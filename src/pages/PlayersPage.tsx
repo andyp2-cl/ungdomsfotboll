@@ -39,7 +39,6 @@ export default function PlayersPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-  const [kioskSchedules, setKioskSchedules] = useState(mockKioskSchedules);
   const { toast } = useToast();
 
   // Get day of week in Swedish
@@ -335,20 +334,26 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle kiosk schedule update - Improved to properly persist the changes
-  const handleKioskScheduleUpdate = (scheduleId: string, updatedSchedule: KioskSchedule) => {
-    const updatedSchedules = kioskSchedules.map(schedule => 
-      schedule.id === scheduleId ? updatedSchedule : schedule
+  // Handle kiosk assignment update
+  const handleKioskAssignmentUpdate = (activityId: string, playerId?: string) => {
+    setActivities(prev => 
+      prev.map(activity => 
+        activity.id === activityId 
+          ? { ...activity, kioskAssignedPlayerId: playerId }
+          : activity
+      )
     );
     
-    setKioskSchedules(updatedSchedules);
+    if (selectedActivity && selectedActivity.id === activityId) {
+      setSelectedActivity(prev => prev ? { ...prev, kioskAssignedPlayerId: playerId } : null);
+    }
     
     toast({
-      title: "Kioskschema uppdaterat",
-      description: "Kioskschema har uppdaterats med nya tilldelningar.",
+      title: "Kioskansvarig uppdaterad",
+      description: playerId 
+        ? `Ny spelare har tilldelats kioskansvar för denna aktivitet.`
+        : `Kioskansvarig har tagits bort från denna aktivitet.`,
     });
-    
-    console.log("Kiosk schedule updated:", updatedSchedule);
   };
 
   // Handle edit player click
@@ -511,6 +516,7 @@ export default function PlayersPage() {
                   onClose={() => setSelectedActivity(null)}
                   onEdit={handleEditActivityClick}
                   onActivityUpdate={handleActivityUpdate}
+                  onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
                 />
               ) : (
                 <ActivityList 
