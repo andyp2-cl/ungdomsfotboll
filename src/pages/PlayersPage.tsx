@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
@@ -30,12 +30,21 @@ export default function PlayersPage() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activeTab, setActiveTab] = useState("players");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [players, setPlayers] = useState<Player[]>(mockPlayers);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
+
+  // Ladda in aktiviteter och filtrera bort de från 2024
+  useEffect(() => {
+    const filteredActivities = mockActivities.filter(activity => {
+      const activityYear = new Date(activity.date).getFullYear();
+      return activityYear !== 2024;
+    });
+    setActivities(filteredActivities);
+  }, []);
 
   // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
@@ -59,8 +68,8 @@ export default function PlayersPage() {
   const handleScrapedMatches = (newActivities: Activity[]) => {
     setActivities(prev => [...prev, ...newActivities]);
     toast({
-      title: "Matches imported",
-      description: `${newActivities.length} new matches have been added.`,
+      title: "Matcher importerade",
+      description: `${newActivities.length} nya matcher har lagts till.`,
     });
   };
 

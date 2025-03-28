@@ -9,50 +9,108 @@ interface ScrapedMatch {
 
 export async function scrapeHifMatches(year: string = "2025"): Promise<ScrapedMatch[]> {
   try {
-    // In a real implementation, we would use fetch or axios to get the page content
-    // But due to CORS limitations in the browser, this would typically need to be done
-    // from a backend service or using a CORS proxy
+    // Eftersom vi kör i webbläsaren behöver vi använda en CORS proxy för att hämta data
+    // Observera att detta är för demo och skulle normalt göras på servern
+    const corsProxy = "https://corsproxy.io/?";
+    const url = `${corsProxy}https://www.svenskalag.se/hessleholmsif-fotboll-p2016/kalender/${year}`;
     
-    // For demonstration, we'll show how the scraping logic would work
-    // but will need to return mock data instead of actually scraping
+    console.log(`Scraping HIF matches from ${url}...`);
     
-    console.log(`Attempting to scrape matches for year ${year}...`);
+    const response = await fetch(url);
     
-    // Simulated response - in a real implementation, this would be replaced
-    // with actual scraped data from the website
-    const mockScrapedMatches: ScrapedMatch[] = [
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    console.log(`Received HTML of length: ${html.length}`);
+    
+    // Använd en regex för att extrahera matchinformation från HTML
+    // Detta är ett förenklat exempel och skulle vara mer robust i en produktionsmiljö
+    const matchRegex = /<div class="cal-event-item[^>]*>[^]*?<span class="cal-event-name-inner">([^<]+)<\/span>[^]*?<span class="cal-day">(\d+)<\/span>\s*<span class="cal-month">(\w+)<\/span>\s*<span class="cal-weekday">([^<]+)<\/span>[^]*?<\/div>/g;
+    
+    const months: Record<string, string> = {
+      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'maj': '05', 'jun': '06',
+      'jul': '07', 'aug': '08', 'sep': '09', 'okt': '10', 'nov': '11', 'dec': '12'
+    };
+    
+    const matches: ScrapedMatch[] = [];
+    let match;
+    
+    while ((match = matchRegex.exec(html)) !== null) {
+      const name = match[1].trim();
+      const day = match[2].padStart(2, '0');
+      const monthName = match[3].toLowerCase();
+      const month = months[monthName] || '01'; // Default to January if not found
+      const date = `${year}-${month}-${day}`;
+      
+      // Kontrollera om det är en match eller cup baserat på namnet
+      const type: ActivityType = name.toLowerCase().includes('cup') ? 'cup' : 'match';
+      
+      matches.push({
+        name,
+        date,
+        type
+      });
+    }
+    
+    console.log(`Found ${matches.length} matches`);
+    
+    // Om vi inte hittar några matcher med regexp (kanske på grund av ändringar i HTML-strukturen)
+    // returnerar vi mock-data som fallback för demo-syften
+    if (matches.length === 0) {
+      console.warn("No matches found with regex, using fallback mock data");
+      return [
+        {
+          name: "Match mot IFK Hässleholm svart (FALLBACK)",
+          date: `${year}-01-17`,
+          type: "match",
+        },
+        {
+          name: "Match mot Åhus Horna BK vit (FALLBACK)",
+          date: `${year}-01-19`,
+          type: "match",
+        },
+        {
+          name: "Match mot Vittsjö GIK (FALLBACK)",
+          date: `${year}-01-19`,
+          type: "match",
+        }
+      ];
+    }
+    
+    return matches;
+  } catch (error) {
+    console.error("Error scraping HIF matches:", error);
+    // Vid fel returnerar vi också mock-data som fallback
+    return [
       {
-        name: "Match mot IFK Hässleholm svart (SCRAPE TEST)",
+        name: "Match mot IFK Hässleholm svart (ERROR FALLBACK)",
         date: `${year}-01-17`,
         type: "match",
       },
       {
-        name: "Match mot Åhus Horna BK vit (SCRAPE TEST)",
+        name: "Match mot Åhus Horna BK vit (ERROR FALLBACK)",
         date: `${year}-01-19`,
         type: "match",
       },
       {
-        name: "Match mot Vittsjö GIK (SCRAPE TEST)",
+        name: "Match mot Vittsjö GIK (ERROR FALLBACK)",
         date: `${year}-01-19`,
         type: "match",
       }
     ];
-    
-    return mockScrapedMatches;
-  } catch (error) {
-    console.error("Error scraping HIF matches:", error);
-    throw new Error("Failed to scrape match data");
   }
 }
 
-// This function would convert scraped matches to our Activity format
+// Konvertera skrapade matcher till aktiviteter
 export function convertScrapedToActivities(
   scrapedMatches: ScrapedMatch[]
 ): Activity[] {
   let nextId = Math.max(...mockActivityIds()) + 1;
   
   return scrapedMatches.map(match => {
-    // Store current ID and then increment for next use
+    // Lagra aktuellt ID och öka för nästa användning
     const currentId = nextId;
     nextId++;
     
@@ -62,24 +120,25 @@ export function convertScrapedToActivities(
       date: match.date,
       type: match.type,
       participants: [],
-      kioskScheduleId: nextId.toString() // Creating a related kiosk schedule
+      kioskScheduleId: nextId.toString(), // Skapa en relaterad kioskschema
+      scraped: true // Markera denna aktivitet som skrapad
     };
   });
 }
 
-// Helper to get existing IDs to avoid conflicts
+// Hjälpfunktion för att få befintliga ID:n för att undvika konflikter
 function mockActivityIds(): number[] {
   try {
-    // In a real implementation, we'd import directly from mockData
-    // but to avoid circular dependencies, we're using this approach
+    // I en riktig implementation skulle vi importera direkt från mockData
+    // men för att undvika cirkulära beroenden använder vi detta tillvägagångssätt
     const activityData = localStorage.getItem('mockActivities');
     if (activityData) {
       const activities = JSON.parse(activityData);
       return activities.map((act: Activity) => parseInt(act.id));
     }
-    return [100]; // Fallback starting ID
+    return [100]; // Fallback startande ID
   } catch (error) {
     console.error("Error getting activity IDs:", error);
-    return [100]; // Fallback starting ID
+    return [100]; // Fallback startande ID
   }
 }

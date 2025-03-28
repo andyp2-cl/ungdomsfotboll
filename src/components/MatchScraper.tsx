@@ -29,15 +29,15 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
       const activities = convertScrapedToActivities(matches);
       setScrapedMatches(activities);
       toast({
-        title: "Matches scraped successfully",
-        description: `Found ${activities.length} matches.`,
+        title: "Matcher skrapade",
+        description: `Hittade ${activities.length} matcher.`,
       });
     } catch (err) {
-      setError((err as Error).message || "Failed to scrape matches");
+      setError((err as Error).message || "Misslyckades med att skrapa matcher");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to scrape matches. See details for more information.",
+        title: "Fel",
+        description: "Misslyckades med att skrapa matcher. Se detaljer för mer information.",
       });
     } finally {
       setIsLoading(false);
@@ -48,8 +48,8 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
     if (scrapedMatches.length && onMatchesScraped) {
       onMatchesScraped(scrapedMatches);
       toast({
-        title: "Matches imported",
-        description: `${scrapedMatches.length} matches have been imported.`,
+        title: "Matcher importerade",
+        description: `${scrapedMatches.length} matcher har importerats.`,
       });
       setScrapedMatches([]);
     }
@@ -58,19 +58,19 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl">Match Data Scraper</CardTitle>
+        <CardTitle className="text-xl">Matchdata-skrapare</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <Select value={year} onValueChange={setYear}>
               <SelectTrigger>
-                <SelectValue placeholder="Select year" />
+                <SelectValue placeholder="Välj år" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -79,14 +79,14 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
             disabled={isLoading}
             className="min-w-28"
           >
-            {isLoading ? "Scraping..." : "Scrape Matches"}
+            {isLoading ? "Skrapar..." : "Skrapa matcher"}
           </Button>
         </div>
         
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Fel</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -95,9 +95,9 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
           <>
             <Alert variant="default" className="bg-green-50 border-green-200">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle>Scraped successfully</AlertTitle>
+              <AlertTitle>Skrapning lyckades</AlertTitle>
               <AlertDescription>
-                Found {scrapedMatches.length} matches for {year}
+                Hittade {scrapedMatches.length} matcher för {year}
               </AlertDescription>
             </Alert>
             
@@ -116,7 +116,7 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
               variant="outline" 
               className="w-full"
             >
-              Import {scrapedMatches.length} Matches
+              Importera {scrapedMatches.length} matcher
             </Button>
           </>
         )}
