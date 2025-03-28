@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -37,14 +36,22 @@ export default function PlayersPage() {
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
 
-  // Ladda in aktiviteter och filtrera bort de från 2024
-  useEffect(() => {
-    const filteredActivities = mockActivities.filter(activity => {
-      const activityYear = new Date(activity.date).getFullYear();
-      return activityYear !== 2024;
-    });
-    setActivities(filteredActivities);
-  }, []);
+  // Handle scraped matches
+  const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
+    if (clearExisting) {
+      setActivities(newActivities);
+      toast({
+        title: "Aktiviteter ersatta",
+        description: `Alla tidigare aktiviteter har tagits bort och ${newActivities.length} nya aktiviteter har lagts till.`,
+      });
+    } else {
+      setActivities(prev => [...prev, ...newActivities]);
+      toast({
+        title: "Matcher importerade",
+        description: `${newActivities.length} nya matcher har lagts till.`,
+      });
+    }
+  };
 
   // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
@@ -64,15 +71,6 @@ export default function PlayersPage() {
     );
   };
 
-  // Handle scraped matches
-  const handleScrapedMatches = (newActivities: Activity[]) => {
-    setActivities(prev => [...prev, ...newActivities]);
-    toast({
-      title: "Matcher importerade",
-      description: `${newActivities.length} nya matcher har lagts till.`,
-    });
-  };
-
   // Handle player update
   const handlePlayerUpdate = (updatedPlayer: Player) => {
     setPlayers(prev => 
@@ -81,7 +79,6 @@ export default function PlayersPage() {
       )
     );
     
-    // If this is the currently selected player, update it
     if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
       setSelectedPlayer(updatedPlayer);
     }
@@ -132,6 +129,14 @@ export default function PlayersPage() {
       return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
     });
   }, [selectedActivityTypes, activities]);
+
+  useEffect(() => {
+    const filteredActivities = mockActivities.filter(activity => {
+      const activityYear = new Date(activity.date).getFullYear();
+      return activityYear !== 2024;
+    });
+    setActivities(filteredActivities);
+  }, []);
 
   return (
     <div className="container py-6">
@@ -250,7 +255,6 @@ export default function PlayersPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog for editing player in a modal */}
       <Dialog open={editingPlayer !== null} onOpenChange={(open) => !open && setEditingPlayer(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -269,7 +273,6 @@ export default function PlayersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for adding new player */}
       <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -282,7 +285,6 @@ export default function PlayersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for adding new activity */}
       <Dialog open={isAddActivityOpen} onOpenChange={setIsAddActivityOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

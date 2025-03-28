@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { scrapeHifMatches, convertScrapedToActivities } from "@/utils/scraper";
 import { Activity } from "@/types/player";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Calendar } from "lucide-react";
+import { AlertCircle, CheckCircle, Calendar, RefreshCw, Download } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 
 interface MatchScraperProps {
-  onMatchesScraped?: (newActivities: Activity[]) => void;
+  onMatchesScraped?: (newActivities: Activity[], clearExisting?: boolean) => void;
 }
 
 export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
@@ -58,10 +58,21 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
 
   const handleImport = () => {
     if (scrapedMatches.length && onMatchesScraped) {
-      onMatchesScraped(scrapedMatches);
+      onMatchesScraped(scrapedMatches, false);
       toast({
         title: "Matcher importerade",
         description: `${scrapedMatches.length} matcher har importerats.`,
+      });
+      setScrapedMatches([]);
+    }
+  };
+
+  const handleResetAndImport = () => {
+    if (scrapedMatches.length && onMatchesScraped) {
+      onMatchesScraped(scrapedMatches, true);
+      toast({
+        title: "Matcher ersatta",
+        description: `Alla tidigare matcher har tagits bort och ${scrapedMatches.length} nya matcher har importerats.`,
       });
       setScrapedMatches([]);
     }
@@ -103,7 +114,14 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
             disabled={isLoading}
             className="min-w-28"
           >
-            {isLoading ? "Skrapar..." : "Skrapa matcher"}
+            {isLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Skrapar...
+              </>
+            ) : (
+              "Skrapa matcher"
+            )}
           </Button>
         </div>
         
@@ -138,13 +156,25 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
               </ul>
             </div>
             
-            <Button 
-              onClick={handleImport} 
-              variant="outline" 
-              className="w-full"
-            >
-              Importera {scrapedMatches.length} matcher
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button 
+                onClick={handleResetAndImport}
+                variant="default"
+                className="w-full"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Ersätt alla aktiviteter
+              </Button>
+              
+              <Button 
+                onClick={handleImport} 
+                variant="outline" 
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Lägg till matcher
+              </Button>
+            </div>
           </>
         )}
       </CardContent>
