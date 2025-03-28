@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,6 +50,9 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Hässleholms IF green color */
+    --hif-green: 135 60% 26%;
   }
 
   .dark {
@@ -87,6 +91,9 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Hässleholms IF green color - same in dark mode */
+    --hif-green: 135 60% 26%;
   }
 }
 
@@ -96,6 +103,16 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-hif-green text-foreground;
   }
+}
+
+/* Add the Hässleholms IF green background color */
+.bg-hif-green {
+  background-color: hsl(var(--hif-green));
+}
+
+/* Keep card backgrounds white */
+.card {
+  @apply bg-white;
 }
