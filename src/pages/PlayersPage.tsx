@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities, mockKioskSchedules } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -307,6 +306,29 @@ export default function PlayersPage() {
       setSelectedActivity(updatedActivity);
     }
     
+    if (updatedActivity.participants) {
+      setPlayers(prevPlayers => 
+        prevPlayers.map(player => {
+          const isParticipating = updatedActivity.participants?.includes(player.id);
+          let playerActivities = player.activities || [];
+          
+          if (isParticipating && !playerActivities.includes(updatedActivity.id)) {
+            return {
+              ...player,
+              activities: [...playerActivities, updatedActivity.id]
+            };
+          } else if (!isParticipating && playerActivities.includes(updatedActivity.id)) {
+            return {
+              ...player,
+              activities: playerActivities.filter(id => id !== updatedActivity.id)
+            };
+          }
+          
+          return player;
+        })
+      );
+    }
+    
     toast({
       title: "Aktivitet uppdaterad",
       description: `${updatedActivity.name} har uppdaterats.`,
@@ -351,11 +373,9 @@ export default function PlayersPage() {
 
   // Handle add new activity
   const handleAddActivity = (newActivity: Activity) => {
-    // If it's a home match at Österås, automatically create a kiosk schedule for it
     let activityToAdd = { ...newActivity };
     
     if (isKioskEligible(newActivity) && !newActivity.kioskScheduleId) {
-      // Create a new kiosk schedule for this activity
       const newScheduleId = uuidv4();
       const newSchedule = {
         id: newScheduleId,
@@ -367,10 +387,7 @@ export default function PlayersPage() {
         ]
       };
       
-      // Add the new schedule to the state
       setKioskSchedules(prev => [...prev, newSchedule]);
-      
-      // Update the activity with the new schedule ID
       activityToAdd.kioskScheduleId = newScheduleId;
     }
     
@@ -399,19 +416,15 @@ export default function PlayersPage() {
   }, [selectedActivityTypes, activities]);
 
   useEffect(() => {
-    // Define the cutoff date - March 31, 2025
     const cutoffDate = new Date('2025-03-31');
     
-    // Filter out activities before March 31, 2025
     const filteredActivities = mockActivities.filter(activity => {
       const activityDate = new Date(activity.date);
       return activityDate >= cutoffDate;
     });
     
-    // Process activities to add kiosk schedules for eligible activities
     const processedActivities = [...filteredActivities, ...aprilActivities].map(activity => {
       if (isKioskEligible(activity) && !activity.kioskScheduleId) {
-        // Create a new kiosk schedule for this activity
         const newScheduleId = uuidv4();
         const newSchedule = {
           id: newScheduleId,
@@ -423,14 +436,8 @@ export default function PlayersPage() {
           ]
         };
         
-        // Add the new schedule to the schedules list
         setKioskSchedules(prev => [...prev, newSchedule]);
-        
-        // Return the activity with the schedule ID
-        return {
-          ...activity,
-          kioskScheduleId: newScheduleId
-        };
+        activity.kioskScheduleId = newScheduleId;
       }
       
       return activity;
@@ -542,6 +549,7 @@ export default function PlayersPage() {
                   onClose={() => setSelectedActivity(null)}
                   onEdit={handleEditActivityClick}
                   onKioskScheduleUpdate={handleKioskScheduleUpdate}
+                  onActivityUpdate={handleActivityUpdate}
                 />
               ) : (
                 <ActivityList 

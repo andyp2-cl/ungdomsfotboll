@@ -4,10 +4,18 @@ import { Activity, Player, KioskSchedule } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, MapPin, Clock, Edit } from "lucide-react";
+import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus } from "lucide-react";
 import { KioskSchedule as KioskScheduleComponent } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { AddPlayersToActivity } from "./AddPlayersToActivity";
+import { Separator } from "@/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -15,13 +23,23 @@ interface ActivityDetailProps {
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
   onKioskScheduleUpdate?: (scheduleId: string, updatedSchedule: KioskSchedule) => void;
+  onActivityUpdate?: (updatedActivity: Activity) => void;
 }
 
-export function ActivityDetail({ activity, players, onClose, onEdit, onKioskScheduleUpdate }: ActivityDetailProps) {
+export function ActivityDetail({ 
+  activity, 
+  players, 
+  onClose, 
+  onEdit, 
+  onKioskScheduleUpdate,
+  onActivityUpdate
+}: ActivityDetailProps) {
   const { toast } = useToast();
   // State to hold the current kiosk schedule
   const [currentSchedule, setCurrentSchedule] = useState<KioskSchedule | undefined>(undefined);
-
+  const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
+  const [isAddingPlayers, setIsAddingPlayers] = useState(false);
+  
   // Fetch the schedule when the activity changes
   useEffect(() => {
     if (activity.kioskScheduleId) {
@@ -32,7 +50,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
   
   // Find all players participating in this activity
   const participatingPlayers = players.filter(
-    (player) => activity.participants?.includes(player.id)
+    (player) => currentActivity.participants?.includes(player.id)
   );
 
   // Handle assigning a player to a kiosk slot
@@ -75,6 +93,39 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
     onClose();
   };
 
+  // Handle adding players to the activity
+  const handleAddPlayers = (playerIds: string[]) => {
+    // Create a new participants array with the new players added
+    const updatedParticipants = [
+      ...(currentActivity.participants || []),
+      ...playerIds
+    ];
+    
+    // Create the updated activity
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
+    };
+    
+    // Update the local state
+    setCurrentActivity(updatedActivity);
+    
+    // Call the update function to save changes
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    // Show success toast
+    const playerNames = playerIds.map(id => 
+      players.find(p => p.id === id)?.name || "Spelare"
+    ).join(", ");
+    
+    toast({
+      title: "Spelare tillagda",
+      description: `${playerNames} har lagts till i aktiviteten.`,
+    });
+  };
+
   // Format the date
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   // Get day of week in Swedish
@@ -87,36 +138,36 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-2xl mb-1 flex items-center">
-              {activity.name}
+              {currentActivity.name}
               <Badge 
-                variant={activity.type === "match" ? "default" : "secondary"}
+                variant={currentActivity.type === "match" ? "default" : "secondary"}
                 className="ml-3"
               >
-                {activity.type === "match" ? "Match" : "Cup"}
+                {currentActivity.type === "match" ? "Match" : "Cup"}
               </Badge>
             </CardTitle>
             <CardDescription className="flex flex-col gap-1">
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 mr-1" />
                 {capitalizedDayOfWeek} {formattedDate}
-                {activity.time && (
+                {currentActivity.time && (
                   <span className="ml-2 flex items-center">
                     <Clock className="h-4 w-4 ml-2 mr-1" />
-                    {activity.time}
+                    {currentActivity.time}
                   </span>
                 )}
               </div>
               
-              {activity.location && (
+              {currentActivity.location && (
                 <div className="flex items-center mt-1">
                   <MapPin className="h-4 w-4 mr-1" />
-                  <span>{activity.location.name}</span>
-                  {activity.location.description && (
-                    <span className="text-muted-foreground ml-1">({activity.location.description})</span>
+                  <span>{currentActivity.location.name}</span>
+                  {currentActivity.location.description && (
+                    <span className="text-muted-foreground ml-1">({currentActivity.location.description})</span>
                   )}
-                  {activity.location.gpsLink && (
+                  {currentActivity.location.gpsLink && (
                     <a 
-                      href={activity.location.gpsLink} 
+                      href={currentActivity.location.gpsLink} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="ml-2 text-blue-600 hover:underline text-sm"
@@ -130,7 +181,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
           </div>
           <div className="flex gap-2">
             {onEdit && (
-              <Button variant="outline" size="icon" onClick={() => onEdit(activity)}>
+              <Button variant="outline" size="icon" onClick={() => onEdit(currentActivity)}>
                 <Edit className="h-5 w-5" />
               </Button>
             )}
@@ -141,30 +192,67 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center mb-3">
-            <Users className="h-5 w-5 mr-2" />
-            Deltagare ({participatingPlayers.length})
-          </h3>
-          {participatingPlayers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {participatingPlayers.map((player) => (
-                <div 
-                  key={player.id} 
-                  className="p-2 border rounded-md flex justify-between items-center"
-                >
-                  <span>{player.name}</span>
-                  <Badge variant="outline">Betyg {player.grade}</Badge>
+        <Accordion type="single" collapsible defaultValue="participants">
+          <AccordionItem value="participants">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                <span>Deltagare ({participatingPlayers.length})</span>
+                {participatingPlayers.length === 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    Inga deltagare
+                  </Badge>
+                )}
+                {participatingPlayers.length >= 12 && (
+                  <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
+                    Maxantal
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {participatingPlayers.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                  {participatingPlayers.map((player) => (
+                    <div 
+                      key={player.id} 
+                      className="p-2 border rounded-md flex justify-between items-center"
+                    >
+                      <span>{player.name}</span>
+                      <Badge variant="outline">Betyg {player.grade}</Badge>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Inga deltagare</p>
-          )}
-        </div>
+              ) : (
+                <p className="text-muted-foreground mb-4">Inga deltagare tillagda än</p>
+              )}
+
+              {participatingPlayers.length < 12 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsAddingPlayers(!isAddingPlayers)}
+                  className="w-full"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
+                </Button>
+              )}
+
+              {isAddingPlayers && (
+                <AddPlayersToActivity 
+                  activity={currentActivity}
+                  players={players}
+                  onAddPlayers={handleAddPlayers}
+                  currentParticipantIds={currentActivity.participants || []}
+                />
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         {currentSchedule && (
           <div>
+            <h3 className="text-lg font-semibold flex items-center mb-3">Kioskschema</h3>
             <KioskScheduleComponent 
               schedule={currentSchedule} 
               players={players} 
@@ -173,7 +261,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
           </div>
         )}
         
-        {!currentSchedule && activity.kioskScheduleId && (
+        {!currentSchedule && currentActivity.kioskScheduleId && (
           <div className="p-4 border rounded-md bg-muted/20">
             <p className="text-muted-foreground text-center">
               Kioskschema finns men kunde inte laddas
