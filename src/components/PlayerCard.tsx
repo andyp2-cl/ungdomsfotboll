@@ -3,7 +3,7 @@ import { Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 interface PlayerCardProps {
   player: Player;
@@ -58,17 +58,17 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
 
   return (
     <Card 
-      className="h-full cursor-pointer hover:shadow-md transition-all relative" 
+      className="h-full cursor-pointer hover:shadow-md transition-all relative group" 
       onClick={onClick}
     >
       {onEdit && (
         <Button 
-          variant="ghost" 
+          variant="outline"
           size="icon" 
-          className="absolute top-2 right-2 z-10" 
+          className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm z-10" 
           onClick={handleEditClick}
         >
-          <Edit className="h-4 w-4" />
+          <Pencil className="h-4 w-4" />
         </Button>
       )}
       <CardHeader className="pb-2">
