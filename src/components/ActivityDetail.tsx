@@ -4,7 +4,7 @@ import { Activity, Player, KioskSlot } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, Plus, MapPin, Clock } from "lucide-react";
+import { CalendarIcon, X, Users, Plus, MapPin, Clock, Edit } from "lucide-react";
 import { KioskSchedule } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
 import { AssignKioskPopover } from "./AssignKioskPopover";
@@ -14,9 +14,10 @@ interface ActivityDetailProps {
   activity: Activity;
   players: Player[];
   onClose: () => void;
+  onEdit?: (activity: Activity) => void;
 }
 
-export function ActivityDetail({ activity, players, onClose }: ActivityDetailProps) {
+export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityDetailProps) {
   const { toast } = useToast();
   // State to hold the current kiosk schedule
   const [currentSchedule, setCurrentSchedule] = useState(
@@ -106,9 +107,16 @@ export function ActivityDetail({ activity, players, onClose }: ActivityDetailPro
               )}
             </CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex gap-2">
+            {onEdit && (
+              <Button variant="outline" size="icon" onClick={() => onEdit(activity)}>
+                <Edit className="h-5 w-5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

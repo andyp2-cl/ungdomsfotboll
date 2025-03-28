@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -11,12 +12,13 @@ import { MatchScraper } from "@/components/MatchScraper";
 import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Grid, List, Plus, UserPlus, Activity as ActivityIcon } from "lucide-react";
+import { Grid, List, Plus, UserPlus, Activity as ActivityIcon, Edit } from "lucide-react";
 import { PlayerList } from "@/components/PlayerList";
 import { useToast } from "@/components/ui/use-toast";
 import { EditPlayerForm } from "@/components/EditPlayerForm";
 import { AddPlayerForm } from "@/components/AddPlayerForm";
 import { AddActivityForm } from "@/components/AddActivityForm";
+import { EditActivityForm } from "@/components/EditActivityForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from 'uuid';
@@ -34,6 +36,7 @@ export default function PlayersPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [players, setPlayers] = useState<Player[]>(mockPlayers);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
@@ -81,7 +84,7 @@ export default function PlayersPage() {
     },
     {
       id: uuidv4(),
-      name: "Kristianstad FC svart - H��ssleholms IF Vit",
+      name: "Kristianstad FC svart - Hässleholms IF Vit",
       date: "2025-04-13",
       time: "12:00",
       type: "match",
@@ -148,7 +151,7 @@ export default function PlayersPage() {
       id: uuidv4(),
       name: "Höör IS blå - Hässleholms IF Vit",
       date: "2025-04-26",
-      time: "00:00",
+      time: "14:30",
       type: "match",
       participants: [],
       location: {
@@ -263,9 +266,32 @@ export default function PlayersPage() {
     });
   };
 
+  // Handle activity update
+  const handleActivityUpdate = (updatedActivity: Activity) => {
+    setActivities(prev => 
+      prev.map(activity => 
+        activity.id === updatedActivity.id ? updatedActivity : activity
+      )
+    );
+    
+    if (selectedActivity && selectedActivity.id === updatedActivity.id) {
+      setSelectedActivity(updatedActivity);
+    }
+    
+    toast({
+      title: "Aktivitet uppdaterad",
+      description: `${updatedActivity.name} har uppdaterats.`,
+    });
+  };
+
   // Handle edit player click
   const handleEditPlayerClick = (player: Player) => {
     setEditingPlayer(player);
+  };
+
+  // Handle edit activity click
+  const handleEditActivityClick = (activity: Activity) => {
+    setEditingActivity(activity);
   };
 
   // Handle add new player
@@ -416,6 +442,7 @@ export default function PlayersPage() {
                   activity={selectedActivity}
                   players={players}
                   onClose={() => setSelectedActivity(null)}
+                  onEdit={handleEditActivityClick}
                 />
               ) : (
                 <ActivityList 
@@ -448,6 +475,24 @@ export default function PlayersPage() {
                 setEditingPlayer(null);
               }}
               onCancel={() => setEditingPlayer(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingActivity !== null} onOpenChange={(open) => !open && setEditingActivity(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redigera aktivitet</DialogTitle>
+          </DialogHeader>
+          {editingActivity && (
+            <EditActivityForm 
+              activity={editingActivity} 
+              onSave={(updatedActivity) => {
+                handleActivityUpdate(updatedActivity);
+                setEditingActivity(null);
+              }}
+              onCancel={() => setEditingActivity(null)}
             />
           )}
         </DialogContent>
