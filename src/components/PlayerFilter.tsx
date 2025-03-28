@@ -12,7 +12,7 @@ export function PlayerFilter({ selectedGrades, onGradeChange }: PlayerFilterProp
   
   return (
     <div className="flex space-x-2 mb-4">
-      <span className="self-center text-sm font-medium mr-2">Filtrera betyg:</span>
+      <span className="self-center text-sm font-medium mr-2">Filtrera nivå:</span>
       {grades.map((grade) => (
         <Button
           key={grade}
