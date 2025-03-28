@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const playerFormSchema = z.object({
   name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
@@ -30,6 +31,7 @@ interface AddPlayerFormProps {
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerFormSchema),
@@ -81,7 +83,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 w-full max-w-md mx-auto px-2">
         <div className="flex flex-col items-center mb-4">
           <div className="relative mb-2">
             <div 
@@ -197,12 +199,20 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
           )}
         />
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'justify-end space-x-2'} pt-4`}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className={isMobile ? 'w-full' : ''}
+          >
             <X className="h-4 w-4 mr-2" />
             Avbryt
           </Button>
-          <Button type="submit">
+          <Button 
+            type="submit"
+            className={isMobile ? 'w-full' : ''}
+          >
             <Save className="h-4 w-4 mr-2" />
             Spara
           </Button>
