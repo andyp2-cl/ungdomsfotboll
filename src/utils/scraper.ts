@@ -23,7 +23,16 @@ export async function scrapePlayerImages(
     const fetchUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
     console.log(`Fetching page from: ${fetchUrl}`);
     
-    const response = await fetch(fetchUrl);
+    const response = await fetch(fetchUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml',
+        'User-Agent': 'Mozilla/5.0 (compatible; PlayerImageScraper/1.0)'
+      },
+      mode: 'cors',
+      cache: 'no-store'
+    });
+    
     if (!response.ok) {
       throw new Error(`Kunde inte hämta sidan (${response.status}): ${response.statusText}`);
     }
@@ -33,7 +42,9 @@ export async function scrapePlayerImages(
     
     if (html.length < 1000) {
       console.warn("Warning: Received very short HTML content. Might be an error page.");
-      throw new Error("Hämtad sida verkar vara en felmeddelande eller ogiltig. Prova en annan URL eller proxy.");
+      if (html.includes("Ett fel har inträffat") || html.includes("error")) {
+        throw new Error("Servern returnerade ett felmeddelande. Prova en annan URL eller proxy.");
+      }
     }
     
     // Parse the HTML
@@ -42,14 +53,16 @@ export async function scrapePlayerImages(
     
     // Try various selectors that might contain player information
     const selectors = [
-      ".sv-channel-content > div", 
-      ".player-card", 
-      ".team-member",
-      ".roster-player",
-      ".player-profile",
-      ".members-list > div",
-      ".team-list > div",
-      ".roster > div",
+      ".player-card", ".team-member", ".roster-player", ".player-profile",
+      ".members-list > div", ".team-list > div", ".roster > div",
+      ".player", ".member", "article.player", "article.member",
+      ".sv-text-portlet-content", ".sv-channel-content > div", 
+      ".sv-layout-portlet",
+      "div.sv-layout__item", "div.sv-text-portlet",
+      "div.sv-layout-portlet-content",
+      ".sv-fluid-grid__item",
+      "[class*='player']", "[class*='member']", "[class*='team']",
+      "[class*='roster']", 
       "div:has(img):has(h3)",
       "div:has(img):has(.player-name)",
       ".sv-text-portlet-content",
@@ -57,38 +70,39 @@ export async function scrapePlayerImages(
       ".sv-layout > div",
       ".container div",
       "article",
-      ".player",
-      ".member",
       // Try to find images with nearby text that could be names
       "img + p", 
       "img + div",
+      "figure", 
+      "figure > figcaption",
+      "figcaption",
       // Very general fallback
-      "div:has(img)"
+      "div:has(img)",
+      // The most general fallback
+      "img"
     ];
     
     let playerElements: NodeListOf<Element> | null = null;
     let usedSelector = "";
     
+    // Try more aggressive approaches to find players in case the standard selectors fail
     for (const selector of selectors) {
-      const elements = doc.querySelectorAll(selector);
-      if (elements && elements.length > 0) {
-        console.log(`Found ${elements.length} elements with selector: ${selector}`);
-        playerElements = elements;
-        usedSelector = selector;
-        break;
+      try {
+        const elements = doc.querySelectorAll(selector);
+        if (elements && elements.length > 0) {
+          console.log(`Found ${elements.length} elements with selector: ${selector}`);
+          playerElements = elements;
+          usedSelector = selector;
+          break;
+        }
+      } catch (e) {
+        console.warn(`Selector "${selector}" caused an error:`, e);
+        // Continue with next selector
       }
     }
     
     if (!playerElements || playerElements.length === 0) {
-      // As a fallback, try to find all images
-      const imgElements = doc.querySelectorAll("img");
-      if (imgElements && imgElements.length > 0) {
-        console.log(`Found ${imgElements.length} images. Using as fallback.`);
-        playerElements = imgElements;
-        usedSelector = "img";
-      } else {
-        throw new Error("Inga spelare eller bilder hittades på sidan");
-      }
+      throw new Error("Inga spelare eller bilder hittades på sidan. Prova en annan webbadress.");
     }
     
     const updatedPlayers: Player[] = [...players];
@@ -96,122 +110,250 @@ export async function scrapePlayerImages(
     
     // Process each element to extract player information
     Array.from(playerElements).forEach((element, index) => {
-      // Different handling based on what selector matched
-      if (usedSelector === "img") {
-        // We're directly looking at image elements
-        const imgElement = element;
-        let imgSrc = imgElement.getAttribute("src");
-        if (!imgSrc) return;
-        
-        // Try to find nearby text for the name
-        let playerName: string | null = null;
-        
-        // Check alt text first
-        const altText = imgElement.getAttribute("alt");
-        if (altText && altText.length > 3) {
-          playerName = altText;
-        }
-        
-        // Check next sibling
-        if (!playerName) {
-          const nextSibling = imgElement.nextElementSibling;
-          if (nextSibling && nextSibling.textContent) {
-            playerName = nextSibling.textContent.trim();
+      try {
+        // Different handling based on what selector matched
+        if (usedSelector === "img") {
+          // We're directly looking at image elements
+          const imgElement = element as HTMLImageElement;
+          let imgSrc = imgElement.getAttribute("src");
+          if (!imgSrc) return;
+          
+          // Skip small icons, logo images, etc.
+          const imgWidth = imgElement.width || 0;
+          const imgHeight = imgElement.height || 0;
+          
+          if ((imgWidth > 0 && imgWidth < 30) || (imgHeight > 0 && imgHeight < 30)) {
+            return; // Skip tiny images
           }
-        }
-        
-        // Check parent's text content
-        if (!playerName) {
-          const parent = imgElement.parentElement;
-          if (parent && parent.textContent) {
-            playerName = parent.textContent.trim().split('\n')[0];
+          
+          // Skip images that are likely to be logos or icons
+          if (imgSrc.includes("logo") || imgSrc.includes("icon") || 
+              imgSrc.includes("banner") || imgSrc.includes("header")) {
+            return;
           }
-        }
-        
-        if (!playerName) return;
-        
-        // Make the image URL absolute
-        if (imgSrc.startsWith('/')) {
-          const urlObj = new URL(url);
-          imgSrc = `${urlObj.origin}${imgSrc}`;
-        } else if (!imgSrc.startsWith('http')) {
-          const urlObj = new URL(url);
-          imgSrc = `${urlObj.origin}/${imgSrc}`;
-        }
-        
-        // Match with our database
-        matchPlayerWithImage(updatedPlayers, playerName, imgSrc);
-        matchCount++;
-      } else {
-        // Try to find player name with various selectors
-        let playerName: string | null = null;
-        const nameSelectors = ['h3', 'h4', '.player-name', '.name', 'strong', 'b', 'p', 'span'];
-        
-        for (const selector of nameSelectors) {
-          const nameElement = element.querySelector(selector);
-          if (nameElement && nameElement.textContent) {
-            playerName = nameElement.textContent.trim();
-            if (playerName) {
-              console.log(`Found player name: ${playerName}`);
-              break;
+          
+          // Try to find nearby text for the name
+          let playerName: string | null = null;
+          
+          // Check alt text first
+          const altText = imgElement.getAttribute("alt");
+          if (altText && altText.length > 3 && !altText.includes("logo") && !altText.includes("banner")) {
+            playerName = altText;
+          }
+          
+          // Check next sibling
+          if (!playerName) {
+            let nextSibling = imgElement.nextElementSibling;
+            while (nextSibling && !playerName) {
+              if (nextSibling.textContent) {
+                const text = nextSibling.textContent.trim();
+                if (text.length > 3 && text.length < 50) {
+                  playerName = text;
+                }
+              }
+              nextSibling = nextSibling.nextElementSibling;
             }
           }
+          
+          // Check parent's text content
+          if (!playerName) {
+            const parent = imgElement.parentElement;
+            if (parent && parent.textContent) {
+              const text = parent.textContent.trim();
+              // Try to extract a potential name (avoid too short or too long text)
+              if (text.length > 3 && text.length < 50) {
+                playerName = text.split('\n')[0].trim();
+              }
+            }
+          }
+          
+          // Check for figures with figcaptions
+          if (!playerName && imgElement.closest('figure')) {
+            const figure = imgElement.closest('figure');
+            const figcaption = figure?.querySelector('figcaption');
+            if (figcaption && figcaption.textContent) {
+              playerName = figcaption.textContent.trim();
+            }
+          }
+          
+          if (!playerName) return;
+          
+          // Make the image URL absolute
+          if (imgSrc.startsWith('/')) {
+            try {
+              const urlObj = new URL(url);
+              imgSrc = `${urlObj.origin}${imgSrc}`;
+            } catch (e) {
+              // If the URL is invalid, try to make a best guess
+              if (url.includes('://')) {
+                const baseUrl = url.split('/').slice(0, 3).join('/');
+                imgSrc = `${baseUrl}${imgSrc}`;
+              }
+            }
+          } else if (!imgSrc.startsWith('http')) {
+            try {
+              const urlObj = new URL(url);
+              imgSrc = `${urlObj.origin}/${imgSrc}`;
+            } catch (e) {
+              // If the URL is invalid, try to make a best guess
+              if (url.includes('://')) {
+                const baseUrl = url.split('/').slice(0, 3).join('/');
+                imgSrc = `${baseUrl}/${imgSrc}`;
+              }
+            }
+          }
+          
+          console.log(`Found potential player: ${playerName} with image: ${imgSrc}`);
+          
+          // Match with our database
+          if (matchPlayerWithImage(updatedPlayers, playerName, imgSrc)) {
+            matchCount++;
+          }
+        } else {
+          // Try to find player name with various selectors
+          let playerName: string | null = null;
+          const nameSelectors = ['h3', 'h4', '.player-name', '.name', 'strong', 'b', 'p', 'span', 'figcaption', '.player-title'];
+          
+          for (const selector of nameSelectors) {
+            try {
+              const nameElement = element.querySelector(selector);
+              if (nameElement && nameElement.textContent) {
+                const text = nameElement.textContent.trim();
+                if (text.length > 3 && text.length < 50) {
+                  playerName = text;
+                  console.log(`Found player name: ${playerName}`);
+                  break;
+                }
+              }
+            } catch (e) {
+              // Continue to next selector
+            }
+          }
+          
+          // If no name found with selectors, try the element's own text
+          if (!playerName && element.textContent) {
+            const text = element.textContent.trim();
+            if (text.length > 3 && text.length < 50) {
+              playerName = text.split('\n')[0].trim();
+            }
+          }
+          
+          if (!playerName) return;
+          
+          // Find player image
+          let imgElement: Element | null = null;
+          try {
+            imgElement = element.querySelector("img");
+          } catch (e) {
+            // If querySelector fails, try a different approach
+            const imgs = element.getElementsByTagName("img");
+            if (imgs.length > 0) {
+              imgElement = imgs[0];
+            }
+          }
+          
+          if (!imgElement) return;
+          
+          let imgSrc = imgElement.getAttribute("src");
+          if (!imgSrc) return;
+          
+          // Make the image URL absolute if it's relative
+          if (imgSrc.startsWith('/')) {
+            try {
+              const urlObj = new URL(url);
+              imgSrc = `${urlObj.origin}${imgSrc}`;
+            } catch (e) {
+              // If the URL is invalid, try to make a best guess
+              if (url.includes('://')) {
+                const baseUrl = url.split('/').slice(0, 3).join('/');
+                imgSrc = `${baseUrl}${imgSrc}`;
+              }
+            }
+          } else if (!imgSrc.startsWith('http')) {
+            try {
+              const urlObj = new URL(url);
+              imgSrc = `${urlObj.origin}/${imgSrc}`;
+            } catch (e) {
+              // If the URL is invalid, try to make a best guess
+              if (url.includes('://')) {
+                const baseUrl = url.split('/').slice(0, 3).join('/');
+                imgSrc = `${baseUrl}/${imgSrc}`;
+              }
+            }
+          }
+          
+          console.log(`Found image for ${playerName}: ${imgSrc}`);
+          
+          // Match with our database
+          if (matchPlayerWithImage(updatedPlayers, playerName, imgSrc)) {
+            matchCount++;
+          }
         }
-        
-        // If no name found with selectors, try the element's own text
-        if (!playerName && element.textContent) {
-          playerName = element.textContent.trim().split('\n')[0];
-        }
-        
-        if (!playerName) return;
-        
-        // Find player image
-        const imgElement = element.querySelector("img");
-        if (!imgElement) return;
-        
-        let imgSrc = imgElement.getAttribute("src");
-        if (!imgSrc) return;
-        
-        // Make the image URL absolute if it's relative
-        if (imgSrc.startsWith('/')) {
-          const urlObj = new URL(url);
-          imgSrc = `${urlObj.origin}${imgSrc}`;
-        } else if (!imgSrc.startsWith('http')) {
-          const urlObj = new URL(url);
-          imgSrc = `${urlObj.origin}/${imgSrc}`;
-        }
-        
-        console.log(`Found image for ${playerName}: ${imgSrc}`);
-        
-        // Match with our database
-        matchPlayerWithImage(updatedPlayers, playerName, imgSrc);
-        matchCount++;
+      } catch (e) {
+        console.error("Error processing element:", e);
+        // Continue with next element
       }
     });
     
-    function matchPlayerWithImage(players: Player[], name: string, imgSrc: string): void {
-      // Try to match the player with our database
+    function matchPlayerWithImage(players: Player[], name: string, imgSrc: string): boolean {
+      // Skip names that are too generic or likely errors
+      if (name.includes("Error") || 
+          name.includes("Fel") || 
+          name.includes("404") || 
+          name.length < 3 || 
+          name.length > 50) {
+        return false;
+      }
+      
+      // Clean the name - remove extra spaces, newlines, and common titles
+      name = name.replace(/\s+/g, ' ')
+                .replace(/\n/g, ' ')
+                .replace(/^\s+|\s+$/g, '')
+                .replace(/^(herr|dam|pojk|flicka|p\d+|f\d+|u\d+)[\s\-]+/i, '')
+                .replace(/^(tränare|coach|ledare|manager)[\s\-]+/i, '');
+      
       // First try exact name match
       let playerIndex = players.findIndex(
         p => p.name.toLowerCase() === name.toLowerCase()
       );
       
-      // If not found, try with first name only
-      if (playerIndex === -1) {
-        const firstName = name.split(' ')[0].toLowerCase();
+      // If not found, try with first and last name separately
+      if (playerIndex === -1 && name.includes(' ')) {
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0].toLowerCase();
+        const lastName = nameParts[nameParts.length - 1].toLowerCase();
+        
+        // Try matching with first name
         playerIndex = players.findIndex(
           p => p.name.toLowerCase().includes(firstName)
         );
-      }
-      
-      // If still not found, try with last name
-      if (playerIndex === -1 && name.includes(' ')) {
-        const lastName = name.split(' ').pop()?.toLowerCase() || '';
-        if (lastName.length > 2) { // Avoid matching very short last names
+        
+        // If still not found, try with last name
+        if (playerIndex === -1 && lastName.length > 2) {
           playerIndex = players.findIndex(
             p => p.name.toLowerCase().includes(lastName)
           );
         }
+      }
+      
+      // If still not found, try with any part of the name
+      if (playerIndex === -1) {
+        const playerWords = name.toLowerCase().split(/\s+/);
+        for (const word of playerWords) {
+          if (word.length > 3) { // Only use words longer than 3 chars
+            playerIndex = players.findIndex(
+              p => p.name.toLowerCase().includes(word)
+            );
+            if (playerIndex !== -1) break;
+          }
+        }
+      }
+      
+      // If still not found, check if any player name is contained in this name
+      if (playerIndex === -1) {
+        playerIndex = players.findIndex(
+          p => name.toLowerCase().includes(p.name.toLowerCase())
+        );
       }
       
       if (playerIndex >= 0) {
@@ -219,13 +361,15 @@ export async function scrapePlayerImages(
           ...players[playerIndex],
           image: imgSrc,
         };
-        matchCount++;
         console.log(`Matched player: ${name} with ${players[playerIndex].name}`);
+        return true;
       }
+      
+      return false;
     }
     
     if (matchCount === 0) {
-      throw new Error("Inga spelare från webbplatsen matchade med din laglista");
+      throw new Error("Inga spelare från webbplatsen matchade med din laglista. Prova en annan URL.");
     }
     
     console.log(`Successfully matched ${matchCount} players`);
