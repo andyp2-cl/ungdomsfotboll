@@ -53,6 +53,18 @@ export default function PlayersPage() {
     }
   };
 
+  // Handle delete all activities
+  const handleDeleteAllActivities = () => {
+    setActivities([]);
+    if (selectedActivity) {
+      setSelectedActivity(null);
+    }
+    toast({
+      title: "Aktiviteter raderade",
+      description: "Alla aktiviteter har tagits bort.",
+    });
+  };
+
   // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
     setSelectedGrades(prev => 
@@ -249,7 +261,10 @@ export default function PlayersPage() {
             </div>
             
             <div className="md:col-span-1">
-              <MatchScraper onMatchesScraped={handleScrapedMatches} />
+              <MatchScraper 
+                onMatchesScraped={handleScrapedMatches} 
+                onDeleteAllActivities={handleDeleteAllActivities}
+              />
             </div>
           </div>
         </TabsContent>

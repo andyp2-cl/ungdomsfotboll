@@ -5,15 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { scrapeHifMatches, convertScrapedToActivities } from "@/utils/scraper";
 import { Activity } from "@/types/player";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Calendar, RefreshCw, Download } from "lucide-react";
+import { AlertCircle, CheckCircle, Calendar, RefreshCw, Download, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface MatchScraperProps {
   onMatchesScraped?: (newActivities: Activity[], clearExisting?: boolean) => void;
+  onDeleteAllActivities?: () => void;
 }
 
-export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
+export function MatchScraper({ onMatchesScraped, onDeleteAllActivities }: MatchScraperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [scrapedMatches, setScrapedMatches] = useState<Activity[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +87,16 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
         description: `Alla tidigare matcher har tagits bort och ${scrapedMatches.length} nya matcher har importerats.`,
       });
       setScrapedMatches([]);
+    }
+  };
+
+  const handleDeleteAllActivities = () => {
+    if (onDeleteAllActivities) {
+      onDeleteAllActivities();
+      toast({
+        title: "Alla aktiviteter raderade",
+        description: "Alla aktiviteter har tagits bort.",
+      });
     }
   };
 
@@ -177,6 +199,32 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
             </div>
           </>
         )}
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="destructive" 
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Radera alla aktiviteter
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Detta kommer att radera alla aktiviteter. Denna åtgärd kan inte ångras.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteAllActivities}>
+                Radera
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
