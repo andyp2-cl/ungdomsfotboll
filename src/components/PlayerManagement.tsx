@@ -8,7 +8,8 @@ import { PlayerDetail } from "@/components/PlayerDetail";
 import { Grid, List, Plus } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEffect } from "react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PlayerImageScraper } from "@/components/PlayerImageScraper";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -43,7 +44,7 @@ export function PlayerManagement({
   onAddPlayerClick,
   onEditPlayerClick,
 }: PlayerManagementProps) {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   // Set default view to list on mobile
   useEffect(() => {
@@ -95,12 +96,30 @@ export function PlayerManagement({
           allPlayers={players}
         />
       ) : (
-        <PlayerList 
-          players={filteredPlayers} 
-          viewMode={viewMode}
-          onPlayerSelect={onPlayerSelect}
-          onPlayerEdit={onEditPlayerClick}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <PlayerList 
+              players={filteredPlayers} 
+              viewMode={viewMode}
+              onPlayerSelect={onPlayerSelect}
+              onPlayerEdit={onEditPlayerClick}
+            />
+          </div>
+          
+          <div className="md:col-span-1">
+            <PlayerImageScraper 
+              players={players} 
+              onImagesScraped={(updatedPlayers) => {
+                // Update all players at once
+                updatedPlayers.forEach(player => {
+                  if (player.image) {
+                    onPlayerUpdate(player);
+                  }
+                });
+              }} 
+            />
+          </div>
+        </div>
       )}
     </div>
   );
