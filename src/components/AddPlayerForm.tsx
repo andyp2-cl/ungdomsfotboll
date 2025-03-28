@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, X } from "lucide-react";
+import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 
 const playerFormSchema = z.object({
@@ -28,6 +28,9 @@ interface AddPlayerFormProps {
 }
 
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerFormSchema),
     defaultValues: {
@@ -38,6 +41,29 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = (values: PlayerFormValues) => {
     // Create a new player with form values and a unique ID
     const newPlayer: Player = {
@@ -47,6 +73,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
       position: values.position || undefined,
       jerseyNumber: values.jerseyNumber || undefined,
       activities: [],
+      image: imagePreview,
     };
 
     onSave(newPlayer);
@@ -55,6 +82,43 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="flex flex-col items-center mb-4">
+          <div className="relative mb-2">
+            <div 
+              className="h-24 w-24 rounded-full border border-gray-200 overflow-hidden flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors"
+              onClick={handleImageClick}
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="Player" className="h-full w-full object-cover" />
+              ) : (
+                <UserCircle className="h-16 w-16 text-gray-400" />
+              )}
+              <div className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full">
+                <Camera className="h-4 w-4" />
+              </div>
+            </div>
+            {imagePreview && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon" 
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white" 
+                onClick={handleRemoveImage}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+          <span className="text-sm text-muted-foreground">Klicka för att lägga till bild</span>
+        </div>
+
         <FormField
           control={form.control}
           name="name"
