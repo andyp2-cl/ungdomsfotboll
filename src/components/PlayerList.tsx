@@ -1,9 +1,11 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, UserCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { PlayerCard } from "./PlayerCard";
 
 interface PlayerListProps {
   players: Player[];
@@ -112,6 +114,23 @@ export function PlayerList({ players, viewMode = "list", onPlayerSelect, onPlaye
     );
   }
 
+  // Grid view
+  if (viewMode === "grid") {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        {sortedPlayers.map(player => (
+          <PlayerCard 
+            key={player.id}
+            player={player}
+            onClick={() => onPlayerSelect(player)}
+            onEdit={onPlayerEdit}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // List view (default)
   return (
     <Table>
       <TableHeader>
