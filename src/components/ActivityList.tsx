@@ -52,6 +52,19 @@ export function ActivityList({ activities, onSelect }: ActivityListProps) {
                 <div className="flex items-center mt-1">
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>{activity.location.name}</span>
+                  {activity.location.description && (
+                    <span className="text-muted-foreground ml-1">({activity.location.description})</span>
+                  )}
+                  {activity.location.gpsLink && (
+                    <a 
+                      href={activity.location.gpsLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-600 hover:underline text-sm"
+                    >
+                      GPS
+                    </a>
+                  )}
                 </div>
               )}
             </div>
