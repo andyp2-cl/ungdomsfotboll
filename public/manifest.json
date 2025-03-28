@@ -1,0 +1,22 @@
+
+{
+  "name": "Hässleholms IF P2014",
+  "short_name": "HIF P2014",
+  "description": "Hässleholms IF P2014 - Fotbollslagshanterare",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#006633",
+  "icons": [
+    {
+      "src": "/hassleholmsif-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/hassleholmsif-apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
