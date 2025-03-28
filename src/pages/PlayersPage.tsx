@@ -12,11 +12,14 @@ import { MatchScraper } from "@/components/MatchScraper";
 import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Grid, List } from "lucide-react";
+import { Grid, List, Plus, UserPlus, Activity as ActivityIcon } from "lucide-react";
 import { PlayerList } from "@/components/PlayerList";
 import { useToast } from "@/components/ui/use-toast";
 import { EditPlayerForm } from "@/components/EditPlayerForm";
+import { AddPlayerForm } from "@/components/AddPlayerForm";
+import { AddActivityForm } from "@/components/AddActivityForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -30,6 +33,8 @@ export default function PlayersPage() {
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [players, setPlayers] = useState<Player[]>(mockPlayers);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
 
   // Hantera byte av spelarens nivåfilter
@@ -83,6 +88,26 @@ export default function PlayersPage() {
     setEditingPlayer(player);
   };
 
+  // Handle add new player
+  const handleAddPlayer = (newPlayer: Player) => {
+    setPlayers(prev => [...prev, newPlayer]);
+    setIsAddPlayerOpen(false);
+    toast({
+      title: "Spelare tillagd",
+      description: `${newPlayer.name} har lagts till.`,
+    });
+  };
+
+  // Handle add new activity
+  const handleAddActivity = (newActivity: Activity) => {
+    setActivities(prev => [...prev, newActivity]);
+    setIsAddActivityOpen(false);
+    toast({
+      title: "Aktivitet tillagd",
+      description: `${newActivity.name} har lagts till.`,
+    });
+  };
+
   // Filtrera spelare baserat på sökfråga och valda nivåer
   const filteredPlayers = useMemo(() => {
     return players.filter(player => {
@@ -123,7 +148,15 @@ export default function PlayersPage() {
           </div>
 
           {!selectedPlayer && (
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <Button 
+                onClick={() => setIsAddPlayerOpen(true)}
+                className="mb-4"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Lägg till spelare
+              </Button>
+              
               <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
                 <ToggleGroupItem value="grid" aria-label="Visa som rutnät">
                   <Grid className="h-4 w-4" />
@@ -173,10 +206,18 @@ export default function PlayersPage() {
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">Alla aktiviteter</h2>
-                <ActivityFilter 
-                  selectedTypes={selectedActivityTypes}
-                  onTypeChange={handleActivityTypeChange}
-                />
+                <div className="flex items-center gap-4">
+                  <Button 
+                    onClick={() => setIsAddActivityOpen(true)}
+                  >
+                    <ActivityIcon className="h-4 w-4 mr-2" />
+                    Lägg till aktivitet
+                  </Button>
+                  <ActivityFilter 
+                    selectedTypes={selectedActivityTypes}
+                    onTypeChange={handleActivityTypeChange}
+                  />
+                </div>
               </div>
               
               {selectedActivity ? (
@@ -216,6 +257,32 @@ export default function PlayersPage() {
               onCancel={() => setEditingPlayer(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog for adding new player */}
+      <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lägg till ny spelare</DialogTitle>
+          </DialogHeader>
+          <AddPlayerForm 
+            onSave={handleAddPlayer}
+            onCancel={() => setIsAddPlayerOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog for adding new activity */}
+      <Dialog open={isAddActivityOpen} onOpenChange={setIsAddActivityOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lägg till ny aktivitet</DialogTitle>
+          </DialogHeader>
+          <AddActivityForm 
+            onSave={handleAddActivity}
+            onCancel={() => setIsAddActivityOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
