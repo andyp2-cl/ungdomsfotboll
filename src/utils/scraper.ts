@@ -51,14 +51,20 @@ export function convertScrapedToActivities(
 ): Activity[] {
   let nextId = Math.max(...mockActivityIds()) + 1;
   
-  return scrapedMatches.map(match => ({
-    id: nextId++.toString(),
-    name: match.name,
-    date: match.date,
-    type: match.type,
-    participants: [],
-    kioskScheduleId: nextId.toString() // Creating a related kiosk schedule
-  }));
+  return scrapedMatches.map(match => {
+    // Store current ID and then increment for next use
+    const currentId = nextId;
+    nextId++;
+    
+    return {
+      id: currentId.toString(),
+      name: match.name,
+      date: match.date,
+      type: match.type,
+      participants: [],
+      kioskScheduleId: nextId.toString() // Creating a related kiosk schedule
+    };
+  });
 }
 
 // Helper to get existing IDs to avoid conflicts
