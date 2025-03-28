@@ -551,19 +551,22 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         <TabsContent value="activities" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 className="text-xl font-semibold">Alla aktiviteter</h2>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
                   <Button 
                     onClick={() => setIsAddActivityOpen(true)}
+                    className="w-full sm:w-auto"
                   >
                     <ActivityIcon className="h-4 w-4 mr-2" />
                     Lägg till aktivitet
                   </Button>
-                  <ActivityFilter 
-                    selectedTypes={selectedActivityTypes}
-                    onTypeChange={handleActivityTypeChange}
-                  />
+                  <div className="w-full sm:w-auto overflow-x-auto">
+                    <ActivityFilter 
+                      selectedTypes={selectedActivityTypes}
+                      onTypeChange={handleActivityTypeChange}
+                    />
+                  </div>
                 </div>
               </div>
               

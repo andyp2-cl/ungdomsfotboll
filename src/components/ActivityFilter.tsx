@@ -14,27 +14,29 @@ export function ActivityFilter({ selectedTypes, onTypeChange }: ActivityFilterPr
   ];
   
   return (
-    <div className="flex space-x-2 mb-4">
-      <span className="self-center text-sm font-medium mr-2">Aktivitetstyp:</span>
-      {types.map((type) => (
-        <Button
-          key={type.value}
-          size="sm"
-          variant={selectedTypes.includes(type.value) ? "default" : "outline"}
-          onClick={() => onTypeChange(type.value)}
-        >
-          {type.label}
-        </Button>
-      ))}
-      {selectedTypes.length > 0 && selectedTypes.length < types.length && (
-        <Button 
-          size="sm" 
-          variant="ghost" 
-          onClick={() => types.forEach(t => !selectedTypes.includes(t.value) && onTypeChange(t.value))}
-        >
-          Visa alla
-        </Button>
-      )}
+    <div className="flex flex-wrap gap-2">
+      <span className="self-center text-sm font-medium mr-1">Aktivitetstyp:</span>
+      <div className="flex flex-wrap gap-2">
+        {types.map((type) => (
+          <Button
+            key={type.value}
+            size="sm"
+            variant={selectedTypes.includes(type.value) ? "default" : "outline"}
+            onClick={() => onTypeChange(type.value)}
+          >
+            {type.label}
+          </Button>
+        ))}
+        {selectedTypes.length > 0 && selectedTypes.length < types.length && (
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            onClick={() => types.forEach(t => !selectedTypes.includes(t.value) && onTypeChange(t.value))}
+          >
+            Visa alla
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
