@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -23,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from 'uuid';
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
+import { FileImport } from "@/components/FileImport";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -200,6 +200,15 @@ export default function PlayersPage() {
       }
     }
   ];
+
+  // Handle imported activities from file
+  const handleImportedActivities = (importedActivities: Activity[]) => {
+    setActivities(prev => [...prev, ...importedActivities]);
+    toast({
+      title: "Aktiviteter importerade",
+      description: `${importedActivities.length} aktiviteter har importerats från fil.`,
+    });
+  };
 
   // Handle scraped matches
   const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
@@ -452,7 +461,8 @@ export default function PlayersPage() {
               )}
             </div>
             
-            <div className="md:col-span-1">
+            <div className="md:col-span-1 space-y-6">
+              <FileImport onActivitiesImported={handleImportedActivities} />
               <MatchScraper 
                 onMatchesScraped={handleScrapedMatches} 
                 onDeleteAllActivities={handleDeleteAllActivities}
