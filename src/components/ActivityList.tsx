@@ -2,7 +2,7 @@
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, MapPin, Coffee } from "lucide-react";
+import { CalendarIcon, Clock, MapPin, Coffee, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ActivityListProps {
@@ -40,12 +40,25 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     const player = players.find(p => p.id === activity.kioskAssignedPlayerId);
     return player ? player.name : "Okänd spelare";
   };
+  
+  // Get participant names for an activity
+  const getParticipantNames = (activity: Activity): string[] => {
+    if (!activity.participants || activity.participants.length === 0) return [];
+    
+    return activity.participants
+      .map(participantId => {
+        const player = players.find(p => p.id === participantId);
+        return player ? player.name : null;
+      })
+      .filter(name => name !== null) as string[];
+  };
 
   return (
     <div className="space-y-4">
       {activities.map((activity) => {
         const isEligibleForKiosk = isKioskEligible(activity);
         const kioskPlayerName = getKioskPlayerName(activity);
+        const participantNames = getParticipantNames(activity);
         
         return (
           <Card key={activity.id} className="overflow-hidden">
@@ -83,11 +96,26 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-sm">
-                {activity.participants && activity.participants.length > 0 
-                  ? `${activity.participants.length} deltagare`
-                  : "Inga deltagare"}
-              </div>
+              {participantNames.length > 0 ? (
+                <div className="text-sm">
+                  <div className="flex items-start gap-1 mb-1">
+                    <Users className="h-4 w-4 mt-0.5 mr-1" />
+                    <span className="font-medium">{participantNames.length} deltagare:</span>
+                  </div>
+                  <div className="ml-5 flex flex-wrap gap-1">
+                    {participantNames.map((name, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span className="text-muted-foreground">Inga deltagare</span>
+                </div>
+              )}
               
               {isEligibleForKiosk && (
                 <div className="mt-2 flex items-center text-sm">
