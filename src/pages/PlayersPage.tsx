@@ -23,7 +23,14 @@ import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from 'uuid';
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
 import { FileImport } from "@/components/FileImport";
-import { getStoredPlayers, savePlayers } from "@/utils/storage";
+import { 
+  getStoredPlayers, 
+  savePlayers, 
+  getStoredActivities, 
+  saveActivities,
+  saveActiveTab,
+  getActiveTab
+} from "@/utils/storage";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -32,7 +39,7 @@ export default function PlayersPage() {
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const [activeTab, setActiveTab] = useState("players");
+  const [activeTab, setActiveTab] = useState(getActiveTab());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activities, setActivities] = useState<Activity[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -41,6 +48,11 @@ export default function PlayersPage() {
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
+
+  // Save the active tab whenever it changes
+  useEffect(() => {
+    saveActiveTab(activeTab);
+  }, [activeTab]);
 
   // Get day of week in Swedish
   const getDayOfWeek = (dateString: string) => {
@@ -222,7 +234,9 @@ export default function PlayersPage() {
 
   // Handle imported activities from file
   const handleImportedActivities = (importedActivities: Activity[]) => {
-    setActivities(prev => [...prev, ...importedActivities]);
+    const updatedActivities = [...activities, ...importedActivities];
+    setActivities(updatedActivities);
+    saveActivities(updatedActivities);
     toast({
       title: "Aktiviteter importerade",
       description: `${importedActivities.length} aktiviteter har importerats från fil.`,
@@ -233,12 +247,15 @@ export default function PlayersPage() {
   const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
     if (clearExisting) {
       setActivities(newActivities);
+      saveActivities(newActivities);
       toast({
         title: "Aktiviteter ersatta",
         description: `Alla tidigare aktiviteter har tagits bort och ${newActivities.length} nya aktiviteter har lagts till.`,
       });
     } else {
-      setActivities(prev => [...prev, ...newActivities]);
+      const updatedActivities = [...activities, ...newActivities];
+      setActivities(updatedActivities);
+      saveActivities(updatedActivities);
       toast({
         title: "Matcher importerade",
         description: `${newActivities.length} nya matcher har lagts till.`,
@@ -249,6 +266,7 @@ export default function PlayersPage() {
   // Handle delete all activities
   const handleDeleteAllActivities = () => {
     setActivities([]);
+    saveActivities([]);
     if (selectedActivity) {
       setSelectedActivity(null);
     }
@@ -297,11 +315,12 @@ export default function PlayersPage() {
 
   // Handle activity update
   const handleActivityUpdate = (updatedActivity: Activity) => {
-    setActivities(prev => 
-      prev.map(activity => 
-        activity.id === updatedActivity.id ? updatedActivity : activity
-      )
+    const updatedActivities = activities.map(activity => 
+      activity.id === updatedActivity.id ? updatedActivity : activity
     );
+    
+    setActivities(updatedActivities);
+    saveActivities(updatedActivities);
     
     if (selectedActivity && selectedActivity.id === updatedActivity.id) {
       setSelectedActivity(updatedActivity);
@@ -339,13 +358,14 @@ export default function PlayersPage() {
 
   // Handle kiosk assignment update
   const handleKioskAssignmentUpdate = (activityId: string, playerId?: string) => {
-    setActivities(prev => 
-      prev.map(activity => 
-        activity.id === activityId 
-          ? { ...activity, kioskAssignedPlayerId: playerId }
-          : activity
-      )
+    const updatedActivities = activities.map(activity => 
+      activity.id === activityId 
+        ? { ...activity, kioskAssignedPlayerId: playerId }
+        : activity
     );
+    
+    setActivities(updatedActivities);
+    saveActivities(updatedActivities);
     
     if (selectedActivity && selectedActivity.id === activityId) {
       setSelectedActivity(prev => prev ? { ...prev, kioskAssignedPlayerId: playerId } : null);
@@ -383,7 +403,9 @@ export default function PlayersPage() {
 
   // Handle add new activity
   const handleAddActivity = (newActivity: Activity) => {
-    setActivities(prev => [...prev, newActivity]);
+    const updatedActivities = [...activities, newActivity];
+    setActivities(updatedActivities);
+    saveActivities(updatedActivities);
     setIsAddActivityOpen(false);
     toast({
       title: "Aktivitet tillagd",
@@ -408,14 +430,25 @@ export default function PlayersPage() {
   }, [selectedActivityTypes, activities]);
 
   useEffect(() => {
-    const cutoffDate = new Date('2025-03-31');
+    // Load stored activities first
+    const storedActivities = getStoredActivities();
     
-    const filteredActivities = mockActivities.filter(activity => {
-      const activityDate = new Date(activity.date);
-      return activityDate >= cutoffDate;
-    });
-    
-    setActivities([...filteredActivities, ...aprilActivities]);
+    // If we have stored activities, use them
+    if (storedActivities.length > 0) {
+      setActivities(storedActivities);
+    } else {
+      // Otherwise, initialize with default activities
+      const cutoffDate = new Date('2025-03-31');
+      
+      const filteredActivities = mockActivities.filter(activity => {
+        const activityDate = new Date(activity.date);
+        return activityDate >= cutoffDate;
+      });
+      
+      const initialActivities = [...filteredActivities, ...aprilActivities];
+      setActivities(initialActivities);
+      saveActivities(initialActivities);
+    }
   }, []);
 
   useEffect(() => {
