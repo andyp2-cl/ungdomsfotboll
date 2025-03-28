@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -25,7 +24,7 @@ interface ActivityDetailProps {
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void; // Add this prop
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
 }
 
 export function ActivityDetail({ 
@@ -39,6 +38,9 @@ export function ActivityDetail({
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
+  
+  // Sort players alphabetically for the dropdown
+  const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
   // Check if activity is eligible for kiosk duty (home match at Österås IP)
   const isKioskEligible = () => {
@@ -306,7 +308,7 @@ export function ActivityDetail({
                     <CommandList>
                       <CommandEmpty>Inga spelare hittades.</CommandEmpty>
                       <CommandGroup className="max-h-60 overflow-auto">
-                        {players.map((player) => (
+                        {sortedPlayers.map((player) => (
                           <CommandItem
                             key={player.id}
                             onSelect={() => handleAssignKioskPlayer(player.id)}

@@ -29,9 +29,11 @@ export function AddPlayersToActivity({
 }: AddPlayersToActivityProps) {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   
-  // Filter out players who are already participating
+  // Filter out players who are already participating and sort alphabetically
   const availablePlayers = useMemo(() => {
-    return players.filter(player => !currentParticipantIds.includes(player.id));
+    return players
+      .filter(player => !currentParticipantIds.includes(player.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [players, currentParticipantIds]);
 
   const handlePlayerSelect = (playerId: string) => {
