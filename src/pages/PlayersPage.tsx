@@ -41,6 +41,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     filteredPlayers,
     handleGradeChange,
     handlePlayerUpdate,
+    handleBulkPlayerUpdate,
     handleAddPlayer
   } = usePlayers();
 
@@ -109,6 +110,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             onPlayerSelect={setSelectedPlayer}
             onViewModeChange={setViewMode}
             onPlayerUpdate={handlePlayerUpdate}
+            onBulkPlayerUpdate={handleBulkPlayerUpdate}
             onAddPlayerClick={() => setIsAddPlayerOpen(true)}
             onEditPlayerClick={setEditingPlayer}
           />

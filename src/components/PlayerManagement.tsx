@@ -24,6 +24,7 @@ interface PlayerManagementProps {
   onPlayerSelect: (player: Player | null) => void;
   onViewModeChange: (mode: "grid" | "list") => void;
   onPlayerUpdate: (player: Player) => void;
+  onBulkPlayerUpdate?: (players: Player[]) => void; // New prop for bulk updates
   onAddPlayerClick: () => void;
   onEditPlayerClick: (player: Player) => void;
 }
@@ -41,12 +42,13 @@ export function PlayerManagement({
   onPlayerSelect,
   onViewModeChange,
   onPlayerUpdate,
+  onBulkPlayerUpdate,
   onAddPlayerClick,
   onEditPlayerClick,
 }: PlayerManagementProps) {
   const isMobile = useIsMobile();
   
-  // Set default view to list on mobile
+  // Always use list view on mobile
   useEffect(() => {
     if (isMobile && viewMode === "grid") {
       onViewModeChange("list");
@@ -110,12 +112,17 @@ export function PlayerManagement({
             <PlayerImageScraper 
               players={players} 
               onImagesScraped={(updatedPlayers) => {
-                // Update all players at once
-                updatedPlayers.forEach(player => {
-                  if (player.image) {
-                    onPlayerUpdate(player);
-                  }
-                });
+                // Use the bulk update function if available, otherwise fallback to individual updates
+                if (onBulkPlayerUpdate) {
+                  onBulkPlayerUpdate(updatedPlayers);
+                } else {
+                  // Update all players at once
+                  updatedPlayers.forEach(player => {
+                    if (player.image) {
+                      onPlayerUpdate(player);
+                    }
+                  });
+                }
               }} 
             />
           </div>

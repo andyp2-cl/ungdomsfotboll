@@ -14,12 +14,12 @@ export function usePlayers() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "list" : "grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Default to list view
   const { toast } = useToast();
 
   // Update view mode if device type changes
   useEffect(() => {
-    setViewMode(isMobile ? "list" : "grid");
+    setViewMode("list"); // Always use list view regardless of device
   }, [isMobile]);
 
   useEffect(() => {
@@ -51,32 +51,94 @@ export function usePlayers() {
   };
 
   const handlePlayerUpdate = async (updatedPlayer: Player) => {
-    const updatedPlayers = players.map(player => 
-      player.id === updatedPlayer.id ? updatedPlayer : player
-    );
-    
-    setPlayers(updatedPlayers);
-    await savePlayers(updatedPlayers);
-    
-    if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
-      setSelectedPlayer(updatedPlayer);
+    try {
+      const updatedPlayers = players.map(player => 
+        player.id === updatedPlayer.id ? updatedPlayer : player
+      );
+      
+      setPlayers(updatedPlayers);
+      await savePlayers(updatedPlayers);
+      
+      if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
+        setSelectedPlayer(updatedPlayer);
+      }
+      
+      toast({
+        title: "Spelaren uppdaterad",
+        description: `${updatedPlayer.name} har uppdaterats.`,
+      });
+      
+      return true; // Return success status
+    } catch (error) {
+      console.error("Error updating player:", error);
+      toast({
+        title: "Kunde inte uppdatera spelaren",
+        description: "Ett fel uppstod när spelaren skulle uppdateras.",
+        variant: "destructive"
+      });
+      return false; // Return failure status
     }
-    
-    toast({
-      title: "Spelaren uppdaterad",
-      description: `${updatedPlayer.name} har uppdaterats.`,
-    });
+  };
+
+  const handleBulkPlayerUpdate = async (updatedPlayers: Player[]) => {
+    try {
+      // Create a map of the current players by ID
+      const playerMap = new Map(players.map(player => [player.id, player]));
+      
+      // Update the map with the new player data
+      updatedPlayers.forEach(player => {
+        if (playerMap.has(player.id)) {
+          playerMap.set(player.id, player);
+        }
+      });
+      
+      // Convert the map back to an array
+      const newPlayers = Array.from(playerMap.values());
+      
+      // Update the state and save to storage
+      setPlayers(newPlayers);
+      await savePlayers(newPlayers);
+      
+      // Update selected player if it was one of the updated ones
+      if (selectedPlayer) {
+        const updatedSelectedPlayer = updatedPlayers.find(p => p.id === selectedPlayer.id);
+        if (updatedSelectedPlayer) {
+          setSelectedPlayer(updatedSelectedPlayer);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error bulk updating players:", error);
+      toast({
+        title: "Kunde inte uppdatera spelare",
+        description: "Ett fel uppstod när spelarna skulle uppdateras.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const handleAddPlayer = async (newPlayer: Player) => {
-    const updatedPlayers = [...players, newPlayer];
-    setPlayers(updatedPlayers);
-    await savePlayers(updatedPlayers);
-    setIsAddPlayerOpen(false);
-    toast({
-      title: "Spelare tillagd",
-      description: `${newPlayer.name} har lagts till.`,
-    });
+    try {
+      const updatedPlayers = [...players, newPlayer];
+      setPlayers(updatedPlayers);
+      await savePlayers(updatedPlayers);
+      setIsAddPlayerOpen(false);
+      toast({
+        title: "Spelare tillagd",
+        description: `${newPlayer.name} har lagts till.`,
+      });
+      return true;
+    } catch (error) {
+      console.error("Error adding player:", error);
+      toast({
+        title: "Kunde inte lägga till spelaren",
+        description: "Ett fel uppstod när spelaren skulle läggas till.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const filteredPlayers = useMemo(() => {
@@ -105,6 +167,7 @@ export function usePlayers() {
     filteredPlayers,
     handleGradeChange,
     handlePlayerUpdate,
+    handleBulkPlayerUpdate, // New function for bulk updates
     handleAddPlayer
   };
 }
