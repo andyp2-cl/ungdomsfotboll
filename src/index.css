@@ -103,7 +103,7 @@
   }
 
   body {
-    @apply bg-hif-green text-foreground;
+    @apply bg-hif-green text-white;
   }
 }
 
@@ -112,7 +112,12 @@
   background-color: hsl(var(--hif-green));
 }
 
-/* Keep card backgrounds white */
+/* Keep card backgrounds white with dark text */
 .card {
-  @apply bg-white;
+  @apply bg-white text-foreground;
+}
+
+/* Ensure text on green background is white */
+.bg-hif-green * {
+  @apply text-white;
 }
