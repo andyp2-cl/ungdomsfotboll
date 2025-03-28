@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Clock, MapPin, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mockKioskSchedules } from "@/data/mockData";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -35,29 +34,18 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     return isAtÖsteråsIP && isHomeMatch;
   };
 
-  // Get kiosk assignments for an activity
-  const getKioskAssignments = (activity: Activity) => {
-    if (!activity.kioskScheduleId) return [];
-
-    const schedule = mockKioskSchedules.find(s => s.id === activity.kioskScheduleId);
-    if (!schedule) return [];
-
-    return schedule.slots
-      .filter(slot => slot.assignedPlayerId)
-      .map(slot => {
-        const player = players.find(p => p.id === slot.assignedPlayerId);
-        return {
-          time: slot.time,
-          playerName: player ? player.name : "Okänd spelare"
-        };
-      });
+  // Get assigned kiosk player name
+  const getKioskPlayerName = (activity: Activity): string => {
+    if (!activity.kioskAssignedPlayerId) return "";
+    const player = players.find(p => p.id === activity.kioskAssignedPlayerId);
+    return player ? player.name : "Okänd spelare";
   };
 
   return (
     <div className="space-y-4">
       {activities.map((activity) => {
-        const kioskAssignments = getKioskAssignments(activity);
-        const canHaveKiosk = isKioskEligible(activity);
+        const isEligibleForKiosk = isKioskEligible(activity);
+        const kioskPlayerName = getKioskPlayerName(activity);
         
         return (
           <Card key={activity.id} className="overflow-hidden">
@@ -101,33 +89,15 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                   : "Inga deltagare"}
               </div>
               
-              {kioskAssignments.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex items-center text-sm font-medium">
-                    <Coffee className="h-4 w-4 mr-1" />
-                    <span>Kioskpass:</span>
-                  </div>
-                  <div className="ml-5 mt-1 text-sm">
-                    {kioskAssignments.map((assignment, index) => (
-                      <div key={index} className="text-muted-foreground">
-                        {assignment.time}: {assignment.playerName}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {canHaveKiosk && !activity.kioskScheduleId && (
-                <div className="mt-2 flex items-center text-sm text-muted-foreground">
+              {isEligibleForKiosk && (
+                <div className="mt-2 flex items-center text-sm">
                   <Coffee className="h-4 w-4 mr-1" />
-                  <span>Kan ha kioskschema</span>
-                </div>
-              )}
-              
-              {activity.kioskScheduleId && kioskAssignments.length === 0 && (
-                <div className="mt-2 flex items-center text-sm text-muted-foreground">
-                  <Coffee className="h-4 w-4 mr-1" />
-                  <span>Har kioskschema (inga tilldelade pass)</span>
+                  <span>
+                    {activity.kioskAssignedPlayerId 
+                      ? <span>Kioskansvarig: <Badge variant="default">{kioskPlayerName}</Badge></span>
+                      : <span className="text-muted-foreground">Ingen kioskansvarig tilldelad</span>
+                    }
+                  </span>
                 </div>
               )}
             </CardContent>

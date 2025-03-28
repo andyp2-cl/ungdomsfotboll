@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { mockPlayers, mockActivities, mockKioskSchedules } from "@/data/mockData";
+import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { PlayerFilter } from "@/components/PlayerFilter";
@@ -8,7 +8,7 @@ import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { MatchScraper } from "@/components/MatchScraper";
-import { Player, PlayerGrade, ActivityType, Activity, KioskSchedule } from "@/types/player";
+import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List, Plus, UserPlus, Activity as ActivityIcon, Edit } from "lucide-react";
@@ -510,7 +510,6 @@ export default function PlayersPage() {
                   players={players}
                   onClose={() => setSelectedActivity(null)}
                   onEdit={handleEditActivityClick}
-                  onKioskScheduleUpdate={handleKioskScheduleUpdate}
                   onActivityUpdate={handleActivityUpdate}
                 />
               ) : (
