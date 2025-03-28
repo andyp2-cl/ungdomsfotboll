@@ -9,7 +9,114 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          kiosk_assigned_player_id: string | null
+          location_description: string | null
+          location_gps_link: string | null
+          location_name: string | null
+          name: string
+          scraped: boolean | null
+          time: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id: string
+          kiosk_assigned_player_id?: string | null
+          location_description?: string | null
+          location_gps_link?: string | null
+          location_name?: string | null
+          name: string
+          scraped?: boolean | null
+          time?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          kiosk_assigned_player_id?: string | null
+          location_description?: string | null
+          location_gps_link?: string | null
+          location_name?: string | null
+          name?: string
+          scraped?: boolean | null
+          time?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      player_activities: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          player_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id: string
+          player_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_activities_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          grade: string
+          id: string
+          image: string | null
+          jersey_number: string | null
+          name: string
+          position: string | null
+        }
+        Insert: {
+          created_at?: string
+          grade: string
+          id: string
+          image?: string | null
+          jersey_number?: string | null
+          name: string
+          position?: string | null
+        }
+        Update: {
+          created_at?: string
+          grade?: string
+          id?: string
+          image?: string | null
+          jersey_number?: string | null
+          name?: string
+          position?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
