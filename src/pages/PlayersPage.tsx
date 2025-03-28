@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from 'uuid';
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
 import { FileImport } from "@/components/FileImport";
+import { getStoredPlayers, savePlayers } from "@/utils/storage";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -34,7 +35,7 @@ export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState("players");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [players, setPlayers] = useState<Player[]>(mockPlayers);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
@@ -277,11 +278,12 @@ export default function PlayersPage() {
 
   // Handle player update
   const handlePlayerUpdate = (updatedPlayer: Player) => {
-    setPlayers(prev => 
-      prev.map(player => 
-        player.id === updatedPlayer.id ? updatedPlayer : player
-      )
+    const updatedPlayers = players.map(player => 
+      player.id === updatedPlayer.id ? updatedPlayer : player
     );
+    
+    setPlayers(updatedPlayers);
+    savePlayers(updatedPlayers);
     
     if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
       setSelectedPlayer(updatedPlayer);
@@ -306,26 +308,27 @@ export default function PlayersPage() {
     }
     
     if (updatedActivity.participants) {
-      setPlayers(prevPlayers => 
-        prevPlayers.map(player => {
-          const isParticipating = updatedActivity.participants?.includes(player.id);
-          let playerActivities = player.activities || [];
-          
-          if (isParticipating && !playerActivities.includes(updatedActivity.id)) {
-            return {
-              ...player,
-              activities: [...playerActivities, updatedActivity.id]
-            };
-          } else if (!isParticipating && playerActivities.includes(updatedActivity.id)) {
-            return {
-              ...player,
-              activities: playerActivities.filter(id => id !== updatedActivity.id)
-            };
-          }
-          
-          return player;
-        })
-      );
+      const updatedPlayers = players.map(player => {
+        const isParticipating = updatedActivity.participants?.includes(player.id);
+        let playerActivities = player.activities || [];
+        
+        if (isParticipating && !playerActivities.includes(updatedActivity.id)) {
+          return {
+            ...player,
+            activities: [...playerActivities, updatedActivity.id]
+          };
+        } else if (!isParticipating && playerActivities.includes(updatedActivity.id)) {
+          return {
+            ...player,
+            activities: playerActivities.filter(id => id !== updatedActivity.id)
+          };
+        }
+        
+        return player;
+      });
+      
+      setPlayers(updatedPlayers);
+      savePlayers(updatedPlayers);
     }
     
     toast({
@@ -368,7 +371,9 @@ export default function PlayersPage() {
 
   // Handle add new player
   const handleAddPlayer = (newPlayer: Player) => {
-    setPlayers(prev => [...prev, newPlayer]);
+    const updatedPlayers = [...players, newPlayer];
+    setPlayers(updatedPlayers);
+    savePlayers(updatedPlayers);
     setIsAddPlayerOpen(false);
     toast({
       title: "Spelare tillagd",
@@ -411,6 +416,11 @@ export default function PlayersPage() {
     });
     
     setActivities([...filteredActivities, ...aprilActivities]);
+  }, []);
+
+  useEffect(() => {
+    const storedPlayers = getStoredPlayers();
+    setPlayers(storedPlayers);
   }, []);
 
   return (
