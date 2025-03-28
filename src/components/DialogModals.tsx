@@ -1,11 +1,10 @@
 
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { EditPlayerForm } from "@/components/EditPlayerForm";
-import { EditActivityForm } from "@/components/EditActivityForm";
-import { AddPlayerForm } from "@/components/AddPlayerForm";
-import { AddActivityForm } from "@/components/AddActivityForm";
+import { EditPlayerDialog } from "@/components/dialogs/EditPlayerDialog";
+import { EditActivityDialog } from "@/components/dialogs/EditActivityDialog";
+import { AddPlayerDialog } from "@/components/dialogs/AddPlayerDialog";
+import { AddActivityDialog } from "@/components/dialogs/AddActivityDialog";
 
 interface DialogModalsProps {
   editingPlayer: Player | null;
@@ -38,65 +37,31 @@ export function DialogModals({
 }: DialogModalsProps) {
   return (
     <>
-      <Dialog open={editingPlayer !== null} onOpenChange={(open) => !open && onEditingPlayerChange(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Redigera spelare</DialogTitle>
-          </DialogHeader>
-          {editingPlayer && (
-            <EditPlayerForm 
-              player={editingPlayer} 
-              onSave={(updatedPlayer) => {
-                onPlayerUpdate(updatedPlayer);
-                onEditingPlayerChange(null);
-              }}
-              onCancel={() => onEditingPlayerChange(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditPlayerDialog 
+        player={editingPlayer}
+        open={editingPlayer !== null}
+        onOpenChange={(open) => !open && onEditingPlayerChange(null)}
+        onPlayerUpdate={onPlayerUpdate}
+      />
 
-      <Dialog open={editingActivity !== null} onOpenChange={(open) => !open && onEditingActivityChange(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Redigera aktivitet</DialogTitle>
-          </DialogHeader>
-          {editingActivity && (
-            <EditActivityForm 
-              activity={editingActivity} 
-              onSave={(updatedActivity) => {
-                onActivityUpdate(updatedActivity);
-                onEditingActivityChange(null);
-              }}
-              onCancel={() => onEditingActivityChange(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditActivityDialog 
+        activity={editingActivity}
+        open={editingActivity !== null}
+        onOpenChange={(open) => !open && onEditingActivityChange(null)}
+        onActivityUpdate={onActivityUpdate}
+      />
 
-      <Dialog open={isAddPlayerOpen} onOpenChange={onAddPlayerOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Lägg till ny spelare</DialogTitle>
-          </DialogHeader>
-          <AddPlayerForm 
-            onSave={onAddPlayer}
-            onCancel={() => onAddPlayerOpenChange(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <AddPlayerDialog 
+        open={isAddPlayerOpen}
+        onOpenChange={onAddPlayerOpenChange}
+        onAddPlayer={onAddPlayer}
+      />
 
-      <Dialog open={isAddActivityOpen} onOpenChange={onAddActivityOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Lägg till ny aktivitet</DialogTitle>
-          </DialogHeader>
-          <AddActivityForm 
-            onSave={onAddActivity}
-            onCancel={() => onAddActivityOpenChange(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <AddActivityDialog 
+        open={isAddActivityOpen}
+        onOpenChange={onAddActivityOpenChange}
+        onAddActivity={onAddActivity}
+      />
     </>
   );
 }
