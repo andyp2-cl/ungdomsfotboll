@@ -1,10 +1,15 @@
 
 import { Activity, ActivityType } from "@/types/player";
+import { generateFootballFieldUrl } from "./locationUtils";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ScrapedMatch {
   name: string;
   date: string;
   type: ActivityType;
+  location?: string;
+  locationDetails?: string;
+  time?: string;
 }
 
 export async function scrapeHifMatches(year: string = "2025"): Promise<ScrapedMatch[]> {
@@ -49,6 +54,8 @@ function parseICalEvents(icalData: string): ScrapedMatch[] {
   const eventRegex = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;
   const summaryRegex = /SUMMARY:([^\n]+)/;
   const dtStartRegex = /DTSTART:(\d{8}T\d{6}Z?)/;
+  const locationRegex = /LOCATION:([^\n]+)/;
+  const descriptionRegex = /DESCRIPTION:([^\n]+)/;
   
   let match;
   while ((match = eventRegex.exec(icalData)) !== null) {
@@ -70,13 +77,35 @@ function parseICalEvents(icalData: string): ScrapedMatch[] {
     const day = dtStart.substring(6, 8);
     const date = `${year}-${month}-${day}`;
     
+    // Extract time if available
+    const hour = dtStart.substring(9, 11);
+    const minute = dtStart.substring(11, 13);
+    const time = `${hour}:${minute}`;
+    
+    // Extract location if available
+    let location = undefined;
+    const locationMatch = locationRegex.exec(eventData);
+    if (locationMatch) {
+      location = locationMatch[1].trim();
+    }
+    
+    // Extract description if available
+    let locationDetails = undefined;
+    const descriptionMatch = descriptionRegex.exec(eventData);
+    if (descriptionMatch) {
+      locationDetails = descriptionMatch[1].trim();
+    }
+    
     // Determine activity type based on name
     const type: ActivityType = name.toLowerCase().includes('cup') ? 'cup' : 'match';
     
     events.push({
       name,
       date,
-      type
+      type,
+      location,
+      locationDetails,
+      time
     });
   }
   
@@ -91,16 +120,25 @@ function generateMockData(year: string): ScrapedMatch[] {
       name: "Match mot IFK Hässleholm svart (FALLBACK)",
       date: `${year}-01-17`,
       type: "match",
+      location: "Österås IP",
+      locationDetails: "Plan 7-manna 1",
+      time: "09:30"
     },
     {
       name: "Match mot Åhus Horna BK vit (FALLBACK)",
       date: `${year}-01-19`,
       type: "match",
+      location: "Österås IP",
+      locationDetails: "Plan 7-manna 1",
+      time: "10:00"
     },
     {
       name: "Match mot Vittsjö GIK (FALLBACK)",
       date: `${year}-01-19`,
       type: "match",
+      location: "Österås IP",
+      locationDetails: "Plan 7-manna 1",
+      time: "11:30"
     }
   ];
 }
@@ -109,22 +147,35 @@ function generateMockData(year: string): ScrapedMatch[] {
 export function convertScrapedToActivities(
   scrapedMatches: ScrapedMatch[]
 ): Activity[] {
-  let nextId = Math.max(...mockActivityIds()) + 1;
-  
   return scrapedMatches.map(match => {
-    // Lagra aktuellt ID och öka för nästa användning
-    const currentId = nextId;
-    nextId++;
+    const id = uuidv4();
     
-    return {
-      id: currentId.toString(),
+    // Create activity with basic information
+    const activity: Activity = {
+      id: id,
       name: match.name,
       date: match.date,
       type: match.type,
       participants: [],
-      kioskScheduleId: nextId.toString(), // Skapa en relaterad kioskschema
-      scraped: true // Markera denna aktivitet som skrapad
+      kioskScheduleId: uuidv4(),
+      scraped: true
     };
+    
+    // Add time if available
+    if (match.time) {
+      activity.time = match.time;
+    }
+    
+    // Add location if available
+    if (match.location) {
+      activity.location = {
+        name: match.location,
+        description: match.locationDetails,
+        gpsLink: generateFootballFieldUrl(match.location)
+      };
+    }
+    
+    return activity;
   });
 }
 

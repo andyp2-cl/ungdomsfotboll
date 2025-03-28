@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Save, X } from "lucide-react";
+import { Calendar as CalendarIcon, Save, X, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from "@/lib/utils";
@@ -23,6 +23,10 @@ const activityFormSchema = z.object({
   date: z.date({
     required_error: "Välj ett datum",
   }),
+  time: z.string().optional(),
+  locationName: z.string().optional(),
+  locationDescription: z.string().optional(),
+  locationGps: z.string().optional(),
 });
 
 type ActivityFormValues = z.infer<typeof activityFormSchema>;
@@ -38,6 +42,10 @@ export function AddActivityForm({ onSave, onCancel }: AddActivityFormProps) {
     defaultValues: {
       name: "",
       type: "match",
+      time: "",
+      locationName: "",
+      locationDescription: "",
+      locationGps: "",
     },
   });
 
@@ -49,7 +57,17 @@ export function AddActivityForm({ onSave, onCancel }: AddActivityFormProps) {
       date: format(values.date, 'yyyy-MM-dd'),
       type: values.type as ActivityType,
       participants: [],
+      time: values.time || undefined,
     };
+
+    // Add location information if provided
+    if (values.locationName) {
+      newActivity.location = {
+        name: values.locationName,
+        description: values.locationDescription || undefined,
+        gpsLink: values.locationGps || undefined,
+      };
+    }
 
     onSave(newActivity);
   };
@@ -93,47 +111,114 @@ export function AddActivityForm({ onSave, onCancel }: AddActivityFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Datum</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Datum</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "yyyy-MM-dd")
+                        ) : (
+                          <span>Välj ett datum</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tid</FormLabel>
+                <FormControl>
+                  <Input placeholder="t.ex. 09:30" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+          <h3 className="font-medium flex items-center mb-3">
+            <MapPin className="h-4 w-4 mr-2" />
+            Plats
+          </h3>
+          
+          <FormField
+            control={form.control}
+            name="locationName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Platsnamn</FormLabel>
+                <FormControl>
+                  <Input placeholder="t.ex. Östervångs IP" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <FormField
+              control={form.control}
+              name="locationDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Beskrivning</FormLabel>
                   <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "yyyy-MM-dd")
-                      ) : (
-                        <span>Välj ett datum</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
+                    <Input placeholder="t.ex. Plan 7, manna 7" {...field} />
                   </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date(new Date().setHours(0, 0, 0, 0))
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="locationGps"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GPS-länk</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://maps.google.com/..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

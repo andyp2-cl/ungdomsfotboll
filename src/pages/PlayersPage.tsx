@@ -19,6 +19,8 @@ import { AddPlayerForm } from "@/components/AddPlayerForm";
 import { AddActivityForm } from "@/components/AddActivityForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { v4 as uuidv4 } from 'uuid';
+import { generateFootballFieldUrl } from "@/utils/locationUtils";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -35,6 +37,166 @@ export default function PlayersPage() {
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
+
+  // Add April 2025 activities
+  const aprilActivities: Activity[] = [
+    {
+      id: uuidv4(),
+      name: "Hässleholms IF svart - Vinslövs IF",
+      date: "2025-04-12",
+      time: "09:30",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Österås IP",
+        description: "Plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Österås IP")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Hässleholms IF grön - IFK Osby vit",
+      date: "2025-04-12",
+      time: "11:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Österås IP",
+        description: "Plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Österås IP")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Ifö Bromölla IF - Hässleholms IF",
+      date: "2025-04-12",
+      time: "12:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Strandängens IP",
+        description: "C-plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Strandängens IP", "Bromölla")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Kristianstad FC svart - H��ssleholms IF Vit",
+      date: "2025-04-13",
+      time: "12:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Vilans IP",
+        description: "B-plan",
+        gpsLink: generateFootballFieldUrl("Vilans IP", "Kristianstad")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Hässleholms IF - Åhus Horna BK vit",
+      date: "2025-04-19",
+      time: "11:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Österås IP",
+        description: "Plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Österås IP")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Hässleholms IF Vit - Nosaby IF blå",
+      date: "2025-04-20",
+      time: "09:30",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Österås IP",
+        description: "Plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Österås IP")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Nosaby IF grön - Hässleholms IF grön",
+      date: "2025-04-20",
+      time: "10:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Nya Vallboskolan",
+        description: "D-plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Nya Vallboskolan", "Kristianstad")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Sibbhults IF - Hässleholms IF svart",
+      date: "2025-04-21",
+      time: "10:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Färevallen",
+        description: "A-plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Färevallen", "Sibbhult")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Höör IS blå - Hässleholms IF Vit",
+      date: "2025-04-26",
+      time: "00:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Färs & Frosta Arena",
+        description: "Höör konstgräs 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Färs & Frosta Arena", "Höör")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Hässleholms IF svart - Broby IF orange",
+      date: "2025-04-26",
+      time: "09:30",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Österås IP",
+        description: "Plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Österås IP")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Kristianstad FC orange - Hässleholms IF grön",
+      date: "2025-04-26",
+      time: "12:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Björkvallen",
+        description: "Kristianstad A-plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Björkvallen", "Kristianstad")
+      }
+    },
+    {
+      id: uuidv4(),
+      name: "Vinnö IF vit - Hässleholms IF",
+      date: "2025-04-27",
+      time: "10:00",
+      type: "match",
+      participants: [],
+      location: {
+        name: "Vinnö IP",
+        description: "A-plan 7-manna 1",
+        gpsLink: generateFootballFieldUrl("Vinnö IP", "Vinnö")
+      }
+    }
+  ];
 
   // Handle scraped matches
   const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
@@ -143,11 +305,14 @@ export default function PlayersPage() {
   }, [selectedActivityTypes, activities]);
 
   useEffect(() => {
+    // Filter out 2024 activities
     const filteredActivities = mockActivities.filter(activity => {
       const activityYear = new Date(activity.date).getFullYear();
       return activityYear !== 2024;
     });
-    setActivities(filteredActivities);
+    
+    // Add the April 2025 activities
+    setActivities([...filteredActivities, ...aprilActivities]);
   }, []);
 
   return (

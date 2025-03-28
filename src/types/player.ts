@@ -23,6 +23,12 @@ export interface Activity {
   participants?: string[]; // Array of player IDs who are participating
   kioskScheduleId?: string; // Referens till kioskschema om det finns
   scraped?: boolean; // Optional flag to mark if this was imported via scraper
+  location?: {
+    name: string;
+    description?: string;
+    gpsLink?: string;
+  };
+  time?: string; // Time of the activity, e.g. "09:30"
 }
 
 export interface Player {

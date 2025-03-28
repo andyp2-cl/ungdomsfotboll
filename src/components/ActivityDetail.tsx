@@ -4,7 +4,7 @@ import { Activity, Player, KioskSlot } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, Plus } from "lucide-react";
+import { CalendarIcon, X, Users, Plus, MapPin, Clock } from "lucide-react";
 import { KioskSchedule } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
 import { AssignKioskPopover } from "./AssignKioskPopover";
@@ -53,6 +53,12 @@ export function ActivityDetail({ activity, players, onClose }: ActivityDetailPro
     });
   };
 
+  // Format the date
+  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
+  // Get day of week in Swedish
+  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
       <CardHeader>
@@ -67,9 +73,37 @@ export function ActivityDetail({ activity, players, onClose }: ActivityDetailPro
                 {activity.type === "match" ? "Match" : "Cup"}
               </Badge>
             </CardTitle>
-            <CardDescription className="flex items-center">
-              <CalendarIcon className="h-4 w-4 mr-1" />
-              {new Date(activity.date).toLocaleDateString('sv-SE')}
+            <CardDescription className="flex flex-col gap-1">
+              <div className="flex items-center">
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                {capitalizedDayOfWeek} {formattedDate}
+                {activity.time && (
+                  <span className="ml-2 flex items-center">
+                    <Clock className="h-4 w-4 ml-2 mr-1" />
+                    {activity.time}
+                  </span>
+                )}
+              </div>
+              
+              {activity.location && (
+                <div className="flex items-center mt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{activity.location.name}</span>
+                  {activity.location.description && (
+                    <span className="text-muted-foreground ml-1">({activity.location.description})</span>
+                  )}
+                  {activity.location.gpsLink && (
+                    <a 
+                      href={activity.location.gpsLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-600 hover:underline text-sm"
+                    >
+                      GPS
+                    </a>
+                  )}
+                </div>
+              )}
             </CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
