@@ -209,6 +209,17 @@ export default function PlayersPage() {
     }
   ];
 
+  // Check if an activity is eligible for kiosk assignment (home match at Österås IP)
+  const isKioskEligible = (activity: Activity): boolean => {
+    if (!activity.location) return false;
+    
+    // Check if it's a home match at Österås IP
+    const isAtÖsteråsIP = activity.location.name.includes('Österås IP');
+    const isHomeMatch = activity.name.toLowerCase().startsWith('hässleholms if');
+    
+    return isAtÖsteråsIP && isHomeMatch;
+  };
+
   // Handle imported activities from file
   const handleImportedActivities = (importedActivities: Activity[]) => {
     setActivities(prev => [...prev, ...importedActivities]);
@@ -339,7 +350,30 @@ export default function PlayersPage() {
 
   // Handle add new activity
   const handleAddActivity = (newActivity: Activity) => {
-    setActivities(prev => [...prev, newActivity]);
+    // If it's a home match at Österås, automatically create a kiosk schedule for it
+    let activityToAdd = { ...newActivity };
+    
+    if (isKioskEligible(newActivity) && !newActivity.kioskScheduleId) {
+      // Create a new kiosk schedule for this activity
+      const newScheduleId = uuidv4();
+      const newSchedule = {
+        id: newScheduleId,
+        activityId: newActivity.id,
+        slots: [
+          { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
+          { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
+          { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
+        ]
+      };
+      
+      // Add the new schedule to the state
+      setKioskSchedules(prev => [...prev, newSchedule]);
+      
+      // Update the activity with the new schedule ID
+      activityToAdd.kioskScheduleId = newScheduleId;
+    }
+    
+    setActivities(prev => [...prev, activityToAdd]);
     setIsAddActivityOpen(false);
     toast({
       title: "Aktivitet tillagd",
@@ -370,8 +404,35 @@ export default function PlayersPage() {
       return activityYear !== 2024;
     });
     
-    // Add the April 2025 activities
-    setActivities([...filteredActivities, ...aprilActivities]);
+    // Process activities to add kiosk schedules for eligible activities
+    const processedActivities = [...filteredActivities, ...aprilActivities].map(activity => {
+      if (isKioskEligible(activity) && !activity.kioskScheduleId) {
+        // Create a new kiosk schedule for this activity
+        const newScheduleId = uuidv4();
+        const newSchedule = {
+          id: newScheduleId,
+          activityId: activity.id,
+          slots: [
+            { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
+            { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
+            { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
+          ]
+        };
+        
+        // Add the new schedule to the schedules list
+        setKioskSchedules(prev => [...prev, newSchedule]);
+        
+        // Return the activity with the schedule ID
+        return {
+          ...activity,
+          kioskScheduleId: newScheduleId
+        };
+      }
+      
+      return activity;
+    });
+    
+    setActivities(processedActivities);
   }, []);
 
   return (

@@ -24,6 +24,17 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
   };
 
+  // Check if an activity is eligible for kiosk assignment (home match at Österås IP)
+  const isKioskEligible = (activity: Activity): boolean => {
+    if (!activity.location) return false;
+    
+    // Check if it's a home match at Österås IP
+    const isAtÖsteråsIP = activity.location.name.includes('Österås IP');
+    const isHomeMatch = activity.name.toLowerCase().startsWith('hässleholms if');
+    
+    return isAtÖsteråsIP && isHomeMatch;
+  };
+
   // Get kiosk assignments for an activity
   const getKioskAssignments = (activity: Activity) => {
     if (!activity.kioskScheduleId) return [];
@@ -46,6 +57,7 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     <div className="space-y-4">
       {activities.map((activity) => {
         const kioskAssignments = getKioskAssignments(activity);
+        const canHaveKiosk = isKioskEligible(activity);
         
         return (
           <Card key={activity.id} className="overflow-hidden">
@@ -102,6 +114,13 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              
+              {canHaveKiosk && kioskAssignments.length === 0 && (
+                <div className="mt-2 flex items-center text-sm text-muted-foreground">
+                  <Coffee className="h-4 w-4 mr-1" />
+                  <span>Kan ha kioskschema</span>
                 </div>
               )}
               
