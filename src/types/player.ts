@@ -1,6 +1,8 @@
 
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D' | 'TRÄNARE';
 
+export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
+
 export type ActivityType = 'match' | 'cup';
 
 export interface Activity {
@@ -23,7 +25,7 @@ export interface Player {
   id: string;
   name: string;
   grade: PlayerGrade;
-  position?: string; // Lägger till position för spelaren
+  positions?: PlayerPosition[]; // Changed from position to positions array
   activities?: string[]; // Array of activity IDs this player is participating in
   jerseyNumber?: string; // Optional jersey number for the player
   image?: string; // URL to player's image

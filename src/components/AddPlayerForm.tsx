@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Player, PlayerGrade } from "@/types/player";
+import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const playerFormSchema = z.object({
   name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
   grade: z.enum(["A", "B", "C", "D", "TRÄNARE"], {
     required_error: "Välj en nivå",
   }),
-  position: z.string().optional(),
+  positions: z.array(z.string()).optional(),
   jerseyNumber: z.string().optional(),
 });
 
@@ -27,6 +28,15 @@ interface AddPlayerFormProps {
   onSave: (player: Player) => void;
   onCancel: () => void;
 }
+
+// List of available positions with labels
+const positionOptions = [
+  { value: "MV", label: "Målvakt" },
+  { value: "BACK", label: "Back" },
+  { value: "MF", label: "Mittfält" },
+  { value: "ANF", label: "Anfall" },
+  { value: "TRÄNARE", label: "Tränare" }
+];
 
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
@@ -38,7 +48,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
     defaultValues: {
       name: "",
       grade: "B",
-      position: "",
+      positions: [],
       jerseyNumber: "",
     },
   });
@@ -72,7 +82,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
       id: uuidv4(),
       name: values.name,
       grade: values.grade as PlayerGrade,
-      position: values.position || undefined,
+      positions: values.positions as PlayerPosition[] || [],
       jerseyNumber: values.jerseyNumber || undefined,
       activities: [],
       image: imagePreview,
@@ -162,24 +172,46 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
 
         <FormField
           control={form.control}
-          name="position"
-          render={({ field }) => (
+          name="positions"
+          render={() => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Välj position" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="MV">Målvakt</SelectItem>
-                  <SelectItem value="BACK">Back</SelectItem>
-                  <SelectItem value="MF">Mittfält</SelectItem>
-                  <SelectItem value="ANF">Anfall</SelectItem>
-                  <SelectItem value="TRÄNARE">Tränare</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Positioner</FormLabel>
+              <div className="flex flex-col space-y-2">
+                {positionOptions.map((position) => (
+                  <FormField
+                    key={position.value}
+                    control={form.control}
+                    name="positions"
+                    render={({ field }) => {
+                      return (
+                        <div className="flex items-center space-x-2 py-1">
+                          <Checkbox
+                            id={`position-${position.value}`}
+                            checked={field.value?.includes(position.value)}
+                            onCheckedChange={(checked) => {
+                              let updatedPositions = [...(field.value || [])];
+                              if (checked) {
+                                updatedPositions.push(position.value);
+                              } else {
+                                updatedPositions = updatedPositions.filter(
+                                  (p) => p !== position.value
+                                );
+                              }
+                              field.onChange(updatedPositions);
+                            }}
+                          />
+                          <label
+                            htmlFor={`position-${position.value}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {position.label}
+                          </label>
+                        </div>
+                      );
+                    }}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}

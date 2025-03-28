@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Player, Activity } from "@/types/player";
+import { Player, Activity, PlayerPosition } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,13 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
       .replace('ANF', 'Anfall');
     
     return formattedPosition;
+  };
+
+  // Format positions array to readable string
+  const formatPositions = (positions?: PlayerPosition[]) => {
+    if (!positions || positions.length === 0) return "Ingen position definierad";
+    
+    return positions.map(formatPosition).join(", ");
   };
 
   const handleEditClick = () => {
@@ -121,7 +128,8 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    {currentPlayer.position ? `Position: ${formatPosition(currentPlayer.position)}` : "Ingen position definierad"}
+                    Positioner: {formatPositions(currentPlayer.positions) || 
+                                (currentPlayer.position ? formatPosition(currentPlayer.position) : "Ingen position definierad")}
                   </CardDescription>
                   <CardDescription className="mt-1">
                     {playerActivities.length > 0 
