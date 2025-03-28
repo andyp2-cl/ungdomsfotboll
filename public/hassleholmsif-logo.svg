@@ -1,10 +1,6 @@
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
-  <style>
-    .text { font-family: Arial, sans-serif; font-weight: bold; }
-    .large-text { font-size: 40px; }
-    .small-text { font-size: 20px; }
-  </style>
-  <text x="10" y="55" fill="#006633" class="text large-text">HÄSSLEHOLMS IF</text>
-  <text x="300" y="55" fill="#006633" class="text small-text">P2014</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100" viewBox="0 0 400 100">
+  <image href="https://www.svenskalag.se/img/clubmarks/1110.png?3" height="100" width="100" x="0" y="0" preserveAspectRatio="xMinYMin"/>
+  <text x="120" y="55" fill="#006633" font-family="Arial, sans-serif" font-weight="bold" font-size="40">HÄSSLEHOLMS IF</text>
+  <text x="120" y="85" fill="#006633" font-family="Arial, sans-serif" font-weight="bold" font-size="20">P2014</text>
 </svg>

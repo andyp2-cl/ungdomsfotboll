@@ -461,11 +461,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   if (isLoading) {
     return (
       <div className="container py-6">
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-start mb-6">
           <img 
             src="/hassleholmsif-logo.svg" 
             alt="Hässleholms IF Logo" 
-            className="h-12"
+            className="h-16"
           />
         </div>
         <div className="flex justify-center items-center h-64">
@@ -480,11 +480,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   return (
     <div className="container py-6">
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-start mb-6">
         <img 
           src="/hassleholmsif-logo.svg" 
           alt="Hässleholms IF Logo" 
-          className="h-12"
+          className="h-16"
         />
       </div>
       
