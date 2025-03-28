@@ -49,6 +49,12 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
     return formattedPosition;
   };
 
+  // Format positions array to readable string
+  const formatPositions = (positions: string[] | undefined) => {
+    if (!positions || positions.length === 0) return 'Odefinierad position';
+    return positions.map(formatPosition).join(', ');
+  };
+
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEdit) {
@@ -90,7 +96,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500 mb-2">
-              {player.position ? formatPosition(player.position) : 'Odefinierad position'}
+              {formatPositions(player.positions)}
             </p>
             <p className="text-sm text-muted-foreground">
               {player.activities && player.activities.length > 0 

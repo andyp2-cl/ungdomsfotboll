@@ -128,8 +128,7 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Positioner: {formatPositions(currentPlayer.positions) || 
-                                (currentPlayer.position ? formatPosition(currentPlayer.position) : "Ingen position definierad")}
+                    Positioner: {formatPositions(currentPlayer.positions)}
                   </CardDescription>
                   <CardDescription className="mt-1">
                     {playerActivities.length > 0 

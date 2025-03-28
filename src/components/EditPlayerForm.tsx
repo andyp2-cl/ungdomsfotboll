@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,16 +42,12 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
   const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Convert positions to array if it doesn't exist
-  const defaultPositions = player.positions || 
-    (player.position ? [player.position] : []);
-  
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerFormSchema),
     defaultValues: {
       name: player.name,
       grade: player.grade,
-      positions: defaultPositions,
+      positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
     },
   });

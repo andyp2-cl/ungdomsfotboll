@@ -53,6 +53,12 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     return formattedPosition;
   };
 
+  // Format positions array to readable string
+  const formatPositions = (positions: string[] | undefined) => {
+    if (!positions || positions.length === 0) return 'Odefinierad';
+    return positions.map(formatPosition).join(', ');
+  };
+
   const handleEditClick = (e: React.MouseEvent, player: Player) => {
     e.stopPropagation();
     if (onEdit) {
@@ -76,9 +82,9 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
       case 'name':
         return a.name.localeCompare(b.name) * direction;
       case 'position':
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB) * direction;
+        const positionsA = a.positions ? a.positions.join(' ') : '';
+        const positionsB = b.positions ? b.positions.join(' ') : '';
+        return positionsA.localeCompare(positionsB) * direction;
       case 'grade':
         return a.grade.localeCompare(b.grade) * direction;
       case 'activities':
@@ -154,7 +160,7 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
                 </span>
               </div>
             </TableCell>
-            <TableCell>{player.position ? formatPosition(player.position) : 'Odefinierad'}</TableCell>
+            <TableCell>{formatPositions(player.positions)}</TableCell>
             <TableCell>
               <Badge className={getGradeColor(player.grade)}>
                 {getGradeText(player.grade)}

@@ -12,7 +12,7 @@ const formatDatabasePlayer = (dbPlayer: any): Player => {
     id: dbPlayer.id,
     name: dbPlayer.name,
     grade: dbPlayer.grade,
-    position: dbPlayer.position || undefined,
+    positions: dbPlayer.position ? dbPlayer.position.split(' ') : [],
     jerseyNumber: dbPlayer.jersey_number || undefined,
     image: dbPlayer.image || undefined,
     activities: [] // We'll populate this separately
@@ -50,7 +50,7 @@ const formatPlayerForDatabase = (player: Player) => {
     id: player.id,
     name: player.name,
     grade: player.grade,
-    position: player.position || null,
+    position: player.positions ? player.positions.join(' ') : null,
     jersey_number: player.jerseyNumber || null,
     image: player.image || null
   };
