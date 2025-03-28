@@ -98,8 +98,9 @@ export function PlayerManagement({
           allPlayers={players}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Main content - Player List */}
+          <div>
             <PlayerList 
               players={filteredPlayers} 
               viewMode={viewMode}
@@ -108,7 +109,8 @@ export function PlayerManagement({
             />
           </div>
           
-          <div className="md:col-span-1">
+          {/* Image scraper moved to bottom */}
+          <div className="mt-8">
             <PlayerImageScraper 
               players={players} 
               onImagesScraped={(updatedPlayers) => {
