@@ -26,7 +26,7 @@ export const mockPlayers: Player[] = [
   { id: "23", name: "Loa Gläder", grade: "C", positions: ["MF", "ANF"], activities: [] },
   { id: "24", name: "Lucas Gloeckner", grade: "C", positions: ["BACK"], activities: [] },
   { id: "25", name: "Teoman Saran", grade: "C", positions: ["MF"], activities: [] },
-  { id: "26", name: "Theo Rydhe", grade: "C", positions: ["C"], activities: [] },
+  { id: "26", name: "Theo Rydhe", grade: "C", positions: ["MF"], activities: [] },
   { id: "27", name: "Adam Kucukovic", grade: "D", positions: ["ANF"], activities: [] },
   { id: "28", name: "Adel Ndugwa Mukiibi", grade: "D", positions: ["ANF"], activities: [] },
   { id: "29", name: "Alessandro Gatica", grade: "D", positions: ["BACK"], activities: [] },
@@ -36,12 +36,12 @@ export const mockPlayers: Player[] = [
   { id: "33", name: "Kevin Schmidt", grade: "D", positions: ["MF"], activities: [] },
   { id: "34", name: "Liam Karlsson Sjöstrand", grade: "D", positions: ["MF"], activities: [] },
   { id: "35", name: "Lincoln Stenhöös", grade: "D", positions: ["MF"], activities: [] },
-  { id: "36", name: "Noah Åkesson nilsson", grade: "D", positions: ["D"], activities: [] },
-  { id: "37", name: "Andreas Petersson", grade: "TRÄNARE", positions: ["TRÄNARE"], activities: [] },
-  { id: "38", name: "Anna Zenthio", grade: "TRÄNARE", positions: ["TRÄNARE"], activities: [] },
-  { id: "39", name: "Tage", grade: "TRÄNARE", positions: ["MV"], activities: [] },
-  { id: "40", name: "Ted Petersson", grade: "TRÄNARE", positions: ["TRÄNARE"], activities: [] },
-  { id: "41", name: "Tommie Hanson", grade: "TRÄNARE", positions: ["TRÄNARE"], activities: [] },
+  { id: "36", name: "Noah Åkesson nilsson", grade: "D", positions: ["BACK"], activities: [] },
+  { id: "37", name: "Andreas Petersson", grade: "A", positions: ["TRÄNARE"], activities: [] },
+  { id: "38", name: "Anna Zenthio", grade: "A", positions: ["TRÄNARE"], activities: [] },
+  { id: "39", name: "Tage", grade: "A", positions: ["MV"], activities: [] },
+  { id: "40", name: "Ted Petersson", grade: "A", positions: ["TRÄNARE"], activities: [] },
+  { id: "41", name: "Tommie Hanson", grade: "A", positions: ["TRÄNARE"], activities: [] },
 ];
 
 export const mockActivities: Activity[] = [
