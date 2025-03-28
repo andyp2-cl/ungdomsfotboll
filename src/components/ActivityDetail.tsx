@@ -25,6 +25,7 @@ interface ActivityDetailProps {
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void; // Add this prop
 }
 
 export function ActivityDetail({ 
@@ -32,7 +33,8 @@ export function ActivityDetail({
   players, 
   onClose, 
   onEdit, 
-  onActivityUpdate
+  onActivityUpdate,
+  onKioskAssignmentUpdate
 }: ActivityDetailProps) {
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
@@ -74,6 +76,11 @@ export function ActivityDetail({
     // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
+    }
+    
+    // Call the kiosk assignment update function if available
+    if (onKioskAssignmentUpdate) {
+      onKioskAssignmentUpdate(currentActivity.id, playerId);
     }
     
     // Get player name for the toast

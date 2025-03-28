@@ -1,4 +1,3 @@
-
 import { Activity, ActivityType } from "@/types/player";
 import { generateFootballFieldUrl } from "./locationUtils";
 import { v4 as uuidv4 } from 'uuid';
@@ -157,7 +156,6 @@ export function convertScrapedToActivities(
       date: match.date,
       type: match.type,
       participants: [],
-      kioskScheduleId: uuidv4(),
       scraped: true
     };
     
