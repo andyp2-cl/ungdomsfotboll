@@ -9,7 +9,14 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: Infinity, // Prevent automatic refetching
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

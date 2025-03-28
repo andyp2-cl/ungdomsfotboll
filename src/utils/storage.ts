@@ -33,20 +33,27 @@ export const getStoredPlayers = (): Player[] => {
   const storedPlayers = safeLocalStorage.getItem(PLAYERS_STORAGE_KEY);
   if (storedPlayers) {
     try {
-      return JSON.parse(storedPlayers);
+      const parsedPlayers = JSON.parse(storedPlayers);
+      console.log("Retrieved players from localStorage:", parsedPlayers.length);
+      return parsedPlayers;
     } catch (error) {
       console.error("Error parsing player data:", error);
     }
   }
   
   // If no stored players or parsing failed, use mockdata and save it
+  console.log("Using mock players data as fallback");
   savePlayers(mockPlayers);
   return mockPlayers;
 };
 
 // Save players to localStorage
 export const savePlayers = (players: Player[]): void => {
-  safeLocalStorage.setItem(PLAYERS_STORAGE_KEY, JSON.stringify(players));
+  console.log("Saving players to localStorage:", players.length);
+  const success = safeLocalStorage.setItem(PLAYERS_STORAGE_KEY, JSON.stringify(players));
+  if (!success) {
+    console.error("Failed to save players to localStorage");
+  }
 };
 
 // Get activities from localStorage
@@ -54,21 +61,29 @@ export const getStoredActivities = (): Activity[] => {
   const storedActivities = safeLocalStorage.getItem(ACTIVITIES_STORAGE_KEY);
   if (storedActivities) {
     try {
-      return JSON.parse(storedActivities);
+      const parsedActivities = JSON.parse(storedActivities);
+      console.log("Retrieved activities from localStorage:", parsedActivities.length);
+      return parsedActivities;
     } catch (error) {
       console.error("Error parsing activity data:", error);
     }
   }
+  console.log("No activities found in localStorage");
   return [];
 };
 
 // Save activities to localStorage
 export const saveActivities = (activities: Activity[]): void => {
-  safeLocalStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(activities));
+  console.log("Saving activities to localStorage:", activities.length);
+  const success = safeLocalStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(activities));
+  if (!success) {
+    console.error("Failed to save activities to localStorage");
+  }
 };
 
 // Save active tab to localStorage
 export const saveActiveTab = (tab: string): void => {
+  console.log("Saving active tab to localStorage:", tab);
   safeLocalStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
 };
 
