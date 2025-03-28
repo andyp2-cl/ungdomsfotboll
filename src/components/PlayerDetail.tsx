@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -81,6 +82,9 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allP
     setIsEditing(false);
   };
 
+  // Check if the player is a trainer
+  const isTrainer = currentPlayer.positions?.includes('TRÄNARE');
+
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
       {isEditing ? (
@@ -120,9 +124,15 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allP
                         #{currentPlayer.jerseyNumber}
                       </span>
                     )}
-                    <Badge className={`ml-3 ${getGradeColor(currentPlayer.grade)}`}>
-                      {getGradeText(currentPlayer.grade)}
-                    </Badge>
+                    {isTrainer ? (
+                      <Badge className="ml-3 bg-gray-500">
+                        Tränare
+                      </Badge>
+                    ) : (
+                      <Badge className={`ml-3 ${getGradeColor(currentPlayer.grade)}`}>
+                        {getGradeText(currentPlayer.grade)}
+                      </Badge>
+                    )}
                   </CardTitle>
                   <CardDescription>
                     Positioner: {formatPositions(currentPlayer.positions)}

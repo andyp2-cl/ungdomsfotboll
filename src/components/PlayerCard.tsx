@@ -73,9 +73,12 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         )}
         
         <div className="absolute top-2 right-2">
-          <Badge className={getGradeColor(player.grade)}>
-            Nivå {player.grade}
-          </Badge>
+          {/* Only show grade badge if not a trainer */}
+          {(!player.positions || !player.positions.includes('TRÄNARE')) && (
+            <Badge className={getGradeColor(player.grade)}>
+              Nivå {player.grade}
+            </Badge>
+          )}
         </div>
         
         {onEdit && (

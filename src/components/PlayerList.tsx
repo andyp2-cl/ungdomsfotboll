@@ -182,9 +182,15 @@ export function PlayerList({ players, viewMode = "list", onPlayerSelect, onPlaye
             </TableCell>
             <TableCell>{formatPositions(player.positions)}</TableCell>
             <TableCell>
-              <Badge className={getGradeColor(player.grade)}>
-                {getGradeText(player.grade)}
-              </Badge>
+              {player.positions && player.positions.includes('TRÄNARE') ? (
+                <Badge className="bg-gray-500 hover:bg-gray-600">
+                  Tränare
+                </Badge>
+              ) : (
+                <Badge className={getGradeColor(player.grade)}>
+                  {getGradeText(player.grade)}
+                </Badge>
+              )}
             </TableCell>
             <TableCell>
               {getActivityCount(player) > 0 
