@@ -1,3 +1,4 @@
+
 import { Activity, ActivityType, Player } from "@/types/player";
 import { generateFootballFieldUrl } from "./locationUtils";
 import { v4 as uuidv4 } from 'uuid';
@@ -12,16 +13,28 @@ interface ScrapedMatch {
 }
 
 // Helper function to extract player information from HTML
-export async function scrapePlayerImages(url: string, players: Player[]): Promise<Player[]> {
+export async function scrapePlayerImages(
+  url: string, 
+  players: Player[], 
+  proxyUrl: string = "https://corsproxy.io/?"
+): Promise<Player[]> {
   try {
-    // Use a CORS proxy to fetch the webpage
-    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+    // Use the specified proxy to fetch the webpage
+    const fetchUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
+    console.log(`Fetching page from: ${fetchUrl}`);
+    
+    const response = await fetch(fetchUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch page: ${response.status}`);
+      throw new Error(`Kunde inte hämta sidan (${response.status}): ${response.statusText}`);
     }
     
     const html = await response.text();
     console.log(`Received HTML content of length: ${html.length}`);
+    
+    if (html.length < 1000) {
+      console.warn("Warning: Received very short HTML content. Might be an error page.");
+      throw new Error("Hämtad sida verkar vara en felmeddelande eller ogiltig. Prova en annan URL eller proxy.");
+    }
     
     // Parse the HTML
     const parser = new DOMParser();
@@ -42,22 +55,40 @@ export async function scrapePlayerImages(url: string, players: Player[]): Promis
       ".sv-text-portlet-content",
       // More general selectors
       ".sv-layout > div",
-      ".container div"
+      ".container div",
+      "article",
+      ".player",
+      ".member",
+      // Try to find images with nearby text that could be names
+      "img + p", 
+      "img + div",
+      // Very general fallback
+      "div:has(img)"
     ];
     
     let playerElements: NodeListOf<Element> | null = null;
+    let usedSelector = "";
     
     for (const selector of selectors) {
       const elements = doc.querySelectorAll(selector);
       if (elements && elements.length > 0) {
         console.log(`Found ${elements.length} elements with selector: ${selector}`);
         playerElements = elements;
+        usedSelector = selector;
         break;
       }
     }
     
     if (!playerElements || playerElements.length === 0) {
-      throw new Error("No player elements found on the page");
+      // As a fallback, try to find all images
+      const imgElements = doc.querySelectorAll("img");
+      if (imgElements && imgElements.length > 0) {
+        console.log(`Found ${imgElements.length} images. Using as fallback.`);
+        playerElements = imgElements;
+        usedSelector = "img";
+      } else {
+        throw new Error("Inga spelare eller bilder hittades på sidan");
+      }
     }
     
     const updatedPlayers: Player[] = [...players];
@@ -65,77 +96,136 @@ export async function scrapePlayerImages(url: string, players: Player[]): Promis
     
     // Process each element to extract player information
     Array.from(playerElements).forEach((element, index) => {
-      // Try to find player name with various selectors
-      let playerName: string | null = null;
-      const nameSelectors = ['h3', 'h4', '.player-name', '.name', 'strong', 'b', 'p'];
-      
-      for (const selector of nameSelectors) {
-        const nameElement = element.querySelector(selector);
-        if (nameElement && nameElement.textContent) {
-          playerName = nameElement.textContent.trim();
-          if (playerName) {
-            console.log(`Found player name: ${playerName}`);
-            break;
+      // Different handling based on what selector matched
+      if (usedSelector === "img") {
+        // We're directly looking at image elements
+        const imgElement = element;
+        let imgSrc = imgElement.getAttribute("src");
+        if (!imgSrc) return;
+        
+        // Try to find nearby text for the name
+        let playerName: string | null = null;
+        
+        // Check alt text first
+        const altText = imgElement.getAttribute("alt");
+        if (altText && altText.length > 3) {
+          playerName = altText;
+        }
+        
+        // Check next sibling
+        if (!playerName) {
+          const nextSibling = imgElement.nextElementSibling;
+          if (nextSibling && nextSibling.textContent) {
+            playerName = nextSibling.textContent.trim();
           }
         }
+        
+        // Check parent's text content
+        if (!playerName) {
+          const parent = imgElement.parentElement;
+          if (parent && parent.textContent) {
+            playerName = parent.textContent.trim().split('\n')[0];
+          }
+        }
+        
+        if (!playerName) return;
+        
+        // Make the image URL absolute
+        if (imgSrc.startsWith('/')) {
+          const urlObj = new URL(url);
+          imgSrc = `${urlObj.origin}${imgSrc}`;
+        } else if (!imgSrc.startsWith('http')) {
+          const urlObj = new URL(url);
+          imgSrc = `${urlObj.origin}/${imgSrc}`;
+        }
+        
+        // Match with our database
+        matchPlayerWithImage(updatedPlayers, playerName, imgSrc);
+        matchCount++;
+      } else {
+        // Try to find player name with various selectors
+        let playerName: string | null = null;
+        const nameSelectors = ['h3', 'h4', '.player-name', '.name', 'strong', 'b', 'p', 'span'];
+        
+        for (const selector of nameSelectors) {
+          const nameElement = element.querySelector(selector);
+          if (nameElement && nameElement.textContent) {
+            playerName = nameElement.textContent.trim();
+            if (playerName) {
+              console.log(`Found player name: ${playerName}`);
+              break;
+            }
+          }
+        }
+        
+        // If no name found with selectors, try the element's own text
+        if (!playerName && element.textContent) {
+          playerName = element.textContent.trim().split('\n')[0];
+        }
+        
+        if (!playerName) return;
+        
+        // Find player image
+        const imgElement = element.querySelector("img");
+        if (!imgElement) return;
+        
+        let imgSrc = imgElement.getAttribute("src");
+        if (!imgSrc) return;
+        
+        // Make the image URL absolute if it's relative
+        if (imgSrc.startsWith('/')) {
+          const urlObj = new URL(url);
+          imgSrc = `${urlObj.origin}${imgSrc}`;
+        } else if (!imgSrc.startsWith('http')) {
+          const urlObj = new URL(url);
+          imgSrc = `${urlObj.origin}/${imgSrc}`;
+        }
+        
+        console.log(`Found image for ${playerName}: ${imgSrc}`);
+        
+        // Match with our database
+        matchPlayerWithImage(updatedPlayers, playerName, imgSrc);
+        matchCount++;
       }
-      
-      if (!playerName) return;
-      
-      // Find player image
-      const imgElement = element.querySelector("img");
-      if (!imgElement) return;
-      
-      let imgSrc = imgElement.getAttribute("src");
-      if (!imgSrc) return;
-      
-      // Make the image URL absolute if it's relative
-      if (imgSrc.startsWith('/')) {
-        const urlObj = new URL(url);
-        imgSrc = `${urlObj.origin}${imgSrc}`;
-      } else if (!imgSrc.startsWith('http')) {
-        const urlObj = new URL(url);
-        imgSrc = `${urlObj.origin}/${imgSrc}`;
-      }
-      
-      console.log(`Found image for ${playerName}: ${imgSrc}`);
-      
+    });
+    
+    function matchPlayerWithImage(players: Player[], name: string, imgSrc: string): void {
       // Try to match the player with our database
       // First try exact name match
-      let playerIndex = updatedPlayers.findIndex(
-        p => p.name.toLowerCase() === playerName.toLowerCase()
+      let playerIndex = players.findIndex(
+        p => p.name.toLowerCase() === name.toLowerCase()
       );
       
       // If not found, try with first name only
       if (playerIndex === -1) {
-        const firstName = playerName.split(' ')[0].toLowerCase();
-        playerIndex = updatedPlayers.findIndex(
+        const firstName = name.split(' ')[0].toLowerCase();
+        playerIndex = players.findIndex(
           p => p.name.toLowerCase().includes(firstName)
         );
       }
       
       // If still not found, try with last name
-      if (playerIndex === -1 && playerName.includes(' ')) {
-        const lastName = playerName.split(' ').pop()?.toLowerCase() || '';
+      if (playerIndex === -1 && name.includes(' ')) {
+        const lastName = name.split(' ').pop()?.toLowerCase() || '';
         if (lastName.length > 2) { // Avoid matching very short last names
-          playerIndex = updatedPlayers.findIndex(
+          playerIndex = players.findIndex(
             p => p.name.toLowerCase().includes(lastName)
           );
         }
       }
       
       if (playerIndex >= 0) {
-        updatedPlayers[playerIndex] = {
-          ...updatedPlayers[playerIndex],
+        players[playerIndex] = {
+          ...players[playerIndex],
           image: imgSrc,
         };
         matchCount++;
-        console.log(`Matched player: ${playerName} with ${updatedPlayers[playerIndex].name}`);
+        console.log(`Matched player: ${name} with ${players[playerIndex].name}`);
       }
-    });
+    }
     
     if (matchCount === 0) {
-      throw new Error("No players from the website matched with your team roster");
+      throw new Error("Inga spelare från webbplatsen matchade med din laglista");
     }
     
     console.log(`Successfully matched ${matchCount} players`);
