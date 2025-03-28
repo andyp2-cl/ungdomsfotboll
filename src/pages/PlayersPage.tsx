@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { mockPlayers, mockActivities, mockKioskSchedules } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -398,10 +399,13 @@ export default function PlayersPage() {
   }, [selectedActivityTypes, activities]);
 
   useEffect(() => {
-    // Filter out 2024 activities
+    // Define the cutoff date - March 31, 2025
+    const cutoffDate = new Date('2025-03-31');
+    
+    // Filter out activities before March 31, 2025
     const filteredActivities = mockActivities.filter(activity => {
-      const activityYear = new Date(activity.date).getFullYear();
-      return activityYear !== 2024;
+      const activityDate = new Date(activity.date);
+      return activityDate >= cutoffDate;
     });
     
     // Process activities to add kiosk schedules for eligible activities
