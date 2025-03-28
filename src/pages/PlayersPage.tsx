@@ -37,6 +37,165 @@ interface PlayersPageProps {
   initialTab?: string;
 }
 
+const aprilActivities: Activity[] = [
+  {
+    id: uuidv4(),
+    name: "Hässleholms IF svart - Vinslövs IF",
+    date: "2025-04-12",
+    time: "09:30",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Österås IP",
+      description: "Plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Österås IP")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Hässleholms IF grön - IFK Osby vit",
+    date: "2025-04-12",
+    time: "11:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Österås IP",
+      description: "Plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Österås IP")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Ifö Bromölla IF - Hässleholms IF",
+    date: "2025-04-12",
+    time: "12:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Strandängens IP",
+      description: "C-plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Strandängens IP", "Bromölla")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Kristianstad FC svart - Hässleholms IF Vit",
+    date: "2025-04-13",
+    time: "12:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Vilans IP",
+      description: "B-plan",
+      gpsLink: generateFootballFieldUrl("Vilans IP", "Kristianstad")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Hässleholms IF - Åhus Horna BK vit",
+    date: "2025-04-19",
+    time: "11:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Österås IP",
+      description: "Plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Österås IP")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Hässleholms IF Vit - Nosaby IF blå",
+    date: "2025-04-20",
+    time: "09:30",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Österås IP",
+      description: "Plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Österås IP")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Nosaby IF grön - Hässleholms IF grön",
+    date: "2025-04-20",
+    time: "10:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Nya Vallboskolan",
+      description: "D-plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Nya Vallboskolan", "Kristianstad")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Sibbhults IF - Hässleholms IF svart",
+    date: "2025-04-21",
+    time: "10:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Färevallen",
+      description: "A-plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Färevallen", "Sibbhult")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Höör IS blå - Hässleholms IF Vit",
+    date: "2025-04-26",
+    time: "14:30",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Färs & Frosta Arena",
+      description: "Höör konstgräs 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Färs & Frosta Arena", "Höör")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Hässleholms IF svart - Broby IF orange",
+    date: "2025-04-26",
+    time: "09:30",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Österås IP",
+      description: "Plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Österås IP")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Kristianstad FC orange - Hässleholms IF grön",
+    date: "2025-04-26",
+    time: "12:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Björkvallen",
+      description: "Kristianstad A-plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Björkvallen", "Kristianstad")
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Vinnö IF vit - Hässleholms IF",
+    date: "2025-04-27",
+    time: "10:00",
+    type: "match",
+    participants: [],
+    location: {
+      name: "Vinnö IP",
+      description: "A-plan 7-manna 1",
+      gpsLink: generateFootballFieldUrl("Vinnö IP", "Vinnö")
+    }
+  }
+];
+
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +215,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -69,217 +229,41 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   }, [activeTab, navigate, location.pathname]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const storedPlayers = getStoredPlayers();
-      setPlayers(storedPlayers);
-      
-      const storedActivities = getStoredActivities();
-      if (storedActivities.length > 0) {
-        setActivities(storedActivities);
-      } else {
-        const cutoffDate = new Date('2025-03-31');
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const storedPlayers = await getStoredPlayers();
+        setPlayers(storedPlayers);
         
-        const filteredActivities = mockActivities.filter(activity => {
-          const activityDate = new Date(activity.date);
-          return activityDate >= cutoffDate;
+        const storedActivities = await getStoredActivities();
+        if (storedActivities.length > 0) {
+          setActivities(storedActivities);
+        } else {
+          const cutoffDate = new Date('2025-03-31');
+          
+          const filteredActivities = mockActivities.filter(activity => {
+            const activityDate = new Date(activity.date);
+            return activityDate >= cutoffDate;
+          });
+          
+          const initialActivities = [...filteredActivities, ...aprilActivities];
+          setActivities(initialActivities);
+          await saveActivities(initialActivities);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast({
+          title: "Kunde inte ladda data",
+          description: "Ett fel uppstod när data skulle hämtas från databasen.",
+          variant: "destructive"
         });
-        
-        const initialActivities = [...filteredActivities, ...aprilActivities];
-        setActivities(initialActivities);
-        saveActivities(initialActivities);
-      }
-    }, 0);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === PLAYERS_STORAGE_KEY) {
-        try {
-          const newPlayers = event.newValue ? JSON.parse(event.newValue) : [];
-          setPlayers(newPlayers);
-        } catch (error) {
-          console.error("Error parsing players from storage event:", error);
-        }
-      } else if (event.key === ACTIVITIES_STORAGE_KEY) {
-        try {
-          const newActivities = event.newValue ? JSON.parse(event.newValue) : [];
-          setActivities(newActivities);
-        } catch (error) {
-          console.error("Error parsing activities from storage event:", error);
-        }
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const getDayOfWeek = (dateString: string) => {
-    const date = new Date(dateString);
-    const dayOfWeek = date.toLocaleDateString('sv-SE', { weekday: 'long' });
-    return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-  };
-
-  const aprilActivities: Activity[] = [
-    {
-      id: uuidv4(),
-      name: "Hässleholms IF svart - Vinslövs IF",
-      date: "2025-04-12",
-      time: "09:30",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Österås IP",
-        description: "Plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Österås IP")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Hässleholms IF grön - IFK Osby vit",
-      date: "2025-04-12",
-      time: "11:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Österås IP",
-        description: "Plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Österås IP")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Ifö Bromölla IF - Hässleholms IF",
-      date: "2025-04-12",
-      time: "12:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Strandängens IP",
-        description: "C-plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Strandängens IP", "Bromölla")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Kristianstad FC svart - Hässleholms IF Vit",
-      date: "2025-04-13",
-      time: "12:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Vilans IP",
-        description: "B-plan",
-        gpsLink: generateFootballFieldUrl("Vilans IP", "Kristianstad")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Hässleholms IF - Åhus Horna BK vit",
-      date: "2025-04-19",
-      time: "11:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Österås IP",
-        description: "Plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Österås IP")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Hässleholms IF Vit - Nosaby IF blå",
-      date: "2025-04-20",
-      time: "09:30",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Österås IP",
-        description: "Plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Österås IP")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Nosaby IF grön - Hässleholms IF grön",
-      date: "2025-04-20",
-      time: "10:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Nya Vallboskolan",
-        description: "D-plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Nya Vallboskolan", "Kristianstad")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Sibbhults IF - Hässleholms IF svart",
-      date: "2025-04-21",
-      time: "10:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Färevallen",
-        description: "A-plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Färevallen", "Sibbhult")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Höör IS blå - Hässleholms IF Vit",
-      date: "2025-04-26",
-      time: "14:30",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Färs & Frosta Arena",
-        description: "Höör konstgräs 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Färs & Frosta Arena", "Höör")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Hässleholms IF svart - Broby IF orange",
-      date: "2025-04-26",
-      time: "09:30",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Österås IP",
-        description: "Plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Österås IP")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Kristianstad FC orange - Hässleholms IF grön",
-      date: "2025-04-26",
-      time: "12:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Björkvallen",
-        description: "Kristianstad A-plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Björkvallen", "Kristianstad")
-      }
-    },
-    {
-      id: uuidv4(),
-      name: "Vinnö IF vit - Hässleholms IF",
-      date: "2025-04-27",
-      time: "10:00",
-      type: "match",
-      participants: [],
-      location: {
-        name: "Vinnö IP",
-        description: "A-plan 7-manna 1",
-        gpsLink: generateFootballFieldUrl("Vinnö IP", "Vinnö")
-      }
-    }
-  ];
+    
+    loadData();
+  }, [toast]);
 
   const isKioskEligible = (activity: Activity): boolean => {
     if (!activity.location) return false;
@@ -290,20 +274,20 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return isAtÖsteråsIP && isHomeMatch;
   };
 
-  const handleImportedActivities = (importedActivities: Activity[]) => {
+  const handleImportedActivities = async (importedActivities: Activity[]) => {
     const updatedActivities = [...activities, ...importedActivities];
     setActivities(updatedActivities);
-    saveActivities(updatedActivities);
+    await saveActivities(updatedActivities);
     toast({
       title: "Aktiviteter importerade",
       description: `${importedActivities.length} aktiviteter har importerats från fil.`,
     });
   };
 
-  const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
+  const handleScrapedMatches = async (newActivities: Activity[], clearExisting: boolean = false) => {
     if (clearExisting) {
       setActivities(newActivities);
-      saveActivities(newActivities);
+      await saveActivities(newActivities);
       toast({
         title: "Aktiviteter ersatta",
         description: `Alla tidigare aktiviteter har tagits bort och ${newActivities.length} nya aktiviteter har lagts till.`,
@@ -311,7 +295,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     } else {
       const updatedActivities = [...activities, ...newActivities];
       setActivities(updatedActivities);
-      saveActivities(updatedActivities);
+      await saveActivities(updatedActivities);
       toast({
         title: "Matcher importerade",
         description: `${newActivities.length} nya matcher har lagts till.`,
@@ -319,9 +303,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     }
   };
 
-  const handleDeleteAllActivities = () => {
+  const handleDeleteAllActivities = async () => {
     setActivities([]);
-    saveActivities([]);
+    await saveActivities([]);
     if (selectedActivity) {
       setSelectedActivity(null);
     }
@@ -347,13 +331,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     );
   };
 
-  const handlePlayerUpdate = (updatedPlayer: Player) => {
+  const handlePlayerUpdate = async (updatedPlayer: Player) => {
     const updatedPlayers = players.map(player => 
       player.id === updatedPlayer.id ? updatedPlayer : player
     );
     
     setPlayers(updatedPlayers);
-    savePlayers(updatedPlayers);
+    await savePlayers(updatedPlayers);
     
     if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
       setSelectedPlayer(updatedPlayer);
@@ -365,13 +349,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     });
   };
 
-  const handleActivityUpdate = (updatedActivity: Activity) => {
+  const handleActivityUpdate = async (updatedActivity: Activity) => {
     const updatedActivities = activities.map(activity => 
       activity.id === updatedActivity.id ? updatedActivity : activity
     );
     
     setActivities(updatedActivities);
-    saveActivities(updatedActivities);
+    await saveActivities(updatedActivities);
     
     if (selectedActivity && selectedActivity.id === updatedActivity.id) {
       setSelectedActivity(updatedActivity);
@@ -398,7 +382,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       });
       
       setPlayers(updatedPlayers);
-      savePlayers(updatedPlayers);
+      await savePlayers(updatedPlayers);
     }
     
     toast({
@@ -407,7 +391,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     });
   };
 
-  const handleKioskAssignmentUpdate = (activityId: string, playerId?: string) => {
+  const handleKioskAssignmentUpdate = async (activityId: string, playerId?: string) => {
     const updatedActivities = activities.map(activity => 
       activity.id === activityId 
         ? { ...activity, kioskAssignedPlayerId: playerId }
@@ -415,7 +399,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     );
     
     setActivities(updatedActivities);
-    saveActivities(updatedActivities);
+    await saveActivities(updatedActivities);
     
     if (selectedActivity && selectedActivity.id === activityId) {
       setSelectedActivity(prev => prev ? { ...prev, kioskAssignedPlayerId: playerId } : null);
@@ -437,10 +421,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     setEditingActivity(activity);
   };
 
-  const handleAddPlayer = (newPlayer: Player) => {
+  const handleAddPlayer = async (newPlayer: Player) => {
     const updatedPlayers = [...players, newPlayer];
     setPlayers(updatedPlayers);
-    savePlayers(updatedPlayers);
+    await savePlayers(updatedPlayers);
     setIsAddPlayerOpen(false);
     toast({
       title: "Spelare tillagd",
@@ -448,10 +432,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     });
   };
 
-  const handleAddActivity = (newActivity: Activity) => {
+  const handleAddActivity = async (newActivity: Activity) => {
     const updatedActivities = [...activities, newActivity];
     setActivities(updatedActivities);
-    saveActivities(updatedActivities);
+    await saveActivities(updatedActivities);
     setIsAddActivityOpen(false);
     toast({
       title: "Aktivitet tillagd",
@@ -472,6 +456,20 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
     });
   }, [selectedActivityTypes, activities]);
+
+  if (isLoading) {
+    return (
+      <div className="container py-6">
+        <h1 className="text-3xl font-bold mb-6">Fotbollsspelare</h1>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p>Laddar data från databasen...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6">
