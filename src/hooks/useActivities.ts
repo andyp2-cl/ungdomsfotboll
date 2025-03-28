@@ -1,0 +1,192 @@
+
+import { useState, useEffect, useMemo } from "react";
+import { Activity, ActivityType, Player } from "@/types/player";
+import { getStoredActivities, saveActivities, savePlayers } from "@/utils/storage";
+import { useToast } from "@/hooks/use-toast";
+
+export function useActivities(players: Player[], setPlayers: (players: Player[]) => void) {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const storedActivities = await getStoredActivities();
+        if (storedActivities.length > 0) {
+          setActivities(storedActivities);
+        } else {
+          toast({
+            title: "Inga aktiviteter hittades",
+            description: "Inga aktiviteter hittades i databasen.",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading activities:", error);
+        toast({
+          title: "Kunde inte ladda aktiviteter",
+          description: "Ett fel uppstod när aktiviteter skulle hämtas från databasen.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadActivities();
+  }, [toast]);
+
+  const handleActivityTypeChange = (type: ActivityType) => {
+    setSelectedActivityTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type) 
+        : [...prev, type]
+    );
+  };
+
+  const handleActivityUpdate = async (updatedActivity: Activity) => {
+    const updatedActivities = activities.map(activity => 
+      activity.id === updatedActivity.id ? updatedActivity : activity
+    );
+    
+    setActivities(updatedActivities);
+    await saveActivities(updatedActivities);
+    
+    if (selectedActivity && selectedActivity.id === updatedActivity.id) {
+      setSelectedActivity(updatedActivity);
+    }
+    
+    if (updatedActivity.participants) {
+      const updatedPlayers = players.map(player => {
+        const isParticipating = updatedActivity.participants?.includes(player.id);
+        let playerActivities = player.activities || [];
+        
+        if (isParticipating && !playerActivities.includes(updatedActivity.id)) {
+          return {
+            ...player,
+            activities: [...playerActivities, updatedActivity.id]
+          };
+        } else if (!isParticipating && playerActivities.includes(updatedActivity.id)) {
+          return {
+            ...player,
+            activities: playerActivities.filter(id => id !== updatedActivity.id)
+          };
+        }
+        
+        return player;
+      });
+      
+      setPlayers(updatedPlayers);
+      await savePlayers(updatedPlayers);
+    }
+    
+    toast({
+      title: "Aktivitet uppdaterad",
+      description: `${updatedActivity.name} har uppdaterats.`,
+    });
+  };
+
+  const handleKioskAssignmentUpdate = async (activityId: string, playerId?: string) => {
+    const updatedActivities = activities.map(activity => 
+      activity.id === activityId 
+        ? { ...activity, kioskAssignedPlayerId: playerId }
+        : activity
+    );
+    
+    setActivities(updatedActivities);
+    await saveActivities(updatedActivities);
+    
+    if (selectedActivity && selectedActivity.id === activityId) {
+      setSelectedActivity(prev => prev ? { ...prev, kioskAssignedPlayerId: playerId } : null);
+    }
+    
+    toast({
+      title: "Kioskansvarig uppdaterad",
+      description: playerId 
+        ? `Ny spelare har tilldelats kioskansvar för denna aktivitet.`
+        : `Kioskansvarig har tagits bort från denna aktivitet.`,
+    });
+  };
+
+  const handleAddActivity = async (newActivity: Activity) => {
+    const updatedActivities = [...activities, newActivity];
+    setActivities(updatedActivities);
+    await saveActivities(updatedActivities);
+    setIsAddActivityOpen(false);
+    toast({
+      title: "Aktivitet tillagd",
+      description: `${newActivity.name} har lagts till.`,
+    });
+  };
+
+  const handleImportedActivities = async (importedActivities: Activity[]) => {
+    const updatedActivities = [...activities, ...importedActivities];
+    setActivities(updatedActivities);
+    await saveActivities(updatedActivities);
+    toast({
+      title: "Aktiviteter importerade",
+      description: `${importedActivities.length} aktiviteter har importerats från fil.`,
+    });
+  };
+
+  const handleScrapedMatches = async (newActivities: Activity[], clearExisting: boolean = false) => {
+    if (clearExisting) {
+      setActivities(newActivities);
+      await saveActivities(newActivities);
+      toast({
+        title: "Aktiviteter ersatta",
+        description: `Alla tidigare aktiviteter har tagits bort och ${newActivities.length} nya aktiviteter har lagts till.`,
+      });
+    } else {
+      const updatedActivities = [...activities, ...newActivities];
+      setActivities(updatedActivities);
+      await saveActivities(updatedActivities);
+      toast({
+        title: "Matcher importerade",
+        description: `${newActivities.length} nya matcher har lagts till.`,
+      });
+    }
+  };
+
+  const handleDeleteAllActivities = async () => {
+    setActivities([]);
+    await saveActivities([]);
+    if (selectedActivity) {
+      setSelectedActivity(null);
+    }
+    toast({
+      title: "Aktiviteter raderade",
+      description: "Alla aktiviteter har tagits bort.",
+    });
+  };
+
+  const filteredActivities = useMemo(() => {
+    return activities.filter(activity => {
+      return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
+    });
+  }, [selectedActivityTypes, activities]);
+
+  return {
+    activities,
+    isLoading,
+    selectedActivityTypes,
+    selectedActivity,
+    setSelectedActivity,
+    editingActivity,
+    setEditingActivity,
+    isAddActivityOpen,
+    setIsAddActivityOpen,
+    filteredActivities,
+    handleActivityTypeChange,
+    handleActivityUpdate,
+    handleKioskAssignmentUpdate,
+    handleAddActivity,
+    handleImportedActivities,
+    handleScrapedMatches,
+    handleDeleteAllActivities
+  };
+}
