@@ -83,11 +83,11 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">
+              <div className="text-sm">
                 {activity.participants && activity.participants.length > 0 
                   ? `${activity.participants.length} deltagare`
                   : "Inga deltagare"}
-              </p>
+              </div>
               
               {kioskAssignments.length > 0 && (
                 <div className="mt-2">

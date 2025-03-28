@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity, Player, KioskSchedule } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,15 @@ interface ActivityDetailProps {
 export function ActivityDetail({ activity, players, onClose, onEdit, onKioskScheduleUpdate }: ActivityDetailProps) {
   const { toast } = useToast();
   // State to hold the current kiosk schedule
-  const [currentSchedule, setCurrentSchedule] = useState(
-    mockKioskSchedules.find(schedule => schedule.id === activity.kioskScheduleId)
-  );
+  const [currentSchedule, setCurrentSchedule] = useState<KioskSchedule | undefined>(undefined);
+
+  // Fetch the schedule when the activity changes
+  useEffect(() => {
+    if (activity.kioskScheduleId) {
+      const schedule = mockKioskSchedules.find(s => s.id === activity.kioskScheduleId);
+      setCurrentSchedule(schedule);
+    }
+  }, [activity.kioskScheduleId]);
   
   // Find all players participating in this activity
   const participatingPlayers = players.filter(
@@ -43,6 +49,11 @@ export function ActivityDetail({ activity, players, onClose, onEdit, onKioskSche
     
     // Update the state
     setCurrentSchedule(updatedSchedule);
+    
+    // Immediately call the update function to ensure it's saved
+    if (onKioskScheduleUpdate) {
+      onKioskScheduleUpdate(updatedSchedule.id, updatedSchedule);
+    }
     
     // Get player name for the toast
     const playerName = players.find(p => p.id === playerId)?.name || "Spelare";

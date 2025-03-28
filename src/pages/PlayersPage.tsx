@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List, Plus, UserPlus, Activity as ActivityIcon, Edit } from "lucide-react";
 import { PlayerList } from "@/components/PlayerList";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { EditPlayerForm } from "@/components/EditPlayerForm";
 import { AddPlayerForm } from "@/components/AddPlayerForm";
 import { AddActivityForm } from "@/components/AddActivityForm";
@@ -41,6 +41,13 @@ export default function PlayersPage() {
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [kioskSchedules, setKioskSchedules] = useState(mockKioskSchedules);
   const { toast } = useToast();
+
+  // Get day of week in Swedish
+  const getDayOfWeek = (dateString: string) => {
+    const date = new Date(dateString);
+    const dayOfWeek = date.toLocaleDateString('sv-SE', { weekday: 'long' });
+    return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+  };
 
   // Add April 2025 activities
   const aprilActivities: Activity[] = [
@@ -294,18 +301,20 @@ export default function PlayersPage() {
     });
   };
 
-  // NEW FUNCTION: Handle kiosk schedule update
+  // Handle kiosk schedule update - Improved to properly persist the changes
   const handleKioskScheduleUpdate = (scheduleId: string, updatedSchedule: KioskSchedule) => {
-    setKioskSchedules(prev => 
-      prev.map(schedule => 
-        schedule.id === scheduleId ? updatedSchedule : schedule
-      )
+    const updatedSchedules = kioskSchedules.map(schedule => 
+      schedule.id === scheduleId ? updatedSchedule : schedule
     );
+    
+    setKioskSchedules(updatedSchedules);
     
     toast({
       title: "Kioskschema uppdaterat",
       description: "Kioskschema har uppdaterats med nya tilldelningar.",
     });
+    
+    console.log("Kiosk schedule updated:", updatedSchedule);
   };
 
   // Handle edit player click
