@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { mockPlayers, mockActivities } from "@/data/mockData";
@@ -460,7 +461,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   if (isLoading) {
     return (
       <div className="container py-6">
-        <h1 className="text-3xl font-bold mb-6">Fotbollsspelare</h1>
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/hassleholmsif-logo.svg" 
+            alt="Hässleholms IF Logo" 
+            className="h-12"
+          />
+        </div>
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
@@ -473,7 +480,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   return (
     <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Fotbollsspelare</h1>
+      <div className="flex justify-center mb-6">
+        <img 
+          src="/hassleholmsif-logo.svg" 
+          alt="Hässleholms IF Logo" 
+          className="h-12"
+        />
+      </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
