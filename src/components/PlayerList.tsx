@@ -1,9 +1,8 @@
-
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, UserCircle } from "lucide-react";
+import { Edit, UserCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 
 interface PlayerListProps {
   players: Player[];
@@ -11,8 +10,13 @@ interface PlayerListProps {
   onEdit?: (player: Player) => void;
 }
 
+type SortField = 'name' | 'position' | 'grade' | 'activities';
+type SortDirection = 'asc' | 'desc';
+
 export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
-  // Funktion för att visa färg baserat på spelarens nivå
+  const [sortField, setSortField] = React.useState<SortField>('name');
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A':
@@ -30,13 +34,11 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     }
   };
 
-  // Funktion för att visa nivåtexten
   const getGradeText = (grade: string) => {
     if (grade === 'TRÄNARE') return 'Tränare';
     return `Nivå ${grade}`;
   };
 
-  // Konvertera positionerna till läsbara format
   const formatPosition = (position: string) => {
     if (position === 'TRÄNARE') return 'Tränare';
     
@@ -56,6 +58,43 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     }
   };
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedPlayers = [...players].sort((a, b) => {
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    
+    switch (sortField) {
+      case 'name':
+        return a.name.localeCompare(b.name) * direction;
+      case 'position':
+        const posA = a.position || '';
+        const posB = b.position || '';
+        return posA.localeCompare(posB) * direction;
+      case 'grade':
+        return a.grade.localeCompare(b.grade) * direction;
+      case 'activities':
+        const activitiesA = a.activities?.length || 0;
+        const activitiesB = b.activities?.length || 0;
+        return (activitiesA - activitiesB) * direction;
+      default:
+        return 0;
+    }
+  });
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? 
+      <ArrowDownAZ className="inline ml-1 h-4 w-4" /> : 
+      <ArrowUpAZ className="inline ml-1 h-4 w-4" />;
+  };
+
   if (players.length === 0) {
     return (
       <div className="text-center py-10">
@@ -68,15 +107,23 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Namn</TableHead>
-          <TableHead>Position</TableHead>
-          <TableHead>Nivå</TableHead>
-          <TableHead>Aktiviteter</TableHead>
+          <TableHead onClick={() => toggleSort('name')} className="cursor-pointer hover:bg-muted/50">
+            Namn <SortIcon field="name" />
+          </TableHead>
+          <TableHead onClick={() => toggleSort('position')} className="cursor-pointer hover:bg-muted/50">
+            Position <SortIcon field="position" />
+          </TableHead>
+          <TableHead onClick={() => toggleSort('grade')} className="cursor-pointer hover:bg-muted/50">
+            Nivå <SortIcon field="grade" />
+          </TableHead>
+          <TableHead onClick={() => toggleSort('activities')} className="cursor-pointer hover:bg-muted/50">
+            Aktiviteter <SortIcon field="activities" />
+          </TableHead>
           {onEdit && <TableHead className="w-16">Åtgärder</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {players.map((player) => (
+        {sortedPlayers.map((player) => (
           <TableRow 
             key={player.id} 
             onClick={() => onSelect(player)}
