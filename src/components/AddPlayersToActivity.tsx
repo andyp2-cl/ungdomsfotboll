@@ -13,6 +13,8 @@ import { Check, UserPlus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -28,6 +30,8 @@ export function AddPlayersToActivity({
   currentParticipantIds 
 }: AddPlayersToActivityProps) {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = useMemo(() => {
@@ -35,6 +39,14 @@ export function AddPlayersToActivity({
       .filter(player => !currentParticipantIds.includes(player.id))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [players, currentParticipantIds]);
+
+  // Filter available players based on search query
+  const filteredPlayers = useMemo(() => {
+    if (!searchQuery) return availablePlayers;
+    return availablePlayers.filter(player => 
+      player.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [availablePlayers, searchQuery]);
 
   const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
@@ -51,6 +63,7 @@ export function AddPlayersToActivity({
       }
       setSelectedPlayers(prev => [...prev, playerId]);
     }
+    setPopoverOpen(false);
   };
 
   const handleAddPlayers = () => {
@@ -80,36 +93,49 @@ export function AddPlayersToActivity({
   return (
     <div className="space-y-4 mt-4">
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-        <Select 
-          onValueChange={handlePlayerSelect}
-          value=""
-        >
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Välj spelare" />
-          </SelectTrigger>
-          <SelectContent>
-            <ScrollArea className="h-[200px]">
-              {availablePlayers.length > 0 ? (
-                availablePlayers.map((player) => (
-                  <SelectItem 
-                    key={player.id} 
-                    value={player.id}
-                    disabled={currentParticipantIds.length + selectedPlayers.length >= 12 && !selectedPlayers.includes(player.id)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>{player.name}</span>
-                      {selectedPlayers.includes(player.id) && <Check className="h-4 w-4 ml-2" />}
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="empty" disabled>
-                  Inga tillgängliga spelare
-                </SelectItem>
-              )}
-            </ScrollArea>
-          </SelectContent>
-        </Select>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="outline" 
+              role="combobox" 
+              aria-expanded={popoverOpen}
+              className="w-full sm:w-[200px] justify-between"
+            >
+              Välj spelare
+              <X 
+                className="h-4 w-4 shrink-0 opacity-50 ml-2" 
+                onClick={() => setSearchQuery("")}
+              />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Sök spelare..." 
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+              />
+              <CommandList>
+                <CommandEmpty>Inga spelare hittades</CommandEmpty>
+                <CommandGroup className="max-h-[200px] overflow-auto">
+                  {filteredPlayers.map((player) => (
+                    <CommandItem
+                      key={player.id}
+                      value={player.id}
+                      onSelect={() => handlePlayerSelect(player.id)}
+                      disabled={currentParticipantIds.length + selectedPlayers.length >= 12 && !selectedPlayers.includes(player.id)}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span>{player.name}</span>
+                        {selectedPlayers.includes(player.id) && <Check className="h-4 w-4 ml-2" />}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         
         <Button 
           onClick={handleAddPlayers} 

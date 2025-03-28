@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,9 +38,18 @@ export function ActivityDetail({
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   
   // Sort players alphabetically for the dropdown
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Filter players based on search query
+  const filteredPlayers = useMemo(() => {
+    if (!playerSearchQuery) return sortedPlayers;
+    return sortedPlayers.filter(player => 
+      player.name.toLowerCase().includes(playerSearchQuery.toLowerCase())
+    );
+  }, [sortedPlayers, playerSearchQuery]);
   
   // Check if activity is eligible for kiosk duty (home match at Österås IP)
   const isKioskEligible = () => {
@@ -304,11 +313,15 @@ export function ActivityDetail({
                 </PopoverTrigger>
                 <PopoverContent className="p-0" align="end" side="top">
                   <Command>
-                    <CommandInput placeholder="Sök spelare..." />
+                    <CommandInput 
+                      placeholder="Sök spelare..." 
+                      value={playerSearchQuery}
+                      onValueChange={setPlayerSearchQuery}
+                    />
                     <CommandList>
                       <CommandEmpty>Inga spelare hittades.</CommandEmpty>
                       <CommandGroup className="max-h-60 overflow-auto">
-                        {sortedPlayers.map((player) => (
+                        {filteredPlayers.map((player) => (
                           <CommandItem
                             key={player.id}
                             onSelect={() => handleAssignKioskPlayer(player.id)}
