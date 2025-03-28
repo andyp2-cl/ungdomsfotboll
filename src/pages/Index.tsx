@@ -5,7 +5,7 @@ import { Users } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Hässleholms IF P2014</h1>
         <p className="text-xl text-gray-600 mb-8">Hantera dina fotbollsspelare och aktiviteter enkelt och smidigt</p>
