@@ -43,7 +43,7 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
             "Maj": "05", "Juni": "06", "Juli": "07", "Augusti": "08",
             "September": "09", "Oktober": "10", "November": "11", "December": "12",
             "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", 
-            "Maj": "05", "Jun": "06", "Jul": "07", "Aug": "08", 
+            "Jun": "06", "Jul": "07", "Aug": "08", 
             "Sep": "09", "Okt": "10", "Nov": "11", "Dec": "12"
           };
           
