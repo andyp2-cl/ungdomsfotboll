@@ -2,7 +2,7 @@
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ActivityListProps {
@@ -47,6 +47,16 @@ export function ActivityList({ activities, onSelect }: ActivityListProps) {
                   </span>
                 )}
               </div>
+              
+              {activity.location && (
+                <div className="flex items-center mt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{activity.location.name}</span>
+                  {activity.location.description && (
+                    <span className="text-muted-foreground ml-1">({activity.location.description})</span>
+                  )}
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
