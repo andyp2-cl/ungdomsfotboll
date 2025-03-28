@@ -2,13 +2,16 @@
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface PlayerListProps {
   players: Player[];
   onSelect: (player: Player) => void;
+  onEdit?: (player: Player) => void;
 }
 
-export function PlayerList({ players, onSelect }: PlayerListProps) {
+export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
   // Funktion för att visa färg baserat på spelarens nivå
   const getGradeColor = (grade: string) => {
     switch (grade) {
@@ -46,6 +49,13 @@ export function PlayerList({ players, onSelect }: PlayerListProps) {
     return formattedPosition;
   };
 
+  const handleEditClick = (e: React.MouseEvent, player: Player) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(player);
+    }
+  };
+
   if (players.length === 0) {
     return (
       <div className="text-center py-10">
@@ -62,6 +72,7 @@ export function PlayerList({ players, onSelect }: PlayerListProps) {
           <TableHead>Position</TableHead>
           <TableHead>Nivå</TableHead>
           <TableHead>Aktiviteter</TableHead>
+          {onEdit && <TableHead className="w-16">Åtgärder</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -71,7 +82,14 @@ export function PlayerList({ players, onSelect }: PlayerListProps) {
             onClick={() => onSelect(player)}
             className="cursor-pointer hover:bg-muted/50"
           >
-            <TableCell className="font-medium">{player.name}</TableCell>
+            <TableCell className="font-medium">
+              {player.name}
+              {player.jerseyNumber && (
+                <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                  #{player.jerseyNumber}
+                </span>
+              )}
+            </TableCell>
             <TableCell>{player.position ? formatPosition(player.position) : 'Odefinierad'}</TableCell>
             <TableCell>
               <Badge className={getGradeColor(player.grade)}>
@@ -83,6 +101,17 @@ export function PlayerList({ players, onSelect }: PlayerListProps) {
                 ? `${player.activities.length} aktiviteter`
                 : "Inga aktiviteter"}
             </TableCell>
+            {onEdit && (
+              <TableCell>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={(e) => handleEditClick(e, player)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

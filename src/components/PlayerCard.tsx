@@ -2,13 +2,16 @@
 import { Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface PlayerCardProps {
   player: Player;
   onClick?: () => void;
+  onEdit?: (player: Player) => void;
 }
 
-export function PlayerCard({ player, onClick }: PlayerCardProps) {
+export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
   // Funktion för att visa färg baserat på spelarens nivå
   const getGradeColor = (grade: string) => {
     switch (grade) {
@@ -46,14 +49,38 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
     return formattedPosition;
   };
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(player);
+    }
+  };
+
   return (
     <Card 
-      className="h-full cursor-pointer hover:shadow-md transition-all" 
+      className="h-full cursor-pointer hover:shadow-md transition-all relative" 
       onClick={onClick}
     >
+      {onEdit && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-2 right-2 z-10" 
+          onClick={handleEditClick}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+      )}
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex justify-between items-center">
-          {player.name}
+          <div className="flex items-center">
+            {player.name}
+            {player.jerseyNumber && (
+              <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                #{player.jerseyNumber}
+              </span>
+            )}
+          </div>
           <Badge className={`ml-2 ${getGradeColor(player.grade)}`}>
             {getGradeText(player.grade)}
           </Badge>

@@ -1,21 +1,27 @@
 
+import { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityList } from "./ActivityList";
-import { X } from "lucide-react";
+import { EditPlayerForm } from "./EditPlayerForm";
+import { Edit, X } from "lucide-react";
 
 interface PlayerDetailProps {
   player: Player;
   activities: Activity[];
   onClose: () => void;
+  onPlayerUpdate?: (updatedPlayer: Player) => void;
 }
 
-export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps) {
+export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: PlayerDetailProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState<Player>(player);
+  
   // Filtrera aktiviteter som spelaren deltar i
   const playerActivities = activities.filter(
-    (activity) => player.activities?.includes(activity.id)
+    (activity) => currentPlayer.activities?.includes(activity.id)
   );
 
   // Funktion för att visa färg baserat på spelarens nivå
@@ -55,38 +61,77 @@ export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps)
     return formattedPosition;
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = (updatedPlayer: Player) => {
+    setCurrentPlayer(updatedPlayer);
+    setIsEditing(false);
+    if (onPlayerUpdate) {
+      onPlayerUpdate(updatedPlayer);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl mb-1 flex items-center">
-              {player.name}
-              <Badge className={`ml-3 ${getGradeColor(player.grade)}`}>
-                {getGradeText(player.grade)}
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              {player.position ? `Position: ${formatPosition(player.position)}` : "Ingen position definierad"}
-            </CardDescription>
-            <CardDescription className="mt-1">
-              {playerActivities.length > 0 
-                ? `Deltar i ${playerActivities.length} aktiviteter`
-                : "Deltar inte i några aktiviteter"}
-            </CardDescription>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <h3 className="text-lg font-semibold">Aktiviteter</h3>
-        <ActivityList activities={playerActivities} />
-      </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button variant="outline" onClick={onClose}>Stäng</Button>
-      </CardFooter>
+      {isEditing ? (
+        <CardContent className="pt-6">
+          <h2 className="text-2xl font-bold mb-4">Redigera spelare</h2>
+          <EditPlayerForm 
+            player={currentPlayer} 
+            onSave={handleSave} 
+            onCancel={handleCancel} 
+          />
+        </CardContent>
+      ) : (
+        <>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl mb-1 flex items-center">
+                  {currentPlayer.name}
+                  {currentPlayer.jerseyNumber && (
+                    <span className="ml-2 text-sm bg-gray-200 text-gray-800 px-2 py-1 rounded-full">
+                      #{currentPlayer.jerseyNumber}
+                    </span>
+                  )}
+                  <Badge className={`ml-3 ${getGradeColor(currentPlayer.grade)}`}>
+                    {getGradeText(currentPlayer.grade)}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  {currentPlayer.position ? `Position: ${formatPosition(currentPlayer.position)}` : "Ingen position definierad"}
+                </CardDescription>
+                <CardDescription className="mt-1">
+                  {playerActivities.length > 0 
+                    ? `Deltar i ${playerActivities.length} aktiviteter`
+                    : "Deltar inte i några aktiviteter"}
+                </CardDescription>
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="icon" onClick={handleEditClick}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={onClose}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <h3 className="text-lg font-semibold">Aktiviteter</h3>
+            <ActivityList activities={playerActivities} />
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button variant="outline" onClick={onClose}>Stäng</Button>
+          </CardFooter>
+        </>
+      )}
     </Card>
   );
 }

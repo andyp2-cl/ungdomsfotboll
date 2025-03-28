@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -14,6 +15,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List } from "lucide-react";
 import { PlayerList } from "@/components/PlayerList";
 import { useToast } from "@/components/ui/use-toast";
+import { EditPlayerForm } from "@/components/EditPlayerForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -25,6 +28,8 @@ export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState("players");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [players, setPlayers] = useState<Player[]>(mockPlayers);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const { toast } = useToast();
 
   // Hantera byte av spelarens nivåfilter
@@ -54,14 +59,38 @@ export default function PlayersPage() {
     });
   };
 
+  // Handle player update
+  const handlePlayerUpdate = (updatedPlayer: Player) => {
+    setPlayers(prev => 
+      prev.map(player => 
+        player.id === updatedPlayer.id ? updatedPlayer : player
+      )
+    );
+    
+    // If this is the currently selected player, update it
+    if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
+      setSelectedPlayer(updatedPlayer);
+    }
+    
+    toast({
+      title: "Spelaren uppdaterad",
+      description: `${updatedPlayer.name} har uppdaterats.`,
+    });
+  };
+
+  // Handle edit player click
+  const handleEditPlayerClick = (player: Player) => {
+    setEditingPlayer(player);
+  };
+
   // Filtrera spelare baserat på sökfråga och valda nivåer
   const filteredPlayers = useMemo(() => {
-    return mockPlayers.filter(player => {
+    return players.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesGrade = selectedGrades.length === 0 || selectedGrades.includes(player.grade);
       return matchesSearch && matchesGrade;
     });
-  }, [searchQuery, selectedGrades]);
+  }, [searchQuery, selectedGrades, players]);
 
   // Filtrera aktiviteter baserat på valda typer
   const filteredActivities = useMemo(() => {
@@ -109,8 +138,9 @@ export default function PlayersPage() {
           {selectedPlayer ? (
             <PlayerDetail 
               player={selectedPlayer} 
-              activities={mockActivities}
+              activities={activities}
               onClose={() => setSelectedPlayer(null)} 
+              onPlayerUpdate={handlePlayerUpdate}
             />
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -120,6 +150,7 @@ export default function PlayersPage() {
                     key={player.id} 
                     player={player} 
                     onClick={() => setSelectedPlayer(player)}
+                    onEdit={handleEditPlayerClick}
                   />
                 ))
               ) : (
@@ -132,6 +163,7 @@ export default function PlayersPage() {
             <PlayerList
               players={filteredPlayers}
               onSelect={setSelectedPlayer}
+              onEdit={handleEditPlayerClick}
             />
           )}
         </TabsContent>
@@ -150,7 +182,7 @@ export default function PlayersPage() {
               {selectedActivity ? (
                 <ActivityDetail
                   activity={selectedActivity}
-                  players={mockPlayers}
+                  players={players}
                   onClose={() => setSelectedActivity(null)}
                 />
               ) : (
@@ -167,6 +199,25 @@ export default function PlayersPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog for editing player in a modal */}
+      <Dialog open={editingPlayer !== null} onOpenChange={(open) => !open && setEditingPlayer(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redigera spelare</DialogTitle>
+          </DialogHeader>
+          {editingPlayer && (
+            <EditPlayerForm 
+              player={editingPlayer} 
+              onSave={(updatedPlayer) => {
+                handlePlayerUpdate(updatedPlayer);
+                setEditingPlayer(null);
+              }}
+              onCancel={() => setEditingPlayer(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
