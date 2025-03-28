@@ -4,7 +4,7 @@ import { Activity, Player, KioskSchedule } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus } from "lucide-react";
+import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus, Coffee } from "lucide-react";
 import { KioskSchedule as KioskScheduleComponent } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -40,13 +41,23 @@ export function ActivityDetail({
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   
+  // Check if activity is eligible for kiosk duty (home match at Österås IP)
+  const isKioskEligible = () => {
+    if (!currentActivity.location) return false;
+    
+    const isAtÖsteråsIP = currentActivity.location.name.includes('Österås IP');
+    const isHomeMatch = currentActivity.name.toLowerCase().startsWith('hässleholms if');
+    
+    return isAtÖsteråsIP && isHomeMatch;
+  };
+  
   // Fetch the schedule when the activity changes
   useEffect(() => {
-    if (activity.kioskScheduleId) {
-      const schedule = mockKioskSchedules.find(s => s.id === activity.kioskScheduleId);
+    if (currentActivity.kioskScheduleId) {
+      const schedule = mockKioskSchedules.find(s => s.id === currentActivity.kioskScheduleId);
       setCurrentSchedule(schedule);
     }
-  }, [activity.kioskScheduleId]);
+  }, [currentActivity.kioskScheduleId]);
   
   // Find all players participating in this activity
   const participatingPlayers = players.filter(
@@ -81,6 +92,47 @@ export function ActivityDetail({
     toast({
       title: "Kioskpass tilldelat",
       description: `${playerName} har tilldelats kioskpasset ${slotTime}.`,
+    });
+  };
+
+  // Handle creating a new kiosk schedule
+  const handleCreateKioskSchedule = () => {
+    if (!isKioskEligible()) return;
+    
+    const newScheduleId = uuidv4();
+    const newSchedule = {
+      id: newScheduleId,
+      activityId: currentActivity.id,
+      slots: [
+        { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
+        { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
+        { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
+      ]
+    };
+    
+    // Update local state
+    setCurrentSchedule(newSchedule);
+    
+    // Update the activity with the new schedule ID
+    const updatedActivity = {
+      ...currentActivity,
+      kioskScheduleId: newScheduleId
+    };
+    
+    setCurrentActivity(updatedActivity);
+    
+    // Save changes via props
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    if (onKioskScheduleUpdate) {
+      onKioskScheduleUpdate(newScheduleId, newSchedule);
+    }
+    
+    toast({
+      title: "Kioskschema skapat",
+      description: "Ett nytt kioskschema har skapats för den här aktiviteten.",
     });
   };
 
@@ -218,8 +270,21 @@ export function ActivityDetail({
                       key={player.id} 
                       className="p-2 border rounded-md flex justify-between items-center"
                     >
-                      <span>{player.name}</span>
-                      <Badge variant="outline">Betyg {player.grade}</Badge>
+                      <div className="flex items-center gap-2">
+                        {player.image ? (
+                          <img 
+                            src={player.image} 
+                            alt={player.name} 
+                            className="h-6 w-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <UserCircle className="h-6 w-6 text-gray-400" />
+                        )}
+                        <span>{player.name}</span>
+                      </div>
+                      <Badge variant="outline">
+                        {player.grade === 'TRÄNARE' ? 'Tränare' : `Nivå ${player.grade}`}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -252,7 +317,10 @@ export function ActivityDetail({
 
         {currentSchedule && (
           <div>
-            <h3 className="text-lg font-semibold flex items-center mb-3">Kioskschema</h3>
+            <h3 className="text-lg font-semibold flex items-center mb-3">
+              <Coffee className="h-5 w-5 mr-2" />
+              Kioskschema
+            </h3>
             <KioskScheduleComponent 
               schedule={currentSchedule} 
               players={players} 
@@ -261,7 +329,21 @@ export function ActivityDetail({
           </div>
         )}
         
-        {!currentSchedule && currentActivity.kioskScheduleId && (
+        {!currentSchedule && isKioskEligible() && (
+          <div className="p-4 border rounded-md bg-muted/20">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Coffee className="h-6 w-6 text-muted-foreground" />
+              <p className="text-center text-muted-foreground">
+                Denna aktivitet kan ha kioskschema
+              </p>
+              <Button onClick={handleCreateKioskSchedule} variant="outline">
+                Skapa kioskschema
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {!currentSchedule && !isKioskEligible() && currentActivity.kioskScheduleId && (
           <div className="p-4 border rounded-md bg-muted/20">
             <p className="text-muted-foreground text-center">
               Kioskschema finns men kunde inte laddas

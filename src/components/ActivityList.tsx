@@ -117,7 +117,7 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                 </div>
               )}
               
-              {canHaveKiosk && kioskAssignments.length === 0 && (
+              {canHaveKiosk && !activity.kioskScheduleId && (
                 <div className="mt-2 flex items-center text-sm text-muted-foreground">
                   <Coffee className="h-4 w-4 mr-1" />
                   <span>Kan ha kioskschema</span>

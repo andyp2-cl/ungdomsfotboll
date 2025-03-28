@@ -3,7 +3,7 @@ import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, UserCircle } from "lucide-react";
 
 interface PlayerListProps {
   players: Player[];
@@ -83,12 +83,27 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
             className="cursor-pointer hover:bg-muted/50"
           >
             <TableCell className="font-medium">
-              {player.name}
-              {player.jerseyNumber && (
-                <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                  #{player.jerseyNumber}
+              <div className="flex items-center gap-2">
+                {player.image ? (
+                  <img 
+                    src={player.image} 
+                    alt={player.name} 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <UserCircle className="h-5 w-5 text-gray-400" />
+                  </div>
+                )}
+                <span>
+                  {player.name}
+                  {player.jerseyNumber && (
+                    <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                      #{player.jerseyNumber}
+                    </span>
+                  )}
                 </span>
-              )}
+              </div>
             </TableCell>
             <TableCell>{player.position ? formatPosition(player.position) : 'Odefinierad'}</TableCell>
             <TableCell>

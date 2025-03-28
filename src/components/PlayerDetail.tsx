@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityList } from "./ActivityList";
 import { EditPlayerForm } from "./EditPlayerForm";
-import { Edit, X } from "lucide-react";
+import { Edit, X, UserCircle } from "lucide-react";
 
 interface PlayerDetailProps {
   player: Player;
@@ -92,26 +92,41 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
         <>
           <CardHeader>
             <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl mb-1 flex items-center">
-                  {currentPlayer.name}
-                  {currentPlayer.jerseyNumber && (
-                    <span className="ml-2 text-sm bg-gray-200 text-gray-800 px-2 py-1 rounded-full">
-                      #{currentPlayer.jerseyNumber}
-                    </span>
+              <div className="flex gap-4 items-center">
+                <div className="flex-shrink-0">
+                  {currentPlayer.image ? (
+                    <img 
+                      src={currentPlayer.image} 
+                      alt={currentPlayer.name} 
+                      className="h-20 w-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
+                      <UserCircle className="h-16 w-16 text-gray-400" />
+                    </div>
                   )}
-                  <Badge className={`ml-3 ${getGradeColor(currentPlayer.grade)}`}>
-                    {getGradeText(currentPlayer.grade)}
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  {currentPlayer.position ? `Position: ${formatPosition(currentPlayer.position)}` : "Ingen position definierad"}
-                </CardDescription>
-                <CardDescription className="mt-1">
-                  {playerActivities.length > 0 
-                    ? `Deltar i ${playerActivities.length} aktiviteter`
-                    : "Deltar inte i några aktiviteter"}
-                </CardDescription>
+                </div>
+                <div>
+                  <CardTitle className="text-2xl mb-1 flex items-center">
+                    {currentPlayer.name}
+                    {currentPlayer.jerseyNumber && (
+                      <span className="ml-2 text-sm bg-gray-200 text-gray-800 px-2 py-1 rounded-full">
+                        #{currentPlayer.jerseyNumber}
+                      </span>
+                    )}
+                    <Badge className={`ml-3 ${getGradeColor(currentPlayer.grade)}`}>
+                      {getGradeText(currentPlayer.grade)}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {currentPlayer.position ? `Position: ${formatPosition(currentPlayer.position)}` : "Ingen position definierad"}
+                  </CardDescription>
+                  <CardDescription className="mt-1">
+                    {playerActivities.length > 0 
+                      ? `Deltar i ${playerActivities.length} aktiviteter`
+                      : "Deltar inte i några aktiviteter"}
+                  </CardDescription>
+                </div>
               </div>
               <div className="flex space-x-2">
                 <Button variant="outline" size="icon" onClick={handleEditClick}>

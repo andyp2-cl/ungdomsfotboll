@@ -3,7 +3,7 @@ import { Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, UserCircle } from "lucide-react";
 
 interface PlayerCardProps {
   player: Player;
@@ -87,14 +87,31 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500 mb-2">
-          {player.position ? formatPosition(player.position) : 'Odefinierad position'}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {player.activities && player.activities.length > 0 
-            ? `${player.activities.length} aktiviteter`
-            : "Inga aktiviteter"}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              {player.position ? formatPosition(player.position) : 'Odefinierad position'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {player.activities && player.activities.length > 0 
+                ? `${player.activities.length} aktiviteter`
+                : "Inga aktiviteter"}
+            </p>
+          </div>
+          <div className="flex-shrink-0 ml-2">
+            {player.image ? (
+              <img 
+                src={player.image} 
+                alt={player.name} 
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                <UserCircle className="h-8 w-8 text-gray-400" />
+              </div>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

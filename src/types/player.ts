@@ -38,4 +38,5 @@ export interface Player {
   position?: string; // Lägger till position för spelaren
   activities?: string[]; // Array of activity IDs this player is participating in
   jerseyNumber?: string; // Optional jersey number for the player
+  image?: string; // URL to player's image
 }
