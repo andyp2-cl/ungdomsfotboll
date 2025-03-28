@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White background color */
+    --background: 120 57% 33%; /* Green background color to match Hässleholms IF website */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
