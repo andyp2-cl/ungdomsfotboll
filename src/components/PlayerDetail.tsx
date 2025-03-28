@@ -99,6 +99,8 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
                       src={currentPlayer.image} 
                       alt={currentPlayer.name} 
                       className="h-20 w-20 rounded-full object-cover"
+                      loading="lazy"
+                      crossOrigin="anonymous" // Adding this to help with CORS issues
                     />
                   ) : (
                     <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">

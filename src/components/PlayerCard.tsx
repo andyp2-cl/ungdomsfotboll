@@ -104,6 +104,8 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
                 src={player.image} 
                 alt={player.name} 
                 className="h-12 w-12 rounded-full object-cover"
+                loading="lazy"
+                crossOrigin="anonymous" // Adding this to help with CORS issues
               />
             ) : (
               <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
