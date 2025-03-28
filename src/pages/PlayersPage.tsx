@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
@@ -32,14 +33,22 @@ import {
   getActiveTab
 } from "@/utils/storage";
 
-export default function PlayersPage() {
-  // State för sökfråga och filtrering
+interface PlayersPageProps {
+  initialTab?: string;
+}
+
+export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathTab = location.pathname === "/activities" ? "activities" : "players";
+  const storedTab = getActiveTab();
+  
+  const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<PlayerGrade[]>([]);
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const [activeTab, setActiveTab] = useState(getActiveTab());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activities, setActivities] = useState<Activity[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -49,19 +58,43 @@ export default function PlayersPage() {
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const { toast } = useToast();
 
-  // Save the active tab whenever it changes
   useEffect(() => {
     saveActiveTab(activeTab);
-  }, [activeTab]);
+    
+    if (activeTab === "activities" && location.pathname !== "/activities") {
+      navigate("/activities", { replace: true });
+    } else if (activeTab === "players" && location.pathname !== "/players") {
+      navigate("/players", { replace: true });
+    }
+  }, [activeTab, navigate, location.pathname]);
 
-  // Get day of week in Swedish
+  useEffect(() => {
+    const storedPlayers = getStoredPlayers();
+    setPlayers(storedPlayers);
+    
+    const storedActivities = getStoredActivities();
+    if (storedActivities.length > 0) {
+      setActivities(storedActivities);
+    } else {
+      const cutoffDate = new Date('2025-03-31');
+      
+      const filteredActivities = mockActivities.filter(activity => {
+        const activityDate = new Date(activity.date);
+        return activityDate >= cutoffDate;
+      });
+      
+      const initialActivities = [...filteredActivities, ...aprilActivities];
+      setActivities(initialActivities);
+      saveActivities(initialActivities);
+    }
+  }, []);
+
   const getDayOfWeek = (dateString: string) => {
     const date = new Date(dateString);
     const dayOfWeek = date.toLocaleDateString('sv-SE', { weekday: 'long' });
     return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
   };
 
-  // Add April 2025 activities
   const aprilActivities: Activity[] = [
     {
       id: uuidv4(),
@@ -221,18 +254,15 @@ export default function PlayersPage() {
     }
   ];
 
-  // Check if an activity is eligible for kiosk assignment (home match at Österås IP)
   const isKioskEligible = (activity: Activity): boolean => {
     if (!activity.location) return false;
     
-    // Check if it's a home match at Österås IP
     const isAtÖsteråsIP = activity.location.name.includes('Österås IP');
     const isHomeMatch = activity.name.toLowerCase().startsWith('hässleholms if');
     
     return isAtÖsteråsIP && isHomeMatch;
   };
 
-  // Handle imported activities from file
   const handleImportedActivities = (importedActivities: Activity[]) => {
     const updatedActivities = [...activities, ...importedActivities];
     setActivities(updatedActivities);
@@ -243,7 +273,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle scraped matches
   const handleScrapedMatches = (newActivities: Activity[], clearExisting: boolean = false) => {
     if (clearExisting) {
       setActivities(newActivities);
@@ -263,7 +292,6 @@ export default function PlayersPage() {
     }
   };
 
-  // Handle delete all activities
   const handleDeleteAllActivities = () => {
     setActivities([]);
     saveActivities([]);
@@ -276,7 +304,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
     setSelectedGrades(prev => 
       prev.includes(grade) 
@@ -285,7 +312,6 @@ export default function PlayersPage() {
     );
   };
 
-  // Hantera byte av aktivitetstypsfilter
   const handleActivityTypeChange = (type: ActivityType) => {
     setSelectedActivityTypes(prev => 
       prev.includes(type) 
@@ -294,7 +320,6 @@ export default function PlayersPage() {
     );
   };
 
-  // Handle player update
   const handlePlayerUpdate = (updatedPlayer: Player) => {
     const updatedPlayers = players.map(player => 
       player.id === updatedPlayer.id ? updatedPlayer : player
@@ -313,7 +338,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle activity update
   const handleActivityUpdate = (updatedActivity: Activity) => {
     const updatedActivities = activities.map(activity => 
       activity.id === updatedActivity.id ? updatedActivity : activity
@@ -356,7 +380,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle kiosk assignment update
   const handleKioskAssignmentUpdate = (activityId: string, playerId?: string) => {
     const updatedActivities = activities.map(activity => 
       activity.id === activityId 
@@ -379,17 +402,14 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle edit player click
   const handleEditPlayerClick = (player: Player) => {
     setEditingPlayer(player);
   };
 
-  // Handle edit activity click
   const handleEditActivityClick = (activity: Activity) => {
     setEditingActivity(activity);
   };
 
-  // Handle add new player
   const handleAddPlayer = (newPlayer: Player) => {
     const updatedPlayers = [...players, newPlayer];
     setPlayers(updatedPlayers);
@@ -401,7 +421,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Handle add new activity
   const handleAddActivity = (newActivity: Activity) => {
     const updatedActivities = [...activities, newActivity];
     setActivities(updatedActivities);
@@ -413,7 +432,6 @@ export default function PlayersPage() {
     });
   };
 
-  // Filtrera spelare baserat på sökfråga och valda nivåer
   const filteredPlayers = useMemo(() => {
     return players.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -422,45 +440,17 @@ export default function PlayersPage() {
     });
   }, [searchQuery, selectedGrades, players]);
 
-  // Filtrera aktiviteter baserat på valda typer
   const filteredActivities = useMemo(() => {
     return activities.filter(activity => {
       return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
     });
   }, [selectedActivityTypes, activities]);
 
-  useEffect(() => {
-    // Load stored activities first
-    const storedActivities = getStoredActivities();
-    
-    // If we have stored activities, use them
-    if (storedActivities.length > 0) {
-      setActivities(storedActivities);
-    } else {
-      // Otherwise, initialize with default activities
-      const cutoffDate = new Date('2025-03-31');
-      
-      const filteredActivities = mockActivities.filter(activity => {
-        const activityDate = new Date(activity.date);
-        return activityDate >= cutoffDate;
-      });
-      
-      const initialActivities = [...filteredActivities, ...aprilActivities];
-      setActivities(initialActivities);
-      saveActivities(initialActivities);
-    }
-  }, []);
-
-  useEffect(() => {
-    const storedPlayers = getStoredPlayers();
-    setPlayers(storedPlayers);
-  }, []);
-
   return (
     <div className="container py-6">
       <h1 className="text-3xl font-bold mb-6">Fotbollsspelare</h1>
       
-      <Tabs defaultValue="players" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
           <TabsTrigger value="players">Spelare</TabsTrigger>
           <TabsTrigger value="activities">Aktiviteter</TabsTrigger>

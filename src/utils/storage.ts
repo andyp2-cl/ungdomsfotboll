@@ -6,70 +6,74 @@ const PLAYERS_STORAGE_KEY = "football-app-players";
 const ACTIVITIES_STORAGE_KEY = "football-app-activities";
 const ACTIVE_TAB_STORAGE_KEY = "football-app-active-tab";
 
-// Hämta spelare från localStorage eller använd mockdata som fallback
+// Helper function to safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error(`Error accessing localStorage for key ${key}:`, error);
+      return null;
+    }
+  },
+  
+  setItem: (key: string, value: string): boolean => {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      console.error(`Error setting localStorage for key ${key}:`, error);
+      return false;
+    }
+  }
+};
+
+// Get players from localStorage or use mockdata as fallback
 export const getStoredPlayers = (): Player[] => {
-  try {
-    const storedPlayers = localStorage.getItem(PLAYERS_STORAGE_KEY);
-    if (storedPlayers) {
+  const storedPlayers = safeLocalStorage.getItem(PLAYERS_STORAGE_KEY);
+  if (storedPlayers) {
+    try {
       return JSON.parse(storedPlayers);
+    } catch (error) {
+      console.error("Error parsing player data:", error);
     }
-    // Om inga lagrade spelare finns, använd mockdata och spara dem
-    savePlayers(mockPlayers);
-    return mockPlayers;
-  } catch (error) {
-    console.error("Fel vid hämtning av spelardata:", error);
-    return mockPlayers;
   }
+  
+  // If no stored players or parsing failed, use mockdata and save it
+  savePlayers(mockPlayers);
+  return mockPlayers;
 };
 
-// Spara spelare till localStorage
+// Save players to localStorage
 export const savePlayers = (players: Player[]): void => {
-  try {
-    localStorage.setItem(PLAYERS_STORAGE_KEY, JSON.stringify(players));
-  } catch (error) {
-    console.error("Fel vid sparande av spelardata:", error);
-  }
+  safeLocalStorage.setItem(PLAYERS_STORAGE_KEY, JSON.stringify(players));
 };
 
-// Hämta aktiviteter från localStorage
+// Get activities from localStorage
 export const getStoredActivities = (): Activity[] => {
-  try {
-    const storedActivities = localStorage.getItem(ACTIVITIES_STORAGE_KEY);
-    if (storedActivities) {
+  const storedActivities = safeLocalStorage.getItem(ACTIVITIES_STORAGE_KEY);
+  if (storedActivities) {
+    try {
       return JSON.parse(storedActivities);
+    } catch (error) {
+      console.error("Error parsing activity data:", error);
     }
-    return [];
-  } catch (error) {
-    console.error("Fel vid hämtning av aktivitetsdata:", error);
-    return [];
   }
+  return [];
 };
 
-// Spara aktiviteter till localStorage
+// Save activities to localStorage
 export const saveActivities = (activities: Activity[]): void => {
-  try {
-    localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(activities));
-  } catch (error) {
-    console.error("Fel vid sparande av aktivitetsdata:", error);
-  }
+  safeLocalStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(activities));
 };
 
-// Spara aktiv tab till localStorage
+// Save active tab to localStorage
 export const saveActiveTab = (tab: string): void => {
-  try {
-    localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
-  } catch (error) {
-    console.error("Fel vid sparande av aktiv tab:", error);
-  }
+  safeLocalStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
 };
 
-// Hämta aktiv tab från localStorage
+// Get active tab from localStorage
 export const getActiveTab = (): string => {
-  try {
-    const tab = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
-    return tab || "players"; // Default to "players" if no stored tab
-  } catch (error) {
-    console.error("Fel vid hämtning av aktiv tab:", error);
-    return "players";
-  }
+  const tab = safeLocalStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+  return tab || "players"; // Default to "players" if no stored tab
 };
