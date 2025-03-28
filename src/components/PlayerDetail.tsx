@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -13,9 +12,10 @@ interface PlayerDetailProps {
   activities: Activity[];
   onClose: () => void;
   onPlayerUpdate?: (updatedPlayer: Player) => void;
+  allPlayers?: Player[];
 }
 
-export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: PlayerDetailProps) {
+export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allPlayers = [] }: PlayerDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<Player>(player);
   
@@ -24,7 +24,7 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
     (activity) => currentPlayer.activities?.includes(activity.id)
   );
 
-  // Funktion för att visa färg baserat på spelarens nivå
+  // Function to show color based on player level
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A':
@@ -40,12 +40,12 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
     }
   };
 
-  // Funktion för att visa nivåtexten
+  // Function to show level text
   const getGradeText = (grade: string) => {
     return `Nivå ${grade}`;
   };
 
-  // Konvertera positionerna till läsbara format
+  // Convert positions to readable format
   const formatPosition = (position: string) => {
     if (position === 'TRÄNARE') return 'Tränare';
     
@@ -146,7 +146,10 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
           </CardHeader>
           <CardContent className="space-y-4">
             <h3 className="text-lg font-semibold">Aktiviteter</h3>
-            <ActivityList activities={playerActivities} />
+            <ActivityList 
+              activities={playerActivities} 
+              players={allPlayers.length > 0 ? allPlayers : [currentPlayer]} 
+            />
           </CardContent>
           <CardFooter className="flex justify-end">
             <Button variant="outline" onClick={onClose}>Stäng</Button>

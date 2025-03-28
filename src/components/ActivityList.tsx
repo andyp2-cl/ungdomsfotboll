@@ -1,4 +1,5 @@
-import { Activity } from "@/types/player";
+
+import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Clock, MapPin, Coffee, Users } from "lucide-react";
@@ -8,7 +9,7 @@ import { useMemo } from "react";
 interface ActivityListProps {
   activities: Activity[];
   onSelect?: (activity: Activity) => void;
-  players?: any[]; // Optional players to show kiosk assignments
+  players?: Player[]; // Change any[] to Player[] for better type safety
 }
 
 export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
