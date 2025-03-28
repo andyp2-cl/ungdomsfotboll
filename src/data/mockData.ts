@@ -1,8 +1,7 @@
-
 import { Activity, Player, KioskSchedule, KioskSlot } from "@/types/player";
 
 export const mockPlayers: Player[] = [
-  { id: "1", name: "Åcke Kristiansson", grade: "A", position: "BACK MF", activities: [] },
+  { id: "1", name: "Acke Kristiansson", grade: "A", position: "BACK MF", activities: [] },
   { id: "2", name: "Alvin Hansson", grade: "A", position: "MF", activities: [] },
   { id: "3", name: "Colin Brandt", grade: "A", position: "BACK", activities: [] },
   { id: "4", name: "David Tanase", grade: "A", position: "MF ANF", activities: [] },
