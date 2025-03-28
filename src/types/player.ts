@@ -1,5 +1,5 @@
 
-export type PlayerGrade = 'A' | 'B' | 'C';
+export type PlayerGrade = 'A' | 'B' | 'C' | 'D' | 'TRÄNARE';
 
 export type ActivityType = 'match' | 'cup';
 

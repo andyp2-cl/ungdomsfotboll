@@ -27,9 +27,32 @@ export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps)
         return 'bg-blue-500';
       case 'C':
         return 'bg-orange-500';
+      case 'D':
+        return 'bg-purple-500';
+      case 'TRÄNARE':
+        return 'bg-red-500';
       default:
         return 'bg-gray-500';
     }
+  };
+
+  // Funktion för att visa nivåtexten
+  const getGradeText = (grade: string) => {
+    if (grade === 'TRÄNARE') return 'Tränare';
+    return `Nivå ${grade}`;
+  };
+
+  // Konvertera positionerna till läsbara format
+  const formatPosition = (position: string) => {
+    if (position === 'TRÄNARE') return 'Tränare';
+    
+    let formattedPosition = position
+      .replace('MV', 'Målvakt')
+      .replace('BACK', 'Back')
+      .replace('MF', 'Mittfält')
+      .replace('ANF', 'Anfall');
+    
+    return formattedPosition;
   };
 
   return (
@@ -40,11 +63,11 @@ export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps)
             <CardTitle className="text-2xl mb-1 flex items-center">
               {player.name}
               <Badge className={`ml-3 ${getGradeColor(player.grade)}`}>
-                Nivå {player.grade}
+                {getGradeText(player.grade)}
               </Badge>
             </CardTitle>
             <CardDescription>
-              {player.position ? `Position: ${player.position}` : "Ingen position definierad"}
+              {player.position ? `Position: ${formatPosition(player.position)}` : "Ingen position definierad"}
             </CardDescription>
             <CardDescription className="mt-1">
               {playerActivities.length > 0 

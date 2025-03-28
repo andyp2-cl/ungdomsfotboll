@@ -18,9 +18,32 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
         return 'bg-blue-500 hover:bg-blue-600';
       case 'C':
         return 'bg-orange-500 hover:bg-orange-600';
+      case 'D':
+        return 'bg-purple-500 hover:bg-purple-600';
+      case 'TRÄNARE':
+        return 'bg-red-500 hover:bg-red-600';
       default:
         return 'bg-gray-500 hover:bg-gray-600';
     }
+  };
+
+  // Funktion för att visa nivåtexten
+  const getGradeText = (grade: string) => {
+    if (grade === 'TRÄNARE') return 'Tränare';
+    return `Nivå ${grade}`;
+  };
+
+  // Konvertera positionerna till läsbara format
+  const formatPosition = (position: string) => {
+    if (position === 'TRÄNARE') return 'Tränare';
+    
+    let formattedPosition = position
+      .replace('MV', 'Målvakt')
+      .replace('BACK', 'Back')
+      .replace('MF', 'Mittfält')
+      .replace('ANF', 'Anfall');
+    
+    return formattedPosition;
   };
 
   return (
@@ -32,13 +55,13 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
         <CardTitle className="text-lg flex justify-between items-center">
           {player.name}
           <Badge className={`ml-2 ${getGradeColor(player.grade)}`}>
-            Nivå {player.grade}
+            {getGradeText(player.grade)}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-2">
-          {player.position || 'Odefinierad position'}
+          {player.position ? formatPosition(player.position) : 'Odefinierad position'}
         </p>
         <p className="text-sm text-muted-foreground">
           {player.activities && player.activities.length > 0 
