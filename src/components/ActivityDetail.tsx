@@ -1,13 +1,12 @@
 
 import { useState } from "react";
-import { Activity, Player, KioskSlot } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, Plus, MapPin, Clock, Edit } from "lucide-react";
+import { CalendarIcon, X, Users, MapPin, Clock, Edit } from "lucide-react";
 import { KioskSchedule } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
-import { AssignKioskPopover } from "./AssignKioskPopover";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ActivityDetailProps {
@@ -24,7 +23,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
     mockKioskSchedules.find(schedule => schedule.id === activity.kioskScheduleId)
   );
   
-  // Hitta alla spelare som deltar i denna aktivitet
+  // Find all players participating in this activity
   const participatingPlayers = players.filter(
     (player) => activity.participants?.includes(player.id)
   );
@@ -46,11 +45,12 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
     
     // Get player name for the toast
     const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
+    const slotTime = currentSchedule.slots.find(s => s.id === slotId)?.time || "";
     
     // Show success toast
     toast({
       title: "Kioskpass tilldelat",
-      description: `${playerName} har tilldelats kioskpasset.`,
+      description: `${playerName} har tilldelats kioskpasset ${slotTime}.`,
     });
   };
 
@@ -149,6 +149,14 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
               players={players} 
               onAssignPlayer={handleAssignPlayer} 
             />
+          </div>
+        )}
+        
+        {!currentSchedule && activity.kioskScheduleId && (
+          <div className="p-4 border rounded-md bg-muted/20">
+            <p className="text-muted-foreground text-center">
+              Kioskschema finns men kunde inte laddas
+            </p>
           </div>
         )}
       </CardContent>

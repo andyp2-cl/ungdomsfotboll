@@ -30,12 +30,17 @@ export function AssignKioskPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button 
-          variant="outline" 
+          variant={currentAssignedId ? "outline" : "secondary"}
           size="sm" 
-          className="h-7 w-7 p-0" 
+          className="h-7 px-2 py-1"
           aria-label="Tilldela spelare"
         >
-          <UserPlus className="h-3.5 w-3.5" />
+          {currentAssignedId ? (
+            <Check className="h-3.5 w-3.5 mr-1" />
+          ) : (
+            <UserPlus className="h-3.5 w-3.5 mr-1" />
+          )}
+          {currentAssignedId ? "Ändra" : "Tilldela"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" align="end" side="top">
