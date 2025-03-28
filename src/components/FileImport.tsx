@@ -16,44 +16,97 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const parseActivityLine = (line: string): Activity | null => {
+  const parseActivitiesFromContent = (content: string): Activity[] => {
     try {
-      // Expected format: Name;Date;Time;Type;Location;LocationDescription
-      const parts = line.split(';');
-      if (parts.length < 3) return null;
-
-      const name = parts[0]?.trim();
-      const dateString = parts[1]?.trim();
-      const timeString = parts[2]?.trim();
-      const type: ActivityType = (parts[3]?.trim().toLowerCase() === 'cup') ? 'cup' : 'match';
-      const locationName = parts[4]?.trim() || undefined;
-      const locationDesc = parts[5]?.trim() || undefined;
-
-      if (!name || !dateString) return null;
-
-      // Create the activity object
-      const activity: Activity = {
-        id: uuidv4(),
-        name,
-        date: dateString,
-        time: timeString || undefined,
-        type,
-        participants: [],
-      };
-
-      // Add location if available
-      if (locationName) {
-        activity.location = {
-          name: locationName,
-          description: locationDesc,
-          gpsLink: generateFootballFieldUrl(locationName)
-        };
+      const lines = content.split('\n').filter(line => line.trim().length > 0);
+      const activities: Activity[] = [];
+      
+      let currentMonth = "";
+      let currentYear = new Date().getFullYear().toString();
+      let currentDate = "";
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Check if this is a month line
+        if (line.match(/^[A-Za-zåäöÅÄÖ]+$/)) {
+          currentMonth = line;
+          continue;
+        }
+        
+        // Check if this is a date line (e.g. "Lör 12")
+        const dateMatch = line.match(/^([A-Za-zåäöÅÄÖ]+)\s+(\d+)$/);
+        if (dateMatch) {
+          const day = dateMatch[2].padStart(2, '0');
+          const monthMap: {[key: string]: string} = {
+            "Januari": "01", "Februari": "02", "Mars": "03", "April": "04",
+            "Maj": "05", "Juni": "06", "Juli": "07", "Augusti": "08",
+            "September": "09", "Oktober": "10", "November": "11", "December": "12",
+            "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", 
+            "Maj": "05", "Jun": "06", "Jul": "07", "Aug": "08", 
+            "Sep": "09", "Okt": "10", "Nov": "11", "Dec": "12"
+          };
+          
+          const monthNumber = monthMap[currentMonth] || "01"; // Default to January if unknown
+          currentDate = `${currentYear}-${monthNumber}-${day}`;
+          continue;
+        }
+        
+        // Check if this is a match line (starts with time)
+        const matchLineMatch = line.match(/^(\d{2}:\d{2})\s*-(.+)$/);
+        if (matchLineMatch && currentDate) {
+          const time = matchLineMatch[1].trim();
+          const matchName = matchLineMatch[2].trim();
+          
+          // Get location from next line if available
+          let location = "";
+          let locationDesc = "";
+          
+          if (i + 1 < lines.length && !lines[i + 1].match(/^(\d{2}:\d{2})|([A-Za-zåäöÅÄÖ]+\s+\d+)$/) && !lines[i + 1].match(/^[A-Za-zåäöÅÄÖ]+$/)) {
+            const locationLine = lines[i + 1].trim();
+            
+            // Try to split location and description if possible
+            const locationParts = locationLine.split(/\s+(?=[A-Za-zåäöÅÄÖ]-plan)/);
+            
+            if (locationParts.length > 1) {
+              location = locationParts[0].trim();
+              locationDesc = locationParts[1].trim();
+            } else {
+              location = locationLine;
+            }
+            
+            i++; // Skip the location line in the next iteration
+          }
+          
+          // Determine if it's a cup or match
+          const type: ActivityType = matchName.toLowerCase().includes('cup') ? 'cup' : 'match';
+          
+          // Create activity object
+          const activity: Activity = {
+            id: uuidv4(),
+            name: matchName,
+            date: currentDate,
+            time: time,
+            type: type,
+            participants: [],
+          };
+          
+          // Add location if available
+          if (location) {
+            activity.location = {
+              name: location,
+              description: locationDesc,
+            };
+          }
+          
+          activities.push(activity);
+        }
       }
-
-      return activity;
+      
+      return activities;
     } catch (error) {
-      console.error("Error parsing activity line:", line, error);
-      return null;
+      console.error("Error parsing activities:", error);
+      return [];
     }
   };
 
@@ -69,13 +122,7 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
         const content = e.target?.result as string;
         if (!content) throw new Error("Kunde inte läsa filinnehållet");
 
-        const lines = content.split('\n').filter(line => line.trim().length > 0);
-        const activities: Activity[] = [];
-
-        for (const line of lines) {
-          const activity = parseActivityLine(line);
-          if (activity) activities.push(activity);
-        }
+        const activities = parseActivitiesFromContent(content);
 
         if (activities.length === 0) {
           toast({
@@ -126,11 +173,14 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Ladda upp en textfil med aktiviteter. Varje rad bör ha formatet: 
+          Ladda upp en textfil med aktiviteter i följande format:
           <br />
-          <code className="bg-muted p-1 rounded text-xs">
-            Namn;Datum(YYYY-MM-DD);Tid(HH:MM);Typ(match/cup);Plats;Platsbeskrivning
-          </code>
+          <pre className="bg-muted p-2 rounded text-xs mt-1 whitespace-pre-wrap">
+{`April
+Lör 12
+09:30 -Hässleholms IF svart - Vinslövs IF
+Österås IP F-plan 7-manna 1`}
+          </pre>
         </p>
         
         <div className="flex items-center justify-center w-full">
