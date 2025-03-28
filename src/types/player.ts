@@ -22,6 +22,7 @@ export interface Activity {
   type: ActivityType;
   participants?: string[]; // Array of player IDs who are participating
   kioskScheduleId?: string; // Referens till kioskschema om det finns
+  scraped?: boolean; // Optional flag to mark if this was imported via scraper
 }
 
 export interface Player {

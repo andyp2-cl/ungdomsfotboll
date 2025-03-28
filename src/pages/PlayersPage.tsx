@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { mockPlayers, mockActivities } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -8,11 +7,13 @@ import { SearchInput } from "@/components/SearchInput";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
+import { MatchScraper } from "@/components/MatchScraper";
 import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List } from "lucide-react";
 import { PlayerList } from "@/components/PlayerList";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -23,6 +24,8 @@ export default function PlayersPage() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activeTab, setActiveTab] = useState("players");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const { toast } = useToast();
 
   // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
@@ -42,6 +45,15 @@ export default function PlayersPage() {
     );
   };
 
+  // Handle scraped matches
+  const handleScrapedMatches = (newActivities: Activity[]) => {
+    setActivities(prev => [...prev, ...newActivities]);
+    toast({
+      title: "Matches imported",
+      description: `${newActivities.length} new matches have been added.`,
+    });
+  };
+
   // Filtrera spelare baserat på sökfråga och valda nivåer
   const filteredPlayers = useMemo(() => {
     return mockPlayers.filter(player => {
@@ -53,10 +65,10 @@ export default function PlayersPage() {
 
   // Filtrera aktiviteter baserat på valda typer
   const filteredActivities = useMemo(() => {
-    return mockActivities.filter(activity => {
+    return activities.filter(activity => {
       return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
     });
-  }, [selectedActivityTypes]);
+  }, [selectedActivityTypes, activities]);
 
   return (
     <div className="container py-6">
@@ -125,26 +137,34 @@ export default function PlayersPage() {
         </TabsContent>
         
         <TabsContent value="activities" className="space-y-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Alla aktiviteter</h2>
-            <ActivityFilter 
-              selectedTypes={selectedActivityTypes}
-              onTypeChange={handleActivityTypeChange}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Alla aktiviteter</h2>
+                <ActivityFilter 
+                  selectedTypes={selectedActivityTypes}
+                  onTypeChange={handleActivityTypeChange}
+                />
+              </div>
+              
+              {selectedActivity ? (
+                <ActivityDetail
+                  activity={selectedActivity}
+                  players={mockPlayers}
+                  onClose={() => setSelectedActivity(null)}
+                />
+              ) : (
+                <ActivityList 
+                  activities={filteredActivities} 
+                  onSelect={setSelectedActivity} 
+                />
+              )}
+            </div>
+            
+            <div className="md:col-span-1">
+              <MatchScraper onMatchesScraped={handleScrapedMatches} />
+            </div>
           </div>
-          
-          {selectedActivity ? (
-            <ActivityDetail
-              activity={selectedActivity}
-              players={mockPlayers}
-              onClose={() => setSelectedActivity(null)}
-            />
-          ) : (
-            <ActivityList 
-              activities={filteredActivities} 
-              onSelect={setSelectedActivity} 
-            />
-          )}
         </TabsContent>
       </Tabs>
     </div>
