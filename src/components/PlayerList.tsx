@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,14 +7,15 @@ import { Edit, UserCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 
 interface PlayerListProps {
   players: Player[];
-  onSelect: (player: Player) => void;
-  onEdit?: (player: Player) => void;
+  viewMode?: "grid" | "list";
+  onPlayerSelect: (player: Player) => void;
+  onPlayerEdit?: (player: Player) => void;
 }
 
 type SortField = 'name' | 'position' | 'grade' | 'activities';
 type SortDirection = 'asc' | 'desc';
 
-export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
+export function PlayerList({ players, viewMode = "list", onPlayerSelect, onPlayerEdit }: PlayerListProps) {
   const [sortField, setSortField] = React.useState<SortField>('name');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
 
@@ -62,8 +62,8 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
 
   const handleEditClick = (e: React.MouseEvent, player: Player) => {
     e.stopPropagation();
-    if (onEdit) {
-      onEdit(player);
+    if (onPlayerEdit) {
+      onPlayerEdit(player);
     }
   };
 
@@ -128,14 +128,14 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
           <TableHead onClick={() => toggleSort('activities')} className="cursor-pointer hover:bg-muted/50">
             Aktiviteter <SortIcon field="activities" />
           </TableHead>
-          {onEdit && <TableHead className="w-16">Åtgärder</TableHead>}
+          {onPlayerEdit && <TableHead className="w-16">Åtgärder</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {sortedPlayers.map((player) => (
           <TableRow 
             key={player.id} 
-            onClick={() => onSelect(player)}
+            onClick={() => onPlayerSelect(player)}
             className="cursor-pointer hover:bg-muted/50"
           >
             <TableCell className="font-medium">
@@ -172,7 +172,7 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
                 ? `${getActivityCount(player)} aktiviteter`
                 : "Inga aktiviteter"}
             </TableCell>
-            {onEdit && (
+            {onPlayerEdit && (
               <TableCell>
                 <Button 
                   variant="ghost" 
