@@ -1,9 +1,9 @@
-
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Clock, MapPin, Coffee, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -12,6 +12,21 @@ interface ActivityListProps {
 }
 
 export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
+  // Sort activities by date
+  const sortedActivities = useMemo(() => {
+    return [...activities].sort((a, b) => {
+      // Sort by date first
+      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      
+      // If dates are the same, sort by time if available
+      if (dateComparison === 0 && a.time && b.time) {
+        return a.time.localeCompare(b.time);
+      }
+      
+      return dateComparison;
+    });
+  }, [activities]);
+
   if (!activities.length) {
     return <p className="text-muted-foreground text-center p-4">Inga aktiviteter hittades</p>;
   }
@@ -55,7 +70,7 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
 
   return (
     <div className="space-y-4">
-      {activities.map((activity) => {
+      {sortedActivities.map((activity) => {
         const isEligibleForKiosk = isKioskEligible(activity);
         const kioskPlayerName = getKioskPlayerName(activity);
         const participantNames = getParticipantNames(activity);
