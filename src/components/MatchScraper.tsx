@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { scrapeHifMatches, convertScrapedToActivities } from "@/utils/scraper";
 import { Activity } from "@/types/player";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -23,14 +23,26 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
   const handleScrape = async () => {
     setIsLoading(true);
     setError(null);
+    setScrapedMatches([]);
     
     try {
       const matches = await scrapeHifMatches(year);
+      
+      if (matches.length === 0) {
+        setError(`Inga matcher hittades för ${year}`);
+        toast({
+          variant: "destructive",
+          title: "Inga matcher hittades",
+          description: `Kunde inte hitta några matcher för ${year}.`,
+        });
+        return;
+      }
+      
       const activities = convertScrapedToActivities(matches);
       setScrapedMatches(activities);
       toast({
         title: "Matcher skrapade",
-        description: `Hittade ${activities.length} matcher.`,
+        description: `Hittade ${activities.length} matcher för ${year}.`,
       });
     } catch (err) {
       setError((err as Error).message || "Misslyckades med att skrapa matcher");
@@ -55,10 +67,20 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
     }
   };
 
+  const currentYear = new Date().getFullYear();
+  const availableYears = [
+    currentYear.toString(),
+    (currentYear + 1).toString(),
+    (currentYear + 2).toString()
+  ];
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl">Matchdata-skrapare</CardTitle>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Matchdata-skrapare
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-4 items-end">
@@ -68,9 +90,11 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
                 <SelectValue placeholder="Välj år" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2027">2027</SelectItem>
+                {availableYears.map(yearOption => (
+                  <SelectItem key={yearOption} value={yearOption}>
+                    {yearOption}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -104,8 +128,11 @@ export function MatchScraper({ onMatchesScraped }: MatchScraperProps) {
             <div className="max-h-60 overflow-y-auto border rounded-md p-2">
               <ul className="space-y-2">
                 {scrapedMatches.map((match, idx) => (
-                  <li key={idx} className="text-sm">
-                    {match.name} - {new Date(match.date).toLocaleDateString('sv-SE')}
+                  <li key={idx} className="text-sm border-b pb-1 last:border-0 last:pb-0">
+                    <div className="font-medium">{match.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(match.date).toLocaleDateString('sv-SE')}
+                    </div>
                   </li>
                 ))}
               </ul>

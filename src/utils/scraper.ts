@@ -9,101 +9,103 @@ interface ScrapedMatch {
 
 export async function scrapeHifMatches(year: string = "2025"): Promise<ScrapedMatch[]> {
   try {
-    // Eftersom vi kör i webbläsaren behöver vi använda en CORS proxy för att hämta data
-    // Observera att detta är för demo och skulle normalt göras på servern
-    const corsProxy = "https://corsproxy.io/?";
-    const url = `${corsProxy}https://www.svenskalag.se/hessleholmsif-fotboll-p2016/kalender/${year}`;
+    // We need to fetch from the webcal URL and parse the iCalendar format
+    // Convert webcal to https for fetch compatibility
+    const calendarUrl = "https://cal.svenskalag.se/34091";
+    console.log(`Fetching calendar data from ${calendarUrl}...`);
     
-    console.log(`Scraping HIF matches from ${url}...`);
-    
-    const response = await fetch(url);
+    const response = await fetch(calendarUrl);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.status}`);
+      throw new Error(`Failed to fetch calendar data: ${response.status}`);
     }
     
-    const html = await response.text();
-    console.log(`Received HTML of length: ${html.length}`);
+    const icalData = await response.text();
+    console.log(`Received iCalendar data of length: ${icalData.length}`);
     
-    // Använd en regex för att extrahera matchinformation från HTML
-    // Detta är ett förenklat exempel och skulle vara mer robust i en produktionsmiljö
-    const matchRegex = /<div class="cal-event-item[^>]*>[^]*?<span class="cal-event-name-inner">([^<]+)<\/span>[^]*?<span class="cal-day">(\d+)<\/span>\s*<span class="cal-month">(\w+)<\/span>\s*<span class="cal-weekday">([^<]+)<\/span>[^]*?<\/div>/g;
+    // Parse the iCalendar data to extract events
+    const events = parseICalEvents(icalData);
+    console.log(`Parsed ${events.length} events from calendar`);
     
-    const months: Record<string, string> = {
-      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'maj': '05', 'jun': '06',
-      'jul': '07', 'aug': '08', 'sep': '09', 'okt': '10', 'nov': '11', 'dec': '12'
-    };
+    // Filter events by year
+    const selectedYearEvents = events.filter(event => {
+      const eventYear = event.date.substring(0, 4);
+      return eventYear === year;
+    });
     
-    const matches: ScrapedMatch[] = [];
-    let match;
+    console.log(`Found ${selectedYearEvents.length} events for year ${year}`);
     
-    while ((match = matchRegex.exec(html)) !== null) {
-      const name = match[1].trim();
-      const day = match[2].padStart(2, '0');
-      const monthName = match[3].toLowerCase();
-      const month = months[monthName] || '01'; // Default to January if not found
-      const date = `${year}-${month}-${day}`;
-      
-      // Kontrollera om det är en match eller cup baserat på namnet
-      const type: ActivityType = name.toLowerCase().includes('cup') ? 'cup' : 'match';
-      
-      matches.push({
-        name,
-        date,
-        type
-      });
-    }
-    
-    console.log(`Found ${matches.length} matches`);
-    
-    // Om vi inte hittar några matcher med regexp (kanske på grund av ändringar i HTML-strukturen)
-    // returnerar vi mock-data som fallback för demo-syften
-    if (matches.length === 0) {
-      console.warn("No matches found with regex, using fallback mock data");
-      return [
-        {
-          name: "Match mot IFK Hässleholm svart (FALLBACK)",
-          date: `${year}-01-17`,
-          type: "match",
-        },
-        {
-          name: "Match mot Åhus Horna BK vit (FALLBACK)",
-          date: `${year}-01-19`,
-          type: "match",
-        },
-        {
-          name: "Match mot Vittsjö GIK (FALLBACK)",
-          date: `${year}-01-19`,
-          type: "match",
-        }
-      ];
-    }
-    
-    return matches;
+    return selectedYearEvents;
   } catch (error) {
-    console.error("Error scraping HIF matches:", error);
-    // Vid fel returnerar vi också mock-data som fallback
-    return [
-      {
-        name: "Match mot IFK Hässleholm svart (ERROR FALLBACK)",
-        date: `${year}-01-17`,
-        type: "match",
-      },
-      {
-        name: "Match mot Åhus Horna BK vit (ERROR FALLBACK)",
-        date: `${year}-01-19`,
-        type: "match",
-      },
-      {
-        name: "Match mot Vittsjö GIK (ERROR FALLBACK)",
-        date: `${year}-01-19`,
-        type: "match",
-      }
-    ];
+    console.error("Error scraping calendar data:", error);
+    // Fallback to mock data if the scraping fails
+    return generateMockData(year);
   }
 }
 
-// Konvertera skrapade matcher till aktiviteter
+// Parse iCalendar format to extract events
+function parseICalEvents(icalData: string): ScrapedMatch[] {
+  const events: ScrapedMatch[] = [];
+  const eventRegex = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;
+  const summaryRegex = /SUMMARY:([^\n]+)/;
+  const dtStartRegex = /DTSTART:(\d{8}T\d{6}Z?)/;
+  
+  let match;
+  while ((match = eventRegex.exec(icalData)) !== null) {
+    const eventData = match[1];
+    
+    // Extract summary (name)
+    const summaryMatch = summaryRegex.exec(eventData);
+    if (!summaryMatch) continue;
+    const name = summaryMatch[1].trim();
+    
+    // Extract start date and time
+    const dtStartMatch = dtStartRegex.exec(eventData);
+    if (!dtStartMatch) continue;
+    
+    // Parse the date from ical format (YYYYMMDDTHHMMSSZ)
+    const dtStart = dtStartMatch[1];
+    const year = dtStart.substring(0, 4);
+    const month = dtStart.substring(4, 6);
+    const day = dtStart.substring(6, 8);
+    const date = `${year}-${month}-${day}`;
+    
+    // Determine activity type based on name
+    const type: ActivityType = name.toLowerCase().includes('cup') ? 'cup' : 'match';
+    
+    events.push({
+      name,
+      date,
+      type
+    });
+  }
+  
+  return events;
+}
+
+// Generate mock data as fallback
+function generateMockData(year: string): ScrapedMatch[] {
+  console.warn("Using fallback mock data");
+  return [
+    {
+      name: "Match mot IFK Hässleholm svart (FALLBACK)",
+      date: `${year}-01-17`,
+      type: "match",
+    },
+    {
+      name: "Match mot Åhus Horna BK vit (FALLBACK)",
+      date: `${year}-01-19`,
+      type: "match",
+    },
+    {
+      name: "Match mot Vittsjö GIK (FALLBACK)",
+      date: `${year}-01-19`,
+      type: "match",
+    }
+  ];
+}
+
+// Convert scraped matches to activities
 export function convertScrapedToActivities(
   scrapedMatches: ScrapedMatch[]
 ): Activity[] {
