@@ -1,16 +1,17 @@
+
 import React, { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import PlayerList from "@/components/PlayerList";
-import ActivityList from "@/components/ActivityList";
+import { PlayerList } from "@/components/PlayerList";
+import { ActivityList } from "@/components/ActivityList";
 import { Player, Activity } from "@/types/player";
-import { mockActivities, aprilActivities } from "@/data/mockData";
+import { mockActivities } from "@/data/mockData";
 import { getStoredPlayers, saveActivities, getStoredActivities, saveActiveTab, getActiveTab } from "@/utils/storage";
 import { format } from "date-fns";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Define the missing storage key constants
+// Define the storage key constants
 const PLAYERS_STORAGE_KEY = "football-app-players";
 const ACTIVITIES_STORAGE_KEY = "football-app-activities";
 
@@ -24,7 +25,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || "players");
   const location = useLocation();
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -78,12 +79,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({ initialTab }) => {
       </TabsList>
       <TabsContent value="players" className="space-y-4">
         <ScrollArea className="h-[500px] w-full rounded-md border">
-          <PlayerList players={players} setPlayers={setPlayers} />
+          <PlayerList players={players} onSelect={() => {}} />
         </ScrollArea>
       </TabsContent>
       <TabsContent value="activities" className="space-y-4">
         <ScrollArea className="h-[500px] w-full rounded-md border">
-          <ActivityList activities={activities} setActivities={setActivities} players={players} />
+          <ActivityList activities={activities} players={players} />
         </ScrollArea>
       </TabsContent>
     </Tabs>
