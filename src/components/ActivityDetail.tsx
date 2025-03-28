@@ -236,7 +236,7 @@ export function ActivityDetail({
                         <span>{player.name}</span>
                       </div>
                       <Badge variant="outline">
-                        {player.grade === 'TRÄNARE' ? 'Tränare' : `Nivå ${player.grade}`}
+                        {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
                       </Badge>
                     </div>
                   ))}
