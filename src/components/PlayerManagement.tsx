@@ -7,6 +7,8 @@ import { PlayerList } from "@/components/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Grid, List, Plus } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useEffect } from "react";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -41,6 +43,15 @@ export function PlayerManagement({
   onAddPlayerClick,
   onEditPlayerClick,
 }: PlayerManagementProps) {
+  const isMobile = useMobile();
+  
+  // Set default view to list on mobile
+  useEffect(() => {
+    if (isMobile && viewMode === "grid") {
+      onViewModeChange("list");
+    }
+  }, [isMobile, viewMode, onViewModeChange]);
+
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">

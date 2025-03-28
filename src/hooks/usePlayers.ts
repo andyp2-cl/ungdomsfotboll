@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Player, PlayerGrade } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
+import { useMobile } from "@/hooks/use-mobile";
 
 export function usePlayers() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -12,8 +13,14 @@ export function usePlayers() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const isMobile = useMobile();
+  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "list" : "grid");
   const { toast } = useToast();
+
+  // Update view mode if device type changes
+  useEffect(() => {
+    setViewMode(isMobile ? "list" : "grid");
+  }, [isMobile]);
 
   useEffect(() => {
     const loadPlayers = async () => {
