@@ -52,7 +52,7 @@ export function PlayerList({ players, onSelect }: PlayerListProps) {
             <TableCell>{player.position || 'Odefinierad'}</TableCell>
             <TableCell>
               <Badge className={getGradeColor(player.grade)}>
-                {player.grade}
+                Nivå {player.grade}
               </Badge>
             </TableCell>
             <TableCell>

@@ -32,7 +32,7 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
         <CardTitle className="text-lg flex justify-between items-center">
           {player.name}
           <Badge className={`ml-2 ${getGradeColor(player.grade)}`}>
-            {player.grade}
+            Nivå {player.grade}
           </Badge>
         </CardTitle>
       </CardHeader>
