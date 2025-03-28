@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,12 +9,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const playerFormSchema = z.object({
   name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
-  grade: z.enum(["A", "B", "C", "D", "TRÄNARE"], {
+  grade: z.enum(["A", "B", "C", "D"], {
     required_error: "Välj en nivå",
   }),
   positions: z.array(z.string()).optional(),
@@ -164,7 +165,6 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
                   <SelectItem value="B">Nivå B</SelectItem>
                   <SelectItem value="C">Nivå C</SelectItem>
                   <SelectItem value="D">Nivå D</SelectItem>
-                  <SelectItem value="TRÄNARE">Tränare</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

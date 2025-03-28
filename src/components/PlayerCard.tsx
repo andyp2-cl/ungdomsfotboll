@@ -1,4 +1,3 @@
-
 import { Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +22,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         return 'bg-orange-500 hover:bg-orange-600';
       case 'D':
         return 'bg-purple-500 hover:bg-purple-600';
-      case 'TRÄNARE':
-        return 'bg-red-500 hover:bg-red-600';
       default:
         return 'bg-gray-500 hover:bg-gray-600';
     }
@@ -32,7 +29,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
 
   // Funktion för att visa nivåtexten
   const getGradeText = (grade: string) => {
-    if (grade === 'TRÄNARE') return 'Tränare';
     return `Nivå ${grade}`;
   };
 
@@ -111,7 +107,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
                 alt={player.name} 
                 className="h-12 w-12 rounded-full object-cover"
                 loading="lazy"
-                crossOrigin="anonymous" // Adding this to help with CORS issues
+                crossOrigin="anonymous"
               />
             ) : (
               <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,15 +28,12 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
         return 'bg-orange-500 hover:bg-orange-600';
       case 'D':
         return 'bg-purple-500 hover:bg-purple-600';
-      case 'TRÄNARE':
-        return 'bg-red-500 hover:bg-red-600';
       default:
         return 'bg-gray-500 hover:bg-gray-600';
     }
   };
 
   const getGradeText = (grade: string) => {
-    if (grade === 'TRÄNARE') return 'Tränare';
     return `Nivå ${grade}`;
   };
 
@@ -53,7 +49,6 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     return formattedPosition;
   };
 
-  // Format positions array to readable string
   const formatPositions = (positions: string[] | undefined) => {
     if (!positions || positions.length === 0) return 'Odefinierad';
     return positions.map(formatPosition).join(', ');

@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const playerFormSchema = z.object({
   name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
-  grade: z.enum(["A", "B", "C", "D", "TRÄNARE"], {
+  grade: z.enum(["A", "B", "C", "D"], {
     required_error: "Välj en nivå",
   }),
   positions: z.array(z.string()).optional(),
@@ -77,7 +76,6 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
   };
 
   const handleSubmit = (values: PlayerFormValues) => {
-    // Create a new player with form values and a unique ID
     const newPlayer: Player = {
       id: uuidv4(),
       name: values.name,
@@ -162,7 +160,6 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
                   <SelectItem value="B">Nivå B</SelectItem>
                   <SelectItem value="C">Nivå C</SelectItem>
                   <SelectItem value="D">Nivå D</SelectItem>
-                  <SelectItem value="TRÄNARE">Tränare</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

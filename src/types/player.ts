@@ -1,5 +1,5 @@
 
-export type PlayerGrade = 'A' | 'B' | 'C' | 'D' | 'TRÄNARE';
+export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
 export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 

@@ -8,7 +8,7 @@ interface PlayerFilterProps {
 }
 
 export function PlayerFilter({ selectedGrades, onGradeChange }: PlayerFilterProps) {
-  const grades: PlayerGrade[] = ['A', 'B', 'C'];
+  const grades: PlayerGrade[] = ['A', 'B', 'C', 'D'];
   
   return (
     <div className="flex space-x-2 mb-4">
@@ -24,7 +24,9 @@ export function PlayerFilter({ selectedGrades, onGradeChange }: PlayerFilterProp
               ? 'bg-green-500 hover:bg-green-600' 
               : grade === 'B' 
                 ? 'bg-blue-500 hover:bg-blue-600' 
-                : 'bg-orange-500 hover:bg-orange-600'
+                : grade === 'C'
+                  ? 'bg-orange-500 hover:bg-orange-600'
+                  : 'bg-purple-500 hover:bg-purple-600'
             : ''}
         >
           {grade}

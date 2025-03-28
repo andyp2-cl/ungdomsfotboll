@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -35,8 +34,6 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
         return 'bg-orange-500';
       case 'D':
         return 'bg-purple-500';
-      case 'TRÄNARE':
-        return 'bg-red-500';
       default:
         return 'bg-gray-500';
     }
@@ -44,7 +41,6 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
 
   // Funktion för att visa nivåtexten
   const getGradeText = (grade: string) => {
-    if (grade === 'TRÄNARE') return 'Tränare';
     return `Nivå ${grade}`;
   };
 
