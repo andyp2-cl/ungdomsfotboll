@@ -1,15 +1,17 @@
 
 import { KioskSchedule as KioskScheduleType, KioskSlot, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock } from "lucide-react";
+import { Clock, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AssignKioskPopover } from "./AssignKioskPopover";
 
 interface KioskScheduleProps {
   schedule: KioskScheduleType;
   players: Player[];
+  onAssignPlayer?: (slotId: string, playerId: string) => void;
 }
 
-export function KioskSchedule({ schedule, players }: KioskScheduleProps) {
+export function KioskSchedule({ schedule, players, onAssignPlayer }: KioskScheduleProps) {
   // Funktion för att hitta spelarnamn baserat på ID
   const getPlayerName = (playerId?: string) => {
     if (!playerId) return "Ej tilldelad";
@@ -34,9 +36,19 @@ export function KioskSchedule({ schedule, players }: KioskScheduleProps) {
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span>{slot.time}</span>
               </div>
-              <Badge variant={slot.assignedPlayerId ? "default" : "outline"}>
-                {getPlayerName(slot.assignedPlayerId)}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={slot.assignedPlayerId ? "default" : "outline"}>
+                  {getPlayerName(slot.assignedPlayerId)}
+                </Badge>
+                {onAssignPlayer && (
+                  <AssignKioskPopover 
+                    players={players} 
+                    slotId={slot.id}
+                    onAssignPlayer={onAssignPlayer}
+                    currentAssignedId={slot.assignedPlayerId}
+                  />
+                )}
+              </div>
             </div>
           ))}
         </div>

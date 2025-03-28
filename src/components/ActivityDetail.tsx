@@ -1,11 +1,14 @@
 
-import { Activity, Player } from "@/types/player";
+import { useState } from "react";
+import { Activity, Player, KioskSlot } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users } from "lucide-react";
+import { CalendarIcon, X, Users, Plus } from "lucide-react";
 import { KioskSchedule } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
+import { AssignKioskPopover } from "./AssignKioskPopover";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -14,15 +17,41 @@ interface ActivityDetailProps {
 }
 
 export function ActivityDetail({ activity, players, onClose }: ActivityDetailProps) {
+  const { toast } = useToast();
+  // State to hold the current kiosk schedule
+  const [currentSchedule, setCurrentSchedule] = useState(
+    mockKioskSchedules.find(schedule => schedule.id === activity.kioskScheduleId)
+  );
+  
   // Hitta alla spelare som deltar i denna aktivitet
   const participatingPlayers = players.filter(
     (player) => activity.participants?.includes(player.id)
   );
 
-  // Hitta kioskschemat för denna aktivitet
-  const kioskSchedule = mockKioskSchedules.find(
-    (schedule) => schedule.id === activity.kioskScheduleId
-  );
+  // Handle assigning a player to a kiosk slot
+  const handleAssignPlayer = (slotId: string, playerId: string) => {
+    if (!currentSchedule) return;
+    
+    // Create a new schedule with the updated slot assignment
+    const updatedSchedule = {
+      ...currentSchedule,
+      slots: currentSchedule.slots.map(slot => 
+        slot.id === slotId ? { ...slot, assignedPlayerId: playerId } : slot
+      )
+    };
+    
+    // Update the state
+    setCurrentSchedule(updatedSchedule);
+    
+    // Get player name for the toast
+    const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
+    
+    // Show success toast
+    toast({
+      title: "Kioskpass tilldelat",
+      description: `${playerName} har tilldelats kioskpasset.`,
+    });
+  };
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -71,9 +100,13 @@ export function ActivityDetail({ activity, players, onClose }: ActivityDetailPro
           )}
         </div>
 
-        {kioskSchedule && (
+        {currentSchedule && (
           <div>
-            <KioskSchedule schedule={kioskSchedule} players={players} />
+            <KioskSchedule 
+              schedule={currentSchedule} 
+              players={players} 
+              onAssignPlayer={handleAssignPlayer} 
+            />
           </div>
         )}
       </CardContent>
