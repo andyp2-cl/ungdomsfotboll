@@ -69,24 +69,51 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   }, [activeTab, navigate, location.pathname]);
 
   useEffect(() => {
-    const storedPlayers = getStoredPlayers();
-    setPlayers(storedPlayers);
+    const timeoutId = setTimeout(() => {
+      const storedPlayers = getStoredPlayers();
+      setPlayers(storedPlayers);
+      
+      const storedActivities = getStoredActivities();
+      if (storedActivities.length > 0) {
+        setActivities(storedActivities);
+      } else {
+        const cutoffDate = new Date('2025-03-31');
+        
+        const filteredActivities = mockActivities.filter(activity => {
+          const activityDate = new Date(activity.date);
+          return activityDate >= cutoffDate;
+        });
+        
+        const initialActivities = [...filteredActivities, ...aprilActivities];
+        setActivities(initialActivities);
+        saveActivities(initialActivities);
+      }
+    }, 0);
     
-    const storedActivities = getStoredActivities();
-    if (storedActivities.length > 0) {
-      setActivities(storedActivities);
-    } else {
-      const cutoffDate = new Date('2025-03-31');
-      
-      const filteredActivities = mockActivities.filter(activity => {
-        const activityDate = new Date(activity.date);
-        return activityDate >= cutoffDate;
-      });
-      
-      const initialActivities = [...filteredActivities, ...aprilActivities];
-      setActivities(initialActivities);
-      saveActivities(initialActivities);
-    }
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === PLAYERS_STORAGE_KEY) {
+        try {
+          const newPlayers = event.newValue ? JSON.parse(event.newValue) : [];
+          setPlayers(newPlayers);
+        } catch (error) {
+          console.error("Error parsing players from storage event:", error);
+        }
+      } else if (event.key === ACTIVITIES_STORAGE_KEY) {
+        try {
+          const newActivities = event.newValue ? JSON.parse(event.newValue) : [];
+          setActivities(newActivities);
+        } catch (error) {
+          console.error("Error parsing activities from storage event:", error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const getDayOfWeek = (dateString: string) => {

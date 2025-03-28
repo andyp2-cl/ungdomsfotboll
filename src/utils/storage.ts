@@ -20,6 +20,12 @@ const safeLocalStorage = {
   setItem: (key: string, value: string): boolean => {
     try {
       localStorage.setItem(key, value);
+      // Force a storage event to sync across tabs/windows
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: key,
+        newValue: value,
+        storageArea: localStorage
+      }));
       return true;
     } catch (error) {
       console.error(`Error setting localStorage for key ${key}:`, error);
