@@ -7,7 +7,8 @@ import { PlayerFilter } from "@/components/PlayerFilter";
 import { SearchInput } from "@/components/SearchInput";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
-import { Player, PlayerGrade, ActivityType } from "@/types/player";
+import { ActivityDetail } from "@/components/ActivityDetail";
+import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function PlayersPage() {
@@ -16,6 +17,7 @@ export default function PlayersPage() {
   const [selectedGrades, setSelectedGrades] = useState<PlayerGrade[]>([]);
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activeTab, setActiveTab] = useState("players");
 
   // Hantera byte av spelarens betygfilter
@@ -109,7 +111,18 @@ export default function PlayersPage() {
             />
           </div>
           
-          <ActivityList activities={filteredActivities} />
+          {selectedActivity ? (
+            <ActivityDetail
+              activity={selectedActivity}
+              players={mockPlayers}
+              onClose={() => setSelectedActivity(null)}
+            />
+          ) : (
+            <ActivityList 
+              activities={filteredActivities} 
+              onSelect={setSelectedActivity} 
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

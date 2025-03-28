@@ -1,5 +1,5 @@
 
-import { Activity, Player } from "@/types/player";
+import { Activity, Player, KioskSchedule, KioskSlot } from "@/types/player";
 
 export const mockPlayers: Player[] = [
   { id: "1", name: "Alexander Isak", grade: "A", activities: ["1", "3"] },
@@ -20,20 +20,53 @@ export const mockActivities: Activity[] = [
     name: "Landskamp mot Danmark", 
     date: "2023-06-10", 
     type: "match",
-    participants: ["1", "2", "3", "5", "8", "10"]
+    participants: ["1", "2", "3", "5", "8", "10"],
+    kioskScheduleId: "1"
   },
   { 
     id: "2", 
     name: "Nordic Cup", 
     date: "2023-07-15", 
     type: "cup",
-    participants: ["2", "4", "7", "8"]
+    participants: ["2", "4", "7", "8"],
+    kioskScheduleId: "2"
   },
   { 
     id: "3", 
     name: "Träningmatch mot Norge", 
     date: "2023-08-05", 
     type: "match",
-    participants: ["1", "3", "6", "10"]
+    participants: ["1", "3", "6", "10"],
+    kioskScheduleId: "3"
   },
+];
+
+export const mockKioskSchedules: KioskSchedule[] = [
+  {
+    id: "1",
+    activityId: "1",
+    slots: [
+      { id: "1_1", time: "12:30-13:30", assignedPlayerId: "5" },
+      { id: "1_2", time: "13:30-14:30", assignedPlayerId: "8" },
+      { id: "1_3", time: "14:30-15:30" }
+    ]
+  },
+  {
+    id: "2",
+    activityId: "2",
+    slots: [
+      { id: "2_1", time: "10:00-11:00", assignedPlayerId: "4" },
+      { id: "2_2", time: "11:00-12:00", assignedPlayerId: "7" },
+      { id: "2_3", time: "12:00-13:00" }
+    ]
+  },
+  {
+    id: "3",
+    activityId: "3",
+    slots: [
+      { id: "3_1", time: "14:00-15:00", assignedPlayerId: "6" },
+      { id: "3_2", time: "15:00-16:00", assignedPlayerId: "1" },
+      { id: "3_3", time: "16:00-17:00" }
+    ]
+  }
 ];

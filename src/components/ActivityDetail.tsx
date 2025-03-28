@@ -1,0 +1,85 @@
+
+import { Activity, Player } from "@/types/player";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, X, Users } from "lucide-react";
+import { KioskSchedule } from "./KioskSchedule";
+import { mockKioskSchedules } from "@/data/mockData";
+
+interface ActivityDetailProps {
+  activity: Activity;
+  players: Player[];
+  onClose: () => void;
+}
+
+export function ActivityDetail({ activity, players, onClose }: ActivityDetailProps) {
+  // Hitta alla spelare som deltar i denna aktivitet
+  const participatingPlayers = players.filter(
+    (player) => activity.participants?.includes(player.id)
+  );
+
+  // Hitta kioskschemat för denna aktivitet
+  const kioskSchedule = mockKioskSchedules.find(
+    (schedule) => schedule.id === activity.kioskScheduleId
+  );
+
+  return (
+    <Card className="w-full lg:max-w-3xl mx-auto">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl mb-1 flex items-center">
+              {activity.name}
+              <Badge 
+                variant={activity.type === "match" ? "default" : "secondary"}
+                className="ml-3"
+              >
+                {activity.type === "match" ? "Match" : "Cup"}
+              </Badge>
+            </CardTitle>
+            <CardDescription className="flex items-center">
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              {new Date(activity.date).toLocaleDateString('sv-SE')}
+            </CardDescription>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold flex items-center mb-3">
+            <Users className="h-5 w-5 mr-2" />
+            Deltagare ({participatingPlayers.length})
+          </h3>
+          {participatingPlayers.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {participatingPlayers.map((player) => (
+                <div 
+                  key={player.id} 
+                  className="p-2 border rounded-md flex justify-between items-center"
+                >
+                  <span>{player.name}</span>
+                  <Badge variant="outline">Betyg {player.grade}</Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">Inga deltagare</p>
+          )}
+        </div>
+
+        {kioskSchedule && (
+          <div>
+            <KioskSchedule schedule={kioskSchedule} players={players} />
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button variant="outline" onClick={onClose}>Stäng</Button>
+      </CardFooter>
+    </Card>
+  );
+}
