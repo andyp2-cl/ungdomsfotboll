@@ -1,3 +1,5 @@
+
+import React from "react";
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
