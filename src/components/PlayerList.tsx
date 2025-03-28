@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -54,6 +55,11 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
     return positions.map(formatPosition).join(', ');
   };
 
+  const getActivityCount = (player: Player) => {
+    if (!player.activities || player.activities.length === 0) return 0;
+    return player.activities.length;
+  };
+
   const handleEditClick = (e: React.MouseEvent, player: Player) => {
     e.stopPropagation();
     if (onEdit) {
@@ -83,8 +89,8 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
       case 'grade':
         return a.grade.localeCompare(b.grade) * direction;
       case 'activities':
-        const activitiesA = a.activities?.length || 0;
-        const activitiesB = b.activities?.length || 0;
+        const activitiesA = getActivityCount(a);
+        const activitiesB = getActivityCount(b);
         return (activitiesA - activitiesB) * direction;
       default:
         return 0;
@@ -162,8 +168,8 @@ export function PlayerList({ players, onSelect, onEdit }: PlayerListProps) {
               </Badge>
             </TableCell>
             <TableCell>
-              {player.activities && player.activities.length > 0 
-                ? `${player.activities.length} aktiviteter`
+              {getActivityCount(player) > 0 
+                ? `${getActivityCount(player)} aktiviteter`
                 : "Inga aktiviteter"}
             </TableCell>
             {onEdit && (

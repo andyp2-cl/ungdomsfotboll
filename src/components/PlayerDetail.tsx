@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -18,7 +19,7 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate }: Pl
   const [isEditing, setIsEditing] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<Player>(player);
   
-  // Filtrera aktiviteter som spelaren deltar i
+  // Filter activities that the player participates in
   const playerActivities = activities.filter(
     (activity) => currentPlayer.activities?.includes(activity.id)
   );
