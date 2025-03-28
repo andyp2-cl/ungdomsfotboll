@@ -373,25 +373,7 @@ export default function PlayersPage() {
 
   // Handle add new activity
   const handleAddActivity = (newActivity: Activity) => {
-    let activityToAdd = { ...newActivity };
-    
-    if (isKioskEligible(newActivity) && !newActivity.kioskScheduleId) {
-      const newScheduleId = uuidv4();
-      const newSchedule = {
-        id: newScheduleId,
-        activityId: newActivity.id,
-        slots: [
-          { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
-          { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
-          { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
-        ]
-      };
-      
-      setKioskSchedules(prev => [...prev, newSchedule]);
-      activityToAdd.kioskScheduleId = newScheduleId;
-    }
-    
-    setActivities(prev => [...prev, activityToAdd]);
+    setActivities(prev => [...prev, newActivity]);
     setIsAddActivityOpen(false);
     toast({
       title: "Aktivitet tillagd",
@@ -423,27 +405,7 @@ export default function PlayersPage() {
       return activityDate >= cutoffDate;
     });
     
-    const processedActivities = [...filteredActivities, ...aprilActivities].map(activity => {
-      if (isKioskEligible(activity) && !activity.kioskScheduleId) {
-        const newScheduleId = uuidv4();
-        const newSchedule = {
-          id: newScheduleId,
-          activityId: activity.id,
-          slots: [
-            { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
-            { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
-            { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
-          ]
-        };
-        
-        setKioskSchedules(prev => [...prev, newSchedule]);
-        activity.kioskScheduleId = newScheduleId;
-      }
-      
-      return activity;
-    });
-    
-    setActivities(processedActivities);
+    setActivities([...filteredActivities, ...aprilActivities]);
   }, []);
 
   return (

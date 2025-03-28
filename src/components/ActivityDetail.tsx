@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { Activity, Player, KioskSchedule } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus, Coffee } from "lucide-react";
-import { KioskSchedule as KioskScheduleComponent } from "./KioskSchedule";
-import { mockKioskSchedules } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { AddPlayersToActivity } from "./AddPlayersToActivity";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +14,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { UserCircle, Check } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
@@ -23,7 +24,6 @@ interface ActivityDetailProps {
   players: Player[];
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
-  onKioskScheduleUpdate?: (scheduleId: string, updatedSchedule: KioskSchedule) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
 }
 
@@ -32,12 +32,9 @@ export function ActivityDetail({
   players, 
   onClose, 
   onEdit, 
-  onKioskScheduleUpdate,
   onActivityUpdate
 }: ActivityDetailProps) {
   const { toast } = useToast();
-  // State to hold the current kiosk schedule
-  const [currentSchedule, setCurrentSchedule] = useState<KioskSchedule | undefined>(undefined);
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   
@@ -51,97 +48,46 @@ export function ActivityDetail({
     return isAtÖsteråsIP && isHomeMatch;
   };
   
-  // Fetch the schedule when the activity changes
-  useEffect(() => {
-    if (currentActivity.kioskScheduleId) {
-      const schedule = mockKioskSchedules.find(s => s.id === currentActivity.kioskScheduleId);
-      setCurrentSchedule(schedule);
-    }
-  }, [currentActivity.kioskScheduleId]);
-  
   // Find all players participating in this activity
   const participatingPlayers = players.filter(
     (player) => currentActivity.participants?.includes(player.id)
   );
 
-  // Handle assigning a player to a kiosk slot
-  const handleAssignPlayer = (slotId: string, playerId: string) => {
-    if (!currentSchedule) return;
-    
-    // Create a new schedule with the updated slot assignment
-    const updatedSchedule = {
-      ...currentSchedule,
-      slots: currentSchedule.slots.map(slot => 
-        slot.id === slotId ? { ...slot, assignedPlayerId: playerId } : slot
-      )
+  // Get assigned kiosk player name
+  const getKioskPlayerName = () => {
+    if (!currentActivity.kioskAssignedPlayerId) return "Ej tilldelad";
+    const player = players.find(p => p.id === currentActivity.kioskAssignedPlayerId);
+    return player ? player.name : "Okänd spelare";
+  };
+
+  // Handle assigning a player to kiosk duty
+  const handleAssignKioskPlayer = (playerId: string) => {
+    // Update the activity with the assigned player
+    const updatedActivity = {
+      ...currentActivity,
+      kioskAssignedPlayerId: playerId
     };
     
     // Update the state
-    setCurrentSchedule(updatedSchedule);
-    
-    // Immediately call the update function to ensure it's saved
-    if (onKioskScheduleUpdate) {
-      onKioskScheduleUpdate(updatedSchedule.id, updatedSchedule);
-    }
-    
-    // Get player name for the toast
-    const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
-    const slotTime = currentSchedule.slots.find(s => s.id === slotId)?.time || "";
-    
-    // Show success toast
-    toast({
-      title: "Kioskpass tilldelat",
-      description: `${playerName} har tilldelats kioskpasset ${slotTime}.`,
-    });
-  };
-
-  // Handle creating a new kiosk schedule
-  const handleCreateKioskSchedule = () => {
-    if (!isKioskEligible()) return;
-    
-    const newScheduleId = uuidv4();
-    const newSchedule = {
-      id: newScheduleId,
-      activityId: currentActivity.id,
-      slots: [
-        { id: uuidv4(), time: "08:30-10:00", assignedPlayerId: undefined },
-        { id: uuidv4(), time: "10:00-11:30", assignedPlayerId: undefined },
-        { id: uuidv4(), time: "11:30-13:00", assignedPlayerId: undefined },
-      ]
-    };
-    
-    // Update local state
-    setCurrentSchedule(newSchedule);
-    
-    // Update the activity with the new schedule ID
-    const updatedActivity = {
-      ...currentActivity,
-      kioskScheduleId: newScheduleId
-    };
-    
     setCurrentActivity(updatedActivity);
     
-    // Save changes via props
+    // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
     }
     
-    if (onKioskScheduleUpdate) {
-      onKioskScheduleUpdate(newScheduleId, newSchedule);
-    }
+    // Get player name for the toast
+    const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
     
+    // Show success toast
     toast({
-      title: "Kioskschema skapat",
-      description: "Ett nytt kioskschema har skapats för den här aktiviteten.",
+      title: "Kioskpass tilldelat",
+      description: `${playerName} har tilldelats kioskpass för denna aktivitet.`,
     });
   };
 
-  // Handle close with saving kiosk schedule changes
+  // Handle close with saving any changes
   const handleClose = () => {
-    // If there's a schedule and an update function, call it with the updated schedule
-    if (currentSchedule && onKioskScheduleUpdate) {
-      onKioskScheduleUpdate(currentSchedule.id, currentSchedule);
-    }
     onClose();
   };
 
@@ -315,39 +261,62 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {currentSchedule && (
-          <div>
+        {isKioskEligible() && (
+          <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold flex items-center mb-3">
               <Coffee className="h-5 w-5 mr-2" />
-              Kioskschema
+              Kioskansvarig
             </h3>
-            <KioskScheduleComponent 
-              schedule={currentSchedule} 
-              players={players} 
-              onAssignPlayer={handleAssignPlayer} 
-            />
-          </div>
-        )}
-        
-        {!currentSchedule && isKioskEligible() && (
-          <div className="p-4 border rounded-md bg-muted/20">
-            <div className="flex flex-col items-center justify-center gap-2">
-              <Coffee className="h-6 w-6 text-muted-foreground" />
-              <p className="text-center text-muted-foreground">
-                Denna aktivitet kan ha kioskschema
-              </p>
-              <Button onClick={handleCreateKioskSchedule} variant="outline">
-                Skapa kioskschema
-              </Button>
+            
+            <div className="flex justify-between items-center">
+              <Badge variant={currentActivity.kioskAssignedPlayerId ? "default" : "outline"} className="mr-2">
+                {getKioskPlayerName()}
+              </Badge>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    className="h-8 px-3"
+                  >
+                    {currentActivity.kioskAssignedPlayerId ? (
+                      <>
+                        <Check className="h-4 w-4 mr-1" />
+                        Ändra
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        Tilldela
+                      </>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0" align="end" side="top">
+                  <Command>
+                    <CommandInput placeholder="Sök spelare..." />
+                    <CommandList>
+                      <CommandEmpty>Inga spelare hittades.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-auto">
+                        {players.map((player) => (
+                          <CommandItem
+                            key={player.id}
+                            onSelect={() => handleAssignKioskPlayer(player.id)}
+                            className="flex items-center justify-between"
+                          >
+                            <span>{player.name}</span>
+                            {player.id === currentActivity.kioskAssignedPlayerId && (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
-          </div>
-        )}
-        
-        {!currentSchedule && !isKioskEligible() && currentActivity.kioskScheduleId && (
-          <div className="p-4 border rounded-md bg-muted/20">
-            <p className="text-muted-foreground text-center">
-              Kioskschema finns men kunde inte laddas
-            </p>
           </div>
         )}
       </CardContent>
