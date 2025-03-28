@@ -18,7 +18,7 @@ export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps)
     (activity) => player.activities?.includes(activity.id)
   );
 
-  // Funktion för att visa färg baserat på spelarens betyg
+  // Funktion för att visa färg baserat på spelarens nivå
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A':
@@ -40,10 +40,13 @@ export function PlayerDetail({ player, activities, onClose }: PlayerDetailProps)
             <CardTitle className="text-2xl mb-1 flex items-center">
               {player.name}
               <Badge className={`ml-3 ${getGradeColor(player.grade)}`}>
-                Betyg {player.grade}
+                Nivå {player.grade}
               </Badge>
             </CardTitle>
             <CardDescription>
+              {player.position ? `Position: ${player.position}` : "Ingen position definierad"}
+            </CardDescription>
+            <CardDescription className="mt-1">
               {playerActivities.length > 0 
                 ? `Deltar i ${playerActivities.length} aktiviteter`
                 : "Deltar inte i några aktiviteter"}

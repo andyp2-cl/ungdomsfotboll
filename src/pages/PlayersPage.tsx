@@ -10,6 +10,9 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Grid, List } from "lucide-react";
+import { PlayerList } from "@/components/PlayerList";
 
 export default function PlayersPage() {
   // State för sökfråga och filtrering
@@ -19,8 +22,9 @@ export default function PlayersPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activeTab, setActiveTab] = useState("players");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Hantera byte av spelarens betygfilter
+  // Hantera byte av spelarens nivåfilter
   const handleGradeChange = (grade: PlayerGrade) => {
     setSelectedGrades(prev => 
       prev.includes(grade) 
@@ -38,7 +42,7 @@ export default function PlayersPage() {
     );
   };
 
-  // Filtrera spelare baserat på sökfråga och valda betyg
+  // Filtrera spelare baserat på sökfråga och valda nivåer
   const filteredPlayers = useMemo(() => {
     return mockPlayers.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -77,13 +81,26 @@ export default function PlayersPage() {
             </div>
           </div>
 
+          {!selectedPlayer && (
+            <div className="flex justify-end mb-4">
+              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
+                <ToggleGroupItem value="grid" aria-label="Visa som rutnät">
+                  <Grid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="Visa som lista">
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          )}
+
           {selectedPlayer ? (
             <PlayerDetail 
               player={selectedPlayer} 
               activities={mockActivities}
               onClose={() => setSelectedPlayer(null)} 
             />
-          ) : (
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredPlayers.length > 0 ? (
                 filteredPlayers.map(player => (
@@ -99,6 +116,11 @@ export default function PlayersPage() {
                 </div>
               )}
             </div>
+          ) : (
+            <PlayerList
+              players={filteredPlayers}
+              onSelect={setSelectedPlayer}
+            />
           )}
         </TabsContent>
         

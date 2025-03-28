@@ -9,7 +9,7 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player, onClick }: PlayerCardProps) {
-  // Funktion för att visa färg baserat på spelarens betyg
+  // Funktion för att visa färg baserat på spelarens nivå
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A':
@@ -37,6 +37,9 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <p className="text-sm text-gray-500 mb-2">
+          {player.position || 'Odefinierad position'}
+        </p>
         <p className="text-sm text-muted-foreground">
           {player.activities && player.activities.length > 0 
             ? `${player.activities.length} aktiviteter`

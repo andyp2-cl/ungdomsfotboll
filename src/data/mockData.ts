@@ -1,17 +1,16 @@
-
 import { Activity, Player, KioskSchedule, KioskSlot } from "@/types/player";
 
 export const mockPlayers: Player[] = [
-  { id: "1", name: "Alexander Isak", grade: "A", activities: ["1", "3"] },
-  { id: "2", name: "Victor Lindelöf", grade: "A", activities: ["1", "2"] },
-  { id: "3", name: "Dejan Kulusevski", grade: "A", activities: ["1", "3"] },
-  { id: "4", name: "Emil Forsberg", grade: "B", activities: ["2"] },
-  { id: "5", name: "Robin Olsen", grade: "B", activities: ["1"] },
-  { id: "6", name: "Ludwig Augustinsson", grade: "C", activities: ["3"] },
-  { id: "7", name: "Mattias Svanberg", grade: "C", activities: ["2"] },
-  { id: "8", name: "Kristoffer Olsson", grade: "B", activities: ["1", "2"] },
-  { id: "9", name: "Ken Sema", grade: "C", activities: [] },
-  { id: "10", name: "Viktor Gyökeres", grade: "A", activities: ["1", "3"] },
+  { id: "1", name: "Alexander Isak", grade: "A", position: "Anfallare", activities: ["1", "3"] },
+  { id: "2", name: "Victor Lindelöf", grade: "A", position: "Försvarare", activities: ["1", "2"] },
+  { id: "3", name: "Dejan Kulusevski", grade: "A", position: "Mittfältare", activities: ["1", "3"] },
+  { id: "4", name: "Emil Forsberg", grade: "B", position: "Mittfältare", activities: ["2"] },
+  { id: "5", name: "Robin Olsen", grade: "B", position: "Målvakt", activities: ["1"] },
+  { id: "6", name: "Ludwig Augustinsson", grade: "C", position: "Försvarare", activities: ["3"] },
+  { id: "7", name: "Mattias Svanberg", grade: "C", position: "Mittfältare", activities: ["2"] },
+  { id: "8", name: "Kristoffer Olsson", grade: "B", position: "Mittfältare", activities: ["1", "2"] },
+  { id: "9", name: "Ken Sema", grade: "C", position: "Mittfältare", activities: [] },
+  { id: "10", name: "Viktor Gyökeres", grade: "A", position: "Anfallare", activities: ["1", "3"] },
 ];
 
 export const mockActivities: Activity[] = [

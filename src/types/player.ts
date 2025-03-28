@@ -28,5 +28,6 @@ export interface Player {
   id: string;
   name: string;
   grade: PlayerGrade;
+  position?: string; // Lägger till position för spelaren
   activities?: string[]; // Array of activity IDs this player is participating in
 }
