@@ -1,22 +1,23 @@
 
 import { useState } from "react";
-import { Activity, Player } from "@/types/player";
+import { Activity, Player, KioskSchedule } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, X, Users, MapPin, Clock, Edit } from "lucide-react";
-import { KioskSchedule } from "./KioskSchedule";
+import { KioskSchedule as KioskScheduleComponent } from "./KioskSchedule";
 import { mockKioskSchedules } from "@/data/mockData";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActivityDetailProps {
   activity: Activity;
   players: Player[];
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
+  onKioskScheduleUpdate?: (scheduleId: string, updatedSchedule: KioskSchedule) => void;
 }
 
-export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityDetailProps) {
+export function ActivityDetail({ activity, players, onClose, onEdit, onKioskScheduleUpdate }: ActivityDetailProps) {
   const { toast } = useToast();
   // State to hold the current kiosk schedule
   const [currentSchedule, setCurrentSchedule] = useState(
@@ -52,6 +53,15 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
       title: "Kioskpass tilldelat",
       description: `${playerName} har tilldelats kioskpasset ${slotTime}.`,
     });
+  };
+
+  // Handle close with saving kiosk schedule changes
+  const handleClose = () => {
+    // If there's a schedule and an update function, call it with the updated schedule
+    if (currentSchedule && onKioskScheduleUpdate) {
+      onKioskScheduleUpdate(currentSchedule.id, currentSchedule);
+    }
+    onClose();
   };
 
   // Format the date
@@ -113,7 +123,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
                 <Edit className="h-5 w-5" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={handleClose}>
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -144,7 +154,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
 
         {currentSchedule && (
           <div>
-            <KioskSchedule 
+            <KioskScheduleComponent 
               schedule={currentSchedule} 
               players={players} 
               onAssignPlayer={handleAssignPlayer} 
@@ -161,7 +171,7 @@ export function ActivityDetail({ activity, players, onClose, onEdit }: ActivityD
         )}
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button variant="outline" onClick={onClose}>Stäng</Button>
+        <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>
     </Card>
   );

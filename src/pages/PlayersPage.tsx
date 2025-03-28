@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { mockPlayers, mockActivities } from "@/data/mockData";
+import { mockPlayers, mockActivities, mockKioskSchedules } from "@/data/mockData";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { PlayerFilter } from "@/components/PlayerFilter";
@@ -8,7 +8,7 @@ import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { MatchScraper } from "@/components/MatchScraper";
-import { Player, PlayerGrade, ActivityType, Activity } from "@/types/player";
+import { Player, PlayerGrade, ActivityType, Activity, KioskSchedule } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List, Plus, UserPlus, Activity as ActivityIcon, Edit } from "lucide-react";
@@ -39,6 +39,7 @@ export default function PlayersPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [kioskSchedules, setKioskSchedules] = useState(mockKioskSchedules);
   const { toast } = useToast();
 
   // Add April 2025 activities
@@ -293,6 +294,20 @@ export default function PlayersPage() {
     });
   };
 
+  // NEW FUNCTION: Handle kiosk schedule update
+  const handleKioskScheduleUpdate = (scheduleId: string, updatedSchedule: KioskSchedule) => {
+    setKioskSchedules(prev => 
+      prev.map(schedule => 
+        schedule.id === scheduleId ? updatedSchedule : schedule
+      )
+    );
+    
+    toast({
+      title: "Kioskschema uppdaterat",
+      description: "Kioskschema har uppdaterats med nya tilldelningar.",
+    });
+  };
+
   // Handle edit player click
   const handleEditPlayerClick = (player: Player) => {
     setEditingPlayer(player);
@@ -452,11 +467,13 @@ export default function PlayersPage() {
                   players={players}
                   onClose={() => setSelectedActivity(null)}
                   onEdit={handleEditActivityClick}
+                  onKioskScheduleUpdate={handleKioskScheduleUpdate}
                 />
               ) : (
                 <ActivityList 
                   activities={filteredActivities} 
-                  onSelect={setSelectedActivity} 
+                  onSelect={setSelectedActivity}
+                  players={players} 
                 />
               )}
             </div>
