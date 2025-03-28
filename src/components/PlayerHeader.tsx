@@ -8,6 +8,7 @@ export function PlayerHeader() {
         src="/hassleholmsif-logo.svg" 
         alt="Hässleholms IF Logo" 
         className="h-16 w-auto"
+        style={{ maxHeight: "64px" }} // Explicitly set max-height
       />
     </div>
   );
