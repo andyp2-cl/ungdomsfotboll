@@ -1,10 +1,11 @@
+
 import { Player, Activity, PlayerGrade, PlayerPosition } from "@/types/player";
 import { PlayerFilter } from "@/components/PlayerFilter";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
 import { PlayerList } from "@/components/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import { Grid, List, Plus, BarChart3, Smartphone } from "lucide-react";
+import { Grid, List, Plus, BarChart3, Smartphone, TrendingUp } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -12,6 +13,8 @@ import { TeamStatistics } from "@/components/TeamStatistics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
+import { PlayerPerformanceChart } from "@/components/PlayerPerformanceChart";
+import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -97,8 +100,8 @@ export function PlayerManagement({
             Statistik
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-1">
-            <BarChart3 className="h-4 w-4" />
-            Rapporter
+            <TrendingUp className="h-4 w-4" />
+            Avancerad analys
           </TabsTrigger>
         </TabsList>
         
@@ -181,6 +184,17 @@ export function PlayerManagement({
                 players={players}
                 activities={activities}
               />
+            </div>
+            
+            <div className="col-span-1 md:col-span-3">
+              <PlayerPerformanceChart
+                players={players}
+                activities={activities}
+              />
+            </div>
+            
+            <div className="col-span-1 md:col-span-3">
+              <MonthlyActivityChart activities={activities} />
             </div>
           </div>
         </TabsContent>
