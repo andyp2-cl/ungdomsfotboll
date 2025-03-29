@@ -14,9 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface DatabaseLog {
   id: string;
@@ -110,10 +111,20 @@ export function DatabaseLogs() {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtidsuppdatering status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('Prenumeration på databasloggar aktiv');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Fel vid prenumeration på databasloggar');
+          setError('Kunde inte prenumerera på realtidsuppdateringar för databasloggar.');
+        }
+      });
 
     // Avregistrera prenumerationen när komponenten avmonteras
     return () => {
+      console.log('Avregistrerar prenumeration på databasloggar');
       supabase.removeChannel(channel);
     };
   }, [toast]);
@@ -160,10 +171,11 @@ export function DatabaseLogs() {
       </div>
       
       {error && (
-        <div className="bg-destructive/15 p-4 rounded-md text-destructive">
-          <p className="font-semibold">Ett fel uppstod:</p>
-          <p>{error}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Ett fel uppstod</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {logs.length === 0 && !error ? (

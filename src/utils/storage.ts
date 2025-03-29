@@ -339,6 +339,33 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         if (existingRelations && existingRelations.length > 0) {
           console.log(`Clearing all participants (${existingRelations.length}) from activity ${activity.name}`);
           
+          // Log the participant removal for each player first
+          for (const relation of existingRelations) {
+            // Get player name if available
+            let playerName = "Player";
+            try {
+              const { data: playerData } = await supabase
+                .from('players')
+                .select('name')
+                .eq('id', relation.player_id)
+                .single();
+              
+              if (playerData) {
+                playerName = playerData.name;
+              }
+            } catch (e) {
+              console.error("Error fetching player name:", e);
+            }
+            
+            await logDatabaseChange(
+              'delete',
+              'player_activity',
+              `${relation.player_id}-${activity.id}`,
+              `Removed player "${playerName}" from activity "${activity.name}"`
+            );
+          }
+          
+          // Now delete the actual relations
           const { error: deleteError } = await supabase
             .from('player_activities')
             .delete()
@@ -346,12 +373,12 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
             
           if (deleteError) throw deleteError;
           
-          // Log the removal of all participants
+          // Log that all participants were cleared
           await logDatabaseChange(
-            'delete',
-            'player_activity',
-            `${activity.id}-all`,
-            `Removed all players from activity ${activity.name}`
+            'update',
+            'activity',
+            activity.id,
+            `Cleared all participants (${existingRelations.length}) from activity "${activity.name}"`
           );
         }
       } else {
@@ -363,6 +390,32 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         );
         
         if (playerIdsToRemove.length > 0) {
+          // Log each player removal individually
+          for (const playerId of playerIdsToRemove) {
+            // Get player name if available
+            let playerName = "Player";
+            try {
+              const { data: playerData } = await supabase
+                .from('players')
+                .select('name')
+                .eq('id', playerId)
+                .single();
+              
+              if (playerData) {
+                playerName = playerData.name;
+              }
+            } catch (e) {
+              console.error("Error fetching player name:", e);
+            }
+            
+            await logDatabaseChange(
+              'delete',
+              'player_activity',
+              `${playerId}-${activity.id}`,
+              `Removed player "${playerName}" from activity "${activity.name}"`
+            );
+          }
+          
           const { error: deleteError } = await supabase
             .from('player_activities')
             .delete()
@@ -370,16 +423,6 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
             .in('player_id', playerIdsToRemove);
             
           if (deleteError) throw deleteError;
-          
-          // Log the removed relations
-          for (const playerId of playerIdsToRemove) {
-            await logDatabaseChange(
-              'delete',
-              'player_activity',
-              `${playerId}-${activity.id}`,
-              `Removed player with ID ${playerId} from activity ${activity.name}`
-            );
-          }
         }
         
         // Add new relationships
@@ -402,11 +445,27 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           
           // Log the added relations
           for (const playerId of newPlayerIds) {
+            // Get player name if available
+            let playerName = "Player";
+            try {
+              const { data: playerData } = await supabase
+                .from('players')
+                .select('name')
+                .eq('id', playerId)
+                .single();
+              
+              if (playerData) {
+                playerName = playerData.name;
+              }
+            } catch (e) {
+              console.error("Error fetching player name:", e);
+            }
+            
             await logDatabaseChange(
               'create',
               'player_activity',
               `${playerId}-${activity.id}`,
-              `Added player with ID ${playerId} to activity ${activity.name}`
+              `Added player "${playerName}" to activity "${activity.name}"`
             );
           }
         }

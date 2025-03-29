@@ -110,7 +110,7 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
   }
 };
 
-// New function to log database changes
+// Improved function to log database changes with error handling
 export const logDatabaseChange = async (
   action: 'create' | 'update' | 'delete', 
   entityType: 'player' | 'activity' | 'player_activity',
@@ -118,6 +118,7 @@ export const logDatabaseChange = async (
   details: string
 ): Promise<void> => {
   try {
+    console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     const { error } = await supabase
       .from('database_logs')
       .insert({
@@ -130,14 +131,28 @@ export const logDatabaseChange = async (
     
     if (error) {
       console.error('Error logging database change:', error);
+      // Try to log with anonymous access as fallback
+      const { error: retryError } = await supabaseClient
+        .from('database_logs')
+        .insert({
+          action,
+          entity_type: entityType,
+          entity_id: entityId,
+          details,
+          timestamp: new Date().toISOString()
+        });
+        
+      if (retryError) {
+        console.error('Final error logging database change:', retryError);
+      }
     }
   } catch (error) {
-    console.error('Error in logDatabaseChange:', error);
+    console.error('Unexpected error in logDatabaseChange:', error);
   }
 };
 
 // Function to fetch database logs
-export const fetchDatabaseLogs = async (limit: number = 50): Promise<any[]> => {
+export const fetchDatabaseLogs = async (limit: number = 100): Promise<any[]> => {
   try {
     const { data, error } = await supabase
       .from('database_logs')
