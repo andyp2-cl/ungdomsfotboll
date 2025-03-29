@@ -214,6 +214,42 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     });
   };
 
+  const handleClearHistoricalActivities = async () => {
+    if (historicalActivities.length === 0) {
+      toast({
+        title: "Inga tidigare aktiviteter",
+        description: "Det finns inga tidigare aktiviteter att rensa.",
+      });
+      return;
+    }
+    
+    setActivities(currentActivities);
+    await saveActivities(currentActivities);
+    
+    if (selectedActivity && historicalActivities.some(a => a.id === selectedActivity.id)) {
+      setSelectedActivity(null);
+    }
+    
+    const historicalActivityIds = historicalActivities.map(a => a.id);
+    const updatedPlayers = players.map(player => {
+      if (player.activities && player.activities.some(id => historicalActivityIds.includes(id))) {
+        return {
+          ...player,
+          activities: player.activities.filter(id => !historicalActivityIds.includes(id))
+        };
+      }
+      return player;
+    });
+    
+    setPlayers(updatedPlayers);
+    await savePlayers(updatedPlayers);
+    
+    toast({
+      title: "Tidigare aktiviteter rensade",
+      description: `${historicalActivities.length} tidigare aktiviteter har tagits bort.`,
+    });
+  };
+
   const filteredCurrentActivities = useMemo(() => {
     return currentActivities
       .filter(activity => {
@@ -264,6 +300,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities
+    handleDeleteAllActivities,
+    handleClearHistoricalActivities
   };
 }

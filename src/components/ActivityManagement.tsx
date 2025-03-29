@@ -8,8 +8,9 @@ import { FileImport } from "@/components/FileImport";
 import { MatchScraper } from "@/components/MatchScraper";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
 import { Button } from "@/components/ui/button";
-import { Activity as ActivityIcon, Database, History } from "lucide-react";
+import { Activity as ActivityIcon, Database, History, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface ActivityManagementProps {
   activities: Activity[];
@@ -27,6 +28,7 @@ interface ActivityManagementProps {
   onImportedActivities: (importedActivities: Activity[]) => void;
   onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
   onDeleteAllActivities: () => void;
+  onClearHistoricalActivities?: () => void; // Add new prop
 }
 
 export function ActivityManagement({
@@ -44,9 +46,11 @@ export function ActivityManagement({
   onKioskAssignmentUpdate,
   onImportedActivities,
   onMatchesScraped,
-  onDeleteAllActivities
+  onDeleteAllActivities,
+  onClearHistoricalActivities
 }: ActivityManagementProps) {
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
   // Get cup matches if the selected activity is a cup
   const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
@@ -121,11 +125,49 @@ export function ActivityManagement({
           <div className="grid grid-cols-1 gap-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 className="text-xl font-semibold">Tidigare aktiviteter</h2>
-              <div className="w-full sm:w-auto overflow-x-auto">
-                <ActivityFilter 
-                  selectedTypes={selectedActivityTypes}
-                  onTypeChange={onActivityTypeChange}
-                />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                {onClearHistoricalActivities && (
+                  <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="destructive"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Rensa tidigare aktiviteter
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Rensa tidigare aktiviteter</DialogTitle>
+                        <DialogDescription>
+                          Detta kommer att ta bort alla tidigare aktiviteter. Denna åtgärd kan inte ångras.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
+                          Avbryt
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => {
+                            onClearHistoricalActivities();
+                            setIsConfirmDialogOpen(false);
+                          }}
+                        >
+                          Rensa
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                <div className="w-full sm:w-auto overflow-x-auto">
+                  <ActivityFilter 
+                    selectedTypes={selectedActivityTypes}
+                    onTypeChange={onActivityTypeChange}
+                  />
+                </div>
               </div>
             </div>
             

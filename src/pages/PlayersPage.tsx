@@ -66,7 +66,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities
+    handleDeleteAllActivities,
+    handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
   useEffect(() => {
@@ -137,6 +138,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             onImportedActivities={handleImportedActivities}
             onMatchesScraped={handleScrapedMatches}
             onDeleteAllActivities={handleDeleteAllActivities}
+            onClearHistoricalActivities={handleClearHistoricalActivities}
           />
         </TabsContent>
       </Tabs>
