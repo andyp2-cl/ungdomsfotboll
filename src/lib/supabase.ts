@@ -110,7 +110,7 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
   }
 };
 
-// Improved function to log database changes with error handling
+// Improved function to log database changes with better error handling for RLS issues
 export const logDatabaseChange = async (
   action: 'create' | 'update' | 'delete', 
   entityType: 'player' | 'activity' | 'player_activity',
@@ -119,20 +119,20 @@ export const logDatabaseChange = async (
 ): Promise<void> => {
   try {
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
-    const { error } = await supabase
-      .from('database_logs')
-      .insert({
-        action,
-        entity_type: entityType,
-        entity_id: entityId,
-        details,
-        timestamp: new Date().toISOString()
-      });
+    
+    // Use direct SQL insert to bypass RLS policies
+    const { error } = await supabase.rpc('insert_database_log', {
+      action_param: action,
+      entity_type_param: entityType,
+      entity_id_param: entityId,
+      details_param: details
+    });
     
     if (error) {
-      console.error('Error logging database change:', error);
-      // Try to log with anonymous access as fallback
-      const { error: retryError } = await supabaseClient
+      console.error('Error logging database change (RPC method):', error);
+      
+      // Fallback to regular insert
+      const { error: insertError } = await supabase
         .from('database_logs')
         .insert({
           action,
@@ -142,8 +142,8 @@ export const logDatabaseChange = async (
           timestamp: new Date().toISOString()
         });
         
-      if (retryError) {
-        console.error('Final error logging database change:', retryError);
+      if (insertError) {
+        console.error('Error logging database change (direct insert):', insertError);
       }
     }
   } catch (error) {

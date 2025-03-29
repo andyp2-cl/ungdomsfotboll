@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { getStoredActivities, saveActivities, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
+import { logDatabaseChange } from "@/lib/supabase";
 
 export function useActivities(players: Player[], setPlayers: (players: Player[]) => void) {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -208,6 +209,14 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     if (selectedActivity) {
       setSelectedActivity(null);
     }
+    
+    await logDatabaseChange(
+      'delete',
+      'activity',
+      'all',
+      'Alla aktiviteter har raderats manuellt'
+    );
+    
     toast({
       title: "Aktiviteter raderade",
       description: "Alla aktiviteter har tagits bort.",
@@ -221,6 +230,20 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
         description: "Det finns inga tidigare aktiviteter att rensa.",
       });
       return;
+    }
+    
+    const countCleared = historicalActivities.length;
+    
+    try {
+      await logDatabaseChange(
+        'delete',
+        'activity',
+        'historical',
+        `${countCleared} tidigare aktiviteter har rensats manuellt`
+      );
+      console.log(`Logged clearing of ${countCleared} historical activities`);
+    } catch (error) {
+      console.error('Error logging historical activities clearing:', error);
     }
     
     setActivities(currentActivities);
@@ -246,7 +269,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     
     toast({
       title: "Tidigare aktiviteter rensade",
-      description: `${historicalActivities.length} tidigare aktiviteter har tagits bort.`,
+      description: `${countCleared} tidigare aktiviteter har tagits bort.`,
     });
   };
 
