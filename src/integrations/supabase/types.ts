@@ -51,6 +51,33 @@ export type Database = {
         }
         Relationships: []
       }
+      database_logs: {
+        Row: {
+          action: string
+          details: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          details?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          details?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       player_activities: {
         Row: {
           activity_id: string

@@ -46,6 +46,11 @@ export function ActivityManagement({
 }: ActivityManagementProps) {
   const [activeTab, setActiveTab] = useState<"activities" | "tools" | "logs">("activities");
   
+  // Get cup matches if the selected activity is a cup
+  const cupMatches = selectedActivity?.type === 'cup' 
+    ? activities.filter(activity => activity.cupId === selectedActivity.id)
+    : [];
+  
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
@@ -88,10 +93,13 @@ export function ActivityManagement({
               <ActivityDetail
                 activity={selectedActivity}
                 players={players}
+                cupMatches={cupMatches}
+                allActivities={activities}
                 onClose={() => onActivitySelect(null)}
                 onEdit={onEditActivityClick}
                 onActivityUpdate={onActivityUpdate}
                 onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+                onActivitySelect={onActivitySelect}
               />
             ) : (
               <ActivityList 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { getStoredActivities, saveActivities, savePlayers } from "@/utils/storage";
@@ -18,22 +17,19 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
       try {
         const storedActivities = await getStoredActivities();
         if (storedActivities.length > 0) {
-          // Filter out past activities
           const today = new Date();
-          today.setHours(0, 0, 0, 0); // Set to beginning of today
+          today.setHours(0, 0, 0, 0);
           
           const currentAndFutureActivities = storedActivities.filter(activity => {
             const activityDate = new Date(activity.date);
-            activityDate.setHours(0, 0, 0, 0); // Set to beginning of activity day
+            activityDate.setHours(0, 0, 0, 0);
             return activityDate >= today;
           });
           
-          // If we filtered out any activities, save the filtered list back to storage
           if (currentAndFutureActivities.length < storedActivities.length) {
             console.log(`Filtered out ${storedActivities.length - currentAndFutureActivities.length} past activities`);
             await saveActivities(currentAndFutureActivities);
             
-            // Also update player activity references
             const updatedPlayers = players.map(player => {
               if (!player.activities || player.activities.length === 0) return player;
               
@@ -51,7 +47,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
               return player;
             });
             
-            // Save updated players with filtered activities
             if (!arePlayersEqual(players, updatedPlayers)) {
               setPlayers(updatedPlayers);
               await savePlayers(updatedPlayers);
@@ -85,7 +80,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     loadActivities();
   }, [toast, players, setPlayers]);
 
-  // Helper function to compare players arrays
   const arePlayersEqual = (playersA: Player[], playersB: Player[]) => {
     if (playersA.length !== playersB.length) return false;
     
@@ -103,7 +97,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     return true;
   };
   
-  // Helper function to compare arrays
   const arraysEqual = (a: any[], b: any[]) => {
     if (a.length !== b.length) return false;
     
@@ -193,7 +186,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     const updatedActivities = [...activities, newActivity];
     setActivities(updatedActivities);
     await saveActivities(updatedActivities);
-    setIsAddActivityOpen(false);
+    
     toast({
       title: "Aktivitet tillagd",
       description: `${newActivity.name} har lagts till.`,
@@ -242,16 +235,13 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
   };
 
   const filteredActivities = useMemo(() => {
-    // Sort by date (ascending) when filtering
     return activities
       .filter(activity => {
         return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
       })
       .sort((a, b) => {
-        // Sort by date first
         const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         
-        // If dates are the same, sort by time if available
         if (dateComparison === 0 && a.time && b.time) {
           return a.time.localeCompare(b.time);
         }

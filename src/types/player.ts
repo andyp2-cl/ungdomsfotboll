@@ -19,6 +19,8 @@ export interface Activity {
     gpsLink?: string;
   };
   time?: string; // Time of the activity, e.g. "09:30"
+  cupId?: string; // Reference to the parent cup activity (for matches that are part of a cup)
+  matches?: string[]; // Array of activity IDs that are matches within this cup (for cup type activities)
 }
 
 export interface Player {

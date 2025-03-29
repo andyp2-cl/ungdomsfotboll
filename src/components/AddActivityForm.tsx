@@ -34,9 +34,16 @@ type ActivityFormValues = z.infer<typeof activityFormSchema>;
 interface AddActivityFormProps {
   onSave: (activity: Activity) => void;
   onCancel: () => void;
+  onTypeChange?: (type: "match" | "cup") => void;
+  onDateChange?: (date: string) => void;
 }
 
-export function AddActivityForm({ onSave, onCancel }: AddActivityFormProps) {
+export function AddActivityForm({ 
+  onSave, 
+  onCancel,
+  onTypeChange,
+  onDateChange
+}: AddActivityFormProps) {
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
@@ -48,6 +55,24 @@ export function AddActivityForm({ onSave, onCancel }: AddActivityFormProps) {
       locationGps: "",
     },
   });
+
+  // Watch for type changes to update parent component
+  const activityType = form.watch("type");
+  const activityDate = form.watch("date");
+
+  // Notify parent of type changes
+  React.useEffect(() => {
+    if (onTypeChange && activityType) {
+      onTypeChange(activityType as "match" | "cup");
+    }
+  }, [activityType, onTypeChange]);
+
+  // Notify parent of date changes
+  React.useEffect(() => {
+    if (onDateChange && activityDate) {
+      onDateChange(format(activityDate, 'yyyy-MM-dd'));
+    }
+  }, [activityDate, onDateChange]);
 
   const handleSubmit = (values: ActivityFormValues) => {
     // Create a new activity with form values and a unique ID

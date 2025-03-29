@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
@@ -76,6 +75,11 @@ const formatActivityForDatabase = (activity: Activity) => {
     dbActivity.location_name = null;
     dbActivity.location_description = null;
     dbActivity.location_gps_link = null;
+  }
+
+  // Add cup relationship if this is a match that's part of a cup
+  if (activity.cupId) {
+    dbActivity.cup_id = activity.cupId;
   }
 
   return dbActivity;
@@ -384,6 +388,17 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
             );
           }
         }
+      }
+      
+      // For new cup activities, also add a reference to their matches
+      if (isNewActivity && activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
+        // Additional logging for cup-match relationships
+        await logDatabaseChange(
+          'create',
+          'cup_matches',
+          activity.id,
+          `Associated ${activity.matches.length} matches with cup "${activity.name}"`
+        );
       }
     }
   } catch (error) {
