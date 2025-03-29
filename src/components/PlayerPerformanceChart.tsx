@@ -39,6 +39,7 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
       })
       .sort((a, b) => a.name.localeCompare(b.name));
     
+    console.log("Player performance data:", playerPerformance); // Log for debugging
     return playerPerformance;
   }, [players, activities]);
 

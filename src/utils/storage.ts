@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
 import { supabase } from "@/lib/supabase";
@@ -89,7 +88,10 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
       .from('players')
       .select('*');
 
-    if (playersError) throw playersError;
+    if (playersError) {
+      console.error("Error fetching players:", playersError);
+      throw playersError;
+    }
     
     const players = playersData.map(formatDatabasePlayer);
     
@@ -98,7 +100,10 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
       .from('player_activities')
       .select('*');
     
-    if (relationshipError) throw relationshipError;
+    if (relationshipError) {
+      console.error("Error fetching player activities:", relationshipError);
+      throw relationshipError;
+    }
     
     // Populate activities for each player
     players.forEach(player => {
@@ -126,15 +131,23 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
   console.log("Saving players to Supabase:", players.length);
   
   try {
+    // Improved error handling and logging for better debugging
     for (const player of players) {
       const formattedPlayer = formatPlayerForDatabase(player);
+      
+      console.log(`Upserting player: ${player.name} (ID: ${player.id})`);
       
       // Upsert the player
       const { error: upsertError } = await supabase
         .from('players')
         .upsert(formattedPlayer, { onConflict: 'id' });
         
-      if (upsertError) throw upsertError;
+      if (upsertError) {
+        console.error(`Error upserting player ${player.name}:`, upsertError);
+        throw upsertError;
+      } else {
+        console.log(`Successfully upserted player: ${player.name}`);
+      }
       
       // Handle player-activity relationships
       if (player.activities && player.activities.length > 0) {
@@ -144,7 +157,10 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
           .select('*')
           .eq('player_id', player.id);
           
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error(`Error fetching relations for player ${player.name}:`, fetchError);
+          throw fetchError;
+        }
         
         // Delete relationships that are no longer valid
         const existingActivityIds = existingRelations.map(rel => rel.activity_id);
@@ -153,13 +169,18 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
         );
         
         if (activityIdsToRemove.length > 0) {
+          console.log(`Removing ${activityIdsToRemove.length} activities for player ${player.name}`);
+          
           const { error: deleteError } = await supabase
             .from('player_activities')
             .delete()
             .eq('player_id', player.id)
             .in('activity_id', activityIdsToRemove);
             
-          if (deleteError) throw deleteError;
+          if (deleteError) {
+            console.error(`Error deleting relations for player ${player.name}:`, deleteError);
+            throw deleteError;
+          }
         }
         
         // Add new relationships
@@ -168,6 +189,8 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
         );
         
         if (newActivityIds.length > 0) {
+          console.log(`Adding ${newActivityIds.length} activities for player ${player.name}`);
+          
           const newRelations = newActivityIds.map(activityId => ({
             id: uuidv4(),
             player_id: player.id,
@@ -178,12 +201,19 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
             .from('player_activities')
             .insert(newRelations);
             
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error(`Error inserting relations for player ${player.name}:`, insertError);
+            throw insertError;
+          }
         }
       }
     }
+    
+    console.log("Players saved successfully to Supabase");
   } catch (error) {
     console.error("Error saving players to Supabase:", error);
+    // Re-throw to allow caller to handle
+    throw error;
   }
 };
 

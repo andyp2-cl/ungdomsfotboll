@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
@@ -61,13 +60,29 @@ export function usePlayers() {
 
   const handlePlayerUpdate = async (updatedPlayer: Player) => {
     try {
+      console.log("Updating player:", updatedPlayer.name);
+      
       const updatedPlayers = players.map(player => 
         player.id === updatedPlayer.id ? updatedPlayer : player
       );
       
+      // First update local state
       setPlayers(updatedPlayers);
-      await savePlayers(updatedPlayers);
       
+      // Then save to database with better error handling
+      try {
+        await savePlayers(updatedPlayers);
+        console.log("Players saved successfully after update");
+      } catch (saveError) {
+        console.error("Failed to save updated players to database:", saveError);
+        toast({
+          title: "Databas-synkroniseringsfel",
+          description: "Ändringar gjordes lokalt men kunde inte sparas i databasen. Försök igen senare.",
+          variant: "destructive"
+        });
+      }
+      
+      // Update selected player if needed
       if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
         setSelectedPlayer(updatedPlayer);
       }
@@ -182,7 +197,7 @@ export function usePlayers() {
     handleGradeChange,
     handlePositionChange,
     handlePlayerUpdate,
-    handleBulkPlayerUpdate,
-    handleAddPlayer
+    handleBulkPlayerUpdate: handleBulkPlayerUpdate || ((updatedPlayers: Player[]) => false),
+    handleAddPlayer: handleAddPlayer || ((newPlayer: Player) => false)
   };
 }
