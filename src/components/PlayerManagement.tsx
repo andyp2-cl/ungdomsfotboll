@@ -9,7 +9,6 @@ import { Grid, List, Plus, BarChart3 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { PlayerImageScraper } from "@/components/PlayerImageScraper";
 import { TeamStatistics } from "@/components/TeamStatistics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -111,36 +110,13 @@ export function PlayerManagement({
               allPlayers={players}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {/* Main content - Player List */}
-              <div>
-                <PlayerList 
-                  players={filteredPlayers} 
-                  viewMode={viewMode}
-                  onPlayerSelect={onPlayerSelect}
-                  onPlayerEdit={onEditPlayerClick}
-                />
-              </div>
-              
-              {/* Image scraper moved to bottom */}
-              <div className="mt-8">
-                <PlayerImageScraper 
-                  players={players} 
-                  onImagesScraped={(updatedPlayers) => {
-                    // Use the bulk update function if available, otherwise fallback to individual updates
-                    if (onBulkPlayerUpdate) {
-                      onBulkPlayerUpdate(updatedPlayers);
-                    } else {
-                      // Update all players at once
-                      updatedPlayers.forEach(player => {
-                        if (player.image) {
-                          onPlayerUpdate(player);
-                        }
-                      });
-                    }
-                  }} 
-                />
-              </div>
+            <div>
+              <PlayerList 
+                players={filteredPlayers} 
+                viewMode={viewMode}
+                onPlayerSelect={onPlayerSelect}
+                onPlayerEdit={onEditPlayerClick}
+              />
             </div>
           )}
         </TabsContent>
