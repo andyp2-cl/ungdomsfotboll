@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
@@ -29,15 +28,26 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       activity.participants = activityPlayerRelations.map(relation => relation.player_id);
     });
     
+    // IMPROVED: Log all activities with their cup IDs before processing
+    console.log("All activities with cup IDs before matching:", 
+      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
+    
     // For cup activities, find matches that have this cup as parent
-    activities.forEach(activity => {
-      if (activity.type === 'cup') {
-        const matchesForCup = activities.filter(
-          possibleMatch => possibleMatch.cupId === activity.id
-        );
-        if (matchesForCup.length > 0) {
-          activity.matches = matchesForCup.map(match => match.id);
-        }
+    const cupActivities = activities.filter(a => a.type === 'cup');
+    console.log("Cup activities:", cupActivities.map(a => a.id));
+    
+    cupActivities.forEach(cupActivity => {
+      // Find all matches that reference this cup ID
+      const matchesForCup = activities.filter(
+        possibleMatch => possibleMatch.cupId === cupActivity.id
+      );
+      
+      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
+        matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
+      
+      if (matchesForCup.length > 0) {
+        cupActivity.matches = matchesForCup.map(match => match.id);
+        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
       }
     });
     
@@ -203,18 +213,20 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
   }
 };
 
-// Update match cup associations for cup activities
+// IMPROVED: Update match cup associations for cup activities with better logging
 export const updateCupMatches = async (activity: Activity, activities: Activity[]): Promise<void> => {
-  // For new cup activities, also add a reference to their matches
-  if (activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
-    console.log(`Cup ${activity.name} has ${activity.matches.length} matches, ensuring they have the correct cupId`);
-    
-    // Get the match activities
-    const matchActivities = activities.filter(a => activity.matches?.includes(a.id));
-    
-    // Update each match with the cup ID if it doesn't already have it
-    for (const matchActivity of matchActivities) {
-      if (matchActivity.cupId !== activity.id) {
+  try {
+    // For new cup activities, also add a reference to their matches
+    if (activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
+      console.log(`Cup ${activity.name} has ${activity.matches.length} matches, ensuring they have the correct cupId`);
+      
+      // Get the match activities
+      const matchActivities = activities.filter(a => activity.matches?.includes(a.id));
+      console.log(`Found ${matchActivities.length} match activities for cup ${activity.name}:`, 
+        matchActivities.map(m => ({id: m.id, name: m.name})));
+      
+      // Update each match with the cup ID
+      for (const matchActivity of matchActivities) {
         console.log(`Updating match ${matchActivity.name} with cupId ${activity.id}`);
         
         // Update the match in the database with the cupId
@@ -226,6 +238,8 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         if (updateError) {
           console.error(`Error updating cupId for match ${matchActivity.name}:`, updateError);
         } else {
+          console.log(`Successfully updated cupId for match ${matchActivity.name}`);
+          
           // Log the cup association
           await logDatabaseChange(
             'update',
@@ -235,15 +249,17 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           );
         }
       }
+      
+      // Additional logging for cup-match relationships
+      await logDatabaseChange(
+        'update',
+        'activity',
+        activity.id,
+        `Associated ${activity.matches.length} matches with cup "${activity.name}"`
+      );
     }
-    
-    // Additional logging for cup-match relationships
-    await logDatabaseChange(
-      'update',
-      'activity',
-      activity.id,
-      `Associated ${activity.matches.length} matches with cup "${activity.name}"`
-    );
+  } catch (error) {
+    console.error("Error updating cup matches:", error);
   }
 };
 
@@ -271,6 +287,8 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         
       if (upsertError) throw upsertError;
       
+      console.log(`${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} (${activity.id})`);
+      
       // Log the change
       await logDatabaseChange(
         isNewActivity ? 'create' : 'update',
@@ -284,6 +302,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       // For cup activities, handle cup-match relationships
       if (activity.type === 'cup') {
+        console.log(`Processing cup-match relationships for cup ${activity.name}`);
         await updateCupMatches(activity, activities);
       }
     }

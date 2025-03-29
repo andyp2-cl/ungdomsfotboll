@@ -85,17 +85,27 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // Find cup matches by looking for activities with a cupId that matches a cup's id
-    activities.forEach(activity => {
-      if (activity.type === 'cup') {
-        // Find all matches that have this cup as parent
-        const matchesForCup = activities.filter(
-          possibleMatch => possibleMatch.cupId === activity.id
-        );
-        if (matchesForCup.length > 0) {
-          activity.matches = matchesForCup.map(match => match.id);
-          console.log(`Found ${matchesForCup.length} matches for cup ${activity.name}`);
-        }
+    // IMPROVED: Find cup matches by looking for activities with a cupId that matches a cup's id
+    // Add additional logging to help diagnose the issue
+    console.log("All activities before processing cup matches:", activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
+    
+    // First, find all cup activities
+    const cupActivities = activities.filter(activity => activity.type === 'cup');
+    console.log("Found cup activities:", cupActivities.map(a => a.id));
+    
+    // Then for each cup, find its matches
+    cupActivities.forEach(cupActivity => {
+      // Find all matches that have this cup as parent
+      const matchesForCup = activities.filter(
+        possibleMatch => possibleMatch.cupId === cupActivity.id
+      );
+      
+      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
+        matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
+      
+      if (matchesForCup.length > 0) {
+        cupActivity.matches = matchesForCup.map(match => match.id);
+        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
       }
     });
     
@@ -145,8 +155,8 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
 
 // Define the database function parameter types properly
 type InsertDatabaseLogParams = {
-  action_param: 'create' | 'update' | 'delete';
-  entity_type_param: 'player' | 'activity' | 'player_activity';
+  action_param: string;
+  entity_type_param: string;
   entity_id_param: string;
   details_param: string;
 };

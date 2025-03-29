@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
@@ -52,7 +51,6 @@ export function ActivityManagement({
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
-  // Debug cup matches when a cup is selected
   useEffect(() => {
     if (selectedActivity?.type === 'cup') {
       console.log('Selected cup activity:', selectedActivity);
@@ -61,19 +59,28 @@ export function ActivityManagement({
         const matchActivities = activities.filter(activity => 
           selectedActivity.matches?.includes(activity.id)
         );
-        console.log('Found match activities:', matchActivities);
+        console.log('Found match activities:', matchActivities.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
       } else {
         console.log('Cup has no matches defined');
+        
+        const matchesByCupId = activities.filter(activity => activity.cupId === selectedActivity.id);
+        console.log('Any activities with this cupId?', matchesByCupId.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
       }
     }
   }, [selectedActivity, activities]);
   
-  // Get cup matches if the selected activity is a cup
   const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
     ? activities.filter(activity => selectedActivity.matches?.includes(activity.id))
     : [];
   
-  console.log('Cup matches calculated:', cupMatches.length, cupMatches);
+  if (selectedActivity?.type === 'cup') {
+    console.log('Cup matches for display:', cupMatches.map(m => ({id: m.id, name: m.name})));
+    
+    if (cupMatches.length === 0) {
+      const matchesByCupId = activities.filter(activity => activity.cupId === selectedActivity.id);
+      console.log('Matches by cupId (not in matches array):', matchesByCupId.map(m => ({id: m.id, name: m.name})));
+    }
+  }
   
   return (
     <div className="space-y-6">

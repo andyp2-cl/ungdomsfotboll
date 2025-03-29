@@ -57,10 +57,8 @@ export function ActivityDetail({
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   
-  // Sort players alphabetically for the dropdown
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
-  // Filter players based on search query
   const filteredPlayers = useMemo(() => {
     if (!playerSearchQuery) return sortedPlayers;
     return sortedPlayers.filter(player => 
@@ -68,83 +66,66 @@ export function ActivityDetail({
     );
   }, [sortedPlayers, playerSearchQuery]);
 
-  // Modified: All matches should be eligible for kiosk duty, but we check if it's a home match
   const isHomeMatch = () => {
     return currentActivity.type === "match" && 
            currentActivity.name.toLowerCase().startsWith('hässleholms if');
   };
   
-  // Find all players participating in this activity
   const participatingPlayers = players.filter(
     (player) => currentActivity.participants?.includes(player.id)
   );
 
-  // Get assigned kiosk player name
   const getKioskPlayerName = () => {
     if (!currentActivity.kioskAssignedPlayerId) return "Ej tilldelad";
     const player = players.find(p => p.id === currentActivity.kioskAssignedPlayerId);
     return player ? player.name : "Okänd spelare";
   };
 
-  // Handle assigning a player to kiosk duty
   const handleAssignKioskPlayer = (playerId: string) => {
-    // Update the activity with the assigned player
     const updatedActivity = {
       ...currentActivity,
       kioskAssignedPlayerId: playerId
     };
     
-    // Update the state
     setCurrentActivity(updatedActivity);
     
-    // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
     }
     
-    // Call the kiosk assignment update function if available
     if (onKioskAssignmentUpdate) {
       onKioskAssignmentUpdate(currentActivity.id, playerId);
     }
     
-    // Get player name for the toast
     const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
     
-    // Show success toast
     toast({
       title: "Kioskpass tilldelat",
       description: `${playerName} har tilldelats kioskpass för denna aktivitet.`,
     });
   };
 
-  // Handle close with saving any changes
   const handleClose = () => {
     onClose();
   };
 
-  // Handle adding players to the activity
   const handleAddPlayers = (playerIds: string[]) => {
-    // Create a new participants array with the new players added
     const updatedParticipants = [
       ...(currentActivity.participants || []),
       ...playerIds
     ];
     
-    // Create the updated activity
     const updatedActivity = {
       ...currentActivity,
       participants: updatedParticipants
     };
     
-    // Update the local state
     setCurrentActivity(updatedActivity);
     
-    // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
     }
     
-    // Show success toast
     const playerNames = playerIds.map(id => 
       players.find(p => p.id === id)?.name || "Spelare"
     ).join(", ");
@@ -155,88 +136,74 @@ export function ActivityDetail({
     });
   };
 
-  // NEW: Handle removing a player from the activity
   const handleRemovePlayer = (playerId: string) => {
-    // Get player name for the toast
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Create a new participants array without the removed player
     const updatedParticipants = (currentActivity.participants || []).filter(
       id => id !== playerId
     );
     
-    // Create the updated activity
     const updatedActivity = {
       ...currentActivity,
       participants: updatedParticipants
     };
     
-    // If the removed player was the kiosk assigned player, remove that assignment
     if (currentActivity.kioskAssignedPlayerId === playerId) {
       updatedActivity.kioskAssignedPlayerId = undefined;
       
-      // Call the kiosk assignment update function if available
       if (onKioskAssignmentUpdate) {
         onKioskAssignmentUpdate(currentActivity.id, undefined);
       }
     }
     
-    // Update the local state
     setCurrentActivity(updatedActivity);
     
-    // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
     }
     
-    // Show success toast
     toast({
       title: "Spelare borttagen",
       description: `${player.name} har tagits bort från aktiviteten.`,
     });
   };
 
-  // NEW: Update the handleClearAllParticipants function to properly clear participants
   const handleClearAllParticipants = () => {
-    // Create the updated activity with no participants
     const updatedActivity = {
       ...currentActivity,
       participants: []
     };
     
-    // If there was a kiosk assigned player, remove that assignment
     if (currentActivity.kioskAssignedPlayerId) {
       updatedActivity.kioskAssignedPlayerId = undefined;
       
-      // Call the kiosk assignment update function if available
       if (onKioskAssignmentUpdate) {
         onKioskAssignmentUpdate(currentActivity.id, undefined);
       }
     }
     
-    // Update the local state
     setCurrentActivity(updatedActivity);
     
-    // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
       
       console.log("Cleared all participants from activity:", updatedActivity.name);
     }
     
-    // Show success toast
     toast({
       title: "Deltagarlista rensad",
       description: `Alla spelare har tagits bort från aktiviteten.`,
     });
   };
 
-  // Format the date
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
-  // Get day of week in Swedish
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+
+  console.log("Cup matches passed to ActivityDetail:", cupMatches.map(m => ({id: m.id, name: m.name})));
+  console.log("Current activity is cup?", currentActivity.type === 'cup');
+  console.log("Current activity matches:", currentActivity.matches);
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -414,7 +381,6 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {/* Modified: Show kiosk assignment for all matches, with a note for home matches */}
         {currentActivity.type === "match" && (
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold flex items-center mb-3">
@@ -483,39 +449,44 @@ export function ActivityDetail({
           </div>
         )}
 
-        {/* Display cup matches if this is a cup */}
-        {currentActivity.type === "cup" && cupMatches.length > 0 && (
+        {currentActivity.type === "cup" && (
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold mb-3">Matcher i cupen</h3>
-            <div className="space-y-2">
-              {cupMatches.map(match => (
-                <div key={match.id} className="p-2 border rounded-md">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{match.name}</div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {match.time || "Tid ej satt"}
-                        {match.location && (
-                          <span className="ml-2">
-                            <MapPin className="h-3 w-3 inline mr-1" />
-                            {match.location.name}
-                          </span>
-                        )}
+            
+            {cupMatches.length > 0 ? (
+              <div className="space-y-2">
+                {console.log("Rendering", cupMatches.length, "matches for cup")}
+                {cupMatches.map(match => (
+                  <div key={match.id} className="p-2 border rounded-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{match.name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {match.time || "Tid ej satt"}
+                          {match.location && (
+                            <span className="ml-2">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              {match.location.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => onActivitySelect && onActivitySelect(match)}
+                      >
+                        Visa
+                      </Button>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8"
-                      onClick={() => onActivitySelect && onActivitySelect(match)}
-                    >
-                      Visa
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Inga matcher tillagda i denna cup ännu.</p>
+            )}
           </div>
         )}
       </CardContent>
