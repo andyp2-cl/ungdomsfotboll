@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { Activity } from "@/types/player";
+import { Activity, ActivityType } from "@/types/player";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AddActivityForm } from "@/components/AddActivityForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -180,7 +181,7 @@ export function AddActivityDialog({
     onOpenChange(false);
   };
 
-  const handleActivityTypeChange = (type: "match" | "cup") => {
+  const handleActivityTypeChange = (type: ActivityType) => {
     setShowCupMatches(type === "cup");
   };
 
