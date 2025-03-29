@@ -73,12 +73,12 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
     }
   };
 
-  // Config for the charts
+  // Config for the charts - fixed to match ChartConfig type
   const chartConfig = {
-    A: { color: '#22c55e', theme: { light: '#22c55e', dark: '#22c55e' } },
-    B: { color: '#3b82f6', theme: { light: '#3b82f6', dark: '#3b82f6' } },
-    C: { color: '#f97316', theme: { light: '#f97316', dark: '#f97316' } },
-    D: { color: '#a855f7', theme: { light: '#a855f7', dark: '#a855f7' } },
+    gradeA: { theme: { light: '#22c55e', dark: '#22c55e' } },
+    gradeB: { theme: { light: '#3b82f6', dark: '#3b82f6' } },
+    gradeC: { theme: { light: '#f97316', dark: '#f97316' } },
+    gradeD: { theme: { light: '#a855f7', dark: '#a855f7' } },
   };
 
   return (
