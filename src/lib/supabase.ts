@@ -1,4 +1,3 @@
-
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 import { Database } from '@/types/supabase';
 import { Player, Activity } from '@/types/player';
@@ -128,9 +127,8 @@ export const logDatabaseChange = async (
   try {
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
-    // Use the explicit type for the RPC call
-    const { error } = await supabase.rpc<void, InsertDatabaseLogParams>(
-      'insert_database_log', 
+    // Fix: correct type parameters for the RPC call
+    const { error } = await supabase.rpc('insert_database_log', 
       {
         action_param: action,
         entity_type_param: entityType,
@@ -182,4 +180,3 @@ export const fetchDatabaseLogs = async (limit: number = 100): Promise<any[]> => 
     return [];
   }
 };
-
