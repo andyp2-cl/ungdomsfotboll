@@ -10,6 +10,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useActivities } from "@/hooks/useActivities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveActiveTab, getActiveTab } from "@/utils/storage";
+import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -30,6 +31,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     searchQuery,
     setSearchQuery,
     selectedGrades,
+    selectedPositions,
     selectedPlayer,
     setSelectedPlayer,
     editingPlayer,
@@ -40,6 +42,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     setViewMode,
     filteredPlayers,
     handleGradeChange,
+    handlePositionChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer

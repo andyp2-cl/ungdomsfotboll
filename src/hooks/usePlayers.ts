@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { Player, PlayerGrade } from "@/types/player";
+import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,6 +10,7 @@ export function usePlayers() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<PlayerGrade[]>([]);
+  const [selectedPositions, setSelectedPositions] = useState<PlayerPosition[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
@@ -47,6 +48,14 @@ export function usePlayers() {
       prev.includes(grade) 
         ? prev.filter(g => g !== grade) 
         : [...prev, grade]
+    );
+  };
+
+  const handlePositionChange = (position: PlayerPosition) => {
+    setSelectedPositions(prev => 
+      prev.includes(position) 
+        ? prev.filter(p => p !== position) 
+        : [...prev, position]
     );
   };
 
@@ -145,9 +154,12 @@ export function usePlayers() {
     return players.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesGrade = selectedGrades.length === 0 || selectedGrades.includes(player.grade);
-      return matchesSearch && matchesGrade;
+      const matchesPosition = selectedPositions.length === 0 || 
+        (player.positions && player.positions.some(position => selectedPositions.includes(position)));
+      
+      return matchesSearch && matchesGrade && matchesPosition;
     });
-  }, [searchQuery, selectedGrades, players]);
+  }, [searchQuery, selectedGrades, selectedPositions, players]);
 
   return {
     players,
@@ -156,6 +168,8 @@ export function usePlayers() {
     searchQuery,
     setSearchQuery,
     selectedGrades,
+    selectedPositions,
+    setSelectedPositions,
     selectedPlayer,
     setSelectedPlayer,
     editingPlayer,
@@ -166,8 +180,9 @@ export function usePlayers() {
     setViewMode,
     filteredPlayers,
     handleGradeChange,
+    handlePositionChange,
     handlePlayerUpdate,
-    handleBulkPlayerUpdate, // New function for bulk updates
+    handleBulkPlayerUpdate,
     handleAddPlayer
   };
 }
