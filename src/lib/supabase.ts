@@ -1,4 +1,3 @@
-
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 import { Database } from '@/types/supabase';
 import { Player, Activity } from '@/types/player';
@@ -110,6 +109,14 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
   }
 };
 
+// Define the database function parameter types
+type InsertDatabaseLogParams = {
+  action_param: 'create' | 'update' | 'delete';
+  entity_type_param: 'player' | 'activity' | 'player_activity';
+  entity_id_param: string;
+  details_param: string;
+};
+
 // Improved function to log database changes with better error handling for RLS issues
 export const logDatabaseChange = async (
   action: 'create' | 'update' | 'delete', 
@@ -120,16 +127,15 @@ export const logDatabaseChange = async (
   try {
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
-    // Instead of explicitly casting to a type, we will call the RPC function with generic parameters
-    const { error } = await supabase.rpc(
+    // Use the explicit type for the RPC call
+    const { error } = await supabase.rpc<void>(
       'insert_database_log', 
       {
         action_param: action,
         entity_type_param: entityType,
         entity_id_param: entityId,
         details_param: details
-      },
-      { count: 'exact' } // Added count option to get exact result
+      } as InsertDatabaseLogParams
     );
     
     if (error) {
