@@ -37,6 +37,9 @@ interface ActivityDetailProps {
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onActivitySelect?: (activity: Activity | null) => void;
+  allActivities?: Activity[];
+  cupMatches?: Activity[];
 }
 
 export function ActivityDetail({ 
@@ -45,7 +48,10 @@ export function ActivityDetail({
   onClose, 
   onEdit, 
   onActivityUpdate,
-  onKioskAssignmentUpdate
+  onKioskAssignmentUpdate,
+  onActivitySelect,
+  allActivities,
+  cupMatches = []
 }: ActivityDetailProps) {
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
@@ -62,15 +68,11 @@ export function ActivityDetail({
       player.name.toLowerCase().includes(playerSearchQuery.toLowerCase())
     );
   }, [sortedPlayers, playerSearchQuery]);
-  
-  // Check if activity is eligible for kiosk duty (home match at Österås IP)
-  const isKioskEligible = () => {
-    if (!currentActivity.location) return false;
-    
-    const isAtÖsteråsIP = currentActivity.location.name.includes('Österås IP');
-    const isHomeMatch = currentActivity.name.toLowerCase().startsWith('hässleholms if');
-    
-    return isAtÖsteråsIP && isHomeMatch;
+
+  // Modified: All matches should be eligible for kiosk duty, but we check if it's a home match
+  const isHomeMatch = () => {
+    return currentActivity.type === "match" && 
+           currentActivity.name.toLowerCase().startsWith('hässleholms if');
   };
   
   // Find all players participating in this activity
@@ -411,11 +413,17 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {isKioskEligible() && (
+        {/* Modified: Show kiosk assignment for all matches, with a note for home matches */}
+        {currentActivity.type === "match" && (
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold flex items-center mb-3">
               <Coffee className="h-5 w-5 mr-2" />
               Kioskansvarig
+              {isHomeMatch() && (
+                <Badge variant="outline" className="ml-2 bg-green-100 text-green-800 border-green-300">
+                  Hemmaplan
+                </Badge>
+              )}
             </h3>
             
             <div className="flex justify-between items-center">
@@ -470,6 +478,42 @@ export function ActivityDetail({
                   </Command>
                 </PopoverContent>
               </Popover>
+            </div>
+          </div>
+        )}
+
+        {/* Display cup matches if this is a cup */}
+        {currentActivity.type === "cup" && cupMatches.length > 0 && (
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-3">Matcher i cupen</h3>
+            <div className="space-y-2">
+              {cupMatches.map(match => (
+                <div key={match.id} className="p-2 border rounded-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{match.name}</div>
+                      <div className="text-sm text-muted-foreground flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {match.time || "Tid ej satt"}
+                        {match.location && (
+                          <span className="ml-2">
+                            <MapPin className="h-3 w-3 inline mr-1" />
+                            {match.location.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8"
+                      onClick={() => onActivitySelect && onActivitySelect(match)}
+                    >
+                      Visa
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

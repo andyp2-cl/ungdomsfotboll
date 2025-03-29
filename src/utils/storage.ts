@@ -395,7 +395,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         // Additional logging for cup-match relationships
         await logDatabaseChange(
           'create',
-          'cup_matches',
+          'activity',
           activity.id,
           `Associated ${activity.matches.length} matches with cup "${activity.name}"`
         );

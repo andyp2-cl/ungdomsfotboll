@@ -47,8 +47,8 @@ export function ActivityManagement({
   const [activeTab, setActiveTab] = useState<"activities" | "tools" | "logs">("activities");
   
   // Get cup matches if the selected activity is a cup
-  const cupMatches = selectedActivity?.type === 'cup' 
-    ? activities.filter(activity => activity.cupId === selectedActivity.id)
+  const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
+    ? activities.filter(activity => selectedActivity.matches?.includes(activity.id))
     : [];
   
   return (
