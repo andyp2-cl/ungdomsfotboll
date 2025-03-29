@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import PlayersPage from "./pages/PlayersPage";
-import { getStoredPlayers, getStoredActivities, setStoredPlayers, setStoredActivities } from "./utils/storage";
+import { getStoredPlayers, getStoredActivities, savePlayers, saveActivities } from "./utils/storage";
 import { mockPlayers, mockActivities } from "./data/mockData";
 import NotFound from "./pages/NotFound";
 import CalendarPage from "./pages/CalendarPage";
@@ -16,11 +16,11 @@ function App() {
     const initializeData = async () => {
       // Initialize mock data if localStorage is empty
       if (!localStorage.getItem("players")) {
-        await setStoredPlayers(mockPlayers);
+        await savePlayers(mockPlayers);
       }
       
       if (!localStorage.getItem("activities")) {
-        await setStoredActivities(mockActivities);
+        await saveActivities(mockActivities);
       }
       
       setIsLoading(false);
