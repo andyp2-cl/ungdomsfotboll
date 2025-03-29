@@ -5,11 +5,13 @@ import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
 import { PlayerList } from "@/components/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import { Grid, List, Plus } from "lucide-react";
+import { Grid, List, Plus, BarChart3 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlayerImageScraper } from "@/components/PlayerImageScraper";
+import { TeamStatistics } from "@/components/TeamStatistics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -47,6 +49,7 @@ export function PlayerManagement({
   onEditPlayerClick,
 }: PlayerManagementProps) {
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<"players" | "statistics">("players");
   
   // Always use list view on mobile
   useEffect(() => {
@@ -57,79 +60,95 @@ export function PlayerManagement({
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      <div className="flex flex-col md:flex-row justify-between gap-4">
-        <div className="w-full md:w-1/2 xl:w-1/3">
-          <SearchInput 
-            value={searchQuery} 
-            onChange={onSearchChange} 
-            placeholder="Sök spelare..."
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "players" | "statistics")}>
+        <TabsList className="max-w-[400px] mb-4">
+          <TabsTrigger value="players">Spelare</TabsTrigger>
+          <TabsTrigger value="statistics" className="flex items-center gap-1">
+            <BarChart3 className="h-4 w-4" />
+            Statistik
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="players" className="space-y-6">
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div className="w-full md:w-1/2 xl:w-1/3">
+              <SearchInput 
+                value={searchQuery} 
+                onChange={onSearchChange} 
+                placeholder="Sök spelare..."
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
+                if (value) onViewModeChange(value as "grid" | "list");
+              }}>
+                <ToggleGroupItem value="grid" aria-label="Rutnätsvy">
+                  <Grid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="Listvy">
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+              
+              <Button onClick={onAddPlayerClick}>
+                <Plus className="h-4 w-4 mr-2" />
+                Lägg till spelare
+              </Button>
+            </div>
+          </div>
+          
+          <PlayerFilter 
+            selectedGrades={selectedGrades} 
+            onGradeChange={onGradeChange} 
           />
-        </div>
-        <div className="flex items-center gap-2">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
-            if (value) onViewModeChange(value as "grid" | "list");
-          }}>
-            <ToggleGroupItem value="grid" aria-label="Rutnätsvy">
-              <Grid className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="list" aria-label="Listvy">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
           
-          <Button onClick={onAddPlayerClick}>
-            <Plus className="h-4 w-4 mr-2" />
-            Lägg till spelare
-          </Button>
-        </div>
-      </div>
-      
-      <PlayerFilter 
-        selectedGrades={selectedGrades} 
-        onGradeChange={onGradeChange} 
-      />
-      
-      {selectedPlayer ? (
-        <PlayerDetail 
-          player={selectedPlayer} 
-          activities={activities} 
-          onClose={() => onPlayerSelect(null)}
-          onPlayerUpdate={onPlayerUpdate}
-          allPlayers={players}
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {/* Main content - Player List */}
-          <div>
-            <PlayerList 
-              players={filteredPlayers} 
-              viewMode={viewMode}
-              onPlayerSelect={onPlayerSelect}
-              onPlayerEdit={onEditPlayerClick}
+          {selectedPlayer ? (
+            <PlayerDetail 
+              player={selectedPlayer} 
+              activities={activities} 
+              onClose={() => onPlayerSelect(null)}
+              onPlayerUpdate={onPlayerUpdate}
+              allPlayers={players}
             />
-          </div>
-          
-          {/* Image scraper moved to bottom */}
-          <div className="mt-8">
-            <PlayerImageScraper 
-              players={players} 
-              onImagesScraped={(updatedPlayers) => {
-                // Use the bulk update function if available, otherwise fallback to individual updates
-                if (onBulkPlayerUpdate) {
-                  onBulkPlayerUpdate(updatedPlayers);
-                } else {
-                  // Update all players at once
-                  updatedPlayers.forEach(player => {
-                    if (player.image) {
-                      onPlayerUpdate(player);
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {/* Main content - Player List */}
+              <div>
+                <PlayerList 
+                  players={filteredPlayers} 
+                  viewMode={viewMode}
+                  onPlayerSelect={onPlayerSelect}
+                  onPlayerEdit={onEditPlayerClick}
+                />
+              </div>
+              
+              {/* Image scraper moved to bottom */}
+              <div className="mt-8">
+                <PlayerImageScraper 
+                  players={players} 
+                  onImagesScraped={(updatedPlayers) => {
+                    // Use the bulk update function if available, otherwise fallback to individual updates
+                    if (onBulkPlayerUpdate) {
+                      onBulkPlayerUpdate(updatedPlayers);
+                    } else {
+                      // Update all players at once
+                      updatedPlayers.forEach(player => {
+                        if (player.image) {
+                          onPlayerUpdate(player);
+                        }
+                      });
                     }
-                  });
-                }
-              }} 
-            />
-          </div>
-        </div>
-      )}
+                  }} 
+                />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="statistics">
+          <TeamStatistics players={players} activities={activities} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
