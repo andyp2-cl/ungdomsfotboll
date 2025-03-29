@@ -125,7 +125,7 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
                       }}
                     />
                     <Legend />
-                    <Bar dataKey="activities" name="Aktiviteter">
+                    <Bar dataKey="activities" name="">
                       {playerStats.slice(0, 10).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getGradeColor(entry.grade)} />
                       ))}
