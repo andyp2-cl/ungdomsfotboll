@@ -135,12 +135,12 @@ export function ActivityManagement({
                         className="w-full sm:w-auto"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Rensa tidigare aktiviteter
+                        Ta bort tidigare aktiviteter
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Rensa tidigare aktiviteter</DialogTitle>
+                        <DialogTitle>Ta bort tidigare aktiviteter</DialogTitle>
                         <DialogDescription>
                           Detta kommer att ta bort alla tidigare aktiviteter. Denna åtgärd kan inte ångras.
                         </DialogDescription>
@@ -156,7 +156,7 @@ export function ActivityManagement({
                             setIsConfirmDialogOpen(false);
                           }}
                         >
-                          Rensa
+                          Ta bort
                         </Button>
                       </DialogFooter>
                     </DialogContent>
