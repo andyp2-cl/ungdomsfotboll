@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -13,9 +14,17 @@ interface PlayerPerformanceChartProps {
 export function PlayerPerformanceChart({ players, activities }: PlayerPerformanceChartProps) {
   // Sort activities by date
   const sortedActivities = useMemo(() => {
-    return [...activities].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    return [...activities].sort((a, b) => {
+      // Sort by date first
+      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      
+      // If dates are the same, sort by time if available
+      if (dateComparison === 0 && a.time && b.time) {
+        return a.time.localeCompare(b.time);
+      }
+      
+      return dateComparison;
+    });
   }, [activities]);
 
   const performanceData = useMemo(() => {
