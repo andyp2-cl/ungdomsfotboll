@@ -1,4 +1,3 @@
-
 import { Player, Activity, PlayerGrade, PlayerPosition } from "@/types/player";
 import { PlayerFilter } from "@/components/PlayerFilter";
 import { SearchInput } from "@/components/SearchInput";
@@ -12,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamStatistics } from "@/components/TeamStatistics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
+import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -52,14 +52,12 @@ export function PlayerManagement({
   const [activeTab, setActiveTab] = useState<"players" | "statistics" | "analytics">("players");
   const [selectedPositions, setSelectedPositions] = useState<PlayerPosition[]>([]);
   
-  // Always use list view on mobile
   useEffect(() => {
     if (isMobile && viewMode === "grid") {
       onViewModeChange("list");
     }
   }, [isMobile, viewMode, onViewModeChange]);
 
-  // Handle position filtering
   const handlePositionChange = (position: PlayerPosition) => {
     setSelectedPositions(prev => 
       prev.includes(position) 
@@ -68,12 +66,9 @@ export function PlayerManagement({
     );
   };
 
-  // Calculate active filters count
   const activeFiltersCount = selectedPositions.length;
 
-  // Get player counts by grade for summary card
   const playerGradeCounts = players.reduce((acc, player) => {
-    // Skip trainers
     if (player.positions?.includes("TRÄNARE")) return acc;
     
     const grade = player.grade;
@@ -84,10 +79,8 @@ export function PlayerManagement({
     return acc;
   }, {} as Record<string, { grade: string, players: number }>);
 
-  // Convert to array for the card
   const gradeData = Object.values(playerGradeCounts);
 
-  // Filter players with positions filter
   const positionFilteredPlayers = selectedPositions.length > 0
     ? filteredPlayers.filter(player => 
         player.positions?.some(position => selectedPositions.includes(position))
@@ -119,7 +112,6 @@ export function PlayerManagement({
               />
             </div>
             <div className="flex items-center gap-2">
-              {/* Hide toggle view on mobile */}
               {!isMobile && (
                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
                   if (value) onViewModeChange(value as "grid" | "list");
