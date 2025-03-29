@@ -162,14 +162,12 @@ export const logDatabaseChange = async (
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
     // Use the generalized rpc call without explicit type parameters
-    const { error } = await supabase.rpc('insert_database_log',
-      {
-        action_param: action,
-        entity_type_param: entityType,
-        entity_id_param: entityId,
-        details_param: details
-      } as InsertDatabaseLogParams
-    );
+    const { error } = await supabase.rpc('insert_database_log', {
+      action_param: action,
+      entity_type_param: entityType,
+      entity_id_param: entityId,
+      details_param: details
+    } as InsertDatabaseLogParams);
     
     if (error) {
       console.error('Error logging database change (RPC method):', error);
