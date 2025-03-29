@@ -80,7 +80,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     } else {
       // Populate participants for each activity
       activities.forEach(activity => {
-        const activityPlayerRelations = playerActivitiesData.filter(pa => pa.activity_id === activity.id);
+        const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
         activity.participants = activityPlayerRelations.map(relation => relation.player_id);
       });
     }
@@ -168,7 +168,7 @@ export const logDatabaseChange = async (
         entity_type_param: entityType,
         entity_id_param: entityId,
         details_param: details
-      }
+      } as InsertDatabaseLogParams
     );
     
     if (error) {
