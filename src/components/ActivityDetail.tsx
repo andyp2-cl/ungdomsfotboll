@@ -1,9 +1,10 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus, Coffee } from "lucide-react";
+import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus, Coffee, Trash2, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddPlayersToActivity } from "./AddPlayersToActivity";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +17,17 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { UserCircle, Check } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
@@ -142,6 +154,81 @@ export function ActivityDetail({
     });
   };
 
+  // NEW: Handle removing a player from the activity
+  const handleRemovePlayer = (playerId: string) => {
+    // Get player name for the toast
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Create a new participants array without the removed player
+    const updatedParticipants = (currentActivity.participants || []).filter(
+      id => id !== playerId
+    );
+    
+    // Create the updated activity
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
+    };
+    
+    // If the removed player was the kiosk assigned player, remove that assignment
+    if (currentActivity.kioskAssignedPlayerId === playerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      // Call the kiosk assignment update function if available
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    // Update the local state
+    setCurrentActivity(updatedActivity);
+    
+    // Call the update function to save changes
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    // Show success toast
+    toast({
+      title: "Spelare borttagen",
+      description: `${player.name} har tagits bort från aktiviteten.`,
+    });
+  };
+
+  // NEW: Handle clearing all participants from the activity
+  const handleClearAllParticipants = () => {
+    // Create the updated activity with no participants
+    const updatedActivity = {
+      ...currentActivity,
+      participants: []
+    };
+    
+    // If there was a kiosk assigned player, remove that assignment
+    if (currentActivity.kioskAssignedPlayerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      // Call the kiosk assignment update function if available
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    // Update the local state
+    setCurrentActivity(updatedActivity);
+    
+    // Call the update function to save changes
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    // Show success toast
+    toast({
+      title: "Deltagarlista rensad",
+      description: `Alla spelare har tagits bort från aktiviteten.`,
+    });
+  };
+
   // Format the date
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   // Get day of week in Swedish
@@ -246,9 +333,20 @@ export function ActivityDetail({
                         )}
                         <span>{player.name}</span>
                       </div>
-                      <Badge variant="outline">
-                        {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleRemovePlayer(player.id)}
+                          title="Ta bort spelare"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -256,16 +354,50 @@ export function ActivityDetail({
                 <p className="text-muted-foreground mb-4">Inga deltagare tillagda än</p>
               )}
 
-              {participatingPlayers.length < 12 && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsAddingPlayers(!isAddingPlayers)}
-                  className="w-full"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {participatingPlayers.length < 12 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsAddingPlayers(!isAddingPlayers)}
+                    className="flex-grow"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
+                  </Button>
+                )}
+                
+                {participatingPlayers.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Rensa alla
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Detta kommer ta bort alla {participatingPlayers.length} deltagare från aktiviteten. 
+                          Denna åtgärd kan inte ångras.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleClearAllParticipants}
+                          className="bg-red-500 hover:bg-red-700"
+                        >
+                          Ta bort alla
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
 
               {isAddingPlayers && (
                 <AddPlayersToActivity 
