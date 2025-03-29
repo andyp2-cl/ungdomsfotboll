@@ -51,6 +51,7 @@ export interface Database {
           location_gps_link: string | null
           kiosk_assigned_player_id: string | null
           scraped: boolean | null
+          cup_id: string | null
           created_at: string
         }
         Insert: {
@@ -64,6 +65,7 @@ export interface Database {
           location_gps_link?: string | null
           kiosk_assigned_player_id?: string | null
           scraped?: boolean | null
+          cup_id?: string | null
           created_at?: string
         }
         Update: {
@@ -77,6 +79,7 @@ export interface Database {
           location_gps_link?: string | null
           kiosk_assigned_player_id?: string | null
           scraped?: boolean | null
+          cup_id?: string | null
           created_at?: string
         }
       }

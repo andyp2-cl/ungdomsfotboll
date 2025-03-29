@@ -12,6 +12,7 @@ export type Database = {
       activities: {
         Row: {
           created_at: string
+          cup_id: string | null
           date: string
           id: string
           kiosk_assigned_player_id: string | null
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          cup_id?: string | null
           date: string
           id: string
           kiosk_assigned_player_id?: string | null
@@ -38,6 +40,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          cup_id?: string | null
           date?: string
           id?: string
           kiosk_assigned_player_id?: string | null
