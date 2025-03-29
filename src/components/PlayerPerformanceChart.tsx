@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -12,6 +11,13 @@ interface PlayerPerformanceChartProps {
 }
 
 export function PlayerPerformanceChart({ players, activities }: PlayerPerformanceChartProps) {
+  // Sort activities by date
+  const sortedActivities = useMemo(() => {
+    return [...activities].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [activities]);
+
   const performanceData = useMemo(() => {
     // Create a map of player performance
     const playerPerformance = players
@@ -19,12 +25,9 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
       .map(player => {
         // Calculate player's activity participation rate
         const participationCount = player.activities?.length || 0;
-        const participationRate = activities.length > 0 
-          ? Math.round((participationCount / activities.length) * 100) 
+        const participationRate = sortedActivities.length > 0 
+          ? Math.round((participationCount / sortedActivities.length) * 100) 
           : 0;
-        
-        // Calculate activity participation over time
-        // For simplicity, let's just track their activity count
         
         return {
           id: player.id,
@@ -39,9 +42,9 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
       })
       .sort((a, b) => a.name.localeCompare(b.name));
     
-    console.log("Player performance data:", playerPerformance); // Log for debugging
+    console.log("Player performance data:", playerPerformance);
     return playerPerformance;
-  }, [players, activities]);
+  }, [players, sortedActivities]);
 
   // Group by position
   const positionData = useMemo(() => {

@@ -13,11 +13,13 @@ interface ActivityListProps {
 }
 
 export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
-  // Sort activities by date
+  // Sort activities by date and time
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
       // Sort by date first
-      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const dateComparison = dateA.getTime() - dateB.getTime();
       
       // If dates are the same, sort by time if available
       if (dateComparison === 0 && a.time && b.time) {
