@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity, ActivityType } from "@/types/player";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -147,6 +146,11 @@ export function AddActivityDialog({
 
   const handleActivityFormSave = (activity: Activity) => {
     if (activity.type === "cup" && showCupMatches && cupMatches.length > 0) {
+      const cupActivity: Activity = {
+        ...activity,
+        matches: []
+      };
+      
       const matchActivities: Activity[] = cupMatches.map(match => ({
         id: match.id,
         name: match.name,
@@ -158,10 +162,12 @@ export function AddActivityDialog({
           description: match.locationDescription
         } : undefined,
         participants: [],
-        cupId: activity.id
+        cupId: cupActivity.id
       }));
       
-      onAddActivity(activity);
+      cupActivity.matches = matchActivities.map(match => match.id);
+      
+      onAddActivity(cupActivity);
       
       matchActivities.forEach(matchActivity => {
         onAddActivity(matchActivity);

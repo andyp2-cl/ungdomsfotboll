@@ -1,3 +1,4 @@
+
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 import { Database } from '@/types/supabase';
 import { Player, Activity } from '@/types/player';
@@ -51,7 +52,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     }
     
     // Transform the database format to our application format
-    return (data || []).map(activity => ({
+    const activities = (data || []).map(activity => ({
       id: activity.id,
       name: activity.name,
       date: activity.date,
@@ -64,8 +65,41 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       } : undefined,
       kioskAssignedPlayerId: activity.kiosk_assigned_player_id || undefined,
       scraped: activity.scraped || false,
-      participants: [] // We'll fetch participants separately
+      participants: [],
+      cupId: activity.cup_id || undefined, // Add cupId mapping
+      matches: [] // We'll populate this for cup activities
     }));
+    
+    // Fetch participant relationships
+    const { data: playerActivitiesData, error: relationshipError } = await supabase
+      .from('player_activities')
+      .select('*');
+      
+    if (relationshipError) {
+      console.error('Error fetching player activities:', relationshipError);
+    } else {
+      // Populate participants for each activity
+      activities.forEach(activity => {
+        const activityPlayerRelations = playerActivitiesData.filter(pa => pa.activity_id === activity.id);
+        activity.participants = activityPlayerRelations.map(relation => relation.player_id);
+      });
+    }
+    
+    // Find cup matches by looking for activities with a cupId that matches a cup's id
+    activities.forEach(activity => {
+      if (activity.type === 'cup') {
+        // Find all matches that have this cup as parent
+        const matchesForCup = activities.filter(
+          possibleMatch => possibleMatch.cupId === activity.id
+        );
+        if (matchesForCup.length > 0) {
+          activity.matches = matchesForCup.map(match => match.id);
+          console.log(`Found ${matchesForCup.length} matches for cup ${activity.name}`);
+        }
+      }
+    });
+    
+    return activities;
   } catch (error) {
     console.error('Error in fetchActivities:', error);
     return [];
@@ -127,8 +161,8 @@ export const logDatabaseChange = async (
   try {
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
-    // Fix: correct type parameters for the RPC call
-    const { error } = await supabase.rpc('insert_database_log', 
+    // Use the generalized rpc call without explicit type parameters
+    const { error } = await supabase.rpc('insert_database_log',
       {
         action_param: action,
         entity_type_param: entityType,

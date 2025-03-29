@@ -64,7 +64,8 @@ const formatActivityForDatabase = (activity: Activity) => {
     type: activity.type,
     time: activity.time || null,
     scraped: activity.scraped || null,
-    kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null
+    kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
+    cup_id: activity.cupId || null
   };
 
   if (activity.location) {
@@ -75,11 +76,6 @@ const formatActivityForDatabase = (activity: Activity) => {
     dbActivity.location_name = null;
     dbActivity.location_description = null;
     dbActivity.location_gps_link = null;
-  }
-
-  // Add cup relationship if this is a match that's part of a cup
-  if (activity.cupId) {
-    dbActivity.cup_id = activity.cupId;
   }
 
   return dbActivity;
@@ -480,6 +476,39 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           activity.id,
           `Associated ${activity.matches.length} matches with cup "${activity.name}"`
         );
+      }
+      
+      // For cup activities that have matches, make sure the matches have the correct cupId
+      if (activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
+        console.log(`Cup ${activity.name} has ${activity.matches.length} matches, ensuring they have the correct cupId`);
+        
+        // Get the match activities
+        const matchActivities = activities.filter(a => activity.matches?.includes(a.id));
+        
+        // Update each match with the cup ID if it doesn't already have it
+        for (const matchActivity of matchActivities) {
+          if (matchActivity.cupId !== activity.id) {
+            console.log(`Updating match ${matchActivity.name} with cupId ${activity.id}`);
+            
+            // Update the match in the database with the cupId
+            const { error: updateError } = await supabase
+              .from('activities')
+              .update({ cup_id: activity.id })
+              .eq('id', matchActivity.id);
+              
+            if (updateError) {
+              console.error(`Error updating cupId for match ${matchActivity.name}:`, updateError);
+            } else {
+              // Log the cup association
+              await logDatabaseChange(
+                'update',
+                'activity',
+                matchActivity.id,
+                `Associated match "${matchActivity.name}" with cup "${activity.name}"`
+              );
+            }
+          }
+        }
       }
     }
   } catch (error) {

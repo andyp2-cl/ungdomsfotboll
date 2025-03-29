@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
@@ -28,7 +28,7 @@ interface ActivityManagementProps {
   onImportedActivities: (importedActivities: Activity[]) => void;
   onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
   onDeleteAllActivities: () => void;
-  onClearHistoricalActivities?: () => void; // Add new prop
+  onClearHistoricalActivities?: () => void;
 }
 
 export function ActivityManagement({
@@ -52,10 +52,28 @@ export function ActivityManagement({
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
+  // Debug cup matches when a cup is selected
+  useEffect(() => {
+    if (selectedActivity?.type === 'cup') {
+      console.log('Selected cup activity:', selectedActivity);
+      if (selectedActivity.matches && selectedActivity.matches.length > 0) {
+        console.log(`Cup has ${selectedActivity.matches.length} matches:`, selectedActivity.matches);
+        const matchActivities = activities.filter(activity => 
+          selectedActivity.matches?.includes(activity.id)
+        );
+        console.log('Found match activities:', matchActivities);
+      } else {
+        console.log('Cup has no matches defined');
+      }
+    }
+  }, [selectedActivity, activities]);
+  
   // Get cup matches if the selected activity is a cup
   const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
     ? activities.filter(activity => selectedActivity.matches?.includes(activity.id))
     : [];
+  
+  console.log('Cup matches calculated:', cupMatches.length, cupMatches);
   
   return (
     <div className="space-y-6">
