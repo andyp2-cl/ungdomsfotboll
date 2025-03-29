@@ -1,41 +1,49 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import PasswordProtection from "./components/PasswordProtection";
+import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
+import { saveStoredPlayers, saveStoredActivities } from "./utils/storage";
+import { mockPlayers, mockActivities } from "./data/mockData";
+import NotFound from "./pages/NotFound";
+import CalendarPage from "./pages/CalendarPage";
+import { PasswordProtection } from "./components/PasswordProtection";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: Infinity, // Prevent automatic refetching
-    },
-  },
-});
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <PasswordProtection>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/players" element={<PlayersPage initialTab="players" />} />
-            <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </PasswordProtection>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const initializeData = async () => {
+      // Initialize mock data if localStorage is empty
+      if (!localStorage.getItem("players")) {
+        await saveStoredPlayers(mockPlayers);
+      }
+      
+      if (!localStorage.getItem("activities")) {
+        await saveStoredActivities(mockActivities);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    initializeData();
+  }, []);
+  
+  if (isLoading) {
+    return <div>Laddar...</div>;
+  }
+  
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<PasswordProtection><Index /></PasswordProtection>} />
+        <Route path="/players" element={<PasswordProtection><PlayersPage initialTab="players" /></PasswordProtection>} />
+        <Route path="/activities" element={<PasswordProtection><PlayersPage initialTab="activities" /></PasswordProtection>} />
+        <Route path="/calendar" element={<PasswordProtection><CalendarPage /></PasswordProtection>} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;
