@@ -10,7 +10,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-  const [oldActivitiesCleaned, setOldActivitiesCleaned] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -18,50 +17,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
       try {
         const storedActivities = await getStoredActivities();
         if (storedActivities.length > 0) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          const currentAndFutureActivities = storedActivities.filter(activity => {
-            const activityDate = new Date(activity.date);
-            activityDate.setHours(0, 0, 0, 0);
-            return activityDate >= today;
-          });
-          
-          if (currentAndFutureActivities.length < storedActivities.length && !oldActivitiesCleaned) {
-            console.log(`Filtered out ${storedActivities.length - currentAndFutureActivities.length} past activities`);
-            await saveActivities(currentAndFutureActivities);
-            
-            const updatedPlayers = players.map(player => {
-              if (!player.activities || player.activities.length === 0) return player;
-              
-              const currentActivities = player.activities.filter(activityId => 
-                currentAndFutureActivities.some(a => a.id === activityId)
-              );
-              
-              if (currentActivities.length !== player.activities.length) {
-                return {
-                  ...player,
-                  activities: currentActivities
-                };
-              }
-              
-              return player;
-            });
-            
-            if (!arePlayersEqual(players, updatedPlayers)) {
-              setPlayers(updatedPlayers);
-              await savePlayers(updatedPlayers);
-            }
-            
-            toast({
-              title: "Gamla aktiviteter rensade",
-              description: `${storedActivities.length - currentAndFutureActivities.length} aktiviteter före dagens datum har tagits bort.`,
-            });
-            
-            setOldActivitiesCleaned(true);
-          }
-          
-          setActivities(currentAndFutureActivities);
+          setActivities(storedActivities);
         } else {
           toast({
             title: "Inga aktiviteter hittades",
@@ -81,7 +37,28 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     };
 
     loadActivities();
-  }, [toast, players, setPlayers, oldActivitiesCleaned]);
+  }, [toast]);
+
+  const { currentActivities, historicalActivities } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const current: Activity[] = [];
+    const historical: Activity[] = [];
+    
+    activities.forEach(activity => {
+      const activityDate = new Date(activity.date);
+      activityDate.setHours(0, 0, 0, 0);
+      
+      if (activityDate >= today) {
+        current.push(activity);
+      } else {
+        historical.push(activity);
+      }
+    });
+    
+    return { currentActivities: current, historicalActivities: historical };
+  }, [activities]);
 
   const arePlayersEqual = (playersA: Player[], playersB: Player[]) => {
     if (playersA.length !== playersB.length) return false;
@@ -237,8 +214,8 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     });
   };
 
-  const filteredActivities = useMemo(() => {
-    return activities
+  const filteredCurrentActivities = useMemo(() => {
+    return currentActivities
       .filter(activity => {
         return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
       })
@@ -251,7 +228,23 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
         
         return dateComparison;
       });
-  }, [selectedActivityTypes, activities]);
+  }, [selectedActivityTypes, currentActivities]);
+
+  const filteredHistoricalActivities = useMemo(() => {
+    return historicalActivities
+      .filter(activity => {
+        return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
+      })
+      .sort((a, b) => {
+        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        
+        if (dateComparison === 0 && a.time && b.time) {
+          return b.time.localeCompare(a.time);
+        }
+        
+        return dateComparison;
+      });
+  }, [selectedActivityTypes, historicalActivities]);
 
   return {
     activities,
@@ -263,7 +256,8 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     setEditingActivity,
     isAddActivityOpen,
     setIsAddActivityOpen,
-    filteredActivities,
+    filteredActivities: filteredCurrentActivities,
+    filteredHistoricalActivities,
     handleActivityTypeChange,
     handleActivityUpdate,
     handleKioskAssignmentUpdate,

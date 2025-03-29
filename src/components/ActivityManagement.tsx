@@ -8,7 +8,7 @@ import { FileImport } from "@/components/FileImport";
 import { MatchScraper } from "@/components/MatchScraper";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
 import { Button } from "@/components/ui/button";
-import { Activity as ActivityIcon, Database } from "lucide-react";
+import { Activity as ActivityIcon, Database, History } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ActivityManagementProps {
@@ -17,6 +17,7 @@ interface ActivityManagementProps {
   selectedActivity: Activity | null;
   selectedActivityTypes: ActivityType[];
   filteredActivities: Activity[];
+  filteredHistoricalActivities: Activity[];
   onActivityTypeChange: (type: ActivityType) => void;
   onActivitySelect: (activity: Activity | null) => void;
   onActivityUpdate: (activity: Activity) => void;
@@ -34,6 +35,7 @@ export function ActivityManagement({
   selectedActivity,
   selectedActivityTypes,
   filteredActivities,
+  filteredHistoricalActivities,
   onActivityTypeChange,
   onActivitySelect,
   onActivityUpdate,
@@ -44,7 +46,7 @@ export function ActivityManagement({
   onMatchesScraped,
   onDeleteAllActivities
 }: ActivityManagementProps) {
-  const [activeTab, setActiveTab] = useState<"activities" | "tools" | "logs">("activities");
+  const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
   
   // Get cup matches if the selected activity is a cup
   const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
@@ -58,6 +60,10 @@ export function ActivityManagement({
           <TabsTrigger value="activities">
             <ActivityIcon className="h-4 w-4 mr-2" />
             Aktiviteter
+          </TabsTrigger>
+          <TabsTrigger value="historical">
+            <History className="h-4 w-4 mr-2" />
+            Tidigare aktiviteter
           </TabsTrigger>
           <TabsTrigger value="tools">
             Verktyg
@@ -104,6 +110,40 @@ export function ActivityManagement({
             ) : (
               <ActivityList 
                 activities={filteredActivities} 
+                onSelect={onActivitySelect}
+                players={players} 
+              />
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="historical" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <h2 className="text-xl font-semibold">Tidigare aktiviteter</h2>
+              <div className="w-full sm:w-auto overflow-x-auto">
+                <ActivityFilter 
+                  selectedTypes={selectedActivityTypes}
+                  onTypeChange={onActivityTypeChange}
+                />
+              </div>
+            </div>
+            
+            {selectedActivity ? (
+              <ActivityDetail
+                activity={selectedActivity}
+                players={players}
+                cupMatches={cupMatches}
+                allActivities={activities}
+                onClose={() => onActivitySelect(null)}
+                onEdit={onEditActivityClick}
+                onActivityUpdate={onActivityUpdate}
+                onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+                onActivitySelect={onActivitySelect}
+              />
+            ) : (
+              <ActivityList 
+                activities={filteredHistoricalActivities} 
                 onSelect={onActivitySelect}
                 players={players} 
               />

@@ -59,6 +59,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     isAddActivityOpen,
     setIsAddActivityOpen,
     filteredActivities,
+    filteredHistoricalActivities,
     handleActivityTypeChange,
     handleActivityUpdate,
     handleKioskAssignmentUpdate,
@@ -126,6 +127,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
             onActivityTypeChange={handleActivityTypeChange}
             onActivitySelect={setSelectedActivity}
             onActivityUpdate={handleActivityUpdate}
