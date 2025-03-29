@@ -78,16 +78,19 @@ export function PlayerManagement({
               />
             </div>
             <div className="flex items-center gap-2">
-              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
-                if (value) onViewModeChange(value as "grid" | "list");
-              }}>
-                <ToggleGroupItem value="grid" aria-label="Rutnätsvy">
-                  <Grid className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label="Listvy">
-                  <List className="h-4 w-4" />
-                </ToggleGroupItem>
-              </ToggleGroup>
+              {/* Hide toggle view on mobile */}
+              {!isMobile && (
+                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
+                  if (value) onViewModeChange(value as "grid" | "list");
+                }}>
+                  <ToggleGroupItem value="grid" aria-label="Rutnätsvy">
+                    <Grid className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="list" aria-label="Listvy">
+                    <List className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              )}
               
               <Button onClick={onAddPlayerClick}>
                 <Plus className="h-4 w-4 mr-2" />
