@@ -109,3 +109,50 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
     return { playerActivities: {}, activityPlayers: {} };
   }
 };
+
+// New function to log database changes
+export const logDatabaseChange = async (
+  action: 'create' | 'update' | 'delete', 
+  entityType: 'player' | 'activity' | 'player_activity',
+  entityId: string,
+  details: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('database_logs')
+      .insert({
+        action,
+        entity_type: entityType,
+        entity_id: entityId,
+        details,
+        timestamp: new Date().toISOString()
+      });
+    
+    if (error) {
+      console.error('Error logging database change:', error);
+    }
+  } catch (error) {
+    console.error('Error in logDatabaseChange:', error);
+  }
+};
+
+// Function to fetch database logs
+export const fetchDatabaseLogs = async (limit: number = 50): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('database_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error fetching database logs:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchDatabaseLogs:', error);
+    return [];
+  }
+};

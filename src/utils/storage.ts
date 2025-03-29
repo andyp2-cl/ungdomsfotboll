@@ -1,6 +1,7 @@
+
 import { Player, Activity } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
-import { supabase } from "@/lib/supabase";
+import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
 
 const ACTIVE_TAB_STORAGE_KEY = "football-app-active-tab";
@@ -137,6 +138,15 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
       
       console.log(`Upserting player: ${player.name} (ID: ${player.id})`);
       
+      // Check if player already exists to determine if this is an update or create
+      const { data: existingPlayer } = await supabase
+        .from('players')
+        .select('id')
+        .eq('id', player.id)
+        .single();
+      
+      const isNewPlayer = !existingPlayer;
+      
       // Upsert the player
       const { error: upsertError } = await supabase
         .from('players')
@@ -147,6 +157,14 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
         throw upsertError;
       } else {
         console.log(`Successfully upserted player: ${player.name}`);
+        
+        // Log the change
+        await logDatabaseChange(
+          isNewPlayer ? 'create' : 'update',
+          'player',
+          player.id,
+          `${isNewPlayer ? 'Created' : 'Updated'} player: ${player.name}`
+        );
       }
       
       // Handle player-activity relationships
@@ -181,6 +199,16 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
             console.error(`Error deleting relations for player ${player.name}:`, deleteError);
             throw deleteError;
           }
+          
+          // Log the removed relations
+          for (const activityId of activityIdsToRemove) {
+            await logDatabaseChange(
+              'delete',
+              'player_activity',
+              `${player.id}-${activityId}`,
+              `Removed player ${player.name} from activity with ID ${activityId}`
+            );
+          }
         }
         
         // Add new relationships
@@ -204,6 +232,16 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
           if (insertError) {
             console.error(`Error inserting relations for player ${player.name}:`, insertError);
             throw insertError;
+          }
+          
+          // Log the added relations
+          for (const activityId of newActivityIds) {
+            await logDatabaseChange(
+              'create',
+              'player_activity',
+              `${player.id}-${activityId}`,
+              `Added player ${player.name} to activity with ID ${activityId}`
+            );
           }
         }
       }
@@ -258,12 +296,29 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
     for (const activity of activities) {
       const formattedActivity = formatActivityForDatabase(activity);
       
+      // Check if activity already exists to determine if this is an update or create
+      const { data: existingActivity } = await supabase
+        .from('activities')
+        .select('id')
+        .eq('id', activity.id)
+        .single();
+      
+      const isNewActivity = !existingActivity;
+      
       // Upsert the activity
       const { error: upsertError } = await supabase
         .from('activities')
         .upsert(formattedActivity, { onConflict: 'id' });
         
       if (upsertError) throw upsertError;
+      
+      // Log the change
+      await logDatabaseChange(
+        isNewActivity ? 'create' : 'update',
+        'activity',
+        activity.id,
+        `${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} on ${activity.date}`
+      );
       
       // Handle player-activity relationships
       if (activity.participants && activity.participants.length > 0) {
@@ -289,6 +344,16 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
             .in('player_id', playerIdsToRemove);
             
           if (deleteError) throw deleteError;
+          
+          // Log the removed relations
+          for (const playerId of playerIdsToRemove) {
+            await logDatabaseChange(
+              'delete',
+              'player_activity',
+              `${playerId}-${activity.id}`,
+              `Removed player with ID ${playerId} from activity ${activity.name}`
+            );
+          }
         }
         
         // Add new relationships
@@ -308,6 +373,16 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
             .insert(newRelations);
             
           if (insertError) throw insertError;
+          
+          // Log the added relations
+          for (const playerId of newPlayerIds) {
+            await logDatabaseChange(
+              'create',
+              'player_activity',
+              `${playerId}-${activity.id}`,
+              `Added player with ID ${playerId} to activity ${activity.name}`
+            );
+          }
         }
       }
     }
