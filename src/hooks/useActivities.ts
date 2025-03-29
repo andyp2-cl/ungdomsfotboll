@@ -10,6 +10,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [oldActivitiesCleaned, setOldActivitiesCleaned] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
             return activityDate >= today;
           });
           
-          if (currentAndFutureActivities.length < storedActivities.length) {
+          if (currentAndFutureActivities.length < storedActivities.length && !oldActivitiesCleaned) {
             console.log(`Filtered out ${storedActivities.length - currentAndFutureActivities.length} past activities`);
             await saveActivities(currentAndFutureActivities);
             
@@ -56,6 +57,8 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
               title: "Gamla aktiviteter rensade",
               description: `${storedActivities.length - currentAndFutureActivities.length} aktiviteter före dagens datum har tagits bort.`,
             });
+            
+            setOldActivitiesCleaned(true);
           }
           
           setActivities(currentAndFutureActivities);
@@ -78,7 +81,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     };
 
     loadActivities();
-  }, [toast, players, setPlayers]);
+  }, [toast, players, setPlayers, oldActivitiesCleaned]);
 
   const arePlayersEqual = (playersA: Player[], playersB: Player[]) => {
     if (playersA.length !== playersB.length) return false;
