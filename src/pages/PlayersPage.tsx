@@ -7,7 +7,7 @@ import { PlayerManagement } from "@/components/PlayerManagement";
 import { ActivityManagement } from "@/components/ActivityManagement";
 import { DialogModals } from "@/components/DialogModals";
 import { usePlayers } from "@/hooks/usePlayers";
-import { useActivities } from "@/hooks/useActivities";
+import { useActivities } from "@/hooks/activities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveActiveTab, getActiveTab } from "@/utils/storage";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";

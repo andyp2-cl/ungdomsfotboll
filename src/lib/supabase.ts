@@ -121,13 +121,18 @@ export const logDatabaseChange = async (
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
     // Use direct SQL insert to bypass RLS policies
-    // Fix: Use type assertion to handle the RPC call properly
+    // Fix: Use proper type definition for the RPC call
     const { error } = await supabase.rpc('insert_database_log', {
       action_param: action,
       entity_type_param: entityType,
       entity_id_param: entityId,
       details_param: details
-    } as any); // Use type assertion as a workaround for the TypeScript error
+    } as {
+      action_param: string;
+      entity_type_param: string;
+      entity_id_param: string;
+      details_param: string;
+    });
     
     if (error) {
       console.error('Error logging database change (RPC method):', error);
