@@ -66,7 +66,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       kioskAssignedPlayerId: activity.kiosk_assigned_player_id || undefined,
       scraped: activity.scraped || false,
       participants: [],
-      cupId: activity.cup_id || undefined, // Add cupId mapping
+      cupId: activity.cup_id || undefined,
       matches: [] // We'll populate this for cup activities
     }));
     
@@ -143,7 +143,7 @@ export const fetchPlayerActivities = async (): Promise<{playerActivities: Record
   }
 };
 
-// Define the database function parameter types
+// Define the database function parameter types properly
 type InsertDatabaseLogParams = {
   action_param: 'create' | 'update' | 'delete';
   entity_type_param: 'player' | 'activity' | 'player_activity';
@@ -161,13 +161,15 @@ export const logDatabaseChange = async (
   try {
     console.log(`Logging database change: ${action} ${entityType} ${entityId}`);
     
-    // Use the generalized rpc call without explicit type parameters
-    const { error } = await supabase.rpc('insert_database_log', {
+    // Use the correct type for the parameters
+    const params: InsertDatabaseLogParams = {
       action_param: action,
       entity_type_param: entityType,
       entity_id_param: entityId,
       details_param: details
-    } as InsertDatabaseLogParams);
+    };
+    
+    const { error } = await supabase.rpc('insert_database_log', params);
     
     if (error) {
       console.error('Error logging database change (RPC method):', error);
