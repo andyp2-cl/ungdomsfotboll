@@ -325,15 +325,37 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       );
       
       // Handle player-activity relationships
-      if (activity.participants && activity.participants.length > 0) {
-        // Get current relationships for this activity
-        const { data: existingRelations, error: fetchError } = await supabase
-          .from('player_activities')
-          .select('*')
-          .eq('activity_id', activity.id);
+      // Get current relationships for this activity regardless of participant array
+      const { data: existingRelations, error: fetchError } = await supabase
+        .from('player_activities')
+        .select('*')
+        .eq('activity_id', activity.id);
           
-        if (fetchError) throw fetchError;
-        
+      if (fetchError) throw fetchError;
+      
+      // If participants array is empty or undefined, we want to remove all relations
+      if (!activity.participants || activity.participants.length === 0) {
+        // If there are any existing relations, delete them all
+        if (existingRelations && existingRelations.length > 0) {
+          console.log(`Clearing all participants (${existingRelations.length}) from activity ${activity.name}`);
+          
+          const { error: deleteError } = await supabase
+            .from('player_activities')
+            .delete()
+            .eq('activity_id', activity.id);
+            
+          if (deleteError) throw deleteError;
+          
+          // Log the removal of all participants
+          await logDatabaseChange(
+            'delete',
+            'player_activity',
+            `${activity.id}-all`,
+            `Removed all players from activity ${activity.name}`
+          );
+        }
+      } else {
+        // Normal handling for activities with participants
         // Delete relationships that are no longer valid
         const existingPlayerIds = existingRelations.map(rel => rel.player_id);
         const playerIdsToRemove = existingPlayerIds.filter(

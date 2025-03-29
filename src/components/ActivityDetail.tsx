@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -198,7 +197,7 @@ export function ActivityDetail({
     });
   };
 
-  // NEW: Handle clearing all participants from the activity
+  // NEW: Update the handleClearAllParticipants function to properly clear participants
   const handleClearAllParticipants = () => {
     // Create the updated activity with no participants
     const updatedActivity = {
@@ -222,6 +221,8 @@ export function ActivityDetail({
     // Call the update function to save changes
     if (onActivityUpdate) {
       onActivityUpdate(updatedActivity);
+      
+      console.log("Cleared all participants from activity:", updatedActivity.name);
     }
     
     // Show success toast
