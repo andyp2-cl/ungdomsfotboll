@@ -20,6 +20,7 @@ export type Database = {
           location_gps_link: string | null
           location_name: string | null
           name: string
+          player_stats: Json | null
           scraped: boolean | null
           time: string | null
           type: string
@@ -34,6 +35,7 @@ export type Database = {
           location_gps_link?: string | null
           location_name?: string | null
           name: string
+          player_stats?: Json | null
           scraped?: boolean | null
           time?: string | null
           type: string
@@ -48,6 +50,7 @@ export type Database = {
           location_gps_link?: string | null
           location_name?: string | null
           name?: string
+          player_stats?: Json | null
           scraped?: boolean | null
           time?: string | null
           type?: string

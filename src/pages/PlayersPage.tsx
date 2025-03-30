@@ -10,6 +10,10 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useActivities } from "@/hooks/activities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveActiveTab, getActiveTab } from "@/utils/storage";
+import { deleteAllHistoricalActivities } from "@/utils/storage/activityStorage";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -18,9 +22,11 @@ interface PlayersPageProps {
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const pathTab = location.pathname === "/activities" ? "activities" : "players";
   const storedTab = getActiveTab();
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Use custom hooks
   const {
@@ -80,7 +86,34 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     }
   }, [activeTab, navigate, location.pathname]);
 
-  const isLoading = isPlayersLoading || isActivitiesLoading;
+  const handleOneTimeDeleteHistoricalActivities = async () => {
+    if (isDeleting) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      await deleteAllHistoricalActivities();
+      
+      // Refresh activities after deletion
+      window.location.reload();
+      
+      toast({
+        title: "Permanent radering slutförd",
+        description: "Alla historiska aktiviteter har raderats permanent från databasen.",
+      });
+    } catch (error) {
+      console.error("Error deleting historical activities:", error);
+      toast({
+        title: "Fel vid radering",
+        description: "Ett fel uppstod när historiska aktiviteter skulle raderas.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const isLoading = isPlayersLoading || isActivitiesLoading || isDeleting;
 
   if (isLoading) {
     return (
@@ -94,6 +127,22 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   return (
     <div className="container py-6">
       <PlayerHeader />
+      
+      {location.pathname === "/activities" && (
+        <div className="my-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <h3 className="text-lg font-medium mb-2">Engångsåtgärd: Radera alla historiska aktiviteter</h3>
+          <p className="mb-3">Denna åtgärd kommer att permanent ta bort alla aktiviteter från gårdagens datum och tidigare från databasen. Detta kan inte ångras.</p>
+          <Button 
+            variant="destructive"
+            onClick={handleOneTimeDeleteHistoricalActivities}
+            disabled={isDeleting}
+            className="flex items-center"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            {isDeleting ? "Raderar..." : "Radera alla historiska aktiviteter permanent"}
+          </Button>
+        </div>
+      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
