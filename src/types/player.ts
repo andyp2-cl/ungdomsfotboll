@@ -5,6 +5,10 @@ export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 
 export type ActivityType = 'match' | 'cup';
 
+export interface PlayerStats {
+  goals?: Record<string, number>; // Record of player ID to number of goals
+}
+
 export interface Activity {
   id: string;
   name: string;
@@ -21,6 +25,7 @@ export interface Activity {
   time?: string; // Time of the activity, e.g. "09:30"
   cupId?: string; // Reference to the parent cup activity (for matches that are part of a cup)
   matches?: string[]; // Array of activity IDs that are matches within this cup (for cup type activities)
+  playerStats?: PlayerStats; // Statistics for players in this activity
 }
 
 export interface Player {

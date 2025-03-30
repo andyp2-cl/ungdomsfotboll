@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
@@ -24,6 +25,7 @@ interface ActivityManagementProps {
   onAddActivityClick: () => void;
   onEditActivityClick: (activity: Activity) => void;
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => void;
+  onDeleteActivity?: (activityId: string) => void;
   onImportedActivities: (importedActivities: Activity[]) => void;
   onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
   onDeleteAllActivities: () => void;
@@ -43,6 +45,7 @@ export function ActivityManagement({
   onAddActivityClick,
   onEditActivityClick,
   onKioskAssignmentUpdate,
+  onDeleteActivity,
   onImportedActivities,
   onMatchesScraped,
   onDeleteAllActivities,
@@ -135,6 +138,7 @@ export function ActivityManagement({
                 onActivityUpdate={onActivityUpdate}
                 onKioskAssignmentUpdate={onKioskAssignmentUpdate}
                 onActivitySelect={onActivitySelect}
+                onDeleteActivity={onDeleteActivity}
               />
             ) : (
               <ActivityList 
@@ -207,6 +211,7 @@ export function ActivityManagement({
                 onActivityUpdate={onActivityUpdate}
                 onKioskAssignmentUpdate={onKioskAssignmentUpdate}
                 onActivitySelect={onActivitySelect}
+                onDeleteActivity={onDeleteActivity}
               />
             ) : (
               <ActivityList 

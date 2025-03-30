@@ -10,7 +10,6 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { useActivities } from "@/hooks/activities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveActiveTab, getActiveTab } from "@/utils/storage";
-import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -62,6 +61,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     filteredHistoricalActivities,
     handleActivityTypeChange,
     handleActivityUpdate,
+    handleDeleteActivity,
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,
@@ -108,7 +108,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             searchQuery={searchQuery}
             selectedGrades={selectedGrades}
             selectedPlayer={selectedPlayer}
-            viewMode={viewMode}
+            viewMode="list" // Remove grid view option
             filteredPlayers={filteredPlayers}
             onSearchChange={setSearchQuery}
             onGradeChange={handleGradeChange}
@@ -135,6 +135,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             onAddActivityClick={() => setIsAddActivityOpen(true)}
             onEditActivityClick={setEditingActivity}
             onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+            onDeleteActivity={handleDeleteActivity}
             onImportedActivities={handleImportedActivities}
             onMatchesScraped={handleScrapedMatches}
             onDeleteAllActivities={handleDeleteAllActivities}

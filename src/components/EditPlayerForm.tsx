@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -7,21 +7,11 @@ import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-
-const playerFormSchema = z.object({
-  name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
-  grade: z.enum(["A", "B", "C", "D"], {
-    required_error: "Välj en nivå",
-  }),
-  positions: z.array(z.string()).optional(),
-  jerseyNumber: z.string().optional(),
-});
-
-type PlayerFormValues = z.infer<typeof playerFormSchema>;
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Save, X } from "lucide-react";
 
 interface EditPlayerFormProps {
   player: Player;
@@ -29,111 +19,67 @@ interface EditPlayerFormProps {
   onCancel: () => void;
 }
 
-// List of available positions with labels
-const positionOptions = [
-  { value: "MV", label: "Målvakt" },
-  { value: "BACK", label: "Back" },
-  { value: "MF", label: "Mittfält" },
-  { value: "ANF", label: "Anfall" },
-  { value: "TRÄNARE", label: "Tränare" }
-];
-
 export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps) {
-  const { toast } = useToast();
-  const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const form = useForm<PlayerFormValues>({
-    resolver: zodResolver(playerFormSchema),
+  const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
+
+  const formSchema = z.object({
+    name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
+    grade: z.enum(["A", "B", "C", "D"]).optional(),
+    positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"])).optional(),
+    jerseyNumber: z.string().optional(),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: player.name,
-      grade: player.grade,
+      grade: isTrainer ? undefined : player.grade,
       positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
     },
   });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleSubmit = (values: PlayerFormValues) => {
-    // Update player with form values and image
+  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+    // Create updated player with form values
     const updatedPlayer: Player = {
       ...player,
       name: values.name,
-      grade: values.grade as PlayerGrade,
-      positions: values.positions as PlayerPosition[] || [],
+      grade: values.grade || "A", // Default to A if no grade selected (shouldn't happen due to validation)
+      positions: values.positions,
       jerseyNumber: values.jerseyNumber || undefined,
-      image: imagePreview,
     };
 
     onSave(updatedPlayer);
-    toast({
-      title: "Spelaren uppdaterad",
-      description: `${values.name} har uppdaterats.`,
-    });
+  };
+
+  // Available player positions
+  const positions: { label: string; value: PlayerPosition }[] = [
+    { label: "Målvakt", value: "MV" },
+    { label: "Back", value: "BACK" },
+    { label: "Mittfältare", value: "MF" },
+    { label: "Anfallare", value: "ANF" },
+    { label: "Tränare", value: "TRÄNARE" },
+  ];
+
+  const handleTrainerChange = (checked: boolean) => {
+    setIsTrainer(checked);
+    
+    // If becoming a trainer, add TRÄNARE to positions
+    if (checked) {
+      const currentPositions = form.getValues("positions") || [];
+      if (!currentPositions.includes("TRÄNARE")) {
+        form.setValue("positions", [...currentPositions, "TRÄNARE"]);
+      }
+    } else {
+      // If no longer a trainer, remove TRÄNARE from positions
+      const currentPositions = form.getValues("positions") || [];
+      form.setValue("positions", currentPositions.filter(pos => pos !== "TRÄNARE"));
+    }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="flex flex-col items-center mb-4">
-          <div className="relative mb-2">
-            <div 
-              className="h-24 w-24 rounded-full border border-gray-200 overflow-hidden flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors"
-              onClick={handleImageClick}
-            >
-              {imagePreview ? (
-                <img src={imagePreview} alt="Player" className="h-full w-full object-cover" />
-              ) : (
-                <UserCircle className="h-16 w-16 text-gray-400" />
-              )}
-              <div className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full">
-                <Camera className="h-4 w-4" />
-              </div>
-            </div>
-            {imagePreview && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon" 
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white" 
-                onClick={handleRemoveImage}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
-          <span className="text-sm text-muted-foreground">Klicka för att lägga till bild</span>
-        </div>
-
         <FormField
           control={form.control}
           name="name"
@@ -148,76 +94,124 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="grade"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nivå</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Välj nivå" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="A">Nivå A</SelectItem>
-                  <SelectItem value="B">Nivå B</SelectItem>
-                  <SelectItem value="C">Nivå C</SelectItem>
-                  <SelectItem value="D">Nivå D</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="border-t pt-4">
+          <div className="flex items-center mb-4">
+            <Checkbox 
+              id="is-trainer" 
+              checked={isTrainer}
+              onCheckedChange={handleTrainerChange}
+              className="mr-2"
+            />
+            <Label htmlFor="is-trainer">Detta är en tränare</Label>
+          </div>
+        </div>
 
-        <FormField
-          control={form.control}
-          name="positions"
-          render={() => (
-            <FormItem>
-              <FormLabel>Positioner</FormLabel>
-              <div className="flex flex-col space-y-2">
-                {positionOptions.map((position) => (
-                  <FormField
-                    key={position.value}
-                    control={form.control}
-                    name="positions"
-                    render={({ field }) => {
-                      return (
-                        <div className="flex items-center space-x-2 py-1">
-                          <Checkbox
-                            id={`position-${position.value}`}
-                            checked={field.value?.includes(position.value)}
-                            onCheckedChange={(checked) => {
-                              let updatedPositions = [...(field.value || [])];
-                              if (checked) {
-                                updatedPositions.push(position.value);
-                              } else {
-                                updatedPositions = updatedPositions.filter(
-                                  (p) => p !== position.value
-                                );
-                              }
-                              field.onChange(updatedPositions);
-                            }}
-                          />
-                          <label
-                            htmlFor={`position-${position.value}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        {!isTrainer && (
+          <FormField
+            control={form.control}
+            name="grade"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel>Nivå</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex space-x-2"
+                  >
+                    {["A", "B", "C", "D"].map((grade) => (
+                      <FormItem
+                        key={grade}
+                        className="flex items-center space-x-1 space-y-0"
+                      >
+                        <FormControl>
+                          <RadioGroupItem value={grade} id={`grade-${grade}`} />
+                        </FormControl>
+                        <Label
+                          htmlFor={`grade-${grade}`}
+                          className="font-normal cursor-pointer"
+                        >
+                          {grade}
+                        </Label>
+                      </FormItem>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {!isTrainer && (
+          <FormField
+            control={form.control}
+            name="positions"
+            render={() => (
+              <FormItem>
+                <div className="mb-2">
+                  <FormLabel>Position</FormLabel>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {positions.filter(pos => pos.value !== "TRÄNARE").map((position) => (
+                    <FormField
+                      key={position.value}
+                      control={form.control}
+                      name="positions"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={position.value}
+                            className="flex items-center space-x-1 space-y-0"
                           >
-                            {position.label}
-                          </label>
-                        </div>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(position.value)}
+                                onCheckedChange={(checked) => {
+                                  const currentPositions = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentPositions, position.value]);
+                                  } else {
+                                    field.onChange(
+                                      currentPositions.filter((val) => val !== position.value)
+                                    );
+                                  }
+                                }}
+                                id={`position-${position.value}`}
+                                className="hidden"
+                              />
+                            </FormControl>
+                            <Badge
+                              variant={
+                                field.value?.includes(position.value)
+                                  ? "default"
+                                  : "outline"
+                              }
+                              className="px-3 py-1 cursor-pointer select-none"
+                              onClick={() => {
+                                const currentPositions = field.value || [];
+                                if (currentPositions.includes(position.value)) {
+                                  field.onChange(
+                                    currentPositions.filter((val) => val !== position.value)
+                                  );
+                                } else {
+                                  field.onChange([...currentPositions, position.value]);
+                                }
+                              }}
+                            >
+                              {position.label}
+                            </Badge>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -226,7 +220,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
             <FormItem>
               <FormLabel>Tröjnummer</FormLabel>
               <FormControl>
-                <Input placeholder="Tröjnummer" {...field} />
+                <Input placeholder="t.ex. 10" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

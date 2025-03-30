@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';

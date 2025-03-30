@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -37,6 +38,7 @@ interface ActivityDetailProps {
   onActivityUpdate?: (updatedActivity: Activity) => void;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
   onActivitySelect?: (activity: Activity | null) => void;
+  onDeleteActivity?: (activityId: string) => void;
   allActivities?: Activity[];
   cupMatches?: Activity[];
 }
@@ -49,6 +51,7 @@ export function ActivityDetail({
   onActivityUpdate,
   onKioskAssignmentUpdate,
   onActivitySelect,
+  onDeleteActivity,
   allActivities,
   cupMatches = []
 }: ActivityDetailProps) {
@@ -56,6 +59,7 @@ export function ActivityDetail({
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
@@ -197,13 +201,19 @@ export function ActivityDetail({
     });
   };
 
+  const handleDeleteActivity = () => {
+    if (onDeleteActivity) {
+      onDeleteActivity(currentActivity.id);
+      onClose();
+    }
+  };
+
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
-  console.log("Cup matches passed to ActivityDetail:", cupMatches.map(m => ({id: m.id, name: m.name})));
-  console.log("Current activity is cup?", currentActivity.type === 'cup');
-  console.log("Current activity matches:", currentActivity.matches);
+  // Determine if the activity is historical (in the past)
+  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -218,6 +228,11 @@ export function ActivityDetail({
               >
                 {currentActivity.type === "match" ? "Match" : "Cup"}
               </Badge>
+              {isHistorical && (
+                <Badge variant="outline" className="ml-2">
+                  Tidigare
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="flex flex-col gap-1">
               <div className="flex items-center">
@@ -257,6 +272,33 @@ export function ActivityDetail({
               <Button variant="outline" size="icon" onClick={() => onEdit(currentActivity)}>
                 <Edit className="h-5 w-5" />
               </Button>
+            )}
+            {onDeleteActivity && (
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Radera aktivitet</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Är du säker på att du vill radera "{currentActivity.name}"? 
+                      Denna åtgärd kan inte ångras och all information kopplad till aktiviteten kommer att försvinna.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteActivity} 
+                      className="bg-red-500 hover:bg-red-700"
+                    >
+                      Radera
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
             <Button variant="ghost" size="icon" onClick={handleClose}>
               <X className="h-5 w-5" />
@@ -381,6 +423,76 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
+        {/* Player goal statistics for historical activities */}
+        {isHistorical && currentActivity.type === "match" && (
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
+            {participatingPlayers.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål varje spelare har gjort:</p>
+                {participatingPlayers.map(player => {
+                  const goals = currentActivity.playerStats?.goals?.[player.id] || 0;
+                  return (
+                    <div key={player.id} className="flex justify-between items-center border-b pb-2">
+                      <span className="font-medium">{player.name}</span>
+                      <div className="flex items-center">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => {
+                            const updatedActivity = {...currentActivity};
+                            if (!updatedActivity.playerStats) {
+                              updatedActivity.playerStats = { goals: {} };
+                            }
+                            if (!updatedActivity.playerStats.goals) {
+                              updatedActivity.playerStats.goals = {};
+                            }
+                            if (goals > 0) {
+                              updatedActivity.playerStats.goals[player.id] = goals - 1;
+                            }
+                            setCurrentActivity(updatedActivity);
+                            if (onActivityUpdate) {
+                              onActivityUpdate(updatedActivity);
+                            }
+                          }}
+                          disabled={goals === 0}
+                        >
+                          -
+                        </Button>
+                        <span className="mx-2 w-6 text-center">{goals}</span>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => {
+                            const updatedActivity = {...currentActivity};
+                            if (!updatedActivity.playerStats) {
+                              updatedActivity.playerStats = { goals: {} };
+                            }
+                            if (!updatedActivity.playerStats.goals) {
+                              updatedActivity.playerStats.goals = {};
+                            }
+                            updatedActivity.playerStats.goals[player.id] = (goals || 0) + 1;
+                            setCurrentActivity(updatedActivity);
+                            if (onActivityUpdate) {
+                              onActivityUpdate(updatedActivity);
+                            }
+                          }}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Lägg till spelare för att registrera mål.</p>
+            )}
+          </div>
+        )}
+
         {currentActivity.type === "match" && (
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold flex items-center mb-3">
@@ -455,7 +567,6 @@ export function ActivityDetail({
             
             {cupMatches.length > 0 ? (
               <div className="space-y-2">
-                {console.log("Rendering", cupMatches.length, "matches for cup")}
                 {cupMatches.map(match => (
                   <div key={match.id} className="p-2 border rounded-md">
                     <div className="flex justify-between items-center">
@@ -476,7 +587,11 @@ export function ActivityDetail({
                         variant="ghost" 
                         size="sm" 
                         className="h-8"
-                        onClick={() => onActivitySelect && onActivitySelect(match)}
+                        onClick={() => {
+                          if (onActivitySelect) {
+                            onActivitySelect(match);
+                          }
+                        }}
                       >
                         Visa
                       </Button>

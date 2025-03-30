@@ -32,6 +32,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
   // Get activity actions
   const {
     handleActivityUpdate,
+    handleDeleteActivity,
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,
@@ -67,6 +68,7 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     
     // Actions
     handleActivityUpdate,
+    handleDeleteActivity,
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,

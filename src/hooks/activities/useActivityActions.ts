@@ -80,6 +80,51 @@ export function useActivityActions(
     });
   };
 
+  const handleDeleteActivity = async (activityId: string) => {
+    const activityToDelete = activities.find(activity => activity.id === activityId);
+    
+    if (!activityToDelete) {
+      toast({
+        title: "Fel",
+        description: "Kunde inte hitta aktiviteten",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Filter out the activity
+    const updatedActivities = activities.filter(activity => activity.id !== activityId);
+    setActivities(updatedActivities);
+    await saveActivities(updatedActivities);
+    
+    // Update players to remove references to this activity
+    const updatedPlayers = players.map(player => {
+      if (player.activities?.includes(activityId)) {
+        return {
+          ...player,
+          activities: player.activities.filter(id => id !== activityId)
+        };
+      }
+      return player;
+    });
+    
+    setPlayers(updatedPlayers);
+    await savePlayers(updatedPlayers);
+    
+    // Log the deletion
+    await logDatabaseChange(
+      'delete',
+      'activity',
+      activityId,
+      `Aktivitet "${activityToDelete.name}" har raderats manuellt`
+    );
+    
+    toast({
+      title: "Aktivitet raderad",
+      description: `${activityToDelete.name} har tagits bort.`,
+    });
+  };
+
   const handleKioskAssignmentUpdate = async (activityId: string, playerId?: string) => {
     const updatedActivities = activities.map(activity => 
       activity.id === activityId 
@@ -203,6 +248,7 @@ export function useActivityActions(
 
   return {
     handleActivityUpdate,
+    handleDeleteActivity,
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,
