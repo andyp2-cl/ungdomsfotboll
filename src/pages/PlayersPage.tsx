@@ -1,25 +1,22 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { PlayerHeader } from "@/components/PlayerHeader";
 import { LoadingState } from "@/components/LoadingState";
-import { PlayerManagement } from "@/components/PlayerManagement";
-import { ActivityManagement } from "@/components/ActivityManagement";
-import { DialogModals } from "@/components/DialogModals";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useActivities } from "@/hooks/activities";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { saveActiveTab, getActiveTab } from "@/utils/storage";
-import { useToast } from "@/hooks/use-toast";
+import { getActiveTab } from "@/utils/storage";
+import { MainTabs } from "@/components/tabs/MainTabs";
+import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
+import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
+import { PageDialogs } from "@/components/tabs/PageDialogs";
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const pathTab = location.pathname === "/activities" ? "activities" : "players";
   const storedTab = getActiveTab();
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
@@ -32,7 +29,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     searchQuery,
     setSearchQuery,
     selectedGrades,
-    selectedPositions,
     selectedPlayer,
     setSelectedPlayer,
     editingPlayer,
@@ -43,7 +39,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     setViewMode,
     filteredPlayers,
     handleGradeChange,
-    handlePositionChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer
@@ -68,19 +63,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities,
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
-
-  useEffect(() => {
-    saveActiveTab(activeTab);
-    
-    if (activeTab === "activities" && location.pathname !== "/activities") {
-      navigate("/activities", { replace: true });
-    } else if (activeTab === "players" && location.pathname !== "/players") {
-      navigate("/players", { replace: true });
-    }
-  }, [activeTab, navigate, location.pathname]);
 
   const isLoading = isPlayersLoading || isActivitiesLoading;
 
@@ -97,67 +81,65 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     <div className="container py-6">
       <PlayerHeader />
       
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-          <TabsTrigger value="players">Spelare</TabsTrigger>
-          <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="players" className="space-y-6">
-          <PlayerManagement 
+      <MainTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        playersContent={
+          <PlayerTabContent 
             players={players}
             activities={activities}
             searchQuery={searchQuery}
             selectedGrades={selectedGrades}
             selectedPlayer={selectedPlayer}
-            viewMode="list" // Remove grid view option
+            viewMode={viewMode}
             filteredPlayers={filteredPlayers}
-            onSearchChange={setSearchQuery}
-            onGradeChange={handleGradeChange}
-            onPlayerSelect={setSelectedPlayer}
-            onViewModeChange={setViewMode}
-            onPlayerUpdate={handlePlayerUpdate}
-            onBulkPlayerUpdate={handleBulkPlayerUpdate}
-            onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-            onEditPlayerClick={setEditingPlayer}
+            isAddPlayerOpen={isAddPlayerOpen}
+            setSearchQuery={setSearchQuery}
+            handleGradeChange={handleGradeChange}
+            setSelectedPlayer={setSelectedPlayer}
+            setViewMode={setViewMode}
+            handlePlayerUpdate={handlePlayerUpdate}
+            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+            setIsAddPlayerOpen={setIsAddPlayerOpen}
+            setEditingPlayer={setEditingPlayer}
           />
-        </TabsContent>
-        
-        <TabsContent value="activities" className="space-y-6">
-          <ActivityManagement 
+        }
+        activitiesContent={
+          <ActivityTabContent 
             activities={activities}
             players={players}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
             filteredHistoricalActivities={filteredHistoricalActivities}
-            onActivityTypeChange={handleActivityTypeChange}
-            onActivitySelect={setSelectedActivity}
-            onActivityUpdate={handleActivityUpdate}
-            onAddActivityClick={() => setIsAddActivityOpen(true)}
-            onEditActivityClick={setEditingActivity}
-            onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-            onDeleteActivity={handleDeleteActivity}
-            onImportedActivities={handleImportedActivities}
-            onMatchesScraped={handleScrapedMatches}
-            onClearHistoricalActivities={handleClearHistoricalActivities}
+            isAddActivityOpen={isAddActivityOpen}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={handleActivityUpdate}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+            handleDeleteActivity={handleDeleteActivity}
+            handleImportedActivities={handleImportedActivities}
+            handleScrapedMatches={handleScrapedMatches}
+            handleClearHistoricalActivities={handleClearHistoricalActivities}
           />
-        </TabsContent>
-      </Tabs>
+        }
+      />
 
-      <DialogModals 
+      <PageDialogs 
         editingPlayer={editingPlayer}
         editingActivity={editingActivity}
         isAddPlayerOpen={isAddPlayerOpen}
         isAddActivityOpen={isAddActivityOpen}
-        onEditingPlayerChange={setEditingPlayer}
-        onEditingActivityChange={setEditingActivity}
-        onAddPlayerOpenChange={setIsAddPlayerOpen}
-        onAddActivityOpenChange={setIsAddActivityOpen}
-        onPlayerUpdate={handlePlayerUpdate}
-        onActivityUpdate={handleActivityUpdate}
-        onAddPlayer={handleAddPlayer}
-        onAddActivity={handleAddActivity}
+        setEditingPlayer={setEditingPlayer}
+        setEditingActivity={setEditingActivity}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        handlePlayerUpdate={handlePlayerUpdate}
+        handleActivityUpdate={handleActivityUpdate}
+        handleAddPlayer={handleAddPlayer}
+        handleAddActivity={handleAddActivity}
       />
     </div>
   );
