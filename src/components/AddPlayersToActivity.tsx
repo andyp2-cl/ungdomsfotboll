@@ -42,7 +42,8 @@ export function AddPlayersToActivity({
 
   // Filter available players based on search query
   const filteredPlayers = useMemo(() => {
-    if (!searchQuery) return availablePlayers;
+    if (!searchQuery.trim()) return availablePlayers;
+    
     return availablePlayers.filter(player => 
       player.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -63,13 +64,13 @@ export function AddPlayersToActivity({
       }
       setSelectedPlayers(prev => [...prev, playerId]);
     }
-    setPopoverOpen(false);
   };
 
   const handleAddPlayers = () => {
     if (selectedPlayers.length > 0) {
       onAddPlayers(selectedPlayers);
       setSelectedPlayers([]);
+      setSearchQuery("");
     }
   };
 
@@ -104,7 +105,10 @@ export function AddPlayersToActivity({
               Välj spelare
               <X 
                 className="h-4 w-4 shrink-0 opacity-50 ml-2" 
-                onClick={() => setSearchQuery("")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchQuery("");
+                }}
               />
             </Button>
           </PopoverTrigger>
@@ -114,6 +118,7 @@ export function AddPlayersToActivity({
                 placeholder="Sök spelare..." 
                 value={searchQuery}
                 onValueChange={setSearchQuery}
+                className="h-9"
               />
               <CommandList>
                 <CommandEmpty>Inga spelare hittades</CommandEmpty>
