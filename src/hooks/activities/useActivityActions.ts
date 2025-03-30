@@ -183,23 +183,6 @@ export function useActivityActions(
     }
   };
 
-  const handleDeleteAllActivities = async () => {
-    setActivities([]);
-    await saveActivities([]);
-    
-    await logDatabaseChange(
-      'delete',
-      'activity',
-      'all',
-      'Alla aktiviteter har raderats manuellt'
-    );
-    
-    toast({
-      title: "Aktiviteter raderade",
-      description: "Alla aktiviteter har tagits bort.",
-    });
-  };
-
   const handleClearHistoricalActivities = async () => {
     if (historicalActivities.length === 0) {
       toast({
@@ -253,7 +236,6 @@ export function useActivityActions(
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities,
     handleClearHistoricalActivities
   };
 }

@@ -37,7 +37,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities,
     handleClearHistoricalActivities
   } = useActivityActions(
     activities, 
@@ -73,7 +72,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     handleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
-    handleDeleteAllActivities,
     handleClearHistoricalActivities
   };
 }

@@ -28,7 +28,6 @@ interface ActivityManagementProps {
   onDeleteActivity?: (activityId: string) => void;
   onImportedActivities: (importedActivities: Activity[]) => void;
   onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
-  onDeleteAllActivities: () => void;
   onClearHistoricalActivities?: () => void;
 }
 
@@ -48,7 +47,6 @@ export function ActivityManagement({
   onDeleteActivity,
   onImportedActivities,
   onMatchesScraped,
-  onDeleteAllActivities,
   onClearHistoricalActivities
 }: ActivityManagementProps) {
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
@@ -228,7 +226,6 @@ export function ActivityManagement({
             <FileImport onActivitiesImported={onImportedActivities} />
             <MatchScraper 
               onMatchesScraped={onMatchesScraped} 
-              onDeleteAllActivities={onDeleteAllActivities}
             />
           </div>
         </TabsContent>
