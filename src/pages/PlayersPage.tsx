@@ -66,6 +66,32 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
+  // Modified function wrappers to ensure Promise<boolean> return type
+  const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
+    await handleKioskAssignmentUpdate(activityId, playerId);
+    return true;
+  };
+
+  const handleDelete = async (activityId: string): Promise<boolean> => {
+    await handleDeleteActivity(activityId);
+    return true;
+  };
+
+  const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
+    await handleImportedActivities(activities);
+    return true;
+  };
+
+  const handleScraped = async (matches: Activity[]): Promise<boolean> => {
+    await handleScrapedMatches(matches);
+    return true;
+  };
+
+  const handleClearHistorical = async (): Promise<boolean> => {
+    await handleClearHistoricalActivities();
+    return true;
+  };
+
   const isLoading = isPlayersLoading || isActivitiesLoading;
 
   if (isLoading) {
@@ -118,11 +144,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             handleActivityUpdate={handleActivityUpdate}
             setIsAddActivityOpen={setIsAddActivityOpen}
             setEditingActivity={setEditingActivity}
-            handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-            handleDeleteActivity={handleDeleteActivity}
-            handleImportedActivities={handleImportedActivities}
-            handleScrapedMatches={handleScrapedMatches}
-            handleClearHistoricalActivities={handleClearHistoricalActivities}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportedActivities={handleImportActivities}
+            handleScrapedMatches={handleScraped}
+            handleClearHistoricalActivities={handleClearHistorical}
           />
         }
       />

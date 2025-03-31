@@ -25,7 +25,7 @@ interface ActivityTabContentProps {
   handleActivityUpdate: (activity: Activity) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
-  handleKioskAssignmentUpdate: (activityId: string, playerId: string) => Promise<boolean>;
+  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleScrapedMatches: (matches: Activity[]) => Promise<boolean>;
@@ -74,8 +74,8 @@ export function ActivityTabContent({
           </ToggleGroup>
           
           <ActivityFilter 
-            selectedActivityTypes={selectedActivityTypes} 
-            onActivityTypeChange={handleActivityTypeChange}
+            selectedTypes={selectedActivityTypes} 
+            onTypeChange={handleActivityTypeChange}
           />
         </div>
         
@@ -102,14 +102,17 @@ export function ActivityTabContent({
       
       {showCupForm && (
         <div className="border p-4 rounded-md bg-background">
-          <CupMatchesForm onAddMatches={handleImportedActivities} onClose={() => setShowCupForm(false)} />
+          <CupMatchesForm 
+            onMatchesChange={handleImportedActivities} 
+            onClose={() => setShowCupForm(false)} 
+          />
         </div>
       )}
       
       {showScraperForm && (
         <div className="border p-4 rounded-md bg-background">
           <MatchScraper 
-            onMatchesScraped={handleScrapedMatches} 
+            onMatchesScraped={handleScrapedMatches}
             onClose={() => setShowScraperForm(false)}
           />
         </div>
@@ -117,7 +120,10 @@ export function ActivityTabContent({
       
       {showImportForm && (
         <div className="border p-4 rounded-md bg-background">
-          <FileImport onImport={handleImportedActivities} onClose={() => setShowImportForm(false)} />
+          <FileImport 
+            onActivitiesImported={handleImportedActivities} 
+            onClose={() => setShowImportForm(false)} 
+          />
         </div>
       )}
       
@@ -128,14 +134,14 @@ export function ActivityTabContent({
           onClose={() => setSelectedActivity(null)}
           onActivityUpdate={handleActivityUpdate}
           onDeleteActivity={handleDeleteActivity}
-          onEditActivity={setEditingActivity}
-          onKioskAssignment={handleKioskAssignmentUpdate}
+          onEdit={setEditingActivity}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
         />
       ) : (
         <ActivityList 
           activities={activeView === "upcoming" ? filteredActivities : filteredHistoricalActivities}
           players={players}
-          onActivitySelect={setSelectedActivity}
+          onSelect={setSelectedActivity}
           isHistorical={activeView === "historical"}
         />
       )}
