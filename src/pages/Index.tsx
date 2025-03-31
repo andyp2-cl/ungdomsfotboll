@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Users, Database, AlertTriangle } from "lucide-react";
+import { Users, Calendar, Database, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -38,18 +38,27 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center p-6 max-w-md">
-        <h1 className="text-4xl font-bold mb-4">Hässleholms IF P2014</h1>
+        <h1 className="text-4xl font-bold mb-4 text-[#006633]">Hässleholms IF P2014</h1>
         <p className="text-xl text-gray-600 mb-8">Hantera dina fotbollsspelare och aktiviteter enkelt och smidigt</p>
         
         <div className="flex flex-col items-center gap-4">
-          <Link to="/players">
-            <Button size="lg" className="gap-2">
-              <Users className="h-5 w-5" />
-              Visa spelare
-            </Button>
-          </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <Link to="/players" className="w-full">
+              <Button size="lg" className="w-full gap-2 h-16">
+                <Users className="h-5 w-5" />
+                Spelare
+              </Button>
+            </Link>
+            
+            <Link to="/activities" className="w-full">
+              <Button size="lg" className="w-full gap-2 h-16">
+                <Calendar className="h-5 w-5" />
+                Aktiviteter
+              </Button>
+            </Link>
+          </div>
           
-          <div className="flex items-center gap-2 text-sm mt-4">
+          <div className="flex items-center gap-2 text-sm mt-6">
             {syncStatus === "connected" && (
               <span className="flex items-center gap-1 text-green-600">
                 <Database className="h-4 w-4" />
@@ -84,6 +93,6 @@ const Index = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Index;
