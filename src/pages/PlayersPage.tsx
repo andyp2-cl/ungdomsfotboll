@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PlayerHeader } from "@/components/PlayerHeader";
@@ -10,6 +9,7 @@ import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
+import { Activity } from "@/types/player";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -21,7 +21,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const storedTab = getActiveTab();
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
   
-  // Use custom hooks
   const {
     players,
     setPlayers,
@@ -66,7 +65,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
-  // Modified function wrappers to ensure Promise<boolean> return type
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
     await handleKioskAssignmentUpdate(activityId, playerId);
     return true;
