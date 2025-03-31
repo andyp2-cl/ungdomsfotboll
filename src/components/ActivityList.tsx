@@ -1,14 +1,15 @@
+
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, MapPin, Coffee, Users } from "lucide-react";
+import { CalendarIcon, Clock, MapPin, Coffee, Users, Goal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 
 interface ActivityListProps {
   activities: Activity[];
   onSelect?: (activity: Activity) => void;
-  players?: Player[]; // Change any[] to Player[] for better type safety
+  players?: Player[];
 }
 
 export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
@@ -70,18 +71,61 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
       .filter(name => name !== null) as string[];
   };
 
+  // Check if an activity is historical (in the past)
+  const isHistorical = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    date.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  // Get goal scorers from player stats
+  const getGoalScorers = (activity: Activity): { name: string, goals: number }[] => {
+    if (!activity.playerStats?.goals) return [];
+    
+    const goalScorers: { name: string, goals: number }[] = [];
+    
+    Object.entries(activity.playerStats.goals).forEach(([playerId, goals]) => {
+      if (goals > 0) {
+        const player = players.find(p => p.id === playerId);
+        if (player) {
+          goalScorers.push({ name: player.name, goals });
+        }
+      }
+    });
+    
+    return goalScorers.sort((a, b) => b.goals - a.goals);
+  };
+
+  // Count total goals in an activity
+  const getTotalGoals = (activity: Activity): number => {
+    if (!activity.playerStats?.goals) return 0;
+    return Object.values(activity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
+  };
+
   return (
     <div className="space-y-4">
       {sortedActivities.map((activity) => {
         const isEligibleForKiosk = isKioskEligible(activity);
         const kioskPlayerName = getKioskPlayerName(activity);
         const participantNames = getParticipantNames(activity);
+        const activityIsHistorical = isHistorical(activity.date);
+        const goalScorers = getGoalScorers(activity);
+        const totalGoals = getTotalGoals(activity);
         
         return (
           <Card key={activity.id} className="overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex justify-between items-center">
-                {activity.name}
+                <div className="flex items-center">
+                  {activity.name}
+                  {activityIsHistorical && activity.type === "match" && totalGoals > 0 && (
+                    <Badge className="ml-2 bg-green-100 text-green-800 border-green-300">
+                      {totalGoals} mål
+                    </Badge>
+                  )}
+                </div>
                 <Badge 
                   variant={activity.type === "match" ? "default" : "secondary"}
                   className="ml-2"
@@ -143,6 +187,25 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                       : <span className="text-muted-foreground">Ingen kioskansvarig tilldelad</span>
                     }
                   </span>
+                </div>
+              )}
+
+              {/* Display goal scorers for historical matches */}
+              {activityIsHistorical && activity.type === "match" && goalScorers.length > 0 && (
+                <div className="mt-2 text-sm">
+                  <div className="flex items-center font-medium mb-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
+                      <path d="M12 2v6M12 22v-6M4.93 10.93l4.24 4.24M14.83 8.83l4.24 4.24M2 12h6M16 12h6M10.93 19.07l4.24-4.24M8.83 9.17l4.24-4.24"/>
+                    </svg>
+                    Målskyttar:
+                  </div>
+                  <div className="ml-5 flex flex-wrap gap-1">
+                    {goalScorers.map((scorer, index) => (
+                      <Badge key={index} variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
+                        {scorer.name} ({scorer.goals})
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -214,6 +213,12 @@ export function ActivityDetail({
 
   // Determine if the activity is historical (in the past)
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+
+  // Helper function to count total goals in activity
+  const getTotalGoals = () => {
+    if (!currentActivity.playerStats?.goals) return 0;
+    return Object.values(currentActivity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
+  };
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -486,6 +491,11 @@ export function ActivityDetail({
                     </div>
                   );
                 })}
+                <div className="mt-4 text-center">
+                  <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
+                    Totalt antal mål: {getTotalGoals()}
+                  </Badge>
+                </div>
               </div>
             ) : (
               <p className="text-muted-foreground">Lägg till spelare för att registrera mål.</p>
