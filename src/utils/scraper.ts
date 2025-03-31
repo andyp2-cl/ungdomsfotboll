@@ -178,19 +178,19 @@ export function convertScrapedToActivities(
   });
 }
 
-// Hjälpfunktion för att få befintliga ID:n för att undvika konflikter
+// Helper function to get existing IDs to avoid conflicts
 function mockActivityIds(): number[] {
   try {
-    // I en riktig implementation skulle vi importera direkt från mockData
-    // men för att undvika cirkulära beroenden använder vi detta tillvägagångssätt
+    // In a real implementation we would import directly from mockData
+    // but to avoid circular dependencies we use this approach
     const activityData = localStorage.getItem('mockActivities');
     if (activityData) {
       const activities = JSON.parse(activityData);
       return activities.map((act: Activity) => parseInt(act.id));
     }
-    return [100]; // Fallback startande ID
+    return [100]; // Fallback starting ID
   } catch (error) {
     console.error("Error getting activity IDs:", error);
-    return [100]; // Fallback startande ID
+    return [100]; // Fallback starting ID
   }
 }

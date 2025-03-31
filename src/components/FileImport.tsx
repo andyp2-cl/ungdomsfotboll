@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +23,7 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
       let currentMonth = "";
       let currentYear = new Date().getFullYear().toString();
       let currentDate = "";
+      let currentTime = "";
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -52,17 +52,23 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
           continue;
         }
         
-        // Check if this is a match line (starts with time)
-        const matchLineMatch = line.match(/^(\d{2}:\d{2})\s*-(.+)$/);
-        if (matchLineMatch && currentDate) {
-          const time = matchLineMatch[1].trim();
-          const matchName = matchLineMatch[2].trim();
+        // Check if this is a time line (e.g. "09:30")
+        const timeMatch = line.match(/^(\d{2}:\d{2})$/);
+        if (timeMatch && currentDate) {
+          currentTime = timeMatch[1];
+          continue;
+        }
+        
+        // Check if this is a match line (starts with dash)
+        const matchLineMatch = line.match(/^-(.+)$/);
+        if (matchLineMatch && currentDate && currentTime) {
+          const matchName = matchLineMatch[1].trim();
           
           // Get location from next line if available
           let location = "";
           let locationDesc = "";
           
-          if (i + 1 < lines.length && !lines[i + 1].match(/^(\d{2}:\d{2})|([A-Za-zåäöÅÄÖ]+\s+\d+)$/) && !lines[i + 1].match(/^[A-Za-zåäöÅÄÖ]+$/)) {
+          if (i + 1 < lines.length && !lines[i + 1].match(/^-|^(\d{2}:\d{2})$/) && !lines[i + 1].match(/^[A-Za-zåäöÅÄÖ]+\s+\d+$/) && !lines[i + 1].match(/^[A-Za-zåäöÅÄÖ]+$/)) {
             const locationLine = lines[i + 1].trim();
             
             // Try to split location and description if possible
@@ -86,7 +92,7 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
             id: uuidv4(),
             name: matchName,
             date: currentDate,
-            time: time,
+            time: currentTime,
             type: type,
             participants: [],
           };
@@ -96,10 +102,14 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
             activity.location = {
               name: location,
               description: locationDesc,
+              gpsLink: generateFootballFieldUrl(location)
             };
           }
           
           activities.push(activity);
+          
+          // Reset current time for the next match
+          currentTime = "";
         }
       }
       
@@ -178,7 +188,8 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
           <pre className="bg-muted p-2 rounded text-xs mt-1 whitespace-pre-wrap">
 {`April
 Lör 12
-09:30 -Hässleholms IF svart - Vinslövs IF
+09:30
+-Hässleholms IF svart - Vinslövs IF
 Österås IP F-plan 7-manna 1`}
           </pre>
         </p>
