@@ -1,17 +1,9 @@
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Check, UserPlus, X } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -91,6 +83,12 @@ export function AddPlayersToActivity({
     return players.find(player => player.id === id);
   };
 
+  // Debug section
+  useEffect(() => {
+    console.log("Search query:", searchQuery);
+    console.log("Filtered players:", filteredPlayers.map(p => p.name));
+  }, [searchQuery, filteredPlayers]);
+
   return (
     <div className="space-y-4 mt-4">
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -127,12 +125,14 @@ export function AddPlayersToActivity({
                     <CommandItem
                       key={player.id}
                       value={player.id}
-                      onSelect={() => handlePlayerSelect(player.id)}
+                      onSelect={(value) => {
+                        handlePlayerSelect(value);
+                      }}
                       disabled={currentParticipantIds.length + selectedPlayers.length >= 12 && !selectedPlayers.includes(player.id)}
                     >
                       <div className="flex items-center justify-between w-full">
                         <span>{player.name}</span>
-                        {selectedPlayers.includes(player.id) && <Check className="h-4 w-4 ml-2" />}
+                        {selectedPlayers.includes(player.id) && <X className="h-4 w-4 ml-2" />}
                       </div>
                     </CommandItem>
                   ))}

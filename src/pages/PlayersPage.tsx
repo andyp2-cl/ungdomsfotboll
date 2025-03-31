@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PlayerHeader } from "@/components/PlayerHeader";
@@ -65,29 +66,54 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
+  // Wrapper functions to ensure proper return types
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
-    await handleKioskAssignmentUpdate(activityId, playerId);
-    return true;
+    try {
+      await handleKioskAssignmentUpdate(activityId, playerId);
+      return true;
+    } catch (error) {
+      console.error("Error updating kiosk assignment:", error);
+      return false;
+    }
   };
 
   const handleDelete = async (activityId: string): Promise<boolean> => {
-    await handleDeleteActivity(activityId);
-    return true;
+    try {
+      return await handleDeleteActivity(activityId);
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      return false;
+    }
   };
 
   const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
-    await handleImportedActivities(activities);
-    return true;
+    try {
+      await handleImportedActivities(activities);
+      return true;
+    } catch (error) {
+      console.error("Error importing activities:", error);
+      return false;
+    }
   };
 
   const handleScraped = async (matches: Activity[]): Promise<boolean> => {
-    await handleScrapedMatches(matches);
-    return true;
+    try {
+      await handleScrapedMatches(matches);
+      return true;
+    } catch (error) {
+      console.error("Error handling scraped matches:", error);
+      return false;
+    }
   };
 
   const handleClearHistorical = async (): Promise<boolean> => {
-    await handleClearHistoricalActivities();
-    return true;
+    try {
+      await handleClearHistoricalActivities();
+      return true;
+    } catch (error) {
+      console.error("Error clearing historical activities:", error);
+      return false;
+    }
   };
 
   const isLoading = isPlayersLoading || isActivitiesLoading;

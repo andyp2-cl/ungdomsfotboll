@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { logDatabaseChange } from "@/lib/supabase";
@@ -89,40 +88,71 @@ export function useActivityActions(
         description: "Kunde inte hitta aktiviteten",
         variant: "destructive"
       });
-      return;
+      return false;
     }
     
-    // Filter out the activity
-    const updatedActivities = activities.filter(activity => activity.id !== activityId);
-    setActivities(updatedActivities);
-    await saveActivities(updatedActivities);
-    
-    // Update players to remove references to this activity
-    const updatedPlayers = players.map(player => {
-      if (player.activities?.includes(activityId)) {
-        return {
-          ...player,
-          activities: player.activities.filter(id => id !== activityId)
-        };
+    try {
+      const updatedActivities = activities.filter(activity => activity.id !== activityId);
+      
+      if (activityToDelete.cupId) {
+        const parentCup = updatedActivities.find(a => a.id === activityToDelete.cupId);
+        if (parentCup && parentCup.matches) {
+          parentCup.matches = parentCup.matches.filter(matchId => matchId !== activityId);
+          console.log(`Removed match ${activityId} from cup ${parentCup.id}`);
+        }
       }
-      return player;
-    });
-    
-    setPlayers(updatedPlayers);
-    await savePlayers(updatedPlayers);
-    
-    // Log the deletion
-    await logDatabaseChange(
-      'delete',
-      'activity',
-      activityId,
-      `Aktivitet "${activityToDelete.name}" har raderats manuellt`
-    );
-    
-    toast({
-      title: "Aktivitet raderad",
-      description: `${activityToDelete.name} har tagits bort.`,
-    });
+      
+      if (activityToDelete.type === 'cup' && activityToDelete.matches && activityToDelete.matches.length > 0) {
+        const matchesToDelete = activityToDelete.matches;
+        console.log(`Deleting ${matchesToDelete.length} matches for cup ${activityToDelete.id}`);
+        
+        for (const matchId of matchesToDelete) {
+          const matchIndex = updatedActivities.findIndex(a => a.id === matchId);
+          if (matchIndex !== -1) {
+            updatedActivities.splice(matchIndex, 1);
+            console.log(`Deleted match ${matchId} from cup ${activityToDelete.id}`);
+          }
+        }
+      }
+      
+      setActivities(updatedActivities);
+      await saveActivities(updatedActivities);
+      
+      const updatedPlayers = players.map(player => {
+        if (player.activities?.includes(activityId)) {
+          return {
+            ...player,
+            activities: player.activities.filter(id => id !== activityId)
+          };
+        }
+        return player;
+      });
+      
+      setPlayers(updatedPlayers);
+      await savePlayers(updatedPlayers);
+      
+      await logDatabaseChange(
+        'delete',
+        'activity',
+        activityId,
+        `Aktivitet "${activityToDelete.name}" har raderats manuellt`
+      );
+      
+      toast({
+        title: "Aktivitet raderad",
+        description: `${activityToDelete.name} har tagits bort.`,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      toast({
+        title: "Fel vid radering",
+        description: "Ett fel uppstod när aktiviteten skulle raderas.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const handleKioskAssignmentUpdate = async (activityId: string, playerId?: string) => {

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
 import { ActivityFilter } from "@/components/ActivityFilter";
@@ -57,11 +57,10 @@ export function ActivityTabContent({
   const [showImportForm, setShowImportForm] = useState(false);
 
   // Create a wrapper function to convert CupMatch[] to Activity[]
-  const handleCupMatchesChange = (cupMatches: any[]) => {
-    // Here we would normally convert CupMatch[] to Activity[]
-    // But for simplicity, we'll cast it directly for now
-    return handleImportedActivities(cupMatches as unknown as Activity[]);
-  };
+  const handleCupMatchesChange = useCallback((cupMatches: any[]) => {
+    // Convert CupMatch[] to Activity[] before passing to handleImportedActivities
+    return handleImportedActivities(cupMatches as Activity[]);
+  }, [handleImportedActivities]);
 
   return (
     <div className="space-y-6">
@@ -110,7 +109,7 @@ export function ActivityTabContent({
       {showCupForm && (
         <div className="border p-4 rounded-md bg-background">
           <CupMatchesForm 
-            onMatchesChange={handleCupMatchesChange} 
+            onMatchesChange={handleCupMatchesChange}
           />
         </div>
       )}
@@ -126,7 +125,7 @@ export function ActivityTabContent({
       {showImportForm && (
         <div className="border p-4 rounded-md bg-background">
           <FileImport 
-            onActivitiesImported={handleImportedActivities} 
+            onActivitiesImported={handleImportedActivities}
           />
         </div>
       )}
