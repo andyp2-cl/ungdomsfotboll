@@ -1,6 +1,7 @@
+
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
-import { logDatabaseChange } from "@/lib/supabase";
+import { logDatabaseChange, permanentlyDeleteActivity } from "@/lib/supabase";
 
 export function useActivityActions(
   activities: Activity[], 
@@ -92,6 +93,19 @@ export function useActivityActions(
     }
     
     try {
+      // IMPROVED: Permanently delete from database first
+      const deleteResult = await permanentlyDeleteActivity(activityId);
+      
+      if (!deleteResult) {
+        toast({
+          title: "Fel vid radering",
+          description: "Ett fel uppstod när aktiviteten skulle raderas från databasen.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      // Then update local state
       const updatedActivities = activities.filter(activity => activity.id !== activityId);
       
       if (activityToDelete.cupId) {
@@ -106,18 +120,23 @@ export function useActivityActions(
         const matchesToDelete = activityToDelete.matches;
         console.log(`Deleting ${matchesToDelete.length} matches for cup ${activityToDelete.id}`);
         
+        // Also delete all matches associated with this cup from database
         for (const matchId of matchesToDelete) {
-          const matchIndex = updatedActivities.findIndex(a => a.id === matchId);
-          if (matchIndex !== -1) {
-            updatedActivities.splice(matchIndex, 1);
-            console.log(`Deleted match ${matchId} from cup ${activityToDelete.id}`);
-          }
+          await permanentlyDeleteActivity(matchId);
+          console.log(`Deleted match ${matchId} from cup ${activityToDelete.id}`);
         }
+        
+        // Then update local state
+        const remainingActivities = updatedActivities.filter(a => !matchesToDelete.includes(a.id));
+        setActivities(remainingActivities);
+        await saveActivities(remainingActivities);
+      } else {
+        // Save the updated activities list
+        setActivities(updatedActivities);
+        await saveActivities(updatedActivities);
       }
       
-      setActivities(updatedActivities);
-      await saveActivities(updatedActivities);
-      
+      // Update player-activity relationships in local state
       const updatedPlayers = players.map(player => {
         if (player.activities?.includes(activityId)) {
           return {
@@ -135,12 +154,12 @@ export function useActivityActions(
         'delete',
         'activity',
         activityId,
-        `Aktivitet "${activityToDelete.name}" har raderats manuellt`
+        `Aktivitet "${activityToDelete.name}" har raderats permanent`
       );
       
       toast({
         title: "Aktivitet raderad",
-        description: `${activityToDelete.name} har tagits bort.`,
+        description: `${activityToDelete.name} har tagits bort permanent.`,
       });
       
       return true;

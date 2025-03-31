@@ -78,3 +78,36 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     return [];
   }
 };
+
+// NEW FUNCTION: Permanently delete activity from Supabase
+export const permanentlyDeleteActivity = async (activityId: string): Promise<boolean> => {
+  try {
+    // First delete all player-activity relationships
+    const { error: relationshipError } = await supabase
+      .from('player_activities')
+      .delete()
+      .eq('activity_id', activityId);
+      
+    if (relationshipError) {
+      console.error('Error deleting player-activity relationships:', relationshipError);
+      throw relationshipError;
+    }
+    
+    // Then delete the activity itself
+    const { error: activityError } = await supabase
+      .from('activities')
+      .delete()
+      .eq('id', activityId);
+      
+    if (activityError) {
+      console.error('Error deleting activity:', activityError);
+      throw activityError;
+    }
+    
+    console.log(`Activity ${activityId} permanently deleted from database`);
+    return true;
+  } catch (error) {
+    console.error('Error permanently deleting activity:', error);
+    return false;
+  }
+};
