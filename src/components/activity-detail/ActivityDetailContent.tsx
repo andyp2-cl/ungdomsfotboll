@@ -10,6 +10,7 @@ import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
 import { ActivityCupMatches } from "./ActivityCupMatches";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { ActivityHeader } from "./ActivityHeader";
+import { ActivityMatchResult } from "./ActivityMatchResult";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -41,6 +42,14 @@ export function ActivityDetailContent({
       <ActivityHeader activity={activity} />
 
       <CardContent className="pb-3 space-y-6">
+        {/* Match Result (only for matches) */}
+        {activity.type === "match" && (
+          <ActivityMatchResult 
+            activity={activity}
+            updateActivity={onUpdate}
+          />
+        )}
+        
         {/* Player statistics (only for matches) */}
         {activity.type === "match" && (
           <ActivityMatchStats 

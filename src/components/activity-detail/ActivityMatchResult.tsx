@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Save } from "lucide-react";
 
 interface ActivityMatchResultProps {
   activity: Activity;
@@ -14,12 +13,20 @@ interface ActivityMatchResultProps {
 
 export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchResultProps) {
   const { toast } = useToast();
-  const [isWin, setIsWin] = useState(activity.isWin);
+  const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
+  const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
 
   const saveMatchResult = () => {
+    // Create an updated activity with the new scores
     const updatedActivity = {
       ...activity,
-      isWin: isWin
+      homeScore,
+      awayScore,
+      result: homeScore !== undefined && awayScore !== undefined ? `${homeScore}-${awayScore}` : undefined,
+      // Determine if it's a win for Hässleholms IF (assuming home team is Hässleholms IF)
+      isWin: homeScore !== undefined && awayScore !== undefined 
+        ? homeScore > awayScore 
+        : activity.isWin
     };
     
     updateActivity(updatedActivity);
@@ -34,39 +41,38 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
       
-      <div className="mb-4">
-        <Label className="block mb-2">Matchresultat för Hässleholms IF</Label>
-        <RadioGroup
-          onValueChange={(value) => {
-            if (value === "win") setIsWin(true);
-            else if (value === "loss") setIsWin(false);
-            else setIsWin(undefined);
-          }}
-          defaultValue={isWin === true ? "win" : isWin === false ? "loss" : "draw"}
-          className="flex space-x-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="win" id="win" />
-            <Label htmlFor="win" className="flex items-center">
-              <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-              Vinst
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="draw" id="draw" />
-            <Label htmlFor="draw">Oavgjort</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="loss" id="loss" />
-            <Label htmlFor="loss" className="flex items-center">
-              <XCircle className="h-4 w-4 mr-2 text-red-500" />
-              Förlust
-            </Label>
-          </div>
-        </RadioGroup>
+      <div className="grid grid-cols-3 gap-4 items-center mb-4">
+        <div>
+          <p className="mb-2 font-medium">Deras mål</p>
+          <Input
+            type="number"
+            min={0}
+            value={awayScore === undefined ? '' : awayScore}
+            onChange={(e) => setAwayScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
+            className="text-center text-lg"
+          />
+        </div>
+        
+        <div className="flex justify-center items-center">
+          <span className="text-2xl font-bold">-</span>
+        </div>
+        
+        <div>
+          <p className="mb-2 font-medium">Våra mål</p>
+          <Input
+            type="number"
+            min={0}
+            value={homeScore === undefined ? '' : homeScore}
+            onChange={(e) => setHomeScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
+            className="text-center text-lg"
+          />
+        </div>
       </div>
       
-      <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
+      <Button onClick={saveMatchResult} className="w-full sm:w-auto">
+        <Save className="h-4 w-4 mr-2" />
+        Spara resultat
+      </Button>
     </div>
   );
 }

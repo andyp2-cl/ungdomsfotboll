@@ -6,6 +6,7 @@ import { ActivityParticipants } from "./ActivityParticipants";
 import { ActivityMatchStats } from "./ActivityMatchStats";
 import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
 import { ActivityCupMatches } from "./ActivityCupMatches";
+import { ActivityMatchResult } from "./ActivityMatchResult";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 
 export { 
@@ -16,5 +17,6 @@ export {
   ActivityMatchStats,
   ActivityKioskAssignment,
   ActivityCupMatches,
+  ActivityMatchResult,
   DeleteActivityDialog
 };
