@@ -83,9 +83,11 @@ export function useActivityForm(
         // Create or update player stats
         player_stats: {
           ...(activity.player_stats || {}),
-          // Make sure to preserve existing stats
+          // Make sure to preserve existing goals and assists
+          goals: activity.player_stats?.goals || {},
+          assists: activity.player_stats?.assists || {},
+          // Add scores information
           scores: {
-            ...(activity.player_stats?.scores || {}),
             home: homeScore,
             away: awayScore
           }
