@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { TeamStatistics } from "@/components/TeamStatistics";
 import { MatchesTabContent } from "./MatchesTabContent";
-import { GoalsTabContent } from "./GoalsTabContent";
+import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { ParticipationTabContent } from "./ParticipationTabContent";
 import { Activity, Player } from "@/types/player";
 

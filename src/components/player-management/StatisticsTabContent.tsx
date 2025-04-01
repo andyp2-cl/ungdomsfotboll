@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,7 @@ import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
 import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 import { MatchesTabContent } from "@/components/player-management/statistics/MatchesTabContent";
-import { GoalsTabContent } from "@/components/player-management/statistics/GoalsTabContent";
+import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
 
 interface StatisticsTabContentProps {
@@ -20,14 +19,12 @@ export function StatisticsTabContent({
   activities,
   gradeData
 }: StatisticsTabContentProps) {
-  // Beräkna antal aktiviteter per nivå
   const activityCountByGrade = gradeData.map(gradeInfo => {
     const gradePlayers = players.filter(p => p.grade === gradeInfo.grade);
     const playerIds = gradePlayers.map(p => p.id);
     
     let totalActivities = 0;
     
-    // Räkna aktiviteter för spelarna i denna nivå
     playerIds.forEach(playerId => {
       const playerActivities = activities.filter(a => 
         a.participants?.includes(playerId)
@@ -48,7 +45,6 @@ export function StatisticsTabContent({
     };
   });
   
-  // Hämta de 10 mest aktiva spelarna
   const playerActivityData = players
     .filter(player => !player.positions?.includes("TRÄNARE"))
     .map(player => {
@@ -65,7 +61,6 @@ export function StatisticsTabContent({
     })
     .sort((a, b) => b.activities - a.activities);
   
-  // Konfigurera diagram
   const gradeChartConfig = {
     average: {
       label: "Genomsnitt per spelare",
