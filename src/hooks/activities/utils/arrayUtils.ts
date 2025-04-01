@@ -42,46 +42,51 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
   const oldPlayerStats = ensureValidStats(oldActivity.player_stats);
   const newPlayerStats = ensureValidStats(newActivity.player_stats);
   
-  // Create updated activity with properly merged player_stats
+  // Create updated activity with properly merged player_stats - ensure it's always an object, never a string
+  const mergedStats = {
+    ...oldPlayerStats,
+    ...newPlayerStats,
+    // Explicitly ensure goals and assists are preserved and merged
+    goals: {
+      ...(oldPlayerStats.goals || {}),
+      ...(newPlayerStats.goals || {})
+    },
+    assists: {
+      ...(oldPlayerStats.assists || {}),
+      ...(newPlayerStats.assists || {})
+    },
+    // Use the new score data
+    scores: {
+      home: newActivity.homeScore,
+      away: newActivity.awayScore
+    },
+    // Use the new win status
+    isWin: newActivity.isWin
+  };
+  
+  // Create final updated activity
   const updatedActivity = {
     ...newActivity,
-    // Merge player_stats, giving precedence to new data but preserving important values
-    player_stats: {
-      ...oldPlayerStats,
-      ...newPlayerStats,
-      // Explicitly ensure goals and assists are preserved and merged
-      goals: {
-        ...(oldPlayerStats.goals || {}),
-        ...(newPlayerStats.goals || {})
-      },
-      assists: {
-        ...(oldPlayerStats.assists || {}),
-        ...(newPlayerStats.assists || {})
-      },
-      // Use the new score data
-      scores: {
-        home: newActivity.homeScore,
-        away: newActivity.awayScore
-      },
-      // Use the new win status
-      isWin: newActivity.isWin
-    }
+    player_stats: mergedStats
   };
   
   console.log("Preserving match data:", {
     oldActivity: {
       id: oldActivity.id,
       hasPlayerStats: !!oldActivity.player_stats,
-      playerStatsType: typeof oldActivity.player_stats
+      playerStatsType: typeof oldActivity.player_stats,
+      playerStats: oldActivity.player_stats
     },
     newActivity: {
       id: newActivity.id,
       hasPlayerStats: !!newActivity.player_stats,
-      playerStatsType: typeof newActivity.player_stats
+      playerStatsType: typeof newActivity.player_stats,
+      playerStats: newActivity.player_stats
     },
     result: {
       hasPlayerStats: !!updatedActivity.player_stats,
-      playerStatsType: typeof updatedActivity.player_stats
+      playerStatsType: typeof updatedActivity.player_stats,
+      playerStats: updatedActivity.player_stats
     }
   });
   

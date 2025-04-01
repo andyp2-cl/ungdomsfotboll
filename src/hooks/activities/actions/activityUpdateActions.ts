@@ -21,11 +21,46 @@ export const handleActivityUpdate = async (
     return;
   }
   
+  // Make sure player_stats is never a string before merging
+  if (existingActivity.player_stats && typeof existingActivity.player_stats === 'string') {
+    try {
+      existingActivity.player_stats = JSON.parse(existingActivity.player_stats);
+    } catch (e) {
+      console.error("Error parsing existing player_stats:", e);
+      existingActivity.player_stats = { goals: {}, assists: {} };
+    }
+  }
+  
+  if (updatedActivity.player_stats && typeof updatedActivity.player_stats === 'string') {
+    try {
+      updatedActivity.player_stats = JSON.parse(updatedActivity.player_stats);
+    } catch (e) {
+      console.error("Error parsing updated player_stats:", e);
+      updatedActivity.player_stats = { goals: {}, assists: {} };
+    }
+  }
+  
   // Use the preserveMatchData utility function to properly merge activities
   // This ensures match results are never lost
   const mergedActivity = preserveMatchData(existingActivity, updatedActivity);
   
-  console.log("Updating activity with preserved match data:", mergedActivity);
+  console.log("Updating activity with preserved match data:", {
+    existingActivity: {
+      id: existingActivity.id,
+      playerStats: existingActivity.player_stats,
+      playerStatsType: typeof existingActivity.player_stats
+    },
+    updatedActivity: {
+      id: updatedActivity.id,
+      playerStats: updatedActivity.player_stats,
+      playerStatsType: typeof updatedActivity.player_stats
+    },
+    mergedActivity: {
+      id: mergedActivity.id,
+      playerStats: mergedActivity.player_stats,
+      playerStatsType: typeof mergedActivity.player_stats
+    }
+  });
   
   const updatedActivities = activities.map(activity => 
     activity.id === mergedActivity.id ? mergedActivity : activity

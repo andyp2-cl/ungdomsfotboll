@@ -96,29 +96,30 @@ export function useActivityForm(
         }
       }
       
-      // Safely parse existing player_stats
-      let existingPlayerStats: any = activity.player_stats;
-      if (typeof existingPlayerStats === 'string') {
-        try {
-          existingPlayerStats = JSON.parse(existingPlayerStats);
-          // Handle double-stringified JSON
-          if (typeof existingPlayerStats === 'string') {
-            existingPlayerStats = JSON.parse(existingPlayerStats);
+      // Helper function to safely parse player_stats
+      const safelyParsePlayerStats = (stats: any) => {
+        if (!stats) return { goals: {}, assists: {} };
+        
+        if (typeof stats === 'string') {
+          try {
+            const parsed = JSON.parse(stats);
+            // Check for double-stringified JSON
+            return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+          } catch (e) {
+            console.error("Error parsing player_stats:", e);
+            return { goals: {}, assists: {} };
           }
-        } catch (e) {
-          console.error("Failed to parse player_stats:", e);
-          existingPlayerStats = { goals: {}, assists: {} };
         }
-      }
+        
+        return stats;
+      };
       
-      // If still not an object, create a fresh one
-      if (!existingPlayerStats || typeof existingPlayerStats !== 'object') {
-        existingPlayerStats = { goals: {}, assists: {} };
-      }
+      // Safely parse existing player_stats
+      const existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
       
-      // Create updated player_stats
+      // Create updated player_stats - ensure it's an object with all necessary fields
       const updatedPlayerStats = {
-        ...(existingPlayerStats || {}),
+        ...existingPlayerStats,
         // Make sure to preserve existing goals and assists
         goals: existingPlayerStats.goals || {},
         assists: existingPlayerStats.assists || {},
@@ -144,6 +145,17 @@ export function useActivityForm(
         isWin,
         player_stats: updatedPlayerStats
       };
+
+      console.log("Before preserveMatchData:", {
+        originalActivity: {
+          playerStats: activity.player_stats,
+          playerStatsType: typeof activity.player_stats
+        },
+        formUpdatedActivity: {
+          playerStats: formUpdatedActivity.player_stats,
+          playerStatsType: typeof formUpdatedActivity.player_stats
+        }
+      });
 
       // Use preserveMatchData to ensure match statistics are maintained
       const updatedActivity = preserveMatchData(activity, formUpdatedActivity);

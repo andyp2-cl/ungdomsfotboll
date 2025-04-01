@@ -29,7 +29,7 @@ export function ActivityResultSection({
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
     setManualWinStatus(activity.isWin);
-  }, [activity.homeScore, activity.awayScore, activity.isWin]);
+  }, [activity]);
 
   // Helper function to safely parse player_stats
   const safelyParsePlayerStats = (stats: any) => {
@@ -68,10 +68,10 @@ export function ActivityResultSection({
         isWin = calculateWinStatus(homeScore, awayScore, isHome);
       }
       
-      // Parse existing player_stats safely
-      const existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
+      // Parse existing player_stats safely and ensure it's not a string
+      let existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
       
-      // Prepare updated player_stats
+      // Prepare updated player_stats - ensure it's a complete object
       const updatedPlayerStats = {
         ...existingPlayerStats,
         goals: existingPlayerStats.goals || {},
@@ -84,10 +84,14 @@ export function ActivityResultSection({
       };
       
       console.log("Saving match result with player_stats:", {
-        before: activity.player_stats,
-        after: updatedPlayerStats,
-        beforeType: typeof activity.player_stats,
-        afterType: typeof updatedPlayerStats
+        before: {
+          value: activity.player_stats,
+          type: typeof activity.player_stats
+        },
+        after: {
+          value: updatedPlayerStats,
+          type: typeof updatedPlayerStats
+        }
       });
       
       // First directly update the database
@@ -117,6 +121,7 @@ export function ActivityResultSection({
         player_stats: updatedPlayerStats
       };
       
+      // Use the update function from props
       updateActivity(updatedActivity);
       
       toast({
