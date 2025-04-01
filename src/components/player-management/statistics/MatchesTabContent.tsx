@@ -25,8 +25,16 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     completedMatches.forEach(match => {
       if (!match.result) return;
       
-      const [ourScore, theirScore] = match.result.split('-').map(Number);
-      if (isNaN(ourScore) || isNaN(theirScore)) return;
+      // CORRECTED: Determine if we're the home team - Hässleholms IF is usually listed first in the match name
+      const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
+                        !match.name.toLowerCase().startsWith('vs') &&
+                        !match.name.toLowerCase().includes('mot');
+      
+      const [score1, score2] = match.result.split('-').map(Number);
+      if (isNaN(score1) || isNaN(score2)) return;
+      
+      const ourScore = isHomeTeam ? score1 : score2;
+      const theirScore = isHomeTeam ? score2 : score1;
       
       goalsScored += ourScore;
       goalsConceded += theirScore;

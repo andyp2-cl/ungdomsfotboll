@@ -40,10 +40,15 @@ export function calculatePlayerStats(players: Player[], activities: Activity[]):
         
         // Count wins
         if (activity.result) {
+          // CORRECTED: Determine if we're the home team - Hässleholms IF is usually listed first in the match name
+          const isHomeTeam = activity.name.toLowerCase().includes('hässleholms if') && 
+                           !activity.name.toLowerCase().startsWith('vs') &&
+                           !activity.name.toLowerCase().includes('mot');
+                          
           const resultParts = activity.result.split('-');
           if (resultParts.length === 2) {
-            const ourScore = parseInt(resultParts[0], 10);
-            const theirScore = parseInt(resultParts[1], 10);
+            const ourScore = isHomeTeam ? parseInt(resultParts[0], 10) : parseInt(resultParts[1], 10);
+            const theirScore = isHomeTeam ? parseInt(resultParts[1], 10) : parseInt(resultParts[0], 10);
             if (!isNaN(ourScore) && !isNaN(theirScore) && ourScore > theirScore) {
               winCount++;
             }

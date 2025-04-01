@@ -32,7 +32,10 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     if (assists > 0) matchesWithAssists++;
     
     // Count results - check if we're home or away team
-    const isHomeTeam = match.name.toLowerCase().startsWith('hässleholms if');
+    // CORRECTED: Determine if we're the home team - Hässleholms IF is usually listed first in the match name
+    const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
+                      !match.name.toLowerCase().startsWith('vs') &&
+                      !match.name.toLowerCase().includes('mot');
     
     if (match.homeScore !== undefined && match.awayScore !== undefined) {
       const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
