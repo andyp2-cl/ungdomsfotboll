@@ -152,6 +152,7 @@ export function ActivityTabContent({
           allActivities={activities}
           onClose={() => setSelectedActivity(null)}
           onMatchResultUpdate={handleMatchResultUpdate}
+          onPlayerSelect={handlePlayerSelect}
         />
       ) : (
         <>

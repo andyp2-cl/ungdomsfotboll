@@ -29,6 +29,10 @@ export function ActivityDetailWrapper({
   handleMatchResultUpdate
 }: ActivityDetailWrapperProps) {
   
+  const relatedActivities = selectedActivity?.cupId 
+    ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
+    : [];
+  
   return (
     <ActivityDetail
       activity={selectedActivity}
@@ -45,6 +49,7 @@ export function ActivityDetailWrapper({
         return success;
       }}
       allActivities={activities}
+      relatedActivities={relatedActivities}
       cupMatches={cupMatches}
       onActivitySelect={onActivitySelect}
       onMatchResultUpdate={handleMatchResultUpdate}
