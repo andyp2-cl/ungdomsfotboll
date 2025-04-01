@@ -15,8 +15,9 @@ export function BackupRestoreActions() {
   
   // Get backup info on component mount and after operations
   useEffect(() => {
-    setBackupInfo(getLastBackupInfo());
-  }, [isBackingUp, isRestoring]);
+    const info = getLastBackupInfo();
+    setBackupInfo(info);
+  }, []);
   
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')

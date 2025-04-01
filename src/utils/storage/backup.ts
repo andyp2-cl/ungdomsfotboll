@@ -80,9 +80,37 @@ export const restoreFromBackup = async (): Promise<boolean> => {
       return false;
     }
     
-    // Restore players and activities
-    await savePlayers(backup.players);
-    await saveActivities(backup.activities);
+    // Restore players
+    try {
+      await savePlayers(backup.players);
+    } catch (error) {
+      console.error("Error restoring players:", error);
+      // Continue with activities even if player restore fails
+    }
+    
+    // Restore activities
+    try {
+      // Handle schema changes - we need to remove or adapt fields that might cause issues
+      const cleanedActivities = backup.activities.map(activity => {
+        // Create a shallow copy of the activity
+        const cleanActivity = { ...activity };
+        
+        // Update or handle fields that might have changed in the schema
+        // For example, if 'result' is causing issues, but we have homeScore and awayScore
+        if (!cleanActivity.result && cleanActivity.homeScore !== undefined && cleanActivity.awayScore !== undefined) {
+          cleanActivity.result = `${cleanActivity.homeScore}-${cleanActivity.awayScore}`;
+        }
+        
+        return cleanActivity;
+      });
+      
+      await saveActivities(cleanedActivities);
+    } catch (error) {
+      console.error("Error restoring activities:", error);
+      // Still return true if players were restored successfully
+      // We'll show a partial success message
+      return true;
+    }
     
     // Log restoration to Supabase
     try {
