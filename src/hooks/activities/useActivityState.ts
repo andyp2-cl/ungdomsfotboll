@@ -15,8 +15,25 @@ export function useActivityState() {
   useEffect(() => {
     const loadActivities = async () => {
       try {
+        setIsLoading(true);
         const storedActivities = await getStoredActivities();
+        
         if (storedActivities.length > 0) {
+          // Log some activities to check if they have match results
+          console.log("Sample activities with match results:", 
+            storedActivities
+              .filter(a => a.type === 'match' && (a.homeScore !== undefined || a.awayScore !== undefined))
+              .slice(0, 3)
+              .map(a => ({
+                id: a.id, 
+                name: a.name, 
+                homeScore: a.homeScore, 
+                awayScore: a.awayScore,
+                isWin: a.isWin,
+                result: a.result
+              }))
+          );
+          
           setActivities(storedActivities);
         } else {
           toast({
@@ -38,6 +55,16 @@ export function useActivityState() {
 
     loadActivities();
   }, [toast]);
+
+  // Update selected activity when activities change (to get latest data)
+  useEffect(() => {
+    if (selectedActivity && activities.length > 0) {
+      const updatedActivity = activities.find(a => a.id === selectedActivity.id);
+      if (updatedActivity) {
+        setSelectedActivity(updatedActivity);
+      }
+    }
+  }, [activities, selectedActivity]);
 
   return {
     activities,

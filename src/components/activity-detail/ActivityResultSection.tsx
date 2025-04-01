@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActivityResultSectionProps {
   activity: Activity;
@@ -21,6 +22,7 @@ export function ActivityResultSection({
   const { toast } = useToast();
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Update local state when activity changes
   useEffect(() => {
@@ -34,53 +36,82 @@ export function ActivityResultSection({
           activity.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
   };
 
-  const saveMatchResult = () => {
-    const resultString = homeScore !== undefined && awayScore !== undefined 
-      ? `${homeScore}-${awayScore}` 
-      : undefined;
+  const saveMatchResult = async () => {
+    setIsSaving(true);
     
-    // Determine win status based on scores (if we're home, we win if homeScore > awayScore and vice versa)
-    let isWin: boolean | undefined = undefined;
-    if (homeScore !== undefined && awayScore !== undefined) {
-      if (homeScore === awayScore) {
-        isWin = undefined; // Draw
-      } else if (isHomeMatch()) {
-        isWin = homeScore > awayScore;
-      } else {
-        isWin = awayScore > homeScore;
+    try {
+      const resultString = homeScore !== undefined && awayScore !== undefined 
+        ? `${homeScore}-${awayScore}` 
+        : undefined;
+      
+      // Determine win status based on scores 
+      let isWin: boolean | undefined = undefined;
+      if (homeScore !== undefined && awayScore !== undefined) {
+        if (homeScore === awayScore) {
+          isWin = undefined; // Draw
+        } else if (isHomeMatch()) {
+          isWin = homeScore > awayScore;
+        } else {
+          isWin = awayScore > homeScore;
+        }
       }
+      
+      // First directly update the database
+      const { error } = await supabase
+        .from('activities')
+        .update({
+          home_score: homeScore,
+          away_score: awayScore,
+          is_win: isWin
+        })
+        .eq('id', activity.id);
+        
+      if (error) {
+        console.error("Error saving match result to database:", error);
+        throw error;
+      }
+      
+      // Then update the local state
+      const updatedActivity = {
+        ...activity,
+        result: resultString,
+        homeScore,
+        awayScore,
+        isWin,
+        player_stats: {
+          ...(activity.player_stats || { goals: {}, assists: {} }),
+          scores: {
+            home: homeScore,
+            away: awayScore
+          },
+          isWin
+        }
+      };
+      
+      // Log the activity data before and after the update
+      console.log("Saving match result:", { 
+        original: { result: activity.result, homeScore: activity.homeScore, awayScore: activity.awayScore, isWin: activity.isWin },
+        updated: { result: updatedActivity.result, homeScore: updatedActivity.homeScore, awayScore: updatedActivity.awayScore, isWin: updatedActivity.isWin }
+      });
+      
+      updateActivity(updatedActivity);
+      
+      toast({
+        title: "Matchresultat sparat",
+        description: resultString 
+          ? `Resultat ${resultString} har sparats för ${activity.name}.` 
+          : `Matchresultat har rensats för ${activity.name}.`,
+      });
+    } catch (error) {
+      console.error("Failed to save match result:", error);
+      toast({
+        title: "Kunde inte spara matchresultat",
+        description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
     }
-    
-    const updatedActivity = {
-      ...activity,
-      result: resultString,
-      homeScore,
-      awayScore,
-      isWin,
-      player_stats: {
-        ...(activity.player_stats || { goals: {}, assists: {} }),
-        scores: {
-          home: homeScore,
-          away: awayScore
-        },
-        isWin
-      }
-    };
-    
-    // Log the activity data before and after the update
-    console.log("Saving match result:", { 
-      original: { result: activity.result, homeScore: activity.homeScore, awayScore: activity.awayScore, isWin: activity.isWin },
-      updated: { result: updatedActivity.result, homeScore: updatedActivity.homeScore, awayScore: updatedActivity.awayScore, isWin: updatedActivity.isWin }
-    });
-    
-    updateActivity(updatedActivity);
-    
-    toast({
-      title: "Matchresultat sparat",
-      description: resultString 
-        ? `Resultat ${resultString} har sparats för ${activity.name}.` 
-        : `Matchresultat har rensats för ${activity.name}.`,
-    });
   };
 
   return (
@@ -132,9 +163,13 @@ export function ActivityResultSection({
       </div>
       
       {!isHistorical && (
-        <Button size="sm" onClick={saveMatchResult}>
+        <Button 
+          size="sm" 
+          onClick={saveMatchResult} 
+          disabled={isSaving}
+        >
           <Save className="h-4 w-4 mr-2" />
-          Spara resultat
+          {isSaving ? "Sparar..." : "Spara resultat"}
         </Button>
       )}
     </div>
