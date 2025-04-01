@@ -27,26 +27,52 @@ export function PlayersListContent({
   // Log for debugging
   console.log("PlayersListContent received players:", filteredPlayers.length);
   
-  // We'll adjust this position filter to be more defensive
-  const positionFilteredPlayers = selectedPositions.length > 0
-    ? filteredPlayers.filter(player => {
-        // Check if player has positions and it's an array
-        if (!player.positions || !Array.isArray(player.positions)) {
-          return false;
-        }
-        return player.positions.some(position => selectedPositions.includes(position));
-      })
-    : filteredPlayers;
+  // Check for specific players in the incoming dataset
+  const hasAlvin = filteredPlayers.some(p => p.name?.includes("Alvin"));
+  console.log("Alvin in incoming filteredPlayers:", hasAlvin);
+  
+  // When no positions are selected, skip the position filtering altogether
+  let displayPlayers = filteredPlayers;
+  
+  // Only apply position filtering if positions are actually selected
+  if (selectedPositions.length > 0) {
+    console.log("Applying position filter for:", selectedPositions);
+    displayPlayers = filteredPlayers.filter(player => {
+      // If player has no positions property or it's not an array, skip this player for position filtering
+      if (!player.positions) {
+        console.log(`Player ${player.name} has no positions property, skipping position filter`);
+        return false;
+      }
+      
+      // Make sure positions is treated as an array
+      const positionsArray = Array.isArray(player.positions) ? player.positions : [player.positions];
+      
+      return positionsArray.some(position => selectedPositions.includes(position));
+    });
+  }
   
   // Filter out coaches if showCoaches is false
-  const displayPlayers = !showCoaches
-    ? positionFilteredPlayers.filter(player => 
-        !player.positions?.includes("TRÄNARE")
-      )
-    : positionFilteredPlayers;
+  if (!showCoaches) {
+    displayPlayers = displayPlayers.filter(player => {
+      // Safely check if player has positions and if it includes "TRÄNARE"
+      if (!player.positions) return true; // Keep players without positions
+      
+      const positionsArray = Array.isArray(player.positions) ? player.positions : [player.positions];
+      return !positionsArray.includes("TRÄNARE");
+    });
+  }
+  
+  // Final check for specific players
+  const hasAlvinAfterFilter = displayPlayers.some(p => p.name?.includes("Alvin"));
+  console.log("Alvin in final displayPlayers:", hasAlvinAfterFilter);
   
   // Log for debugging
   console.log("Players to display:", displayPlayers.length);
+  
+  // If we don't have many players, log them all to help debug
+  if (displayPlayers.length > 0 && displayPlayers.length < 50) {
+    console.log("Players being displayed:", displayPlayers.map(p => p.name).join(", "));
+  }
 
   return (
     <div>

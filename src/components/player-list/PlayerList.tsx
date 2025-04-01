@@ -22,12 +22,26 @@ export function PlayerList({
 }: PlayerListProps) {
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   
-  // Filter out coaches if not requested
+  // Log for debugging what's coming into PlayerList
+  console.log("PlayerList received players:", players.length);
+  const hasAlvin = players.some(p => p.name?.includes("Alvin"));
+  console.log("Alvin in PlayerList:", hasAlvin);
+  
+  // Filter out coaches if not requested - we'll do this here as a safety check
+  // even though it's already done in PlayersListContent
   const filteredPlayers = !showCoaches 
-    ? players.filter(player => !player.positions?.includes("TRÄNARE"))
+    ? players.filter(player => {
+        if (!player.positions) return true;
+        const positionsArray = Array.isArray(player.positions) ? player.positions : [player.positions];
+        return !positionsArray.includes("TRÄNARE");
+      })
     : players;
     
+  // Apply sorting
   const sortedPlayers = sortPlayers(filteredPlayers);
+  
+  // Final debug check
+  console.log("PlayerList final player count:", sortedPlayers.length);
 
   if (viewMode === "grid") {
     return (
