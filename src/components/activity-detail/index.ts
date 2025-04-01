@@ -11,6 +11,8 @@ import { HeaderActionButtons } from "./HeaderActionButtons";
 import { ParticipantActionButtons } from "./ParticipantActionButtons";
 import { ParticipantsList } from "./ParticipantsList";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
+import { ActivityDetailView } from "./ActivityDetailView";
+import { ParticipantsSection } from "./ParticipantsSection";
 
 export {
   ActivityDetail,
@@ -24,5 +26,7 @@ export {
   HeaderActionButtons,
   ParticipantActionButtons,
   ParticipantsList,
-  ActivityDetailHeaderContent
+  ActivityDetailHeaderContent,
+  ActivityDetailView,
+  ParticipantsSection
 };
