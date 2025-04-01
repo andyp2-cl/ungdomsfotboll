@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -142,7 +143,7 @@ export function ActivityTabContent({
           players={players}
           onBack={() => setSelectedActivity(null)}
           onEdit={setEditingActivity}
-          onDelete={handleDeleteActivity}
+          onDeleteActivity={handleDeleteActivity}
           onUpdate={handleActivityUpdate}
           onKioskUpdate={handleKioskAssignmentUpdate}
           onActivitySelect={setSelectedActivity}
