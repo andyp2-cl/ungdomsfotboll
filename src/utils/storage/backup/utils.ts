@@ -1,5 +1,5 @@
-
-import { BackupData, BackupInfo } from './types';
+import { Activity } from "@/types/player";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Processes match activities to ensure result data is properly set
@@ -28,21 +28,27 @@ export const processMatchData = (activity: any) => {
 /**
  * Retrieves information about the last backup from localStorage
  */
-export const getLastBackupInfo = (): BackupInfo | null => {
+export const getLastBackupInfo = (): { 
+  timestamp: string; 
+  playerCount: number; 
+  activityCount: number; 
+} | null => {
   const backupData = localStorage.getItem('hassleholmsif_backup');
-  if (!backupData) {
-    return null;
-  }
+  if (!backupData) return null;
   
   try {
-    const backup: BackupData = JSON.parse(backupData);
+    const backup = JSON.parse(backupData);
+    if (!backup.timestamp || !backup.players || !backup.activities) {
+      return null;
+    }
+    
     return {
       timestamp: backup.timestamp,
       playerCount: backup.players.length,
       activityCount: backup.activities.length
     };
   } catch (error) {
-    console.error("Error parsing backup data:", error);
+    console.error("Error parsing backup info:", error);
     return null;
   }
 };
@@ -50,94 +56,50 @@ export const getLastBackupInfo = (): BackupInfo | null => {
 /**
  * Process activities to ensure all required fields are properly set for restoration
  */
-export const processActivitiesForRestore = (activities: any[]) => {
-  return activities.map(activity => {
-    // Create a shallow copy of the activity
-    const processed = { ...activity };
+export const processActivitiesForRestore = (activities: Activity[]): Activity[] => {
+  // First pass: ensure basic properties are set
+  const processedActivities = activities.map(activity => {
+    // Deep clone to avoid modifying original
+    const processedActivity: Activity = JSON.parse(JSON.stringify(activity));
     
-    // Convert database field names to application field names if needed
-    if (processed.home_score !== undefined && processed.homeScore === undefined) {
-      processed.homeScore = processed.home_score;
+    // Ensure id exists
+    if (!processedActivity.id) {
+      processedActivity.id = uuidv4();
     }
     
-    if (processed.away_score !== undefined && processed.awayScore === undefined) {
-      processed.awayScore = processed.away_score;
+    // Ensure participants array exists
+    if (!processedActivity.participants) {
+      processedActivity.participants = [];
     }
     
-    if (processed.is_win !== undefined && processed.isWin === undefined) {
-      processed.isWin = processed.is_win;
+    // Ensure matches array exists for cup activities
+    if (processedActivity.type === 'cup' && !processedActivity.matches) {
+      processedActivity.matches = [];
     }
     
-    // Ensure match data is properly set
-    if (processed.type === 'match') {
-      // If we have homeScore and awayScore but no result, generate the result
-      if ((processed.homeScore !== undefined && processed.homeScore !== null) && 
-          (processed.awayScore !== undefined && processed.awayScore !== null) && 
-          !processed.result) {
-        processed.result = `${processed.homeScore}-${processed.awayScore}`;
-      }
-      
-      // If we have a result but no scores, try to extract scores from the result
-      if (processed.result && 
-          (processed.homeScore === undefined || processed.awayScore === undefined)) {
-        const scores = processed.result.split('-').map(Number);
-        if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
-          processed.homeScore = scores[0];
-          processed.awayScore = scores[1];
-          
-          // Also set home_score and away_score for database compatibility
-          processed.home_score = scores[0];
-          processed.away_score = scores[1];
-        }
-      }
-      
-      // Determine win status if not explicitly set
-      if (processed.isWin === undefined && 
-          processed.homeScore !== undefined && processed.awayScore !== undefined) {
-        processed.isWin = processed.homeScore > processed.awayScore;
-      }
-      
-      // Initialize or update player_stats
-      if (!processed.player_stats) {
-        processed.player_stats = {
-          goals: {},
-          assists: {},
-          scores: {
-            home: processed.homeScore,
-            away: processed.awayScore
-          },
-          isWin: processed.isWin
-        };
-      } else {
-        // Make sure player_stats is an object, not a string
-        if (typeof processed.player_stats === 'string') {
-          try {
-            processed.player_stats = JSON.parse(processed.player_stats);
-          } catch (e) {
-            console.error("Error parsing player_stats string:", e);
-            processed.player_stats = {
-              goals: {},
-              assists: {},
-              scores: {
-                home: processed.homeScore,
-                away: processed.awayScore
-              },
-              isWin: processed.isWin
-            };
-          }
-        }
-        
-        // Ensure player_stats.scores is set correctly
-        processed.player_stats.scores = {
-          home: processed.homeScore,
-          away: processed.awayScore
-        };
-        
-        // Ensure isWin is set correctly
-        processed.player_stats.isWin = processed.isWin;
+    // Set default values for match-specific fields if not present
+    if (processedActivity.type === 'match' && processedActivity.homeScore !== undefined && processedActivity.awayScore !== undefined) {
+      if (processedActivity.result === undefined) {
+        processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
       }
     }
     
-    return processed;
+    return processedActivity;
   });
+  
+  // Second pass: resolve cup and match relationships
+  processedActivities.forEach(activity => {
+    if (activity.type === 'cup') {
+      // For cups, find all matches that reference this cup via cupId
+      const matchActivities = processedActivities.filter(
+        possibleMatch => possibleMatch.cupId === activity.id
+      );
+      
+      if (matchActivities.length > 0) {
+        activity.matches = matchActivities.map(match => match.id);
+      }
+    }
+  });
+  
+  return processedActivities;
 };

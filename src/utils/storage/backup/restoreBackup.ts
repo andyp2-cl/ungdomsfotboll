@@ -28,7 +28,6 @@ export const restoreBackup = async (): Promise<boolean> => {
     }
     
     console.log("Restoring backup with activities:", backup.activities.length);
-    console.log("Sample match data from backup:", backup.activities.filter(a => a.type === 'match').slice(0, 3));
     
     // Restore players first
     try {
@@ -43,12 +42,15 @@ export const restoreBackup = async (): Promise<boolean> => {
     const processedActivities = processActivitiesForRestore(backup.activities);
     
     console.log("Processed activities for restore:", processedActivities.length);
-    console.log("Sample processed match data:", processedActivities.filter(a => a.type === 'match').slice(0, 3));
+    console.log("Sample processed activities:", processedActivities.slice(0, 3));
     
     // Restore activities
     try {
       await saveActivities(processedActivities);
       console.log("Activities restored successfully");
+      
+      // Reload the page after successful restoration to show the new data
+      window.location.reload();
     } catch (error) {
       console.error("Error restoring activities:", error);
       return false;
