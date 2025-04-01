@@ -4,7 +4,7 @@ import { Activity } from "@/types/player";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -114,53 +114,109 @@ export function ActivityResultSection({
     }
   };
 
+  // Determine team labels based on match details
+  const ourTeamLabel = isHomeMatch() ? "Våra mål" : "Våra mål";
+  const theirTeamLabel = isHomeMatch() ? "Deras mål" : "Deras mål";
+  
+  // For historical matches, we'll show a more informative display
+  const hasResult = homeScore !== undefined && awayScore !== undefined;
+  
+  // Determine the match outcome text
+  const getOutcomeText = () => {
+    if (!hasResult) return "Inget resultat";
+    
+    if (homeScore === awayScore) return "Oavgjort";
+    
+    if (isHomeMatch()) {
+      return homeScore! > awayScore! ? "Vinst" : "Förlust";
+    } else {
+      return awayScore! > homeScore! ? "Vinst" : "Förlust";
+    }
+  };
+  
+  // Determine color for the outcome badge
+  const getOutcomeColorClass = () => {
+    if (!hasResult) return "bg-gray-100 text-gray-700";
+    
+    if (homeScore === awayScore) return "bg-blue-100 text-blue-700";
+    
+    const isWin = (isHomeMatch() && homeScore! > awayScore!) || 
+                 (!isHomeMatch() && awayScore! > homeScore!);
+                 
+    return isWin ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+  };
+
   return (
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
       
-      <div className="grid grid-cols-3 gap-2 mb-3 items-center">
-        <div className="space-y-2">
-          <Label htmlFor="homeScore">
-            {isHomeMatch() ? "Våra mål" : "Deras mål"}
-          </Label>
-          {isHistorical ? (
-            <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
-              {activity.homeScore !== undefined ? activity.homeScore : "-"}
+      {isHistorical && hasResult ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="font-medium">Resultat:</span>
+              <span className="text-lg font-bold">{homeScore}-{awayScore}</span>
             </div>
-          ) : (
-            <Input
-              id="homeScore"
-              type="number"
-              min="0"
-              value={homeScore === undefined ? "" : homeScore}
-              onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-              className="max-w-[120px]"
-            />
-          )}
-        </div>
-        <div className="flex justify-center items-center text-lg font-bold">
-          -
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="awayScore">
-            {isHomeMatch() ? "Deras mål" : "Våra mål"}
-          </Label>
-          {isHistorical ? (
-            <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
-              {activity.awayScore !== undefined ? activity.awayScore : "-"}
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getOutcomeColorClass()}`}>
+              {getOutcomeText()}
             </div>
-          ) : (
-            <Input
-              id="awayScore"
-              type="number"
-              min="0"
-              value={awayScore === undefined ? "" : awayScore}
-              onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-              className="max-w-[120px]"
-            />
-          )}
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-3">
+            <div className="border rounded p-3 text-center">
+              <div className="text-sm text-muted-foreground mb-1">{ourTeamLabel}</div>
+              <div className="text-xl font-bold">{isHomeMatch() ? homeScore : awayScore}</div>
+            </div>
+            <div className="border rounded p-3 text-center">
+              <div className="text-sm text-muted-foreground mb-1">{theirTeamLabel}</div>
+              <div className="text-xl font-bold">{isHomeMatch() ? awayScore : homeScore}</div>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2 mb-3 items-center">
+          <div className="space-y-2">
+            <Label htmlFor="homeScore">
+              {isHomeMatch() ? ourTeamLabel : theirTeamLabel}
+            </Label>
+            {isHistorical ? (
+              <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
+                {activity.homeScore !== undefined ? activity.homeScore : "-"}
+              </div>
+            ) : (
+              <Input
+                id="homeScore"
+                type="number"
+                min="0"
+                value={homeScore === undefined ? "" : homeScore}
+                onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className="max-w-[120px]"
+              />
+            )}
+          </div>
+          <div className="flex justify-center items-center text-lg font-bold">
+            -
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="awayScore">
+              {isHomeMatch() ? theirTeamLabel : ourTeamLabel}
+            </Label>
+            {isHistorical ? (
+              <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
+                {activity.awayScore !== undefined ? activity.awayScore : "-"}
+              </div>
+            ) : (
+              <Input
+                id="awayScore"
+                type="number"
+                min="0"
+                value={awayScore === undefined ? "" : awayScore}
+                onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className="max-w-[120px]"
+              />
+            )}
+          </div>
+        </div>
+      )}
       
       {!isHistorical && (
         <Button 
