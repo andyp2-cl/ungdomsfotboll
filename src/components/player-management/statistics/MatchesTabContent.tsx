@@ -85,7 +85,7 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       wins,
       draws,
       losses,
-      goalsScored: totalStats.totalGoals, // Use the consolidated goals count from the goals calculation
+      goalsScored: totalStats.goals, // Fix: Use 'goals' instead of 'totalGoals'
       cleanSheets,
       comebackWins,
       homeWins,
