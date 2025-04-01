@@ -47,7 +47,7 @@ export function StatisticsTabsWrapper({
         </TabsContent>
         
         <TabsContent value="participation">
-          <ParticipationTabContent players={players} />
+          <ParticipationTabContent players={players} activities={activities} />
         </TabsContent>
       </Tabs>
     </div>

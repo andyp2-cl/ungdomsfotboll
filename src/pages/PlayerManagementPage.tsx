@@ -19,6 +19,7 @@ export default function PlayerManagementPage() {
   // Activity state and actions
   const {
     // State
+    activities,
     isLoading: activitiesLoading,
     selectedActivity,
     setSelectedActivity,
@@ -85,8 +86,22 @@ export default function PlayerManagementPage() {
           <TabsContent value="players" className="space-y-4">
             <PlayersTabContent 
               players={players}
-              setIsAddPlayerOpen={setIsAddPlayerOpen}
-              handleUpdatePlayer={handleUpdatePlayer}
+              activities={activities}
+              searchQuery=""
+              selectedGrades={[]}
+              selectedPositions={[]}
+              activeFiltersCount={0}
+              selectedPlayer={null}
+              viewMode="list"
+              filteredPlayers={players}
+              onSearchChange={() => {}}
+              onGradeChange={() => {}}
+              onPositionChange={() => {}}
+              onPlayerSelect={() => {}}
+              onPlayerUpdate={handleUpdatePlayer}
+              onAddPlayerClick={() => setIsAddPlayerOpen(true)}
+              onEditPlayerClick={() => {}}
+              isMobile={false}
             />
           </TabsContent>
           
@@ -132,8 +147,8 @@ export default function PlayerManagementPage() {
       
       {isAddPlayerOpen && (
         <AddPlayerForm 
-          onClose={() => setIsAddPlayerOpen(false)} 
-          onPlayerAdded={() => setIsAddPlayerOpen(false)}
+          onSave={() => setIsAddPlayerOpen(false)}
+          onCancel={() => setIsAddPlayerOpen(false)}
         />
       )}
       
