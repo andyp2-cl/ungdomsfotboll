@@ -14,7 +14,7 @@ interface PlayerCardProps {
 export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
   // Get real activity count that excludes kiosk duty assignments
   const getActivityCount = () => {
-    if (!player.activities || player.activities.length === 0) return 0;
+    if (!player.activities) return 0;
     return player.activities.length;
   };
 
@@ -64,7 +64,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             alt={player.name} 
             className="w-full h-full object-cover"
             loading="lazy"
-            crossOrigin="anonymous" // Adding this to help with CORS issues
+            crossOrigin="anonymous"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -73,7 +73,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         )}
         
         <div className="absolute top-2 right-2">
-          {/* Only show grade badge if not a trainer */}
           {(!player.positions || !player.positions.includes('TRÄNARE')) && (
             <Badge className={getGradeColor(player.grade)}>
               Nivå {player.grade}
