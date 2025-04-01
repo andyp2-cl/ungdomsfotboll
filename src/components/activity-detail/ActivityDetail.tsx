@@ -26,7 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ActivityHeader } from "./ActivityHeader";
 import { ActivityParticipants } from "./ActivityParticipants";
-import { ActivityMatchResult } from "./ActivityMatchResult";
 import { ActivityMatchStats } from "./ActivityMatchStats";
 import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
 import { ActivityCupMatches } from "./ActivityCupMatches";
@@ -143,14 +142,6 @@ export function ActivityDetail({
         </CardHeader>
 
         <CardContent className="pb-3 space-y-6">
-          {/* Match result section (only for matches) */}
-          {activity.type === "match" && (
-            <ActivityMatchResult 
-              activity={activity} 
-              updateActivity={onUpdate} 
-            />
-          )}
-
           {/* Player statistics (only for matches) */}
           {activity.type === "match" && (
             <ActivityMatchStats 
