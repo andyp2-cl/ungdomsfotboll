@@ -34,7 +34,7 @@ export function MainTabs({
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
         <TabsTrigger value="players">Spelare</TabsTrigger>
-        <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
+        <TabsTrigger value="activities">Matcher</TabsTrigger>
       </TabsList>
       
       <TabsContent value="players" className="space-y-6">

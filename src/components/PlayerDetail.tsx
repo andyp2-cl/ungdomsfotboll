@@ -32,6 +32,11 @@ export function PlayerDetail({
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
   );
+  
+  // Count matches specifically
+  const playerMatches = playerActivities.filter(activity => 
+    activity.type === "match"
+  );
 
   const handleActivitySelect = (activity: Activity) => {
     if (onActivitySelect) {
@@ -95,18 +100,18 @@ export function PlayerDetail({
           
           <Card>
             <CardHeader className="py-3">
-              <CardTitle className="text-base">Aktiviteter</CardTitle>
+              <CardTitle className="text-base">Matcher & Aktiviteter</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Totalt:</span>
+                  <span className="text-muted-foreground">Totalt aktiviteter:</span>
                   <span className="font-medium">{playerActivities.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Matcher:</span>
                   <span className="font-medium">
-                    {playerActivities.filter(a => a.type === "match").length}
+                    {playerMatches.length}
                   </span>
                 </div>
                 <div className="flex justify-between">
