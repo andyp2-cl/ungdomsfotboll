@@ -1,37 +1,55 @@
 
+import React from "react";
 import { Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, X } from "lucide-react";
+import { 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, MapPin } from "lucide-react";
 
 interface ActivityHeaderProps {
   activity: Activity;
-  onEdit: () => void;
-  onDelete: () => void;
-  onClose: () => void;
 }
 
-export function ActivityHeader({
-  activity,
-  onEdit,
-  onDelete,
-  onClose
-}: ActivityHeaderProps) {
+export function ActivityHeader({ activity }: ActivityHeaderProps) {
   return (
-    <div className="flex justify-between items-start">
-      <div>
-        <h2 className="text-2xl font-semibold">{activity.name}</h2>
+    <CardHeader className="pb-3">
+      <div className="flex items-center space-x-2">
+        <CardTitle>{activity.name}</CardTitle>
+        <Badge variant={activity.type === "match" ? "default" : "secondary"}>
+          {activity.type === "match" ? "Match" : "Cup"}
+        </Badge>
       </div>
-      <div className="flex gap-2">
-        <Button variant="outline" size="icon" onClick={onEdit}>
-          <Edit className="h-5 w-5" />
-        </Button>
-        <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={onDelete}>
-          <Trash2 className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-    </div>
+      <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
+        <span className="flex items-center">
+          <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+          {new Date(activity.date).toLocaleDateString('sv-SE')}
+        </span>
+        {activity.time && (
+          <span className="flex items-center">
+            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+            {activity.time}
+          </span>
+        )}
+        {activity.location && (
+          <span className="flex items-center">
+            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+            {activity.location.name}
+            {activity.location.gpsLink && (
+              <a
+                href={activity.location.gpsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 text-blue-500 hover:underline"
+              >
+                (Karta)
+              </a>
+            )}
+          </span>
+        )}
+      </CardDescription>
+    </CardHeader>
   );
 }
