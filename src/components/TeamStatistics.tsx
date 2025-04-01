@@ -71,7 +71,7 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
         winCount,
         winRate,
         fill: getGradeColor(player.grade),
-        activityData: player.activities?.length || 0 // Fix for the type error, changed from activities array to number
+        activities: activityCount // Make sure we provide the "activities" property to match the interface
       };
     }).sort((a, b) => b.activityCount - a.activityCount);
   }, [players, activities]);
