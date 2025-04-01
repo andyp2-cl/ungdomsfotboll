@@ -11,9 +11,12 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 
 interface ActivityHeaderProps {
   activity: Activity;
+  onClose?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function ActivityHeader({ activity }: ActivityHeaderProps) {
+export function ActivityHeader({ activity, onClose, onEdit, onDelete }: ActivityHeaderProps) {
   return (
     <CardHeader className="pb-3">
       <div className="flex items-center space-x-2">
