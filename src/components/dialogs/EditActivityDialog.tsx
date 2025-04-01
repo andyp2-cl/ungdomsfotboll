@@ -20,7 +20,19 @@ export function EditActivityDialog({
 }: EditActivityDialogProps) {
   const { toast } = useToast();
 
-  // Ensure we have a clean activity object before passing it to the form
+  // Säkerställ att vi har ett rent activity-objekt innan vi skickar det till formuläret
+  const sanitizeActivity = (activity: Activity | null): Activity | null => {
+    if (!activity) return null;
+    
+    // Säkerställ att player_stats är korrekt formaterat
+    const sanitizedPlayerStats = sanitizePlayerStats(activity.player_stats);
+    
+    return {
+      ...activity,
+      player_stats: sanitizedPlayerStats
+    };
+  };
+
   const sanitizePlayerStats = (playerStats: any) => {
     if (!playerStats) {
       return { goals: {}, assists: {} };
@@ -28,9 +40,9 @@ export function EditActivityDialog({
     
     if (typeof playerStats === 'string') {
       try {
-        // Try to parse JSON string
+        // Försök att tolka JSON-strängen
         const parsed = JSON.parse(playerStats);
-        // Handle double-stringified JSON
+        // Hantera dubbelt stringifierad JSON
         if (typeof parsed === 'string') {
           try {
             const doubleParsed = JSON.parse(parsed);
@@ -55,7 +67,7 @@ export function EditActivityDialog({
       }
     }
     
-    // If it's already an object, ensure it has the required properties
+    // Om det redan är ett objekt, säkerställ att det har nödvändiga egenskaper
     return {
       ...playerStats,
       goals: playerStats.goals || {},
@@ -63,39 +75,22 @@ export function EditActivityDialog({
     };
   };
 
-  const sanitizedActivity = activity ? {
-    ...activity,
-    // Ensure player_stats is properly formatted as an object
-    player_stats: sanitizePlayerStats(activity.player_stats)
-  } : null;
+  const sanitizedActivity = sanitizeActivity(activity);
 
   const handleSave = (updatedActivity: Activity) => {
     try {
-      // Ensure player_stats is properly handled before updating
-      const sanitizedPlayerStats = sanitizePlayerStats(updatedActivity.player_stats);
-      
-      // Add scores and win status to player_stats
-      const finalPlayerStats = {
-        ...sanitizedPlayerStats,
-        scores: {
-          home: updatedActivity.homeScore || 0,
-          away: updatedActivity.awayScore || 0
-        },
-        isWin: updatedActivity.isWin === undefined ? false : updatedActivity.isWin
-      };
-      
-      const finalActivity = {
-        ...updatedActivity,
-        player_stats: finalPlayerStats
-      };
-      
-      console.log("EditActivityDialog - Updating activity with:", {
-        id: finalActivity.id,
-        playerStatsType: typeof finalActivity.player_stats,
-        playerStats: finalActivity.player_stats
+      console.log("EditActivityDialog - Updating activity:", {
+        id: updatedActivity.id,
+        playerStatsType: typeof updatedActivity.player_stats,
+        homeScore: updatedActivity.homeScore,
+        awayScore: updatedActivity.awayScore,
+        isWin: updatedActivity.isWin
       });
       
-      // Now update the activity
+      // Spara i ett lokalt scope för att undvika frysning i asynkrona operationer
+      const finalActivity = { ...updatedActivity };
+      
+      // Uppdatera aktiviteten
       onActivityUpdate(finalActivity);
       onOpenChange(false);
     } catch (error) {
