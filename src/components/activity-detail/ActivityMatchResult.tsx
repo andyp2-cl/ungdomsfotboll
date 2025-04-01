@@ -51,7 +51,7 @@ export function ActivityMatchResult({
         }
       }
       
-      // First directly update the database
+      // First directly update the database to ensure the data is saved
       const { error } = await supabase
         .from('activities')
         .update({
@@ -65,6 +65,8 @@ export function ActivityMatchResult({
         console.error("Error saving match result to database:", error);
         throw error;
       }
+
+      console.log("Match result saved to database:", { homeScore, awayScore, isWin });
 
       // Create an updated activity with the new scores
       const updatedActivity = {

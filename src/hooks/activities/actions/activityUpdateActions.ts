@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { preserveMatchData } from "../utils/arrayUtils";
@@ -21,9 +22,10 @@ export const handleActivityUpdate = async (
   }
   
   // Use the preserveMatchData utility function to properly merge activities
+  // This ensures match results are never lost
   const mergedActivity = preserveMatchData(existingActivity, updatedActivity);
   
-  console.log("Updating activity with data:", mergedActivity);
+  console.log("Updating activity with preserved match data:", mergedActivity);
   
   const updatedActivities = activities.map(activity => 
     activity.id === mergedActivity.id ? mergedActivity : activity
