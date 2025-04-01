@@ -45,7 +45,7 @@ export function PositionPerformanceChart({ positionData }: PositionPerformanceCh
                       Vinstprocent: {data.winRate}%
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Antal spelare: {data.count}
+                      Genomsnittliga matcher: {data.avgMatches.toFixed(1)}
                     </div>
                   </div>
                 );

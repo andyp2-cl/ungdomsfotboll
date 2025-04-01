@@ -29,6 +29,7 @@ export interface PositionPerformanceData {
   goalsAvg: number;
   assistsAvg: number;
   winRate: number;
+  avgMatches: number;
 }
 
 export interface TeamSummaryData {
@@ -120,7 +121,8 @@ export const calculatePositionData = (performanceData: PlayerPerformanceData[]):
       participationAvg: 0, 
       goalsAvg: 0, 
       assistsAvg: 0, 
-      winRate: 0 
+      winRate: 0,
+      avgMatches: 0
     };
     
     current.count += 1;
@@ -128,6 +130,7 @@ export const calculatePositionData = (performanceData: PlayerPerformanceData[]):
     current.goalsAvg += player.goalsAvg;
     current.assistsAvg += player.assistsAvg;
     current.winRate += player.winRate;
+    current.avgMatches += player.matchCount;
     
     positions.set(pos, current);
   });
@@ -138,6 +141,7 @@ export const calculatePositionData = (performanceData: PlayerPerformanceData[]):
     goalsAvg: data.count > 0 ? Number((data.goalsAvg / data.count).toFixed(2)) : 0,
     assistsAvg: data.count > 0 ? Number((data.assistsAvg / data.count).toFixed(2)) : 0,
     winRate: data.count > 0 ? Math.round(data.winRate / data.count) : 0,
+    avgMatches: data.count > 0 ? Number((data.avgMatches / data.count).toFixed(1)) : 0,
   }));
 };
 
