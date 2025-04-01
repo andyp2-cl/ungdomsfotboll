@@ -68,10 +68,8 @@ export function ActivityList({
     }
   };
 
-  // Determine grid columns based on whether it's historical view
-  const gridColumns = isHistorical 
-    ? 'grid-cols-1' 
-    : (isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
+  // All activities (both upcoming and historical) should use full width
+  const gridColumns = 'grid-cols-1';
 
   return (
     <div className={`grid ${gridColumns} gap-4`}>
