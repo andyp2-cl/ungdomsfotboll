@@ -2,6 +2,7 @@
 /**
  * Utility functions for array operations in activity hooks
  */
+import { Player } from "@/types/player";
 
 /**
  * Checks if two player arrays are equal by comparing IDs and activities

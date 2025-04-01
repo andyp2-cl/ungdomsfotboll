@@ -1,6 +1,7 @@
-
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
+import { savePlayers } from "@/utils/storage";
+import { logDatabaseChange } from "@/lib/supabase/logs";
 
 /**
  * Handles importing multiple activities from a file
