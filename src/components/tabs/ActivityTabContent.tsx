@@ -5,7 +5,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BarChart3, Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
 import { ActivityList } from "@/components/ActivityList";
-import { ActivityDetail } from "@/components/ActivityDetail";
+import { ActivityDetail } from "@/components/activity-detail/ActivityDetail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
@@ -85,6 +85,19 @@ export function ActivityTabContent({
   // Sortera nivåer (A, B, C, D)
   gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
 
+  // Get related activities for the selected activity
+  const relatedActivities = selectedActivity?.cupId 
+    ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
+    : [];
+
+  // Get cup matches if the selected activity is a cup
+  const cupMatches = selectedActivity?.type === 'cup'
+    ? activities.filter(a => a.cupId === selectedActivity.id)
+    : [];
+
+  // Determine if this is a historical activity (past date)
+  const isHistorical = activeView === "historical";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -128,13 +141,16 @@ export function ActivityTabContent({
         <ActivityDetail 
           activity={selectedActivity}
           players={players}
-          onClose={() => setSelectedActivity(null)}
-          onActivityUpdate={handleActivityUpdate}
-          onDeleteActivity={handleDeleteActivity}
+          onBack={() => setSelectedActivity(null)}
           onEdit={setEditingActivity}
-          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onDelete={handleDeleteActivity}
+          onUpdate={handleActivityUpdate}
+          onKioskUpdate={handleKioskAssignmentUpdate}
           onActivitySelect={setSelectedActivity}
-          onPlayerSelect={handlePlayerSelect}
+          relatedActivities={relatedActivities}
+          cupMatches={cupMatches}
+          allActivities={activities}
+          onClose={() => setSelectedActivity(null)}
         />
       ) : (
         <>
@@ -150,6 +166,7 @@ export function ActivityTabContent({
               players={players}
               onSelect={setSelectedActivity}
               onPlayerSelect={handlePlayerSelect}
+              isHistorical={isHistorical}
             />
           )}
         </>

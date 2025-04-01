@@ -39,6 +39,13 @@ export function ActivityDetailContent({
   // Determine if this is a cup
   const isCup = activity.type === "cup";
 
+  // Calculate if the activity is historical based on date if not explicitly provided
+  const isHistoricalByDate = !isHistorical && 
+    new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+  
+  // Use either the provided value or calculate based on date
+  const isActivityHistorical = isHistorical || isHistoricalByDate;
+
   return (
     <Card>
       <ActivityHeader activity={activity} />
@@ -49,7 +56,7 @@ export function ActivityDetailContent({
           <ActivityMatchResult 
             activity={activity}
             updateActivity={onUpdate}
-            isHistorical={isHistorical}
+            isHistorical={isActivityHistorical}
           />
         )}
         
@@ -60,6 +67,7 @@ export function ActivityDetailContent({
             players={players}
             participatingPlayers={participantPlayers}
             updateActivity={onUpdate}
+            isHistorical={isActivityHistorical}
           />
         )}
 

@@ -8,16 +8,18 @@ interface ActivityMatchStatsProps {
   activity: Activity;
   players: Player[];
   participatingPlayers: Player[];
-  updateActivity: (updatedActivity: Activity) => void;
+  updateActivity: (activity: Activity) => void;
+  isHistorical?: boolean;
 }
 
-export function ActivityMatchStats({ 
-  activity, 
-  players, 
-  participatingPlayers, 
-  updateActivity 
+export function ActivityMatchStats({
+  activity,
+  players,
+  participatingPlayers,
+  updateActivity,
+  isHistorical = false
 }: ActivityMatchStatsProps) {
-  
+  // Get total goals and assists
   const getTotalGoals = () => {
     if (!activity.player_stats?.goals) return 0;
     return Object.values(activity.player_stats.goals).reduce((sum, goals) => sum + (goals as number), 0);
@@ -28,40 +30,22 @@ export function ActivityMatchStats({
     return Object.values(activity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
   };
 
-  const handleGoalChange = (playerId: string, change: number) => {
-    const updatedActivity = {...activity};
+  // Update player stats
+  const updatePlayerStat = (playerId: string, statType: 'goals' | 'assists', value: number) => {
+    if (isHistorical) return; // Don't allow updates for historical activities
+    
+    const updatedActivity = { ...activity };
     
     if (!updatedActivity.player_stats) {
       updatedActivity.player_stats = { goals: {}, assists: {} };
     }
     
-    if (!updatedActivity.player_stats.goals) {
-      updatedActivity.player_stats.goals = {};
+    if (!updatedActivity.player_stats[statType]) {
+      updatedActivity.player_stats[statType] = {};
     }
     
-    const currentGoals = updatedActivity.player_stats.goals[playerId] || 0;
-    const newGoals = Math.max(0, currentGoals + change);
-    
-    updatedActivity.player_stats.goals[playerId] = newGoals;
-    
-    updateActivity(updatedActivity);
-  };
-
-  const handleAssistChange = (playerId: string, change: number) => {
-    const updatedActivity = {...activity};
-    
-    if (!updatedActivity.player_stats) {
-      updatedActivity.player_stats = { goals: {}, assists: {} };
-    }
-    
-    if (!updatedActivity.player_stats.assists) {
-      updatedActivity.player_stats.assists = {};
-    }
-    
-    const currentAssists = updatedActivity.player_stats.assists[playerId] || 0;
-    const newAssists = Math.max(0, currentAssists + change);
-    
-    updatedActivity.player_stats.assists[playerId] = newAssists;
+    // @ts-ignore (we know this is valid)
+    updatedActivity.player_stats[statType][playerId] = value;
     
     updateActivity(updatedActivity);
   };
@@ -72,7 +56,11 @@ export function ActivityMatchStats({
       
       {participatingPlayers.length > 0 ? (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål och assist varje spelare har gjort:</p>
+          <p className="text-sm text-muted-foreground mb-2">
+            {isHistorical ? 
+              "Matchstatistik för spelarnas mål och assist:" : 
+              "Anteckna hur många mål och assist varje spelare har gjort:"}
+          </p>
           
           {participatingPlayers.map(player => {
             const goals = activity.player_stats?.goals?.[player.id] || 0;
@@ -84,46 +72,68 @@ export function ActivityMatchStats({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center">
                     <span className="text-xs mr-2">Mål:</span>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full"
-                      onClick={() => handleGoalChange(player.id, -1)}
-                      disabled={goals === 0}
-                    >
-                      -
-                    </Button>
-                    <span className="mx-2 w-6 text-center">{goals}</span>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full"
-                      onClick={() => handleGoalChange(player.id, 1)}
-                    >
-                      +
-                    </Button>
+                    {isHistorical ? (
+                      <span className="mx-2 w-6 text-center">{goals}</span>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => {
+                            if (goals > 0) {
+                              updatePlayerStat(player.id, 'goals', goals - 1);
+                            }
+                          }}
+                          disabled={goals === 0 || isHistorical}
+                        >
+                          -
+                        </Button>
+                        <span className="mx-2 w-6 text-center">{goals}</span>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => updatePlayerStat(player.id, 'goals', goals + 1)}
+                          disabled={isHistorical}
+                        >
+                          +
+                        </Button>
+                      </>
+                    )}
                   </div>
                   
                   <div className="flex items-center">
                     <span className="text-xs mr-2">Assist:</span>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full"
-                      onClick={() => handleAssistChange(player.id, -1)}
-                      disabled={assists === 0}
-                    >
-                      -
-                    </Button>
-                    <span className="mx-2 w-6 text-center">{assists}</span>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-full"
-                      onClick={() => handleAssistChange(player.id, 1)}
-                    >
-                      +
-                    </Button>
+                    {isHistorical ? (
+                      <span className="mx-2 w-6 text-center">{assists}</span>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => {
+                            if (assists > 0) {
+                              updatePlayerStat(player.id, 'assists', assists - 1);
+                            }
+                          }}
+                          disabled={assists === 0 || isHistorical}
+                        >
+                          -
+                        </Button>
+                        <span className="mx-2 w-6 text-center">{assists}</span>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => updatePlayerStat(player.id, 'assists', assists + 1)}
+                          disabled={isHistorical}
+                        >
+                          +
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
