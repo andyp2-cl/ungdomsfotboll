@@ -13,6 +13,7 @@ interface ActivityDetailWrapperProps {
   onActivityUpdate: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityDetailWrapper({
@@ -24,21 +25,29 @@ export function ActivityDetailWrapper({
   onEditActivityClick,
   onActivityUpdate,
   handleKioskUpdate,
-  handleDeleteActivity
+  handleDeleteActivity,
+  handleMatchResultUpdate
 }: ActivityDetailWrapperProps) {
+  
   return (
     <ActivityDetail
       activity={selectedActivity}
       players={players}
-      onBack={() => onActivitySelect(null)}
-      onEdit={onEditActivityClick}
-      onUpdate={onActivityUpdate}
-      onKioskUpdate={handleKioskUpdate}
-      onActivitySelect={onActivitySelect}
-      onDelete={handleDeleteActivity}
-      relatedActivities={activities}
-      cupMatches={cupMatches}
       onClose={() => onActivitySelect(null)}
+      onEdit={onEditActivityClick}
+      onActivityUpdate={onActivityUpdate}
+      onKioskAssignmentUpdate={handleKioskUpdate}
+      onDeleteActivity={async (id) => {
+        const success = await handleDeleteActivity(id);
+        if (success) {
+          onActivitySelect(null);
+        }
+        return success;
+      }}
+      allActivities={activities}
+      cupMatches={cupMatches}
+      onActivitySelect={onActivitySelect}
+      onMatchResultUpdate={handleMatchResultUpdate}
     />
   );
 }

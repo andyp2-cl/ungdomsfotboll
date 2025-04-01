@@ -31,6 +31,7 @@ import { ActivityResultSection } from "./activity-detail/match-result";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { v4 as uuidv4 } from 'uuid';
+import { QuickMatchResult } from "./activity-detail/QuickMatchResult";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -44,6 +45,7 @@ interface ActivityDetailProps {
   allActivities?: Activity[];
   cupMatches?: Activity[];
   onPlayerSelect?: (playerId: string) => void;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityDetail({ 
@@ -57,7 +59,8 @@ export function ActivityDetail({
   onDeleteActivity,
   allActivities,
   cupMatches = [],
-  onPlayerSelect
+  onPlayerSelect,
+  onMatchResultUpdate
 }: ActivityDetailProps) {
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
@@ -257,7 +260,14 @@ export function ActivityDetail({
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
+  const isMatch = activity.type === "match";
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+
+  const handleQuickResultSave = async (homeScore?: number, awayScore?: number) => {
+    if (onMatchResultUpdate) {
+      await onMatchResultUpdate(activity.id, homeScore, awayScore);
+    }
+  };
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -356,6 +366,14 @@ export function ActivityDetail({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {isMatch && (
+          <QuickMatchResult 
+            activity={activity}
+            onSave={handleQuickResultSave}
+            isReadOnly={false}
+          />
+        )}
+
         <Accordion type="single" collapsible defaultValue="participants">
           <AccordionItem value="participants">
             <AccordionTrigger className="py-2">
@@ -476,7 +494,7 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {isHistorical && currentActivity.type === "match" && (
+        {isHistorical && isMatch && (
           <ActivityResultSection
             activity={currentActivity}
             isHistorical={isHistorical}

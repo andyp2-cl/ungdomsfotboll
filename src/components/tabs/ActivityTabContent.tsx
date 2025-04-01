@@ -28,6 +28,7 @@ interface ActivityTabContentProps {
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityTabContent({
@@ -46,7 +47,8 @@ export function ActivityTabContent({
   handleKioskAssignmentUpdate,
   handleDeleteActivity,
   handleImportedActivities,
-  handleClearHistoricalActivities
+  handleClearHistoricalActivities,
+  handleMatchResultUpdate
 }: ActivityTabContentProps) {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -149,6 +151,7 @@ export function ActivityTabContent({
           cupMatches={cupMatches}
           allActivities={activities}
           onClose={() => setSelectedActivity(null)}
+          onMatchResultUpdate={handleMatchResultUpdate}
         />
       ) : (
         <>

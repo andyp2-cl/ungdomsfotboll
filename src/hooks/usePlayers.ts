@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -55,7 +54,8 @@ export function usePlayers(initialTab?: string) {
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,
-    handleClearHistoricalActivities
+    handleClearHistoricalActivities,
+    handleMatchResultUpdate
   } = useActivities(players, setPlayers);
 
   // Wrapper functions to ensure proper return types
@@ -75,6 +75,15 @@ export function usePlayers(initialTab?: string) {
     } catch (error) {
       console.error("Error deleting activity:", error);
       return false;
+    }
+  };
+
+  // Wrapper for match result update
+  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+    try {
+      await handleMatchResultUpdate(activityId, homeScore, awayScore);
+    } catch (error) {
+      console.error("Error updating match result:", error);
     }
   };
 
@@ -151,6 +160,7 @@ export function usePlayers(initialTab?: string) {
     handleClearHistorical,
     handleAddActivity,
     handlePlayerActivitySelect,
+    handleMatchResult,
     
     // Loading state
     isLoading
