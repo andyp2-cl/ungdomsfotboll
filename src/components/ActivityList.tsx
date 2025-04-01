@@ -2,8 +2,7 @@
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, UserCircle, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Users, UserCircle, MapPin, Trophy, Star } from "lucide-react";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -95,6 +94,72 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
     const player = players.find(p => p.id === activity.kioskAssignedPlayerId);
     return player ? player.name : "Okänd";
   };
+  
+  const renderGoalStats = (activity: Activity) => {
+    if (!activity.playerStats?.goals) return null;
+    
+    const goalScorers = Object.entries(activity.playerStats.goals)
+      .filter(([_, count]) => count > 0)
+      .map(([playerId, count]) => {
+        const player = players.find(p => p.id === playerId);
+        return { 
+          player: player ? player.name : "Okänd spelare", 
+          count 
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+      
+    if (goalScorers.length === 0) return null;
+    
+    return (
+      <div className="mt-2 text-xs">
+        <div className="flex items-center text-green-700">
+          <Trophy className="h-3 w-3 mr-1" />
+          <span>Målskyttar:</span>
+        </div>
+        <div className="ml-4">
+          {goalScorers.map((scorer, index) => (
+            <div key={index}>
+              {scorer.player} ({scorer.count})
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  const renderAssistStats = (activity: Activity) => {
+    if (!activity.playerStats?.assists) return null;
+    
+    const assisters = Object.entries(activity.playerStats.assists)
+      .filter(([_, count]) => count > 0)
+      .map(([playerId, count]) => {
+        const player = players.find(p => p.id === playerId);
+        return { 
+          player: player ? player.name : "Okänd spelare", 
+          count 
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+      
+    if (assisters.length === 0) return null;
+    
+    return (
+      <div className="mt-2 text-xs">
+        <div className="flex items-center text-blue-700">
+          <Star className="h-3 w-3 mr-1" />
+          <span>Assist:</span>
+        </div>
+        <div className="ml-4">
+          {assisters.map((assister, index) => (
+            <div key={index}>
+              {assister.player} ({assister.count})
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   if (activities.length === 0) {
     return (
@@ -164,6 +229,13 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
                     Kiosk: {getKioskPlayerName(activity)}
                   </Badge>
                 </div>
+              )}
+              
+              {isHistorical && activity.type === "match" && (
+                <>
+                  {renderGoalStats(activity)}
+                  {renderAssistStats(activity)}
+                </>
               )}
               
               {activity.type === "cup" && activity.matches && activity.matches.length > 0 && (
