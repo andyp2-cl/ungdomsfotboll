@@ -36,8 +36,9 @@ export function AddPlayersToActivity({
   const filteredPlayers = useMemo(() => {
     if (!searchQuery.trim()) return availablePlayers;
     
+    const query = searchQuery.toLowerCase().trim();
     return availablePlayers.filter(player => 
-      player.name.toLowerCase().includes(searchQuery.toLowerCase())
+      player.name.toLowerCase().includes(query)
     );
   }, [availablePlayers, searchQuery]);
 
@@ -63,6 +64,7 @@ export function AddPlayersToActivity({
       onAddPlayers(selectedPlayers);
       setSelectedPlayers([]);
       setSearchQuery("");
+      setPopoverOpen(false);
     }
   };
 
@@ -83,11 +85,12 @@ export function AddPlayersToActivity({
     return players.find(player => player.id === id);
   };
 
-  // Debug section
+  // Reset search when popover closes
   useEffect(() => {
-    console.log("Search query:", searchQuery);
-    console.log("Filtered players:", filteredPlayers.map(p => p.name));
-  }, [searchQuery, filteredPlayers]);
+    if (!popoverOpen) {
+      setSearchQuery("");
+    }
+  }, [popoverOpen]);
 
   return (
     <div className="space-y-4 mt-4">
