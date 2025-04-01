@@ -35,6 +35,7 @@ export function useActivityForm(
       result: activity.result || "",
       homeScore: activity.homeScore,
       awayScore: activity.awayScore,
+      isWin: activity.isWin,
     },
   });
 
@@ -69,6 +70,28 @@ export function useActivityForm(
         ? `${homeScore}-${awayScore}`
         : values.result || undefined;
       
+      // Determine if the match was a win for Hässleholms IF
+      let isWin: boolean | undefined = values.isWin;
+      
+      // Auto-calculate isWin if we have scores and it's not explicitly set
+      if (homeScore !== undefined && awayScore !== undefined && isWin === undefined) {
+        const isHomeTeam = values.name.toLowerCase().includes('hässleholms if') && 
+                         !values.name.toLowerCase().includes(' vs ') || 
+                         values.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
+        
+        const ourScore = isHomeTeam ? homeScore : awayScore;
+        const theirScore = isHomeTeam ? awayScore : homeScore;
+        
+        if (ourScore !== undefined && theirScore !== undefined) {
+          if (ourScore > theirScore) {
+            isWin = true;
+          } else if (ourScore < theirScore) {
+            isWin = false;
+          }
+          // If scores are equal, isWin remains undefined (draw)
+        }
+      }
+      
       // Create updated activity with form values
       const formUpdatedActivity: Activity = {
         ...activity,
@@ -80,6 +103,7 @@ export function useActivityForm(
         result,
         homeScore,
         awayScore,
+        isWin,
         // Create or update player stats
         player_stats: {
           ...(activity.player_stats || {}),
@@ -90,7 +114,8 @@ export function useActivityForm(
           scores: {
             home: homeScore,
             away: awayScore
-          }
+          },
+          isWin
         }
       };
 

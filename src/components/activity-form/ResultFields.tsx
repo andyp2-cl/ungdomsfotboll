@@ -1,11 +1,12 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Trophy } from "lucide-react";
+import { Trophy, Circle, CheckCircle2, XCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
 import { useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -13,13 +14,33 @@ interface ResultFieldsProps {
 }
 
 export function ResultFields({ form, activityType }: ResultFieldsProps) {
-  // Auto-compute the result string when scores change
+  // Auto-compute the result string and match outcome when scores change
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if ((name === 'homeScore' || name === 'awayScore') && 
           value.homeScore !== undefined && 
           value.awayScore !== undefined) {
+        // Update result string
         form.setValue('result', `${value.homeScore}-${value.awayScore}`);
+        
+        // Auto-determine if match was a win for Hässleholms IF
+        const isHomeTeam = value.name?.toLowerCase().includes('hässleholms if') && 
+                         !value.name?.toLowerCase().includes(' vs ') || 
+                         value.name?.toLowerCase().split(' vs ')[0].includes('hässleholms if');
+        
+        const ourScore = isHomeTeam ? value.homeScore : value.awayScore;
+        const theirScore = isHomeTeam ? value.awayScore : value.homeScore;
+        
+        if (ourScore !== undefined && theirScore !== undefined) {
+          if (ourScore > theirScore) {
+            form.setValue('isWin', true);
+          } else if (ourScore < theirScore) {
+            form.setValue('isWin', false);
+          } else {
+            // Draw - set to null or undefined
+            form.setValue('isWin', undefined);
+          }
+        }
       }
     });
     
@@ -109,6 +130,31 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      
+      <div className="mt-4">
+        <FormField
+          control={form.control}
+          name="isWin"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
+              <FormControl>
+                <Checkbox 
+                  checked={field.value === true}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked === true);
+                  }}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                  Hässleholms IF vann denna match
+                </FormLabel>
+              </div>
             </FormItem>
           )}
         />

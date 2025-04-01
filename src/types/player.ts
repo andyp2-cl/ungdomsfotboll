@@ -12,6 +12,7 @@ export interface PlayerStats {
     home?: number;
     away?: number;
   }; // Score information for matches
+  isWin?: boolean; // Whether the match was a win for Hässleholms IF
 }
 
 export interface Location {
@@ -36,6 +37,7 @@ export interface Activity {
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score
+  isWin?: boolean; // Whether the match was a win for Hässleholms IF
 }
 
 export interface Player {

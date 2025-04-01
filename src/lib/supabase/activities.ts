@@ -34,7 +34,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         matches: [], // We'll populate this for cup activities
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
-        awayScore: item.away_score
+        awayScore: item.away_score,
+        isWin: typeof item.is_win === 'boolean' ? item.is_win : undefined
       };
       
       // Set result field if home_score and away_score are available
@@ -56,7 +57,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
             scores: {
               home: item.home_score,
               away: item.away_score
-            }
+            },
+            isWin: activity.isWin
           };
         } catch (e) {
           console.error("Error parsing player_stats JSON:", e);
@@ -66,7 +68,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
             scores: {
               home: item.home_score,
               away: item.away_score
-            }
+            },
+            isWin: activity.isWin
           };
         }
       } else {
@@ -76,7 +79,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
           scores: {
             home: item.home_score,
             away: item.away_score
-          }
+          },
+          isWin: activity.isWin
         };
       }
       

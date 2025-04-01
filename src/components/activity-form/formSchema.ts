@@ -17,6 +17,7 @@ export const activityFormSchema = z.object({
   result: z.string().optional(),
   homeScore: z.coerce.number().optional(),
   awayScore: z.coerce.number().optional(),
+  isWin: z.boolean().optional(),
 });
 
 export type ActivityFormValues = z.infer<typeof activityFormSchema>;
@@ -26,6 +27,7 @@ export interface ResultFieldValues {
   result?: string;
   homeScore?: number;
   awayScore?: number;
+  isWin?: boolean;
 }
 
 // Location-specific types
