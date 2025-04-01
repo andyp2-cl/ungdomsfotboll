@@ -180,6 +180,23 @@ export function ActivityDetail({
     return currentActivity.result || "";
   };
 
+  // Fixed getTotalGoals and getTotalAssists functions
+  const getTotalGoals = () => {
+    // Calculate total goals from player_stats if available
+    if (currentActivity.player_stats?.goals) {
+      return Object.values(currentActivity.player_stats.goals).reduce((sum, goals) => sum + (goals as number), 0);
+    }
+    return 0;
+  };
+
+  const getTotalAssists = () => {
+    // Calculate total assists from player_stats if available
+    if (currentActivity.player_stats?.assists) {
+      return Object.values(currentActivity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
+    }
+    return 0;
+  };
+
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
