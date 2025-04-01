@@ -10,15 +10,26 @@ interface ParticipantListProps {
   participants: Player[];
   onRemoveParticipant: (playerId: string) => void;
   onPlayerSelect?: (playerId: string) => void;
+  onRemovePlayer?: (playerId: string) => void; // Added this prop to support both naming conventions
   isMobile?: boolean;
 }
 
 export function ParticipantList({ 
   participants, 
   onRemoveParticipant,
+  onRemovePlayer,
   onPlayerSelect,
   isMobile = false
 }: ParticipantListProps) {
+  // Use onRemovePlayer as a fallback if provided
+  const handleRemove = (playerId: string) => {
+    if (onRemovePlayer) {
+      onRemovePlayer(playerId);
+    } else {
+      onRemoveParticipant(playerId);
+    }
+  };
+
   if (participants.length === 0) {
     return (
       <div className="text-center py-6 bg-muted/20 rounded-md">
@@ -96,7 +107,7 @@ export function ParticipantList({
                   variant="ghost" 
                   size="icon" 
                   className="h-8 w-8" 
-                  onClick={() => onRemoveParticipant(player.id)}
+                  onClick={() => handleRemove(player.id)}
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -4,7 +4,7 @@ import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Football, MapPin, User } from "lucide-react";
+import { Trophy, MapPin, User } from "lucide-react";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -129,7 +129,7 @@ export function ActivityList({
                 <div className="flex justify-between w-full items-center">
                   {hasResult ? (
                     <Badge className={resultColor}>
-                      <Football className="h-3.5 w-3.5 mr-1" />
+                      <Trophy className="h-3.5 w-3.5 mr-1" />
                       {activity.result}
                     </Badge>
                   ) : isHistorical ? (

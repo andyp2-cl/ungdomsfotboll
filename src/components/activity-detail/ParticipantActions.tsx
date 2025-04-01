@@ -1,27 +1,65 @@
 
-import React, { useState } from "react";
+import React, { useState, Dispatch, SetStateAction } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, Trash } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantActionsProps {
-  activity: Activity;
-  nonParticipantPlayers: Player[];
-  onAddParticipant: (playerId: string) => void;
+  activity?: Activity;
+  nonParticipantPlayers?: Player[];
+  onAddParticipant?: (playerId: string) => void;
+  participantCount?: number; // Added to support ActivityParticipantSection
+  isAddingPlayers?: boolean;
+  setIsAddingPlayers?: Dispatch<SetStateAction<boolean>>;
+  onClearAllParticipants?: () => void;
   isMobile?: boolean;
 }
 
 export function ParticipantActions({ 
   activity, 
-  nonParticipantPlayers, 
+  nonParticipantPlayers = [], 
   onAddParticipant,
+  participantCount,
+  isAddingPlayers,
+  setIsAddingPlayers,
+  onClearAllParticipants,
   isMobile = false
 }: ParticipantActionsProps) {
   const [open, setOpen] = useState(false);
   
+  // If we're in the alternative usage mode (with participantCount)
+  if (participantCount !== undefined && setIsAddingPlayers) {
+    return (
+      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
+        <Button 
+          variant="outline" 
+          onClick={() => setIsAddingPlayers(true)}
+          size={isMobile ? "sm" : "default"}
+          className={isMobile ? "text-sm" : ""}
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Lägg till spelare
+        </Button>
+        
+        {participantCount > 0 && onClearAllParticipants && (
+          <Button 
+            variant="outline" 
+            onClick={onClearAllParticipants}
+            size={isMobile ? "sm" : "default"}
+            className={`${isMobile ? "text-sm" : ""} text-destructive hover:text-destructive`}
+          >
+            <Trash className="h-4 w-4 mr-2" />
+            Rensa alla
+          </Button>
+        )}
+      </div>
+    );
+  }
+  
+  // Original implementation with popup
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -39,7 +77,9 @@ export function ParticipantActions({
               <CommandItem
                 key={player.id}
                 onSelect={() => {
-                  onAddParticipant(player.id);
+                  if (onAddParticipant) {
+                    onAddParticipant(player.id);
+                  }
                   setOpen(false);
                 }}
                 className="cursor-pointer"
