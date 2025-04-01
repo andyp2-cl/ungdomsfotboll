@@ -818,6 +818,7 @@ interface PlayerDetailProps {
   onPlayerUpdate?: (player: Player) => void;
   onBulkUpdate?: (player: Player) => void;
   allPlayers: Player[];
+  onActivitySelect?: (activity: Activity) => void; 
 }
 
 export function PlayerDetail({ 
@@ -827,10 +828,19 @@ export function PlayerDetail({
   onEdit,
   onPlayerUpdate,
   onBulkUpdate,
-  allPlayers 
+  allPlayers,
+  onActivitySelect 
 }: PlayerDetailProps) {
   const { toast } = useToast();
   const stats = calculatePlayerStatistics(player, activities);
+
+  const handleActivitySelect = (activity: Activity) => {
+    if (onActivitySelect) {
+      onActivitySelect(activity);
+    } else {
+      console.log("Activity selected but no handler provided:", activity.name);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -928,14 +938,7 @@ export function PlayerDetail({
       <PlayerMatchHistory 
         player={player} 
         activities={activities} 
-        onActivitySelect={(activity) => {
-          // Navigate to the activity
-          if (onClose) {
-            onClose();
-            // If we're in a parent component that can handle activity selection
-            // we could add that logic here
-          }
-        }} 
+        onActivitySelect={handleActivitySelect} 
       />
     </div>
   );

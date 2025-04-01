@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -189,7 +188,6 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
     );
   }
 
-  // Group activities by date for better organization
   const activityGroups = activities.reduce((groups, activity) => {
     const date = new Date(activity.date);
     const dateKey = date.toISOString().split('T')[0];
@@ -205,7 +203,6 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
     return groups;
   }, {} as Record<string, { date: Date, activities: Activity[] }>);
   
-  // Sort groups by date
   const sortedGroups = Object.values(activityGroups)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   
@@ -226,7 +223,7 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         return (
           <div key={group.date.toISOString()} className="space-y-2">
             <h3 className="font-medium text-sm capitalize">{dateString}</h3>
-            <div className={`grid grid-cols-1 ${historical ? 'md:grid-cols-1 lg:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+            <div className={`grid grid-cols-1 gap-4 ${historical ? '' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
               {group.activities.map((activity) => (
                 <Card 
                   key={activity.id}

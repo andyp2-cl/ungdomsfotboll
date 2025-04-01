@@ -127,6 +127,12 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     );
   }
 
+  const handlePlayerActivitySelect = (activity: Activity) => {
+    setSelectedPlayer(null);
+    setSelectedActivity(activity);
+    setActiveTab('activities');
+  };
+
   return (
     <div className="container py-6">
       <PlayerHeader />
@@ -152,6 +158,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             handleBulkPlayerUpdate={handleBulkPlayerUpdate}
             setIsAddPlayerOpen={setIsAddPlayerOpen}
             setEditingPlayer={setEditingPlayer}
+            onActivitySelect={handlePlayerActivitySelect}
           />
         }
         activitiesContent={

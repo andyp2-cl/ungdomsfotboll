@@ -1,25 +1,34 @@
 
 import { useState } from "react";
-import { PlayerManagement } from "@/components/PlayerManagement";
-import { Player } from "@/types/player";
+import { Activity, Player, PlayerGrade } from "@/types/player";
+import { SearchInput } from "@/components/SearchInput";
+import { PlayerFilter } from "@/components/PlayerFilter";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Grid, List, Plus } from "lucide-react";
+import { PlayerList } from "@/components/PlayerList";
+import { PlayerCard } from "@/components/PlayerCard";
+import { PlayerDetail } from "@/components/PlayerDetail";
+import { Button } from "@/components/ui/button";
+import { TeamStatistics } from "@/components/TeamStatistics";
 
 interface PlayerTabContentProps {
   players: Player[];
-  activities: any[];
+  activities: Activity[];
   searchQuery: string;
-  selectedGrades: any[];
+  selectedGrades: PlayerGrade[];
   selectedPlayer: Player | null;
-  viewMode: "grid" | "list";
+  viewMode: "list" | "grid" | "stats";
   filteredPlayers: Player[];
   isAddPlayerOpen: boolean;
   setSearchQuery: (query: string) => void;
-  handleGradeChange: (grade: any) => void;
+  handleGradeChange: (grade: PlayerGrade) => void;
   setSelectedPlayer: (player: Player | null) => void;
-  setViewMode: (mode: "grid" | "list") => void;
+  setViewMode: (mode: "list" | "grid" | "stats") => void;
   handlePlayerUpdate: (player: Player) => void;
   handleBulkPlayerUpdate: (players: Player[]) => void;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   setEditingPlayer: (player: Player | null) => void;
+  onActivitySelect?: (activity: Activity) => void;
 }
 
 export function PlayerTabContent({
@@ -38,25 +47,79 @@ export function PlayerTabContent({
   handlePlayerUpdate,
   handleBulkPlayerUpdate,
   setIsAddPlayerOpen,
-  setEditingPlayer
+  setEditingPlayer,
+  onActivitySelect
 }: PlayerTabContentProps) {
   return (
-    <PlayerManagement 
-      players={players}
-      activities={activities}
-      searchQuery={searchQuery}
-      selectedGrades={selectedGrades}
-      selectedPlayer={selectedPlayer}
-      viewMode="list" // Remove grid view option
-      filteredPlayers={filteredPlayers}
-      onSearchChange={setSearchQuery}
-      onGradeChange={handleGradeChange}
-      onPlayerSelect={setSelectedPlayer}
-      onViewModeChange={setViewMode}
-      onPlayerUpdate={handlePlayerUpdate}
-      onBulkPlayerUpdate={handleBulkPlayerUpdate}
-      onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-      onEditPlayerClick={setEditingPlayer}
-    />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="w-full sm:w-auto flex-grow space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
+          <SearchInput 
+            placeholder="Sök spelare..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+          
+          <PlayerFilter 
+            selectedGrades={selectedGrades} 
+            onGradeChange={handleGradeChange}
+          />
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
+            if (value) setViewMode(value as "list" | "grid" | "stats");
+          }}>
+            <ToggleGroupItem value="list" aria-label="Lista">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="grid" aria-label="Rutnät">
+              <Grid className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
+          <Button onClick={() => setIsAddPlayerOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Lägg till
+          </Button>
+        </div>
+      </div>
+      
+      {selectedPlayer ? (
+        <PlayerDetail 
+          player={selectedPlayer}
+          activities={activities}
+          onClose={() => setSelectedPlayer(null)}
+          onEdit={setEditingPlayer}
+          onPlayerUpdate={handlePlayerUpdate}
+          onBulkUpdate={handleBulkPlayerUpdate}
+          allPlayers={players}
+          onActivitySelect={onActivitySelect}
+        />
+      ) : viewMode === "stats" ? (
+        <TeamStatistics 
+          players={players} 
+          activities={activities}
+          onPlayerSelect={setSelectedPlayer}
+        />
+      ) : viewMode === "list" ? (
+        <PlayerList 
+          players={filteredPlayers}
+          onPlayerClick={setSelectedPlayer}
+          onEditPlayer={setEditingPlayer}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredPlayers.map(player => (
+            <PlayerCard 
+              key={player.id}
+              player={player}
+              onClick={() => setSelectedPlayer(player)}
+              onEdit={() => setEditingPlayer(player)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
