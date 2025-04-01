@@ -1,7 +1,8 @@
+
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, MapPin, Coffee, Users, Goal } from "lucide-react";
+import { CalendarIcon, Clock, MapPin, Coffee, Users, Goal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 
@@ -143,6 +144,11 @@ export function ActivityList({ activities, onSelect, onPlayerSelect, players = [
                       {totalGoals} mål
                     </Badge>
                   )}
+                  {activityIsHistorical && activity.type === "match" && totalAssists > 0 && (
+                    <Badge className="bg-blue-100 text-blue-700 border-blue-300">
+                      {totalAssists} assist
+                    </Badge>
+                  )}
                 </div>
                 <Badge 
                   variant={activity.type === "match" ? "default" : "secondary"}
@@ -263,9 +269,7 @@ export function ActivityList({ activities, onSelect, onPlayerSelect, players = [
                   {assistProviders.length > 0 && (
                     <div className="mb-2">
                       <div className="flex items-center font-medium mb-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                        <Award className="h-4 w-4 mr-1" />
                         Assist:
                       </div>
                       <div className="ml-5 flex flex-wrap gap-1">

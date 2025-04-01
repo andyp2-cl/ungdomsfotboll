@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
@@ -61,6 +63,7 @@ export function ActivityDetail({
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [matchResult, setMatchResult] = useState(currentActivity.result || "");
   
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
@@ -209,6 +212,28 @@ export function ActivityDetail({
     }
   };
 
+  const handleMatchResultChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMatchResult(e.target.value);
+  };
+
+  const saveMatchResult = () => {
+    const updatedActivity = {
+      ...currentActivity,
+      result: matchResult
+    };
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    toast({
+      title: "Matchresultat sparat",
+      description: `Resultat ${matchResult} har sparats för ${currentActivity.name}.`,
+    });
+  };
+
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
@@ -218,6 +243,11 @@ export function ActivityDetail({
   const getTotalGoals = () => {
     if (!currentActivity.playerStats?.goals) return 0;
     return Object.values(currentActivity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
+  };
+
+  const getTotalAssists = () => {
+    if (!currentActivity.playerStats?.assists) return 0;
+    return Object.values(currentActivity.playerStats.assists).reduce((sum, assists) => sum + assists, 0);
   };
 
   return (
@@ -236,6 +266,11 @@ export function ActivityDetail({
               {isHistorical && (
                 <Badge variant="outline" className="ml-2">
                   Tidigare
+                </Badge>
+              )}
+              {isHistorical && currentActivity.type === "match" && currentActivity.result && (
+                <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300">
+                  {currentActivity.result}
                 </Badge>
               )}
             </CardTitle>
@@ -433,77 +468,150 @@ export function ActivityDetail({
         </Accordion>
 
         {isHistorical && currentActivity.type === "match" && (
-          <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
-            {participatingPlayers.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål varje spelare har gjort:</p>
-                {participatingPlayers.map(player => {
-                  const goals = currentActivity.playerStats?.goals?.[player.id] || 0;
-                  return (
-                    <div key={player.id} className="flex justify-between items-center border-b pb-2">
-                      <span className="font-medium">{player.name}</span>
-                      <div className="flex items-center">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => {
-                            const updatedActivity = {...currentActivity};
-                            if (!updatedActivity.playerStats) {
-                              updatedActivity.playerStats = { goals: {} };
-                            }
-                            if (!updatedActivity.playerStats.goals) {
-                              updatedActivity.playerStats.goals = {};
-                            }
-                            if (goals > 0) {
-                              updatedActivity.playerStats.goals[player.id] = goals - 1;
-                            }
-                            setCurrentActivity(updatedActivity);
-                            if (onActivityUpdate) {
-                              onActivityUpdate(updatedActivity);
-                            }
-                          }}
-                          disabled={goals === 0}
-                        >
-                          -
-                        </Button>
-                        <span className="mx-2 w-6 text-center">{goals}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => {
-                            const updatedActivity = {...currentActivity};
-                            if (!updatedActivity.playerStats) {
-                              updatedActivity.playerStats = { goals: {} };
-                            }
-                            if (!updatedActivity.playerStats.goals) {
-                              updatedActivity.playerStats.goals = {};
-                            }
-                            updatedActivity.playerStats.goals[player.id] = (goals || 0) + 1;
-                            setCurrentActivity(updatedActivity);
-                            if (onActivityUpdate) {
-                              onActivityUpdate(updatedActivity);
-                            }
-                          }}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="mt-4 text-center">
-                  <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
-                    Totalt antal mål: {getTotalGoals()}
-                  </Badge>
-                </div>
+          <>
+            <div className="border rounded-md p-4">
+              <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="t.ex. 2-1"
+                  value={matchResult}
+                  onChange={handleMatchResultChange}
+                  className="max-w-[120px]"
+                />
+                <Button size="sm" onClick={saveMatchResult}>Spara</Button>
               </div>
-            ) : (
-              <p className="text-muted-foreground">Lägg till spelare för att registrera mål.</p>
-            )}
-          </div>
+            </div>
+            
+            <div className="border rounded-md p-4">
+              <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
+              {participatingPlayers.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål och assist varje spelare har gjort:</p>
+                  {participatingPlayers.map(player => {
+                    const goals = currentActivity.playerStats?.goals?.[player.id] || 0;
+                    const assists = currentActivity.playerStats?.assists?.[player.id] || 0;
+                    
+                    return (
+                      <div key={player.id} className="flex justify-between items-center border-b pb-2">
+                        <span className="font-medium">{player.name}</span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center">
+                            <span className="text-xs mr-2">Mål:</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.playerStats) {
+                                  updatedActivity.playerStats = { goals: {} };
+                                }
+                                if (!updatedActivity.playerStats.goals) {
+                                  updatedActivity.playerStats.goals = {};
+                                }
+                                if (goals > 0) {
+                                  updatedActivity.playerStats.goals[player.id] = goals - 1;
+                                }
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                              disabled={goals === 0}
+                            >
+                              -
+                            </Button>
+                            <span className="mx-2 w-6 text-center">{goals}</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.playerStats) {
+                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.playerStats.goals) {
+                                  updatedActivity.playerStats.goals = {};
+                                }
+                                updatedActivity.playerStats.goals[player.id] = (goals || 0) + 1;
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                            >
+                              +
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <span className="text-xs mr-2">Assist:</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.playerStats) {
+                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.playerStats.assists) {
+                                  updatedActivity.playerStats.assists = {};
+                                }
+                                if (assists > 0) {
+                                  updatedActivity.playerStats.assists[player.id] = assists - 1;
+                                }
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                              disabled={assists === 0}
+                            >
+                              -
+                            </Button>
+                            <span className="mx-2 w-6 text-center">{assists}</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.playerStats) {
+                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.playerStats.assists) {
+                                  updatedActivity.playerStats.assists = {};
+                                }
+                                updatedActivity.playerStats.assists[player.id] = (assists || 0) + 1;
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="mt-4 flex gap-4 justify-center">
+                    <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
+                      Mål: {getTotalGoals()}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm px-3 py-1 bg-blue-50 text-blue-700 border-blue-200">
+                      Assist: {getTotalAssists()}
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Lägg till spelare för att registrera mål och assist.</p>
+              )}
+            </div>
+          </>
         )}
 
         {currentActivity.type === "match" && (
@@ -578,7 +686,7 @@ export function ActivityDetail({
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold mb-3">Matcher i cupen</h3>
             
-            {cupMatches.length > 0 ? (
+            {cupMatches && cupMatches.length > 0 ? (
               <div className="space-y-2">
                 {cupMatches.map(match => (
                   <div key={match.id} className="p-2 border rounded-md">

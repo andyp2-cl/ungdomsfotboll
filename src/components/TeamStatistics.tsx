@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { PlayerPerformanceChart } from "@/components/PlayerPerformanceChart";
 import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getGradeColor } from '@/utils/gradeUtils';
 
 interface TeamStatisticsProps {
   players: Player[];
@@ -22,14 +22,35 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
   const playerStats = useMemo(() => {
     return players.map(player => {
       const activityCount = player.activities?.length || 0;
+      const participationRate = activities.length > 0
+        ? Math.round((activityCount / activities.length) * 100)
+        : 0;
+
+      // Calculate goals and assists
+      let goalCount = 0;
+      let assistCount = 0;
+
+      activities.forEach(activity => {
+        if (activity.type === "match" && activity.playerStats) {
+          goalCount += activity.playerStats.goals?.[player.id] || 0;
+          assistCount += activity.playerStats.assists?.[player.id] || 0;
+        }
+      });
+
       return {
+        id: player.id,
         name: player.name,
-        activities: activityCount,
         grade: player.grade,
-        id: player.id
+        position: player.positions?.[0] || 'N/A',
+        jerseyNumber: player.jerseyNumber || '',
+        activityCount: participationCount,
+        participationRate: participationRate,
+        goals: goalCount,
+        assists: assistCount,
+        fill: getGradeColor(player.grade)
       };
-    }).sort((a, b) => b.activities - a.activities);
-  }, [players]);
+    }).sort((a, b) => b.activityCount - a.activityCount);
+  }, [players, activities]);
 
   // Calculate participation by grade
   const gradeStats = useMemo(() => {

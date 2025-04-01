@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -38,6 +37,22 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
           ? Math.round((participationCount / sortedActivities.length) * 100) 
           : 0;
         
+        // Calculate average goals and assists per match
+        let totalGoals = 0;
+        let totalAssists = 0;
+        let matchCount = 0;
+
+        activities.forEach(activity => {
+          if (activity.type === "match" && activity.playerStats && activity.participants?.includes(player.id)) {
+            matchCount++;
+            totalGoals += activity.playerStats.goals?.[player.id] || 0;
+            totalAssists += activity.playerStats.assists?.[player.id] || 0;
+          }
+        });
+
+        const goalsAvg = matchCount > 0 ? totalGoals / matchCount : 0;
+        const assistsAvg = matchCount > 0 ? totalAssists / matchCount : 0;
+        
         return {
           id: player.id,
           name: player.name,
@@ -46,6 +61,8 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
           jerseyNumber: player.jerseyNumber || '',
           activityCount: participationCount,
           participationRate: participationRate,
+          goalsAvg: goalsAvg,
+          assistsAvg: assistsAvg,
           fill: getGradeColor(player.grade)
         };
       })
@@ -53,24 +70,28 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
     
     console.log("Player performance data:", playerPerformance);
     return playerPerformance;
-  }, [players, sortedActivities]);
+  }, [players, sortedActivities, activities]);
 
   // Group by position
   const positionData = useMemo(() => {
-    const positions = new Map<string, { position: string, count: number, participationAvg: number }>();
+    const positions = new Map<string, { position: string, count: number, participationAvg: number, goalsAvg: number, assistsAvg: number }>();
     
     performanceData.forEach(player => {
       const pos = player.position;
-      const current = positions.get(pos) || { position: pos, count: 0, participationAvg: 0 };
+      const current = positions.get(pos) || { position: pos, count: 0, participationAvg: 0, goalsAvg: 0, assistsAvg: 0 };
       current.count += 1;
       current.participationAvg += player.participationRate;
+      current.goalsAvg += player.goalsAvg;
+      current.assistsAvg += player.assistsAvg;
       positions.set(pos, current);
     });
     
     // Calculate averages
     return Array.from(positions.values()).map(data => ({
       ...data,
-      participationAvg: data.count > 0 ? Math.round(data.participationAvg / data.count) : 0
+      participationAvg: data.count > 0 ? Math.round(data.participationAvg / data.count) : 0,
+      goalsAvg: data.count > 0 ? data.goalsAvg / data.count : 0,
+      assistsAvg: data.count > 0 ? data.assistsAvg / data.count : 0,
     }));
   }, [performanceData]);
 
@@ -112,6 +133,16 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
                         <div className="text-sm">
                           Genomsnittlig närvaro: {data.participationAvg}%
                         </div>
+                        {data.goalsAvg > 0 && (
+                          <div className="text-xs text-green-600">
+                            Mål per match: {data.goalsAvg.toFixed(1)}
+                          </div>
+                        )}
+                        {data.assistsAvg > 0 && (
+                          <div className="text-xs text-blue-600">
+                            Assist per match: {data.assistsAvg.toFixed(1)}
+                          </div>
+                        )}
                         <div className="text-xs text-muted-foreground">
                           Antal spelare: {data.count}
                         </div>
