@@ -93,11 +93,13 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Backup/Restore section at the bottom of the page */}
-      <div className="p-4 bg-white border-t">
+      {/* Backup/Restore section at the bottom of the page - made more prominent */}
+      <div className="p-6 bg-white border-t shadow-inner">
         <div className="max-w-md mx-auto">
-          <h2 className="text-lg font-medium mb-3">Säkerhetskopiering</h2>
-          <BackupRestoreActions />
+          <h2 className="text-xl font-semibold mb-4 text-center">Säkerhetskopiering</h2>
+          <div className="bg-slate-50 p-4 rounded-lg border shadow-sm">
+            <BackupRestoreActions />
+          </div>
         </div>
       </div>
     </div>
