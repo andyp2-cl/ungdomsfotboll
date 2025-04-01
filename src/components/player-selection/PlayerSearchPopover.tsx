@@ -26,11 +26,10 @@ export function PlayerSearchPopover({
   const [searchQuery, setSearchQuery] = useState("");
   
   // Filter available players based on search query
-  const filteredPlayers = searchQuery.trim() 
-    ? availablePlayers.filter(player => 
-        player.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-      )
-    : availablePlayers;
+  const filteredPlayers = availablePlayers.filter(player => {
+    if (!searchQuery.trim()) return true;
+    return player.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
+  });
 
   // Reset search when popover closes
   useEffect(() => {

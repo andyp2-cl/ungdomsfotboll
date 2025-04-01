@@ -1,3 +1,4 @@
+
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
 export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
@@ -25,7 +26,7 @@ export interface Activity {
   scraped?: boolean;
   cupId?: string;
   matches?: string[]; // Activity IDs for cup matches
-  player_stats?: any; // Add this to preserve match results data
+  player_stats?: PlayerStats; // Changed from any to PlayerStats
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score
