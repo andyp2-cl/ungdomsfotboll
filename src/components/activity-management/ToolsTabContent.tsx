@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Activity } from "@/types/player";
-import { FileImport } from "@/components/FileImport";
+import { FileImport } from "@/components/file-import/FileImport";
 import { MatchScraper } from "@/components/MatchScraper";
 import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
