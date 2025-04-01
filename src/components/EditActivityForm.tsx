@@ -14,12 +14,12 @@ interface EditActivityFormProps {
 }
 
 export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFormProps) {
-  // Ensure activity.player_stats is an object before passing to useActivityForm
+  console.log("EditActivityForm render with activity:", activity.id);
+  
+  // Create a clean copy of the activity with normalized player_stats
   const normalizedActivity = {
     ...activity,
-    player_stats: typeof activity.player_stats === 'string' 
-      ? JSON.parse(activity.player_stats) 
-      : activity.player_stats || { goals: {}, assists: {} }
+    player_stats: normalizePlayerStats(activity.player_stats)
   };
   
   const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, onSave);
@@ -34,4 +34,40 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
       </form>
     </Form>
   );
+}
+
+// Helper function to ensure player_stats is properly normalized
+function normalizePlayerStats(playerStats: any) {
+  if (!playerStats) {
+    return { goals: {}, assists: {} };
+  }
+  
+  if (typeof playerStats === 'string') {
+    try {
+      const parsed = JSON.parse(playerStats);
+      if (typeof parsed === 'string') {
+        try {
+          return JSON.parse(parsed);
+        } catch (e) {
+          console.error("Error parsing double-stringified player_stats:", e);
+          return { goals: {}, assists: {} };
+        }
+      }
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats string:", e);
+      return { goals: {}, assists: {} };
+    }
+  }
+  
+  // Ensure the object has the required structure
+  return {
+    ...playerStats,
+    goals: playerStats.goals || {},
+    assists: playerStats.assists || {}
+  };
 }

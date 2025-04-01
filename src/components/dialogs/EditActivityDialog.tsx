@@ -29,15 +29,19 @@ export function EditActivityDialog({
       : activity.player_stats || { goals: {}, assists: {} }
   } : null;
 
-  const handleSave = (updatedActivity: Activity) => {
+  const handleSave = async (updatedActivity: Activity) => {
     if (!activityCopy) return;
     
     try {
+      console.log("Handling activity save:", updatedActivity.name);
+      
       // Pass the updated activity to the parent component
       onActivityUpdate(updatedActivity);
       
-      // Close the dialog
+      // Close the dialog only after successful update
       onOpenChange(false);
+      
+      console.log("Activity update completed");
     } catch (error) {
       console.error("Error saving activity:", error);
       toast({

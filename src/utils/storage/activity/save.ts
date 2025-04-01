@@ -12,13 +12,17 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
   
   try {
     for (const activity of activities) {
+      // Clone the activity to avoid mutations during processing
+      const activityToSave = { ...activity };
+      
       // Normalize player_stats to ensure it's always an object before saving
       let normalizedPlayerStats;
-      if (!activity.player_stats) {
+      
+      if (!activityToSave.player_stats) {
         normalizedPlayerStats = { goals: {}, assists: {} };
-      } else if (typeof activity.player_stats === 'string') {
+      } else if (typeof activityToSave.player_stats === 'string') {
         try {
-          normalizedPlayerStats = JSON.parse(activity.player_stats);
+          normalizedPlayerStats = JSON.parse(activityToSave.player_stats);
           // If still a string after parsing (double-stringified), parse again
           if (typeof normalizedPlayerStats === 'string') {
             normalizedPlayerStats = JSON.parse(normalizedPlayerStats);
@@ -30,19 +34,25 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       } else {
         // Already an object, just ensure required properties exist
         normalizedPlayerStats = {
-          ...activity.player_stats,
-          goals: activity.player_stats.goals || {},
-          assists: activity.player_stats.assists || {}
+          ...activityToSave.player_stats,
+          goals: activityToSave.player_stats.goals || {},
+          assists: activityToSave.player_stats.assists || {}
         };
       }
       
       // Create a clean activity object with normalized player_stats
       const normalizedActivity = {
-        ...activity,
+        ...activityToSave,
         player_stats: normalizedPlayerStats
       };
       
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
+      
+      console.log("Saving activity with player_stats:", {
+        id: normalizedActivity.id,
+        name: normalizedActivity.name,
+        playerStatsType: typeof normalizedActivity.player_stats
+      });
       
       // Check if activity already exists to determine if this is an update or create
       const { data: existingActivity } = await supabase
@@ -66,12 +76,17 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       console.log(`${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} (${activity.id})`);
       
       // Log the change
-      await logDatabaseChange(
-        isNewActivity ? 'create' : 'update',
-        'activity',
-        activity.id,
-        `${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} on ${activity.date}`
-      );
+      try {
+        await logDatabaseChange(
+          isNewActivity ? 'create' : 'update',
+          'activity',
+          activity.id,
+          `${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} on ${activity.date}`
+        );
+      } catch (logError) {
+        // Don't fail the operation if logging fails
+        console.error("Error logging database change (continuing anyway):", logError);
+      }
       
       // Handle player-activity relationships
       await updateActivityParticipants(normalizedActivity);
