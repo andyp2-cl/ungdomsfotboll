@@ -17,7 +17,6 @@ export type Database = {
           date: string
           home_score: number | null
           id: string
-          is_win: boolean | null
           kiosk_assigned_player_id: string | null
           location_description: string | null
           location_gps_link: string | null
@@ -35,7 +34,6 @@ export type Database = {
           date: string
           home_score?: number | null
           id: string
-          is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
           location_description?: string | null
           location_gps_link?: string | null
@@ -53,7 +51,6 @@ export type Database = {
           date?: string
           home_score?: number | null
           id?: string
-          is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
           location_description?: string | null
           location_gps_link?: string | null

@@ -1,3 +1,4 @@
+
 import { Player, Activity } from "@/types/player";
 import { getGradeColor } from '@/utils/gradeUtils';
 
@@ -37,9 +38,16 @@ export function calculatePlayerStats(players: Player[], activities: Activity[]):
         totalGoals += activity.player_stats.goals?.[player.id] || 0;
         totalAssists += activity.player_stats.assists?.[player.id] || 0;
         
-        // Count wins based on the isWin flag
-        if (activity.isWin) {
-          winCount++;
+        // Count wins
+        if (activity.result) {
+          const resultParts = activity.result.split('-');
+          if (resultParts.length === 2) {
+            const ourScore = parseInt(resultParts[0], 10);
+            const theirScore = parseInt(resultParts[1], 10);
+            if (!isNaN(ourScore) && !isNaN(theirScore) && ourScore > theirScore) {
+              winCount++;
+            }
+          }
         }
       }
     });

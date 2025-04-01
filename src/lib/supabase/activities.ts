@@ -34,8 +34,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         matches: [], // We'll populate this for cup activities
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
-        awayScore: item.away_score,
-        isWin: item.is_win !== undefined ? item.is_win : undefined
+        awayScore: item.away_score
       };
       
       // Set result field if home_score and away_score are available

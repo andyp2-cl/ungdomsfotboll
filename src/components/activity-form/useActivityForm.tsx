@@ -35,7 +35,6 @@ export function useActivityForm(
       result: activity.result || "",
       homeScore: activity.homeScore,
       awayScore: activity.awayScore,
-      isWin: activity.isWin || false,
     },
   });
 
@@ -81,7 +80,6 @@ export function useActivityForm(
         result,
         homeScore,
         awayScore,
-        isWin: values.isWin,
         // Create or update player stats
         player_stats: {
           ...(activity.player_stats || {}),

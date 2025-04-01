@@ -25,25 +25,15 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     completedMatches.forEach(match => {
       if (!match.result) return;
       
-      // Use the isWin flag to determine if Hässleholms IF won
-      const isWin = match.isWin === true;
+      const [ourScore, theirScore] = match.result.split('-').map(Number);
+      if (isNaN(ourScore) || isNaN(theirScore)) return;
       
-      const [score1, score2] = match.result.split('-').map(Number);
-      if (isNaN(score1) || isNaN(score2)) return;
+      goalsScored += ourScore;
+      goalsConceded += theirScore;
       
-      // Determine our score vs their score based on the isWin flag
-      // For simplicity, assume score1 is HIF and score2 is opponent
-      // The exact mapping doesn't matter since we're using isWin flag for W/L/D
-      goalsScored += score1;
-      goalsConceded += score2;
-      
-      if (isWin) {
-        wins++;
-      } else if (score1 === score2) {
-        draws++;
-      } else {
-        losses++;
-      }
+      if (ourScore > theirScore) wins++;
+      else if (ourScore === theirScore) draws++;
+      else losses++;
     });
     
     return {

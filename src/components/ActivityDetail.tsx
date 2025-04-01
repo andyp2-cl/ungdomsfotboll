@@ -1,380 +1,765 @@
-
+import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from '@/components/ui/button';
+import { CalendarIcon, X, Users, MapPin, Clock, Edit, UserPlus, Coffee, Trash2, UserMinus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { AddPlayersToActivity } from "./AddPlayersToActivity";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Check, Clock, MapPin, Trophy, Users, X } from "lucide-react";
-import { format, isValid, parseISO } from "date-fns";
-import { sv } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { UserCircle, Check } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
-import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
+import { Label } from "@/components/ui/label";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
-  activity: Activity | null;
-  onClose: () => void;
-  onEdit: (activity: Activity) => void;
+  activity: Activity;
   players: Player[];
-  onAssignKiosk: (activityId: string, playerId?: string) => void;
-  onRemoveKioskAssignment: (activityId: string) => void;
+  onClose: () => void;
+  onEdit?: (activity: Activity) => void;
+  onActivityUpdate?: (updatedActivity: Activity) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onActivitySelect?: (activity: Activity | null) => void;
+  onDeleteActivity?: (activityId: string) => void;
+  allActivities?: Activity[];
+  cupMatches?: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
 }
 
-export function ActivityDetail({
-  activity,
-  onClose,
-  onEdit,
-  players,
-  onAssignKiosk,
-  onRemoveKioskAssignment
+export function ActivityDetail({ 
+  activity, 
+  players, 
+  onClose, 
+  onEdit, 
+  onActivityUpdate,
+  onKioskAssignmentUpdate,
+  onActivitySelect,
+  onDeleteActivity,
+  allActivities,
+  cupMatches = [],
+  onPlayerSelect
 }: ActivityDetailProps) {
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [kioskPlayerId, setKioskPlayerId] = useState<string | undefined>(activity?.kioskAssignedPlayerId);
-  const [isKioskDialogOpen, setIsKioskDialogOpen] = useState(false);
-  const [isCupMatchesDialogOpen, setIsCupMatchesDialogOpen] = useState(false);
-  const [homeScore, setHomeScore] = useState<number | undefined>(activity?.homeScore);
-  const [awayScore, setAwayScore] = useState<number | undefined>(activity?.awayScore);
-  const [isWin, setIsWin] = useState<boolean | undefined>(activity?.isWin);
+  const { toast } = useToast();
+  const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
+  const [isAddingPlayers, setIsAddingPlayers] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [homeScore, setHomeScore] = useState(currentActivity.homeScore || 0);
+  const [awayScore, setAwayScore] = useState(currentActivity.awayScore || 0);
+  
+  const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+  
+  const filteredPlayers = useMemo(() => {
+    if (!playerSearchQuery) return sortedPlayers;
+    return sortedPlayers.filter(player => 
+      player.name.toLowerCase().includes(playerSearchQuery.toLowerCase())
+    );
+  }, [sortedPlayers, playerSearchQuery]);
 
-  useEffect(() => {
-    if (activity) {
-      setSelectedPlayers(activity.participants || []);
-      setKioskPlayerId(activity.kioskAssignedPlayerId);
-      setHomeScore(activity.homeScore);
-      setAwayScore(activity.awayScore);
-      setIsWin(activity.isWin);
+  const isHomeMatch = () => {
+    return currentActivity.type === "match" && 
+           currentActivity.name.toLowerCase().startsWith('hässleholms if');
+  };
+  
+  const participatingPlayers = players.filter(
+    (player) => currentActivity.participants?.includes(player.id)
+  );
+
+  const getKioskPlayerName = () => {
+    if (!currentActivity.kioskAssignedPlayerId) return "Ej tilldelad";
+    const player = players.find(p => p.id === currentActivity.kioskAssignedPlayerId);
+    return player ? player.name : "Okänd spelare";
+  };
+
+  const handleAssignKioskPlayer = (playerId: string) => {
+    const updatedActivity = {
+      ...currentActivity,
+      kioskAssignedPlayerId: playerId
+    };
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
     }
-  }, [activity]);
+    
+    if (onKioskAssignmentUpdate) {
+      onKioskAssignmentUpdate(currentActivity.id, playerId);
+    }
+    
+    const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
+    
+    toast({
+      title: "Kioskpass tilldelat",
+      description: `${playerName} har tilldelats kioskpass för denna aktivitet.`,
+    });
+  };
 
   const handleClose = () => {
     onClose();
   };
 
-  const handleEdit = () => {
-    if (activity) {
-      onEdit(activity);
+  const handleAddPlayers = (playerIds: string[]) => {
+    const updatedParticipants = [
+      ...(currentActivity.participants || []),
+      ...playerIds
+    ];
+    
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
+    };
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
     }
-  };
-
-  const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return "Okänt datum";
-    const parsedDate = parseISO(dateString);
-    if (!isValid(parsedDate)) return "Ogiltigt datum";
-    return format(parsedDate, "EEEE d MMMM yyyy", { locale: sv });
-  };
-
-  const formatTime = (timeString: string | undefined): string => {
-    return timeString ? timeString : "Ingen tid angiven";
-  };
-
-  const handlePlayerToggle = (playerId: string) => {
-    setSelectedPlayers((prevPlayers) => {
-      if (prevPlayers.includes(playerId)) {
-        return prevPlayers.filter((id) => id !== playerId);
-      } else {
-        return [...prevPlayers, playerId];
-      }
+    
+    const playerNames = playerIds.map(id => 
+      players.find(p => p.id === id)?.name || "Spelare"
+    ).join(", ");
+    
+    toast({
+      title: "Spelare tillagda",
+      description: `${playerNames} har lagts till i aktiviteten.`,
     });
   };
 
-  const handleKioskAssignment = (playerId?: string) => {
-    if (activity) {
-      if (playerId) {
-        onAssignKiosk(activity.id, playerId);
-        setKioskPlayerId(playerId);
-      } else {
-        onRemoveKioskAssignment(activity.id);
-        setKioskPlayerId(undefined);
-      }
-      setIsKioskDialogOpen(false);
-    }
-  };
-
-  const renderLocationInfo = () => {
-    if (!activity?.location) {
-      return <p>Ingen platsinformation tillgänglig.</p>;
-    }
-
-    return (
-      <div className="space-y-2">
-        <p className="font-medium">{activity.location.name}</p>
-        {activity.location.description && <p className="text-sm text-muted-foreground">{activity.location.description}</p>}
-        {activity.location.gpsLink && (
-          <a href={activity.location.gpsLink} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">
-            Visa på karta
-          </a>
-        )}
-      </div>
+  const handleRemovePlayer = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const updatedParticipants = (currentActivity.participants || []).filter(
+      id => id !== playerId
     );
-  };
-
-  const renderParticipants = () => {
-    if (!players || players.length === 0) {
-      return <p>Inga spelare tillgängliga.</p>;
-    }
-
-    return (
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-        {players.map((player) => (
-          <div key={player.id} className="flex flex-col items-center">
-            <PlayerAvatar player={player} size="sm" />
-            <label
-              htmlFor={`player-${player.id}`}
-              className="text-sm text-center cursor-pointer hover:underline"
-            >
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`player-${player.id}`}
-                  checked={selectedPlayers.includes(player.id)}
-                  onCheckedChange={() => handlePlayerToggle(player.id)}
-                />
-                <span>{player.name}</span>
-              </div>
-            </label>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderKioskAssignment = () => {
-    return (
-      <div>
-        <p className="text-sm text-muted-foreground">
-          Tilldela en spelare som ansvarig för kiosken under denna aktivitet.
-        </p>
-        <Button size="sm" onClick={() => setIsKioskDialogOpen(true)}>
-          {kioskPlayerId
-            ? `Ändra kioskansvarig`
-            : `Välj kioskansvarig`}
-        </Button>
-
-        {kioskPlayerId && (
-          <div className="mt-2 flex items-center space-x-2">
-            <p className="text-sm">
-              Kioskansvarig:{" "}
-              {players.find((p) => p.id === kioskPlayerId)?.name || "Okänd"}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleKioskAssignment(undefined)}
-            >
-              Ta bort
-            </Button>
-          </div>
-        )}
-
-        <Dialog open={isKioskDialogOpen} onOpenChange={setIsKioskDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Välj kioskansvarig</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-              {players.map((player) => (
-                <Button
-                  key={player.id}
-                  variant={kioskPlayerId === player.id ? "default" : "outline"}
-                  onClick={() => handleKioskAssignment(player.id)}
-                >
-                  {player.name}
-                </Button>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  };
-
-  const renderCupMatches = () => {
-    if (!activity?.matches || activity.matches.length === 0) {
-      return <p>Inga matcher kopplade till denna cup.</p>;
-    }
-
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Matcher kopplade till denna cup:
-        </p>
-        <ul>
-          {activity.matches.map((matchId) => {
-            const match = players.find((p) => p.id === matchId);
-            return (
-              <li key={matchId} className="text-sm">
-                {match ? match.name : "Okänd match"}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    );
-  };
-
-  const renderMatchResult = () => {
-    const handleScoreChange = () => {
-      if (activity) {
-        const updatedActivity = {
-          ...activity,
-          homeScore: homeScore !== undefined ? homeScore : null,
-          awayScore: awayScore !== undefined ? awayScore : null,
-          isWin: isWin !== undefined ? isWin : null,
-        };
-        onEdit(updatedActivity);
-      }
+    
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
     };
-
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="homeScore">Hemma</Label>
-            <Input
-              type="number"
-              id="homeScore"
-              value={homeScore !== undefined ? homeScore.toString() : ""}
-              onChange={(e) => setHomeScore(e.target.value ? parseInt(e.target.value) : undefined)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="awayScore">Borta</Label>
-            <Input
-              type="number"
-              id="awayScore"
-              value={awayScore !== undefined ? awayScore.toString() : ""}
-              onChange={(e) => setAwayScore(e.target.value ? parseInt(e.target.value) : undefined)}
-            />
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isWin"
-            checked={isWin === true}
-            onCheckedChange={(checked) => {
-              // Fix: Handle the CheckedState type properly
-              setIsWin(checked === true);
-            }}
-          />
-          <Label htmlFor="isWin">Vinst för Hässleholms IF</Label>
-        </div>
-        <Button size="sm" onClick={handleScoreChange}>
-          Spara resultat
-        </Button>
-      </div>
-    );
+    
+    if (currentActivity.kioskAssignedPlayerId === playerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    toast({
+      title: "Spelare borttagen",
+      description: `${player.name} har tagits bort från aktiviteten.`,
+    });
   };
 
-  if (!activity) {
-    return null;
-  }
+  const handleClearAllParticipants = () => {
+    const updatedActivity = {
+      ...currentActivity,
+      participants: []
+    };
+    
+    if (currentActivity.kioskAssignedPlayerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+      
+      console.log("Cleared all participants from activity:", updatedActivity.name);
+    }
+    
+    toast({
+      title: "Deltagarlista rensad",
+      description: `Alla spelare har tagits bort från aktiviteten.`,
+    });
+  };
+
+  const handleDeleteActivity = () => {
+    if (onDeleteActivity) {
+      onDeleteActivity(currentActivity.id);
+      onClose();
+    }
+  };
+
+  const saveMatchResult = () => {
+    const resultString = `${homeScore}-${awayScore}`;
+    
+    const updatedActivity = {
+      ...currentActivity,
+      result: resultString,
+      homeScore: homeScore,
+      awayScore: awayScore
+    };
+    
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    toast({
+      title: "Matchresultat sparat",
+      description: `Resultat ${resultString} har sparats för ${currentActivity.name}.`,
+    });
+  };
+
+  const formatResult = () => {
+    if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
+      return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
+    }
+    return currentActivity.result || "";
+  };
+
+  const getTotalGoals = () => {
+    if (!currentActivity.player_stats?.goals) return 0;
+    return Object.values(currentActivity.player_stats.goals).reduce((sum, goals) => sum + (goals as number), 0);
+  };
+
+  const getTotalAssists = () => {
+    if (!currentActivity.player_stats?.assists) return 0;
+    return Object.values(currentActivity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
+  };
+
+  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
+  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+
+  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
 
   return (
-    <Dialog open={!!activity} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[90%] lg:max-w-[80%] xl:max-w-[70%]">
-        <DialogHeader>
-          <DialogTitle>
-            <div className="flex justify-between items-center">
-              <span>{activity.name}</span>
-              <Button variant="ghost" size="icon" onClick={handleClose}>
-                <X className="h-4 w-4" />
+    <Card className="w-full lg:max-w-3xl mx-auto">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl mb-1 flex items-center">
+              {currentActivity.name}
+              <Badge 
+                variant={currentActivity.type === "match" ? "default" : "secondary"}
+                className="ml-3"
+              >
+                {currentActivity.type === "match" ? "Match" : "Cup"}
+              </Badge>
+              {isHistorical && (
+                <Badge variant="outline" className="ml-2">
+                  Tidigare
+                </Badge>
+              )}
+              {isHistorical && currentActivity.type === "match" && formatResult() && (
+                <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300">
+                  {formatResult()}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="flex flex-col gap-1">
+              <div className="flex items-center">
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                {capitalizedDayOfWeek} {formattedDate}
+                {currentActivity.time && (
+                  <span className="ml-2 flex items-center">
+                    <Clock className="h-4 w-4 ml-2 mr-1" />
+                    {currentActivity.time}
+                  </span>
+                )}
+              </div>
+              
+              {currentActivity.location && (
+                <div className="flex items-center mt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{currentActivity.location.name}</span>
+                  {currentActivity.location.description && (
+                    <span className="text-muted-foreground ml-1">({currentActivity.location.description})</span>
+                  )}
+                  {currentActivity.location.gpsLink && (
+                    <a 
+                      href={currentActivity.location.gpsLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-600 hover:underline text-sm"
+                    >
+                      GPS
+                    </a>
+                  )}
+                </div>
+              )}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {onEdit && (
+              <Button variant="outline" size="icon" onClick={() => onEdit(currentActivity)}>
+                <Edit className="h-5 w-5" />
               </Button>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
+            )}
+            {onDeleteActivity && (
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Radera aktivitet</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Är du säker på att du vill radera "{currentActivity.name}"? 
+                      Denna åtgärd kan inte ångras och all information kopplad till aktiviteten kommer att försvinna.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteActivity} 
+                      className="bg-red-500 hover:bg-red-700"
+                    >
+                      Radera
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button variant="ghost" size="icon" onClick={handleClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Accordion type="single" collapsible defaultValue="participants">
+          <AccordionItem value="participants">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                <span>Deltagare ({participatingPlayers.length})</span>
+                {participatingPlayers.length === 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    Inga deltagare
+                  </Badge>
+                )}
+                {participatingPlayers.length >= 12 && (
+                  <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
+                    Maxantal
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {participatingPlayers.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                  {participatingPlayers.map((player) => (
+                    <div 
+                      key={player.id} 
+                      className="p-2 border rounded-md flex justify-between items-center"
+                    >
+                      <Button 
+                        variant="ghost" 
+                        className="flex items-center gap-2 p-0 h-auto hover:bg-transparent"
+                        onClick={() => onPlayerSelect && onPlayerSelect(player.id)}
+                      >
+                        {player.image ? (
+                          <img 
+                            src={player.image} 
+                            alt={player.name} 
+                            className="h-6 w-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <UserCircle className="h-6 w-6 text-gray-400" />
+                        )}
+                        <span className="text-foreground">{player.name}</span>
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleRemovePlayer(player.id)}
+                          title="Ta bort spelare"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground mb-4">Inga deltagare tillagda än</p>
+              )}
 
-        <Tabs defaultValue="details" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="details">Detaljer</TabsTrigger>
-            <TabsTrigger value="participants">Deltagare</TabsTrigger>
-            {activity.type === "cup" && <TabsTrigger value="cup-matches">Cupmatcher</TabsTrigger>}
-            {activity.type === "match" && <TabsTrigger value="match-result">Matchresultat</TabsTrigger>}
-            <TabsTrigger value="kiosk">Kiosk</TabsTrigger>
-          </TabsList>
-          <TabsContent value="details" className="space-y-2">
-            <Card>
-              <CardContent className="pl-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <CalendarDays className="h-4 w-4" />
-                      <span>Datum:</span>
-                    </div>
-                    <p>{formatDate(activity.date)}</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4" />
-                      <span>Tid:</span>
-                    </div>
-                    <p>{formatTime(activity.time)}</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>Plats:</span>
-                    </div>
-                    {renderLocationInfo()}
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="h-4 w-4" />
-                      <span>Typ:</span>
-                    </div>
-                    <p>{activity.type}</p>
+              <div className="flex flex-wrap gap-2">
+                {participatingPlayers.length < 12 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsAddingPlayers(!isAddingPlayers)}
+                    className="flex-grow"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
+                  </Button>
+                )}
+                
+                {participatingPlayers.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Rensa alla
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Detta kommer ta bort alla {participatingPlayers.length} deltagare från aktiviteten. 
+                          Denna åtgärd kan inte ångras.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleClearAllParticipants}
+                          className="bg-red-500 hover:bg-red-700"
+                        >
+                          Ta bort alla
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+
+              {isAddingPlayers && (
+                <AddPlayersToActivity 
+                  activity={currentActivity}
+                  players={players}
+                  onAddPlayers={handleAddPlayers}
+                  currentParticipantIds={currentActivity.participants || []}
+                />
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {isHistorical && currentActivity.type === "match" && (
+          <>
+            <div className="border rounded-md p-4">
+              <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+              <div className="grid grid-cols-3 gap-2 mb-3 items-center">
+                <div className="space-y-2">
+                  <Label htmlFor="homeScore">
+                    {isHomeMatch() ? "Våra mål" : "Deras mål"}
+                  </Label>
+                  <Input
+                    id="homeScore"
+                    type="number"
+                    min="0"
+                    value={homeScore}
+                    onChange={(e) => setHomeScore(Number(e.target.value))}
+                    className="max-w-[120px]"
+                  />
+                </div>
+                <div className="flex justify-center items-center text-lg font-bold">
+                  -
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="awayScore">
+                    {isHomeMatch() ? "Deras mål" : "Våra mål"}
+                  </Label>
+                  <Input
+                    id="awayScore"
+                    type="number"
+                    min="0"
+                    value={awayScore}
+                    onChange={(e) => setAwayScore(Number(e.target.value))}
+                    className="max-w-[120px]"
+                  />
+                </div>
+              </div>
+              <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
+            </div>
+            
+            <div className="border rounded-md p-4">
+              <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
+              {participatingPlayers.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål och assist varje spelare har gjort:</p>
+                  {participatingPlayers.map(player => {
+                    const goals = currentActivity.player_stats?.goals?.[player.id] || 0;
+                    const assists = currentActivity.player_stats?.assists?.[player.id] || 0;
+                    
+                    return (
+                      <div key={player.id} className="flex justify-between items-center border-b pb-2">
+                        <span className="font-medium">{player.name}</span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center">
+                            <span className="text-xs mr-2">Mål:</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {} };
+                                }
+                                if (!updatedActivity.player_stats.goals) {
+                                  updatedActivity.player_stats.goals = {};
+                                }
+                                if (goals > 0) {
+                                  updatedActivity.player_stats.goals[player.id] = goals - 1;
+                                }
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                              disabled={goals === 0}
+                            >
+                              -
+                            </Button>
+                            <span className="mx-2 w-6 text-center">{goals}</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.player_stats.goals) {
+                                  updatedActivity.player_stats.goals = {};
+                                }
+                                updatedActivity.player_stats.goals[player.id] = (goals || 0) + 1;
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                            >
+                              +
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <span className="text-xs mr-2">Assist:</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.player_stats.assists) {
+                                  updatedActivity.player_stats.assists = {};
+                                }
+                                if (assists > 0) {
+                                  updatedActivity.player_stats.assists[player.id] = assists - 1;
+                                }
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                              disabled={assists === 0}
+                            >
+                              -
+                            </Button>
+                            <span className="mx-2 w-6 text-center">{assists}</span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-7 w-7 rounded-full"
+                              onClick={() => {
+                                const updatedActivity = {...currentActivity};
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
+                                }
+                                if (!updatedActivity.player_stats.assists) {
+                                  updatedActivity.player_stats.assists = {};
+                                }
+                                updatedActivity.player_stats.assists[player.id] = (assists || 0) + 1;
+                                setCurrentActivity(updatedActivity);
+                                if (onActivityUpdate) {
+                                  onActivityUpdate(updatedActivity);
+                                }
+                              }}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="mt-4 flex gap-4 justify-center">
+                    <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
+                      Mål: {getTotalGoals()}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm px-3 py-1 bg-blue-50 text-blue-700 border-blue-200">
+                      Assist: {getTotalAssists()}
+                    </Badge>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="participants" className="space-y-2">
-            <Card>
-              <CardContent>
-                <ScrollArea className="h-[300px] w-full">
-                  {renderParticipants()}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {activity.type === "cup" && (
-            <TabsContent value="cup-matches" className="space-y-2">
-              <Card>
-                <CardContent>
-                  {renderCupMatches()}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-          {activity.type === "match" && (
-            <TabsContent value="match-result" className="space-y-2">
-              <Card>
-                <CardContent>
-                  {renderMatchResult()}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-          <TabsContent value="kiosk" className="space-y-2">
-            <Card>
-              <CardContent>
-                {renderKioskAssignment()}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              ) : (
+                <p className="text-muted-foreground">Lägg till spelare för att registrera mål och assist.</p>
+              )}
+            </div>
+          </>
+        )}
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="secondary" onClick={handleClose}>
-            Stäng
-          </Button>
-          <Button onClick={handleEdit}>Redigera</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        {currentActivity.type === "match" && (
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold flex items-center mb-3">
+              <Coffee className="h-5 w-5 mr-2" />
+              Kioskansvarig
+              {isHomeMatch() && (
+                <Badge variant="outline" className="ml-2 bg-green-100 text-green-800 border-green-300">
+                  Hemmaplan
+                </Badge>
+              )}
+            </h3>
+            
+            <div className="flex justify-between items-center">
+              <Badge variant={currentActivity.kioskAssignedPlayerId ? "default" : "outline"} className="mr-2">
+                {getKioskPlayerName()}
+              </Badge>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    className="h-8 px-3"
+                  >
+                    {currentActivity.kioskAssignedPlayerId ? (
+                      <>
+                        <Check className="h-4 w-4 mr-1" />
+                        Ändra
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        Tilldela
+                      </>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0" align="end" side="top">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Sök spelare..." 
+                      value={playerSearchQuery}
+                      onValueChange={setPlayerSearchQuery}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Inga spelare hittades.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-auto">
+                        {filteredPlayers.map((player) => (
+                          <CommandItem
+                            key={player.id}
+                            onSelect={() => handleAssignKioskPlayer(player.id)}
+                            className="flex items-center justify-between"
+                          >
+                            <span>{player.name}</span>
+                            {player.id === currentActivity.kioskAssignedPlayerId && (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+
+        {currentActivity.type === "cup" && (
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-3">Matcher i cupen</h3>
+            
+            {cupMatches && cupMatches.length > 0 ? (
+              <div className="space-y-2">
+                {cupMatches.map(match => (
+                  <div key={match.id} className="p-2 border rounded-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{match.name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {match.time || "Tid ej satt"}
+                          {match.location && (
+                            <span className="ml-2">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              {match.location.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => {
+                          if (onActivitySelect) {
+                            onActivitySelect(match);
+                          }
+                        }}
+                      >
+                        Visa
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Inga matcher tillagda i denna cup ännu.</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button variant="outline" onClick={handleClose}>Stäng</Button>
+      </CardFooter>
+    </Card>
   );
 }

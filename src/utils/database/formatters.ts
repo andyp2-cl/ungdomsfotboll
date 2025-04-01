@@ -45,8 +45,7 @@ export const formatActivityForDatabase = (activity: Activity) => {
     player_stats: activity.player_stats ? JSON.stringify(activity.player_stats) : null,
     result: activity.result || null,
     home_score: activity.homeScore !== undefined ? activity.homeScore : null,
-    away_score: activity.awayScore !== undefined ? activity.awayScore : null,
-    is_win: activity.isWin || false
+    away_score: activity.awayScore !== undefined ? activity.awayScore : null
   };
 };
 
@@ -106,10 +105,6 @@ export const formatActivityFromDatabase = (dbActivity: any): Activity => {
   
   if (dbActivity.away_score !== null && dbActivity.away_score !== undefined) {
     activity.awayScore = dbActivity.away_score;
-  }
-  
-  if (dbActivity.is_win !== null && dbActivity.is_win !== undefined) {
-    activity.isWin = dbActivity.is_win;
   }
   
   return activity;
