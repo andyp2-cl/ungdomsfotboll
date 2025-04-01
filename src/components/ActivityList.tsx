@@ -1,9 +1,10 @@
+
+import React from "react";
 import { Activity, Player } from "@/types/player";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, MapPin, ChevronRight, UserCircle, Coffee } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
+import { Football, MapPin, User } from "lucide-react";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -11,232 +12,143 @@ interface ActivityListProps {
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
+  isMobile?: boolean;
 }
 
-export function ActivityList({ activities, players, onSelect, onPlayerSelect, isHistorical }: ActivityListProps) {
+export function ActivityList({ 
+  activities, 
+  players, 
+  onSelect, 
+  onPlayerSelect,
+  isHistorical = false,
+  isMobile = false
+}: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="text-center py-10">
-        <p className="text-muted-foreground">Inga aktiviteter hittades.</p>
+      <div className="text-center py-12">
+        <p className="text-lg text-muted-foreground">Inga aktiviteter hittades</p>
       </div>
     );
   }
   
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('sv-SE');
+  // Get activity type badge color
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "match": return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "training": return "bg-green-100 text-green-800 hover:bg-green-200";
+      case "cup": return "bg-purple-100 text-purple-800 hover:bg-purple-200";
+      default: return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+    }
   };
   
-  const sortedActivities = [...activities].sort((a, b) => {
-    // Sort by date, then by time if available
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    
-    if (dateA.getTime() !== dateB.getTime()) {
-      return dateA.getTime() - dateB.getTime();
-    }
-    
-    if (a.time && b.time) {
-      return a.time.localeCompare(b.time);
-    }
-    
-    return 0;
-  });
-  
-  const formatResult = (activity: Activity) => {
-    // Only return a formatted result if both homeScore and awayScore are defined
-    if (activity.homeScore !== undefined && activity.awayScore !== undefined && 
-        activity.homeScore !== null && activity.awayScore !== null) {
-      return `${activity.homeScore}-${activity.awayScore}`;
-    }
-    // Use result field if it exists and is not null-null or undefined-undefined
-    if (activity.result && !activity.result.includes('null') && !activity.result.includes('undefined')) {
-      return activity.result;
-    }
-    // Otherwise return empty string
-    return "";
-  };
-
-  const groupedActivities: { [key: string]: Activity[] } = {};
-  
-  // Group activities by month
-  sortedActivities.forEach(activity => {
-    const date = new Date(activity.date);
-    const month = `${date.getFullYear()}-${date.getMonth() + 1}`;
-    
-    if (!groupedActivities[month]) {
-      groupedActivities[month] = [];
-    }
-    
-    groupedActivities[month].push(activity);
-  });
-
-  // Get month names and sort keys
-  const getMonthName = (monthKey: string) => {
-    const [year, month] = monthKey.split('-').map(Number);
-    const date = new Date(year, month - 1);
-    return date.toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' });
+  // Get result badge color
+  const getResultColor = (activity: Activity) => {
+    if (!activity.isWin && activity.isWin !== false) return "bg-gray-100 text-gray-800";
+    return activity.isWin 
+      ? "bg-green-100 text-green-800" 
+      : "bg-red-100 text-red-800";
   };
   
-  const sortedMonthKeys = Object.keys(groupedActivities).sort((a, b) => {
-    const [yearA, monthA] = a.split('-').map(Number);
-    const [yearB, monthB] = b.split('-').map(Number);
-    
-    if (yearA !== yearB) {
-      return yearA - yearB;
+  // Format date
+  const formatActivityDate = (date: string) => {
+    try {
+      return format(new Date(date), isMobile ? "d/M" : "d MMM yyyy");
+    } catch (e) {
+      return date;
     }
-    
-    return monthA - monthB;
-  });
+  };
+  
+  // Get activity type in Swedish
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "match": return "Match";
+      case "training": return "Träning";
+      case "cup": return "Cup";
+      default: return "Övrigt";
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {sortedMonthKeys.map(monthKey => (
-        <div key={monthKey} className="space-y-2">
-          <h3 className="font-semibold text-lg">{getMonthName(monthKey)}</h3>
-          <ScrollArea className="h-[400px] rounded-md border p-4">
-            <div className="space-y-2">
-              {groupedActivities[monthKey].map(activity => {
-                const formattedDate = formatDate(activity.date);
-                const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'short' });
-                const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-                
-                const participantCount = activity.participants?.length || 0;
-                const isKioskDuty = activity.kioskAssignedPlayerId != null;
-                
-                const kioskPlayer = activity.kioskAssignedPlayerId 
-                  ? players.find(p => p.id === activity.kioskAssignedPlayerId) 
-                  : undefined;
-                
-                const isPastActivity = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
-                const formattedResult = formatResult(activity);
-                const hasResult = activity.type === 'match' && formattedResult !== "";
-                
-                return (
-                  <Card key={activity.id} className="hover:bg-accent/5 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col sm:flex-row justify-between gap-2">
-                        <div className="flex-grow space-y-1">
-                          <div className="flex justify-between sm:justify-start sm:gap-3 items-center">
-                            <h4 className="font-medium">{activity.name}</h4>
-                            <div className="flex flex-wrap gap-1.5">
-                              <Badge 
-                                variant={activity.type === "match" ? "default" : "secondary"}
-                              >
-                                {activity.type === "match" ? "Match" : "Cup"}
-                              </Badge>
-                              
-                              {isPastActivity && (
-                                <Badge variant="outline">Tidigare</Badge>
-                              )}
-                              
-                              {hasResult && (
-                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                                  {formattedResult}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <CalendarIcon className="h-4 w-4 mr-1" />
-                              <span>{capitalizedDayOfWeek} {formattedDate}</span>
-                            </div>
-                            
-                            {activity.time && (
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{activity.time}</span>
-                              </div>
-                            )}
-                            
-                            {activity.location && (
-                              <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-1" />
-                                <span>{activity.location.name}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 mt-1">
-                            {participantCount > 0 && (
-                              <Badge variant="outline" className="text-xs py-0 px-1.5">
-                                {participantCount} deltagare
-                              </Badge>
-                            )}
-                            
-                            {isKioskDuty && kioskPlayer && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs py-0 px-1.5 flex items-center gap-1 bg-amber-50 text-amber-800 border-amber-200"
-                              >
-                                <Coffee className="h-3 w-3" />
-                                <span>Kiosk: {kioskPlayer.name}</span>
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-end sm:flex-col sm:justify-center gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="w-full sm:w-auto"
-                            onClick={() => onSelect(activity)}
-                          >
-                            Visa <ChevronRight className="h-4 w-4 ml-1" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {activity.participants && activity.participants.length > 0 && (
-                        <div className="mt-3 pt-2 border-t flex flex-wrap gap-1">
-                          {activity.participants.slice(0, 10).map(participantId => {
-                            const player = players.find(p => p.id === participantId);
-                            if (!player) return null;
-                            
-                            return (
-                              <div 
-                                key={player.id}
-                                className="flex items-center space-x-1 rounded-full bg-muted px-2 py-1 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (onPlayerSelect) onPlayerSelect(player.id);
-                                }}
-                                title={player.name}
-                                role="button"
-                                tabIndex={0}
-                              >
-                                {player.image ? (
-                                  <img 
-                                    src={player.image} 
-                                    alt={player.name} 
-                                    className="h-4 w-4 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <UserCircle className="h-4 w-4 text-gray-400" />
-                                )}
-                                <span>{player.name}</span>
-                              </div>
-                            );
-                          })}
-                          
-                          {activity.participants.length > 10 && (
-                            <div className="rounded-full bg-muted px-2 py-1 text-xs">
-                              +{activity.participants.length - 10} fler
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
-      ))}
+    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+      {activities.map(activity => {
+        // Get participant count
+        const participantCount = activity.participants?.length || 0;
+        
+        // Format date and time
+        const formattedDate = formatActivityDate(activity.date);
+        
+        // Get location name if available
+        const locationName = activity.location?.name || "";
+        
+        // Get badge color for activity type
+        const typeColor = getTypeColor(activity.type);
+        
+        // Get result text and color
+        const hasResult = activity.result && !activity.result.includes('null') && !activity.result.includes('undefined');
+        const resultColor = getResultColor(activity);
+        
+        // Is match type
+        const isMatch = activity.type === "match";
+        
+        return (
+          <Card 
+            key={activity.id} 
+            className={`cursor-pointer hover:shadow-md transition-shadow ${isMobile ? 'p-2' : ''}`} 
+            onClick={() => onSelect(activity)}
+          >
+            <CardHeader className={isMobile ? "pb-2 pt-3 px-3" : "pb-2"}>
+              <div className="flex justify-between items-start">
+                <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'} truncate`}>{activity.name}</CardTitle>
+                <Badge className={typeColor}>
+                  {getTypeLabel(activity.type)}
+                </Badge>
+              </div>
+              <CardDescription className="flex items-center">
+                {formattedDate}
+                {activity.time && <span className="ml-2">• {activity.time}</span>}
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className={isMobile ? "px-3 py-1" : ""}>
+              <div className="flex flex-col space-y-1">
+                {locationName && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 mr-1" />
+                    <span className="truncate">{locationName}</span>
+                  </div>
+                )}
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <User className="h-3.5 w-3.5 mr-1" />
+                  <span>{participantCount} {participantCount === 1 ? "deltagare" : "deltagare"}</span>
+                </div>
+              </div>
+            </CardContent>
+            
+            {isMatch && (
+              <CardFooter className={isMobile ? "px-3 pt-1 pb-3" : "pt-1"}>
+                <div className="flex justify-between w-full items-center">
+                  {hasResult ? (
+                    <Badge className={resultColor}>
+                      <Football className="h-3.5 w-3.5 mr-1" />
+                      {activity.result}
+                    </Badge>
+                  ) : isHistorical ? (
+                    <span className="text-sm text-muted-foreground">Inget resultat</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Kommande</span>
+                  )}
+                  
+                  {activity.kioskAssignedPlayerId && (
+                    <Badge variant="outline" className="ml-auto">
+                      Kiosk: {players.find(p => p.id === activity.kioskAssignedPlayerId)?.name?.split(' ')[0] || 'Tilldelad'}
+                    </Badge>
+                  )}
+                </div>
+              </CardFooter>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }

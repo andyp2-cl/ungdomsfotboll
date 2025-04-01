@@ -9,6 +9,7 @@ import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -49,6 +50,7 @@ export function ActivityTabContent({
 }: ActivityTabContentProps) {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const isMobile = useIsMobile();
 
   const handlePlayerSelect = (playerId: string) => {
     const player = players.find(p => p.id === playerId);
@@ -92,27 +94,32 @@ export function ActivityTabContent({
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="w-full sm:w-auto space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
-          <ToggleGroup type="single" value={activeView} onValueChange={(value) => {
-            if (value) setActiveView(value as "upcoming" | "historical" | "statistics");
-          }} className="justify-start">
-            <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter">
-              <Calendar className="h-4 w-4 mr-2" />
-              Kommande
+        <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4'}`}>
+          <ToggleGroup 
+            type="single" 
+            value={activeView} 
+            onValueChange={(value) => {
+              if (value) setActiveView(value as "upcoming" | "historical" | "statistics");
+            }} 
+            className={`justify-start ${isMobile ? 'w-full flex' : ''}`}
+          >
+            <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+              <Calendar className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+              {isMobile ? 'Kommande' : 'Kommande'}
             </ToggleGroupItem>
-            <ToggleGroupItem value="historical" aria-label="Historiska aktiviteter">
-              <Clock className="h-4 w-4 mr-2" />
-              Historik
+            <ToggleGroupItem value="historical" aria-label="Historiska aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+              <Clock className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+              {isMobile ? 'Historik' : 'Historik'}
             </ToggleGroupItem>
-            <ToggleGroupItem value="statistics" aria-label="Statistik">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Statistik
+            <ToggleGroupItem value="statistics" aria-label="Statistik" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+              <BarChart3 className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+              {isMobile ? 'Statistik' : 'Statistik'}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setIsAddActivityOpen(true)}>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Button onClick={() => setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
           </Button>
@@ -158,6 +165,7 @@ export function ActivityTabContent({
               onSelect={setSelectedActivity}
               onPlayerSelect={handlePlayerSelect}
               isHistorical={isHistorical}
+              isMobile={isMobile}
             />
           )}
         </>

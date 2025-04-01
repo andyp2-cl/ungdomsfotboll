@@ -6,6 +6,7 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetailWrapper } from "./ActivityDetailWrapper";
 import { Button } from "@/components/ui/button";
 import { Activity as ActivityIcon } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityTabContentProps {
   title: string;
@@ -40,6 +41,8 @@ export function ActivityTabContent({
   handleDeleteActivity,
   cupMatches
 }: ActivityTabContentProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -52,10 +55,11 @@ export function ActivityTabContent({
             <ActivityIcon className="h-4 w-4 mr-2" />
             Lägg till aktivitet
           </Button>
-          <div className="w-full sm:w-auto overflow-x-auto">
+          <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto overflow-x-auto'}`}>
             <ActivityFilter 
               selectedTypes={selectedActivityTypes}
               onTypeChange={onActivityTypeChange}
+              isMobile={isMobile}
             />
           </div>
         </div>
@@ -78,6 +82,7 @@ export function ActivityTabContent({
           activities={filteredActivities} 
           onSelect={onActivitySelect}
           players={players} 
+          isMobile={isMobile}
         />
       )}
     </div>

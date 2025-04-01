@@ -4,6 +4,7 @@ import { Player } from "@/types/player";
 import { PlayerListTable } from "./PlayerListTable";
 import { PlayerGridView } from "./PlayerGridView";
 import { usePlayerSorting } from "./PlayerListSorting";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerListProps {
   players: Player[];
@@ -21,6 +22,7 @@ export function PlayerList({
   showCoaches = true
 }: PlayerListProps) {
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
+  const isMobile = useIsMobile();
   
   // Log for debugging what's coming into PlayerList
   console.log("PlayerList received players:", players.length);
@@ -43,7 +45,10 @@ export function PlayerList({
   // Final debug check
   console.log("PlayerList final player count:", sortedPlayers.length);
 
-  if (viewMode === "grid") {
+  // Force grid view on mobile devices
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
+
+  if (effectiveViewMode === "grid") {
     return (
       <PlayerGridView 
         players={sortedPlayers} 

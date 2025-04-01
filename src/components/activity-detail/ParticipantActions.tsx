@@ -1,76 +1,61 @@
 
-import React from "react";
+import React, { useState } from "react";
+import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Plus, UserPlus } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantActionsProps {
-  participantCount: number;
-  isAddingPlayers: boolean;
-  setIsAddingPlayers: (isAdding: boolean) => void;
-  onClearAllParticipants: () => void;
+  activity: Activity;
+  nonParticipantPlayers: Player[];
+  onAddParticipant: (playerId: string) => void;
+  isMobile?: boolean;
 }
 
-export function ParticipantActions({
-  participantCount,
-  isAddingPlayers,
-  setIsAddingPlayers,
-  onClearAllParticipants
+export function ParticipantActions({ 
+  activity, 
+  nonParticipantPlayers, 
+  onAddParticipant,
+  isMobile = false
 }: ParticipantActionsProps) {
+  const [open, setOpen] = useState(false);
+  
   return (
-    <div className="flex flex-wrap gap-2">
-      {participantCount < 12 && (
-        <Button 
-          variant="outline" 
-          onClick={() => setIsAddingPlayers(!isAddingPlayers)}
-          className="flex-grow"
-        >
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size={isMobile ? "sm" : "default"} className={isMobile ? "w-full" : ""}>
           <UserPlus className="h-4 w-4 mr-2" />
-          {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
+          Lägg till spelare
         </Button>
-      )}
-      
-      {participantCount > 0 && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Rensa alla
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Är du säker?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Detta kommer ta bort alla {participantCount} deltagare från aktiviteten. 
-                Denna åtgärd kan inte ångras.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Avbryt</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={onClearAllParticipants}
-                className="bg-red-500 hover:bg-red-700"
+      </PopoverTrigger>
+      <PopoverContent className="p-0" side="bottom" align="end">
+        <Command>
+          <CommandInput placeholder="Sök spelare..." />
+          <CommandEmpty>Inga spelare hittades</CommandEmpty>
+          <CommandGroup className="max-h-60 overflow-auto">
+            {nonParticipantPlayers.map(player => (
+              <CommandItem
+                key={player.id}
+                onSelect={() => {
+                  onAddParticipant(player.id);
+                  setOpen(false);
+                }}
+                className="cursor-pointer"
               >
-                Ta bort alla
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </div>
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarImage src={player.image} alt={player.name} />
+                  <AvatarFallback className="text-xs">
+                    {player.name?.split(" ").map(n => n[0]).join("") || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{player.name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -1,118 +1,117 @@
 
 import React from "react";
 import { Activity } from "@/types/player";
-import { X, Edit, Trash2 } from "lucide-react";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar, ChevronLeft, Edit, MapPin, MoreVertical, Trash } from "lucide-react";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from "@/components/ui/card";
-import { CalendarIcon, Clock, MapPin } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityDetailHeaderProps {
   activity: Activity;
-  isHistorical: boolean;
+  isHistorical?: boolean;
   onClose: () => void;
   onEdit?: (activity: Activity) => void;
   onDeleteOpen: () => void;
 }
 
-export function ActivityDetailHeader({ 
-  activity, 
-  isHistorical,
-  onClose, 
-  onEdit, 
-  onDeleteOpen 
-}: ActivityDetailHeaderProps) {
-  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
-  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
-  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+export function ActivityDetailHeader({ activity, isHistorical, onClose, onEdit, onDeleteOpen }: ActivityDetailHeaderProps) {
+  const isMobile = useIsMobile();
 
-  const formatResult = () => {
-    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
-      return `${activity.homeScore}-${activity.awayScore}`;
+  // Format date
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "EEEE d MMMM yyyy");
+    } catch (e) {
+      return dateString;
     }
-    return activity.result || "";
+  };
+
+  // Get activity type label
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "match":
+        return "Match";
+      case "training":
+        return "Träning";
+      case "cup":
+        return "Cup";
+      default:
+        return "Övrigt";
+    }
+  };
+
+  // Get activity type badge color
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "match":
+        return "bg-blue-100 text-blue-800";
+      case "training":
+        return "bg-green-100 text-green-800";
+      case "cup":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <CardHeader>
-      <div className="flex justify-between items-start">
-        <div>
-          <CardTitle className="text-2xl mb-1 flex items-center">
-            {activity.name}
-            <Badge 
-              variant={activity.type === "match" ? "default" : "secondary"}
-              className="ml-3"
-            >
-              {activity.type === "match" ? "Match" : "Cup"}
-            </Badge>
-            {isHistorical && (
-              <Badge variant="outline" className="ml-2">
-                Tidigare
-              </Badge>
-            )}
-            {isHistorical && activity.type === "match" && formatResult() && (
-              <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300">
-                {formatResult()}
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription className="flex flex-col gap-1">
-            <div className="flex items-center">
-              <CalendarIcon className="h-4 w-4 mr-1" />
-              {capitalizedDayOfWeek} {formattedDate}
-              {activity.time && (
-                <span className="ml-2 flex items-center">
-                  <Clock className="h-4 w-4 ml-2 mr-1" />
-                  {activity.time}
-                </span>
-              )}
-            </div>
-            
-            {activity.location && (
-              <div className="flex items-center mt-1">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>{activity.location.name}</span>
-                {activity.location.description && (
-                  <span className="text-muted-foreground ml-1">({activity.location.description})</span>
-                )}
-                {activity.location.gpsLink && (
-                  <a 
-                    href={activity.location.gpsLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="ml-2 text-blue-600 hover:underline text-sm"
-                  >
-                    GPS
-                  </a>
-                )}
-              </div>
-            )}
-          </CardDescription>
-        </div>
-        <div className="flex gap-2">
-          {onEdit && (
-            <Button variant="outline" size="icon" onClick={() => onEdit(activity)}>
-              <Edit className="h-5 w-5" />
+    <CardHeader className={isMobile ? "pb-2 space-y-2" : "pb-2"}>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={onClose} className={isMobile ? "p-0 -ml-2" : ""}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          <span>Tillbaka</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Åtgärder</span>
             </Button>
-          )}
-          {onDeleteOpen && (
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-              onClick={onDeleteOpen}
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onEdit && (
+              <DropdownMenuItem onClick={() => onEdit(activity)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Redigera
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onDeleteOpen} className="text-destructive">
+              <Trash className="h-4 w-4 mr-2" />
+              Ta bort
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <CardTitle className={isMobile ? "text-xl" : "text-2xl"}>{activity.name}</CardTitle>
+
+      <div className="flex items-center flex-wrap gap-2">
+        <Badge className={getTypeColor(activity.type)}>{getTypeLabel(activity.type)}</Badge>
+
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4 mr-1" />
+          <span>
+            {formatDate(activity.date)}
+            {activity.time && ` • ${activity.time}`}
+          </span>
         </div>
+
+        {activity.location?.name && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 mr-1" />
+            <span>{activity.location.name}</span>
+          </div>
+        )}
       </div>
     </CardHeader>
   );
