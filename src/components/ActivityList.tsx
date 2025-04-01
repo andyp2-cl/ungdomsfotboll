@@ -44,10 +44,17 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect, is
   });
   
   const formatResult = (activity: Activity) => {
-    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    // Only return a formatted result if both homeScore and awayScore are defined
+    if (activity.homeScore !== undefined && activity.awayScore !== undefined && 
+        activity.homeScore !== null && activity.awayScore !== null) {
       return `${activity.homeScore}-${activity.awayScore}`;
     }
-    return activity.result || "";
+    // Use result field if it exists and is not null-null or undefined-undefined
+    if (activity.result && !activity.result.includes('null') && !activity.result.includes('undefined')) {
+      return activity.result;
+    }
+    // Otherwise return empty string
+    return "";
   };
 
   const groupedActivities: { [key: string]: Activity[] } = {};
@@ -102,7 +109,8 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect, is
                   : undefined;
                 
                 const isPastActivity = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
-                const hasResult = activity.type === 'match' && (formatResult(activity) || isPastActivity);
+                const formattedResult = formatResult(activity);
+                const hasResult = activity.type === 'match' && formattedResult !== "";
                 
                 return (
                   <Card key={activity.id} className="hover:bg-accent/5 transition-colors">
@@ -122,9 +130,9 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect, is
                                 <Badge variant="outline">Tidigare</Badge>
                               )}
                               
-                              {hasResult && formatResult(activity) && (
+                              {hasResult && (
                                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                                  {formatResult(activity)}
+                                  {formattedResult}
                                 </Badge>
                               )}
                             </div>

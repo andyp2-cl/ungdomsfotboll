@@ -14,7 +14,15 @@ interface MatchesTabContentProps {
 export function MatchesTabContent({ activities, players = [] }: MatchesTabContentProps) {
   // Filter out only completed matches (those with a result)
   const completedMatches = useMemo(() => {
-    return activities.filter(a => a.type === 'match' && a.result);
+    return activities.filter(a => {
+      if (a.type !== 'match') return false;
+      
+      // Consider a match as having result if either result is set directly or 
+      // if both homeScore and awayScore are defined and not null
+      return (a.result && !a.result.includes('null') && !a.result.includes('undefined')) || 
+             (a.homeScore !== undefined && a.awayScore !== undefined && 
+              a.homeScore !== null && a.awayScore !== null);
+    });
   }, [activities]);
   
   // Get goal statistics from the same function used in GoalsTabContent
@@ -46,7 +54,8 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       }
       
       // Calculate our score and opponent score
-      if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      if (match.homeScore !== undefined && match.awayScore !== undefined && 
+          match.homeScore !== null && match.awayScore !== null) {
         // Determine if we're home or away team
         const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
                          !match.name.toLowerCase().includes(' vs ') || 
