@@ -1,4 +1,3 @@
-
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
 export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
@@ -15,18 +14,18 @@ export interface Activity {
   name: string;
   date: string;
   type: ActivityType;
-  participants?: string[]; // Array of player IDs who are participating
-  kioskAssignedPlayerId?: string; // Directly assign a player to kiosk duty (no schedule needed)
-  scraped?: boolean; // Optional flag to mark if this was imported via scraper
+  time?: string;
   location?: {
     name: string;
     description?: string;
     gpsLink?: string;
   };
-  time?: string; // Time of the activity, e.g. "09:30"
-  cupId?: string; // Reference to the parent cup activity (for matches that are part of a cup)
-  matches?: string[]; // Array of activity IDs that are matches within this cup (for cup type activities)
-  playerStats?: PlayerStats; // Statistics for players in this activity
+  participants: string[]; // Player IDs
+  kioskAssignedPlayerId?: string;
+  scraped?: boolean;
+  cupId?: string;
+  matches?: string[]; // Activity IDs for cup matches
+  player_stats?: any; // Add this to preserve match results data
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score

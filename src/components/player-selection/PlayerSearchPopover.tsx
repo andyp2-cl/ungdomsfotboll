@@ -22,8 +22,8 @@ export function PlayerSearchPopover({
   currentParticipantCount,
   maxParticipants = 12
 }: PlayerSearchPopoverProps) {
+  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [popoverOpen, setPopoverOpen] = useState(false);
   
   // Filter available players based on search query
   const filteredPlayers = searchQuery.trim() 
@@ -34,10 +34,10 @@ export function PlayerSearchPopover({
 
   // Reset search when popover closes
   useEffect(() => {
-    if (!popoverOpen) {
+    if (!open) {
       setSearchQuery("");
     }
-  }, [popoverOpen]);
+  }, [open]);
 
   const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
@@ -57,12 +57,12 @@ export function PlayerSearchPopover({
   };
 
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
           role="combobox" 
-          aria-expanded={popoverOpen}
+          aria-expanded={open}
           className="w-full sm:w-[200px] justify-between"
         >
           Välj spelare

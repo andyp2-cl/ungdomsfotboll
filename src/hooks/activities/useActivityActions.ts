@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { logDatabaseChange, permanentlyDeleteActivity } from "@/lib/supabase";
@@ -43,27 +42,40 @@ export function useActivityActions(
   };
 
   const handleActivityUpdate = async (updatedActivity: Activity) => {
+    const existingActivity = activities.find(activity => activity.id === updatedActivity.id);
+    
+    if (!existingActivity) {
+      console.error("Activity not found:", updatedActivity.id);
+      return;
+    }
+    
+    const mergedActivity = {
+      ...existingActivity,
+      ...updatedActivity,
+      player_stats: updatedActivity.player_stats || existingActivity.player_stats
+    };
+    
     const updatedActivities = activities.map(activity => 
-      activity.id === updatedActivity.id ? updatedActivity : activity
+      activity.id === mergedActivity.id ? mergedActivity : activity
     );
     
     setActivities(updatedActivities);
     await saveActivities(updatedActivities);
     
-    if (updatedActivity.participants) {
+    if (mergedActivity.participants) {
       const updatedPlayers = players.map(player => {
-        const isParticipating = updatedActivity.participants?.includes(player.id);
+        const isParticipating = mergedActivity.participants?.includes(player.id);
         let playerActivities = player.activities || [];
         
-        if (isParticipating && !playerActivities.includes(updatedActivity.id)) {
+        if (isParticipating && !playerActivities.includes(mergedActivity.id)) {
           return {
             ...player,
-            activities: [...playerActivities, updatedActivity.id]
+            activities: [...playerActivities, mergedActivity.id]
           };
-        } else if (!isParticipating && playerActivities.includes(updatedActivity.id)) {
+        } else if (!isParticipating && playerActivities.includes(mergedActivity.id)) {
           return {
             ...player,
-            activities: playerActivities.filter(id => id !== updatedActivity.id)
+            activities: playerActivities.filter(id => id !== mergedActivity.id)
           };
         }
         
@@ -76,7 +88,7 @@ export function useActivityActions(
     
     toast({
       title: "Aktivitet uppdaterad",
-      description: `${updatedActivity.name} har uppdaterats.`,
+      description: `${mergedActivity.name} har uppdaterats.`,
     });
   };
 
@@ -93,7 +105,6 @@ export function useActivityActions(
     }
     
     try {
-      // IMPROVED: Permanently delete from database first
       const deleteResult = await permanentlyDeleteActivity(activityId);
       
       if (!deleteResult) {
@@ -105,7 +116,6 @@ export function useActivityActions(
         return false;
       }
       
-      // Then update local state
       const updatedActivities = activities.filter(activity => activity.id !== activityId);
       
       if (activityToDelete.cupId) {
@@ -120,23 +130,19 @@ export function useActivityActions(
         const matchesToDelete = activityToDelete.matches;
         console.log(`Deleting ${matchesToDelete.length} matches for cup ${activityToDelete.id}`);
         
-        // Also delete all matches associated with this cup from database
         for (const matchId of matchesToDelete) {
           await permanentlyDeleteActivity(matchId);
           console.log(`Deleted match ${matchId} from cup ${activityToDelete.id}`);
         }
         
-        // Then update local state
         const remainingActivities = updatedActivities.filter(a => !matchesToDelete.includes(a.id));
         setActivities(remainingActivities);
         await saveActivities(remainingActivities);
       } else {
-        // Save the updated activities list
         setActivities(updatedActivities);
         await saveActivities(updatedActivities);
       }
       
-      // Update player-activity relationships in local state
       const updatedPlayers = players.map(player => {
         if (player.activities?.includes(activityId)) {
           return {
