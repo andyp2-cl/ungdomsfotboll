@@ -1,10 +1,10 @@
-
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "./types";
 import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cupMatches";
+import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 
 // Save activities to Supabase
 export const saveActivities = async (activities: Activity[]): Promise<void> => {
@@ -16,29 +16,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       const activityToSave = { ...activity };
       
       // Normalize player_stats to ensure it's always an object before saving
-      let normalizedPlayerStats;
-      
-      if (!activityToSave.player_stats) {
-        normalizedPlayerStats = { goals: {}, assists: {} };
-      } else if (typeof activityToSave.player_stats === 'string') {
-        try {
-          normalizedPlayerStats = JSON.parse(activityToSave.player_stats);
-          // If still a string after parsing (double-stringified), parse again
-          if (typeof normalizedPlayerStats === 'string') {
-            normalizedPlayerStats = JSON.parse(normalizedPlayerStats);
-          }
-        } catch (e) {
-          console.error("Error parsing player_stats string:", e);
-          normalizedPlayerStats = { goals: {}, assists: {} };
-        }
-      } else {
-        // Already an object, just ensure required properties exist
-        normalizedPlayerStats = {
-          ...activityToSave.player_stats,
-          goals: activityToSave.player_stats.goals || {},
-          assists: activityToSave.player_stats.assists || {}
-        };
-      }
+      const normalizedPlayerStats = normalizePlayerStats(activityToSave.player_stats);
       
       // Create a clean activity object with normalized player_stats
       const normalizedActivity = {

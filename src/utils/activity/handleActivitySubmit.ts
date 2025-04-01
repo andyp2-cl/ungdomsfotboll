@@ -2,7 +2,7 @@
 import { Activity, Location } from "@/types/player";
 import { ActivityFormValues } from "@/components/activity-form/formSchema";
 import { format } from "date-fns";
-import { normalizePlayerStats } from "./normalizePlayerStats";
+import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
 
 export async function handleActivitySubmit(

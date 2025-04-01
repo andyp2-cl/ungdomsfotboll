@@ -5,7 +5,7 @@ import { Activity } from "@/types/player";
 import { format } from "date-fns";
 import { ActivityFormValues, activityFormSchema } from "./formSchema";
 import { useState, useEffect } from "react";
-import { normalizePlayerStats } from "@/utils/activity/normalizePlayerStats";
+import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 import { handleActivitySubmit } from "@/utils/activity/handleActivitySubmit";
 
 export function useActivityForm(

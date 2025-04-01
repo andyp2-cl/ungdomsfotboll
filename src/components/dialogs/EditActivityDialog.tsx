@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EditActivityForm } from "@/components/EditActivityForm";
 import { useToast } from "@/hooks/use-toast";
+import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 
 interface EditActivityDialogProps {
   activity: Activity | null;
@@ -24,9 +24,7 @@ export function EditActivityDialog({
   const activityCopy = activity ? {
     ...activity,
     // Normalize player_stats to ensure it's always an object
-    player_stats: typeof activity.player_stats === 'string'
-      ? JSON.parse(activity.player_stats)
-      : activity.player_stats || { goals: {}, assists: {} }
+    player_stats: normalizePlayerStats(activity.player_stats)
   } : null;
 
   const handleSave = async (updatedActivity: Activity) => {
