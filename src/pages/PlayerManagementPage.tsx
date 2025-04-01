@@ -14,7 +14,7 @@ export default function PlayerManagementPage() {
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   
   // Player state and actions
-  const { players, isLoading: playersLoading, setPlayers, handleUpdatePlayer } = usePlayers();
+  const { players, isLoading: playersLoading, setPlayers, handlePlayerUpdate } = usePlayers();
   
   // Activity state and actions
   const {
@@ -98,7 +98,7 @@ export default function PlayerManagementPage() {
               onGradeChange={() => {}}
               onPositionChange={() => {}}
               onPlayerSelect={() => {}}
-              onPlayerUpdate={handleUpdatePlayer}
+              onPlayerUpdate={handlePlayerUpdate}
               onAddPlayerClick={() => setIsAddPlayerOpen(true)}
               onEditPlayerClick={() => {}}
               isMobile={false}
