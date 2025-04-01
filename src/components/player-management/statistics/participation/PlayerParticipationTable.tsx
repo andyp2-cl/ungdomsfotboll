@@ -6,9 +6,10 @@ import { Activity, Player } from "@/types/player";
 interface PlayerParticipationTableProps {
   players: Player[];
   activities: Activity[];
+  className?: string;
 }
 
-export function PlayerParticipationTable({ players, activities }: PlayerParticipationTableProps) {
+export function PlayerParticipationTable({ players, activities, className = "md:col-span-2" }: PlayerParticipationTableProps) {
   // Calculate participation per player
   const playerParticipation = React.useMemo(() => {
     return players
@@ -42,7 +43,7 @@ export function PlayerParticipationTable({ players, activities }: PlayerParticip
   }, [activities, players]);
 
   return (
-    <Card className="md:col-span-2">
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Topplista deltagande</CardTitle>
       </CardHeader>
