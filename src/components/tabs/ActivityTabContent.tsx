@@ -2,13 +2,13 @@
 import { useState, useCallback } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
-import { ActivityFilter } from "@/components/ActivityFilter";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
+import { BarChart3, Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
+import { StatisticsTabContent } from "@/components/player-management/StatisticsTabContent";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -49,7 +49,7 @@ export function ActivityTabContent({
   handleScrapedMatches,
   handleClearHistoricalActivities
 }: ActivityTabContentProps) {
-  const [activeView, setActiveView] = useState<"upcoming" | "historical">("upcoming");
+  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Function to view player from activity
@@ -61,12 +61,31 @@ export function ActivityTabContent({
     }
   };
 
+  // Räkna antalet spelare per årskurs (för statistik)
+  const gradeData = players.reduce((acc, player) => {
+    if (player.positions?.includes("TRÄNARE")) return acc;
+    
+    const grade = player.grade;
+    const existingGrade = acc.find(item => item.grade === grade);
+    
+    if (existingGrade) {
+      existingGrade.players++;
+    } else {
+      acc.push({ grade, players: 1 });
+    }
+    
+    return acc;
+  }, [] as { grade: string, players: number }[]);
+  
+  // Sortera nivåer (A, B, C, D)
+  gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="w-full sm:w-auto space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
           <ToggleGroup type="single" value={activeView} onValueChange={(value) => {
-            if (value) setActiveView(value as "upcoming" | "historical");
+            if (value) setActiveView(value as "upcoming" | "historical" | "statistics");
           }} className="justify-start">
             <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter">
               <Calendar className="h-4 w-4 mr-2" />
@@ -76,12 +95,11 @@ export function ActivityTabContent({
               <Clock className="h-4 w-4 mr-2" />
               Historik
             </ToggleGroupItem>
+            <ToggleGroupItem value="statistics" aria-label="Statistik">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Statistik
+            </ToggleGroupItem>
           </ToggleGroup>
-          
-          <ActivityFilter 
-            selectedTypes={selectedActivityTypes} 
-            onTypeChange={handleActivityTypeChange}
-          />
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
@@ -94,8 +112,8 @@ export function ActivityTabContent({
       
       {selectedPlayer ? (
         <PlayerDetail 
-          player={selectedPlayer}
-          activities={activities}
+          player={selectedPlayer} 
+          activities={activities} 
           onClose={() => setSelectedPlayer(null)}
           allPlayers={players}
         />
@@ -112,12 +130,22 @@ export function ActivityTabContent({
           onPlayerSelect={handlePlayerSelect}
         />
       ) : (
-        <ActivityList 
-          activities={activeView === "upcoming" ? filteredActivities : filteredHistoricalActivities}
-          players={players}
-          onSelect={setSelectedActivity}
-          onPlayerSelect={handlePlayerSelect}
-        />
+        <>
+          {activeView === "statistics" ? (
+            <StatisticsTabContent 
+              players={players}
+              activities={activities}
+              gradeData={gradeData}
+            />
+          ) : (
+            <ActivityList 
+              activities={activeView === "upcoming" ? filteredActivities : filteredHistoricalActivities}
+              players={players}
+              onSelect={setSelectedActivity}
+              onPlayerSelect={handlePlayerSelect}
+            />
+          )}
+        </>
       )}
     </div>
   );

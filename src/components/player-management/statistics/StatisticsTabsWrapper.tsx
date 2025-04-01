@@ -1,12 +1,13 @@
 
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingUp, Users } from "lucide-react";
 import { TeamStatistics } from "@/components/TeamStatistics";
 import { MatchesTabContent } from "./MatchesTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { ParticipationTabContent } from "./ParticipationTabContent";
 import { Activity, Player } from "@/types/player";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatisticsTabsWrapperProps {
   players: Player[];

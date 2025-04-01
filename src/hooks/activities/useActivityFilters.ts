@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Activity, ActivityType } from "@/types/player";
 
 export function useActivityFilters(activities: Activity[]) {
+  // Vi behåller selectedActivityTypes men använder det inte längre i UI
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
 
   const { currentActivities, historicalActivities } = useMemo(() => {
@@ -26,6 +27,7 @@ export function useActivityFilters(activities: Activity[]) {
     return { currentActivities: current, historicalActivities: historical };
   }, [activities]);
 
+  // Behåll funktionen för att ändra aktivitetstyper (för bakåtkompatibilitet)
   const handleActivityTypeChange = (type: ActivityType) => {
     setSelectedActivityTypes(prev => 
       prev.includes(type) 
@@ -34,11 +36,9 @@ export function useActivityFilters(activities: Activity[]) {
     );
   };
 
+  // Filtrera aktiviteter (men använd inte selectedActivityTypes längre)
   const filteredCurrentActivities = useMemo(() => {
     return currentActivities
-      .filter(activity => {
-        return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
-      })
       .sort((a, b) => {
         const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         
@@ -48,13 +48,10 @@ export function useActivityFilters(activities: Activity[]) {
         
         return dateComparison;
       });
-  }, [selectedActivityTypes, currentActivities]);
+  }, [currentActivities]);
 
   const filteredHistoricalActivities = useMemo(() => {
     return historicalActivities
-      .filter(activity => {
-        return selectedActivityTypes.length === 0 || selectedActivityTypes.includes(activity.type);
-      })
       .sort((a, b) => {
         const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
         
@@ -64,7 +61,7 @@ export function useActivityFilters(activities: Activity[]) {
         
         return dateComparison;
       });
-  }, [selectedActivityTypes, historicalActivities]);
+  }, [historicalActivities]);
 
   return {
     selectedActivityTypes,
