@@ -72,6 +72,18 @@ interface TeamFormationAnalysisProps {
 export function TeamFormationAnalysis({ players }: TeamFormationAnalysisProps) {
   const [selectedFormation, setSelectedFormation] = useState<string>("4-4-2");
 
+  // Move getPositionColor function definition before it's used
+  // Get position color
+  const getPositionColor = (position: PlayerPosition): string => {
+    switch (position) {
+      case "MV": return "#e11d48"; // Red
+      case "BACK": return "#fb923c"; // Orange
+      case "MF": return "#22c55e"; // Green
+      case "ANF": return "#3b82f6"; // Blue
+      default: return "#9ca3af"; // Gray
+    }
+  };
+
   // Filter out trainers
   const fieldPlayers = useMemo(() => 
     players.filter(player => !player.positions?.includes("TRÄNARE")),
@@ -105,17 +117,6 @@ export function TeamFormationAnalysis({ players }: TeamFormationAnalysisProps) {
       color: getPositionColor(pos as PlayerPosition)
     }));
   }, [fieldPlayers]);
-
-  // Get position color
-  const getPositionColor = (position: PlayerPosition): string => {
-    switch (position) {
-      case "MV": return "#e11d48"; // Red
-      case "BACK": return "#fb923c"; // Orange
-      case "MF": return "#22c55e"; // Green
-      case "ANF": return "#3b82f6"; // Blue
-      default: return "#9ca3af"; // Gray
-    }
-  };
 
   // Position label
   const getPositionLabel = (position: PlayerPosition): string => {
