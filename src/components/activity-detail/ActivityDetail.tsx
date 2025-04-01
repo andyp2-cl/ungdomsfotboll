@@ -37,6 +37,9 @@ export function ActivityDetail({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Determine if this is a historical activity (past date)
+  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+
   // Handle delete
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -71,6 +74,7 @@ export function ActivityDetail({
         onKioskUpdate={onKioskUpdate}
         onActivitySelect={onActivitySelect}
         cupMatches={cupMatches}
+        isHistorical={isHistorical}
       />
 
       {/* Delete confirmation dialog */}

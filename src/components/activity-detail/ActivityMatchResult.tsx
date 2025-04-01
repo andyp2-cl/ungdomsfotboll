@@ -9,9 +9,14 @@ import { Save } from "lucide-react";
 interface ActivityMatchResultProps {
   activity: Activity;
   updateActivity: (updatedActivity: Activity) => void;
+  isHistorical?: boolean;
 }
 
-export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchResultProps) {
+export function ActivityMatchResult({ 
+  activity, 
+  updateActivity, 
+  isHistorical = false 
+}: ActivityMatchResultProps) {
   const { toast } = useToast();
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
@@ -44,13 +49,19 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
       <div className="grid grid-cols-3 gap-4 items-center mb-4">
         <div>
           <p className="mb-2 font-medium">Deras mål</p>
-          <Input
-            type="number"
-            min={0}
-            value={awayScore === undefined ? '' : awayScore}
-            onChange={(e) => setAwayScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center text-lg"
-          />
+          {isHistorical ? (
+            <div className="h-10 px-3 py-2 text-center text-lg border rounded-md bg-muted">
+              {awayScore !== undefined ? awayScore : '-'}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min={0}
+              value={awayScore === undefined ? '' : awayScore}
+              onChange={(e) => setAwayScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
+              className="text-center text-lg"
+            />
+          )}
         </div>
         
         <div className="flex justify-center items-center">
@@ -59,20 +70,28 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
         
         <div>
           <p className="mb-2 font-medium">Våra mål</p>
-          <Input
-            type="number"
-            min={0}
-            value={homeScore === undefined ? '' : homeScore}
-            onChange={(e) => setHomeScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center text-lg"
-          />
+          {isHistorical ? (
+            <div className="h-10 px-3 py-2 text-center text-lg border rounded-md bg-muted">
+              {homeScore !== undefined ? homeScore : '-'}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min={0}
+              value={homeScore === undefined ? '' : homeScore}
+              onChange={(e) => setHomeScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
+              className="text-center text-lg"
+            />
+          )}
         </div>
       </div>
       
-      <Button onClick={saveMatchResult} className="w-full sm:w-auto">
-        <Save className="h-4 w-4 mr-2" />
-        Spara resultat
-      </Button>
+      {!isHistorical && (
+        <Button onClick={saveMatchResult} className="w-full sm:w-auto">
+          <Save className="h-4 w-4 mr-2" />
+          Spara resultat
+        </Button>
+      )}
     </div>
   );
 }

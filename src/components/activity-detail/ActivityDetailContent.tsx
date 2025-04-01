@@ -19,6 +19,7 @@ interface ActivityDetailContentProps {
   onKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
   cupMatches?: Activity[];
+  isHistorical?: boolean;
 }
 
 export function ActivityDetailContent({
@@ -27,7 +28,8 @@ export function ActivityDetailContent({
   onUpdate,
   onKioskUpdate,
   onActivitySelect,
-  cupMatches = []
+  cupMatches = [],
+  isHistorical = false
 }: ActivityDetailContentProps) {
   // Find participants
   const participantPlayers = players.filter(player => 
@@ -47,6 +49,7 @@ export function ActivityDetailContent({
           <ActivityMatchResult 
             activity={activity}
             updateActivity={onUpdate}
+            isHistorical={isHistorical}
           />
         )}
         
