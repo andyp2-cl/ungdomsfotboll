@@ -22,12 +22,14 @@ export function ActivityResultSection({
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
+  const [manualWinStatus, setManualWinStatus] = useState<boolean | undefined>(activity.isWin);
   
   // Update local state when activity changes
   useEffect(() => {
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
-  }, [activity.homeScore, activity.awayScore]);
+    setManualWinStatus(activity.isWin);
+  }, [activity.homeScore, activity.awayScore, activity.isWin]);
 
   const saveMatchResult = async () => {
     setIsSaving(true);
@@ -40,8 +42,13 @@ export function ActivityResultSection({
       // Determine if this is a home match for our team
       const isHome = isHomeMatch(activity);
       
-      // Determine win status based on scores and whether it's a home match
-      const isWin = calculateWinStatus(homeScore, awayScore, isHome);
+      // Determine win status - we'll respect the manually set status if available
+      let isWin = manualWinStatus;
+      
+      // If no manual status, calculate based on scores
+      if (isWin === undefined) {
+        isWin = calculateWinStatus(homeScore, awayScore, isHome);
+      }
       
       // First directly update the database
       const { error } = await supabase
@@ -58,7 +65,13 @@ export function ActivityResultSection({
         throw error;
       }
       
-      console.log("Match result saved to database:", { homeScore, awayScore, isWin, isHome });
+      console.log("Match result saved to database:", { 
+        homeScore, 
+        awayScore, 
+        isWin, 
+        isHome,
+        manualOverride: manualWinStatus !== undefined 
+      });
       
       // Then update the local state
       const updatedActivity = {

@@ -2,7 +2,7 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
-import { isHomeMatch, getOutcomeText, getOutcomeColorClass } from "./utils";
+import { isHomeMatch, getOutcomeText, getOutcomeColorClass, extractTeamNames } from "./utils";
 
 interface ScoreDisplayProps {
   activity: Activity;
@@ -13,10 +13,14 @@ interface ScoreDisplayProps {
 export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayProps) {
   const isHome = isHomeMatch(activity);
   const hasResult = homeScore !== undefined && awayScore !== undefined;
+  const teamNames = extractTeamNames(activity);
   
-  // Determine team labels based on match details
-  const ourTeamLabel = "Våra mål";
-  const theirTeamLabel = "Deras mål";
+  // Determine if Hässleholms IF is home or away
+  const isHassleholm = isHome ? 'home' : 'away';
+  
+  // Get appropriate team labels
+  const homeTeamLabel = isHome ? "Hässleholms IF" : teamNames.homeTeam;
+  const awayTeamLabel = !isHome ? "Hässleholms IF" : teamNames.awayTeam;
   
   if (!hasResult) {
     return (
@@ -38,13 +42,19 @@ export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayPro
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 mt-3">
-        <div className="border rounded p-3 text-center">
-          <div className="text-sm text-muted-foreground mb-1">{isHome ? ourTeamLabel : theirTeamLabel}</div>
-          <div className="text-xl font-bold">{isHome ? homeScore : awayScore}</div>
+        <div className={`border rounded p-3 text-center ${isHassleholm === 'home' ? 'border-blue-300 bg-blue-50' : ''}`}>
+          <div className="text-sm text-muted-foreground mb-1">{homeTeamLabel}</div>
+          <div className="text-xl font-bold">{homeScore}</div>
+          {isHassleholm === 'home' && (
+            <div className="mt-1 text-xs text-blue-600">Hemmalag</div>
+          )}
         </div>
-        <div className="border rounded p-3 text-center">
-          <div className="text-sm text-muted-foreground mb-1">{isHome ? theirTeamLabel : ourTeamLabel}</div>
-          <div className="text-xl font-bold">{isHome ? awayScore : homeScore}</div>
+        <div className={`border rounded p-3 text-center ${isHassleholm === 'away' ? 'border-blue-300 bg-blue-50' : ''}`}>
+          <div className="text-sm text-muted-foreground mb-1">{awayTeamLabel}</div>
+          <div className="text-xl font-bold">{awayScore}</div>
+          {isHassleholm === 'away' && (
+            <div className="mt-1 text-xs text-blue-600">Bortalag</div>
+          )}
         </div>
       </div>
     </div>

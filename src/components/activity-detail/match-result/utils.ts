@@ -5,9 +5,15 @@ import { Activity } from "@/types/player";
  * Determines if the match is a home match for Hässleholms IF
  */
 export function isHomeMatch(activity: Activity): boolean {
-  return activity.name.toLowerCase().includes('hässleholms if') && 
-         !activity.name.toLowerCase().includes(' vs ') || 
-         activity.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
+  // Check if the activity name contains information about who's home/away
+  if (activity.name.toLowerCase().includes(' vs ')) {
+    // Format: "Team A vs Team B" where Team A is the home team
+    const teams = activity.name.toLowerCase().split(' vs ');
+    return teams[0].includes('hässleholms if');
+  } else {
+    // If there's no "vs" in the name, we assume it's a home match if Hässleholms IF is mentioned first
+    return activity.name.toLowerCase().startsWith('hässleholms if');
+  }
 }
 
 /**
@@ -19,6 +25,7 @@ export function getOutcomeText(homeScore?: number, awayScore?: number, isHomeTea
   if (homeScore === awayScore) return "Oavgjort";
   
   if (isHomeTeam) {
+    // For home games, we WIN when homeScore is greater than awayScore
     return homeScore > awayScore ? "Vinst" : "Förlust";
   } else {
     // For away games, we WIN when awayScore is greater than homeScore
@@ -59,4 +66,23 @@ export function calculateWinStatus(homeScore?: number, awayScore?: number, isHom
     // For away games: win if awayScore > homeScore
     return awayScore > homeScore;
   }
+}
+
+/**
+ * Extracts team names from activity name (if possible)
+ */
+export function extractTeamNames(activity: Activity): { homeTeam: string, awayTeam: string } {
+  if (activity.name.toLowerCase().includes(' vs ')) {
+    const teams = activity.name.split(' vs ');
+    return {
+      homeTeam: teams[0].trim(),
+      awayTeam: teams[1].trim()
+    };
+  }
+  
+  // Default fallback
+  return {
+    homeTeam: "Hemmalag",
+    awayTeam: "Bortalag"
+  };
 }
