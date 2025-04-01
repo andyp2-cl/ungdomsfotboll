@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Activity, ActivityType, Player } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
 import { TabsContent } from "@/components/ui/tabs";
 import { ActivityTabContent, ToolsTabContent } from "@/components/activity-management";
@@ -11,10 +11,10 @@ interface ActivityManagementProps {
   activities: Activity[];
   players: Player[];
   selectedActivity: Activity | null;
-  selectedActivityTypes: ActivityType[];
+  selectedActivityTypes: string[];
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
-  onActivityTypeChange: (type: ActivityType) => void;
+  onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
   onActivityUpdate: (activity: Activity) => void;
   onAddActivityClick: () => void;

@@ -18,7 +18,7 @@ interface ActivitiesTabContentProps {
   handleActivityUpdate: (activity: Activity) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
-  handleKioskAssignmentUpdate: (activityId: string, playerId: string) => void;
+  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => void;
   handleDeleteActivity: (activityId: string) => void;
   handleImportedActivities: (activities: Activity[]) => void;
   handleClearHistoricalActivities: () => void;

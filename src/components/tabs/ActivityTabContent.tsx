@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { Activity, ActivityType, Player } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BarChart3, Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
@@ -14,11 +14,11 @@ interface ActivityTabContentProps {
   activities: Activity[];
   players: Player[];
   selectedActivity: Activity | null;
-  selectedActivityTypes: ActivityType[];
+  selectedActivityTypes: string[];
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
   isAddActivityOpen: boolean;
-  handleActivityTypeChange: (type: ActivityType) => void;
+  handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;

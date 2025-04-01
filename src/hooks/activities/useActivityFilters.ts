@@ -1,10 +1,10 @@
 
 import { useState, useMemo } from "react";
-import { Activity, ActivityType } from "@/types/player";
+import { Activity } from "@/types/player";
 
 export function useActivityFilters(activities: Activity[]) {
   // Vi behåller selectedActivityTypes men använder det inte längre i UI
-  const [selectedActivityTypes, setSelectedActivityTypes] = useState<ActivityType[]>([]);
+  const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
 
   const { currentActivities, historicalActivities } = useMemo(() => {
     const today = new Date();
@@ -28,7 +28,7 @@ export function useActivityFilters(activities: Activity[]) {
   }, [activities]);
 
   // Behåll funktionen för att ändra aktivitetstyper (för bakåtkompatibilitet)
-  const handleActivityTypeChange = (type: ActivityType) => {
+  const handleActivityTypeChange = (type: string) => {
     setSelectedActivityTypes(prev => 
       prev.includes(type) 
         ? prev.filter(t => t !== type) 

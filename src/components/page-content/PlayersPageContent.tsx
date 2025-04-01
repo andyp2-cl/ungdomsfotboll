@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Player, Activity, PlayerGrade, ActivityType } from "@/types/player";
+import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
@@ -40,13 +40,12 @@ interface PlayersPageContentProps {
   setEditingActivity: (activity: Activity | null) => void;
   isAddActivityOpen: boolean;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  selectedActivityTypes: ActivityType[];
-  handleActivityTypeChange: (type: ActivityType) => void;
+  selectedActivityTypes: string[];
+  handleActivityTypeChange: (type: string) => void;
   handleActivityUpdate: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
-  handleScraped: (matches: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => void;
   onPlayerActivitySelect: (activity: Activity) => void;
@@ -92,7 +91,6 @@ export function PlayersPageContent({
   handleKioskUpdate,
   handleDelete,
   handleImportActivities,
-  handleScraped,
   handleClearHistorical,
   handleAddActivity,
   onPlayerActivitySelect
@@ -141,7 +139,6 @@ export function PlayersPageContent({
               handleKioskAssignmentUpdate={handleKioskUpdate}
               handleDeleteActivity={handleDelete}
               handleImportedActivities={handleImportActivities}
-              handleScrapedMatches={handleScraped}
               handleClearHistoricalActivities={handleClearHistorical}
             />
           }

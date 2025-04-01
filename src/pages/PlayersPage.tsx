@@ -49,7 +49,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
-    handleScraped,
     handleClearHistorical,
     handleAddActivity,
     handlePlayerActivitySelect,
@@ -100,7 +99,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleKioskUpdate={handleKioskUpdate}
         handleDelete={handleDelete}
         handleImportActivities={handleImportActivities}
-        handleScraped={handleScraped}
         handleClearHistorical={handleClearHistorical}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}

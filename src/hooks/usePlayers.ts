@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Player, Activity, PlayerGrade, ActivityType } from "@/types/player";
+import { Player, Activity, PlayerGrade } from "@/types/player";
 import { getActiveTab } from "@/utils/storage";
 import { usePlayers as usePlayersData } from "@/hooks/players";
 import { useActivities } from "@/hooks/activities";

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Activity, ActivityType, Player } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetailWrapper } from "./ActivityDetailWrapper";
@@ -12,9 +12,9 @@ interface ActivityTabContentProps {
   activities: Activity[];
   players: Player[];
   selectedActivity: Activity | null;
-  selectedActivityTypes: ActivityType[];
+  selectedActivityTypes: string[];
   filteredActivities: Activity[];
-  onActivityTypeChange: (type: ActivityType) => void;
+  onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
   onActivityUpdate: (activity: Activity) => void;
   onAddActivityClick: () => void;

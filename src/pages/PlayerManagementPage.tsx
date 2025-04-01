@@ -40,7 +40,6 @@ export default function PlayerManagementPage() {
     handleKioskAssignmentUpdate,
     handleAddActivity,
     handleImportedActivities,
-    handleScrapedMatches,
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
   
@@ -107,7 +106,7 @@ export default function PlayerManagementPage() {
           
           <TabsContent value="activities">
             <ActivitiesTabContent
-              activities={filteredActivities}
+              activities={activities}
               players={players}
               selectedActivity={selectedActivity}
               selectedActivityTypes={selectedActivityTypes}
@@ -122,7 +121,6 @@ export default function PlayerManagementPage() {
               handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
               handleDeleteActivity={handleDeleteActivity}
               handleImportedActivities={handleImportedActivities}
-              handleScrapedMatches={handleScrapedMatches}
               handleClearHistoricalActivities={handleClearHistoricalActivities}
             />
           </TabsContent>
