@@ -11,12 +11,15 @@ import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { Activity } from "@/types/player";
 import { BackupRestoreActions } from "@/components/BackupRestoreActions";
+import { useEditMode } from "@/contexts/EditModeContext";
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  const { isEditMode } = useEditMode();
+  
   // Get tab from location or storage
   const location = useLocation();
   const pathTab = location.pathname === "/activities" ? "activities" : "players";
@@ -71,6 +74,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Wrapper functions to ensure proper return types
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
     try {
       await handleKioskAssignmentUpdate(activityId, playerId);
       return true;
@@ -81,6 +86,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   const handleDelete = async (activityId: string): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
     try {
       return await handleDeleteActivity(activityId);
     } catch (error) {
@@ -91,6 +98,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Handle imported or scraped activities
   const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
     try {
       await handleImportedActivities(activities);
       return true;
@@ -101,6 +110,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   const handleScraped = async (matches: Activity[]): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
     try {
       await handleScrapedMatches(matches);
       return true;
@@ -111,6 +122,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   const handleClearHistorical = async (): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
     try {
       await handleClearHistoricalActivities();
       return true;
@@ -128,6 +141,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     setSelectedActivity(activity);
     setActiveTab('activities');
   };
+
+  // Use this to conditionally render edit UI elements
+  const canEdit = isEditMode;
 
   return (
     <PageContainer isLoading={isLoading}>
@@ -149,10 +165,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
               handleGradeChange={handleGradeChange}
               setSelectedPlayer={setSelectedPlayer}
               setViewMode={setViewMode}
-              handlePlayerUpdate={handlePlayerUpdate}
-              handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-              setIsAddPlayerOpen={setIsAddPlayerOpen}
-              setEditingPlayer={setEditingPlayer}
+              handlePlayerUpdate={canEdit ? handlePlayerUpdate : undefined}
+              handleBulkPlayerUpdate={canEdit ? handleBulkPlayerUpdate : undefined}
+              setIsAddPlayerOpen={canEdit ? setIsAddPlayerOpen : undefined}
+              setEditingPlayer={canEdit ? setEditingPlayer : undefined}
               onActivitySelect={handlePlayerActivitySelect}
             />
           }
@@ -167,38 +183,42 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
               isAddActivityOpen={isAddActivityOpen}
               handleActivityTypeChange={handleActivityTypeChange}
               setSelectedActivity={setSelectedActivity}
-              handleActivityUpdate={handleActivityUpdate}
-              setIsAddActivityOpen={setIsAddActivityOpen}
-              setEditingActivity={setEditingActivity}
-              handleKioskAssignmentUpdate={handleKioskUpdate}
-              handleDeleteActivity={handleDelete}
-              handleImportedActivities={handleImportActivities}
-              handleScrapedMatches={handleScraped}
-              handleClearHistoricalActivities={handleClearHistorical}
+              handleActivityUpdate={canEdit ? handleActivityUpdate : undefined}
+              setIsAddActivityOpen={canEdit ? setIsAddActivityOpen : undefined}
+              setEditingActivity={canEdit ? setEditingActivity : undefined}
+              handleKioskAssignmentUpdate={canEdit ? handleKioskUpdate : undefined}
+              handleDeleteActivity={canEdit ? handleDelete : undefined}
+              handleImportedActivities={canEdit ? handleImportActivities : undefined}
+              handleScrapedMatches={canEdit ? handleScraped : undefined}
+              handleClearHistoricalActivities={canEdit ? handleClearHistorical : undefined}
             />
           }
         />
       </div>
 
-      <PageDialogs 
-        editingPlayer={editingPlayer}
-        editingActivity={editingActivity}
-        isAddPlayerOpen={isAddPlayerOpen}
-        isAddActivityOpen={isAddActivityOpen}
-        setEditingPlayer={setEditingPlayer}
-        setEditingActivity={setEditingActivity}
-        setIsAddPlayerOpen={setIsAddPlayerOpen}
-        setIsAddActivityOpen={setIsAddActivityOpen}
-        handlePlayerUpdate={handlePlayerUpdate}
-        handleActivityUpdate={handleActivityUpdate}
-        handleAddPlayer={handleAddPlayer}
-        handleAddActivity={handleAddActivity}
-      />
+      {canEdit && (
+        <PageDialogs 
+          editingPlayer={editingPlayer}
+          editingActivity={editingActivity}
+          isAddPlayerOpen={isAddPlayerOpen}
+          isAddActivityOpen={isAddActivityOpen}
+          setEditingPlayer={setEditingPlayer}
+          setEditingActivity={setEditingActivity}
+          setIsAddPlayerOpen={setIsAddPlayerOpen}
+          setIsAddActivityOpen={setIsAddActivityOpen}
+          handlePlayerUpdate={handlePlayerUpdate}
+          handleActivityUpdate={handleActivityUpdate}
+          handleAddPlayer={handleAddPlayer}
+          handleAddActivity={handleAddActivity}
+        />
+      )}
       
-      {/* Backup/Restore actions at the bottom of the page */}
-      <div className="fixed bottom-4 right-4 z-10">
-        <BackupRestoreActions />
-      </div>
+      {/* Backup/Restore actions visible only in edit mode */}
+      {canEdit && (
+        <div className="fixed bottom-4 right-4 z-10">
+          <BackupRestoreActions />
+        </div>
+      )}
     </PageContainer>
   );
 }
