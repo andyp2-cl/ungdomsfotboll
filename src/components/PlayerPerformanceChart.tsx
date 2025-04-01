@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
@@ -15,13 +14,10 @@ interface PlayerPerformanceChartProps {
 export function PlayerPerformanceChart({ players, activities }: PlayerPerformanceChartProps) {
   const [activeTab, setActiveTab] = useState<"position" | "goals" | "wins">("position");
 
-  // Sort activities by date
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
-      // Sort by date first
       const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
       
-      // If dates are the same, sort by time if available
       if (dateComparison === 0 && a.time && b.time) {
         return a.time.localeCompare(b.time);
       }
@@ -31,31 +27,27 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
   }, [activities]);
 
   const performanceData = useMemo(() => {
-    // Create a map of player performance
     const playerPerformance = players
       .filter(player => !player.positions?.includes('TRÄNARE'))
       .map(player => {
-        // Calculate player's activity participation rate
         const participationCount = player.activities?.length || 0;
         const participationRate = sortedActivities.length > 0 
           ? Math.round((participationCount / sortedActivities.length) * 100) 
           : 0;
         
-        // Calculate goals, assists, and win statistics
         let totalGoals = 0;
         let totalAssists = 0;
         let matchCount = 0;
         let winCount = 0;
-        let goalMatches = 0; // Number of matches where player scored
+        let goalMatches = 0;
 
         activities.forEach(activity => {
           if (activity.type === "match" && activity.participants?.includes(player.id)) {
             matchCount++;
             
-            // Count goals and assists
-            if (activity.playerStats) {
-              const goals = activity.playerStats.goals?.[player.id] || 0;
-              const assists = activity.playerStats.assists?.[player.id] || 0;
+            if (activity.player_stats) {
+              const goals = activity.player_stats.goals?.[player.id] || 0;
+              const assists = activity.player_stats.assists?.[player.id] || 0;
               totalGoals += goals;
               totalAssists += assists;
               
@@ -64,7 +56,6 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
               }
             }
             
-            // Count wins
             if (activity.result) {
               const resultParts = activity.result.split('-');
               if (resultParts.length === 2) {
@@ -108,7 +99,6 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
     return playerPerformance;
   }, [players, sortedActivities, activities]);
 
-  // Group by position
   const positionData = useMemo(() => {
     const positions = new Map<string, { position: string, count: number, participationAvg: number, goalsAvg: number, assistsAvg: number, winRate: number }>();
     
@@ -123,7 +113,6 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
       positions.set(pos, current);
     });
     
-    // Calculate averages
     return Array.from(positions.values()).map(data => ({
       ...data,
       participationAvg: data.count > 0 ? Math.round(data.participationAvg / data.count) : 0,
@@ -133,7 +122,6 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
     }));
   }, [performanceData]);
 
-  // Top goal scorers
   const topScorers = useMemo(() => {
     return [...performanceData]
       .filter(player => player.totalGoals > 0)
@@ -141,17 +129,14 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
       .slice(0, 10);
   }, [performanceData]);
 
-  // Win rate data
   const winRateData = useMemo(() => {
     return [...performanceData]
-      .filter(player => player.matchCount >= 3) // Only include players with at least 3 matches
+      .filter(player => player.matchCount >= 3)
       .sort((a, b) => b.winRate - a.winRate)
       .slice(0, 10);
   }, [performanceData]);
 
-  // Team Summary Data for Pie Charts
   const teamSummary = useMemo(() => {
-    // Total goals by position
     const goalsByPosition = new Map<string, number>();
     const assistsByPosition = new Map<string, number>();
     

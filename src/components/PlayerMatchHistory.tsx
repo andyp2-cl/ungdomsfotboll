@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { Calendar, Clock, MapPin, Trophy, Star } from "lucide-react";
@@ -33,8 +32,8 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
 
   matches.forEach(match => {
     // Count goals and assists
-    const goals = match.playerStats?.goals?.[player.id] || 0;
-    const assists = match.playerStats?.assists?.[player.id] || 0;
+    const goals = match.player_stats?.goals?.[player.id] || 0;
+    const assists = match.player_stats?.assists?.[player.id] || 0;
     
     totalGoals += goals;
     totalAssists += assists;
@@ -45,9 +44,9 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
     // Count results - check if we're home or away team
     const isHomeTeam = match.name.toLowerCase().startsWith('hässleholms if');
     
-    if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
-      const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
+    if (match.home_score !== undefined && match.away_score !== undefined) {
+      const ourScore = isHomeTeam ? match.home_score : match.away_score;
+      const theirScore = isHomeTeam ? match.away_score : match.home_score;
       
       if (ourScore > theirScore) wins++;
       else if (ourScore === theirScore) draws++;
@@ -124,18 +123,18 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
                           )}
                         </TableCell>
                         <TableCell>
-                          {match.playerStats?.goals?.[player.id] ? (
+                          {match.player_stats?.goals?.[player.id] ? (
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              {match.playerStats.goals[player.id]}
+                              {match.player_stats.goals[player.id]}
                             </Badge>
                           ) : (
                             <span className="text-muted-foreground">0</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          {match.playerStats?.assists?.[player.id] ? (
+                          {match.player_stats?.assists?.[player.id] ? (
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {match.playerStats.assists[player.id]}
+                              {match.player_stats.assists[player.id]}
                             </Badge>
                           ) : (
                             <span className="text-muted-foreground">0</span>

@@ -242,13 +242,13 @@ export function ActivityDetail({
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
 
   const getTotalGoals = () => {
-    if (!currentActivity.playerStats?.goals) return 0;
-    return Object.values(currentActivity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
+    if (!currentActivity.player_stats?.goals) return 0;
+    return Object.values(currentActivity.player_stats.goals).reduce((sum, goals) => sum + goals, 0);
   };
 
   const getTotalAssists = () => {
-    if (!currentActivity.playerStats?.assists) return 0;
-    return Object.values(currentActivity.playerStats.assists).reduce((sum, assists) => sum + assists, 0);
+    if (!currentActivity.player_stats?.assists) return 0;
+    return Object.values(currentActivity.player_stats.assists).reduce((sum, assists) => sum + assists, 0);
   };
 
   const renderPlayerStatistics = () => {
@@ -565,8 +565,8 @@ export function ActivityDetail({
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål och assist varje spelare har gjort:</p>
                   {participatingPlayers.map(player => {
-                    const goals = currentActivity.playerStats?.goals?.[player.id] || 0;
-                    const assists = currentActivity.playerStats?.assists?.[player.id] || 0;
+                    const goals = currentActivity.player_stats?.goals?.[player.id] || 0;
+                    const assists = currentActivity.player_stats?.assists?.[player.id] || 0;
                     
                     return (
                       <div key={player.id} className="flex justify-between items-center border-b pb-2">
@@ -580,14 +580,14 @@ export function ActivityDetail({
                               className="h-7 w-7 rounded-full"
                               onClick={() => {
                                 const updatedActivity = {...currentActivity};
-                                if (!updatedActivity.playerStats) {
-                                  updatedActivity.playerStats = { goals: {} };
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {} };
                                 }
-                                if (!updatedActivity.playerStats.goals) {
-                                  updatedActivity.playerStats.goals = {};
+                                if (!updatedActivity.player_stats.goals) {
+                                  updatedActivity.player_stats.goals = {};
                                 }
                                 if (goals > 0) {
-                                  updatedActivity.playerStats.goals[player.id] = goals - 1;
+                                  updatedActivity.player_stats.goals[player.id] = goals - 1;
                                 }
                                 setCurrentActivity(updatedActivity);
                                 if (onActivityUpdate) {
@@ -605,13 +605,13 @@ export function ActivityDetail({
                               className="h-7 w-7 rounded-full"
                               onClick={() => {
                                 const updatedActivity = {...currentActivity};
-                                if (!updatedActivity.playerStats) {
-                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
                                 }
-                                if (!updatedActivity.playerStats.goals) {
-                                  updatedActivity.playerStats.goals = {};
+                                if (!updatedActivity.player_stats.goals) {
+                                  updatedActivity.player_stats.goals = {};
                                 }
-                                updatedActivity.playerStats.goals[player.id] = (goals || 0) + 1;
+                                updatedActivity.player_stats.goals[player.id] = (goals || 0) + 1;
                                 setCurrentActivity(updatedActivity);
                                 if (onActivityUpdate) {
                                   onActivityUpdate(updatedActivity);
@@ -630,14 +630,14 @@ export function ActivityDetail({
                               className="h-7 w-7 rounded-full"
                               onClick={() => {
                                 const updatedActivity = {...currentActivity};
-                                if (!updatedActivity.playerStats) {
-                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
                                 }
-                                if (!updatedActivity.playerStats.assists) {
-                                  updatedActivity.playerStats.assists = {};
+                                if (!updatedActivity.player_stats.assists) {
+                                  updatedActivity.player_stats.assists = {};
                                 }
                                 if (assists > 0) {
-                                  updatedActivity.playerStats.assists[player.id] = assists - 1;
+                                  updatedActivity.player_stats.assists[player.id] = assists - 1;
                                 }
                                 setCurrentActivity(updatedActivity);
                                 if (onActivityUpdate) {
@@ -655,13 +655,13 @@ export function ActivityDetail({
                               className="h-7 w-7 rounded-full"
                               onClick={() => {
                                 const updatedActivity = {...currentActivity};
-                                if (!updatedActivity.playerStats) {
-                                  updatedActivity.playerStats = { goals: {}, assists: {} };
+                                if (!updatedActivity.player_stats) {
+                                  updatedActivity.player_stats = { goals: {}, assists: {} };
                                 }
-                                if (!updatedActivity.playerStats.assists) {
-                                  updatedActivity.playerStats.assists = {};
+                                if (!updatedActivity.player_stats.assists) {
+                                  updatedActivity.player_stats.assists = {};
                                 }
-                                updatedActivity.playerStats.assists[player.id] = (assists || 0) + 1;
+                                updatedActivity.player_stats.assists[player.id] = (assists || 0) + 1;
                                 setCurrentActivity(updatedActivity);
                                 if (onActivityUpdate) {
                                   onActivityUpdate(updatedActivity);
@@ -888,58 +888,4 @@ export function PlayerDetail({
             </div>
             
             {stats.goalsByActivity.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-semibold mb-2">Målstatistik</h4>
-                <div className="space-y-2">
-                  {stats.goalsByActivity.map((activityStat, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
-                      <div>
-                        <div className="font-medium">{activityStat.activityName}</div>
-                        <div className="text-muted-foreground text-xs">
-                          {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        {activityStat.goals} {activityStat.goals === 1 ? 'mål' : 'mål'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {stats.assistsByActivity.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-semibold mb-2">Assiststatistik</h4>
-                <div className="space-y-2">
-                  {stats.assistsByActivity.map((activityStat, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
-                      <div>
-                        <div className="font-medium">{activityStat.activityName}</div>
-                        <div className="text-muted-foreground text-xs">
-                          {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        {activityStat.assists} {activityStat.assists === 1 ? 'assist' : 'assist'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>Stäng</Button>
-        </CardFooter>
-      </Card>
-      
-      <PlayerMatchHistory 
-        player={player} 
-        activities={activities} 
-        onActivitySelect={handleActivitySelect} 
-      />
-    </div>
-  );
-}
+              <div className="

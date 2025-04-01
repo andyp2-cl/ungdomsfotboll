@@ -37,8 +37,8 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
   const assistsByActivity: PlayerStatistics['assistsByActivity'] = [];
 
   historicalMatches.forEach(match => {
-    const goals = match.playerStats?.goals?.[player.id] || 0;
-    const assists = match.playerStats?.assists?.[player.id] || 0;
+    const goals = match.player_stats?.goals?.[player.id] || 0;
+    const assists = match.player_stats?.assists?.[player.id] || 0;
 
     totalGoals += goals;
     totalAssists += assists;

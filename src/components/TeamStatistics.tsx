@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,10 +34,10 @@ export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStat
       let winCount = 0;
 
       activities.forEach(activity => {
-        if (activity.type === "match" && activity.playerStats && activity.participants?.includes(player.id)) {
+        if (activity.type === "match" && activity.player_stats && activity.participants?.includes(player.id)) {
           matchCount++;
-          totalGoals += activity.playerStats.goals?.[player.id] || 0;
-          totalAssists += activity.playerStats.assists?.[player.id] || 0;
+          totalGoals += activity.player_stats.goals?.[player.id] || 0;
+          totalAssists += activity.player_stats.assists?.[player.id] || 0;
           
           // Count wins
           if (activity.result) {

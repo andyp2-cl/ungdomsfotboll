@@ -60,7 +60,8 @@ export function AddActivityForm({
         gpsLink: locationGpsLink
       },
       time: time,
-      matches: cupMatches
+      matches: cupMatches,
+      participants: [] // Adding the required participants property
     };
 
     onSave(newActivity);
