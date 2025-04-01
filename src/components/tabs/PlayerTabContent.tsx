@@ -92,7 +92,7 @@ export function PlayerTabContent({
           onClose={() => setSelectedPlayer(null)}
           onEdit={setEditingPlayer}
           onPlayerUpdate={handlePlayerUpdate}
-          onBulkUpdate={handleBulkPlayerUpdate}
+          onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
           allPlayers={players}
           onActivitySelect={onActivitySelect}
         />
