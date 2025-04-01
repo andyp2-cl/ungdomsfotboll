@@ -16,6 +16,8 @@ interface ScoreFormProps {
   awayScore: number | undefined;
   setHomeScore: (score: number | undefined) => void;
   setAwayScore: (score: number | undefined) => void;
+  manualWinStatus?: boolean | undefined;
+  setManualWinStatus?: (status: boolean | undefined) => void;
   onSave: () => void;
   isSaving: boolean;
   isHistorical?: boolean;
@@ -27,6 +29,8 @@ export function ScoreForm({
   awayScore,
   setHomeScore,
   setAwayScore,
+  manualWinStatus,
+  setManualWinStatus,
   onSave,
   isSaving,
   isHistorical = false
@@ -40,6 +44,26 @@ export function ScoreForm({
   // Create appropriate labels for the score inputs
   const homeTeamLabel = isHome ? "Hässleholms IF (hemma)" : teamNames.homeTeam;
   const awayTeamLabel = !isHome ? "Hässleholms IF (borta)" : teamNames.awayTeam;
+
+  // Handle win status change
+  const handleWinStatusChange = (value: string) => {
+    if (!setManualWinStatus) return;
+    
+    if (value === "win") {
+      setManualWinStatus(true);
+    } else if (value === "loss") {
+      setManualWinStatus(false);
+    } else if (value === "draw") {
+      setManualWinStatus(undefined);
+    }
+  };
+
+  // Determine current value for the radio group
+  const winStatusValue = manualWinStatus === true 
+    ? "win" 
+    : manualWinStatus === false 
+      ? "loss" 
+      : "draw";
 
   return (
     <div>
@@ -91,22 +115,13 @@ export function ScoreForm({
           </div>
         </div>
         
-        {!isHistorical && homeScore !== undefined && awayScore !== undefined && (
+        {!isHistorical && setManualWinStatus && (
           <div className="mb-4">
             <h4 className="text-sm font-medium mb-2">Resultat för Hässleholms IF</h4>
             <RadioGroup 
-              defaultValue={
-                homeScore === awayScore 
-                  ? "draw" 
-                  : ((isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore)) 
-                    ? "win" 
-                    : "loss"
-              }
+              value={winStatusValue}
+              onValueChange={handleWinStatusChange}
               className="flex flex-col space-y-1"
-              onValueChange={(value) => {
-                // Här kan vi eventuellt justera poängen automatiskt om så önskas
-                // Men vi låter det vara manuellt för nu
-              }}
             >
               <div className="flex items-center space-x-3 space-y-0">
                 <RadioGroupItem value="win" id="win" />

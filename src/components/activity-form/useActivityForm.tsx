@@ -79,8 +79,6 @@ export function useActivityForm(
                          !values.name.toLowerCase().includes(' vs ') || 
                          values.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
         
-        // Flip the logic here: If we're home team, we win if homeScore > awayScore
-        // If we're away team, we win if awayScore > homeScore
         if (isHomeTeam) {
           if (homeScore > awayScore) {
             isWin = true;
@@ -98,25 +96,39 @@ export function useActivityForm(
         }
       }
       
-      // Handle player_stats - ensure it's a properly formed object
-      let playerStats = activity.player_stats;
-      if (typeof playerStats === 'string') {
+      // Safely parse existing player_stats
+      let existingPlayerStats: any = activity.player_stats;
+      if (typeof existingPlayerStats === 'string') {
         try {
-          playerStats = JSON.parse(playerStats);
+          existingPlayerStats = JSON.parse(existingPlayerStats);
           // Handle double-stringified JSON
-          if (typeof playerStats === 'string') {
-            playerStats = JSON.parse(playerStats);
+          if (typeof existingPlayerStats === 'string') {
+            existingPlayerStats = JSON.parse(existingPlayerStats);
           }
         } catch (e) {
           console.error("Failed to parse player_stats:", e);
-          playerStats = { goals: {}, assists: {} };
+          existingPlayerStats = { goals: {}, assists: {} };
         }
       }
       
       // If still not an object, create a fresh one
-      if (!playerStats || typeof playerStats !== 'object') {
-        playerStats = { goals: {}, assists: {} };
+      if (!existingPlayerStats || typeof existingPlayerStats !== 'object') {
+        existingPlayerStats = { goals: {}, assists: {} };
       }
+      
+      // Create updated player_stats
+      const updatedPlayerStats = {
+        ...(existingPlayerStats || {}),
+        // Make sure to preserve existing goals and assists
+        goals: existingPlayerStats.goals || {},
+        assists: existingPlayerStats.assists || {},
+        // Add scores information
+        scores: {
+          home: homeScore,
+          away: awayScore
+        },
+        isWin
+      };
       
       // Create updated activity with form values
       const formUpdatedActivity: Activity = {
@@ -130,23 +142,22 @@ export function useActivityForm(
         homeScore,
         awayScore,
         isWin,
-        // Create or update player stats
-        player_stats: {
-          ...(playerStats || {}),
-          // Make sure to preserve existing goals and assists
-          goals: playerStats?.goals || {},
-          assists: playerStats?.assists || {},
-          // Add scores information
-          scores: {
-            home: homeScore,
-            away: awayScore
-          },
-          isWin
-        }
+        player_stats: updatedPlayerStats
       };
 
       // Use preserveMatchData to ensure match statistics are maintained
       const updatedActivity = preserveMatchData(activity, formUpdatedActivity);
+      
+      console.log("Saving activity with preserved match data:", {
+        before: {
+          playerStats: activity.player_stats,
+          playerStatsType: typeof activity.player_stats
+        },
+        after: {
+          playerStats: updatedActivity.player_stats,
+          playerStatsType: typeof updatedActivity.player_stats
+        }
+      });
       
       await onSave(updatedActivity);
     } catch (error) {

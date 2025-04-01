@@ -31,6 +31,24 @@ export function ActivityResultSection({
     setManualWinStatus(activity.isWin);
   }, [activity.homeScore, activity.awayScore, activity.isWin]);
 
+  // Helper function to safely parse player_stats
+  const safelyParsePlayerStats = (stats: any) => {
+    if (!stats) return { goals: {}, assists: {} };
+    
+    if (typeof stats === 'string') {
+      try {
+        const parsed = JSON.parse(stats);
+        // Check for double-stringified JSON
+        return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+      } catch (e) {
+        console.error("Error parsing player_stats:", e);
+        return { goals: {}, assists: {} };
+      }
+    }
+    
+    return stats;
+  };
+
   const saveMatchResult = async () => {
     setIsSaving(true);
     
@@ -46,29 +64,31 @@ export function ActivityResultSection({
       let isWin = manualWinStatus;
       
       // If no manual status, calculate based on scores
-      if (isWin === undefined) {
+      if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
         isWin = calculateWinStatus(homeScore, awayScore, isHome);
       }
       
-      // Ensure player_stats is in the correct format (in case it was stringified)
-      let playerStats = activity.player_stats;
-      if (typeof playerStats === 'string') {
-        try {
-          playerStats = JSON.parse(playerStats);
-          // Handle double-stringified JSON
-          if (typeof playerStats === 'string') {
-            playerStats = JSON.parse(playerStats);
-          }
-        } catch (e) {
-          console.error("Failed to parse player_stats:", e);
-          playerStats = { goals: {}, assists: {} };
-        }
-      }
+      // Parse existing player_stats safely
+      const existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
       
-      // If still not an object, create a fresh one
-      if (!playerStats || typeof playerStats !== 'object') {
-        playerStats = { goals: {}, assists: {} };
-      }
+      // Prepare updated player_stats
+      const updatedPlayerStats = {
+        ...existingPlayerStats,
+        goals: existingPlayerStats.goals || {},
+        assists: existingPlayerStats.assists || {},
+        scores: {
+          home: homeScore,
+          away: awayScore
+        },
+        isWin
+      };
+      
+      console.log("Saving match result with player_stats:", {
+        before: activity.player_stats,
+        after: updatedPlayerStats,
+        beforeType: typeof activity.player_stats,
+        afterType: typeof updatedPlayerStats
+      });
       
       // First directly update the database
       const { error } = await supabase
@@ -78,14 +98,7 @@ export function ActivityResultSection({
           away_score: awayScore,
           is_win: isWin,
           result: resultString,
-          player_stats: {
-            ...(playerStats || {}),
-            scores: {
-              home: homeScore,
-              away: awayScore
-            },
-            isWin
-          }
+          player_stats: updatedPlayerStats
         })
         .eq('id', activity.id);
         
@@ -94,15 +107,6 @@ export function ActivityResultSection({
         throw error;
       }
       
-      console.log("Match result saved to database:", { 
-        homeScore, 
-        awayScore, 
-        isWin, 
-        isHome,
-        manualOverride: manualWinStatus !== undefined,
-        playerStats
-      });
-      
       // Then update the local state
       const updatedActivity = {
         ...activity,
@@ -110,14 +114,7 @@ export function ActivityResultSection({
         homeScore,
         awayScore,
         isWin,
-        player_stats: {
-          ...(playerStats || {}),
-          scores: {
-            home: homeScore,
-            away: awayScore
-          },
-          isWin
-        }
+        player_stats: updatedPlayerStats
       };
       
       updateActivity(updatedActivity);
@@ -160,6 +157,8 @@ export function ActivityResultSection({
           awayScore={awayScore}
           setHomeScore={setHomeScore}
           setAwayScore={setAwayScore}
+          manualWinStatus={manualWinStatus}
+          setManualWinStatus={setManualWinStatus}
           onSave={saveMatchResult}
           isSaving={isSaving}
           isHistorical={isHistorical}
