@@ -4,7 +4,9 @@ import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 interface ActivityMatchResultProps {
   activity: Activity;
@@ -15,8 +17,9 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
   const { toast } = useToast();
   const [homeScore, setHomeScore] = useState(activity.homeScore || 0);
   const [awayScore, setAwayScore] = useState(activity.awayScore || 0);
+  const [isWin, setIsWin] = useState(activity.isWin);
 
-  const isHomeMatch = () => {
+  const isHomeTeam = () => {
     return activity.type === "match" && 
            activity.name.toLowerCase().startsWith('hässleholms if');
   };
@@ -28,7 +31,8 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
       ...activity,
       result: resultString,
       homeScore: homeScore,
-      awayScore: awayScore
+      awayScore: awayScore,
+      isWin: isWin
     };
     
     updateActivity(updatedActivity);
@@ -45,7 +49,7 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
       <div className="grid grid-cols-3 gap-2 mb-3 items-center">
         <div className="space-y-2">
           <Label htmlFor="homeScore">
-            {isHomeMatch() ? "Våra mål" : "Deras mål"}
+            {isHomeTeam() ? "Våra mål" : "Deras mål"}
           </Label>
           <Input
             id="homeScore"
@@ -61,7 +65,7 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
         </div>
         <div className="space-y-2">
           <Label htmlFor="awayScore">
-            {isHomeMatch() ? "Deras mål" : "Våra mål"}
+            {isHomeTeam() ? "Deras mål" : "Våra mål"}
           </Label>
           <Input
             id="awayScore"
@@ -73,6 +77,23 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
           />
         </div>
       </div>
+      
+      <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center space-x-2">
+          <CheckCircle2 className={`h-5 w-5 ${isWin ? "text-green-500" : "text-gray-300"}`} />
+          <Switch 
+            checked={isWin === true}
+            onCheckedChange={(checked) => setIsWin(checked ? true : checked === false ? false : undefined)}
+          />
+          <XCircle className={`h-5 w-5 ${isWin === false ? "text-red-500" : "text-gray-300"}`} />
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {isWin === true ? "Hässleholms IF vann denna match" : 
+           isWin === false ? "Hässleholms IF förlorade denna match" : 
+           "Oavgjort"}
+        </span>
+      </div>
+      
       <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ interface MatchesTabContentProps {
 }
 
 export function MatchesTabContent({ activities }: MatchesTabContentProps) {
-  // Filtrera ut endast genomförda matcher (de som har ett resultat)
+  // Filter out only completed matches (those with a result)
   const completedMatches = useMemo(() => {
     return activities.filter(a => a.type === 'match' && a.result);
   }, [activities]);
@@ -23,39 +24,27 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     
     completedMatches.forEach(match => {
       // First check if isWin is explicitly set
-      if (match.isWin !== undefined) {
-        if (match.isWin) {
-          wins++;
-        } else if (match.homeScore === match.awayScore) {
-          draws++;
-        } else {
-          losses++;
-        }
+      if (match.isWin === true) {
+        wins++;
+      } else if (match.isWin === false) {
+        losses++;
+      } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
+                match.homeScore === match.awayScore) {
+        draws++;
       }
-      // Otherwise calculate based on scores
-      else if (match.result) {
-        const [homeScore, awayScore] = match.result.split('-').map(Number);
-        if (isNaN(homeScore) || isNaN(awayScore)) return;
-        
+      
+      // Calculate our score and opponent score
+      if (match.homeScore !== undefined && match.awayScore !== undefined) {
         // Determine if we're home or away team
         const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
                          !match.name.toLowerCase().includes(' vs ') || 
                          match.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
         
-        // Calculate our score and opponent score
-        const ourScore = isHomeTeam ? homeScore : awayScore;
-        const theirScore = isHomeTeam ? awayScore : homeScore;
+        const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
+        const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
         
         goalsScored += ourScore;
         goalsConceded += theirScore;
-        
-        if (ourScore > theirScore) {
-          wins++;
-        } else if (ourScore === theirScore) {
-          draws++;
-        } else {
-          losses++;
-        }
       }
     });
     
@@ -78,7 +67,7 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     { name: 'Förluster', value: matchStats.losses, color: '#ef4444' }
   ];
 
-  // Om det inte finns några genomförda matcher, visa ett meddelande
+  // If there are no completed matches, show a message
   if (completedMatches.length === 0) {
     return (
       <div className="p-4 bg-muted rounded-lg text-center">

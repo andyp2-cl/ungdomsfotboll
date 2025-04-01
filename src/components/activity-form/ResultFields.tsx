@@ -1,12 +1,12 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Trophy, Circle, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, CheckCircle2, XCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
 import { useEffect } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -14,7 +14,7 @@ interface ResultFieldsProps {
 }
 
 export function ResultFields({ form, activityType }: ResultFieldsProps) {
-  // Auto-compute the result string and match outcome when scores change
+  // Auto-compute the result string when scores change
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if ((name === 'homeScore' || name === 'awayScore') && 
@@ -22,34 +22,6 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
           value.awayScore !== undefined) {
         // Update result string
         form.setValue('result', `${value.homeScore}-${value.awayScore}`);
-        
-        // Auto-determine if match was a win for Hässleholms IF
-        const isHomeTeam = value.name?.toLowerCase().includes('hässleholms if') && 
-                         !value.name?.toLowerCase().includes(' vs ') || 
-                         value.name?.toLowerCase().split(' vs ')[0].includes('hässleholms if');
-        
-        // Fix the logic here: For Hässleholms IF
-        // If we're home team and homeScore > awayScore = WIN
-        // If we're away team and awayScore > homeScore = WIN
-        if (isHomeTeam) {
-          if (value.homeScore > value.awayScore) {
-            form.setValue('isWin', true);
-          } else if (value.homeScore < value.awayScore) {
-            form.setValue('isWin', false);
-          } else {
-            // Draw - set to null or undefined
-            form.setValue('isWin', undefined);
-          }
-        } else {
-          if (value.awayScore > value.homeScore) {
-            form.setValue('isWin', true);
-          } else if (value.awayScore < value.homeScore) {
-            form.setValue('isWin', false);
-          } else {
-            // Draw - set to null or undefined
-            form.setValue('isWin', undefined);
-          }
-        }
       }
     });
     
@@ -149,21 +121,47 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
           control={form.control}
           name="isWin"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
+            <FormItem className="space-y-3">
+              <FormLabel>Matchresultat för Hässleholms IF</FormLabel>
               <FormControl>
-                <Checkbox 
-                  checked={field.value === true}
-                  onCheckedChange={(checked) => {
-                    field.onChange(checked === true);
+                <RadioGroup
+                  onValueChange={(value) => {
+                    if (value === "win") field.onChange(true);
+                    else if (value === "loss") field.onChange(false);
+                    else field.onChange(undefined);
                   }}
-                />
+                  defaultValue={field.value === true ? "win" : field.value === false ? "loss" : "draw"}
+                  className="flex flex-col space-y-1"
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="win" />
+                    </FormControl>
+                    <FormLabel className="font-normal flex items-center">
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      Vinst
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="draw" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      Oavgjort
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="loss" />
+                    </FormControl>
+                    <FormLabel className="font-normal flex items-center">
+                      <XCircle className="h-4 w-4 mr-2 text-red-500" />
+                      Förlust
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Hässleholms IF vann denna match
-                </FormLabel>
-              </div>
+              <FormMessage />
             </FormItem>
           )}
         />
