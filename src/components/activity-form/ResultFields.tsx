@@ -6,6 +6,7 @@ import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
 import { useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -109,6 +110,31 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="mt-4">
+        <FormField
+          control={form.control}
+          name="isWin"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Hässleholms IF vann matchen
+                </FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Markera om Hässleholms IF vann matchen oavsett resultat
+                </p>
+              </div>
             </FormItem>
           )}
         />

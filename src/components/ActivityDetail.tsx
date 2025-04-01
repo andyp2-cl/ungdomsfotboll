@@ -281,6 +281,11 @@ export function ActivityDetail({
                   {formatResult()}
                 </Badge>
               )}
+              {isHistorical && currentActivity.type === "match" && currentActivity.isWin && (
+                <Badge variant="outline" className="ml-2 bg-green-100 text-green-800 border-green-300">
+                  Vinst
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="flex flex-col gap-1">
               <div className="flex items-center">
@@ -510,6 +515,30 @@ export function ActivityDetail({
                   />
                 </div>
               </div>
+              
+              <div className="flex items-center space-x-2 mt-3 mb-3">
+                <Checkbox 
+                  id="isWin" 
+                  checked={currentActivity.isWin || false}
+                  onCheckedChange={(checked) => {
+                    const updatedActivity = {
+                      ...currentActivity,
+                      isWin: checked === true
+                    };
+                    setCurrentActivity(updatedActivity);
+                    if (onActivityUpdate) {
+                      onActivityUpdate(updatedActivity);
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="isWin"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Hässleholms IF vann matchen
+                </label>
+              </div>
+              
               <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
             </div>
             

@@ -36,6 +36,7 @@ export interface Activity {
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score
+  isWin?: boolean; // Added: Flag to indicate if Hässleholms IF won the match
 }
 
 export interface Player {
