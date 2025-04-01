@@ -53,9 +53,8 @@ export function usePlayers(initialTab?: string) {
     handleActivityUpdate,
     handleDeleteActivity,
     handleKioskAssignmentUpdate,
-    handleAddActivity, // Ensure this is imported
+    handleAddActivity,
     handleImportedActivities,
-    handleScrapedMatches,
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
@@ -79,23 +78,13 @@ export function usePlayers(initialTab?: string) {
     }
   };
 
-  // Handle imported or scraped activities
+  // Handle imported activities
   const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
     try {
       await handleImportedActivities(activities);
       return true;
     } catch (error) {
       console.error("Error importing activities:", error);
-      return false;
-    }
-  };
-
-  const handleScraped = async (matches: Activity[]): Promise<boolean> => {
-    try {
-      await handleScrapedMatches(matches);
-      return true;
-    } catch (error) {
-      console.error("Error handling scraped matches:", error);
       return false;
     }
   };
@@ -159,9 +148,8 @@ export function usePlayers(initialTab?: string) {
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
-    handleScraped,
     handleClearHistorical,
-    handleAddActivity, // Ensure this is returned from the hook
+    handleAddActivity,
     handlePlayerActivitySelect,
     
     // Loading state

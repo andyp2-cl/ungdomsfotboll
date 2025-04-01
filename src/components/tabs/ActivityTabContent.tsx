@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -25,7 +26,6 @@ interface ActivityTabContentProps {
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
-  handleScrapedMatches: (matches: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
 }
 
@@ -45,7 +45,6 @@ export function ActivityTabContent({
   handleKioskAssignmentUpdate,
   handleDeleteActivity,
   handleImportedActivities,
-  handleScrapedMatches,
   handleClearHistoricalActivities
 }: ActivityTabContentProps) {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");

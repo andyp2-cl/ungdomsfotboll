@@ -20,7 +20,6 @@ interface ActivitiesTabContentProps {
   handleKioskAssignmentUpdate: (activityId: string, playerId: string) => void;
   handleDeleteActivity: (activityId: string) => void;
   handleImportedActivities: (activities: Activity[]) => void;
-  handleScrapedMatches: (matches: Activity[]) => void;
   handleClearHistoricalActivities: () => void;
 }
 
@@ -40,7 +39,6 @@ export function ActivitiesTabContent({
   handleKioskAssignmentUpdate,
   handleDeleteActivity,
   handleImportedActivities,
-  handleScrapedMatches,
   handleClearHistoricalActivities
 }: ActivitiesTabContentProps) {
   return (

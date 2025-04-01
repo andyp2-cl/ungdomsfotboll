@@ -22,7 +22,6 @@ interface ActivityManagementProps {
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => void;
   onDeleteActivity?: (activityId: string) => void;
   onImportedActivities: (importedActivities: Activity[]) => void;
-  onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
   onClearHistoricalActivities?: () => void;
 }
 
@@ -41,7 +40,6 @@ export function ActivityManagement({
   onKioskAssignmentUpdate,
   onDeleteActivity,
   onImportedActivities,
-  onMatchesScraped,
   onClearHistoricalActivities
 }: ActivityManagementProps) {
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
@@ -144,7 +142,6 @@ export function ActivityManagement({
         <TabsContent value="tools" className="space-y-6">
           <ToolsTabContent 
             onImportedActivities={onImportedActivities}
-            onMatchesScraped={onMatchesScraped}
           />
         </TabsContent>
         
