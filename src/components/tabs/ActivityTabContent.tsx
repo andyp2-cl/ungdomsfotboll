@@ -144,8 +144,8 @@ export function ActivityTabContent({
           onBack={() => setSelectedActivity(null)}
           onEdit={setEditingActivity}
           onDeleteActivity={handleDeleteActivity}
-          onUpdate={handleActivityUpdate}
-          onKioskUpdate={handleKioskAssignmentUpdate}
+          onActivityUpdate={handleActivityUpdate}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
           onActivitySelect={setSelectedActivity}
           relatedActivities={relatedActivities}
           cupMatches={cupMatches}
