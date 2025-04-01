@@ -1,10 +1,9 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Coffee, UserPlus, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
@@ -12,29 +11,29 @@ interface ActivityKioskAssignmentProps {
   activity: Activity;
   players: Player[];
   updateActivity: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
 }
 
-export function ActivityKioskAssignment({
-  activity,
-  players,
+export function ActivityKioskAssignment({ 
+  activity, 
+  players, 
   updateActivity,
   onKioskAssignmentUpdate
 }: ActivityKioskAssignmentProps) {
-  const { toast } = useToast();
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   
+  // Sort players alphabetically for the popover
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
+  // Filter players based on search query
   const filteredPlayers = playerSearchQuery 
     ? sortedPlayers.filter(player => 
         player.name.toLowerCase().includes(playerSearchQuery.toLowerCase())
       )
     : sortedPlayers;
-
+  
   const isHomeMatch = () => {
-    return activity.type === "match" && 
-           activity.name.toLowerCase().startsWith('hässleholms if');
+    return activity.name.toLowerCase().startsWith('hässleholms if');
   };
 
   const getKioskPlayerName = () => {
@@ -43,7 +42,7 @@ export function ActivityKioskAssignment({
     return player ? player.name : "Okänd spelare";
   };
 
-  const handleAssignKioskPlayer = (playerId: string) => {
+  const handleAssignKioskPlayer = async (playerId: string) => {
     const updatedActivity = {
       ...activity,
       kioskAssignedPlayerId: playerId
@@ -51,16 +50,8 @@ export function ActivityKioskAssignment({
     
     updateActivity(updatedActivity);
     
-    if (onKioskAssignmentUpdate) {
-      onKioskAssignmentUpdate(activity.id, playerId);
-    }
-    
-    const playerName = players.find(p => p.id === playerId)?.name || "Spelare";
-    
-    toast({
-      title: "Kioskpass tilldelat",
-      description: `${playerName} har tilldelats kioskpass för denna aktivitet.`,
-    });
+    // Also update through the provided update function
+    await onKioskAssignmentUpdate(activity.id, playerId);
   };
 
   return (

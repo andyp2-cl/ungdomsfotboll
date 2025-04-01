@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +14,10 @@ interface ActivityMatchStatsProps {
 export function ActivityMatchStats({ 
   activity, 
   players, 
-  participatingPlayers,
+  participatingPlayers, 
   updateActivity 
 }: ActivityMatchStatsProps) {
+  
   const getTotalGoals = () => {
     if (!activity.player_stats?.goals) return 0;
     return Object.values(activity.player_stats.goals).reduce((sum, goals) => sum + (goals as number), 0);
@@ -26,12 +28,52 @@ export function ActivityMatchStats({
     return Object.values(activity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
   };
 
+  const handleGoalChange = (playerId: string, change: number) => {
+    const updatedActivity = {...activity};
+    
+    if (!updatedActivity.player_stats) {
+      updatedActivity.player_stats = { goals: {}, assists: {} };
+    }
+    
+    if (!updatedActivity.player_stats.goals) {
+      updatedActivity.player_stats.goals = {};
+    }
+    
+    const currentGoals = updatedActivity.player_stats.goals[playerId] || 0;
+    const newGoals = Math.max(0, currentGoals + change);
+    
+    updatedActivity.player_stats.goals[playerId] = newGoals;
+    
+    updateActivity(updatedActivity);
+  };
+
+  const handleAssistChange = (playerId: string, change: number) => {
+    const updatedActivity = {...activity};
+    
+    if (!updatedActivity.player_stats) {
+      updatedActivity.player_stats = { goals: {}, assists: {} };
+    }
+    
+    if (!updatedActivity.player_stats.assists) {
+      updatedActivity.player_stats.assists = {};
+    }
+    
+    const currentAssists = updatedActivity.player_stats.assists[playerId] || 0;
+    const newAssists = Math.max(0, currentAssists + change);
+    
+    updatedActivity.player_stats.assists[playerId] = newAssists;
+    
+    updateActivity(updatedActivity);
+  };
+
   return (
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
+      
       {participatingPlayers.length > 0 ? (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground mb-2">Anteckna hur många mål och assist varje spelare har gjort:</p>
+          
           {participatingPlayers.map(player => {
             const goals = activity.player_stats?.goals?.[player.id] || 0;
             const assists = activity.player_stats?.assists?.[player.id] || 0;
@@ -46,19 +88,7 @@ export function ActivityMatchStats({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 rounded-full"
-                      onClick={() => {
-                        const updatedActivity = {...activity};
-                        if (!updatedActivity.player_stats) {
-                          updatedActivity.player_stats = { goals: {} };
-                        }
-                        if (!updatedActivity.player_stats.goals) {
-                          updatedActivity.player_stats.goals = {};
-                        }
-                        if (goals > 0) {
-                          updatedActivity.player_stats.goals[player.id] = goals - 1;
-                        }
-                        updateActivity(updatedActivity);
-                      }}
+                      onClick={() => handleGoalChange(player.id, -1)}
                       disabled={goals === 0}
                     >
                       -
@@ -68,17 +98,7 @@ export function ActivityMatchStats({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 rounded-full"
-                      onClick={() => {
-                        const updatedActivity = {...activity};
-                        if (!updatedActivity.player_stats) {
-                          updatedActivity.player_stats = { goals: {}, assists: {} };
-                        }
-                        if (!updatedActivity.player_stats.goals) {
-                          updatedActivity.player_stats.goals = {};
-                        }
-                        updatedActivity.player_stats.goals[player.id] = (goals || 0) + 1;
-                        updateActivity(updatedActivity);
-                      }}
+                      onClick={() => handleGoalChange(player.id, 1)}
                     >
                       +
                     </Button>
@@ -90,19 +110,7 @@ export function ActivityMatchStats({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 rounded-full"
-                      onClick={() => {
-                        const updatedActivity = {...activity};
-                        if (!updatedActivity.player_stats) {
-                          updatedActivity.player_stats = { goals: {}, assists: {} };
-                        }
-                        if (!updatedActivity.player_stats.assists) {
-                          updatedActivity.player_stats.assists = {};
-                        }
-                        if (assists > 0) {
-                          updatedActivity.player_stats.assists[player.id] = assists - 1;
-                        }
-                        updateActivity(updatedActivity);
-                      }}
+                      onClick={() => handleAssistChange(player.id, -1)}
                       disabled={assists === 0}
                     >
                       -
@@ -112,17 +120,7 @@ export function ActivityMatchStats({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 rounded-full"
-                      onClick={() => {
-                        const updatedActivity = {...activity};
-                        if (!updatedActivity.player_stats) {
-                          updatedActivity.player_stats = { goals: {}, assists: {} };
-                        }
-                        if (!updatedActivity.player_stats.assists) {
-                          updatedActivity.player_stats.assists = {};
-                        }
-                        updatedActivity.player_stats.assists[player.id] = (assists || 0) + 1;
-                        updateActivity(updatedActivity);
-                      }}
+                      onClick={() => handleAssistChange(player.id, 1)}
                     >
                       +
                     </Button>
@@ -131,6 +129,7 @@ export function ActivityMatchStats({
               </div>
             );
           })}
+          
           <div className="mt-4 flex gap-4 justify-center">
             <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
               Mål: {getTotalGoals()}

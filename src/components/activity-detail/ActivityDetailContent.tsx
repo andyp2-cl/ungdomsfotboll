@@ -75,7 +75,7 @@ export function ActivityDetailContent({
           updateActivity={onUpdate}
         />
 
-        {/* Kiosk assignment section */}
+        {/* Kiosk assignment section (only for matches) */}
         {activity.type === "match" && (
           <ActivityKioskAssignment 
             activity={activity}
