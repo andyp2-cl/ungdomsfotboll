@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, Player } from "@/types/player";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
-import { MatchesTabContent } from "./MatchesTabContent";
+import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { ParticipationTabContent } from "./ParticipationTabContent";
 import { saveActiveTab } from "@/utils/storage/tabs";

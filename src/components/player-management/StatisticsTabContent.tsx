@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
 import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
-import { MatchesTabContent } from "@/components/player-management/statistics/MatchesTabContent";
+import { MatchesTabContent } from "@/components/player-management/statistics/matches/MatchesTabContent";
 import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
 

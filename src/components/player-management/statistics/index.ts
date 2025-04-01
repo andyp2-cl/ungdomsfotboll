@@ -1,5 +1,5 @@
 
 export * from "./StatisticsTabsWrapper";
-export * from "./MatchesTabContent";
-export * from "./GoalsTabContent";
+export * from "./matches/MatchesTabContent";
+export * from "./goals/GoalsTabContent";
 export * from "./ParticipationTabContent";
