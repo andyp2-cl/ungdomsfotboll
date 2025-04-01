@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ActivityDetailHeader } from "./ActivityDetailHeader";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { AddPlayersToActivity } from "../AddPlayersToActivity";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ActivityResultSection } from "./match-result";
-import { ActivityStatsSection } from "./ActivityStatsSection";
-import { ActivityParticipantSection } from "./ActivityParticipantSection";
-import { ActivityKioskSection } from "./ActivityKioskSection";
-import { ActivityMatchesSection } from "./ActivityMatchesSection";
+import { QuickMatchResult } from "./QuickMatchResult";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
+import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
+import { HeaderActionButtons } from "./HeaderActionButtons";
+import { ParticipantActionButtons } from "./ParticipantActionButtons";
+import { ParticipantsList } from "./ParticipantsList";
+import { Badge } from "@/components/ui/badge";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -27,10 +29,6 @@ interface ActivityDetailProps {
   allActivities?: Activity[];
   cupMatches?: Activity[];
   onPlayerSelect?: (playerId: string) => void;
-  onUpdate?: (activity: Activity) => void;
-  onKioskUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
-  onDelete?: (activityId: string) => Promise<boolean>;
-  relatedActivities?: Activity[];
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
@@ -41,21 +39,20 @@ export function ActivityDetail({
   onBack, 
   onEdit, 
   onActivityUpdate,
-  onUpdate,
   onKioskAssignmentUpdate,
-  onKioskUpdate,
   onActivitySelect,
   onDeleteActivity,
-  onDelete,
   allActivities,
-  relatedActivities,
   cupMatches = [],
   onPlayerSelect,
   onMatchResultUpdate
 }: ActivityDetailProps) {
+  const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
+  const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
+  const [clearParticipantsDialogOpen, setClearParticipantsDialogOpen] = useState(false);
+  
   useEffect(() => {
     setCurrentActivity(activity);
   }, [activity]);
@@ -66,45 +63,11 @@ export function ActivityDetail({
     (player) => currentActivity.participants?.includes(player.id)
   );
 
-  const normalizePlayerStats = (activity: Activity): Activity => {
-    if (!activity.player_stats) {
-      return {
-        ...activity,
-        player_stats: { goals: {}, assists: {} }
-      };
-    }
-    
-    if (typeof activity.player_stats === 'string') {
-      try {
-        const parsed = JSON.parse(activity.player_stats);
-        return {
-          ...activity,
-          player_stats: typeof parsed === 'string' 
-            ? JSON.parse(parsed) 
-            : parsed
-        };
-      } catch (e) {
-        console.error("Error parsing player_stats:", e);
-        return {
-          ...activity,
-          player_stats: { goals: {}, assists: {} }
-        };
-      }
-    }
-    
-    return activity;
-  };
-
   const handleActivityUpdate = (updatedActivity: Activity) => {
-    const normalizedActivity = normalizePlayerStats(updatedActivity);
-    setCurrentActivity(normalizedActivity);
+    setCurrentActivity(updatedActivity);
     
     if (onActivityUpdate) {
-      onActivityUpdate(normalizedActivity);
-    }
-    
-    if (onUpdate) {
-      onUpdate(normalizedActivity);
+      onActivityUpdate(updatedActivity);
     }
   };
 
@@ -112,85 +75,196 @@ export function ActivityDetail({
     if (onDeleteActivity) {
       onDeleteActivity(currentActivity.id);
       onClose();
-    } else if (onDelete) {
-      onDelete(currentActivity.id).then(success => {
-        if (success) {
-          if (onBack) onBack();
-          else onClose();
-        }
-      });
     }
   };
 
   const handleClose = onBack || onClose;
 
-  const normalizedCurrentActivity = normalizePlayerStats(currentActivity);
+  const handleAddPlayers = (playerIds: string[]) => {
+    const updatedParticipants = [
+      ...(currentActivity.participants || []),
+      ...playerIds
+    ];
+    
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
+    };
+    
+    handleActivityUpdate(updatedActivity);
+    
+    const playerNames = playerIds.map(id => 
+      players.find(p => p.id === id)?.name || "Spelare"
+    ).join(", ");
+    
+    toast({
+      title: "Spelare tillagda",
+      description: `${playerNames} har lagts till i aktiviteten.`,
+    });
+  };
+
+  const handleRemovePlayer = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const updatedParticipants = (currentActivity.participants || []).filter(
+      id => id !== playerId
+    );
+    
+    const updatedActivity = {
+      ...currentActivity,
+      participants: updatedParticipants
+    };
+    
+    if (currentActivity.kioskAssignedPlayerId === playerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    handleActivityUpdate(updatedActivity);
+    
+    toast({
+      title: "Spelare borttagen",
+      description: `${player.name} har tagits bort från aktiviteten.`,
+    });
+  };
+
+  const handleClearAllParticipants = () => {
+    const updatedActivity = {
+      ...currentActivity,
+      participants: []
+    };
+    
+    if (currentActivity.kioskAssignedPlayerId) {
+      updatedActivity.kioskAssignedPlayerId = undefined;
+      
+      if (onKioskAssignmentUpdate) {
+        onKioskAssignmentUpdate(currentActivity.id, undefined);
+      }
+    }
+    
+    handleActivityUpdate(updatedActivity);
+    setClearParticipantsDialogOpen(false);
+    
+    toast({
+      title: "Deltagarlista rensad",
+      description: `Alla spelare har tagits bort från aktiviteten.`,
+    });
+  };
+
+  const handleQuickResultSave = async (homeScore?: number, awayScore?: number) => {
+    if (onMatchResultUpdate) {
+      await onMatchResultUpdate(activity.id, homeScore, awayScore);
+    }
+  };
+
+  const formatResult = () => {
+    if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
+      return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
+    }
+    return currentActivity.result || "";
+  };
+
+  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
+  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+
+  const isMatch = activity.type === "match";
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
-      <ActivityDetailHeader 
-        activity={normalizedCurrentActivity}
-        isHistorical={isHistorical}
-        onClose={handleClose}
-        onEdit={onEdit}
-        onDeleteOpen={() => setIsDeleteDialogOpen(true)}
-      />
-
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <ActivityDetailHeaderContent 
+            activity={currentActivity}
+            formattedDate={formattedDate}
+            capitalizedDayOfWeek={capitalizedDayOfWeek}
+            isHistorical={isHistorical}
+            formatResult={formatResult}
+          />
+          <HeaderActionButtons 
+            onEdit={onEdit}
+            currentActivity={currentActivity}
+            onDeleteActivity={onDeleteActivity}
+            isDeleteDialogOpen={isDeleteDialogOpen}
+            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+            handleClose={handleClose}
+          />
+        </div>
+      </CardHeader>
       <CardContent className="space-y-6">
-        {normalizedCurrentActivity.type === "match" && (
-          <ActivityResultSection 
-            activity={normalizedCurrentActivity}
+        {isMatch && (
+          <QuickMatchResult 
+            activity={activity}
+            onSave={handleQuickResultSave}
+            isReadOnly={false}
+          />
+        )}
+
+        <Accordion type="single" collapsible defaultValue="participants">
+          <AccordionItem value="participants">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                <span>Deltagare ({participatingPlayers.length})</span>
+                {participatingPlayers.length === 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    Inga deltagare
+                  </Badge>
+                )}
+                {participatingPlayers.length >= 12 && (
+                  <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
+                    Maxantal
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ParticipantsList
+                participants={participatingPlayers}
+                onPlayerSelect={onPlayerSelect}
+                onRemovePlayer={handleRemovePlayer}
+              />
+
+              <ParticipantActionButtons 
+                isAddingPlayers={isAddingPlayers}
+                setIsAddingPlayers={setIsAddingPlayers}
+                participantCount={participatingPlayers.length}
+                handleClearAllParticipants={handleClearAllParticipants}
+                isOpen={clearParticipantsDialogOpen}
+                setIsOpen={setClearParticipantsDialogOpen}
+              />
+
+              {isAddingPlayers && (
+                <AddPlayersToActivity 
+                  activity={currentActivity}
+                  players={players}
+                  onAddPlayers={handleAddPlayers}
+                  currentParticipantIds={currentActivity.participants || []}
+                />
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {isHistorical && isMatch && (
+          <ActivityResultSection
+            activity={currentActivity}
             isHistorical={isHistorical}
             updateActivity={handleActivityUpdate}
             onMatchResultUpdate={onMatchResultUpdate}
           />
         )}
-        
-        {normalizedCurrentActivity.type === "match" && (
-          <ActivityStatsSection 
-            activity={normalizedCurrentActivity}
-            players={players}
-            participatingPlayers={participatingPlayers}
-            updateActivity={handleActivityUpdate}
-            isHistorical={isHistorical}
-          />
-        )}
-        
-        <ActivityParticipantSection 
-          activity={normalizedCurrentActivity}
-          players={players}
-          updateActivity={handleActivityUpdate}
-          onPlayerSelect={onPlayerSelect}
-        />
-        
-        {normalizedCurrentActivity.type === "match" && (
-          <ActivityKioskSection 
-            activity={normalizedCurrentActivity}
-            players={players}
-            updateActivity={handleActivityUpdate}
-            onKioskAssignmentUpdate={onKioskAssignmentUpdate || 
-              (onKioskUpdate ? 
-                (activityId, playerId) => {
-                  onKioskUpdate(activityId, playerId);
-                  return Promise.resolve(true);
-                } : undefined)}
-          />
-        )}
-        
-        {normalizedCurrentActivity.type === "cup" && cupMatches && cupMatches.length > 0 && (
-          <ActivityMatchesSection 
-            cupMatches={cupMatches}
-            onActivitySelect={onActivitySelect}
-          />
-        )}
       </CardContent>
-      
       <CardFooter className="flex justify-end">
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>
 
       <DeleteActivityDialog
-        activityName={normalizedCurrentActivity.name}
+        activityName={currentActivity.name}
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onDelete={handleDeleteActivity}
