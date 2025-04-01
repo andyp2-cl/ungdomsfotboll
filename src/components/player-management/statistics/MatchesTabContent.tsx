@@ -21,6 +21,10 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     let losses = 0;
     let goalsScored = 0;
     let goalsConceded = 0;
+    let cleanSheets = 0;
+    let comebackWins = 0;
+    let homeWins = 0;
+    let awayWins = 0;
     
     completedMatches.forEach(match => {
       // First check if isWin is explicitly set
@@ -47,6 +51,26 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
         
         goalsScored += ourScore;
         goalsConceded += theirScore;
+        
+        // Clean sheets - matches where we conceded 0 goals
+        if (theirScore === 0) {
+          cleanSheets++;
+        }
+        
+        // Count home/away wins
+        if (match.isWin === true) {
+          if (isHomeTeam) {
+            homeWins++;
+          } else {
+            awayWins++;
+          }
+          
+          // Comeback wins - we won despite conceding first
+          // This is an approximation since we don't have timeline data
+          if (theirScore > 0) {
+            comebackWins++;
+          }
+        }
       }
     });
     
@@ -57,7 +81,10 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
       losses,
       goalsScored,
       goalsConceded,
-      goalDifference: goalsScored - goalsConceded,
+      cleanSheets,
+      comebackWins,
+      homeWins,
+      awayWins,
       winPercentage: completedMatches.length > 0 ? Math.round((wins / completedMatches.length) * 100) : 0
     };
   }, [completedMatches]);
@@ -120,8 +147,8 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
               <div className="text-sm text-muted-foreground">Vinstprocent</div>
             </div>
             <div className="text-center p-3 border rounded-md">
-              <div className="text-2xl font-bold">{matchStats.goalDifference}</div>
-              <div className="text-sm text-muted-foreground">Målskillnad</div>
+              <div className="text-2xl font-bold">{matchStats.homeWins}-{matchStats.awayWins}</div>
+              <div className="text-sm text-muted-foreground">Hemma-Borta V</div>
             </div>
           </div>
         </CardContent>
@@ -156,6 +183,14 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
             <div className="flex justify-between items-center p-3 bg-orange-100 text-orange-800 rounded-md">
               <span className="font-medium">Insläppta mål:</span>
               <span>{matchStats.goalsConceded}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-emerald-100 text-emerald-800 rounded-md">
+              <span className="font-medium">Hållna nollor:</span>
+              <span>{matchStats.cleanSheets}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-purple-100 text-purple-800 rounded-md">
+              <span className="font-medium">Comeback-vinster:</span>
+              <span>{matchStats.comebackWins}</span>
             </div>
           </div>
         </CardContent>
