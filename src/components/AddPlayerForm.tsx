@@ -1,133 +1,31 @@
-import { useState, useRef } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
-import { Button } from "@/components/ui/button";
+
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, X, UserCircle, Camera, Trash2 } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid';
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Player } from "@/types/player";
+import { ImageUploadField } from "./player-form/ImageUploadField";
+import { PlayerPositionField } from "./player-form/PlayerPositionField";
+import { FormButtons } from "./player-form/FormButtons";
+import { usePlayerForm } from "./player-form/usePlayerForm";
 
-const playerFormSchema = z.object({
-  name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
-  grade: z.enum(["A", "B", "C", "D"], {
-    required_error: "Välj en nivå",
-  }),
-  positions: z.array(z.string()).optional(),
-  jerseyNumber: z.string().optional(),
-});
-
-type PlayerFormValues = z.infer<typeof playerFormSchema>;
-
-interface AddPlayerFormProps {
+export interface AddPlayerFormProps {
   onSave: (player: Player) => void;
   onCancel: () => void;
 }
 
-// List of available positions with labels
-const positionOptions = [
-  { value: "MV", label: "Målvakt" },
-  { value: "BACK", label: "Back" },
-  { value: "MF", label: "Mittfält" },
-  { value: "ANF", label: "Anfall" },
-  { value: "TRÄNARE", label: "Tränare" }
-];
-
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
-  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobile();
-
-  const form = useForm<PlayerFormValues>({
-    resolver: zodResolver(playerFormSchema),
-    defaultValues: {
-      name: "",
-      grade: "B",
-      positions: [],
-      jerseyNumber: "",
-    },
+  const { form, imagePreview, setImagePreview, handleSubmit } = usePlayerForm({ 
+    onSave, 
+    onCancel 
   });
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleSubmit = (values: PlayerFormValues) => {
-    const newPlayer: Player = {
-      id: uuidv4(),
-      name: values.name,
-      grade: values.grade as PlayerGrade,
-      positions: values.positions as PlayerPosition[] || [],
-      jerseyNumber: values.jerseyNumber || undefined,
-      activities: [],
-      image: imagePreview,
-    };
-
-    onSave(newPlayer);
-  };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 w-full max-w-md mx-auto px-2">
-        <div className="flex flex-col items-center mb-4">
-          <div className="relative mb-2">
-            <div 
-              className="h-24 w-24 rounded-full border border-gray-200 overflow-hidden flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors"
-              onClick={handleImageClick}
-            >
-              {imagePreview ? (
-                <img src={imagePreview} alt="Player" className="h-full w-full object-cover" />
-              ) : (
-                <UserCircle className="h-16 w-16 text-gray-400" />
-              )}
-              <div className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full">
-                <Camera className="h-4 w-4" />
-              </div>
-            </div>
-            {imagePreview && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon" 
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white" 
-                onClick={handleRemoveImage}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
-          <span className="text-sm text-muted-foreground">Klicka för att lägga till bild</span>
-        </div>
+        <ImageUploadField 
+          imagePreview={imagePreview} 
+          setImagePreview={setImagePreview} 
+        />
 
         <FormField
           control={form.control}
@@ -167,52 +65,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="positions"
-          render={() => (
-            <FormItem>
-              <FormLabel>Positioner</FormLabel>
-              <div className="flex flex-col space-y-2">
-                {positionOptions.map((position) => (
-                  <FormField
-                    key={position.value}
-                    control={form.control}
-                    name="positions"
-                    render={({ field }) => {
-                      return (
-                        <div className="flex items-center space-x-2 py-1">
-                          <Checkbox
-                            id={`position-${position.value}`}
-                            checked={field.value?.includes(position.value)}
-                            onCheckedChange={(checked) => {
-                              let updatedPositions = [...(field.value || [])];
-                              if (checked) {
-                                updatedPositions.push(position.value);
-                              } else {
-                                updatedPositions = updatedPositions.filter(
-                                  (p) => p !== position.value
-                                );
-                              }
-                              field.onChange(updatedPositions);
-                            }}
-                          />
-                          <label
-                            htmlFor={`position-${position.value}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {position.label}
-                          </label>
-                        </div>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <PlayerPositionField form={form} />
 
         <FormField
           control={form.control}
@@ -228,25 +81,24 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
           )}
         />
 
-        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'justify-end space-x-2'} pt-4`}>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            className={isMobile ? 'w-full' : ''}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Avbryt
-          </Button>
-          <Button 
-            type="submit"
-            className={isMobile ? 'w-full' : ''}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Spara
-          </Button>
-        </div>
+        <FormButtons onCancel={onCancel} />
       </form>
     </Form>
+  );
+}
+
+// Wrapper component for backward compatibility
+export function AddPlayerFormWrapper({ 
+  onPlayerAdded, 
+  onClose 
+}: { 
+  onPlayerAdded: () => void; 
+  onClose: () => void 
+}) {
+  return (
+    <AddPlayerForm 
+      onSave={() => onPlayerAdded()} 
+      onCancel={onClose} 
+    />
   );
 }
