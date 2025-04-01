@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PageContainer } from "@/components/page-containers/PageContainer";
@@ -10,7 +9,6 @@ import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { Activity } from "@/types/player";
-import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 import { useEditMode } from "@/contexts/EditModeContext";
 
 interface PlayersPageProps {
@@ -211,13 +209,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
           handleAddPlayer={handleAddPlayer}
           handleAddActivity={handleAddActivity}
         />
-      )}
-      
-      {/* Backup/Restore actions visible only in edit mode */}
-      {canEdit && (
-        <div className="fixed bottom-4 right-4 z-10">
-          <BackupRestoreActions />
-        </div>
       )}
     </PageContainer>
   );

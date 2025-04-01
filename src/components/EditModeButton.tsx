@@ -2,12 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Lock, Unlock } from "lucide-react";
+import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 
 export function EditModeButton() {
   const { isEditMode, showPasswordDialog, exitEditMode } = useEditMode();
   
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-50 flex gap-2 items-center">
+      <BackupRestoreActions />
+      
       {isEditMode ? (
         <Button 
           variant="destructive" 
