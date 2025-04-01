@@ -1,11 +1,12 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Player, Activity } from "@/types/player";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Activity } from "@/types/player";
 import { Calendar } from "lucide-react";
 import { format, parseISO, isSameMonth, subMonths, startOfMonth } from "date-fns";
 import { sv } from "date-fns/locale";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 
 interface MonthlyActivityChartProps {
   activities: Activity[];
@@ -53,6 +54,12 @@ export function MonthlyActivityChart({ activities }: MonthlyActivityChartProps) 
     return monthsData;
   }, [activities]);
 
+  const chartConfig = {
+    matches: { color: "#4f46e5", label: "Matcher" },
+    cups: { color: "#ec4899", label: "Cuper" },
+    total: { color: "#10b981", label: "Totalt" }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -66,71 +73,73 @@ export function MonthlyActivityChart({ activities }: MonthlyActivityChartProps) 
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={monthlyData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis 
-                dataKey="label" 
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis allowDecimals={false} />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="rounded-lg border bg-background p-2 shadow-sm">
-                        <div className="font-medium">{label}</div>
-                        <div className="grid grid-cols-1 gap-1 mt-1">
-                          {payload.map((entry, index) => (
-                            <div key={index} className="flex items-center">
-                              <div
-                                className="w-3 h-3 rounded mr-1"
-                                style={{ backgroundColor: entry.color }}
-                              ></div>
-                              <span className="text-sm">
-                                {entry.name}: {entry.value}
-                              </span>
-                            </div>
-                          ))}
+          <ChartContainer config={chartConfig}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={monthlyData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="font-medium">{label}</div>
+                          <div className="grid grid-cols-1 gap-1 mt-1">
+                            {payload.map((entry, index) => (
+                              <div key={index} className="flex items-center">
+                                <div
+                                  className="w-3 h-3 rounded mr-1"
+                                  style={{ backgroundColor: entry.color }}
+                                ></div>
+                                <span className="text-sm">
+                                  {entry.name}: {entry.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="matches" 
-                name="Matcher" 
-                stroke="#4f46e5" 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="cups" 
-                name="Cuper" 
-                stroke="#ec4899" 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="total" 
-                name="Totalt" 
-                stroke="#10b981" 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="matches" 
+                  name="Matcher" 
+                  stroke="#4f46e5" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cups" 
+                  name="Cuper" 
+                  stroke="#ec4899" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="total" 
+                  name="Totalt" 
+                  stroke="#10b981" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>

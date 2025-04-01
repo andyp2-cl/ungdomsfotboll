@@ -19,7 +19,10 @@ export type ChartContextProps = {
   config: ChartConfig
 }
 
-export interface ChartTooltipContentProps extends React.ComponentProps<typeof RechartsPrimitive.Tooltip>, React.ComponentProps<"div"> {
+// Omit the conflicting 'content' property from Recharts' Tooltip props
+export interface ChartTooltipContentProps extends 
+  Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, 'content'>, 
+  React.ComponentProps<"div"> {
   hideLabel?: boolean
   hideIndicator?: boolean
   indicator?: "line" | "dot" | "dashed"

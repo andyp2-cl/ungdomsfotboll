@@ -5,9 +5,7 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+  CartesianGrid,
   ResponsiveContainer,
   Cell
 } from 'recharts';
@@ -50,7 +48,6 @@ export function GradeStatisticsChart({ data, config }: GradeStatisticsChartProps
               return null;
             }}
           />
-          <Legend />
           <Bar 
             dataKey="average" 
             name="Genomsnitt"

@@ -2,8 +2,8 @@
 import React, { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Player, Activity } from "@/types/player";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { ChartContainer } from "@/components/ui/chart";
 import { getGradeColor } from '@/utils/gradeUtils';
 
 interface PlayerAttendanceAnalyticsProps {
@@ -74,28 +74,6 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
                   tickFormatter={(value) => {
                     // Truncate long names
                     return value.length > 15 ? value.substring(0, 15) + '...' : value;
-                  }}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                          <div className="font-medium">{data.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Nivå: {data.grade} {data.jersey ? `• #${data.jersey}` : ''}
-                          </div>
-                          <div className="mt-1 font-medium text-sm">
-                            Närvaro: {data.attendanceRate}%
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {data.activitiesCount} av {data.totalActivities} aktiviteter
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
                   }}
                 />
                 <Bar 

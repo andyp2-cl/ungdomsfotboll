@@ -5,9 +5,7 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+  CartesianGrid,
   ResponsiveContainer,
   Cell
 } from 'recharts';
@@ -55,7 +53,6 @@ export function PlayerActivityChart({ data, config }: PlayerActivityChartProps) 
               return null;
             }}
           />
-          <Legend />
           <Bar dataKey="activities" name="">
             {data.slice(0, 10).map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getGradeColor(entry.grade)} />
