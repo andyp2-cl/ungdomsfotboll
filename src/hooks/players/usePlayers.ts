@@ -59,8 +59,22 @@ export function usePlayers() {
     viewMode,
     setViewMode,
     filteredPlayers,
-    handleGradeChange,
-    handlePositionChange,
+    handleGradeChange: (grade: any) => {
+      const isSelected = handleGradeChange(grade);
+      setSelectedGrades(prev => 
+        isSelected 
+          ? prev.filter(g => g !== grade)
+          : [...prev, grade]
+      );
+    },
+    handlePositionChange: (position: any) => {
+      const isSelected = handlePositionChange(position);
+      setSelectedPositions(prev => 
+        isSelected 
+          ? prev.filter(p => p !== position)
+          : [...prev, position]
+      );
+    },
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,

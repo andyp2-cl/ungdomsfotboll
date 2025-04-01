@@ -21,7 +21,7 @@ export function usePlayerFilters({
     return str.toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, ""); // Remove all non-alphanumeric characters
+      .replace(/[^a-z0-9\s]/g, ""); // Allow spaces in the normalized string
   };
 
   const filteredPlayers = useMemo(() => {
@@ -38,10 +38,23 @@ export function usePlayerFilters({
       return players;
     }
     
+    // Log all player names to help with debugging
+    if (players.length > 0) {
+      console.log("All player names:", players.map(p => p.name).join(", "));
+    }
+    
+    // Check specifically for Alvin in the dataset
+    const hasAlvin = players.some(p => p.name && p.name.toLowerCase().includes("alvin"));
+    console.log("Dataset contains player named Alvin:", hasAlvin);
+    
     const results = players.filter(player => {
+      if (!player.name) {
+        return false; // Skip players without names
+      }
+      
       // Check if player name includes search query (case insensitive)
-      const nameMatches = !searchQuery || 
-        normalizeString(player.name).includes(normalizedQuery);
+      const normalizedName = normalizeString(player.name);
+      const nameMatches = !searchQuery || normalizedName.includes(normalizedQuery);
       
       // Check if player grade is selected, or no grades are selected
       const gradeMatches = selectedGrades.length === 0 || 
@@ -51,22 +64,27 @@ export function usePlayerFilters({
       const positionMatches = selectedPositions.length === 0 || 
         (player.positions && player.positions.some(pos => selectedPositions.includes(pos)));
       
-      // Debug log for specific players
-      if (player.name.toLowerCase().includes("alvin")) {
-        console.log(`Filtering ${player.name}:`, {
-          nameMatches,
-          normalizedName: normalizeString(player.name),
-          gradeMatches,
-          positionMatches,
-          included: nameMatches && gradeMatches && positionMatches
-        });
-      }
+      // Debug log for all players to better trace the filtering
+      console.log(`Filtering ${player.name}:`, {
+        normalizedName,
+        nameMatches,
+        gradeMatches,
+        positionMatches,
+        included: nameMatches && gradeMatches && positionMatches
+      });
       
       return nameMatches && gradeMatches && positionMatches;
     });
     
     // Log results
     console.log(`Filtered ${players.length} players to ${results.length}`);
+    if (results.length > 0 && results.length < 10) {
+      console.log("Filtered player names:", results.map(p => p.name).join(", "));
+    }
+    
+    // Check if Alvin is in the results
+    const hasAlvinInResults = results.some(p => p.name && p.name.toLowerCase().includes("alvin"));
+    console.log("Filtered results contain Alvin:", hasAlvinInResults);
     
     return results;
   }, [players, searchQuery, selectedGrades, selectedPositions]);
