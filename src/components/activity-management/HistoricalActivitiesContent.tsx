@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Activity, ActivityType, Player } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityTabContent } from "./ActivityTabContent";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,9 +11,9 @@ interface HistoricalActivitiesContentProps {
   activities: Activity[];
   players: Player[];
   selectedActivity: Activity | null;
-  selectedActivityTypes: ActivityType[];
+  selectedActivityTypes: string[];
   filteredHistoricalActivities: Activity[];
-  onActivityTypeChange: (type: ActivityType) => void;
+  onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
   onActivityUpdate: (activity: Activity) => void;
   onAddActivityClick: () => void;
