@@ -32,10 +32,16 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         participants: [],
         cupId: item.cup_id || undefined,
         matches: [], // We'll populate this for cup activities
-        result: item.result || undefined,
+        result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score
       };
+      
+      // Set result field if home_score and away_score are available
+      if (item.home_score !== null && item.home_score !== undefined && 
+          item.away_score !== null && item.away_score !== undefined) {
+        activity.result = `${item.home_score}-${item.away_score}`;
+      }
       
       // Handle player_stats properly
       if (item.player_stats) {
