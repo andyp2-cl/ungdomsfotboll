@@ -13,6 +13,7 @@ import { ParticipantsList } from "./ParticipantsList";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { ActivityDetailView } from "./ActivityDetailView";
 import { ParticipantsSection } from "./ParticipantsSection";
+import { MatchResultQuickView } from "./MatchResultQuickView";
 
 export {
   ActivityDetail,
@@ -28,5 +29,6 @@ export {
   ParticipantsList,
   ActivityDetailHeaderContent,
   ActivityDetailView,
-  ParticipantsSection
+  ParticipantsSection,
+  MatchResultQuickView
 };

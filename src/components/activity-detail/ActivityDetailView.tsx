@@ -4,17 +4,11 @@ import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { AddPlayersToActivity } from "../AddPlayersToActivity";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ActivityResultSection } from "./match-result";
-import { QuickMatchResult } from "./QuickMatchResult";
+import { MatchResultQuickView } from "./MatchResultQuickView";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { HeaderActionButtons } from "./HeaderActionButtons";
-import { ParticipantActionButtons } from "./ParticipantActionButtons";
-import { ParticipantsList } from "./ParticipantsList";
-import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ParticipantsSection } from "./ParticipantsSection";
 
 interface ActivityDetailViewProps {
@@ -174,28 +168,6 @@ export function ActivityDetailView({
     }
   };
 
-  const formatResult = () => {
-    if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
-      return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
-    }
-    return currentActivity.result || "";
-  };
-
-  // Get total goals and assists from player_stats
-  const getTotalGoals = () => {
-    if (currentActivity.player_stats?.goals) {
-      return Object.values(currentActivity.player_stats.goals).reduce((sum, goals) => sum + (goals as number), 0);
-    }
-    return 0;
-  };
-
-  const getTotalAssists = () => {
-    if (currentActivity.player_stats?.assists) {
-      return Object.values(currentActivity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
-    }
-    return 0;
-  };
-
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
@@ -211,7 +183,12 @@ export function ActivityDetailView({
             formattedDate={formattedDate}
             capitalizedDayOfWeek={capitalizedDayOfWeek}
             isHistorical={isHistorical}
-            formatResult={formatResult}
+            formatResult={() => {
+              if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
+                return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
+              }
+              return currentActivity.result || "";
+            }}
           />
           <HeaderActionButtons 
             onEdit={onEdit}
@@ -225,7 +202,7 @@ export function ActivityDetailView({
       </CardHeader>
       <CardContent className="space-y-6">
         {isMatch && (
-          <QuickMatchResult 
+          <MatchResultQuickView 
             activity={activity}
             onSave={handleQuickResultSave}
             isReadOnly={false}
