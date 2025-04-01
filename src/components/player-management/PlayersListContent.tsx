@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Player, PlayerPosition } from "@/types/player";
-import { PlayerList } from "@/components/PlayerList";
+import { PlayerList } from "@/components/player-list/PlayerList";
 import { Button } from "@/components/ui/button";
 import { Smartphone } from "lucide-react";
 

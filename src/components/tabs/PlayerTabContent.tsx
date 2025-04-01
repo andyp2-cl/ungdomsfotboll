@@ -5,7 +5,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { PlayerFilter } from "@/components/PlayerFilter";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid, List, Plus } from "lucide-react";
-import { PlayerList } from "@/components/PlayerList";
+import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
