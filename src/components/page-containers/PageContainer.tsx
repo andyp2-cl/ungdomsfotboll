@@ -1,20 +1,23 @@
 
-import React, { ReactNode } from "react";
-import { LoadingState } from "../LoadingState";
-import { EditModeButton } from "../EditModeButton";
-import { FooterActions } from "./FooterActions";
+import React from "react";
+import { LoadingState } from "@/components/LoadingState";
+import { PlayerHeader } from "@/components/PlayerHeader";
 
 interface PageContainerProps {
-  children: ReactNode;
-  isLoading?: boolean;
+  isLoading: boolean;
+  children: React.ReactNode;
 }
 
-export function PageContainer({ children, isLoading = false }: PageContainerProps) {
+export function PageContainer({ isLoading, children }: PageContainerProps) {
   return (
-    <div className="container mx-auto px-4 pb-20 pt-6 min-h-screen relative">
-      <EditModeButton />
-      {isLoading ? <LoadingState /> : children}
-      <FooterActions />
+    <div className="container py-6">
+      <PlayerHeader />
+      
+      {isLoading ? (
+        <LoadingState />
+      ) : (
+        children
+      )}
     </div>
   );
 }

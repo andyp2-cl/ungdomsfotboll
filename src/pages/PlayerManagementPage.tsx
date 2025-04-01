@@ -9,11 +9,8 @@ import { AnalyticsTabContent } from "@/components/player-management/AnalyticsTab
 import { StatisticsTabContent } from "@/components/player-management/StatisticsTabContent";
 import { AddPlayerForm } from "@/components/AddPlayerForm";
 import { EditActivityForm } from "@/components/EditActivityForm";
-import { EditModeButton } from "@/components/EditModeButton";
-import { useEditMode } from "@/contexts/EditModeContext";
 
 export default function PlayerManagementPage() {
-  const { isEditMode } = useEditMode();
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   
   // Player state and actions
@@ -69,13 +66,9 @@ export default function PlayerManagementPage() {
   // Check if data is loading
   const isLoading = playersLoading || activitiesLoading;
 
-  // Use this to conditionally render UI elements based on edit mode
-  const canEdit = isEditMode;
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <h1 className="text-3xl font-bold">Spelarhallning</h1>
-      <EditModeButton />
       
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -106,7 +99,7 @@ export default function PlayerManagementPage() {
               onPositionChange={() => {}}
               onPlayerSelect={() => {}}
               onPlayerUpdate={handlePlayerUpdate}
-              onAddPlayerClick={canEdit ? () => setIsAddPlayerOpen(true) : undefined}
+              onAddPlayerClick={() => setIsAddPlayerOpen(true)}
               onEditPlayerClick={() => {}}
               isMobile={false}
             />
@@ -124,8 +117,8 @@ export default function PlayerManagementPage() {
               handleActivityTypeChange={handleActivityTypeChange}
               setSelectedActivity={setSelectedActivity}
               handleActivityUpdate={handleActivityUpdate}
-              setIsAddActivityOpen={canEdit ? setIsAddActivityOpen : undefined}
-              setEditingActivity={canEdit ? setEditingActivity : undefined}
+              setIsAddActivityOpen={setIsAddActivityOpen}
+              setEditingActivity={setEditingActivity}
               handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
               handleDeleteActivity={handleDeleteActivity}
               handleImportedActivities={handleImportedActivities}
@@ -152,14 +145,14 @@ export default function PlayerManagementPage() {
         </Tabs>
       )}
       
-      {canEdit && isAddPlayerOpen && (
+      {isAddPlayerOpen && (
         <AddPlayerForm 
           onSave={() => setIsAddPlayerOpen(false)}
           onCancel={() => setIsAddPlayerOpen(false)}
         />
       )}
       
-      {canEdit && editingActivity && (
+      {editingActivity && (
         <EditActivityForm
           activity={editingActivity}
           onSave={handleActivityUpdate}
