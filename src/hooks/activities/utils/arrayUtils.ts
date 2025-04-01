@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for array operations in activity hooks
  */
@@ -52,6 +51,21 @@ export const preserveMatchData = (originalActivity: Activity, updatedActivity: A
   
   // Special handling for match data to ensure it's preserved
   if (originalActivity.type === 'match' || updatedActivity.type === 'match') {
+    console.log('Preserving match data:', {
+      original: {
+        result: originalActivity.result,
+        homeScore: originalActivity.homeScore,
+        awayScore: originalActivity.awayScore,
+        isWin: originalActivity.isWin
+      },
+      updated: {
+        result: updatedActivity.result,
+        homeScore: updatedActivity.homeScore,
+        awayScore: updatedActivity.awayScore,
+        isWin: updatedActivity.isWin
+      }
+    });
+    
     // Keep the result if it exists in either version, with preference for the updated one
     result.result = updatedActivity.result || originalActivity.result;
     
@@ -59,15 +73,20 @@ export const preserveMatchData = (originalActivity: Activity, updatedActivity: A
     result.homeScore = updatedActivity.homeScore !== undefined ? updatedActivity.homeScore : originalActivity.homeScore;
     result.awayScore = updatedActivity.awayScore !== undefined ? updatedActivity.awayScore : originalActivity.awayScore;
     
-    // Preserve win status
+    // Make sure the result string and scores are in sync
+    if (result.homeScore !== undefined && result.awayScore !== undefined) {
+      result.result = `${result.homeScore}-${result.awayScore}`;
+    }
+    
+    // Preserve win status, prioritizing the updated version
     result.isWin = updatedActivity.isWin !== undefined ? updatedActivity.isWin : originalActivity.isWin;
     
-    // Ensure player_stats are properly merged
+    // Ensure player_stats are properly merged and consistently store score data
     result.player_stats = {
       // Start with original stats or empty objects
       goals: { ...(originalActivity.player_stats?.goals || {}) },
       assists: { ...(originalActivity.player_stats?.assists || {}) },
-      // Keep or create scores object
+      // Keep or create scores object, ensuring it's always in sync with the activity scores
       scores: {
         home: result.homeScore,
         away: result.awayScore
@@ -89,6 +108,14 @@ export const preserveMatchData = (originalActivity: Activity, updatedActivity: A
         ...updatedActivity.player_stats.assists
       };
     }
+
+    console.log('Preserved match data result:', {
+      result: result.result,
+      homeScore: result.homeScore,
+      awayScore: result.awayScore,
+      isWin: result.isWin,
+      player_stats: result.player_stats
+    });
   }
   
   return result;

@@ -40,6 +40,8 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
                          !match.name.toLowerCase().includes(' vs ') || 
                          match.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
         
+        // goalsScored is always OUR goals (Hässleholms IF)
+        // goalsConceded is always THEIR goals (opponent)
         const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
         const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
         

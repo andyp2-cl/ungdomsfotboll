@@ -1,4 +1,6 @@
-import { supabase, logDatabaseChange } from "@/lib/supabase";
+
+import { supabase } from "@/lib/supabase";
+import { logDatabaseChange } from "@/lib/supabase/logs";
 import { savePlayers } from "./playerStorage";
 import { saveActivities } from "./activityStorage";
 
@@ -23,11 +25,31 @@ export const useBackupRestore = () => {
       const players = playersResponse.data || [];
       const activities = activitiesResponse.data || [];
       
+      // Ensure all match data is properly stored
+      const processedActivities = activities.map(activity => {
+        // Create a copy of the activity to avoid mutating the original
+        const processedActivity = { ...activity };
+        
+        // Make sure result is set if we have scores
+        if (activity.type === 'match' && 
+            activity.home_score !== null && activity.home_score !== undefined && 
+            activity.away_score !== null && activity.away_score !== undefined) {
+          if (!processedActivity.result) {
+            processedActivity.result = `${activity.home_score}-${activity.away_score}`;
+          }
+        }
+        
+        return processedActivity;
+      });
+      
       const backupData: BackupData = {
         players: players,
-        activities: activities,
+        activities: processedActivities,
         timestamp: new Date().toISOString(),
       };
+      
+      console.log("Creating backup with activities:", processedActivities.length);
+      console.log("Sample match data:", processedActivities.filter(a => a.type === 'match').slice(0, 3));
       
       localStorage.setItem('hassleholmsif_backup', JSON.stringify(backupData));
       
@@ -36,7 +58,7 @@ export const useBackupRestore = () => {
         'backup',
         'backup',
         'all',
-        `Created backup: ${players.length} players and ${activities.length} activities`
+        `Created backup: ${players.length} players and ${processedActivities.length} activities`
       );
       
       console.log("Backup created and stored in localStorage");
@@ -87,6 +109,9 @@ export const useBackupRestore = () => {
         return false;
       }
       
+      console.log("Restoring backup with activities:", backup.activities.length);
+      console.log("Sample match data from backup:", backup.activities.filter(a => a.type === 'match').slice(0, 3));
+      
       // Restore players
       try {
         await savePlayers(backup.players);
@@ -101,6 +126,19 @@ export const useBackupRestore = () => {
         const cleanedActivities = backup.activities.map(activity => {
           // Create a shallow copy of the activity
           const cleanActivity = { ...activity };
+          
+          // Convert database field names to application field names if needed
+          if (cleanActivity.home_score !== undefined && cleanActivity.homeScore === undefined) {
+            cleanActivity.homeScore = cleanActivity.home_score;
+          }
+          
+          if (cleanActivity.away_score !== undefined && cleanActivity.awayScore === undefined) {
+            cleanActivity.awayScore = cleanActivity.away_score;
+          }
+          
+          if (cleanActivity.is_win !== undefined && cleanActivity.isWin === undefined) {
+            cleanActivity.isWin = cleanActivity.is_win;
+          }
           
           // Ensure homeScore, awayScore, and result are properly set
           if (cleanActivity.type === 'match') {
@@ -140,6 +178,9 @@ export const useBackupRestore = () => {
           
           return cleanActivity;
         });
+        
+        console.log("Processed activities for restore:", cleanedActivities.length);
+        console.log("Sample processed match data:", cleanedActivities.filter(a => a.type === 'match').slice(0, 3));
         
         await saveActivities(cleanedActivities);
       } catch (error) {

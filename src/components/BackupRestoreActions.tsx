@@ -3,15 +3,18 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useBackupRestore } from "@/utils/storage/backup";
-import { Save, RotateCcw, Clock } from "lucide-react";
+import { Save, RotateCcw, Clock, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/hooks/use-toast";
 
 export function BackupRestoreActions() {
+  const { toast } = useToast();
   const { createBackup, restoreBackup, getLastBackupInfo } = useBackupRestore();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [backupInfo, setBackupInfo] = useState<{timestamp: string, playerCount: number, activityCount: number} | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   // Get backup info on component mount and after operations
   useEffect(() => {
@@ -29,6 +32,22 @@ export function BackupRestoreActions() {
       await createBackup();
       // Update the backup info after creating a new backup
       setBackupInfo(getLastBackupInfo());
+      
+      // Show success message
+      toast({
+        title: "Data sparad",
+        description: "En säkerhetskopia har skapats framgångsrikt.",
+      });
+      
+      // Show success icon for 2 seconds
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Fel",
+        description: "Kunde inte skapa säkerhetskopia. Försök igen.",
+        variant: "destructive"
+      });
     } finally {
       setIsBackingUp(false);
     }
@@ -39,9 +58,26 @@ export function BackupRestoreActions() {
     try {
       const success = await restoreBackup();
       if (success) {
+        toast({
+          title: "Data återställd",
+          description: `Data har återställts från säkerhetskopian skapad ${formattedBackupDate}.`,
+        });
         // Force reload the page to reflect changes
         window.location.reload();
+      } else {
+        toast({
+          title: "Återställning misslyckades",
+          description: "Kunde inte återställa data. Ingen säkerhetskopia hittades eller så var formatet ogiltigt.",
+          variant: "destructive"
+        });
       }
+    } catch (error) {
+      console.error("Error in restore:", error);
+      toast({
+        title: "Återställning misslyckades",
+        description: `Ett fel uppstod: ${error instanceof Error ? error.message : 'Okänt fel'}`,
+        variant: "destructive"
+      });
     } finally {
       setIsRestoring(false);
     }
@@ -56,7 +92,8 @@ export function BackupRestoreActions() {
         onClick={handleBackup}
         disabled={isBackingUp || isRestoring}
       >
-        {isBackingUp ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+        {isBackingUp ? <Spinner className="h-4 w-4" /> : 
+          showSuccess ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Save className="h-4 w-4" />}
         Spara data
       </Button>
       

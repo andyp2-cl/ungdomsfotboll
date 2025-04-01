@@ -29,7 +29,9 @@ export function ActivityResultSection({
   }, [activity.homeScore, activity.awayScore]);
 
   const isHomeMatch = () => {
-    return activity.name.toLowerCase().startsWith('hässleholms if');
+    return activity.name.toLowerCase().includes('hässleholms if') && 
+          !activity.name.toLowerCase().includes(' vs ') || 
+          activity.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
   };
 
   const saveMatchResult = () => {
@@ -37,19 +39,39 @@ export function ActivityResultSection({
       ? `${homeScore}-${awayScore}` 
       : undefined;
     
+    // Determine win status based on scores (if we're home, we win if homeScore > awayScore and vice versa)
+    let isWin: boolean | undefined = undefined;
+    if (homeScore !== undefined && awayScore !== undefined) {
+      if (homeScore === awayScore) {
+        isWin = undefined; // Draw
+      } else if (isHomeMatch()) {
+        isWin = homeScore > awayScore;
+      } else {
+        isWin = awayScore > homeScore;
+      }
+    }
+    
     const updatedActivity = {
       ...activity,
       result: resultString,
       homeScore,
       awayScore,
+      isWin,
       player_stats: {
         ...(activity.player_stats || { goals: {}, assists: {} }),
         scores: {
           home: homeScore,
           away: awayScore
-        }
+        },
+        isWin
       }
     };
+    
+    // Log the activity data before and after the update
+    console.log("Saving match result:", { 
+      original: { result: activity.result, homeScore: activity.homeScore, awayScore: activity.awayScore, isWin: activity.isWin },
+      updated: { result: updatedActivity.result, homeScore: updatedActivity.homeScore, awayScore: updatedActivity.awayScore, isWin: updatedActivity.isWin }
+    });
     
     updateActivity(updatedActivity);
     
