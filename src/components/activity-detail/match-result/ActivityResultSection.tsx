@@ -35,18 +35,42 @@ export function ActivityResultSection({
   const safelyParsePlayerStats = (stats: any) => {
     if (!stats) return { goals: {}, assists: {} };
     
-    if (typeof stats === 'string') {
-      try {
-        const parsed = JSON.parse(stats);
-        // Check for double-stringified JSON
-        return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-      } catch (e) {
-        console.error("Error parsing player_stats:", e);
-        return { goals: {}, assists: {} };
-      }
+    // If already an object, ensure it has required structure
+    if (typeof stats !== 'string') {
+      return {
+        ...stats,
+        goals: stats.goals || {},
+        assists: stats.assists || {}
+      };
     }
     
-    return stats;
+    // Handle string-encoded JSON
+    try {
+      const parsed = JSON.parse(stats);
+      // Check for double-stringified JSON
+      if (typeof parsed === 'string') {
+        try {
+          const doubleDecoded = JSON.parse(parsed);
+          return {
+            ...doubleDecoded,
+            goals: doubleDecoded.goals || {},
+            assists: doubleDecoded.assists || {}
+          };
+        } catch (e) {
+          console.error("Error parsing double-stringified JSON:", e);
+          return { goals: {}, assists: {} };
+        }
+      }
+      
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats JSON:", e);
+      return { goals: {}, assists: {} };
+    }
   };
 
   const saveMatchResult = async () => {
@@ -69,7 +93,7 @@ export function ActivityResultSection({
       }
       
       // Parse existing player_stats safely and ensure it's not a string
-      let existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
+      const existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
       
       // Prepare updated player_stats - ensure it's a complete object
       const updatedPlayerStats = {

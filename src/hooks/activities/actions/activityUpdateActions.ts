@@ -14,6 +14,14 @@ export const handleActivityUpdate = async (
   toast: any,
   updatedActivity: Activity
 ) => {
+  console.log("handleActivityUpdate called with:", {
+    activityId: updatedActivity.id,
+    playerStatsType: typeof updatedActivity.player_stats,
+    homeScore: updatedActivity.homeScore,
+    awayScore: updatedActivity.awayScore,
+    isWin: updatedActivity.isWin
+  });
+  
   const existingActivity = activities.find(activity => activity.id === updatedActivity.id);
   
   if (!existingActivity) {
@@ -21,51 +29,38 @@ export const handleActivityUpdate = async (
     return;
   }
   
-  // Make sure player_stats is never a string before merging
-  if (existingActivity.player_stats && typeof existingActivity.player_stats === 'string') {
-    try {
-      existingActivity.player_stats = JSON.parse(existingActivity.player_stats);
-    } catch (e) {
-      console.error("Error parsing existing player_stats:", e);
-      existingActivity.player_stats = { goals: {}, assists: {} };
-    }
-  }
+  console.log("Existing activity:", {
+    id: existingActivity.id,
+    playerStatsType: typeof existingActivity.player_stats,
+    playerStats: existingActivity.player_stats
+  });
   
-  if (updatedActivity.player_stats && typeof updatedActivity.player_stats === 'string') {
-    try {
-      updatedActivity.player_stats = JSON.parse(updatedActivity.player_stats);
-    } catch (e) {
-      console.error("Error parsing updated player_stats:", e);
-      updatedActivity.player_stats = { goals: {}, assists: {} };
-    }
-  }
+  // Ensure player_stats is never a string in either activity before merging
+  const cleanExistingActivity = {
+    ...existingActivity,
+    player_stats: ensurePlayerStatsObject(existingActivity.player_stats)
+  };
+  
+  const cleanUpdatedActivity = {
+    ...updatedActivity,
+    player_stats: ensurePlayerStatsObject(updatedActivity.player_stats)
+  };
   
   // Use the preserveMatchData utility function to properly merge activities
   // This ensures match results are never lost
-  const mergedActivity = preserveMatchData(existingActivity, updatedActivity);
+  const mergedActivity = preserveMatchData(cleanExistingActivity, cleanUpdatedActivity);
   
-  console.log("Updating activity with preserved match data:", {
-    existingActivity: {
-      id: existingActivity.id,
-      playerStats: existingActivity.player_stats,
-      playerStatsType: typeof existingActivity.player_stats
-    },
-    updatedActivity: {
-      id: updatedActivity.id,
-      playerStats: updatedActivity.player_stats,
-      playerStatsType: typeof updatedActivity.player_stats
-    },
-    mergedActivity: {
-      id: mergedActivity.id,
-      playerStats: mergedActivity.player_stats,
-      playerStatsType: typeof mergedActivity.player_stats
-    }
+  console.log("Final merged activity:", {
+    id: mergedActivity.id,
+    playerStatsType: typeof mergedActivity.player_stats,
+    playerStats: mergedActivity.player_stats
   });
   
   const updatedActivities = activities.map(activity => 
     activity.id === mergedActivity.id ? mergedActivity : activity
   );
   
+  // Update state and save to storage
   setActivities(updatedActivities);
   await saveActivities(updatedActivities);
   
@@ -98,6 +93,52 @@ export const handleActivityUpdate = async (
     description: `${mergedActivity.name} har uppdaterats.`,
   });
 };
+
+/**
+ * Helper function to ensure player_stats is always an object
+ */
+function ensurePlayerStatsObject(playerStats: any) {
+  if (!playerStats) {
+    return { goals: {}, assists: {} };
+  }
+  
+  if (typeof playerStats === 'string') {
+    try {
+      const parsed = JSON.parse(playerStats);
+      
+      // Handle double-stringified JSON
+      if (typeof parsed === 'string') {
+        try {
+          const doubleDecoded = JSON.parse(parsed);
+          return {
+            ...doubleDecoded,
+            goals: doubleDecoded.goals || {},
+            assists: doubleDecoded.assists || {}
+          };
+        } catch (e) {
+          console.error("Error parsing double-stringified player_stats:", e);
+          return { goals: {}, assists: {} };
+        }
+      }
+      
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats string:", e);
+      return { goals: {}, assists: {} };
+    }
+  }
+  
+  // Ensure required properties exist
+  return {
+    ...playerStats,
+    goals: playerStats.goals || {},
+    assists: playerStats.assists || {}
+  };
+}
 
 /**
  * Handles assigning a player to kiosk duty for an activity

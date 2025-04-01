@@ -6,8 +6,22 @@ import { Activity } from "@/types/player";
  * Ensures that player statistics are not lost when updating an activity
  */
 export function preserveMatchData(oldActivity: Activity, newActivity: Activity): Activity {
+  console.log("preserveMatchData input:", {
+    oldActivity: {
+      id: oldActivity.id, 
+      playerStatsType: typeof oldActivity.player_stats,
+      playerStats: oldActivity.player_stats
+    },
+    newActivity: {
+      id: newActivity.id, 
+      playerStatsType: typeof newActivity.player_stats,
+      playerStats: newActivity.player_stats
+    }
+  });
+  
   // Ensure we have a clean player_stats object to work with
   const ensureValidStats = (stats: any) => {
+    // If stats is undefined or null, return default empty structure
     if (!stats) return { goals: {}, assists: {} };
     
     // Handle string-encoded JSON (can happen due to form submissions or API responses)
@@ -21,9 +35,14 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
             parsed = JSON.parse(parsed);
           } catch (e) {
             console.warn("Double-string parse failed:", e);
+            return { goals: {}, assists: {} };
           }
         }
-        return parsed;
+        return {
+          ...parsed,
+          goals: parsed.goals || {},
+          assists: parsed.assists || {}
+        };
       } catch (e) {
         console.error("Error parsing player_stats string:", e);
         return { goals: {}, assists: {} };
@@ -42,7 +61,7 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
   const oldPlayerStats = ensureValidStats(oldActivity.player_stats);
   const newPlayerStats = ensureValidStats(newActivity.player_stats);
   
-  // Create updated activity with properly merged player_stats - ensure it's always an object, never a string
+  // Create updated activity with properly merged player_stats
   const mergedStats = {
     ...oldPlayerStats,
     ...newPlayerStats,
@@ -70,7 +89,7 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
     player_stats: mergedStats
   };
   
-  console.log("Preserving match data:", {
+  console.log("preserveMatchData output:", {
     oldActivity: {
       id: oldActivity.id,
       hasPlayerStats: !!oldActivity.player_stats,
