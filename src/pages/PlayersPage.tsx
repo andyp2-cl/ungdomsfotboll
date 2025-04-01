@@ -2,7 +2,6 @@
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
-import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -103,11 +102,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
       />
-      
-      {/* Backup/Restore actions at the bottom of the page */}
-      <div className="fixed bottom-4 right-4 z-10">
-        <BackupRestoreActions />
-      </div>
     </PageContainer>
   );
 }
