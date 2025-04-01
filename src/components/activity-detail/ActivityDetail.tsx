@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -177,14 +178,6 @@ export function ActivityDetail({
       return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
     }
     return currentActivity.result || "";
-  };
-
-  const getTotalGoals = () => {
-    return (currentActivity.homeScore || 0) + (currentActivity.awayScore || 0);
-  };
-
-  const getTotalAssists = () => {
-    return (currentActivity.homeAssists || 0) + (currentActivity.awayAssists || 0);
   };
 
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
