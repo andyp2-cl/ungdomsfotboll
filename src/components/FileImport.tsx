@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,7 +191,10 @@ export function FileImport({ onActivitiesImported }: FileImportProps) {
 Lör 12
 09:30
 -Hässleholms IF svart - Vinslövs IF
-Österås IP F-plan 7-manna 1`}
+Österås IP F-plan 7-manna 1
+13:00
+-Hässleholms IF svart - Hörby FF
+Österås IP F-plan 7-manna 2`}
           </pre>
         </p>
         
