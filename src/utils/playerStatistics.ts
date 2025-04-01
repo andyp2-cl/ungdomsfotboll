@@ -40,15 +40,15 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
     const goals = match.player_stats?.goals?.[player.id] || 0;
     const assists = match.player_stats?.assists?.[player.id] || 0;
 
-    totalGoals += goals;
-    totalAssists += assists;
+    totalGoals += Number(goals);
+    totalAssists += Number(assists);
 
     if (goals > 0) {
       goalsByActivity.push({
         activityId: match.id,
         activityName: match.name,
         activityDate: match.date,
-        goals
+        goals: Number(goals)
       });
     }
 
@@ -57,7 +57,7 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
         activityId: match.id,
         activityName: match.name,
         activityDate: match.date,
-        assists
+        assists: Number(assists)
       });
     }
   });
