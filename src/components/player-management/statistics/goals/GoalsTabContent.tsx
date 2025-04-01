@@ -1,0 +1,33 @@
+
+import React, { useMemo } from "react";
+import { Activity, Player } from "@/types/player";
+import { TopScorersChart } from "./TopScorersChart";
+import { DetailedGoalStats } from "./DetailedGoalStats";
+import { GoalsPerMatchCard } from "./GoalsPerMatchCard";
+import { calculateGoalStats } from "./calculateGoalStats";
+
+interface GoalsTabContentProps {
+  activities: Activity[];
+  players: Player[];
+}
+
+export function GoalsTabContent({ activities, players }: GoalsTabContentProps) {
+  // Calculate goal statistics 
+  const { playerStats, totalStats } = useMemo(() => 
+    calculateGoalStats(activities, players), 
+    [activities, players]
+  );
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <TopScorersChart playerStats={playerStats} />
+      
+      <DetailedGoalStats 
+        playerStats={playerStats}
+        totalStats={totalStats}
+      />
+      
+      <GoalsPerMatchCard playerStats={playerStats} />
+    </div>
+  );
+}

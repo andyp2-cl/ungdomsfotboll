@@ -26,7 +26,7 @@ export function GoalsPerMatchCard({ playerStats }: GoalsPerMatchCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Matcher per målskytt</CardTitle>
+        <CardTitle>Mål per match</CardTitle>
       </CardHeader>
       <CardContent>
         <GoalsPerMatchChart data={chartData} />
