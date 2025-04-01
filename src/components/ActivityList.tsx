@@ -44,8 +44,8 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
   });
   
   const formatResult = (activity: Activity) => {
-    if (activity.goalsScored !== undefined && activity.goalsConceded !== undefined) {
-      return `${activity.goalsScored}-${activity.goalsConceded}`;
+    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+      return `${activity.homeScore}-${activity.awayScore}`;
     }
     return activity.result || "";
   };

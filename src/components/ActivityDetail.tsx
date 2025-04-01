@@ -63,8 +63,8 @@ export function ActivityDetail({
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [goalsScored, setGoalsScored] = useState(currentActivity.goalsScored || 0);
-  const [goalsConceded, setGoalsConceded] = useState(currentActivity.goalsConceded || 0);
+  const [homeScore, setHomeScore] = useState(currentActivity.homeScore || 0);
+  const [awayScore, setAwayScore] = useState(currentActivity.awayScore || 0);
   
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
@@ -213,18 +213,14 @@ export function ActivityDetail({
     }
   };
 
-  const handleMatchResultChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMatchResult(e.target.value);
-  };
-
   const saveMatchResult = () => {
-    const resultString = `${goalsScored}-${goalsConceded}`;
+    const resultString = `${homeScore}-${awayScore}`;
     
     const updatedActivity = {
       ...currentActivity,
       result: resultString,
-      goalsScored: goalsScored,
-      goalsConceded: goalsConceded
+      homeScore: homeScore,
+      awayScore: awayScore
     };
     
     setCurrentActivity(updatedActivity);
@@ -240,8 +236,8 @@ export function ActivityDetail({
   };
 
   const formatResult = () => {
-    if (currentActivity.goalsScored !== undefined && currentActivity.goalsConceded !== undefined) {
-      return `${currentActivity.goalsScored}-${currentActivity.goalsConceded}`;
+    if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
+      return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
     }
     return currentActivity.result || "";
   };
@@ -483,26 +479,33 @@ export function ActivityDetail({
           <>
             <div className="border rounded-md p-4">
               <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
-              <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="grid grid-cols-3 gap-2 mb-3 items-center">
                 <div className="space-y-2">
-                  <Label htmlFor="goalsScored">Gjorda mål</Label>
+                  <Label htmlFor="homeScore">
+                    {isHomeMatch() ? "Våra mål" : "Deras mål"}
+                  </Label>
                   <Input
-                    id="goalsScored"
+                    id="homeScore"
                     type="number"
                     min="0"
-                    value={goalsScored}
-                    onChange={(e) => setGoalsScored(Number(e.target.value))}
+                    value={homeScore}
+                    onChange={(e) => setHomeScore(Number(e.target.value))}
                     className="max-w-[120px]"
                   />
                 </div>
+                <div className="flex justify-center items-center text-lg font-bold">
+                  -
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="goalsConceded">Insläppta mål</Label>
+                  <Label htmlFor="awayScore">
+                    {isHomeMatch() ? "Deras mål" : "Våra mål"}
+                  </Label>
                   <Input
-                    id="goalsConceded"
+                    id="awayScore"
                     type="number"
                     min="0"
-                    value={goalsConceded}
-                    onChange={(e) => setGoalsConceded(Number(e.target.value))}
+                    value={awayScore}
+                    onChange={(e) => setAwayScore(Number(e.target.value))}
                     className="max-w-[120px]"
                   />
                 </div>

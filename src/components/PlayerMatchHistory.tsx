@@ -42,10 +42,22 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
     if (goals > 0) matchesWithGoals++;
     if (assists > 0) matchesWithAssists++;
     
-    // Count results
-    if (match.result) {
-      const [ourScore, theirScore] = match.result.split('-').map(Number);
-      if (!isNaN(ourScore) && !isNaN(theirScore)) {
+    // Count results - check if we're home or away team
+    const isHomeTeam = match.name.toLowerCase().startsWith('hässleholms if');
+    
+    if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
+      const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
+      
+      if (ourScore > theirScore) wins++;
+      else if (ourScore === theirScore) draws++;
+      else losses++;
+    } else if (match.result) {
+      const [score1, score2] = match.result.split('-').map(Number);
+      if (!isNaN(score1) && !isNaN(score2)) {
+        const ourScore = isHomeTeam ? score1 : score2;
+        const theirScore = isHomeTeam ? score2 : score1;
+        
         if (ourScore > theirScore) wins++;
         else if (ourScore === theirScore) draws++;
         else losses++;
