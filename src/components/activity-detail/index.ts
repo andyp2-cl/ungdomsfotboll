@@ -1,7 +1,7 @@
 
 import { ActivityDetail } from "./ActivityDetail";
 import { ActivityDetailHeader } from "./ActivityDetailHeader";
-import { ActivityResultSection } from "./match-result/ActivityResultSection";
+import { ActivityResultSection } from "./match-result";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityKioskSection } from "./ActivityKioskSection";
