@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -888,4 +889,67 @@ export function PlayerDetail({
             </div>
             
             {stats.goalsByActivity.length > 0 && (
-              <div className="
+              <div className="mt-4">
+                <h4 className="text-sm font-semibold mb-2">Målstatistik</h4>
+                <div className="space-y-2">
+                  {stats.goalsByActivity.map((activityStat, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
+                      <div>
+                        <div className="font-medium">{activityStat.activityName}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        {activityStat.goals} {activityStat.goals === 1 ? 'mål' : 'mål'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {stats.assistsByActivity.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-semibold mb-2">Assiststatistik</h4>
+                <div className="space-y-2">
+                  {stats.assistsByActivity.map((activityStat, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
+                      <div>
+                        <div className="font-medium">{activityStat.activityName}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {activityStat.assists} {activityStat.assists === 1 ? 'assist' : 'assist'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Matchhistorik</h3>
+            <PlayerMatchHistory 
+              player={player}
+              activities={activities}
+              onActivitySelect={handleActivitySelect}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2">
+          {onEdit && (
+            <Button variant="outline" onClick={() => onEdit(player)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Redigera
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClose}>Stäng</Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

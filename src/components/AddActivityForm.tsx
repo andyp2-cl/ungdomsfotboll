@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType } from "@/types/player";
 import { Input } from '@/components/ui/input';
