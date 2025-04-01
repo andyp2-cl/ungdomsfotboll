@@ -9,9 +9,6 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
-import { CupMatchesForm } from "@/components/CupMatchesForm";
-import { MatchScraper } from "@/components/MatchScraper";
-import { FileImport } from "@/components/FileImport";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -53,16 +50,7 @@ export function ActivityTabContent({
   handleClearHistoricalActivities
 }: ActivityTabContentProps) {
   const [activeView, setActiveView] = useState<"upcoming" | "historical">("upcoming");
-  const [showCupForm, setShowCupForm] = useState(false);
-  const [showScraperForm, setShowScraperForm] = useState(false);
-  const [showImportForm, setShowImportForm] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-
-  // Create a wrapper function to convert CupMatch[] to Activity[]
-  const handleCupMatchesChange = useCallback((cupMatches: any[]) => {
-    // Convert CupMatch[] to Activity[] before passing to handleImportedActivities
-    return handleImportedActivities(cupMatches as Activity[]);
-  }, [handleImportedActivities]);
 
   // Function to view player from activity
   const handlePlayerSelect = (playerId: string) => {
@@ -101,45 +89,8 @@ export function ActivityTabContent({
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
           </Button>
-          
-          <Button variant="outline" onClick={() => setShowCupForm(!showCupForm)}>
-            Lägg till cupmatcher
-          </Button>
-          
-          <Button variant="outline" onClick={() => setShowScraperForm(!showScraperForm)}>
-            Importera matcher
-          </Button>
-          
-          <Button variant="outline" onClick={() => setShowImportForm(!showImportForm)}>
-            <List className="h-4 w-4 mr-2" />
-            Importera fil
-          </Button>
         </div>
       </div>
-      
-      {showCupForm && (
-        <div className="border p-4 rounded-md bg-background">
-          <CupMatchesForm 
-            onMatchesChange={handleCupMatchesChange}
-          />
-        </div>
-      )}
-      
-      {showScraperForm && (
-        <div className="border p-4 rounded-md bg-background">
-          <MatchScraper 
-            onMatchesScraped={handleScrapedMatches}
-          />
-        </div>
-      )}
-      
-      {showImportForm && (
-        <div className="border p-4 rounded-md bg-background">
-          <FileImport 
-            onActivitiesImported={handleImportedActivities}
-          />
-        </div>
-      )}
       
       {selectedPlayer ? (
         <PlayerDetail 

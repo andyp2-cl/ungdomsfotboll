@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
-import { CalendarPlus, FileText } from "lucide-react";
+import { CalendarPlus, FileText, Upload, RefreshCw } from "lucide-react";
 import { CupMatch, CupMatchesForm } from "@/components/CupMatchesForm";
+import { scrapeHifMatches, convertScrapedToActivities } from "@/utils/scraper";
+import { generateFootballFieldUrl } from "@/utils/locationUtils";
 
 interface AddActivityDialogProps {
   open: boolean;
@@ -23,10 +25,14 @@ export function AddActivityDialog({
   onAddActivity 
 }: AddActivityDialogProps) {
   const [textInput, setTextInput] = useState("");
-  const [activeTab, setActiveTab] = useState<"form" | "text">("form");
+  const [activeTab, setActiveTab] = useState<"form" | "text" | "scraper" | "import">("form");
   const [cupMatches, setCupMatches] = useState<CupMatch[]>([]);
   const [showCupMatches, setShowCupMatches] = useState(false);
   const [cupDate, setCupDate] = useState("");
+  const [scrapedMatches, setScrapedMatches] = useState<Activity[]>([]);
+  const [isScrapingLoading, setIsScrapingLoading] = useState(false);
+  const [scrapYear, setScrapYear] = useState(new Date().getFullYear().toString());
+  const [scrapError, setScrapError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const parseActivitiesFromContent = (content: string): Activity[] => {
@@ -109,6 +115,7 @@ export function AddActivityDialog({
             activity.location = {
               name: location,
               description: locationDesc,
+              gpsLink: generateFootballFieldUrl(location)
             };
           }
           
@@ -147,13 +154,18 @@ export function AddActivityDialog({
       return;
     }
 
-    onAddActivity(activities[0]);
+    for (const activity of activities) {
+      onAddActivity(activity);
+    }
+    
     setTextInput("");
     
     toast({
-      title: "Aktivitet tillagd",
-      description: `${activities[0].name} har lagts till.`,
+      title: "Aktiviteter tillagda",
+      description: `${activities.length} aktiviteter har lagts till.`,
     });
+    
+    onOpenChange(false);
   };
 
   const handleActivityFormSave = (activity: Activity) => {
@@ -171,7 +183,8 @@ export function AddActivityDialog({
         time: match.time,
         location: match.location ? {
           name: match.location,
-          description: match.locationDescription
+          description: match.locationDescription,
+          gpsLink: generateFootballFieldUrl(match.location)
         } : undefined,
         participants: [],
         cupId: cupActivity.id
@@ -207,22 +220,130 @@ export function AddActivityDialog({
     setCupDate(date);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        if (!content) throw new Error("Kunde inte läsa filinnehållet");
+
+        const activities = parseActivitiesFromContent(content);
+
+        if (activities.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Fel vid import",
+            description: "Inga giltiga aktiviteter hittades i filen.",
+          });
+        } else {
+          activities.forEach(activity => {
+            onAddActivity(activity);
+          });
+          
+          toast({
+            title: "Import slutförd",
+            description: `${activities.length} aktiviteter har importerats.`,
+          });
+          
+          onOpenChange(false);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Fel vid import",
+          description: "Ett fel uppstod vid import av aktiviteter.",
+        });
+        console.error("Error importing activities:", error);
+      } finally {
+        // Reset file input
+        event.target.value = '';
+      }
+    };
+
+    reader.onerror = () => {
+      toast({
+        variant: "destructive",
+        title: "Fel vid import",
+        description: "Kunde inte läsa filen.",
+      });
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleScrape = async () => {
+    setIsScrapingLoading(true);
+    setScrapError(null);
+    setScrapedMatches([]);
+    
+    try {
+      const matches = await scrapeHifMatches(scrapYear);
+      
+      if (matches.length === 0) {
+        setScrapError(`Inga matcher hittades för ${scrapYear}`);
+        toast({
+          variant: "destructive",
+          title: "Inga matcher hittades",
+          description: `Kunde inte hitta några matcher för ${scrapYear}.`,
+        });
+        return;
+      }
+      
+      const activities = convertScrapedToActivities(matches);
+      setScrapedMatches(activities);
+      toast({
+        title: "Matcher hittade",
+        description: `Hittade ${activities.length} matcher för ${scrapYear}.`,
+      });
+    } catch (err) {
+      setScrapError((err as Error).message || "Misslyckades med att skrapa matcher");
+      toast({
+        variant: "destructive",
+        title: "Fel",
+        description: "Misslyckades med att skrapa matcher. Se detaljer för mer information.",
+      });
+    } finally {
+      setIsScrapingLoading(false);
+    }
+  };
+
+  const handleImportScraped = () => {
+    if (scrapedMatches.length) {
+      scrapedMatches.forEach(match => {
+        onAddActivity(match);
+      });
+      
+      toast({
+        title: "Matcher importerade",
+        description: `${scrapedMatches.length} matcher har importerats.`,
+      });
+      
+      setScrapedMatches([]);
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen) {
         setCupMatches([]);
         setShowCupMatches(false);
         setCupDate("");
+        setScrapedMatches([]);
+        setScrapError(null);
       }
       onOpenChange(newOpen);
     }}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Lägg till ny aktivitet</DialogTitle>
+          <DialogTitle>Lägg till aktivitet</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "form" | "text")}>
-          <TabsList className="grid grid-cols-2 mb-4">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "form" | "text" | "scraper" | "import")}>
+          <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="form" className="flex items-center gap-2">
               <CalendarPlus className="h-4 w-4" />
               Formulär
@@ -230,6 +351,14 @@ export function AddActivityDialog({
             <TabsTrigger value="text" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Textformat
+            </TabsTrigger>
+            <TabsTrigger value="scraper" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Importera
+            </TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Fil
             </TabsTrigger>
           </TabsList>
           
@@ -280,6 +409,104 @@ Lör 12
               <Button onClick={handleSubmitText}>
                 Lägg till
               </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="scraper">
+            <div className="space-y-4">
+              <DialogDescription>
+                Importera matcher från kalendern automatiskt. 
+              </DialogDescription>
+              
+              <div className="flex gap-2">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={scrapYear}
+                  onChange={(e) => setScrapYear(e.target.value)}
+                >
+                  {[new Date().getFullYear(), new Date().getFullYear() + 1].map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <Button onClick={handleScrape} disabled={isScrapingLoading}>
+                  {isScrapingLoading ? "Hämtar..." : "Hämta matcher"}
+                </Button>
+              </div>
+              
+              {scrapError && (
+                <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+                  {scrapError}
+                </div>
+              )}
+              
+              {scrapedMatches.length > 0 && (
+                <>
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-md">
+                    <p className="font-medium">Hittade {scrapedMatches.length} matcher</p>
+                  </div>
+                  
+                  <div className="max-h-60 overflow-y-auto border rounded-md p-2">
+                    <ul className="space-y-2">
+                      {scrapedMatches.map((match, idx) => (
+                        <li key={idx} className="text-sm border-b pb-1 last:border-0 last:pb-0">
+                          <div className="font-medium">{match.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(match.date).toLocaleDateString('sv-SE')} {match.time}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button onClick={handleImportScraped}>
+                      Importera alla
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="import">
+            <div className="space-y-4">
+              <DialogDescription>
+                Importera aktiviteter från en textfil i samma format som i textfliken.
+              </DialogDescription>
+              
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 hover:bg-muted/50">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                      <span className="font-semibold">Klicka för att ladda upp</span> eller dra och släpp
+                    </p>
+                    <p className="text-xs text-muted-foreground">TXT (Textfil)</p>
+                  </div>
+                  <input 
+                    id="file-upload" 
+                    type="file" 
+                    accept=".txt" 
+                    className="hidden" 
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                >
+                  Stäng
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
