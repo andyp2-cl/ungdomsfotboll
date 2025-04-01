@@ -57,3 +57,17 @@ export const preserveMatchData = (originalActivity: Activity, updatedActivity: A
 
   return result;
 };
+
+/**
+ * Helper function to check if two player arrays are equal
+ * Used for optimizing rerenders when player lists don't change
+ */
+export const arePlayersEqual = (playersA: string[], playersB: string[]): boolean => {
+  if (playersA.length !== playersB.length) return false;
+  
+  // Create sorted copies to compare regardless of order
+  const sortedA = [...playersA].sort();
+  const sortedB = [...playersB].sort();
+  
+  return sortedA.every((playerId, index) => playerId === sortedB[index]);
+};

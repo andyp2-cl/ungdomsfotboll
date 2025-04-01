@@ -3,7 +3,7 @@ import { Activity, Player } from "@/types/player";
 import { handleActivityUpdate, handleKioskAssignmentUpdate, handleAddActivity } from "./actions/activityUpdateActions";
 import { handleImportedActivities, handleScrapedMatches, handleClearHistoricalActivities } from "./actions/activityBatchActions";
 import { handleDeleteActivity } from "./actions/activityDeleteActions";
-import { arePlayersEqual } from "./utils/arrayUtils";
+import { preserveMatchData } from "./utils/arrayUtils";
 
 /**
  * Hook that provides actions for managing activities
