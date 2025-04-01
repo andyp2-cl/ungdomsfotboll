@@ -19,6 +19,7 @@ export const logDatabaseChange = async (
   details?: string
 ): Promise<void> => {
   try {
+    // Try to log the change, but don't throw if there's an error
     const { error } = await supabase
       .from('database_logs')
       .insert({
@@ -29,9 +30,11 @@ export const logDatabaseChange = async (
       });
     
     if (error) {
-      console.error('Error logging database change:', error);
+      // Log to console but don't throw - this is a non-critical operation
+      console.error('Error logging database change (continuing anyway):', error);
     }
   } catch (error) {
-    console.error('Error in logDatabaseChange:', error);
+    // Also log any exceptions but don't throw - this is a non-critical operation
+    console.error('Exception in logDatabaseChange (continuing anyway):', error);
   }
 };

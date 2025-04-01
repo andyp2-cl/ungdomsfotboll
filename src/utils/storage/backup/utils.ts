@@ -10,9 +10,16 @@ export const processMatchData = (activity: any) => {
   
   // Make sure result property is set if we have scores
   if (activity.type === 'match' && 
-      activity.home_score !== null && activity.home_score !== undefined && 
-      activity.away_score !== null && activity.away_score !== undefined) {
+      activity.homeScore !== undefined && activity.homeScore !== null && 
+      activity.awayScore !== undefined && activity.awayScore !== null) {
+    processedActivity.result = `${activity.homeScore}-${activity.awayScore}`;
+  } else if (activity.type === 'match' &&
+      activity.home_score !== undefined && activity.home_score !== null && 
+      activity.away_score !== undefined && activity.away_score !== null) {
     processedActivity.result = `${activity.home_score}-${activity.away_score}`;
+    // Also ensure homeScore and awayScore are set
+    processedActivity.homeScore = activity.home_score;
+    processedActivity.awayScore = activity.away_score;
   }
   
   return processedActivity;
@@ -64,17 +71,30 @@ export const processActivitiesForRestore = (activities: any[]) => {
     // Ensure match data is properly set
     if (processed.type === 'match') {
       // If we have homeScore and awayScore but no result, generate the result
-      if (processed.homeScore !== undefined && processed.awayScore !== undefined && !processed.result) {
+      if ((processed.homeScore !== undefined && processed.homeScore !== null) && 
+          (processed.awayScore !== undefined && processed.awayScore !== null) && 
+          !processed.result) {
         processed.result = `${processed.homeScore}-${processed.awayScore}`;
       }
       
       // If we have a result but no scores, try to extract scores from the result
-      if (processed.result && (processed.homeScore === undefined || processed.awayScore === undefined)) {
+      if (processed.result && 
+          (processed.homeScore === undefined || processed.awayScore === undefined)) {
         const scores = processed.result.split('-').map(Number);
         if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
           processed.homeScore = scores[0];
           processed.awayScore = scores[1];
+          
+          // Also set home_score and away_score for database compatibility
+          processed.home_score = scores[0];
+          processed.away_score = scores[1];
         }
+      }
+      
+      // Determine win status if not explicitly set
+      if (processed.isWin === undefined && 
+          processed.homeScore !== undefined && processed.awayScore !== undefined) {
+        processed.isWin = processed.homeScore > processed.awayScore;
       }
       
       // Initialize or update player_stats

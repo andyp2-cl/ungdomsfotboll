@@ -1,6 +1,5 @@
 
 import { supabase } from "@/lib/supabase";
-import { logDatabaseChange } from "@/lib/supabase/logs";
 import { BackupData } from "./types";
 import { processMatchData } from "./utils";
 
@@ -35,8 +34,11 @@ export const createBackup = async (): Promise<void> => {
     
     localStorage.setItem('hassleholmsif_backup', JSON.stringify(backupData));
     
-    // Log backup to Supabase
+    // Log backup to Supabase, but don't fail if it errors
     try {
+      // Import the logDatabaseChange function dynamically to avoid circular dependencies
+      const { logDatabaseChange } = await import("@/lib/supabase/logs");
+      
       await logDatabaseChange(
         'backup',
         'backup',
@@ -44,7 +46,7 @@ export const createBackup = async (): Promise<void> => {
         `Created backup: ${players.length} players and ${processedActivities.length} activities`
       );
     } catch (error) {
-      console.error("Error logging backup:", error);
+      console.error("Error logging backup (non-critical):", error);
       // Non-critical error, continue with backup creation
     }
     

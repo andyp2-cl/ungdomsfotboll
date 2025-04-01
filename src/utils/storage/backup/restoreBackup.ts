@@ -1,5 +1,4 @@
 
-import { logDatabaseChange } from "@/lib/supabase/logs";
 import { savePlayers } from "../playerStorage";
 import { saveActivities } from "../activityStorage";
 import { processActivitiesForRestore } from "./utils";
@@ -55,8 +54,11 @@ export const restoreBackup = async (): Promise<boolean> => {
       return false;
     }
     
-    // Log restoration to Supabase
+    // Try to log restoration to Supabase, but don't fail if it errors
     try {
+      // Import the logDatabaseChange function dynamically to avoid circular dependencies
+      const { logDatabaseChange } = await import("@/lib/supabase/logs");
+      
       await logDatabaseChange(
         'restore',
         'backup',
@@ -64,7 +66,7 @@ export const restoreBackup = async (): Promise<boolean> => {
         `Restored from backup: ${backup.players.length} players and ${backup.activities.length} activities`
       );
     } catch (error) {
-      console.error("Error logging restoration:", error);
+      console.error("Error logging restoration (non-critical):", error);
       // This is non-critical, so we still return true
     }
     
