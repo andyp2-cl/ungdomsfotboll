@@ -82,6 +82,31 @@ export function ActivityManagement({
       console.log('Matches by cupId (not in matches array):', matchesByCupId.map(m => ({id: m.id, name: m.name})));
     }
   }
+
+  // Wrap the onKioskAssignmentUpdate function to return a Promise<boolean>
+  const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
+    try {
+      onKioskAssignmentUpdate(activityId, playerId);
+      return true;
+    } catch (error) {
+      console.error("Error updating kiosk assignment:", error);
+      return false;
+    }
+  };
+
+  // Wrap the onDeleteActivity function to return a Promise<boolean>
+  const handleDeleteActivity = async (activityId: string): Promise<boolean> => {
+    try {
+      if (onDeleteActivity) {
+        onDeleteActivity(activityId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      return false;
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -132,9 +157,9 @@ export function ActivityManagement({
                 onBack={() => onActivitySelect(null)}
                 onEdit={onEditActivityClick}
                 onUpdate={onActivityUpdate}
-                onKioskUpdate={onKioskAssignmentUpdate}
+                onKioskUpdate={handleKioskUpdate}
                 onActivitySelect={onActivitySelect}
-                onDelete={onDeleteActivity || (() => Promise.resolve(false))}
+                onDelete={handleDeleteActivity}
                 relatedActivities={activities}
                 cupMatches={cupMatches}
               />
@@ -205,9 +230,9 @@ export function ActivityManagement({
                 onBack={() => onActivitySelect(null)}
                 onEdit={onEditActivityClick}
                 onUpdate={onActivityUpdate}
-                onKioskUpdate={onKioskAssignmentUpdate}
+                onKioskUpdate={handleKioskUpdate}
                 onActivitySelect={onActivitySelect}
-                onDelete={onDeleteActivity || (() => Promise.resolve(false))}
+                onDelete={handleDeleteActivity}
                 relatedActivities={activities}
                 cupMatches={cupMatches}
               />
