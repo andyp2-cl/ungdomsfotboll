@@ -12,6 +12,7 @@ interface PlayersListContentProps {
   onPlayerSelect: (player: Player | null) => void;
   onPlayerEdit: (player: Player) => void;
   isMobile: boolean;
+  showCoaches?: boolean;
 }
 
 export function PlayersListContent({
@@ -20,7 +21,8 @@ export function PlayersListContent({
   selectedPositions,
   onPlayerSelect,
   onPlayerEdit,
-  isMobile
+  isMobile,
+  showCoaches = true
 }: PlayersListContentProps) {
   const positionFilteredPlayers = selectedPositions.length > 0
     ? filteredPlayers.filter(player => 
@@ -35,6 +37,7 @@ export function PlayersListContent({
         viewMode={viewMode}
         onPlayerSelect={onPlayerSelect}
         onPlayerEdit={onPlayerEdit}
+        showCoaches={showCoaches}
       />
       {isMobile && (
         <div className="mt-6 flex justify-center">

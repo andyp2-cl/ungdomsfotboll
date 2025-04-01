@@ -108,7 +108,7 @@ export function StatisticsTabContent({
         </TabsContent>
         
         <TabsContent value="matches">
-          <MatchesTabContent activities={activities} />
+          <MatchesTabContent activities={activities} players={players} />
         </TabsContent>
         
         <TabsContent value="goals">

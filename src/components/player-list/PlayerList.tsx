@@ -10,16 +10,24 @@ interface PlayerListProps {
   viewMode?: "grid" | "list";
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
+  showCoaches?: boolean;
 }
 
 export function PlayerList({ 
   players, 
   viewMode = "list", 
   onPlayerSelect, 
-  onPlayerEdit 
+  onPlayerEdit,
+  showCoaches = true
 }: PlayerListProps) {
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
-  const sortedPlayers = sortPlayers(players);
+  
+  // Filter out coaches if not requested
+  const filteredPlayers = !showCoaches 
+    ? players.filter(player => !player.positions?.includes("TRÄNARE"))
+    : players;
+    
+  const sortedPlayers = sortPlayers(filteredPlayers);
 
   if (viewMode === "grid") {
     return (

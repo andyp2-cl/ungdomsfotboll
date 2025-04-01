@@ -52,9 +52,11 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
     }
   };
 
+  const isCoach = player.positions?.includes('TRÄNARE');
+
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
+      className={`overflow-hidden cursor-pointer hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
       onClick={onClick}
     >
       <div className="aspect-[4/3] bg-muted relative">
@@ -73,7 +75,11 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         )}
         
         <div className="absolute top-2 right-2">
-          {(!player.positions || !player.positions.includes('TRÄNARE')) && (
+          {isCoach ? (
+            <Badge className="bg-amber-500 hover:bg-amber-600">
+              Tränare
+            </Badge>
+          ) : (
             <Badge className={getGradeColor(player.grade)}>
               Nivå {player.grade}
             </Badge>
@@ -97,17 +103,22 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
       <CardContent className="p-4">
         <h3 className="font-semibold truncate">
           {player.name}
-          {player.jerseyNumber && (
+          {player.jerseyNumber && !isCoach && (
             <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
               #{player.jerseyNumber}
             </span>
           )}
         </h3>
-        <p className="text-sm text-muted-foreground">
-          {player.positions && player.positions.length > 0
-            ? player.positions.map(formatPosition).join(', ')
-            : 'Ingen position definierad'}
-        </p>
+        {!isCoach && (
+          <p className="text-sm text-muted-foreground">
+            {player.positions && player.positions.length > 0
+              ? player.positions
+                  .filter(pos => pos !== 'TRÄNARE')
+                  .map(formatPosition)
+                  .join(', ')
+              : 'Ingen position definierad'}
+          </p>
+        )}
       </CardContent>
       
       <CardFooter className="p-4 pt-0 flex justify-between">

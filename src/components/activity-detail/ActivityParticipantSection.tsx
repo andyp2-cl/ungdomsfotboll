@@ -101,6 +101,15 @@ export function ActivityParticipantSection({
     });
   };
 
+  // Function to get the badge display for a player's position or role
+  const getPlayerBadgeText = (player: Player) => {
+    if (player.positions?.includes("TRÄNARE")) {
+      return 'Tränare';
+    } else {
+      return `Nivå ${player.grade}`;
+    }
+  };
+
   return (
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Deltagare ({participatingPlayers.length})</h3>
@@ -130,7 +139,7 @@ export function ActivityParticipantSection({
               </Button>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">
-                  {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
+                  {getPlayerBadgeText(player)}
                 </Badge>
                 <Button 
                   variant="ghost" 
