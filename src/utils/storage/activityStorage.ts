@@ -1,7 +1,7 @@
 import { Activity } from "@/types/player";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
-import { formatDatabaseActivity, formatActivityForDatabase } from "../database/formatters";
+import { formatActivityForDatabase, formatActivityFromDatabase } from "../database/formatters";
 
 // Get activities from Supabase
 export const getStoredActivities = async (): Promise<Activity[]> => {
@@ -13,7 +13,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
     if (activitiesError) throw activitiesError;
     
-    const activities = activitiesData.map(formatDatabaseActivity);
+    const activities = activitiesData.map(formatActivityFromDatabase);
     
     // Then, get player-activity relationships and populate the participants array
     const { data: playerActivitiesData, error: relationshipError } = await supabase

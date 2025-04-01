@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType } from "@/types/player";
 import { Input } from '@/components/ui/input';
@@ -60,7 +61,7 @@ export function AddActivityForm({
       },
       time: time,
       matches: cupMatches,
-      participants: [] // Adding the required participants property
+      participants: [] // Required participants property
     };
 
     onSave(newActivity);

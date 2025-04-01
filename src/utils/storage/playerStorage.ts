@@ -3,7 +3,7 @@ import { Player } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
-import { formatDatabasePlayer, formatPlayerForDatabase } from "../database/formatters";
+import { formatPlayerForDatabase, formatDatabasePlayer } from "../database/formatters";
 
 // Get players from Supabase or use mockdata as fallback
 export const getStoredPlayers = async (): Promise<Player[]> => {

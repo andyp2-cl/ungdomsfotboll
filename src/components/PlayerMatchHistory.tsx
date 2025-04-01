@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { Calendar, Clock, MapPin, Trophy, Star } from "lucide-react";
@@ -44,9 +45,9 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
     // Count results - check if we're home or away team
     const isHomeTeam = match.name.toLowerCase().startsWith('hässleholms if');
     
-    if (match.home_score !== undefined && match.away_score !== undefined) {
-      const ourScore = isHomeTeam ? match.home_score : match.away_score;
-      const theirScore = isHomeTeam ? match.away_score : match.home_score;
+    if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
+      const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
       
       if (ourScore > theirScore) wins++;
       else if (ourScore === theirScore) draws++;

@@ -1,7 +1,6 @@
-
 import { Activity, Player } from "@/types/player";
 
-// Replace mentions of playerStats with player_stats
+// Format an activity for database storage - replaces client-side naming with database naming
 export const formatActivityForDatabase = (activity: Activity) => {
   const formattedActivity: any = {
     id: activity.id,
@@ -24,6 +23,7 @@ export const formatActivityForDatabase = (activity: Activity) => {
   return formattedActivity;
 };
 
+// Format a database activity to client-side Activity object
 export const formatActivityFromDatabase = (dbActivity: any): Activity => {
   const activity: Activity = {
     id: dbActivity.id,
@@ -48,4 +48,35 @@ export const formatActivityFromDatabase = (dbActivity: any): Activity => {
   };
 
   return activity;
+};
+
+// Alias for formatActivityFromDatabase to keep compatibility with existing code
+export const formatDatabaseActivity = formatActivityFromDatabase;
+
+// Format a player for database storage
+export const formatPlayerForDatabase = (player: Player) => {
+  const formattedPlayer: any = {
+    id: player.id,
+    name: player.name,
+    grade: player.grade,
+    position: player.positions?.join(","), // Store positions as comma-separated string
+    jersey_number: player.jerseyNumber,
+    image: player.image
+  };
+
+  return formattedPlayer;
+};
+
+// Format a database player to client-side Player object
+export const formatDatabasePlayer = (dbPlayer: any): Player => {
+  const player: Player = {
+    id: dbPlayer.id,
+    name: dbPlayer.name,
+    grade: dbPlayer.grade as any,
+    positions: dbPlayer.position ? dbPlayer.position.split(",") : undefined,
+    jerseyNumber: dbPlayer.jersey_number,
+    image: dbPlayer.image
+  };
+
+  return player;
 };
