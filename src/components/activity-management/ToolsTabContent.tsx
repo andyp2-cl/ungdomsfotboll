@@ -2,7 +2,7 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { FileImport } from "@/components/file-import/FileImport";
-import { BackupRestoreActions } from "@/components/BackupRestoreActions";
+import { BackupRestoreActions } from "@/components/backup-restore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatabaseBackup } from "lucide-react";
 
