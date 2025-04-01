@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ActivityDetailHeader } from "./ActivityDetailHeader";
-import { ActivityResultSection } from "./ActivityResultSection";
+import { ActivityResultSection } from "./match-result/ActivityResultSection";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityKioskSection } from "./ActivityKioskSection";
