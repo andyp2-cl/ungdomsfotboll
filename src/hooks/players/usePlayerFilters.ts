@@ -15,84 +15,69 @@ export function usePlayerFilters({
   selectedGrades,
   selectedPositions
 }: UsePlayerFiltersProps) {
-  const handleGradeChange = (grade: PlayerGrade, setSelectedGrades: React.Dispatch<React.SetStateAction<PlayerGrade[]>>) => {
-    setSelectedGrades(prev => 
-      prev.includes(grade) 
-        ? prev.filter(g => g !== grade) 
-        : [...prev, grade]
-    );
-  };
-
-  const handlePositionChange = (position: PlayerPosition, setSelectedPositions: React.Dispatch<React.SetStateAction<PlayerPosition[]>>) => {
-    setSelectedPositions(prev => 
-      prev.includes(position) 
-        ? prev.filter(p => p !== position) 
-        : [...prev, position]
-    );
+  const normalizeString = (str: string) => {
+    if (!str) return '';
+    // Convert to lowercase and remove diacritics (e.g. ä, ö, å)
+    return str.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, ""); // Remove all non-alphanumeric characters
   };
 
   const filteredPlayers = useMemo(() => {
-    // Log the number of players before filtering for debugging
-    console.log("Total players before filtering:", players.length);
+    // Log for debugging
+    console.log("Filtering players, total count:", players.length);
     
-    // Check if Alvin exists in the original players array
-    const hasAlvin = players.some(p => p.name?.toLowerCase().includes("alvin"));
-    console.log("Alvin exists in players array:", hasAlvin);
+    // First, normalize the search query for better matching
+    const normalizedQuery = normalizeString(searchQuery);
+    console.log("Normalized search query:", normalizedQuery);
     
-    // Normalize the search query (remove case sensitivity and trim)
-    const normalizedQuery = searchQuery.toLowerCase().trim();
-    
-    // Log the normalized search query for debugging
-    if (normalizedQuery) {
-      console.log("Normalized search query:", normalizedQuery);
+    // Early return if no filters are applied
+    if (!searchQuery && selectedGrades.length === 0 && selectedPositions.length === 0) {
+      console.log("No filters applied, returning all players");
+      return players;
     }
     
-    return players.filter(player => {
-      // Make sure player.name exists and normalize it
-      const playerName = player.name ? player.name.toLowerCase() : "";
+    const results = players.filter(player => {
+      // Check if player name includes search query (case insensitive)
+      const nameMatches = !searchQuery || 
+        normalizeString(player.name).includes(normalizedQuery);
       
-      // Debug specific players
-      if (playerName.includes("alvin")) {
-        console.log("Found Alvin:", player.name);
-        console.log("Search match?", !normalizedQuery || playerName.includes(normalizedQuery));
-        console.log("Grade match?", selectedGrades.length === 0 || selectedGrades.includes(player.grade));
-      }
-      
-      // Check if player name includes the search query (more permissive search)
-      // Only apply if searchQuery has content
-      const matchesSearch = !normalizedQuery || playerName.includes(normalizedQuery);
-      
-      // Filter by grade - if no grades selected, show all
-      const matchesGrade = selectedGrades.length === 0 || 
+      // Check if player grade is selected, or no grades are selected
+      const gradeMatches = selectedGrades.length === 0 || 
         selectedGrades.includes(player.grade);
       
-      // Filter by position - if no positions selected, show all
-      // More defensive position handling - don't filter if positions is null/undefined
-      let matchesPosition = true;
-      if (selectedPositions.length > 0 && player.positions) {
-        // Ensure positions is an array
-        const positionsArray = Array.isArray(player.positions) ? player.positions : [player.positions];
-        matchesPosition = positionsArray.some(position => 
-          selectedPositions.includes(position as PlayerPosition)
-        );
+      // Check if player has at least one of the selected positions, or no positions are selected
+      const positionMatches = selectedPositions.length === 0 || 
+        (player.positions && player.positions.some(pos => selectedPositions.includes(pos)));
+      
+      // Debug log for specific players
+      if (player.name.toLowerCase().includes("alvin")) {
+        console.log(`Filtering ${player.name}:`, {
+          nameMatches,
+          normalizedName: normalizeString(player.name),
+          gradeMatches,
+          positionMatches,
+          included: nameMatches && gradeMatches && positionMatches
+        });
       }
       
-      const shouldInclude = matchesSearch && matchesGrade && matchesPosition;
-      return shouldInclude;
+      return nameMatches && gradeMatches && positionMatches;
     });
-  }, [searchQuery, selectedGrades, selectedPositions, players]);
+    
+    // Log results
+    console.log(`Filtered ${players.length} players to ${results.length}`);
+    
+    return results;
+  }, [players, searchQuery, selectedGrades, selectedPositions]);
 
-  // Log filtered players count
-  console.log("Filtered players count:", filteredPlayers.length);
-  
-  // Check for specific players in the filtered results
-  const hasAlvinInFiltered = filteredPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
-  console.log("Alvin found in filtered results:", hasAlvinInFiltered);
-  
-  if (filteredPlayers.length < players.length) {
-    console.log("Some players were filtered out. First 5 filtered players:", 
-      filteredPlayers.slice(0, 5).map(p => p.name).join(", "));
-  }
+  const handleGradeChange = (grade: PlayerGrade) => {
+    return selectedGrades.includes(grade);
+  };
+
+  const handlePositionChange = (position: PlayerPosition) => {
+    return selectedPositions.includes(position);
+  };
 
   return {
     filteredPlayers,

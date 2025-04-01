@@ -102,7 +102,7 @@ export function ActivityParticipantSection({
       <ParticipantActions 
         activity={activity}
         nonParticipantPlayers={players.filter(p => !activity.participants?.includes(p.id))}
-        onAddParticipant={handleAddPlayers}
+        onAddPlayers={handleAddPlayers}
         participantCount={participatingPlayers.length}
         isAddingPlayers={isAddingPlayers}
         setIsAddingPlayers={setIsAddingPlayers}

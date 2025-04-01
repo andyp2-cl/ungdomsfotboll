@@ -12,6 +12,7 @@ interface ParticipantActionsProps {
   activity?: Activity;
   nonParticipantPlayers?: Player[];
   onAddParticipant?: (playerId: string) => void;
+  onAddPlayers?: (playerIds: string[]) => void; // Added this prop for bulk additions
   
   // Alternative props for direct button usage
   participantCount?: number; 
@@ -28,6 +29,7 @@ export function ParticipantActions({
   activity, 
   nonParticipantPlayers = [], 
   onAddParticipant,
+  onAddPlayers,
   
   // Alternative props
   participantCount,
@@ -69,6 +71,17 @@ export function ParticipantActions({
     );
   }
   
+  // Handle the participant selection
+  const handleSelectParticipant = (playerId: string) => {
+    if (onAddParticipant) {
+      onAddParticipant(playerId);
+    } else if (onAddPlayers) {
+      // If we have onAddPlayers, use it with a single-item array
+      onAddPlayers([playerId]);
+    }
+    setOpen(false);
+  };
+  
   // Original implementation with popup
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -86,12 +99,7 @@ export function ParticipantActions({
             {nonParticipantPlayers.map(player => (
               <CommandItem
                 key={player.id}
-                onSelect={() => {
-                  if (onAddParticipant) {
-                    onAddParticipant(player.id);
-                  }
-                  setOpen(false);
-                }}
+                onSelect={() => handleSelectParticipant(player.id)}
                 className="cursor-pointer"
               >
                 <Avatar className="h-6 w-6 mr-2">
