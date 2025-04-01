@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Player, Activity } from "@/types/player";
+import { Player, Activity, PlayerGrade, ActivityType } from "@/types/player";
 import { getActiveTab } from "@/utils/storage";
 import { usePlayers as usePlayersData } from "@/hooks/players";
 import { useActivities } from "@/hooks/activities";
@@ -53,7 +53,7 @@ export function usePlayers(initialTab?: string) {
     handleActivityUpdate,
     handleDeleteActivity,
     handleKioskAssignmentUpdate,
-    handleAddActivity,
+    handleAddActivity, // Ensure this is imported
     handleImportedActivities,
     handleScrapedMatches,
     handleClearHistoricalActivities
@@ -161,6 +161,7 @@ export function usePlayers(initialTab?: string) {
     handleImportActivities,
     handleScraped,
     handleClearHistorical,
+    handleAddActivity, // Ensure this is returned from the hook
     handlePlayerActivitySelect,
     
     // Loading state

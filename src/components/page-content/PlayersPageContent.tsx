@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Player, Activity } from "@/types/player";
+import { Player, Activity, PlayerGrade, ActivityType } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
@@ -23,10 +23,10 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: string[];
+  selectedGrades: PlayerGrade[];
   viewMode: "list" | "grid" | "stats";
   setViewMode: (mode: "list" | "grid" | "stats") => void;
-  handleGradeChange: (grade: any) => void;
+  handleGradeChange: (grade: PlayerGrade) => void;
   handlePlayerUpdate: (player: Player) => void;
   handleBulkPlayerUpdate: (players: Player[]) => void;
   handleAddPlayer: (player: Player) => void;
@@ -40,8 +40,8 @@ interface PlayersPageContentProps {
   setEditingActivity: (activity: Activity | null) => void;
   isAddActivityOpen: boolean;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  selectedActivityTypes: string[];
-  handleActivityTypeChange: (type: string) => void;
+  selectedActivityTypes: ActivityType[];
+  handleActivityTypeChange: (type: ActivityType) => void;
   handleActivityUpdate: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
