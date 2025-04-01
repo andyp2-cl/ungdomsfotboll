@@ -4,7 +4,7 @@ import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayerHeader } from "@/components/PlayerHeader";
-import { PlayerMatchHistory } from "@/components/PlayerMatchHistory";
+import { PlayerMatchHistory } from "@/components/player-match-history";
 import { X } from "lucide-react";
 
 interface PlayerDetailProps {
