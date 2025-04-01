@@ -61,6 +61,11 @@ export function ActivityTabContent({
     }
   };
 
+  // Dummy no-op function for player updates in this context
+  const dummyPlayerUpdate = (player: Player) => {
+    console.log("Player update not implemented in this context", player);
+  };
+
   // Räkna antalet spelare per årskurs (för statistik)
   const gradeData = players.reduce((acc, player) => {
     if (player.positions?.includes("TRÄNARE")) return acc;
@@ -115,6 +120,8 @@ export function ActivityTabContent({
           player={selectedPlayer} 
           activities={activities} 
           onClose={() => setSelectedPlayer(null)}
+          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
+          onPlayerUpdate={dummyPlayerUpdate}
           allPlayers={players}
         />
       ) : selectedActivity ? (

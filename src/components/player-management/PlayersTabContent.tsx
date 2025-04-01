@@ -70,6 +70,7 @@ export function PlayersTabContent({
           player={selectedPlayer} 
           activities={activities} 
           onClose={() => onPlayerSelect(null)}
+          onEdit={onEditPlayerClick}
           onPlayerUpdate={onPlayerUpdate}
           allPlayers={players}
         />
