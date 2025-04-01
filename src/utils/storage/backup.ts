@@ -30,13 +30,13 @@ export const useBackupRestore = () => {
         // Create a copy of the activity to avoid mutating the original
         const processedActivity = { ...activity };
         
-        // Make sure result is set if we have scores
+        // Make sure result property is set if we have scores
+        // Using type assertion to handle the database schema type
         if (activity.type === 'match' && 
             activity.home_score !== null && activity.home_score !== undefined && 
             activity.away_score !== null && activity.away_score !== undefined) {
-          if (!processedActivity.result) {
-            processedActivity.result = `${activity.home_score}-${activity.away_score}`;
-          }
+          // Add the result property (it doesn't exist in the DB schema but we need it in our app)
+          (processedActivity as any).result = `${activity.home_score}-${activity.away_score}`;
         }
         
         return processedActivity;
