@@ -169,82 +169,110 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
     );
   }
 
+  // Group activities by date for better organization
+  const activityGroups = activities.reduce((groups, activity) => {
+    const date = new Date(activity.date);
+    const dateKey = date.toISOString().split('T')[0];
+    
+    if (!groups[dateKey]) {
+      groups[dateKey] = {
+        date,
+        activities: []
+      };
+    }
+    
+    groups[dateKey].activities.push(activity);
+    return groups;
+  }, {} as Record<string, { date: Date, activities: Activity[] }>);
+  
+  // Sort groups by date
+  const sortedGroups = Object.values(activityGroups)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  const isHistorical = (date: Date) => {
+    return date < new Date(new Date().setHours(0, 0, 0, 0));
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {activities.map((activity) => {
-        const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
-        const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'short' });
-        const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    <div className="space-y-6">
+      {sortedGroups.map((group) => {
+        const historical = isHistorical(group.date);
+        const dayOfWeek = group.date.toLocaleDateString('sv-SE', { weekday: 'long' });
+        const day = group.date.getDate();
+        const month = group.date.toLocaleDateString('sv-SE', { month: 'long' });
+        const year = group.date.getFullYear();
+        const dateString = `${dayOfWeek} ${day} ${month} ${year}`;
         
         return (
-          <Card 
-            key={activity.id}
-            className="hover:bg-accent/5 cursor-pointer transition-colors"
-            onClick={() => onSelect(activity)}
-          >
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-medium text-sm line-clamp-1 mb-1">{activity.name}</h3>
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    <span>{capitalizedDayOfWeek} {formatDate(activity.date)}</span>
-                    {activity.time && (
+          <div key={group.date.toISOString()} className="space-y-2">
+            <h3 className="font-medium text-sm capitalize">{dateString}</h3>
+            <div className={`grid grid-cols-1 ${historical ? 'md:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+              {group.activities.map((activity) => (
+                <Card 
+                  key={activity.id}
+                  className="hover:bg-accent/5 cursor-pointer transition-colors"
+                  onClick={() => onSelect(activity)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-medium text-sm line-clamp-1 mb-1">{activity.name}</h3>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>{formatTime(activity.time)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Badge variant={activity.type === "match" ? "default" : "secondary"} className="text-xs">
+                          {activity.type === "match" ? "Match" : "Cup"}
+                        </Badge>
+                        {historical && (
+                          <Badge variant="outline" className="text-xs">
+                            Tidigare
+                          </Badge>
+                        )}
+                        {historical && activity.type === "match" && activity.result && (
+                          <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
+                            {activity.result}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {activity.location && (
+                      <div className="text-xs text-muted-foreground mt-1 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span>{activity.location.name}</span>
+                      </div>
+                    )}
+                    
+                    {renderParticipants(activity)}
+                    
+                    {activity.type === "match" && activity.kioskAssignedPlayerId && (
+                      <div className="mt-2 text-xs flex items-center">
+                        <Badge variant="outline" className="text-xs py-0 h-5">
+                          Kiosk: {getKioskPlayerName(activity)}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {historical && activity.type === "match" && (
                       <>
-                        <Clock className="h-3 w-3 ml-2 mr-1" />
-                        <span>{formatTime(activity.time)}</span>
+                        {renderGoalStats(activity)}
+                        {renderAssistStats(activity)}
                       </>
                     )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Badge variant={activity.type === "match" ? "default" : "secondary"} className="text-xs">
-                    {activity.type === "match" ? "Match" : "Cup"}
-                  </Badge>
-                  {isHistorical && (
-                    <Badge variant="outline" className="text-xs">
-                      Tidigare
-                    </Badge>
-                  )}
-                  {isHistorical && activity.type === "match" && activity.result && (
-                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
-                      {activity.result}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              {activity.location && (
-                <div className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  <span>{activity.location.name}</span>
-                </div>
-              )}
-              
-              {renderParticipants(activity)}
-              
-              {activity.type === "match" && activity.kioskAssignedPlayerId && (
-                <div className="mt-2 text-xs flex items-center">
-                  <Badge variant="outline" className="text-xs py-0 h-5">
-                    Kiosk: {getKioskPlayerName(activity)}
-                  </Badge>
-                </div>
-              )}
-              
-              {isHistorical && activity.type === "match" && (
-                <>
-                  {renderGoalStats(activity)}
-                  {renderAssistStats(activity)}
-                </>
-              )}
-              
-              {activity.type === "cup" && activity.matches && activity.matches.length > 0 && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {activity.matches.length} matcher i cupen
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    
+                    {activity.type === "cup" && activity.matches && activity.matches.length > 0 && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {activity.matches.length} matcher i cupen
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         );
       })}
     </div>
