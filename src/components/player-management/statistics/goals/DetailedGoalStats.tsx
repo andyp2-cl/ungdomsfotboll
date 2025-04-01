@@ -3,17 +3,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoalStatsSummary } from "./GoalStatsSummary";
 import { PlayerGoalsTable } from "./PlayerGoalsTable";
-
-interface PlayerGoalStats {
-  playerId: string;
-  name: string;
-  goals: number;
-  assists: number;
-  matches: number;
-}
+import { PlayerGoalStat } from "./calculateGoalStats";
 
 interface DetailedGoalStatsProps {
-  playerStats: PlayerGoalStats[];
+  playerStats: PlayerGoalStat[];
   totalStats: {
     goals: number;
     assists: number;

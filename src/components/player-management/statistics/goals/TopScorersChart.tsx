@@ -2,15 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { PlayerGoalStat } from "./calculateGoalStats";
 
 interface TopScorersChartProps {
-  playerStats: Array<{
-    playerId: string;
-    name: string;
-    goals: number;
-    assists: number;
-    matches: number;
-  }>;
+  playerStats: PlayerGoalStat[];
 }
 
 export function TopScorersChart({ playerStats }: TopScorersChartProps) {

@@ -2,17 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoalsPerMatchChart } from "./GoalsPerMatchChart";
-
-interface PlayerGoalStats {
-  playerId: string;
-  name: string;
-  goals: number;
-  assists: number;
-  matches: number;
-}
+import { PlayerGoalStat } from "./calculateGoalStats";
 
 interface GoalsPerMatchCardProps {
-  playerStats: PlayerGoalStats[];
+  playerStats: PlayerGoalStat[];
 }
 
 export function GoalsPerMatchCard({ playerStats }: GoalsPerMatchCardProps) {
