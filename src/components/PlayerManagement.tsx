@@ -1,20 +1,12 @@
 
+import React, { useEffect, useState } from "react";
 import { Player, Activity, PlayerGrade, PlayerPosition } from "@/types/player";
-import { PlayerFilter } from "@/components/PlayerFilter";
-import { SearchInput } from "@/components/SearchInput";
-import { Button } from "@/components/ui/button";
-import { PlayerList } from "@/components/PlayerList";
-import { PlayerDetail } from "@/components/PlayerDetail";
-import { Grid, List, Plus, BarChart3, Smartphone, TrendingUp } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { TeamStatistics } from "@/components/TeamStatistics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
-import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
-import { PlayerPerformanceChart } from "@/components/PlayerPerformanceChart";
-import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
+import { BarChart3, TrendingUp } from "lucide-react";
+import { PlayersTabContent } from "./player-management/PlayersTabContent";
+import { StatisticsTabContent } from "./player-management/StatisticsTabContent";
+import { AnalyticsTabContent } from "./player-management/AnalyticsTabContent";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -84,12 +76,6 @@ export function PlayerManagement({
 
   const gradeData = Object.values(playerGradeCounts);
 
-  const positionFilteredPlayers = selectedPositions.length > 0
-    ? filteredPlayers.filter(player => 
-        player.positions?.some(position => selectedPositions.includes(position))
-      )
-    : filteredPlayers;
-
   return (
     <div className="grid grid-cols-1 gap-6">
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "players" | "statistics" | "analytics")}>
@@ -105,98 +91,42 @@ export function PlayerManagement({
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="players" className="space-y-6">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="w-full md:w-1/2 xl:w-1/3">
-              <SearchInput 
-                value={searchQuery} 
-                onChange={onSearchChange} 
-                placeholder="Sök spelare..."
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              {!isMobile && (
-                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
-                  if (value) onViewModeChange(value as "grid" | "list");
-                }}>
-                  <ToggleGroupItem value="grid" aria-label="Rutnätsvy">
-                    <Grid className="h-4 w-4" />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="list" aria-label="Listvy">
-                    <List className="h-4 w-4" />
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              )}
-              
-              <Button onClick={onAddPlayerClick}>
-                <Plus className="h-4 w-4 mr-2" />
-                Lägg till spelare
-              </Button>
-            </div>
-          </div>
-          
-          <PlayerFilter 
-            selectedGrades={selectedGrades} 
-            onGradeChange={onGradeChange}
+        <TabsContent value="players">
+          <PlayersTabContent 
+            players={players}
+            activities={activities}
+            searchQuery={searchQuery}
+            selectedGrades={selectedGrades}
             selectedPositions={selectedPositions}
-            onPositionChange={handlePositionChange}
             activeFiltersCount={activeFiltersCount}
+            selectedPlayer={selectedPlayer}
+            viewMode={viewMode}
+            filteredPlayers={filteredPlayers}
+            onSearchChange={onSearchChange}
+            onGradeChange={onGradeChange}
+            onPositionChange={handlePositionChange}
+            onPlayerSelect={onPlayerSelect}
+            onPlayerUpdate={onPlayerUpdate}
+            onAddPlayerClick={onAddPlayerClick}
+            onEditPlayerClick={onEditPlayerClick}
+            isMobile={isMobile}
           />
-          
-          {selectedPlayer ? (
-            <PlayerDetail 
-              player={selectedPlayer} 
-              activities={activities} 
-              onClose={() => onPlayerSelect(null)}
-              onPlayerUpdate={onPlayerUpdate}
-              allPlayers={players}
-            />
-          ) : (
-            <div>
-              <PlayerList 
-                players={positionFilteredPlayers}
-                viewMode={viewMode}
-                onPlayerSelect={onPlayerSelect}
-                onPlayerEdit={onEditPlayerClick}
-              />
-              {isMobile && (
-                <div className="mt-6 flex justify-center">
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
-                    Installera mobilapp
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
         </TabsContent>
         
         <TabsContent value="statistics">
-          <TeamStatistics players={players} activities={activities} />
+          <StatisticsTabContent 
+            players={players} 
+            activities={activities}
+            gradeData={gradeData} 
+          />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <PlayerSummaryCard data={gradeData} />
-            
-            <div className="col-span-1 md:col-span-2">
-              <PlayerAttendanceAnalytics 
-                players={players}
-                activities={activities}
-              />
-            </div>
-            
-            <div className="col-span-1 md:col-span-3">
-              <PlayerPerformanceChart
-                players={players}
-                activities={activities}
-              />
-            </div>
-            
-            <div className="col-span-1 md:col-span-3">
-              <MonthlyActivityChart activities={activities} />
-            </div>
-          </div>
+        <TabsContent value="analytics">
+          <AnalyticsTabContent 
+            players={players}
+            activities={activities}
+            gradeData={gradeData}
+          />
         </TabsContent>
       </Tabs>
     </div>
