@@ -3,6 +3,7 @@ import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ActivityManagement } from "@/components/ActivityManagement";
 
 interface ActivitiesTabContentProps {
   activities: Activity[];
@@ -51,10 +52,23 @@ export function ActivitiesTabContent({
         </Button>
       </div>
       
-      <div className="text-center text-gray-500 py-8">
-        Aktivitetshantering är implementerad i ActivityManagement-komponenten.
-        Detta är endast en placeholder för PlayerManagementPage.
-      </div>
+      <ActivityManagement
+        activities={activities}
+        players={players}
+        selectedActivity={selectedActivity}
+        selectedActivityTypes={selectedActivityTypes}
+        filteredActivities={filteredActivities}
+        filteredHistoricalActivities={filteredHistoricalActivities}
+        onActivityTypeChange={handleActivityTypeChange}
+        onActivitySelect={setSelectedActivity}
+        onActivityUpdate={handleActivityUpdate}
+        onAddActivityClick={() => setIsAddActivityOpen(true)}
+        onEditActivityClick={setEditingActivity}
+        onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+        onDeleteActivity={handleDeleteActivity}
+        onImportedActivities={handleImportedActivities}
+        onClearHistoricalActivities={handleClearHistoricalActivities}
+      />
     </div>
   );
 }
