@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Trophy, MapPin, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -92,6 +93,15 @@ export function ActivityList({
         
         // Is match type
         const isMatch = activity.type === "match";
+
+        // Get participant data
+        const activityParticipants = activity.participants || [];
+        const participantPlayers = players.filter(p => activityParticipants.includes(p.id));
+        
+        // Show only the first few participants
+        const maxDisplayedParticipants = isMobile ? 3 : 4;
+        const displayedParticipants = participantPlayers.slice(0, maxDisplayedParticipants);
+        const remainingCount = participantPlayers.length - maxDisplayedParticipants;
         
         return (
           <Card 
@@ -124,6 +134,37 @@ export function ActivityList({
                   <User className="h-3.5 w-3.5 mr-1" />
                   <span>{participantCount} {participantCount === 1 ? "deltagare" : "deltagare"}</span>
                 </div>
+                
+                {/* Participant avatars */}
+                {participantPlayers.length > 0 && (
+                  <div className="flex items-center mt-2 -space-x-2">
+                    {displayedParticipants.map(player => (
+                      <Avatar 
+                        key={player.id} 
+                        className="h-6 w-6 border border-background"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPlayerSelect && onPlayerSelect(player.id);
+                        }}
+                      >
+                        {player.image ? (
+                          <AvatarImage src={player.image} alt={player.name} />
+                        ) : (
+                          <AvatarFallback className="text-xs">
+                            {player.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    ))}
+                    {remainingCount > 0 && (
+                      <Avatar className="h-6 w-6 border border-background">
+                        <AvatarFallback className="text-xs bg-muted">
+                          +{remainingCount}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
             
