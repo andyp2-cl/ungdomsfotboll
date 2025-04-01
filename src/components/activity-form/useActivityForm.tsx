@@ -98,6 +98,26 @@ export function useActivityForm(
         }
       }
       
+      // Handle player_stats - ensure it's a properly formed object
+      let playerStats = activity.player_stats;
+      if (typeof playerStats === 'string') {
+        try {
+          playerStats = JSON.parse(playerStats);
+          // Handle double-stringified JSON
+          if (typeof playerStats === 'string') {
+            playerStats = JSON.parse(playerStats);
+          }
+        } catch (e) {
+          console.error("Failed to parse player_stats:", e);
+          playerStats = { goals: {}, assists: {} };
+        }
+      }
+      
+      // If still not an object, create a fresh one
+      if (!playerStats || typeof playerStats !== 'object') {
+        playerStats = { goals: {}, assists: {} };
+      }
+      
       // Create updated activity with form values
       const formUpdatedActivity: Activity = {
         ...activity,
@@ -112,10 +132,10 @@ export function useActivityForm(
         isWin,
         // Create or update player stats
         player_stats: {
-          ...(activity.player_stats || {}),
+          ...(playerStats || {}),
           // Make sure to preserve existing goals and assists
-          goals: activity.player_stats?.goals || {},
-          assists: activity.player_stats?.assists || {},
+          goals: playerStats?.goals || {},
+          assists: playerStats?.assists || {},
           // Add scores information
           scores: {
             home: homeScore,

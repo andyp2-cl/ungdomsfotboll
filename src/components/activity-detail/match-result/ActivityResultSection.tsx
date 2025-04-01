@@ -50,13 +50,42 @@ export function ActivityResultSection({
         isWin = calculateWinStatus(homeScore, awayScore, isHome);
       }
       
+      // Ensure player_stats is in the correct format (in case it was stringified)
+      let playerStats = activity.player_stats;
+      if (typeof playerStats === 'string') {
+        try {
+          playerStats = JSON.parse(playerStats);
+          // Handle double-stringified JSON
+          if (typeof playerStats === 'string') {
+            playerStats = JSON.parse(playerStats);
+          }
+        } catch (e) {
+          console.error("Failed to parse player_stats:", e);
+          playerStats = { goals: {}, assists: {} };
+        }
+      }
+      
+      // If still not an object, create a fresh one
+      if (!playerStats || typeof playerStats !== 'object') {
+        playerStats = { goals: {}, assists: {} };
+      }
+      
       // First directly update the database
       const { error } = await supabase
         .from('activities')
         .update({
           home_score: homeScore,
           away_score: awayScore,
-          is_win: isWin
+          is_win: isWin,
+          result: resultString,
+          player_stats: {
+            ...(playerStats || {}),
+            scores: {
+              home: homeScore,
+              away: awayScore
+            },
+            isWin
+          }
         })
         .eq('id', activity.id);
         
@@ -70,7 +99,8 @@ export function ActivityResultSection({
         awayScore, 
         isWin, 
         isHome,
-        manualOverride: manualWinStatus !== undefined 
+        manualOverride: manualWinStatus !== undefined,
+        playerStats
       });
       
       // Then update the local state
@@ -81,7 +111,7 @@ export function ActivityResultSection({
         awayScore,
         isWin,
         player_stats: {
-          ...(activity.player_stats || { goals: {}, assists: {} }),
+          ...(playerStats || {}),
           scores: {
             home: homeScore,
             away: awayScore
