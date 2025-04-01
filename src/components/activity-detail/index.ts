@@ -1,5 +1,5 @@
 
-import { ActivityDetail } from "./ActivityDetailRefactored";
+import { ActivityDetail } from "./ActivityDetail";
 import { ActivityDetailHeader } from "./ActivityDetailHeader";
 import { ActivityResultSection } from "./ActivityResultSection";
 import { ActivityStatsSection } from "./ActivityStatsSection";

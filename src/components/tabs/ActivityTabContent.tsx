@@ -51,7 +51,6 @@ export function ActivityTabContent({
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
-  // Function to view player from activity
   const handlePlayerSelect = (playerId: string) => {
     const player = players.find(p => p.id === playerId);
     if (player) {
@@ -60,12 +59,10 @@ export function ActivityTabContent({
     }
   };
 
-  // Dummy no-op function for player updates in this context
   const dummyPlayerUpdate = (player: Player) => {
     console.log("Player update not implemented in this context", player);
   };
 
-  // Räkna antalet spelare per årskurs (för statistik)
   const gradeData = players.reduce((acc, player) => {
     if (player.positions?.includes("TRÄNARE")) return acc;
     
@@ -81,20 +78,16 @@ export function ActivityTabContent({
     return acc;
   }, [] as { grade: string, players: number }[]);
   
-  // Sortera nivåer (A, B, C, D)
   gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
 
-  // Get related activities for the selected activity
   const relatedActivities = selectedActivity?.cupId 
     ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
     : [];
 
-  // Get cup matches if the selected activity is a cup
   const cupMatches = selectedActivity?.type === 'cup'
     ? activities.filter(a => a.cupId === selectedActivity.id)
     : [];
 
-  // Determine if this is a historical activity (past date)
   const isHistorical = activeView === "historical";
 
   return (
