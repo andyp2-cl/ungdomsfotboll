@@ -35,26 +35,16 @@ export function usePlayerFilters({
     // Log the number of players before filtering for debugging
     console.log("Total players before filtering:", players.length);
     
-    // Log all players to check if Alvin exists in the initial dataset
-    const alvin = players.find(p => p.name?.includes("Alvin"));
-    if (alvin) {
-      console.log("Alvin found in initial players list:", alvin);
-    } else {
-      console.warn("Alvin not found in initial players list!");
-    }
-    
-    // Debug: log all player names to help find issues
-    if (players.length > 0 && players.length < 50) {
-      console.log("All player names:", players.map(p => p.name).join(", "));
-    }
+    // Normalize the search query (remove case sensitivity and trim)
+    const normalizedQuery = searchQuery.toLowerCase().trim();
     
     return players.filter(player => {
-      // Make sure player.name exists before attempting toLowerCase()
-      const playerName = player.name || "";
+      // Make sure player.name exists and normalize it
+      const playerName = player.name ? player.name.toLowerCase() : "";
       
-      // Filter by search query - only apply if searchQuery has content
-      const matchesSearch = !searchQuery || 
-        playerName.toLowerCase().includes(searchQuery.toLowerCase());
+      // Check if player name includes the search query (more permissive search)
+      // Only apply if searchQuery has content
+      const matchesSearch = !normalizedQuery || playerName.includes(normalizedQuery);
       
       // Filter by grade - if no grades selected, show all
       const matchesGrade = selectedGrades.length === 0 || 
@@ -71,31 +61,16 @@ export function usePlayerFilters({
         );
       }
       
-      // Extra debugging for specific players
-      if (playerName.includes("Alvin")) {
-        console.log("Alvin filter check:", {
-          player,
-          matchesSearch,
-          matchesGrade,
-          matchesPosition,
-          searchQuery,
-          selectedGrades,
-          selectedPositions
-        });
-      }
-      
       const shouldInclude = matchesSearch && matchesGrade && matchesPosition;
       return shouldInclude;
     });
   }, [searchQuery, selectedGrades, selectedPositions, players]);
 
-  // Log filtered players count and any specific players we're looking for
+  // Log filtered players count
   console.log("Filtered players count:", filteredPlayers.length);
-  const filteredAlvin = filteredPlayers.find(p => p.name?.includes("Alvin"));
-  if (filteredAlvin) {
-    console.log("Alvin found in filtered players:", filteredAlvin);
-  } else if (players.find(p => p.name?.includes("Alvin"))) {
-    console.warn("Alvin was filtered out!");
+  if (filteredPlayers.length < players.length) {
+    console.log("Some players were filtered out. First 5 filtered players:", 
+      filteredPlayers.slice(0, 5).map(p => p.name));
   }
 
   return {

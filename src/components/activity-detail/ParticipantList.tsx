@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ParticipantListProps {
   participants: Player[];
-  onRemoveParticipant: (playerId: string) => void;
+  onRemoveParticipant?: (playerId: string) => void;
   onPlayerSelect?: (playerId: string) => void;
   onRemovePlayer?: (playerId: string) => void; // Added this prop to support both naming conventions
   isMobile?: boolean;
@@ -21,12 +21,12 @@ export function ParticipantList({
   onPlayerSelect,
   isMobile = false
 }: ParticipantListProps) {
-  // Use onRemovePlayer as a fallback if provided
+  // Use onRemovePlayer as a fallback if onRemoveParticipant is not provided
   const handleRemove = (playerId: string) => {
-    if (onRemovePlayer) {
-      onRemovePlayer(playerId);
-    } else {
+    if (onRemoveParticipant) {
       onRemoveParticipant(playerId);
+    } else if (onRemovePlayer) {
+      onRemovePlayer(playerId);
     }
   };
 

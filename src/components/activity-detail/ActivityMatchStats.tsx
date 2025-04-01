@@ -30,10 +30,8 @@ export function ActivityMatchStats({
     return Object.values(activity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
   };
 
-  // Update player stats
+  // Update player stats - removed the isHistorical check to allow editing for historical matches
   const updatePlayerStat = (playerId: string, statType: 'goals' | 'assists', value: number) => {
-    if (isHistorical) return; // Don't allow updates for historical activities
-    
     const updatedActivity = { ...activity };
     
     if (!updatedActivity.player_stats) {
@@ -58,7 +56,7 @@ export function ActivityMatchStats({
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground mb-2">
             {isHistorical ? 
-              "Matchstatistik för spelarnas mål och assist:" : 
+              "Uppdatera statistik för spelarnas mål och assist:" : 
               "Anteckna hur många mål och assist varje spelare har gjort:"}
           </p>
           
@@ -72,68 +70,58 @@ export function ActivityMatchStats({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center">
                     <span className="text-xs mr-2">Mål:</span>
-                    {isHistorical ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full"
+                        onClick={() => {
+                          if (goals > 0) {
+                            updatePlayerStat(player.id, 'goals', goals - 1);
+                          }
+                        }}
+                        disabled={goals === 0}
+                      >
+                        -
+                      </Button>
                       <span className="mx-2 w-6 text-center">{goals}</span>
-                    ) : (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => {
-                            if (goals > 0) {
-                              updatePlayerStat(player.id, 'goals', goals - 1);
-                            }
-                          }}
-                          disabled={goals === 0 || isHistorical}
-                        >
-                          -
-                        </Button>
-                        <span className="mx-2 w-6 text-center">{goals}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => updatePlayerStat(player.id, 'goals', goals + 1)}
-                          disabled={isHistorical}
-                        >
-                          +
-                        </Button>
-                      </>
-                    )}
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full"
+                        onClick={() => updatePlayerStat(player.id, 'goals', goals + 1)}
+                      >
+                        +
+                      </Button>
+                    </>
                   </div>
                   
                   <div className="flex items-center">
                     <span className="text-xs mr-2">Assist:</span>
-                    {isHistorical ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full"
+                        onClick={() => {
+                          if (assists > 0) {
+                            updatePlayerStat(player.id, 'assists', assists - 1);
+                          }
+                        }}
+                        disabled={assists === 0}
+                      >
+                        -
+                      </Button>
                       <span className="mx-2 w-6 text-center">{assists}</span>
-                    ) : (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => {
-                            if (assists > 0) {
-                              updatePlayerStat(player.id, 'assists', assists - 1);
-                            }
-                          }}
-                          disabled={assists === 0 || isHistorical}
-                        >
-                          -
-                        </Button>
-                        <span className="mx-2 w-6 text-center">{assists}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-7 w-7 rounded-full"
-                          onClick={() => updatePlayerStat(player.id, 'assists', assists + 1)}
-                          disabled={isHistorical}
-                        >
-                          +
-                        </Button>
-                      </>
-                    )}
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full"
+                        onClick={() => updatePlayerStat(player.id, 'assists', assists + 1)}
+                      >
+                        +
+                      </Button>
+                    </>
                   </div>
                 </div>
               </div>

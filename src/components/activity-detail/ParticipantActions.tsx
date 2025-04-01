@@ -2,7 +2,7 @@
 import React, { useState, Dispatch, SetStateAction } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus, Trash } from "lucide-react";
+import { UserPlus, Trash } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +11,7 @@ interface ParticipantActionsProps {
   activity?: Activity;
   nonParticipantPlayers?: Player[];
   onAddParticipant?: (playerId: string) => void;
-  participantCount?: number; // Added to support ActivityParticipantSection
+  participantCount?: number; 
   isAddingPlayers?: boolean;
   setIsAddingPlayers?: Dispatch<SetStateAction<boolean>>;
   onClearAllParticipants?: () => void;
