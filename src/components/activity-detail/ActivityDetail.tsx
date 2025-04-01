@@ -42,6 +42,9 @@ interface ActivityDetailProps {
   onKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
   relatedActivities?: Activity[];
+  cupMatches?: Activity[];
+  allActivities?: Activity[];
+  onClose?: () => void;
 }
 
 export function ActivityDetail({
@@ -53,16 +56,16 @@ export function ActivityDetail({
   onUpdate,
   onKioskUpdate,
   onActivitySelect,
-  relatedActivities = []
+  relatedActivities = [],
+  cupMatches = [],
+  allActivities = [],
+  onClose
 }: ActivityDetailProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Determine if this is a cup and find related matches
   const isCup = activity.type === "cup";
-  const cupMatches = isCup && activity.matches
-    ? relatedActivities.filter(a => activity.matches?.includes(a.id))
-    : [];
 
   // Find participants
   const participantPlayers = players.filter(player => 
@@ -95,7 +98,7 @@ export function ActivityDetail({
       {/* Header section with back button, title, and action buttons */}
       <ActivityHeader 
         activity={activity}
-        onBack={onBack}
+        onClose={onClose || onBack}
         onEdit={() => onEdit(activity)}
         onDelete={() => setIsDeleteDialogOpen(true)}
       />
@@ -144,7 +147,7 @@ export function ActivityDetail({
           {activity.type === "match" && (
             <ActivityMatchResult 
               activity={activity} 
-              onUpdate={onUpdate} 
+              updateActivity={onUpdate} 
             />
           )}
 
@@ -152,13 +155,14 @@ export function ActivityDetail({
           {activity.type === "match" && (
             <ActivityMatchStats 
               activity={activity} 
-              players={participantPlayers}
-              onUpdate={onUpdate}
+              players={players}
+              participatingPlayers={participantPlayers}
+              updateActivity={onUpdate}
             />
           )}
 
           {/* Cup matches section (only for cups) */}
-          {isCup && cupMatches.length > 0 && (
+          {isCup && cupMatches && cupMatches.length > 0 && (
             <ActivityCupMatches 
               cupMatches={cupMatches}
               onActivitySelect={onActivitySelect}
@@ -168,8 +172,8 @@ export function ActivityDetail({
           {/* Participants section */}
           <ActivityParticipants 
             activity={activity}
-            participantPlayers={participantPlayers}
-            onUpdate={onUpdate}
+            players={players}
+            updateActivity={onUpdate}
           />
 
           {/* Kiosk assignment section */}
@@ -177,8 +181,8 @@ export function ActivityDetail({
             <ActivityKioskAssignment 
               activity={activity}
               players={players}
-              assignedPlayer={assignedPlayer}
-              onKioskUpdate={onKioskUpdate}
+              updateActivity={onUpdate}
+              onKioskAssignmentUpdate={onKioskUpdate}
             />
           )}
         </CardContent>

@@ -129,14 +129,14 @@ export function ActivityManagement({
               <ActivityDetail
                 activity={selectedActivity}
                 players={players}
-                cupMatches={cupMatches}
-                allActivities={activities}
-                onClose={() => onActivitySelect(null)}
+                onBack={() => onActivitySelect(null)}
                 onEdit={onEditActivityClick}
-                onActivityUpdate={onActivityUpdate}
-                onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+                onUpdate={onActivityUpdate}
+                onKioskUpdate={onKioskAssignmentUpdate}
                 onActivitySelect={onActivitySelect}
-                onDeleteActivity={onDeleteActivity}
+                onDelete={onDeleteActivity || (() => Promise.resolve(false))}
+                relatedActivities={activities}
+                cupMatches={cupMatches}
               />
             ) : (
               <ActivityList 
@@ -202,14 +202,14 @@ export function ActivityManagement({
               <ActivityDetail
                 activity={selectedActivity}
                 players={players}
-                cupMatches={cupMatches}
-                allActivities={activities}
-                onClose={() => onActivitySelect(null)}
+                onBack={() => onActivitySelect(null)}
                 onEdit={onEditActivityClick}
-                onActivityUpdate={onActivityUpdate}
-                onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+                onUpdate={onActivityUpdate}
+                onKioskUpdate={onKioskAssignmentUpdate}
                 onActivitySelect={onActivitySelect}
-                onDeleteActivity={onDeleteActivity}
+                onDelete={onDeleteActivity || (() => Promise.resolve(false))}
+                relatedActivities={activities}
+                cupMatches={cupMatches}
               />
             ) : (
               <ActivityList 
