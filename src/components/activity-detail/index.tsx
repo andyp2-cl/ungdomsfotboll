@@ -6,7 +6,7 @@ import { ActivityParticipants } from "./ActivityParticipants";
 import { ActivityMatchStats } from "./ActivityMatchStats";
 import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
 import { ActivityCupMatches } from "./ActivityCupMatches";
-import { ActivityMatchResult } from "./ActivityMatchResult";
+import { ActivityMatchResult } from "./match-result";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 
 export { 
