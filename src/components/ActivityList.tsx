@@ -8,10 +8,11 @@ import { useMemo } from "react";
 interface ActivityListProps {
   activities: Activity[];
   onSelect?: (activity: Activity) => void;
+  onPlayerSelect?: (playerId: string) => void;
   players?: Player[];
 }
 
-export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
+export function ActivityList({ activities, onSelect, onPlayerSelect, players = [] }: ActivityListProps) {
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
       const dateA = new Date(a.date);
@@ -181,11 +182,19 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                     <span className="font-medium">{participantNames.length} deltagare:</span>
                   </div>
                   <div className="ml-5 flex flex-wrap gap-1">
-                    {participantNames.map((name, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {name}
-                      </Badge>
-                    ))}
+                    {participantNames.map((name, index) => {
+                      const playerId = activity.participants && activity.participants[index];
+                      return (
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className="text-xs cursor-pointer hover:bg-gray-100"
+                          onClick={() => onPlayerSelect && playerId && onPlayerSelect(playerId)}
+                        >
+                          {name}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -200,7 +209,18 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                   <Coffee className="h-4 w-4 mr-1" />
                   <span>
                     {activity.kioskAssignedPlayerId 
-                      ? <span>Kioskansvarig: <Badge variant="default">{kioskPlayerName}</Badge></span>
+                      ? (
+                        <span>
+                          Kioskansvarig: {' '}
+                          <Badge 
+                            variant="default" 
+                            className="cursor-pointer hover:bg-blue-600"
+                            onClick={() => onPlayerSelect && activity.kioskAssignedPlayerId && onPlayerSelect(activity.kioskAssignedPlayerId)}
+                          >
+                            {kioskPlayerName}
+                          </Badge>
+                        </span>
+                      )
                       : <span className="text-muted-foreground">Ingen kioskansvarig tilldelad</span>
                     }
                   </span>
@@ -218,11 +238,24 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                         Målskyttar:
                       </div>
                       <div className="ml-5 flex flex-wrap gap-1">
-                        {goalScorers.map((scorer, index) => (
-                          <Badge key={index} variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
-                            {scorer.name} ({scorer.goals})
-                          </Badge>
-                        ))}
+                        {goalScorers.map((scorer, index) => {
+                          const playerId = Object.entries(activity.playerStats?.goals || {})
+                            .find(([id, goals]) => {
+                              const player = players.find(p => p.id === id);
+                              return player && player.name === scorer.name;
+                            })?.[0];
+                            
+                          return (
+                            <Badge 
+                              key={index} 
+                              variant="outline" 
+                              className="text-xs bg-green-50 border-green-200 text-green-700 cursor-pointer hover:bg-green-100"
+                              onClick={() => onPlayerSelect && playerId && onPlayerSelect(playerId)}
+                            >
+                              {scorer.name} ({scorer.goals})
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -236,11 +269,24 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                         Assist:
                       </div>
                       <div className="ml-5 flex flex-wrap gap-1">
-                        {assistProviders.map((provider, index) => (
-                          <Badge key={index} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
-                            {provider.name} ({provider.assists})
-                          </Badge>
-                        ))}
+                        {assistProviders.map((provider, index) => {
+                          const playerId = Object.entries(activity.playerStats?.assists || {})
+                            .find(([id, assists]) => {
+                              const player = players.find(p => p.id === id);
+                              return player && player.name === provider.name;
+                            })?.[0];
+                            
+                          return (
+                            <Badge 
+                              key={index} 
+                              variant="outline" 
+                              className="text-xs bg-blue-50 border-blue-200 text-blue-700 cursor-pointer hover:bg-blue-100"
+                              onClick={() => onPlayerSelect && playerId && onPlayerSelect(playerId)}
+                            >
+                              {provider.name} ({provider.assists})
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
