@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { 
@@ -28,11 +27,11 @@ interface ActivityDetailProps {
   allActivities?: Activity[];
   cupMatches?: Activity[];
   onPlayerSelect?: (playerId: string) => void;
-  // Add these props to match with ActivityManagement.tsx usage
   onUpdate?: (activity: Activity) => void;
   onKioskUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onDelete?: (activityId: string) => Promise<boolean>;
   relatedActivities?: Activity[];
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityDetail({ 
@@ -51,24 +50,22 @@ export function ActivityDetail({
   allActivities,
   relatedActivities,
   cupMatches = [],
-  onPlayerSelect
+  onPlayerSelect,
+  onMatchResultUpdate
 }: ActivityDetailProps) {
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Update currentActivity when activity prop changes
   useEffect(() => {
     setCurrentActivity(activity);
   }, [activity]);
 
-  // Determine if this is a historical activity (past date)
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
   
   const participatingPlayers = players.filter(
     (player) => currentActivity.participants?.includes(player.id)
   );
 
-  // Helper function to safely normalize player_stats
   const normalizePlayerStats = (activity: Activity): Activity => {
     if (!activity.player_stats) {
       return {
@@ -98,7 +95,6 @@ export function ActivityDetail({
     return activity;
   };
 
-  // Update activity handler
   const handleActivityUpdate = (updatedActivity: Activity) => {
     const normalizedActivity = normalizePlayerStats(updatedActivity);
     setCurrentActivity(normalizedActivity);
@@ -107,7 +103,6 @@ export function ActivityDetail({
       onActivityUpdate(normalizedActivity);
     }
     
-    // Also call onUpdate if provided
     if (onUpdate) {
       onUpdate(normalizedActivity);
     }
@@ -127,10 +122,8 @@ export function ActivityDetail({
     }
   };
 
-  // Choose the appropriate close handler
   const handleClose = onBack || onClose;
 
-  // Normalize current activity before rendering
   const normalizedCurrentActivity = normalizePlayerStats(currentActivity);
 
   return (
@@ -144,16 +137,15 @@ export function ActivityDetail({
       />
 
       <CardContent className="space-y-6">
-        {/* Match Result (only for matches) */}
         {normalizedCurrentActivity.type === "match" && (
           <ActivityResultSection 
             activity={normalizedCurrentActivity}
             isHistorical={isHistorical}
             updateActivity={handleActivityUpdate}
+            onMatchResultUpdate={onMatchResultUpdate}
           />
         )}
         
-        {/* Match Statistics (only for matches) */}
         {normalizedCurrentActivity.type === "match" && (
           <ActivityStatsSection 
             activity={normalizedCurrentActivity}
@@ -164,7 +156,6 @@ export function ActivityDetail({
           />
         )}
         
-        {/* Participants section */}
         <ActivityParticipantSection 
           activity={normalizedCurrentActivity}
           players={players}
@@ -172,7 +163,6 @@ export function ActivityDetail({
           onPlayerSelect={onPlayerSelect}
         />
         
-        {/* Kiosk assignment (only for matches) */}
         {normalizedCurrentActivity.type === "match" && (
           <ActivityKioskSection 
             activity={normalizedCurrentActivity}
@@ -187,7 +177,6 @@ export function ActivityDetail({
           />
         )}
         
-        {/* Cup matches (only for cups) */}
         {normalizedCurrentActivity.type === "cup" && cupMatches && cupMatches.length > 0 && (
           <ActivityMatchesSection 
             cupMatches={cupMatches}
@@ -200,7 +189,6 @@ export function ActivityDetail({
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>
 
-      {/* Delete confirmation dialog */}
       <DeleteActivityDialog
         activityName={normalizedCurrentActivity.name}
         isOpen={isDeleteDialogOpen}

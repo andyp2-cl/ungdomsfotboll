@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
