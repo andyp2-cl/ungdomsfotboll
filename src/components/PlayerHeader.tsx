@@ -29,7 +29,7 @@ export function PlayerHeader({
     if (location.pathname === "/players") {
       return [{ label: "Spelare" }];
     } else if (location.pathname === "/activities") {
-      return [{ label: "Aktiviteter" }];
+      return [{ label: "Matcher" }];
     }
     return [];
   };
@@ -40,7 +40,7 @@ export function PlayerHeader({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h2 className="text-2xl font-bold">{player.name}</h2>
-          <p className="text-muted-foreground">Årskull: {player.grade}</p>
+          <p className="text-muted-foreground">Nivå: {player.grade}</p>
         </div>
         
         {onEdit && (

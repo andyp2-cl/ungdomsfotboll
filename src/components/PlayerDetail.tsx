@@ -79,7 +79,7 @@ export function PlayerDetail({
                   <span className="font-medium">{player.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Årskull:</span>
+                  <span className="text-muted-foreground">Nivå:</span>
                   <span className="font-medium">{player.grade}</span>
                 </div>
                 {player.positions && player.positions.length > 0 && (
