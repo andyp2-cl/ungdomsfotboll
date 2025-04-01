@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
@@ -11,12 +10,14 @@ interface ActivityResultSectionProps {
   activity: Activity;
   isHistorical: boolean;
   updateActivity: (updatedActivity: Activity) => void;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityResultSection({ 
   activity, 
   isHistorical,
-  updateActivity 
+  updateActivity,
+  onMatchResultUpdate
 }: ActivityResultSectionProps) {
   const { toast } = useToast();
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
@@ -118,21 +119,27 @@ export function ActivityResultSection({
         }
       });
       
-      // First directly update the database
-      const { error } = await supabase
-        .from('activities')
-        .update({
-          home_score: homeScore,
-          away_score: awayScore,
-          is_win: isWin,
-          result: resultString,
-          player_stats: updatedPlayerStats
-        })
-        .eq('id', activity.id);
-        
-      if (error) {
-        console.error("Error saving match result to database:", error);
-        throw error;
+      // If we have the onMatchResultUpdate prop, use it
+      if (onMatchResultUpdate) {
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      } else {
+        // Otherwise, fall back to the direct database update approach
+        // First directly update the database
+        const { error } = await supabase
+          .from('activities')
+          .update({
+            home_score: homeScore,
+            away_score: awayScore,
+            is_win: isWin,
+            result: resultString,
+            player_stats: updatedPlayerStats
+          })
+          .eq('id', activity.id);
+          
+        if (error) {
+          console.error("Error saving match result to database:", error);
+          throw error;
+        }
       }
       
       // Then update the local state
