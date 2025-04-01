@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useBackupRestore } from "@/utils/storage/backup";
-import { Save, RotateCcw, Clock, CheckCircle, AlertTriangle, Database } from "lucide-react";
+import { Save, RotateCcw, Clock, CheckCircle, AlertTriangle, Database, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 import { validateBackupData } from "@/utils/storage/backup/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const PASSWORD = "tommieannatedandreas"; // The password for restore functionality
 
 export function BackupRestoreActions() {
   const { toast } = useToast();
@@ -16,6 +20,8 @@ export function BackupRestoreActions() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [backupInfo, setBackupInfo] = useState<{timestamp: string, playerCount: number, activityCount: number} | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   
   // Get backup info on component mount and after operations
   useEffect(() => {
@@ -90,7 +96,21 @@ export function BackupRestoreActions() {
     }
   };
   
+  const validatePassword = () => {
+    if (password !== PASSWORD) {
+      setPasswordError("Felaktigt lösenord. Försök igen.");
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+  
   const handleRestore = async () => {
+    // First validate the password
+    if (!validatePassword()) {
+      return;
+    }
+    
     // Verify if backup exists and has data
     const backupData = localStorage.getItem('hassleholmsif_backup');
     const info = getLastBackupInfo();
@@ -159,6 +179,8 @@ export function BackupRestoreActions() {
       });
     } finally {
       setIsRestoring(false);
+      // Reset password field after restore attempt
+      setPassword("");
     }
   };
   
@@ -210,13 +232,35 @@ export function BackupRestoreActions() {
                     Ingen säkerhetskopia hittades eller så saknar den data.
                   </div>
                 )}
+                
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="restore-password" className="font-medium">Ange lösenord för att fortsätta:</Label>
+                  </div>
+                  <Input 
+                    id="restore-password"
+                    type="password"
+                    placeholder="Lösenord"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={passwordError ? "border-red-500" : ""}
+                  />
+                  {passwordError && (
+                    <p className="text-red-500 text-sm">{passwordError}</p>
+                  )}
+                </div>
+                
                 <p className="mt-4 font-medium text-destructive">
                   Varning: Alla ändringar sedan senaste säkerhetskopian kommer att förloras.
                 </p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => {
+                setPassword("");
+                setPasswordError("");
+              }}>Avbryt</AlertDialogCancel>
               <AlertDialogAction onClick={handleRestore}>Återställ data</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
