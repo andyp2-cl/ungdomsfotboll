@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -129,12 +128,9 @@ export function ActivityTabContent({
           activity={selectedActivity}
           players={players}
           onClose={() => setSelectedActivity(null)}
-          onActivityUpdate={handleActivityUpdate}
-          onDeleteActivity={handleDeleteActivity}
           onEdit={setEditingActivity}
-          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-          onActivitySelect={setSelectedActivity}
-          onPlayerSelect={handlePlayerSelect}
+          onAssignKiosk={handleKioskAssignmentUpdate}
+          onRemoveKioskAssignment={(activityId) => handleKioskAssignmentUpdate(activityId)}
         />
       ) : (
         <>

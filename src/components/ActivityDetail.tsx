@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import PlayerAvatar from "./player-selection/PlayerAvatar";
+import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
 
 interface ActivityDetailProps {
   activity: Activity | null;
