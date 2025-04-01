@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from "react";
-import LoadingState from "../LoadingState";
+import { LoadingState } from "../LoadingState";
 import { EditModeButton } from "../EditModeButton";
 
 interface PageContainerProps {
