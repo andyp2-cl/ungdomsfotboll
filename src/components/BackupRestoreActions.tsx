@@ -17,7 +17,7 @@ export function BackupRestoreActions() {
   useEffect(() => {
     const info = getLastBackupInfo();
     setBackupInfo(info);
-  }, []);
+  }, [isBackingUp, isRestoring]); // Re-check after operations
   
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')

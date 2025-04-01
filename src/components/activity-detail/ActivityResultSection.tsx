@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,28 +19,45 @@ export function ActivityResultSection({
   updateActivity 
 }: ActivityResultSectionProps) {
   const { toast } = useToast();
-  const [homeScore, setHomeScore] = useState(activity.homeScore || 0);
-  const [awayScore, setAwayScore] = useState(activity.awayScore || 0);
+  const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
+  const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
+  
+  // Update local state when activity changes
+  useEffect(() => {
+    setHomeScore(activity.homeScore);
+    setAwayScore(activity.awayScore);
+  }, [activity.homeScore, activity.awayScore]);
 
   const isHomeMatch = () => {
     return activity.name.toLowerCase().startsWith('hässleholms if');
   };
 
   const saveMatchResult = () => {
-    const resultString = `${homeScore}-${awayScore}`;
+    const resultString = homeScore !== undefined && awayScore !== undefined 
+      ? `${homeScore}-${awayScore}` 
+      : undefined;
     
     const updatedActivity = {
       ...activity,
       result: resultString,
-      homeScore: homeScore,
-      awayScore: awayScore
+      homeScore,
+      awayScore,
+      player_stats: {
+        ...(activity.player_stats || { goals: {}, assists: {} }),
+        scores: {
+          home: homeScore,
+          away: awayScore
+        }
+      }
     };
     
     updateActivity(updatedActivity);
     
     toast({
       title: "Matchresultat sparat",
-      description: `Resultat ${resultString} har sparats för ${activity.name}.`,
+      description: resultString 
+        ? `Resultat ${resultString} har sparats för ${activity.name}.` 
+        : `Matchresultat har rensats för ${activity.name}.`,
     });
   };
 
@@ -62,8 +79,8 @@ export function ActivityResultSection({
               id="homeScore"
               type="number"
               min="0"
-              value={homeScore}
-              onChange={(e) => setHomeScore(Number(e.target.value))}
+              value={homeScore === undefined ? "" : homeScore}
+              onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
               className="max-w-[120px]"
             />
           )}
@@ -84,8 +101,8 @@ export function ActivityResultSection({
               id="awayScore"
               type="number"
               min="0"
-              value={awayScore}
-              onChange={(e) => setAwayScore(Number(e.target.value))}
+              value={awayScore === undefined ? "" : awayScore}
+              onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
               className="max-w-[120px]"
             />
           )}

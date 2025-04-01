@@ -1,226 +1,171 @@
+import { supabase, logDatabaseChange } from "@/lib/supabase";
+import { savePlayers } from "./playerStorage";
+import { saveActivities } from "./activityStorage";
 
-import { Activity, Player } from "@/types/player";
-import { getStoredActivities, saveActivities } from "./activityStorage";
-import { getStoredPlayers, savePlayers } from "./playerStorage";
-import { supabase } from "@/lib/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-
-/**
- * Interface for backup data
- */
-export interface BackupData {
-  players: Player[];
-  activities: Activity[];
+interface BackupData {
+  players: any[];
+  activities: any[];
   timestamp: string;
-  version: string;
 }
 
-/**
- * Creates a backup of all players and activities
- */
-export const createBackup = async (): Promise<BackupData | null> => {
-  try {
-    // Retrieve current data
-    const players = await getStoredPlayers();
-    const activities = await getStoredActivities();
-    
-    // Create backup object with timestamp
-    const backup: BackupData = {
-      players,
-      activities,
-      timestamp: new Date().toISOString(),
-      version: '1.0' // For future compatibility checks
-    };
-    
-    // Save backup to localStorage
-    localStorage.setItem('hassleholmsif_backup', JSON.stringify(backup));
-    
-    // Also save to Supabase if available
-    try {
-      const { error } = await supabase
-        .from('database_logs')
-        .insert({
-          action: 'backup',
-          entity_type: 'backup',
-          entity_id: 'manual-backup-' + new Date().toISOString(),
-          details: `Manual backup created with ${players.length} players and ${activities.length} activities`
-        });
-        
-      if (error) console.error("Error logging backup creation:", error);
-    } catch (e) {
-      console.error("Could not save backup record to Supabase:", e);
-    }
-    
-    return backup;
-  } catch (error) {
-    console.error("Error creating backup:", error);
-    return null;
-  }
-};
-
-/**
- * Restores data from the last backup
- */
-export const restoreFromBackup = async (): Promise<boolean> => {
-  try {
-    // Get backup from localStorage
-    const backupString = localStorage.getItem('hassleholmsif_backup');
-    if (!backupString) {
-      console.error("No backup found");
-      return false;
-    }
-    
-    // Parse backup data
-    const backup: BackupData = JSON.parse(backupString);
-    
-    // Verify backup format
-    if (!backup.players || !backup.activities || !backup.timestamp || !backup.version) {
-      console.error("Invalid backup format");
-      return false;
-    }
-    
-    // Restore players
-    try {
-      await savePlayers(backup.players);
-    } catch (error) {
-      console.error("Error restoring players:", error);
-      // Continue with activities even if player restore fails
-    }
-    
-    // Restore activities
-    try {
-      // Handle schema changes - we need to remove or adapt fields that might cause issues
-      const cleanedActivities = backup.activities.map(activity => {
-        // Create a shallow copy of the activity
-        const cleanActivity = { ...activity };
-        
-        // Update or handle fields that might have changed in the schema
-        // For example, if 'result' is causing issues, but we have homeScore and awayScore
-        if (!cleanActivity.result && cleanActivity.homeScore !== undefined && cleanActivity.awayScore !== undefined) {
-          cleanActivity.result = `${cleanActivity.homeScore}-${cleanActivity.awayScore}`;
-        }
-        
-        return cleanActivity;
-      });
-      
-      await saveActivities(cleanedActivities);
-    } catch (error) {
-      console.error("Error restoring activities:", error);
-      // Still return true if players were restored successfully
-      // We'll show a partial success message
-      return true;
-    }
-    
-    // Log restoration to Supabase
-    try {
-      const { error } = await supabase
-        .from('database_logs')
-        .insert({
-          action: 'restore',
-          entity_type: 'backup',
-          entity_id: 'manual-restore-' + new Date().toISOString(),
-          details: `Data restored from backup created at ${backup.timestamp} with ${backup.players.length} players and ${backup.activities.length} activities`
-        });
-        
-      if (error) console.error("Error logging backup restoration:", error);
-    } catch (e) {
-      console.error("Could not save restore record to Supabase:", e);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error restoring from backup:", error);
-    return false;
-  }
-};
-
-/**
- * Hook for backup and restore functionality
- */
 export const useBackupRestore = () => {
-  const { toast } = useToast();
-  
-  const handleCreateBackup = async () => {
+  const createBackup = async (): Promise<void> => {
     try {
-      const backup = await createBackup();
+      // Fetch players and activities in parallel
+      const [playersResponse, activitiesResponse] = await Promise.all([
+        supabase.from('players').select('*'),
+        supabase.from('activities').select('*')
+      ]);
       
-      if (backup) {
-        const formattedDate = format(new Date(backup.timestamp), 'yyyy-MM-dd HH:mm:ss');
-        
-        toast({
-          title: "Säkerhetskopiering slutförd",
-          description: `Backup skapad: ${formattedDate} med ${backup.players.length} spelare och ${backup.activities.length} aktiviteter`,
-        });
-        return true;
-      } else {
-        toast({
-          title: "Kunde inte skapa säkerhetskopia",
-          description: "Ett fel uppstod vid skapandet av säkerhetskopian.",
-          variant: "destructive"
-        });
-        return false;
-      }
+      if (playersResponse.error) throw playersResponse.error;
+      if (activitiesResponse.error) throw activitiesResponse.error;
+      
+      const players = playersResponse.data || [];
+      const activities = activitiesResponse.data || [];
+      
+      const backupData: BackupData = {
+        players: players,
+        activities: activities,
+        timestamp: new Date().toISOString(),
+      };
+      
+      localStorage.setItem('hassleholmsif_backup', JSON.stringify(backupData));
+      
+      // Log backup to Supabase
+      await logDatabaseChange(
+        'backup',
+        'backup',
+        'all',
+        `Created backup: ${players.length} players and ${activities.length} activities`
+      );
+      
+      console.log("Backup created and stored in localStorage");
     } catch (error) {
-      console.error("Error in handleCreateBackup:", error);
-      toast({
-        title: "Fel vid säkerhetskopiering",
-        description: "Ett oväntat fel uppstod. Försök igen senare.",
-        variant: "destructive"
-      });
-      return false;
+      console.error("Error creating backup:", error);
+      throw error;
     }
   };
   
-  const handleRestoreBackup = async () => {
-    try {
-      const success = await restoreFromBackup();
-      
-      if (success) {
-        toast({
-          title: "Återställning slutförd",
-          description: "Data har återställts från senaste säkerhetskopian.",
-        });
-        return true;
-      } else {
-        toast({
-          title: "Kunde inte återställa data",
-          description: "Ingen säkerhetskopia hittades eller så var formatet ogiltigt.",
-          variant: "destructive"
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error("Error in handleRestoreBackup:", error);
-      toast({
-        title: "Fel vid återställning",
-        description: "Ett oväntat fel uppstod. Försök igen senare.",
-        variant: "destructive"
-      });
-      return false;
+  const getLastBackupInfo = (): {timestamp: string, playerCount: number, activityCount: number} | null => {
+    const backupData = localStorage.getItem('hassleholmsif_backup');
+    if (!backupData) {
+      return null;
     }
-  };
-  
-  const getLastBackupInfo = (): { timestamp: string, playerCount: number, activityCount: number } | null => {
+    
     try {
-      const backupString = localStorage.getItem('hassleholmsif_backup');
-      if (!backupString) return null;
-      
-      const backup: BackupData = JSON.parse(backupString);
+      const backup: BackupData = JSON.parse(backupData);
       return {
         timestamp: backup.timestamp,
         playerCount: backup.players.length,
         activityCount: backup.activities.length
       };
     } catch (error) {
-      console.error("Error getting backup info:", error);
+      console.error("Error parsing backup data:", error);
       return null;
     }
   };
   
-  return {
-    createBackup: handleCreateBackup,
-    restoreBackup: handleRestoreBackup,
-    getLastBackupInfo
+  // In the restoreBackup function, modify the restoration logic to ensure match results are preserved
+  const restoreBackup = async (): Promise<boolean> => {
+    try {
+      const backupData = localStorage.getItem('hassleholmsif_backup');
+      if (!backupData) {
+        console.error("No backup found");
+        return false;
+      }
+      
+      let backup;
+      try {
+        backup = JSON.parse(backupData);
+      } catch (error) {
+        console.error("Error parsing backup data:", error);
+        return false;
+      }
+      
+      if (!backup.players || !backup.activities) {
+        console.error("Invalid backup format");
+        return false;
+      }
+      
+      // Restore players
+      try {
+        await savePlayers(backup.players);
+      } catch (error) {
+        console.error("Error restoring players:", error);
+        // Continue with activities even if player restore fails
+      }
+      
+      // Restore activities
+      try {
+        // Make sure result, homeScore, and awayScore are properly preserved
+        const cleanedActivities = backup.activities.map(activity => {
+          // Create a shallow copy of the activity
+          const cleanActivity = { ...activity };
+          
+          // Ensure homeScore, awayScore, and result are properly set
+          if (cleanActivity.type === 'match') {
+            // If we have homeScore and awayScore but no result, generate the result
+            if (cleanActivity.homeScore !== undefined && cleanActivity.awayScore !== undefined && !cleanActivity.result) {
+              cleanActivity.result = `${cleanActivity.homeScore}-${cleanActivity.awayScore}`;
+            }
+            
+            // If we have a result but no scores, try to extract scores from the result
+            if (cleanActivity.result && (cleanActivity.homeScore === undefined || cleanActivity.awayScore === undefined)) {
+              const scores = cleanActivity.result.split('-').map(Number);
+              if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
+                cleanActivity.homeScore = scores[0];
+                cleanActivity.awayScore = scores[1];
+              }
+            }
+            
+            // Initialize player_stats if it doesn't exist
+            if (!cleanActivity.player_stats) {
+              cleanActivity.player_stats = {
+                goals: {},
+                assists: {},
+                scores: {
+                  home: cleanActivity.homeScore,
+                  away: cleanActivity.awayScore
+                },
+                isWin: cleanActivity.isWin
+              };
+            } else {
+              // Ensure player_stats.scores is set correctly
+              cleanActivity.player_stats.scores = {
+                home: cleanActivity.homeScore,
+                away: cleanActivity.awayScore
+              };
+            }
+          }
+          
+          return cleanActivity;
+        });
+        
+        await saveActivities(cleanedActivities);
+      } catch (error) {
+        console.error("Error restoring activities:", error);
+        return false;
+      }
+      
+      // Log restoration to Supabase
+      try {
+        await logDatabaseChange(
+          'restore',
+          'backup',
+          'all',
+          `Restored from backup: ${backup.players.length} players and ${backup.activities.length} activities`
+        );
+      } catch (error) {
+        console.error("Error logging restoration:", error);
+        // This is non-critical, so we still return true
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error in restoreBackup:", error);
+      return false;
+    }
   };
+
+  return { createBackup, restoreBackup, getLastBackupInfo };
 };
