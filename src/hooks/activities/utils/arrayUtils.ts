@@ -2,7 +2,7 @@
 /**
  * Utility functions for array operations in activity hooks
  */
-import { Player } from "@/types/player";
+import { Player, Activity } from "@/types/player";
 
 /**
  * Checks if two player arrays are equal by comparing IDs and activities
@@ -38,4 +38,24 @@ export const arraysEqual = (a: any[], b: any[]): boolean => {
   }
   
   return true;
+};
+
+/**
+ * Preserves match data when updating an activity
+ * Ensures important fields like result, homeScore, awayScore, and player_stats are preserved
+ */
+export const preserveMatchData = (existingActivity: Activity, updatedActivity: Activity): Activity => {
+  return {
+    ...existingActivity,
+    ...updatedActivity,
+    // Preserve the result data if not explicitly set in the update
+    result: updatedActivity.result ?? existingActivity.result,
+    homeScore: updatedActivity.homeScore ?? existingActivity.homeScore,
+    awayScore: updatedActivity.awayScore ?? existingActivity.awayScore,
+    // Merge player_stats objects instead of replacing
+    player_stats: {
+      ...(existingActivity.player_stats || {}),
+      ...(updatedActivity.player_stats || {})
+    }
+  };
 };

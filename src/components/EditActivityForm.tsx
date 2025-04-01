@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Save, X, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, Save, X, MapPin, Trophy } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,9 @@ const activityFormSchema = z.object({
   locationName: z.string().optional(),
   locationDescription: z.string().optional(),
   locationGps: z.string().optional(),
+  result: z.string().optional(),
+  homeScore: z.coerce.number().optional(),
+  awayScore: z.coerce.number().optional(),
 });
 
 type ActivityFormValues = z.infer<typeof activityFormSchema>;
@@ -56,6 +59,9 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
       locationName: activity.location?.name || "",
       locationDescription: activity.location?.description || "",
       locationGps: activity.location?.gpsLink || "",
+      result: activity.result || "",
+      homeScore: activity.homeScore,
+      awayScore: activity.awayScore,
     },
   });
 
@@ -67,6 +73,9 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
       date: format(values.date, 'yyyy-MM-dd'),
       type: values.type as ActivityType,
       time: values.time || undefined,
+      result: values.result || undefined,
+      homeScore: values.homeScore,
+      awayScore: values.awayScore,
     };
 
     // Add location information if provided
@@ -228,6 +237,72 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
             />
           </div>
         </div>
+
+        {/* Match result section */}
+        {activity.type === "match" && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-medium flex items-center mb-3">
+              <Trophy className="h-4 w-4 mr-2" />
+              Resultat
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="homeScore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hemmamål</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        {...field} 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="awayScore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bortamål</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        {...field} 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="result"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resultat (text)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="2-1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

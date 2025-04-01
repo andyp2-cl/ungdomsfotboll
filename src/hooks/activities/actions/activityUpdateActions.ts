@@ -1,6 +1,6 @@
-
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
+import { preserveMatchData } from "../utils/arrayUtils";
 
 /**
  * Handles updating an existing activity
@@ -20,13 +20,8 @@ export const handleActivityUpdate = async (
     return;
   }
   
-  // Make sure we properly merge the player_stats and preserve the result data
-  const mergedActivity = {
-    ...existingActivity,
-    ...updatedActivity,
-    player_stats: updatedActivity.player_stats || existingActivity.player_stats,
-    result: updatedActivity.result ?? existingActivity.result
-  };
+  // Use the preserveMatchData utility function to properly merge activities
+  const mergedActivity = preserveMatchData(existingActivity, updatedActivity);
   
   console.log("Updating activity with data:", mergedActivity);
   
