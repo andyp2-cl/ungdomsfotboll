@@ -71,6 +71,7 @@ export function usePlayerFilters({
     return results;
   }, [players, searchQuery, selectedGrades, selectedPositions]);
 
+  // These functions now return a boolean indicating if the item is currently selected
   const handleGradeChange = (grade: PlayerGrade) => {
     return selectedGrades.includes(grade);
   };

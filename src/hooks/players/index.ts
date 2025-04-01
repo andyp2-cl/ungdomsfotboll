@@ -67,8 +67,25 @@ export function usePlayers() {
     viewMode,
     setViewMode,
     filteredPlayers,
-    handleGradeChange: (grade: any) => handleGradeChange(grade, setSelectedGrades),
-    handlePositionChange: (position: any) => handlePositionChange(position, setSelectedPositions),
+    // Fix these two lines by providing wrapper functions that handle the state updates
+    handleGradeChange: (grade: any) => {
+      const isSelected = handleGradeChange(grade);
+      // Toggle the grade selection
+      setSelectedGrades(prev => 
+        isSelected 
+          ? prev.filter(g => g !== grade)
+          : [...prev, grade]
+      );
+    },
+    handlePositionChange: (position: any) => {
+      const isSelected = handlePositionChange(position);
+      // Toggle the position selection
+      setSelectedPositions(prev => 
+        isSelected 
+          ? prev.filter(p => p !== position)
+          : [...prev, position]
+      );
+    },
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
