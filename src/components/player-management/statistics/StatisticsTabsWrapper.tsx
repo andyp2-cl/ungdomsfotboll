@@ -5,7 +5,7 @@ import { Activity, Player } from "@/types/player";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
 import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
-import { ParticipationTabContent } from "./ParticipationTabContent";
+import { FormationTabContent } from "./formation/FormationTabContent";
 import { saveActiveTab } from "@/utils/storage/tabs";
 
 interface StatisticsTabsWrapperProps {
@@ -19,10 +19,10 @@ export function StatisticsTabsWrapper({
   activities,
   gradeData
 }: StatisticsTabsWrapperProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "matches" | "goals" | "participation">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "matches" | "goals" | "formation">("overview");
 
   const handleTabChange = (value: string) => {
-    const tab = value as "overview" | "matches" | "goals" | "participation";
+    const tab = value as "overview" | "matches" | "goals" | "formation";
     setActiveTab(tab);
     saveActiveTab(`statistics-${tab}`);
   };
@@ -37,7 +37,7 @@ export function StatisticsTabsWrapper({
           <TabsTrigger value="overview">Översikt</TabsTrigger>
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Mål</TabsTrigger>
-          <TabsTrigger value="participation">Deltagare</TabsTrigger>
+          <TabsTrigger value="formation">Formation</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -52,8 +52,8 @@ export function StatisticsTabsWrapper({
           <GoalsTabContent players={players} activities={activities} />
         </TabsContent>
         
-        <TabsContent value="participation">
-          <ParticipationTabContent players={players} activities={activities} />
+        <TabsContent value="formation">
+          <FormationTabContent players={players} activities={activities} />
         </TabsContent>
       </Tabs>
     </div>
