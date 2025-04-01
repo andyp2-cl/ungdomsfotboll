@@ -1,14 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { ActivityType } from "@/types/player";
 
 interface ActivityFilterProps {
-  selectedTypes: ActivityType[];
-  onTypeChange: (type: ActivityType) => void;
+  selectedTypes: string[];
+  onTypeChange: (type: string) => void;
 }
 
 export function ActivityFilter({ selectedTypes, onTypeChange }: ActivityFilterProps) {
-  const types: { value: ActivityType; label: string }[] = [
+  const types: { value: string; label: string }[] = [
     { value: 'match', label: 'Match' },
     { value: 'cup', label: 'Cup' },
   ];
