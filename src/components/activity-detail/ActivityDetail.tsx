@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { 
   Card, 
@@ -56,6 +56,11 @@ export function ActivityDetail({
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Update currentActivity when activity prop changes
+  useEffect(() => {
+    setCurrentActivity(activity);
+  }, [activity]);
+
   // Determine if this is a historical activity (past date)
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
   
@@ -63,17 +68,48 @@ export function ActivityDetail({
     (player) => currentActivity.participants?.includes(player.id)
   );
 
+  // Helper function to safely normalize player_stats
+  const normalizePlayerStats = (activity: Activity): Activity => {
+    if (!activity.player_stats) {
+      return {
+        ...activity,
+        player_stats: { goals: {}, assists: {} }
+      };
+    }
+    
+    if (typeof activity.player_stats === 'string') {
+      try {
+        const parsed = JSON.parse(activity.player_stats);
+        return {
+          ...activity,
+          player_stats: typeof parsed === 'string' 
+            ? JSON.parse(parsed) 
+            : parsed
+        };
+      } catch (e) {
+        console.error("Error parsing player_stats:", e);
+        return {
+          ...activity,
+          player_stats: { goals: {}, assists: {} }
+        };
+      }
+    }
+    
+    return activity;
+  };
+
   // Update activity handler
   const handleActivityUpdate = (updatedActivity: Activity) => {
-    setCurrentActivity(updatedActivity);
+    const normalizedActivity = normalizePlayerStats(updatedActivity);
+    setCurrentActivity(normalizedActivity);
     
     if (onActivityUpdate) {
-      onActivityUpdate(updatedActivity);
+      onActivityUpdate(normalizedActivity);
     }
     
     // Also call onUpdate if provided
     if (onUpdate) {
-      onUpdate(updatedActivity);
+      onUpdate(normalizedActivity);
     }
   };
 
@@ -94,10 +130,13 @@ export function ActivityDetail({
   // Choose the appropriate close handler
   const handleClose = onBack || onClose;
 
+  // Normalize current activity before rendering
+  const normalizedCurrentActivity = normalizePlayerStats(currentActivity);
+
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
       <ActivityDetailHeader 
-        activity={currentActivity}
+        activity={normalizedCurrentActivity}
         isHistorical={isHistorical}
         onClose={handleClose}
         onEdit={onEdit}
@@ -106,18 +145,18 @@ export function ActivityDetail({
 
       <CardContent className="space-y-6">
         {/* Match Result (only for matches) */}
-        {currentActivity.type === "match" && (
+        {normalizedCurrentActivity.type === "match" && (
           <ActivityResultSection 
-            activity={currentActivity}
+            activity={normalizedCurrentActivity}
             isHistorical={isHistorical}
             updateActivity={handleActivityUpdate}
           />
         )}
         
         {/* Match Statistics (only for matches) */}
-        {currentActivity.type === "match" && (
+        {normalizedCurrentActivity.type === "match" && (
           <ActivityStatsSection 
-            activity={currentActivity}
+            activity={normalizedCurrentActivity}
             players={players}
             participatingPlayers={participatingPlayers}
             updateActivity={handleActivityUpdate}
@@ -127,16 +166,16 @@ export function ActivityDetail({
         
         {/* Participants section */}
         <ActivityParticipantSection 
-          activity={currentActivity}
+          activity={normalizedCurrentActivity}
           players={players}
           updateActivity={handleActivityUpdate}
           onPlayerSelect={onPlayerSelect}
         />
         
         {/* Kiosk assignment (only for matches) */}
-        {currentActivity.type === "match" && (
+        {normalizedCurrentActivity.type === "match" && (
           <ActivityKioskSection 
-            activity={currentActivity}
+            activity={normalizedCurrentActivity}
             players={players}
             updateActivity={handleActivityUpdate}
             onKioskAssignmentUpdate={onKioskAssignmentUpdate || 
@@ -149,7 +188,7 @@ export function ActivityDetail({
         )}
         
         {/* Cup matches (only for cups) */}
-        {currentActivity.type === "cup" && cupMatches && cupMatches.length > 0 && (
+        {normalizedCurrentActivity.type === "cup" && cupMatches && cupMatches.length > 0 && (
           <ActivityMatchesSection 
             cupMatches={cupMatches}
             onActivitySelect={onActivitySelect}
@@ -163,7 +202,7 @@ export function ActivityDetail({
 
       {/* Delete confirmation dialog */}
       <DeleteActivityDialog
-        activityName={currentActivity.name}
+        activityName={normalizedCurrentActivity.name}
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onDelete={handleDeleteActivity}

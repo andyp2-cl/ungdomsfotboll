@@ -76,11 +76,11 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
     },
     // Use the new score data
     scores: {
-      home: newActivity.homeScore,
-      away: newActivity.awayScore
+      home: newActivity.homeScore || 0,
+      away: newActivity.awayScore || 0
     },
-    // Use the new win status
-    isWin: newActivity.isWin
+    // Use the new win status, default to false if undefined
+    isWin: newActivity.isWin === undefined ? false : newActivity.isWin
   };
   
   // Create final updated activity
@@ -90,19 +90,9 @@ export function preserveMatchData(oldActivity: Activity, newActivity: Activity):
   };
   
   console.log("preserveMatchData output:", {
-    oldActivity: {
-      id: oldActivity.id,
-      hasPlayerStats: !!oldActivity.player_stats,
-      playerStatsType: typeof oldActivity.player_stats,
-      playerStats: oldActivity.player_stats
-    },
-    newActivity: {
-      id: newActivity.id,
-      hasPlayerStats: !!newActivity.player_stats,
-      playerStatsType: typeof newActivity.player_stats,
-      playerStats: newActivity.player_stats
-    },
-    result: {
+    mergedStats,
+    updatedActivity: {
+      id: updatedActivity.id,
       hasPlayerStats: !!updatedActivity.player_stats,
       playerStatsType: typeof updatedActivity.player_stats,
       playerStats: updatedActivity.player_stats

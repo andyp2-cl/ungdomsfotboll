@@ -39,20 +39,33 @@ export function ActivityMatchResult({
         // Handle double-stringified JSON
         if (typeof parsed === 'string') {
           try {
-            return JSON.parse(parsed);
+            const doubleParsed = JSON.parse(parsed);
+            return {
+              ...doubleParsed,
+              goals: doubleParsed.goals || {},
+              assists: doubleParsed.assists || {}
+            };
           } catch (e) {
             console.error("Error parsing double-stringified player_stats:", e);
             return { goals: {}, assists: {} };
           }
         }
-        return parsed;
+        return {
+          ...parsed,
+          goals: parsed.goals || {},
+          assists: parsed.assists || {}
+        };
       } catch (e) {
         console.error("Error parsing player_stats:", e);
         return { goals: {}, assists: {} };
       }
     }
     
-    return stats;
+    return {
+      ...stats,
+      goals: stats.goals || {},
+      assists: stats.assists || {}
+    };
   };
 
   const saveMatchResult = async () => {
@@ -73,11 +86,13 @@ export function ActivityMatchResult({
         goals: existingPlayerStats.goals || {},
         assists: existingPlayerStats.assists || {},
         scores: {
-          home: homeScore,
-          away: awayScore
+          home: homeScore || 0,
+          away: awayScore || 0
         },
         isWin
       };
+      
+      console.log("Saving match result with player_stats:", updatedPlayerStats);
       
       // First directly update the database to ensure the data is saved
       const { error } = await supabase
@@ -87,7 +102,7 @@ export function ActivityMatchResult({
           away_score: awayScore,
           is_win: isWin,
           player_stats: updatedPlayerStats,
-          result: homeScore !== undefined && awayScore !== undefined ? `${homeScore}-${awayScore}` : undefined
+          result: homeScore !== undefined && awayScore !== undefined ? `${homeScore}-${awayScore}` : null
         })
         .eq('id', activity.id);
         
@@ -95,14 +110,6 @@ export function ActivityMatchResult({
         console.error("Error saving match result to database:", error);
         throw error;
       }
-
-      console.log("Match result saved to database:", { 
-        homeScore, 
-        awayScore, 
-        isWin, 
-        isHome,
-        playerStats: updatedPlayerStats
-      });
 
       // Create an updated activity with the new scores
       const updatedActivity = {
@@ -113,6 +120,14 @@ export function ActivityMatchResult({
         isWin,
         player_stats: updatedPlayerStats
       };
+      
+      console.log("Updating activity with:", {
+        id: updatedActivity.id,
+        homeScore, 
+        awayScore, 
+        isWin,
+        playerStats: updatedPlayerStats
+      });
       
       updateActivity(updatedActivity);
       
