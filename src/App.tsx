@@ -8,6 +8,7 @@ import PasswordProtection from "./components/PasswordProtection";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
+import PlayerManagementPage from "./pages/PlayerManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/players" element={<PlayersPage initialTab="players" />} />
             <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+            <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
+            <Route path="/player-management" element={<PlayerManagementPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
