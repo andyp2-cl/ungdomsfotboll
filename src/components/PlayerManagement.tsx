@@ -48,10 +48,11 @@ export function PlayerManagement({
   const [selectedPositions, setSelectedPositions] = useState<PlayerPosition[]>([]);
   
   useEffect(() => {
-    if (isMobile && viewMode === "grid") {
+    // Always force list view
+    if (viewMode === "grid") {
       onViewModeChange("list");
     }
-  }, [isMobile, viewMode, onViewModeChange]);
+  }, [viewMode, onViewModeChange]);
 
   const handlePositionChange = (position: PlayerPosition) => {
     setSelectedPositions(prev => 

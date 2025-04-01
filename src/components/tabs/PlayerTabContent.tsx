@@ -3,10 +3,8 @@ import { useState } from "react";
 import { Activity, Player, PlayerGrade } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
 import { PlayerFilter } from "@/components/PlayerFilter";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Grid, List, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PlayerList } from "@/components/player-list/PlayerList";
-import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { TeamStatistics } from "@/components/TeamStatistics";
@@ -67,17 +65,6 @@ export function PlayerTabContent({
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {
-            if (value) setViewMode(value as "list" | "grid" | "stats");
-          }}>
-            <ToggleGroupItem value="list" aria-label="Lista">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="grid" aria-label="Rutnät">
-              <Grid className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-          
           <Button onClick={() => setIsAddPlayerOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
@@ -102,23 +89,12 @@ export function PlayerTabContent({
           activities={activities}
           onPlayerSelect={setSelectedPlayer}
         />
-      ) : viewMode === "list" ? (
+      ) : (
         <PlayerList 
           players={filteredPlayers}
           onPlayerSelect={setSelectedPlayer}
           onPlayerEdit={setEditingPlayer}
         />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredPlayers.map(player => (
-            <PlayerCard 
-              key={player.id}
-              player={player}
-              onClick={() => setSelectedPlayer(player)}
-              onEdit={() => setEditingPlayer(player)}
-            />
-          ))}
-        </div>
       )}
     </div>
   );
