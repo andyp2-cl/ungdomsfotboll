@@ -46,7 +46,7 @@ export function BackupRestoreActions() {
         onClick={handleBackup}
         disabled={isBackingUp || isRestoring}
       >
-        {isBackingUp ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
+        {isBackingUp ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         Spara data
       </Button>
       
@@ -58,7 +58,7 @@ export function BackupRestoreActions() {
             className="flex items-center gap-2"
             disabled={!backupInfo || isBackingUp || isRestoring}
           >
-            {isRestoring ? <Spinner size="sm" /> : <RotateCcw className="h-4 w-4" />}
+            {isRestoring ? <Spinner className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
             Återställ
           </Button>
         </AlertDialogTrigger>

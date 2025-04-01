@@ -131,7 +131,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   return (
     <PageContainer isLoading={isLoading}>
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4">
         <MainTabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -178,7 +178,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
             />
           }
         />
-        <BackupRestoreActions />
       </div>
 
       <PageDialogs 
@@ -195,6 +194,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddPlayer={handleAddPlayer}
         handleAddActivity={handleAddActivity}
       />
+      
+      {/* Backup/Restore actions at the bottom of the page */}
+      <div className="fixed bottom-4 right-4 z-10">
+        <BackupRestoreActions />
+      </div>
     </PageContainer>
   );
 }
