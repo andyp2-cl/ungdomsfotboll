@@ -16,7 +16,20 @@ export function usePlayerActions(
   useEffect(() => {
     const loadPlayers = async () => {
       try {
+        setIsLoading(true);
         const storedPlayers = await getStoredPlayers();
+        
+        // Log players loaded for debugging
+        console.log("Players loaded from storage:", storedPlayers.length);
+        
+        // Check if specific players exist - for debugging
+        const alvin = storedPlayers.find(p => p.name.includes("Alvin"));
+        if (alvin) {
+          console.log("Alvin found in loaded players:", alvin);
+        } else {
+          console.warn("Alvin not found in loaded players!");
+        }
+        
         setPlayers(storedPlayers);
       } catch (error) {
         console.error("Error loading players:", error);
