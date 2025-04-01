@@ -5,6 +5,7 @@ import { Activity, Location } from "@/types/player";
 import { format } from "date-fns";
 import { ActivityFormValues, activityFormSchema } from "./formSchema";
 import { useState } from "react";
+import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
 
 export function useActivityForm(
   activity: Activity,
@@ -54,8 +55,8 @@ export function useActivityForm(
       // Format date to ISO string
       const formattedDate = format(values.date, 'yyyy-MM-dd');
       
-      // Update activity with form values
-      const updatedActivity: Activity = {
+      // Create updated activity with form values
+      const formUpdatedActivity: Activity = {
         ...activity,
         name: values.name,
         date: formattedDate,
@@ -67,6 +68,9 @@ export function useActivityForm(
         awayScore: values.awayScore,
       };
 
+      // Use preserveMatchData to ensure match statistics are maintained
+      const updatedActivity = preserveMatchData(activity, formUpdatedActivity);
+      
       await onSave(updatedActivity);
     } catch (error) {
       console.error("Error saving activity:", error);
