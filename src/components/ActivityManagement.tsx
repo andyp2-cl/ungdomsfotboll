@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ActivityTabContent, ToolsTabContent } from "@/components/activity-management";
+import { ActivityFilter } from "@/components/ActivityFilter";
 
 interface ActivityManagementProps {
   activities: Activity[];
@@ -79,7 +79,6 @@ export function ActivityManagement({
     }
   }
 
-  // Wrap the onKioskAssignmentUpdate function to return a Promise<boolean>
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
     try {
       onKioskAssignmentUpdate(activityId, playerId);
@@ -90,7 +89,6 @@ export function ActivityManagement({
     }
   };
 
-  // Wrap the onDeleteActivity function to return a Promise<boolean>
   const handleDeleteActivity = async (activityId: string): Promise<boolean> => {
     try {
       if (onDeleteActivity) {
