@@ -55,6 +55,20 @@ export function useActivityForm(
       // Format date to ISO string
       const formattedDate = format(values.date, 'yyyy-MM-dd');
       
+      // Make sure score values are converted to numbers
+      const homeScore = typeof values.homeScore === 'string' 
+        ? parseInt(values.homeScore, 10) 
+        : values.homeScore;
+        
+      const awayScore = typeof values.awayScore === 'string' 
+        ? parseInt(values.awayScore, 10) 
+        : values.awayScore;
+        
+      // Create result string if both scores exist
+      const result = (homeScore !== undefined && awayScore !== undefined)
+        ? `${homeScore}-${awayScore}`
+        : values.result || undefined;
+      
       // Create updated activity with form values
       const formUpdatedActivity: Activity = {
         ...activity,
@@ -63,9 +77,19 @@ export function useActivityForm(
         type: values.type,
         time: values.time || undefined,
         location,
-        result: values.result || undefined,
-        homeScore: values.homeScore,
-        awayScore: values.awayScore,
+        result,
+        homeScore,
+        awayScore,
+        // Create or update player stats
+        player_stats: {
+          ...(activity.player_stats || {}),
+          // Make sure to preserve existing stats
+          scores: {
+            ...(activity.player_stats?.scores || {}),
+            home: homeScore,
+            away: awayScore
+          }
+        }
       };
 
       // Use preserveMatchData to ensure match statistics are maintained

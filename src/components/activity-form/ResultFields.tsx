@@ -3,7 +3,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Trophy } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues, ResultFieldValues } from "./formSchema";
+import { ActivityFormValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
 import { useEffect } from "react";
 
@@ -50,7 +50,15 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   placeholder="0" 
                   {...field} 
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseInt(e.target.value);
+                    field.onChange(value);
+                    
+                    // Also update the result field for immediate feedback
+                    if (value !== undefined && form.getValues().awayScore !== undefined) {
+                      form.setValue('result', `${value}-${form.getValues().awayScore}`);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -70,7 +78,15 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   placeholder="0" 
                   {...field} 
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseInt(e.target.value);
+                    field.onChange(value);
+                    
+                    // Also update the result field for immediate feedback
+                    if (value !== undefined && form.getValues().homeScore !== undefined) {
+                      form.setValue('result', `${form.getValues().homeScore}-${value}`);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />

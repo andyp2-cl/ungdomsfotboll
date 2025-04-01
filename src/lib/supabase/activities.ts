@@ -30,7 +30,18 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       scraped: activity.scraped || false,
       participants: [],
       cupId: activity.cup_id || undefined,
-      matches: [] // We'll populate this for cup activities
+      matches: [], // We'll populate this for cup activities
+      result: activity.result || undefined,
+      homeScore: activity.home_score,
+      awayScore: activity.away_score,
+      player_stats: activity.player_stats || {
+        goals: {},
+        assists: {},
+        scores: {
+          home: activity.home_score,
+          away: activity.away_score
+        }
+      }
     }));
     
     // Fetch participant relationships
@@ -48,8 +59,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // IMPROVED: Find cup matches by looking for activities with a cupId that matches a cup's id
-    // Add additional logging to help diagnose the issue
+    // Find cup matches by looking for activities with a cupId that matches a cup's id
     console.log("All activities before processing cup matches:", activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
     
     // First, find all cup activities
