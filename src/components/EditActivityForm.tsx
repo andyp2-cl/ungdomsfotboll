@@ -14,9 +14,15 @@ interface EditActivityFormProps {
 }
 
 export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFormProps) {
-  // Vi skickar aktiviteten direkt till useActivityForm utan att normalisera här
-  // eftersom normaliseringen nu sker inne i useActivityForm
-  const { form, handleSubmit, isSubmitting } = useActivityForm(activity, onSave);
+  // Ensure activity.player_stats is an object before passing to useActivityForm
+  const normalizedActivity = {
+    ...activity,
+    player_stats: typeof activity.player_stats === 'string' 
+      ? JSON.parse(activity.player_stats) 
+      : activity.player_stats || { goals: {}, assists: {} }
+  };
+  
+  const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, onSave);
 
   return (
     <Form {...form}>

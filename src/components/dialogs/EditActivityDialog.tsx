@@ -20,18 +20,23 @@ export function EditActivityDialog({
 }: EditActivityDialogProps) {
   const { toast } = useToast();
 
+  // Make a defensive copy of the activity to avoid mutations
+  const activityCopy = activity ? {
+    ...activity,
+    // Normalize player_stats to ensure it's always an object
+    player_stats: typeof activity.player_stats === 'string'
+      ? JSON.parse(activity.player_stats)
+      : activity.player_stats || { goals: {}, assists: {} }
+  } : null;
+
   const handleSave = (updatedActivity: Activity) => {
+    if (!activityCopy) return;
+    
     try {
-      console.log("EditActivityDialog - Updating activity:", {
-        id: updatedActivity.id,
-        playerStatsType: typeof updatedActivity.player_stats,
-        homeScore: updatedActivity.homeScore,
-        awayScore: updatedActivity.awayScore,
-        isWin: updatedActivity.isWin
-      });
-      
-      // Uppdatera aktiviteten
+      // Pass the updated activity to the parent component
       onActivityUpdate(updatedActivity);
+      
+      // Close the dialog
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving activity:", error);
@@ -49,9 +54,9 @@ export function EditActivityDialog({
         <DialogHeader>
           <DialogTitle>Redigera aktivitet</DialogTitle>
         </DialogHeader>
-        {activity && (
+        {activityCopy && (
           <EditActivityForm 
-            activity={activity} 
+            activity={activityCopy} 
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
           />

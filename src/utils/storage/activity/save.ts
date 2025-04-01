@@ -6,57 +6,40 @@ import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cupMatches";
 
-// Hjälpfunktion för att säkerställa att player_stats är ett normaliserat objekt
-function normalizePlayerStats(playerStats: any) {
-  if (!playerStats) {
-    return { goals: {}, assists: {} };
-  }
-  
-  if (typeof playerStats === 'string') {
-    try {
-      const parsed = JSON.parse(playerStats);
-      if (typeof parsed === 'string') {
-        try {
-          const doubleParsed = JSON.parse(parsed);
-          return {
-            ...doubleParsed,
-            goals: doubleParsed.goals || {},
-            assists: doubleParsed.assists || {}
-          };
-        } catch (e) {
-          console.error("Error parsing double-stringified player_stats:", e);
-          return { goals: {}, assists: {} };
-        }
-      }
-      return {
-        ...parsed,
-        goals: parsed.goals || {},
-        assists: parsed.assists || {}
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats string:", e);
-      return { goals: {}, assists: {} };
-    }
-  }
-  
-  // Om det redan är ett objekt, säkerställ att det har nödvändiga egenskaper
-  return {
-    ...playerStats,
-    goals: playerStats.goals || {},
-    assists: playerStats.assists || {}
-  };
-}
-
 // Save activities to Supabase
 export const saveActivities = async (activities: Activity[]): Promise<void> => {
   console.log("Saving activities to Supabase:", activities.length);
   
   try {
     for (const activity of activities) {
-      // Normalisera player_stats innan formatering för databasen
+      // Normalize player_stats to ensure it's always an object before saving
+      let normalizedPlayerStats;
+      if (!activity.player_stats) {
+        normalizedPlayerStats = { goals: {}, assists: {} };
+      } else if (typeof activity.player_stats === 'string') {
+        try {
+          normalizedPlayerStats = JSON.parse(activity.player_stats);
+          // If still a string after parsing (double-stringified), parse again
+          if (typeof normalizedPlayerStats === 'string') {
+            normalizedPlayerStats = JSON.parse(normalizedPlayerStats);
+          }
+        } catch (e) {
+          console.error("Error parsing player_stats string:", e);
+          normalizedPlayerStats = { goals: {}, assists: {} };
+        }
+      } else {
+        // Already an object, just ensure required properties exist
+        normalizedPlayerStats = {
+          ...activity.player_stats,
+          goals: activity.player_stats.goals || {},
+          assists: activity.player_stats.assists || {}
+        };
+      }
+      
+      // Create a clean activity object with normalized player_stats
       const normalizedActivity = {
         ...activity,
-        player_stats: normalizePlayerStats(activity.player_stats)
+        player_stats: normalizedPlayerStats
       };
       
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
@@ -75,7 +58,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         .from('activities')
         .upsert(formattedActivity, { onConflict: 'id' });
         
-      if (upsertError) throw upsertError;
+      if (upsertError) {
+        console.error("Error upserting activity:", upsertError);
+        throw upsertError;
+      }
       
       console.log(`${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} (${activity.id})`);
       
