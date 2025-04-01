@@ -18,20 +18,33 @@ function normalizePlayerStats(playerStats: any) {
       if (typeof parsed === 'string') {
         try {
           const doubleParsed = JSON.parse(parsed);
-          return doubleParsed;
+          return {
+            ...doubleParsed,
+            goals: doubleParsed.goals || {},
+            assists: doubleParsed.assists || {}
+          };
         } catch (e) {
           console.error("Error parsing double-stringified player_stats:", e);
           return { goals: {}, assists: {} };
         }
       }
-      return parsed;
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
     } catch (e) {
       console.error("Error parsing player_stats string:", e);
       return { goals: {}, assists: {} };
     }
   }
   
-  return playerStats;
+  // Om det redan är ett objekt, säkerställ att det har nödvändiga egenskaper
+  return {
+    ...playerStats,
+    goals: playerStats.goals || {},
+    assists: playerStats.assists || {}
+  };
 }
 
 // Save activities to Supabase

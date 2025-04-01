@@ -20,63 +20,6 @@ export function EditActivityDialog({
 }: EditActivityDialogProps) {
   const { toast } = useToast();
 
-  // Säkerställ att vi har ett rent activity-objekt innan vi skickar det till formuläret
-  const sanitizeActivity = (activity: Activity | null): Activity | null => {
-    if (!activity) return null;
-    
-    // Säkerställ att player_stats är korrekt formaterat
-    const sanitizedPlayerStats = sanitizePlayerStats(activity.player_stats);
-    
-    return {
-      ...activity,
-      player_stats: sanitizedPlayerStats
-    };
-  };
-
-  const sanitizePlayerStats = (playerStats: any) => {
-    if (!playerStats) {
-      return { goals: {}, assists: {} };
-    }
-    
-    if (typeof playerStats === 'string') {
-      try {
-        // Försök att tolka JSON-strängen
-        const parsed = JSON.parse(playerStats);
-        // Hantera dubbelt stringifierad JSON
-        if (typeof parsed === 'string') {
-          try {
-            const doubleParsed = JSON.parse(parsed);
-            return {
-              ...doubleParsed,
-              goals: doubleParsed.goals || {},
-              assists: doubleParsed.assists || {}
-            };
-          } catch (e) {
-            console.error("Double-string parse failed:", e);
-            return { goals: {}, assists: {} };
-          }
-        }
-        return {
-          ...parsed,
-          goals: parsed.goals || {},
-          assists: parsed.assists || {}
-        };
-      } catch (e) {
-        console.error("Error parsing player_stats string:", e);
-        return { goals: {}, assists: {} };
-      }
-    }
-    
-    // Om det redan är ett objekt, säkerställ att det har nödvändiga egenskaper
-    return {
-      ...playerStats,
-      goals: playerStats.goals || {},
-      assists: playerStats.assists || {}
-    };
-  };
-
-  const sanitizedActivity = sanitizeActivity(activity);
-
   const handleSave = (updatedActivity: Activity) => {
     try {
       console.log("EditActivityDialog - Updating activity:", {
@@ -87,11 +30,8 @@ export function EditActivityDialog({
         isWin: updatedActivity.isWin
       });
       
-      // Spara i ett lokalt scope för att undvika frysning i asynkrona operationer
-      const finalActivity = { ...updatedActivity };
-      
       // Uppdatera aktiviteten
-      onActivityUpdate(finalActivity);
+      onActivityUpdate(updatedActivity);
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving activity:", error);
@@ -109,9 +49,9 @@ export function EditActivityDialog({
         <DialogHeader>
           <DialogTitle>Redigera aktivitet</DialogTitle>
         </DialogHeader>
-        {sanitizedActivity && (
+        {activity && (
           <EditActivityForm 
-            activity={sanitizedActivity} 
+            activity={activity} 
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
           />

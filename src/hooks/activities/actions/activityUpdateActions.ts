@@ -1,7 +1,52 @@
-
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { preserveMatchData } from "../utils/arrayUtils";
+
+/**
+ * Hjälpfunktion för att säkerställa player_stats är alltid ett objekt
+ */
+function ensurePlayerStatsObject(playerStats: any) {
+  if (!playerStats) {
+    return { goals: {}, assists: {} };
+  }
+  
+  if (typeof playerStats === 'string') {
+    try {
+      const parsed = JSON.parse(playerStats);
+      
+      // Handle double-stringified JSON
+      if (typeof parsed === 'string') {
+        try {
+          const doubleDecoded = JSON.parse(parsed);
+          return {
+            ...doubleDecoded,
+            goals: doubleDecoded.goals || {},
+            assists: doubleDecoded.assists || {}
+          };
+        } catch (e) {
+          console.error("Error parsing double-stringified player_stats:", e);
+          return { goals: {}, assists: {} };
+        }
+      }
+      
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats string:", e);
+      return { goals: {}, assists: {} };
+    }
+  }
+  
+  // Ensure required properties exist
+  return {
+    ...playerStats,
+    goals: playerStats.goals || {},
+    assists: playerStats.assists || {}
+  };
+}
 
 /**
  * Handles updating an existing activity
@@ -93,52 +138,6 @@ export const handleActivityUpdate = async (
     description: `${mergedActivity.name} har uppdaterats.`,
   });
 };
-
-/**
- * Helper function to ensure player_stats is always an object
- */
-function ensurePlayerStatsObject(playerStats: any) {
-  if (!playerStats) {
-    return { goals: {}, assists: {} };
-  }
-  
-  if (typeof playerStats === 'string') {
-    try {
-      const parsed = JSON.parse(playerStats);
-      
-      // Handle double-stringified JSON
-      if (typeof parsed === 'string') {
-        try {
-          const doubleDecoded = JSON.parse(parsed);
-          return {
-            ...doubleDecoded,
-            goals: doubleDecoded.goals || {},
-            assists: doubleDecoded.assists || {}
-          };
-        } catch (e) {
-          console.error("Error parsing double-stringified player_stats:", e);
-          return { goals: {}, assists: {} };
-        }
-      }
-      
-      return {
-        ...parsed,
-        goals: parsed.goals || {},
-        assists: parsed.assists || {}
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats string:", e);
-      return { goals: {}, assists: {} };
-    }
-  }
-  
-  // Ensure required properties exist
-  return {
-    ...playerStats,
-    goals: playerStats.goals || {},
-    assists: playerStats.assists || {}
-  };
-}
 
 /**
  * Handles assigning a player to kiosk duty for an activity

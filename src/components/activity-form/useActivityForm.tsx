@@ -7,16 +7,64 @@ import { ActivityFormValues, activityFormSchema } from "./formSchema";
 import { useState } from "react";
 import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
 
+// Hjälpfunktion för att säkerställa att player_stats alltid är ett objekt
+function normalizePlayerStats(playerStats: any) {
+  if (!playerStats) {
+    return { goals: {}, assists: {} };
+  }
+  
+  if (typeof playerStats === 'string') {
+    try {
+      const parsed = JSON.parse(playerStats);
+      // Hantera dubbelt stringifierad JSON
+      if (typeof parsed === 'string') {
+        try {
+          const doubleParsed = JSON.parse(parsed);
+          return {
+            ...doubleParsed,
+            goals: doubleParsed.goals || {},
+            assists: doubleParsed.assists || {}
+          };
+        } catch (e) {
+          console.error("Error parsing double-stringified player_stats:", e);
+          return { goals: {}, assists: {} };
+        }
+      }
+      return {
+        ...parsed,
+        goals: parsed.goals || {},
+        assists: parsed.assists || {}
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats string:", e);
+      return { goals: {}, assists: {} };
+    }
+  }
+  
+  // Om det redan är ett objekt, säkerställ att det har nödvändiga egenskaper
+  return {
+    ...playerStats,
+    goals: playerStats.goals || {},
+    assists: playerStats.assists || {}
+  };
+}
+
 export function useActivityForm(
   activity: Activity,
   onSave: (updatedActivity: Activity) => void
 ) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Normalisera activity.player_stats före användning
+  const normalizedActivity = {
+    ...activity,
+    player_stats: normalizePlayerStats(activity.player_stats)
+  };
+
   // Parse the ISO date string to a Date object
   const getInitialDate = () => {
     try {
-      return new Date(activity.date);
+      return new Date(normalizedActivity.date);
     } catch (e) {
       return new Date();
     }
@@ -25,17 +73,17 @@ export function useActivityForm(
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
-      name: activity.name,
-      type: activity.type,
+      name: normalizedActivity.name,
+      type: normalizedActivity.type,
       date: getInitialDate(),
-      time: activity.time || "",
-      locationName: activity.location?.name || "",
-      locationDescription: activity.location?.description || "",
-      locationGps: activity.location?.gpsLink || "",
-      result: activity.result || "",
-      homeScore: activity.homeScore,
-      awayScore: activity.awayScore,
-      isWin: activity.isWin,
+      time: normalizedActivity.time || "",
+      locationName: normalizedActivity.location?.name || "",
+      locationDescription: normalizedActivity.location?.description || "",
+      locationGps: normalizedActivity.location?.gpsLink || "",
+      result: normalizedActivity.result || "",
+      homeScore: normalizedActivity.homeScore,
+      awayScore: normalizedActivity.awayScore,
+      isWin: normalizedActivity.isWin,
     },
   });
 
@@ -96,26 +144,8 @@ export function useActivityForm(
         }
       }
       
-      // Helper function to safely parse player_stats
-      const safelyParsePlayerStats = (stats: any) => {
-        if (!stats) return { goals: {}, assists: {} };
-        
-        if (typeof stats === 'string') {
-          try {
-            const parsed = JSON.parse(stats);
-            // Check for double-stringified JSON
-            return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-          } catch (e) {
-            console.error("Error parsing player_stats:", e);
-            return { goals: {}, assists: {} };
-          }
-        }
-        
-        return stats;
-      };
-      
-      // Safely parse existing player_stats
-      const existingPlayerStats = safelyParsePlayerStats(activity.player_stats);
+      // Safely parse existing player_stats från den normaliserade aktiviteten
+      const existingPlayerStats = normalizedActivity.player_stats;
       
       // Create updated player_stats - ensure it's an object with all necessary fields
       const updatedPlayerStats = {
@@ -133,7 +163,7 @@ export function useActivityForm(
       
       // Create updated activity with form values
       const formUpdatedActivity: Activity = {
-        ...activity,
+        ...normalizedActivity,
         name: values.name,
         date: formattedDate,
         type: values.type,
@@ -148,8 +178,8 @@ export function useActivityForm(
 
       console.log("Before preserveMatchData:", {
         originalActivity: {
-          playerStats: activity.player_stats,
-          playerStatsType: typeof activity.player_stats
+          playerStats: normalizedActivity.player_stats,
+          playerStatsType: typeof normalizedActivity.player_stats
         },
         formUpdatedActivity: {
           playerStats: formUpdatedActivity.player_stats,
@@ -158,12 +188,12 @@ export function useActivityForm(
       });
 
       // Use preserveMatchData to ensure match statistics are maintained
-      const updatedActivity = preserveMatchData(activity, formUpdatedActivity);
+      const updatedActivity = preserveMatchData(normalizedActivity, formUpdatedActivity);
       
       console.log("Saving activity with preserved match data:", {
         before: {
-          playerStats: activity.player_stats,
-          playerStatsType: typeof activity.player_stats
+          playerStats: normalizedActivity.player_stats,
+          playerStatsType: typeof normalizedActivity.player_stats
         },
         after: {
           playerStats: updatedActivity.player_stats,
