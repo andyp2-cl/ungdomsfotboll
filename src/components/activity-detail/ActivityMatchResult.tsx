@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ActivityMatchResultProps {
   activity: Activity;
@@ -78,20 +79,36 @@ export function ActivityMatchResult({ activity, updateActivity }: ActivityMatchR
         </div>
       </div>
       
-      <div className="flex items-center space-x-2 mb-4">
-        <div className="flex items-center space-x-2">
-          <CheckCircle2 className={`h-5 w-5 ${isWin ? "text-green-500" : "text-gray-300"}`} />
-          <Switch 
-            checked={isWin === true}
-            onCheckedChange={(checked) => setIsWin(checked ? true : checked === false ? false : undefined)}
-          />
-          <XCircle className={`h-5 w-5 ${isWin === false ? "text-red-500" : "text-gray-300"}`} />
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {isWin === true ? "Hässleholms IF vann denna match" : 
-           isWin === false ? "Hässleholms IF förlorade denna match" : 
-           "Oavgjort"}
-        </span>
+      <div className="mb-4">
+        <Label className="block mb-2">Matchresultat för Hässleholms IF</Label>
+        <RadioGroup
+          onValueChange={(value) => {
+            if (value === "win") setIsWin(true);
+            else if (value === "loss") setIsWin(false);
+            else setIsWin(undefined);
+          }}
+          defaultValue={isWin === true ? "win" : isWin === false ? "loss" : "draw"}
+          className="flex space-x-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="win" id="win" />
+            <Label htmlFor="win" className="flex items-center">
+              <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+              Vinst
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="draw" id="draw" />
+            <Label htmlFor="draw">Oavgjort</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="loss" id="loss" />
+            <Label htmlFor="loss" className="flex items-center">
+              <XCircle className="h-4 w-4 mr-2 text-red-500" />
+              Förlust
+            </Label>
+          </div>
+        </RadioGroup>
       </div>
       
       <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
