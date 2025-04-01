@@ -2,27 +2,22 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { FileImport } from "@/components/file-import/FileImport";
-import { MatchScraper } from "@/components/MatchScraper";
 import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatabaseBackup } from "lucide-react";
 
 interface ToolsTabContentProps {
   onImportedActivities: (importedActivities: Activity[]) => void;
-  onMatchesScraped: (newActivities: Activity[], clearExisting?: boolean) => void;
+  onMatchesScraped?: (newActivities: Activity[], clearExisting?: boolean) => void;
 }
 
 export function ToolsTabContent({
-  onImportedActivities,
-  onMatchesScraped
+  onImportedActivities
 }: ToolsTabContentProps) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <FileImport onActivitiesImported={onImportedActivities} />
-        <MatchScraper 
-          onMatchesScraped={onMatchesScraped} 
-        />
       </div>
       
       <Card>
