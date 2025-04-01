@@ -49,6 +49,8 @@ export const handleMatchResultUpdate = async (
     // Update the player_stats with new score data
     const updatedPlayerStats = {
       ...existingPlayerStats,
+      goals: existingPlayerStats.goals || {},
+      assists: existingPlayerStats.assists || {},
       scores: {
         home: homeScore,
         away: awayScore

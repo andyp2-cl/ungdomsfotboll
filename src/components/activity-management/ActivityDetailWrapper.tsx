@@ -33,6 +33,8 @@ export function ActivityDetailWrapper({
     ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
     : [];
   
+  console.log("ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
+  
   return (
     <ActivityDetail
       activity={selectedActivity}

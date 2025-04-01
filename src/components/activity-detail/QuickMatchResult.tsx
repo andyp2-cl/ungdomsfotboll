@@ -30,6 +30,7 @@ export function QuickMatchResult({
   const isHome = isHomeMatch(activity);
   
   const handleSave = async () => {
+    console.log("QuickMatchResult handleSave called with:", {homeScore, awayScore});
     setIsSaving(true);
     try {
       await onSave(homeScore, awayScore);

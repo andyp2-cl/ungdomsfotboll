@@ -78,6 +78,16 @@ export function ActivityResultSection({
     setIsSaving(true);
     
     try {
+      console.log("Saving match result:", {homeScore, awayScore, activityId: activity.id});
+      
+      // If we have the onMatchResultUpdate prop, use it
+      if (onMatchResultUpdate) {
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+        setIsSaving(false);
+        return;
+      }
+      
+      // Otherwise continue with the traditional approach
       const resultString = homeScore !== undefined && awayScore !== undefined 
         ? `${homeScore}-${awayScore}` 
         : undefined;
@@ -180,7 +190,7 @@ export function ActivityResultSection({
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
       
-      {isHistorical && hasResult ? (
+      {isHistorical && hasResult && false ? ( // Ändrad till alltid visa formuläret för historiska matcher
         <ScoreDisplay 
           activity={activity} 
           homeScore={homeScore} 

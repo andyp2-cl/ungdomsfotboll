@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -158,8 +157,18 @@ export function ActivityDetail({
   };
 
   const handleQuickResultSave = async (homeScore?: number, awayScore?: number) => {
+    console.log("QuickMatchResult save called with:", {homeScore, awayScore});
     if (onMatchResultUpdate) {
-      await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      try {
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      } catch (error) {
+        console.error("Error in handleQuickResultSave:", error);
+        toast({
+          title: "Fel vid uppdatering av matchresultat",
+          description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -168,6 +177,14 @@ export function ActivityDetail({
       return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
     }
     return currentActivity.result || "";
+  };
+
+  const getTotalGoals = () => {
+    return (currentActivity.homeScore || 0) + (currentActivity.awayScore || 0);
+  };
+
+  const getTotalAssists = () => {
+    return (currentActivity.homeAssists || 0) + (currentActivity.awayAssists || 0);
   };
 
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
@@ -256,7 +273,7 @@ export function ActivityDetail({
           <ActivityResultSection
             activity={currentActivity}
             isHistorical={isHistorical}
-            updateActivity={handleActivityUpdate}
+            updateActivity={onActivityUpdate || (() => {})}
             onMatchResultUpdate={onMatchResultUpdate}
           />
         )}
