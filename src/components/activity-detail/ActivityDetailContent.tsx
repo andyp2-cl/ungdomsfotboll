@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { 
@@ -10,7 +9,7 @@ import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
 import { ActivityCupMatches } from "./ActivityCupMatches";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { ActivityHeader } from "./ActivityHeader";
-import { ActivityMatchResult } from "./ActivityMatchResult";
+import { ActivityMatchResult } from "./match-result";
 
 interface ActivityDetailContentProps {
   activity: Activity;
