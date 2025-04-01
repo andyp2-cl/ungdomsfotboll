@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,15 +12,12 @@ interface ActivityListProps {
 }
 
 export function ActivityList({ activities, onSelect, players = [] }: ActivityListProps) {
-  // Sort activities by date and time
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
-      // Sort by date first
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       const dateComparison = dateA.getTime() - dateB.getTime();
       
-      // If dates are the same, sort by time if available
       if (dateComparison === 0 && a.time && b.time) {
         return a.time.localeCompare(b.time);
       }
@@ -34,32 +30,27 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     return <p className="text-muted-foreground text-center p-4">Inga aktiviteter hittades</p>;
   }
 
-  // Get day of week in Swedish
   const getDayOfWeek = (dateString: string) => {
     const date = new Date(dateString);
     const dayOfWeek = date.toLocaleDateString('sv-SE', { weekday: 'long' });
     return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
   };
 
-  // Check if an activity is eligible for kiosk assignment (home match at Österås IP)
   const isKioskEligible = (activity: Activity): boolean => {
     if (!activity.location) return false;
     
-    // Check if it's a home match at Österås IP
     const isAtÖsteråsIP = activity.location.name.includes('Österås IP');
     const isHomeMatch = activity.name.toLowerCase().startsWith('hässleholms if');
     
     return isAtÖsteråsIP && isHomeMatch;
   };
 
-  // Get assigned kiosk player name
   const getKioskPlayerName = (activity: Activity): string => {
     if (!activity.kioskAssignedPlayerId) return "";
     const player = players.find(p => p.id === activity.kioskAssignedPlayerId);
     return player ? player.name : "Okänd spelare";
   };
-  
-  // Get participant names for an activity
+
   const getParticipantNames = (activity: Activity): string[] => {
     if (!activity.participants || activity.participants.length === 0) return [];
     
@@ -71,7 +62,6 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
       .filter(name => name !== null) as string[];
   };
 
-  // Check if an activity is historical (in the past)
   const isHistorical = (dateString: string): boolean => {
     const date = new Date(dateString);
     date.setHours(0, 0, 0, 0);
@@ -80,7 +70,6 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     return date < today;
   };
 
-  // Get goal scorers from player stats
   const getGoalScorers = (activity: Activity): { name: string, goals: number }[] => {
     if (!activity.playerStats?.goals) return [];
     
@@ -98,10 +87,31 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
     return goalScorers.sort((a, b) => b.goals - a.goals);
   };
 
-  // Count total goals in an activity
+  const getAssistProviders = (activity: Activity): { name: string, assists: number }[] => {
+    if (!activity.playerStats?.assists) return [];
+    
+    const assistProviders: { name: string, assists: number }[] = [];
+    
+    Object.entries(activity.playerStats.assists).forEach(([playerId, assists]) => {
+      if (assists > 0) {
+        const player = players.find(p => p.id === playerId);
+        if (player) {
+          assistProviders.push({ name: player.name, assists });
+        }
+      }
+    });
+    
+    return assistProviders.sort((a, b) => b.assists - a.assists);
+  };
+
   const getTotalGoals = (activity: Activity): number => {
     if (!activity.playerStats?.goals) return 0;
     return Object.values(activity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
+  };
+
+  const getTotalAssists = (activity: Activity): number => {
+    if (!activity.playerStats?.assists) return 0;
+    return Object.values(activity.playerStats.assists).reduce((sum, assists) => sum + assists, 0);
   };
 
   return (
@@ -112,16 +122,23 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
         const participantNames = getParticipantNames(activity);
         const activityIsHistorical = isHistorical(activity.date);
         const goalScorers = getGoalScorers(activity);
+        const assistProviders = getAssistProviders(activity);
         const totalGoals = getTotalGoals(activity);
+        const totalAssists = getTotalAssists(activity);
         
         return (
           <Card key={activity.id} className="overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex justify-between items-center">
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   {activity.name}
+                  {activityIsHistorical && activity.type === "match" && activity.result && (
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                      {activity.result}
+                    </Badge>
+                  )}
                   {activityIsHistorical && activity.type === "match" && totalGoals > 0 && (
-                    <Badge className="ml-2 bg-green-100 text-green-800 border-green-300">
+                    <Badge className="bg-green-100 text-green-800 border-green-300">
                       {totalGoals} mål
                     </Badge>
                   )}
@@ -190,22 +207,43 @@ export function ActivityList({ activities, onSelect, players = [] }: ActivityLis
                 </div>
               )}
 
-              {/* Display goal scorers for historical matches */}
-              {activityIsHistorical && activity.type === "match" && goalScorers.length > 0 && (
+              {activityIsHistorical && activity.type === "match" && (
                 <div className="mt-2 text-sm">
-                  <div className="flex items-center font-medium mb-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
-                      <path d="M12 2v6M12 22v-6M4.93 10.93l4.24 4.24M14.83 8.83l4.24 4.24M2 12h6M16 12h6M10.93 19.07l4.24-4.24M8.83 9.17l4.24-4.24"/>
-                    </svg>
-                    Målskyttar:
-                  </div>
-                  <div className="ml-5 flex flex-wrap gap-1">
-                    {goalScorers.map((scorer, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
-                        {scorer.name} ({scorer.goals})
-                      </Badge>
-                    ))}
-                  </div>
+                  {goalScorers.length > 0 && (
+                    <div className="mb-2">
+                      <div className="flex items-center font-medium mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
+                          <path d="M12 2v6M12 22v-6M4.93 10.93l4.24 4.24M14.83 8.83l4.24 4.24M2 12h6M16 12h6M10.93 19.07l4.24-4.24M8.83 9.17l4.24-4.24"/>
+                        </svg>
+                        Målskyttar:
+                      </div>
+                      <div className="ml-5 flex flex-wrap gap-1">
+                        {goalScorers.map((scorer, index) => (
+                          <Badge key={index} variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
+                            {scorer.name} ({scorer.goals})
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {assistProviders.length > 0 && (
+                    <div className="mb-2">
+                      <div className="flex items-center font-medium mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                        Assist:
+                      </div>
+                      <div className="ml-5 flex flex-wrap gap-1">
+                        {assistProviders.map((provider, index) => (
+                          <Badge key={index} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+                            {provider.name} ({provider.assists})
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

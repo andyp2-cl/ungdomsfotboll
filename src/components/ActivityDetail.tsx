@@ -40,6 +40,7 @@ interface ActivityDetailProps {
   onDeleteActivity?: (activityId: string) => void;
   allActivities?: Activity[];
   cupMatches?: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function ActivityDetail({ 
@@ -52,7 +53,8 @@ export function ActivityDetail({
   onActivitySelect,
   onDeleteActivity,
   allActivities,
-  cupMatches = []
+  cupMatches = [],
+  onPlayerSelect
 }: ActivityDetailProps) {
   const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
@@ -211,10 +213,8 @@ export function ActivityDetail({
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
-  // Determine if the activity is historical (in the past)
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
 
-  // Helper function to count total goals in activity
   const getTotalGoals = () => {
     if (!currentActivity.playerStats?.goals) return 0;
     return Object.values(currentActivity.playerStats.goals).reduce((sum, goals) => sum + goals, 0);
@@ -338,7 +338,11 @@ export function ActivityDetail({
                       key={player.id} 
                       className="p-2 border rounded-md flex justify-between items-center"
                     >
-                      <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        className="flex items-center gap-2 p-0 h-auto hover:bg-transparent"
+                        onClick={() => onPlayerSelect && onPlayerSelect(player.id)}
+                      >
                         {player.image ? (
                           <img 
                             src={player.image} 
@@ -348,8 +352,8 @@ export function ActivityDetail({
                         ) : (
                           <UserCircle className="h-6 w-6 text-gray-400" />
                         )}
-                        <span>{player.name}</span>
-                      </div>
+                        <span className="text-foreground">{player.name}</span>
+                      </Button>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">
                           {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
@@ -428,7 +432,6 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {/* Player goal statistics for historical activities */}
         {isHistorical && currentActivity.type === "match" && (
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>

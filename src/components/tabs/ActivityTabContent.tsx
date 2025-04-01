@@ -7,6 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
+import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { CupMatchesForm } from "@/components/CupMatchesForm";
 import { MatchScraper } from "@/components/MatchScraper";
@@ -55,12 +56,22 @@ export function ActivityTabContent({
   const [showCupForm, setShowCupForm] = useState(false);
   const [showScraperForm, setShowScraperForm] = useState(false);
   const [showImportForm, setShowImportForm] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Create a wrapper function to convert CupMatch[] to Activity[]
   const handleCupMatchesChange = useCallback((cupMatches: any[]) => {
     // Convert CupMatch[] to Activity[] before passing to handleImportedActivities
     return handleImportedActivities(cupMatches as Activity[]);
   }, [handleImportedActivities]);
+
+  // Function to view player from activity
+  const handlePlayerSelect = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayer(player);
+      setSelectedActivity(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -130,7 +141,14 @@ export function ActivityTabContent({
         </div>
       )}
       
-      {selectedActivity ? (
+      {selectedPlayer ? (
+        <PlayerDetail 
+          player={selectedPlayer}
+          activities={activities}
+          onClose={() => setSelectedPlayer(null)}
+          allPlayers={players}
+        />
+      ) : selectedActivity ? (
         <ActivityDetail 
           activity={selectedActivity}
           players={players}
@@ -139,12 +157,15 @@ export function ActivityTabContent({
           onDeleteActivity={handleDeleteActivity}
           onEdit={setEditingActivity}
           onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onActivitySelect={setSelectedActivity}
+          onPlayerSelect={handlePlayerSelect}
         />
       ) : (
         <ActivityList 
           activities={activeView === "upcoming" ? filteredActivities : filteredHistoricalActivities}
           players={players}
           onSelect={setSelectedActivity}
+          onPlayerSelect={handlePlayerSelect}
         />
       )}
     </div>

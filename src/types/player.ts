@@ -7,6 +7,7 @@ export type ActivityType = 'match' | 'cup';
 
 export interface PlayerStats {
   goals?: Record<string, number>; // Record of player ID to number of goals
+  assists?: Record<string, number>; // Record of player ID to number of assists
 }
 
 export interface Activity {
@@ -26,6 +27,7 @@ export interface Activity {
   cupId?: string; // Reference to the parent cup activity (for matches that are part of a cup)
   matches?: string[]; // Array of activity IDs that are matches within this cup (for cup type activities)
   playerStats?: PlayerStats; // Statistics for players in this activity
+  result?: string; // Match result, e.g. "2-1"
 }
 
 export interface Player {

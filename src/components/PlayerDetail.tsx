@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityList } from "./ActivityList";
 import { EditPlayerForm } from "./EditPlayerForm";
-import { Edit, X, UserCircle } from "lucide-react";
+import { Edit, X, UserCircle, Award, BarChart2, Calendar } from "lucide-react";
+import { calculatePlayerStatistics, sortActivitiesByDate } from "@/utils/playerStatistics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "./ui/separator";
 
 interface PlayerDetailProps {
   player: Player;
@@ -19,12 +22,16 @@ interface PlayerDetailProps {
 export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allPlayers = [] }: PlayerDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<Player>(player);
+  const [activeTab, setActiveTab] = useState<"activities" | "statistics">("activities");
   
   // Filter activities that the player participates in
-  const playerActivities = activities.filter(
-    (activity) => currentPlayer.activities?.includes(activity.id)
+  const playerActivities = sortActivitiesByDate(
+    activities.filter((activity) => currentPlayer.activities?.includes(activity.id))
   );
-
+  
+  // Get player statistics
+  const playerStats = calculatePlayerStatistics(currentPlayer, activities);
+  
   // Function to show color based on player level
   const getGradeColor = (grade: string) => {
     switch (grade) {
@@ -84,7 +91,12 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allP
 
   // Check if the player is a trainer
   const isTrainer = currentPlayer.positions?.includes('TRÄNARE');
-
+  
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('sv-SE');
+  };
+  
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
       {isEditing ? (
@@ -155,11 +167,100 @@ export function PlayerDetail({ player, activities, onClose, onPlayerUpdate, allP
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <h3 className="text-lg font-semibold">Aktiviteter</h3>
-            <ActivityList 
-              activities={playerActivities} 
-              players={allPlayers.length > 0 ? allPlayers : [currentPlayer]} 
-            />
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "activities" | "statistics")}>
+              <TabsList className="mb-4 grid grid-cols-2">
+                <TabsTrigger value="activities" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Aktiviteter
+                </TabsTrigger>
+                <TabsTrigger value="statistics" className="flex items-center gap-2">
+                  <BarChart2 className="h-4 w-4" />
+                  Statistik
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="activities">
+                <h3 className="text-lg font-semibold">Aktiviteter</h3>
+                <ActivityList 
+                  activities={playerActivities} 
+                  players={allPlayers.length > 0 ? allPlayers : [currentPlayer]} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="statistics" className="space-y-4">
+                {/* Player performance summary */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="border rounded-md p-3 text-center">
+                    <div className="text-3xl font-bold">{playerStats.totalMatches}</div>
+                    <div className="text-sm text-muted-foreground">Matcher</div>
+                  </div>
+                  <div className="border rounded-md p-3 text-center">
+                    <div className="text-3xl font-bold text-green-600">{playerStats.totalGoals}</div>
+                    <div className="text-sm text-muted-foreground">Mål</div>
+                  </div>
+                  <div className="border rounded-md p-3 text-center">
+                    <div className="text-3xl font-bold text-blue-600">{playerStats.totalAssists}</div>
+                    <div className="text-sm text-muted-foreground">Assist</div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                {playerStats.totalGoals > 0 || playerStats.totalAssists > 0 ? (
+                  <div className="space-y-4">
+                    {/* Goals by activity */}
+                    {playerStats.goalsByActivity.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <Award className="h-4 w-4 mr-2 text-green-500" />
+                          Mål per match
+                        </h4>
+                        <div className="space-y-2">
+                          {playerStats.goalsByActivity.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center px-3 py-2 border rounded-md">
+                              <div>
+                                <div className="font-medium">{item.activityName}</div>
+                                <div className="text-sm text-muted-foreground">{formatDate(item.activityDate)}</div>
+                              </div>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {item.goals} {item.goals === 1 ? "mål" : "mål"}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Assists by activity */}
+                    {playerStats.assistsByActivity.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <Award className="h-4 w-4 mr-2 text-blue-500" />
+                          Assist per match
+                        </h4>
+                        <div className="space-y-2">
+                          {playerStats.assistsByActivity.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center px-3 py-2 border rounded-md">
+                              <div>
+                                <div className="font-medium">{item.activityName}</div>
+                                <div className="text-sm text-muted-foreground">{formatDate(item.activityDate)}</div>
+                              </div>
+                              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                {item.assists} {item.assists === 1 ? "assist" : "assist"}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Ingen statistik tillgänglig för denna spelare än.
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
           <CardFooter className="flex justify-end">
             <Button variant="outline" onClick={onClose}>Stäng</Button>
