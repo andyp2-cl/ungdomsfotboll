@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { v4 as uuidv4 } from "uuid";
 
@@ -57,6 +58,8 @@ export const getLastBackupInfo = (): {
  * Process activities to ensure all required fields are properly set for restoration
  */
 export const processActivitiesForRestore = (activities: Activity[]): Activity[] => {
+  console.log("Processing activities for restore, count:", activities.length);
+  
   // First pass: ensure basic properties are set
   const processedActivities = activities.map(activity => {
     // Deep clone to avoid modifying original
@@ -65,6 +68,21 @@ export const processActivitiesForRestore = (activities: Activity[]): Activity[] 
     // Ensure id exists
     if (!processedActivity.id) {
       processedActivity.id = uuidv4();
+    }
+    
+    // Ensure type is valid
+    if (!processedActivity.type || (processedActivity.type !== 'match' && processedActivity.type !== 'cup')) {
+      processedActivity.type = 'match'; // Default to match if not valid
+    }
+    
+    // Ensure date exists and is a string
+    if (!processedActivity.date) {
+      processedActivity.date = new Date().toISOString().split('T')[0];
+    }
+    
+    // Ensure name exists
+    if (!processedActivity.name) {
+      processedActivity.name = `Activity ${processedActivity.id.substring(0, 6)}`;
     }
     
     // Ensure participants array exists
@@ -78,10 +96,25 @@ export const processActivitiesForRestore = (activities: Activity[]): Activity[] 
     }
     
     // Set default values for match-specific fields if not present
-    if (processedActivity.type === 'match' && processedActivity.homeScore !== undefined && processedActivity.awayScore !== undefined) {
-      if (processedActivity.result === undefined) {
-        processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
+    if (processedActivity.type === 'match') {
+      if (processedActivity.homeScore !== undefined && processedActivity.awayScore !== undefined) {
+        if (processedActivity.result === undefined) {
+          processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
+        }
       }
+    }
+    
+    // Initialize player_stats if not present
+    if (!processedActivity.player_stats) {
+      processedActivity.player_stats = {
+        goals: {},
+        assists: {},
+        scores: {
+          home: processedActivity.homeScore,
+          away: processedActivity.awayScore
+        },
+        isWin: processedActivity.isWin
+      };
     }
     
     return processedActivity;

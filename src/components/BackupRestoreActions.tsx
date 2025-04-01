@@ -56,7 +56,13 @@ export function BackupRestoreActions() {
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
+      toast({
+        title: "Återställer data",
+        description: "Återställer data från säkerhetskopia. Detta kan ta en stund...",
+      });
+      
       const success = await restoreBackup();
+      
       if (success) {
         toast({
           title: "Data återställd",

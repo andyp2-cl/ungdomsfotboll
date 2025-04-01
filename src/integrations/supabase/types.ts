@@ -24,6 +24,7 @@ export type Database = {
           location_name: string | null
           name: string
           player_stats: Json | null
+          result: string | null
           scraped: boolean | null
           time: string | null
           type: string
@@ -42,6 +43,7 @@ export type Database = {
           location_name?: string | null
           name: string
           player_stats?: Json | null
+          result?: string | null
           scraped?: boolean | null
           time?: string | null
           type: string
@@ -60,6 +62,7 @@ export type Database = {
           location_name?: string | null
           name?: string
           player_stats?: Json | null
+          result?: string | null
           scraped?: boolean | null
           time?: string | null
           type?: string
