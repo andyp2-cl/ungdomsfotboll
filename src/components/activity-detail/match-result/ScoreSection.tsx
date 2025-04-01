@@ -32,7 +32,8 @@ export function ScoreSection({
   // Determine if we have a valid result to display
   const hasResult = homeScore !== undefined && awayScore !== undefined;
 
-  if (isHistorical && hasResult && false) { // Kept the original logic for consistency
+  // För historiska matcher, visa alltid ScoreDisplay
+  if (isHistorical) {
     return (
       <ScoreDisplay 
         activity={activity} 
@@ -41,6 +42,7 @@ export function ScoreSection({
       />
     );
   } else {
+    // För icke-historiska matcher, visa ScoreForm
     return (
       <ScoreForm 
         activity={activity}
