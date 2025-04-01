@@ -4,7 +4,7 @@ import { getActiveTab } from "@/utils/storage";
 import { usePlayers } from "@/hooks/players";
 import { useActivities } from "@/hooks/activities";
 import { useEditMode } from "@/contexts/EditModeContext";
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 
 export function usePlayersPageState(initialTab?: string) {
   const { isEditMode } = useEditMode();
@@ -52,16 +52,40 @@ export function usePlayersPageState(initialTab?: string) {
     filteredActivities,
     filteredHistoricalActivities,
     handleActivityTypeChange,
-    handleActivityUpdate,
+    handleActivityUpdate: originalHandleActivityUpdate,
     handleDeleteActivity,
     handleKioskAssignmentUpdate,
-    handleAddActivity,
+    handleAddActivity: originalHandleAddActivity,
     handleImportedActivities,
     handleScrapedMatches,
     handleClearHistoricalActivities
   } = useActivities(players, setPlayers);
 
   // Wrapper functions with proper return type handling
+  const handleActivityUpdate = async (activity: Activity): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
+    try {
+      await originalHandleActivityUpdate(activity);
+      return true;
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      return false;
+    }
+  };
+  
+  const handleAddActivity = async (activity: Activity): Promise<boolean> => {
+    if (!isEditMode) return false;
+    
+    try {
+      await originalHandleAddActivity(activity);
+      return true;
+    } catch (error) {
+      console.error("Error adding activity:", error);
+      return false;
+    }
+  };
+
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
     if (!isEditMode) return false;
     
@@ -186,6 +210,7 @@ export function usePlayersPageState(initialTab?: string) {
     handleImportActivities,
     handleScraped,
     handleClearHistorical,
+    handleAddActivity,
     
     // Other actions
     handlePlayerActivitySelect
