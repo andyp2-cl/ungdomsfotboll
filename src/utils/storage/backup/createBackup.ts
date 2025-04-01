@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { BackupData } from "./types";
 import { processMatchData } from "./utils";
+import { Player } from "@/types/player";
 
 /**
  * Creates a backup of all players and activities data and stores it in localStorage
@@ -46,9 +47,19 @@ export const createBackup = async (): Promise<void> => {
       // Continue anyway, relationships will be missing
     }
     
+    // Create a properly typed copy of players with activities property
+    const playersWithActivities: (Player & { activities?: string[] })[] = players.map(player => ({
+      ...player,
+      activities: [], // Initialize with empty array
+      // Convert database fields to expected format
+      grade: player.grade as any,
+      positions: player.position ? JSON.parse(player.position) : undefined,
+      jerseyNumber: player.jersey_number
+    }));
+    
     // Attach activities to players
     if (playerActivitiesData && playerActivitiesData.length > 0) {
-      players.forEach(player => {
+      playersWithActivities.forEach(player => {
         const playerActivityRelations = playerActivitiesData.filter(pa => pa.player_id === player.id);
         player.activities = playerActivityRelations.map(relation => relation.activity_id);
       });
@@ -60,7 +71,7 @@ export const createBackup = async (): Promise<void> => {
     const processedActivities = activities.map(processMatchData);
     
     const backupData: BackupData = {
-      players: players,
+      players: playersWithActivities,
       activities: processedActivities,
       timestamp: new Date().toISOString(),
     };
@@ -83,7 +94,7 @@ export const createBackup = async (): Promise<void> => {
         'backup',
         'backup',
         'all',
-        `Created backup: ${players.length} players and ${processedActivities.length} activities`
+        `Created backup: ${playersWithActivities.length} players and ${processedActivities.length} activities`
       );
     } catch (error) {
       console.error("Error logging backup (non-critical):", error);
