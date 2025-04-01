@@ -8,6 +8,7 @@ import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceA
 import { MatchesTabContent } from "@/components/player-management/statistics/matches/MatchesTabContent";
 import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
+import { FormationTabContent } from "@/components/player-management/statistics/formation/FormationTabContent";
 
 interface StatisticsTabContentProps {
   players: Player[];
@@ -82,6 +83,7 @@ export function StatisticsTabContent({
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Målstatistik</TabsTrigger>
           <TabsTrigger value="participation">Deltagande</TabsTrigger>
+          <TabsTrigger value="formation">Formation</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -115,6 +117,10 @@ export function StatisticsTabContent({
         
         <TabsContent value="participation">
           <ParticipationTabContent activities={activities} players={players} />
+        </TabsContent>
+        
+        <TabsContent value="formation">
+          <FormationTabContent activities={activities} players={players} />
         </TabsContent>
       </Tabs>
     </div>
