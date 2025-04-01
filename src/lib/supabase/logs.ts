@@ -3,7 +3,7 @@ import { supabase } from './client';
 
 // Function to log database changes for auditing
 export const logDatabaseChange = async (
-  action: 'create' | 'update' | 'delete',
+  action: 'create' | 'update' | 'delete' | 'backup' | 'restore',
   entityType: string,
   entityId: string,
   details?: string
