@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ActivityFormValues } from "./formSchema";
 import { UseFormReturn } from "react-hook-form";
+import { ActivityType } from "@/types/player";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
+  activityType?: ActivityType; // Make activityType optional
 }
 
-export function ResultFields({ form }: ResultFieldsProps) {
+export function ResultFields({ form, activityType }: ResultFieldsProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Resultat</h3>

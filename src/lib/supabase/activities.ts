@@ -35,7 +35,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
-        isWin: item.is_win
+        isWin: item.is_win !== undefined ? item.is_win : undefined
       };
       
       // Set result field if home_score and away_score are available

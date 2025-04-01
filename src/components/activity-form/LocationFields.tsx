@@ -3,7 +3,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues, LocationFieldValues } from "./formSchema";
+import { ActivityFormValues } from "./formSchema";
 import { useEffect } from "react";
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
 
