@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useBackupRestore } from "@/utils/storage/backup";
@@ -11,8 +11,13 @@ export function BackupRestoreActions() {
   const { createBackup, restoreBackup, getLastBackupInfo } = useBackupRestore();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [backupInfo, setBackupInfo] = useState<{timestamp: string, playerCount: number, activityCount: number} | null>(null);
   
-  const backupInfo = getLastBackupInfo();
+  // Get backup info on component mount and after operations
+  useEffect(() => {
+    setBackupInfo(getLastBackupInfo());
+  }, [isBackingUp, isRestoring]);
+  
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')
     : null;
@@ -21,6 +26,8 @@ export function BackupRestoreActions() {
     setIsBackingUp(true);
     try {
       await createBackup();
+      // Update the backup info after creating a new backup
+      setBackupInfo(getLastBackupInfo());
     } finally {
       setIsBackingUp(false);
     }
@@ -29,9 +36,11 @@ export function BackupRestoreActions() {
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
-      await restoreBackup();
-      // Force reload the page to reflect changes
-      window.location.reload();
+      const success = await restoreBackup();
+      if (success) {
+        // Force reload the page to reflect changes
+        window.location.reload();
+      }
     } finally {
       setIsRestoring(false);
     }
