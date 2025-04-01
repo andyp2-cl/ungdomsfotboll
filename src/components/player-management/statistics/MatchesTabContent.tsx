@@ -1,18 +1,26 @@
 
 import React, { useMemo } from "react";
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { calculateGoalStats } from "./goals/calculateGoalStats";
 
 interface MatchesTabContentProps {
   activities: Activity[];
+  players?: Player[];
 }
 
-export function MatchesTabContent({ activities }: MatchesTabContentProps) {
+export function MatchesTabContent({ activities, players = [] }: MatchesTabContentProps) {
   // Filter out only completed matches (those with a result)
   const completedMatches = useMemo(() => {
     return activities.filter(a => a.type === 'match' && a.result);
   }, [activities]);
+  
+  // Get goal statistics from the same function used in GoalsTabContent
+  const { totalStats } = useMemo(() => 
+    calculateGoalStats(activities, players), 
+    [activities, players]
+  );
   
   // Calculate match statistics
   const matchStats = useMemo(() => {
@@ -20,7 +28,6 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     let draws = 0;
     let losses = 0;
     let goalsScored = 0;
-    let goalsConceded = 0;
     let cleanSheets = 0;
     let comebackWins = 0;
     let homeWins = 0;
@@ -50,7 +57,6 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
         const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
         
         goalsScored += ourScore;
-        goalsConceded += theirScore;
         
         // Clean sheets - matches where we conceded 0 goals
         if (theirScore === 0) {
@@ -79,15 +85,14 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
       wins,
       draws,
       losses,
-      goalsScored,
-      goalsConceded,
+      goalsScored: totalStats.totalGoals, // Use the consolidated goals count from the goals calculation
       cleanSheets,
       comebackWins,
       homeWins,
       awayWins,
       winPercentage: completedMatches.length > 0 ? Math.round((wins / completedMatches.length) * 100) : 0
     };
-  }, [completedMatches]);
+  }, [completedMatches, totalStats]);
   
   // Format data for charts
   const matchResultData = [
@@ -179,10 +184,6 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
             <div className="flex justify-between items-center p-3 bg-blue-100 text-blue-800 rounded-md">
               <span className="font-medium">Gjorda mål:</span>
               <span>{matchStats.goalsScored}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-orange-100 text-orange-800 rounded-md">
-              <span className="font-medium">Insläppta mål:</span>
-              <span>{matchStats.goalsConceded}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-emerald-100 text-emerald-800 rounded-md">
               <span className="font-medium">Hållna nollor:</span>
