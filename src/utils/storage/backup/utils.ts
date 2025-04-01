@@ -55,6 +55,48 @@ export const getLastBackupInfo = (): {
 };
 
 /**
+ * Performs a deep data validation of the backup content
+ */
+export const validateBackupData = (backupData: any): boolean => {
+  if (!backupData || typeof backupData !== 'object') {
+    console.error("Invalid backup data: not an object");
+    return false;
+  }
+  
+  if (!backupData.timestamp || !backupData.players || !backupData.activities) {
+    console.error("Invalid backup data: missing required fields", backupData);
+    return false;
+  }
+  
+  if (!Array.isArray(backupData.players) || !Array.isArray(backupData.activities)) {
+    console.error("Invalid backup data: players or activities not arrays");
+    return false;
+  }
+  
+  // Validate each player has required fields
+  const validPlayers = backupData.players.filter(player => 
+    player && player.id && player.name && player.grade
+  );
+  
+  if (validPlayers.length === 0 && backupData.players.length > 0) {
+    console.error("Invalid backup data: no valid players found");
+    return false;
+  }
+  
+  // Validate activities have required fields
+  const validActivities = backupData.activities.filter(activity => 
+    activity && activity.id && activity.name && activity.date && activity.type
+  );
+  
+  if (validActivities.length === 0 && backupData.activities.length > 0) {
+    console.error("Invalid backup data: no valid activities found");
+    return false;
+  }
+  
+  return true;
+};
+
+/**
  * Process activities to ensure all required fields are properly set for restoration
  */
 export const processActivitiesForRestore = (activities: Activity[]): Activity[] => {
@@ -112,6 +154,11 @@ export const processActivitiesForRestore = (activities: Activity[]): Activity[] 
         if (processedActivity.result === undefined) {
           processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
         }
+      } else if (processedActivity.home_score !== undefined && processedActivity.away_score !== undefined) {
+        // Handle database-style field names
+        processedActivity.homeScore = processedActivity.home_score;
+        processedActivity.awayScore = processedActivity.away_score;
+        processedActivity.result = `${processedActivity.home_score}-${processedActivity.away_score}`;
       }
     }
     

@@ -1,3 +1,4 @@
+
 import { savePlayers } from "../playerStorage";
 import { saveActivities } from "../activityStorage";
 import { processActivitiesForRestore } from "./utils";
@@ -43,11 +44,14 @@ export const restoreBackup = async (): Promise<boolean> => {
     
     console.log("Restoring backup with activities:", backup.activities.length);
     
+    // First make a copy of the backup data to preserve it
+    const backupCopy = JSON.stringify(backup);
+    
     // Clear existing data in database before restoring
     try {
       console.log("Clearing existing data before restoration...");
       
-      // Clear player_activities relationships
+      // Clear player_activities relationships first (due to foreign key constraints)
       const { error: paError } = await supabase
         .from('player_activities')
         .delete()
@@ -58,7 +62,7 @@ export const restoreBackup = async (): Promise<boolean> => {
         // Continue despite error
       }
       
-      // Clear activities (we don't delete players to keep their IDs consistent)
+      // Clear activities 
       const { error: actError } = await supabase
         .from('activities')
         .delete()
@@ -66,6 +70,17 @@ export const restoreBackup = async (): Promise<boolean> => {
         
       if (actError) {
         console.error("Error clearing activities:", actError);
+        // Continue despite error
+      }
+      
+      // Clear players
+      const { error: playerError } = await supabase
+        .from('players')
+        .delete()
+        .gte('id', '0'); // Delete all
+        
+      if (playerError) {
+        console.error("Error clearing players:", playerError);
         // Continue despite error
       }
       
@@ -135,7 +150,7 @@ export const restoreBackup = async (): Promise<boolean> => {
     // Restore activities
     try {
       // Split activities into batches to avoid timeouts and memory issues
-      const batchSize = 10;
+      const batchSize = 5;
       const batches = [];
       
       for (let i = 0; i < processedActivities.length; i += batchSize) {
@@ -155,7 +170,53 @@ export const restoreBackup = async (): Promise<boolean> => {
         }
       }
       
-      console.log("All activities restored successfully");
+      // Now restore player-activity relationships
+      try {
+        console.log("Restoring player-activity relationships...");
+        const playerActivitiesData = [];
+        
+        // Collect all player-activity pairs from the backup
+        for (const player of backup.players) {
+          if (player.activities && Array.isArray(player.activities)) {
+            for (const activityId of player.activities) {
+              playerActivitiesData.push({
+                id: `${player.id}_${activityId}`,
+                player_id: player.id,
+                activity_id: activityId
+              });
+            }
+          }
+        }
+        
+        if (playerActivitiesData.length > 0) {
+          console.log(`Restoring ${playerActivitiesData.length} player-activity relationships`);
+          
+          // Save in batches
+          const relationshipBatchSize = 10;
+          for (let i = 0; i < playerActivitiesData.length; i += relationshipBatchSize) {
+            const batch = playerActivitiesData.slice(i, i + relationshipBatchSize);
+            try {
+              const { error } = await supabase
+                .from('player_activities')
+                .upsert(batch);
+                
+              if (error) {
+                console.error(`Error saving player-activity relationship batch ${i}:`, error);
+              }
+            } catch (error) {
+              console.error(`Error saving player-activity relationship batch ${i}:`, error);
+              // Continue with next batch
+            }
+          }
+        } else {
+          console.warn("No player-activity relationships found in backup to restore");
+        }
+      } catch (error) {
+        console.error("Error restoring player-activity relationships:", error);
+        // Continue despite errors
+      }
+      
+      console.log("All activities and relationships restored successfully");
       
       try {
         // Log the restoration to the database
