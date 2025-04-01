@@ -162,6 +162,7 @@ export function ActivityManagement({
                 onDelete={handleDeleteActivity}
                 relatedActivities={activities}
                 cupMatches={cupMatches}
+                onClose={() => onActivitySelect(null)}
               />
             ) : (
               <ActivityList 
@@ -235,6 +236,7 @@ export function ActivityManagement({
                 onDelete={handleDeleteActivity}
                 relatedActivities={activities}
                 cupMatches={cupMatches}
+                onClose={() => onActivitySelect(null)}
               />
             ) : (
               <ActivityList 
