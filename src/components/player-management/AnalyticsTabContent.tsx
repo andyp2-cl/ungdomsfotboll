@@ -3,7 +3,7 @@ import React from "react";
 import { Player, Activity } from "@/types/player";
 import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
-import { PlayerPerformanceChart } from "@/components/PlayerPerformanceChart";
+import { PlayerPerformanceChart } from "@/components/performance-charts";
 import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
 
 interface AnalyticsTabContentProps {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Player, Activity } from "@/types/player";
-import { PlayerPerformanceChart } from "@/components/PlayerPerformanceChart";
+import { PlayerPerformanceChart } from "@/components/performance-charts";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 
 interface AttendanceTabContentProps {
