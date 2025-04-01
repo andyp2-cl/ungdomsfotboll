@@ -75,20 +75,14 @@ export function ScoreForm({
               <Label htmlFor="homeScore" className={isHassleholm === 'home' ? "font-semibold" : ""}>
                 {homeTeamLabel}
               </Label>
-              {isHistorical ? (
-                <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
-                  {activity.homeScore !== undefined ? activity.homeScore : "-"}
-                </div>
-              ) : (
-                <Input
-                  id="homeScore"
-                  type="number"
-                  min="0"
-                  value={homeScore === undefined ? "" : homeScore}
-                  onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                  className={isHassleholm === 'home' ? "border-blue-200" : ""}
-                />
-              )}
+              <Input
+                id="homeScore"
+                type="number"
+                min="0"
+                value={homeScore === undefined ? "" : homeScore}
+                onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className={isHassleholm === 'home' ? "border-blue-200" : ""}
+              />
             </div>
             <div className="flex justify-center items-center text-lg font-bold">
               -
@@ -97,67 +91,59 @@ export function ScoreForm({
               <Label htmlFor="awayScore" className={isHassleholm === 'away' ? "font-semibold" : ""}>
                 {awayTeamLabel}
               </Label>
-              {isHistorical ? (
-                <div className="h-10 px-3 py-2 text-center border rounded-md bg-muted">
-                  {activity.awayScore !== undefined ? activity.awayScore : "-"}
-                </div>
-              ) : (
-                <Input
-                  id="awayScore"
-                  type="number"
-                  min="0"
-                  value={awayScore === undefined ? "" : awayScore}
-                  onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                  className={isHassleholm === 'away' ? "border-blue-200" : ""}
-                />
-              )}
+              <Input
+                id="awayScore"
+                type="number"
+                min="0"
+                value={awayScore === undefined ? "" : awayScore}
+                onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className={isHassleholm === 'away' ? "border-blue-200" : ""}
+              />
             </div>
           </div>
         </div>
         
-        {!isHistorical && setManualWinStatus && (
+        {setManualWinStatus && (
           <div className="mb-4">
-            <h4 className="text-sm font-medium mb-2">Resultat för Hässleholms IF</h4>
+            <h4 className="text-sm font-medium mb-2">Matchresultat</h4>
             <RadioGroup 
-              value={winStatusValue}
+              value={winStatusValue} 
               onValueChange={handleWinStatusChange}
-              className="flex flex-col space-y-1"
+              className="flex space-x-4"
             >
-              <div className="flex items-center space-x-3 space-y-0">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="win" id="win" />
-                <FormLabel htmlFor="win" className="font-normal flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Vinst för Hässleholms IF
+                <FormLabel htmlFor="win" className="flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
+                  Vinst
                 </FormLabel>
               </div>
-              <div className="flex items-center space-x-3 space-y-0">
-                <RadioGroupItem value="draw" id="draw" />
-                <FormLabel htmlFor="draw" className="font-normal">
-                  Oavgjort
-                </FormLabel>
-              </div>
-              <div className="flex items-center space-x-3 space-y-0">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="loss" id="loss" />
-                <FormLabel htmlFor="loss" className="font-normal flex items-center">
-                  <XCircle className="h-4 w-4 mr-2 text-red-500" />
-                  Förlust för Hässleholms IF
+                <FormLabel htmlFor="loss" className="flex items-center">
+                  <XCircle className="h-4 w-4 mr-1 text-red-600" />
+                  Förlust
+                </FormLabel>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draw" id="draw" />
+                <FormLabel htmlFor="draw" className="flex items-center">
+                  Oavgjort
                 </FormLabel>
               </div>
             </RadioGroup>
           </div>
         )}
-      </div>
-      
-      {!isHistorical && (
+        
         <Button 
-          size="sm" 
           onClick={onSave} 
           disabled={isSaving}
+          className="w-full"
         >
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? "Sparar..." : "Spara resultat"}
         </Button>
-      )}
+      </div>
     </div>
   );
 }

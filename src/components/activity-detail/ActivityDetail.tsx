@@ -252,7 +252,7 @@ export function ActivityDetail({
           </AccordionItem>
         </Accordion>
 
-        {isHistorical && isMatch && (
+        {isMatch && (
           <ActivityResultSection
             activity={currentActivity}
             isHistorical={isHistorical}

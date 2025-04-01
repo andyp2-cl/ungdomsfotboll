@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +21,20 @@ export function QuickMatchResult({
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Update state when activity changes
+  useEffect(() => {
+    setHomeScore(activity.homeScore);
+    setAwayScore(activity.awayScore);
+  }, [activity]);
+
   const isHome = isHomeMatch(activity);
   
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await onSave(homeScore, awayScore);
+    } catch (error) {
+      console.error("Error saving match result:", error);
     } finally {
       setIsSaving(false);
     }
