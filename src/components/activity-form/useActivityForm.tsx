@@ -85,7 +85,6 @@ export function useActivityForm(
           ...(activity.player_stats || {}),
           // Make sure to preserve existing stats
           scores: {
-            ...(activity.player_stats?.scores || {}),
             home: homeScore,
             away: awayScore
           }

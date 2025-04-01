@@ -89,7 +89,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
   }
 };
 
-// NEW FUNCTION: Permanently delete activity from Supabase
+// Function to permanently delete activity from Supabase
 export const permanentlyDeleteActivity = async (activityId: string): Promise<boolean> => {
   try {
     // First delete all player-activity relationships
