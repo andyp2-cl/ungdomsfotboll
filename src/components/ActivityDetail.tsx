@@ -256,7 +256,10 @@ export function ActivityDetail({
           <Checkbox
             id="isWin"
             checked={isWin === true}
-            onCheckedChange={(checked) => setIsWin(checked)}
+            onCheckedChange={(checked) => {
+              // Fix: Handle the CheckedState type properly
+              setIsWin(checked === true);
+            }}
           />
           <Label htmlFor="isWin">Vinst för Hässleholms IF</Label>
         </div>
