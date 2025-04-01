@@ -154,11 +154,11 @@ export const processActivitiesForRestore = (activities: Activity[]): Activity[] 
         if (processedActivity.result === undefined) {
           processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
         }
-      } else if (processedActivity.home_score !== undefined && processedActivity.away_score !== undefined) {
+      } else if ((processedActivity as any).home_score !== undefined && (processedActivity as any).away_score !== undefined) {
         // Handle database-style field names
-        processedActivity.homeScore = processedActivity.home_score;
-        processedActivity.awayScore = processedActivity.away_score;
-        processedActivity.result = `${processedActivity.home_score}-${processedActivity.away_score}`;
+        processedActivity.homeScore = (processedActivity as any).home_score;
+        processedActivity.awayScore = (processedActivity as any).away_score;
+        processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
       }
     }
     
