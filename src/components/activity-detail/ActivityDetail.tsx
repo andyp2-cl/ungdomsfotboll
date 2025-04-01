@@ -13,22 +13,13 @@ import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityKioskSection } from "./ActivityKioskSection";
 import { ActivityMatchesSection } from "./ActivityMatchesSection";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteActivityDialog } from "./DeleteActivityDialog";
 
 interface ActivityDetailProps {
   activity: Activity;
   players: Player[];
   onClose: () => void;
-  onBack?: () => void;  // Added this prop to match usage in ActivityManagement.tsx
+  onBack?: () => void;
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
@@ -171,26 +162,12 @@ export function ActivityDetail({
       </CardFooter>
 
       {/* Delete confirmation dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Radera aktivitet</AlertDialogTitle>
-            <AlertDialogDescription>
-              Är du säker på att du vill radera "{currentActivity.name}"? 
-              Denna åtgärd kan inte ångras och all information kopplad till aktiviteten kommer att försvinna.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteActivity} 
-              className="bg-red-500 hover:bg-red-700"
-            >
-              Radera
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteActivityDialog
+        activityName={currentActivity.name}
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onDelete={handleDeleteActivity}
+      />
     </Card>
   );
 }

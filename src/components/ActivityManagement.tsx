@@ -1,16 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
-import { ActivityFilter } from "@/components/ActivityFilter";
-import { ActivityList } from "@/components/ActivityList";
-import { ActivityDetail } from "@/components/activity-detail";
-import { FileImport } from "@/components/FileImport";
-import { MatchScraper } from "@/components/MatchScraper";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
-import { Button } from "@/components/ui/button";
 import { Activity as ActivityIcon, Database, History, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ActivityTabContent, ToolsTabContent } from "@/components/activity-management";
 
 interface ActivityManagementProps {
   activities: Activity[];
@@ -130,48 +126,22 @@ export function ActivityManagement({
         </TabsList>
         
         <TabsContent value="activities" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <h2 className="text-xl font-semibold">Alla aktiviteter</h2>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                <Button 
-                  onClick={onAddActivityClick}
-                  className="w-full sm:w-auto"
-                >
-                  <ActivityIcon className="h-4 w-4 mr-2" />
-                  Lägg till aktivitet
-                </Button>
-                <div className="w-full sm:w-auto overflow-x-auto">
-                  <ActivityFilter 
-                    selectedTypes={selectedActivityTypes}
-                    onTypeChange={onActivityTypeChange}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {selectedActivity ? (
-              <ActivityDetail
-                activity={selectedActivity}
-                players={players}
-                onBack={() => onActivitySelect(null)}
-                onEdit={onEditActivityClick}
-                onUpdate={onActivityUpdate}
-                onKioskUpdate={handleKioskUpdate}
-                onActivitySelect={onActivitySelect}
-                onDelete={handleDeleteActivity}
-                relatedActivities={activities}
-                cupMatches={cupMatches}
-                onClose={() => onActivitySelect(null)}
-              />
-            ) : (
-              <ActivityList 
-                activities={filteredActivities} 
-                onSelect={onActivitySelect}
-                players={players} 
-              />
-            )}
-          </div>
+          <ActivityTabContent
+            title="Alla aktiviteter"
+            activities={activities}
+            players={players}
+            selectedActivity={selectedActivity}
+            selectedActivityTypes={selectedActivityTypes}
+            filteredActivities={filteredActivities}
+            onActivityTypeChange={onActivityTypeChange}
+            onActivitySelect={onActivitySelect}
+            onActivityUpdate={onActivityUpdate}
+            onAddActivityClick={onAddActivityClick}
+            onEditActivityClick={onEditActivityClick}
+            handleKioskUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDeleteActivity}
+            cupMatches={cupMatches}
+          />
         </TabsContent>
         
         <TabsContent value="historical" className="space-y-6">
@@ -225,36 +195,48 @@ export function ActivityManagement({
             </div>
             
             {selectedActivity ? (
-              <ActivityDetail
-                activity={selectedActivity}
+              <ActivityTabContent
+                title="Tidigare aktiviteter"
+                activities={activities}
                 players={players}
-                onBack={() => onActivitySelect(null)}
-                onEdit={onEditActivityClick}
-                onUpdate={onActivityUpdate}
-                onKioskUpdate={handleKioskUpdate}
+                selectedActivity={selectedActivity}
+                selectedActivityTypes={selectedActivityTypes}
+                filteredActivities={filteredHistoricalActivities}
+                onActivityTypeChange={onActivityTypeChange}
                 onActivitySelect={onActivitySelect}
-                onDelete={handleDeleteActivity}
-                relatedActivities={activities}
+                onActivityUpdate={onActivityUpdate}
+                onAddActivityClick={onAddActivityClick}
+                onEditActivityClick={onEditActivityClick}
+                handleKioskUpdate={handleKioskUpdate}
+                handleDeleteActivity={handleDeleteActivity}
                 cupMatches={cupMatches}
-                onClose={() => onActivitySelect(null)}
               />
             ) : (
-              <ActivityList 
-                activities={filteredHistoricalActivities} 
-                onSelect={onActivitySelect}
-                players={players} 
+              <ActivityTabContent
+                title="Tidigare aktiviteter"
+                activities={activities}
+                players={players}
+                selectedActivity={selectedActivity}
+                selectedActivityTypes={selectedActivityTypes}
+                filteredActivities={filteredHistoricalActivities}
+                onActivityTypeChange={onActivityTypeChange}
+                onActivitySelect={onActivitySelect}
+                onActivityUpdate={onActivityUpdate}
+                onAddActivityClick={onAddActivityClick}
+                onEditActivityClick={onEditActivityClick}
+                handleKioskUpdate={handleKioskUpdate}
+                handleDeleteActivity={handleDeleteActivity}
+                cupMatches={cupMatches}
               />
             )}
           </div>
         </TabsContent>
         
         <TabsContent value="tools" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FileImport onActivitiesImported={onImportedActivities} />
-            <MatchScraper 
-              onMatchesScraped={onMatchesScraped} 
-            />
-          </div>
+          <ToolsTabContent 
+            onImportedActivities={onImportedActivities}
+            onMatchesScraped={onMatchesScraped}
+          />
         </TabsContent>
         
         <TabsContent value="logs">

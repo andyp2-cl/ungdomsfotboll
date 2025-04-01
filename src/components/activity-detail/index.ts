@@ -6,6 +6,7 @@ import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityKioskSection } from "./ActivityKioskSection";
 import { ActivityMatchesSection } from "./ActivityMatchesSection";
+import { DeleteActivityDialog } from "./DeleteActivityDialog";
 
 export {
   ActivityDetail,
@@ -14,5 +15,6 @@ export {
   ActivityStatsSection,
   ActivityParticipantSection,
   ActivityKioskSection,
-  ActivityMatchesSection
+  ActivityMatchesSection,
+  DeleteActivityDialog
 };
