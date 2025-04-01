@@ -6,12 +6,13 @@ import { User } from "lucide-react";
 
 interface PlayerAvatarProps {
   player: Player;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export function PlayerAvatar({ player, size = "md" }: PlayerAvatarProps) {
   // Calculate size in pixels
   const sizeMap = {
+    xs: "h-5 w-5",
     sm: "h-6 w-6",
     md: "h-8 w-8",
     lg: "h-10 w-10",
