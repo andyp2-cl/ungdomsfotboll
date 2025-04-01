@@ -8,17 +8,53 @@ import { processMatchData } from "./utils";
  */
 export const createBackup = async (): Promise<void> => {
   try {
+    console.log("Starting backup creation process...");
+    
     // Fetch players and activities in parallel
     const [playersResponse, activitiesResponse] = await Promise.all([
       supabase.from('players').select('*'),
       supabase.from('activities').select('*')
     ]);
     
-    if (playersResponse.error) throw playersResponse.error;
-    if (activitiesResponse.error) throw activitiesResponse.error;
+    if (playersResponse.error) {
+      console.error("Error fetching players:", playersResponse.error);
+      throw playersResponse.error;
+    }
+    if (activitiesResponse.error) {
+      console.error("Error fetching activities:", activitiesResponse.error);
+      throw activitiesResponse.error;
+    }
     
     const players = playersResponse.data || [];
     const activities = activitiesResponse.data || [];
+    
+    console.log(`Retrieved ${players.length} players and ${activities.length} activities from database`);
+    
+    // If we have no data, don't create an empty backup
+    if (players.length === 0 && activities.length === 0) {
+      console.error("No players or activities found in database, aborting backup");
+      throw new Error("No data to backup");
+    }
+    
+    // Fetch player-activity relationships
+    const { data: playerActivitiesData, error: paError } = await supabase
+      .from('player_activities')
+      .select('*');
+      
+    if (paError) {
+      console.error("Error fetching player-activity relationships:", paError);
+      // Continue anyway, relationships will be missing
+    }
+    
+    // Attach activities to players
+    if (playerActivitiesData && playerActivitiesData.length > 0) {
+      players.forEach(player => {
+        const playerActivityRelations = playerActivitiesData.filter(pa => pa.player_id === player.id);
+        player.activities = playerActivityRelations.map(relation => relation.activity_id);
+      });
+      
+      console.log(`Attached activity relationships to players (${playerActivitiesData.length} relationships)`);
+    }
     
     // Ensure all match data is properly stored
     const processedActivities = activities.map(processMatchData);
@@ -30,8 +66,12 @@ export const createBackup = async (): Promise<void> => {
     };
     
     console.log("Creating backup with activities:", processedActivities.length);
-    console.log("Sample match data:", processedActivities.filter(a => a.type === 'match').slice(0, 3));
     
+    if (processedActivities.length > 0) {
+      console.log("Sample match data:", processedActivities.filter(a => a.type === 'match').slice(0, 3));
+    }
+    
+    // Save to localStorage
     localStorage.setItem('hassleholmsif_backup', JSON.stringify(backupData));
     
     // Log backup to Supabase, but don't fail if it errors

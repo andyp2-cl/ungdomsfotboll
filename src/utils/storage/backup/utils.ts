@@ -58,10 +58,21 @@ export const getLastBackupInfo = (): {
  * Process activities to ensure all required fields are properly set for restoration
  */
 export const processActivitiesForRestore = (activities: Activity[]): Activity[] => {
+  if (!activities || !Array.isArray(activities) || activities.length === 0) {
+    console.error("Invalid or empty activities array provided for processing");
+    return [];
+  }
+
   console.log("Processing activities for restore, count:", activities.length);
   
   // First pass: ensure basic properties are set
   const processedActivities = activities.map(activity => {
+    // Skip null or undefined activities
+    if (!activity) {
+      console.error("Null or undefined activity found in backup");
+      return null;
+    }
+    
     // Deep clone to avoid modifying original
     const processedActivity: Activity = JSON.parse(JSON.stringify(activity));
     
@@ -118,7 +129,7 @@ export const processActivitiesForRestore = (activities: Activity[]): Activity[] 
     }
     
     return processedActivity;
-  });
+  }).filter(Boolean) as Activity[]; // Remove null entries
   
   // Second pass: resolve cup and match relationships
   processedActivities.forEach(activity => {
