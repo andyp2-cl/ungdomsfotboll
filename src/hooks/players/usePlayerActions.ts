@@ -1,27 +1,17 @@
 
-import { useState, useEffect, useMemo } from "react";
-import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
+import { useEffect } from "react";
+import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-export function usePlayers() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGrades, setSelectedGrades] = useState<PlayerGrade[]>([]);
-  const [selectedPositions, setSelectedPositions] = useState<PlayerPosition[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "stats">("list"); // Updated to include "stats"
+export function usePlayerActions(
+  players: Player[],
+  setPlayers: React.Dispatch<React.SetStateAction<Player[]>>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedPlayer: React.Dispatch<React.SetStateAction<Player | null>>,
+  setIsAddPlayerOpen: React.Dispatch<React.SetStateAction<boolean>>
+) {
   const { toast } = useToast();
-
-  // Update view mode if device type changes
-  useEffect(() => {
-    setViewMode("list"); // Always use list view regardless of device
-  }, [isMobile]);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -41,23 +31,7 @@ export function usePlayers() {
     };
 
     loadPlayers();
-  }, [toast]);
-
-  const handleGradeChange = (grade: PlayerGrade) => {
-    setSelectedGrades(prev => 
-      prev.includes(grade) 
-        ? prev.filter(g => g !== grade) 
-        : [...prev, grade]
-    );
-  };
-
-  const handlePositionChange = (position: PlayerPosition) => {
-    setSelectedPositions(prev => 
-      prev.includes(position) 
-        ? prev.filter(p => p !== position) 
-        : [...prev, position]
-    );
-  };
+  }, [toast, setPlayers, setIsLoading]);
 
   const handlePlayerUpdate = async (updatedPlayer: Player) => {
     try {
@@ -84,9 +58,9 @@ export function usePlayers() {
       }
       
       // Update selected player if needed
-      if (selectedPlayer && selectedPlayer.id === updatedPlayer.id) {
-        setSelectedPlayer(updatedPlayer);
-      }
+      setSelectedPlayer(prevSelected => 
+        prevSelected && prevSelected.id === updatedPlayer.id ? updatedPlayer : prevSelected
+      );
       
       toast({
         title: "Spelaren uppdaterad",
@@ -125,12 +99,11 @@ export function usePlayers() {
       await savePlayers(newPlayers);
       
       // Update selected player if it was one of the updated ones
-      if (selectedPlayer) {
-        const updatedSelectedPlayer = updatedPlayers.find(p => p.id === selectedPlayer.id);
-        if (updatedSelectedPlayer) {
-          setSelectedPlayer(updatedSelectedPlayer);
-        }
-      }
+      setSelectedPlayer(prevSelected => {
+        if (!prevSelected) return null;
+        const updatedSelectedPlayer = updatedPlayers.find(p => p.id === prevSelected.id);
+        return updatedSelectedPlayer || prevSelected;
+      });
       
       return true;
     } catch (error) {
@@ -166,39 +139,9 @@ export function usePlayers() {
     }
   };
 
-  const filteredPlayers = useMemo(() => {
-    return players.filter(player => {
-      const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesGrade = selectedGrades.length === 0 || selectedGrades.includes(player.grade);
-      const matchesPosition = selectedPositions.length === 0 || 
-        (player.positions && player.positions.some(position => selectedPositions.includes(position)));
-      
-      return matchesSearch && matchesGrade && matchesPosition;
-    });
-  }, [searchQuery, selectedGrades, selectedPositions, players]);
-
   return {
-    players,
-    setPlayers,
-    isLoading,
-    searchQuery,
-    setSearchQuery,
-    selectedGrades,
-    selectedPositions,
-    setSelectedPositions,
-    selectedPlayer,
-    setSelectedPlayer,
-    editingPlayer,
-    setEditingPlayer,
-    isAddPlayerOpen,
-    setIsAddPlayerOpen,
-    viewMode,
-    setViewMode,
-    filteredPlayers,
-    handleGradeChange,
-    handlePositionChange,
     handlePlayerUpdate,
-    handleBulkPlayerUpdate: handleBulkPlayerUpdate || ((updatedPlayers: Player[]) => false),
-    handleAddPlayer: handleAddPlayer || ((newPlayer: Player) => false)
+    handleBulkPlayerUpdate,
+    handleAddPlayer
   };
 }

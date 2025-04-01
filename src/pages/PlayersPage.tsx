@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { PlayerHeader } from "@/components/PlayerHeader";
-import { LoadingState } from "@/components/LoadingState";
-import { usePlayers } from "@/hooks/usePlayers";
+import { PageContainer } from "@/components/page-containers/PageContainer";
+import { usePlayers } from "@/hooks/players";
 import { useActivities } from "@/hooks/activities";
 import { getActiveTab } from "@/utils/storage";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -17,11 +16,13 @@ interface PlayersPageProps {
 }
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  // Get tab from location or storage
   const location = useLocation();
   const pathTab = location.pathname === "/activities" ? "activities" : "players";
   const storedTab = getActiveTab();
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
   
+  // Get player state and actions
   const {
     players,
     setPlayers,
@@ -44,6 +45,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddPlayer
   } = usePlayers();
 
+  // Get activity state and actions
   const {
     activities,
     isLoading: isActivitiesLoading,
@@ -86,6 +88,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     }
   };
 
+  // Handle imported or scraped activities
   const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
     try {
       await handleImportedActivities(activities);
@@ -118,15 +121,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   const isLoading = isPlayersLoading || isActivitiesLoading;
 
-  if (isLoading) {
-    return (
-      <div className="container py-6">
-        <PlayerHeader />
-        <LoadingState />
-      </div>
-    );
-  }
-
+  // Handle selection of activity from player detail view
   const handlePlayerActivitySelect = (activity: Activity) => {
     setSelectedPlayer(null);
     setSelectedActivity(activity);
@@ -134,9 +129,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   return (
-    <div className="container py-6">
-      <PlayerHeader />
-      
+    <PageContainer isLoading={isLoading}>
       <MainTabs 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -198,6 +191,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddPlayer={handleAddPlayer}
         handleAddActivity={handleAddActivity}
       />
-    </div>
+    </PageContainer>
   );
 }
