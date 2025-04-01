@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -63,7 +64,8 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
           participationRate: participationRate,
           goalsAvg: goalsAvg,
           assistsAvg: assistsAvg,
-          fill: getGradeColor(player.grade)
+          fill: getGradeColor(player.grade),
+          activities: player.activities || []
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));

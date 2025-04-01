@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { v4 as uuidv4 } from 'uuid';
+import { calculatePlayerStatistics } from "@/utils/playerStatistics";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -250,7 +251,7 @@ export function ActivityDetail({
   };
 
   const renderPlayerStatistics = () => {
-    if (!activities || activities.length === 0) {
+    if (!allActivities || allActivities.length === 0) {
       return (
         <div className="text-muted-foreground text-center py-4">
           Ingen statistik tillgänglig
@@ -258,7 +259,10 @@ export function ActivityDetail({
       );
     }
     
-    const stats = calculatePlayerStatistics(player, activities);
+    const playerToShow = players.find(p => p.id === currentActivity.kioskAssignedPlayerId);
+    if (!playerToShow) return null;
+    
+    const stats = calculatePlayerStatistics(playerToShow, allActivities);
     
     return (
       <div className="space-y-4">
@@ -800,6 +804,118 @@ export function ActivityDetail({
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+interface PlayerDetailProps {
+  player: Player;
+  activities: Activity[];
+  onClose: () => void;
+  onPlayerUpdate?: (player: Player) => void;
+  allPlayers: Player[];
+}
+
+export function PlayerDetail({ 
+  player, 
+  activities, 
+  onClose, 
+  onPlayerUpdate,
+  allPlayers 
+}: PlayerDetailProps) {
+  const { toast } = useToast();
+  const stats = calculatePlayerStatistics(player, activities);
+
+  return (
+    <Card className="w-full lg:max-w-3xl mx-auto">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl mb-1 flex items-center">
+              {player.name}
+              <Badge 
+                variant="outline"
+                className="ml-3"
+              >
+                {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
+              </Badge>
+              {player.jerseyNumber && (
+                <Badge variant="secondary" className="ml-2">
+                  #{player.jerseyNumber}
+                </Badge>
+              )}
+            </CardTitle>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Spelarstatistik</h3>
+          
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-background border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold">{stats.totalMatches}</div>
+              <div className="text-xs text-muted-foreground">Matcher</div>
+            </div>
+            <div className="bg-background border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.totalGoals}</div>
+              <div className="text-xs text-muted-foreground">Mål</div>
+            </div>
+            <div className="bg-background border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.totalAssists}</div>
+              <div className="text-xs text-muted-foreground">Assist</div>
+            </div>
+          </div>
+          
+          {stats.goalsByActivity.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold mb-2">Målstatistik</h4>
+              <div className="space-y-2">
+                {stats.goalsByActivity.map((activityStat, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
+                    <div>
+                      <div className="font-medium">{activityStat.activityName}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      {activityStat.goals} {activityStat.goals === 1 ? 'mål' : 'mål'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {stats.assistsByActivity.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold mb-2">Assiststatistik</h4>
+              <div className="space-y-2">
+                {stats.assistsByActivity.map((activityStat, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 border rounded text-sm">
+                    <div>
+                      <div className="font-medium">{activityStat.activityName}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {new Date(activityStat.activityDate).toLocaleDateString('sv-SE')}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {activityStat.assists} {activityStat.assists === 1 ? 'assist' : 'assist'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button variant="outline" onClick={onClose}>Stäng</Button>
       </CardFooter>
     </Card>
   );

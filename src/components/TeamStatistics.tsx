@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,27 +28,33 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
         : 0;
 
       // Calculate goals and assists
-      let goalCount = 0;
-      let assistCount = 0;
+      let totalGoals = 0;
+      let totalAssists = 0;
+      let matchCount = 0;
 
       activities.forEach(activity => {
-        if (activity.type === "match" && activity.playerStats) {
-          goalCount += activity.playerStats.goals?.[player.id] || 0;
-          assistCount += activity.playerStats.assists?.[player.id] || 0;
+        if (activity.type === "match" && activity.playerStats && activity.participants?.includes(player.id)) {
+          matchCount++;
+          totalGoals += activity.playerStats.goals?.[player.id] || 0;
+          totalAssists += activity.playerStats.assists?.[player.id] || 0;
         }
       });
 
+      const goalsAvg = matchCount > 0 ? totalGoals / matchCount : 0;
+      const assistsAvg = matchCount > 0 ? totalAssists / matchCount : 0;
+      
       return {
         id: player.id,
         name: player.name,
         grade: player.grade,
         position: player.positions?.[0] || 'N/A',
         jerseyNumber: player.jerseyNumber || '',
-        activityCount: participationCount,
-        participationRate: participationRate,
-        goals: goalCount,
-        assists: assistCount,
-        fill: getGradeColor(player.grade)
+        activityCount,
+        participationRate,
+        goals: totalGoals,
+        assists: totalAssists,
+        fill: getGradeColor(player.grade),
+        activities: player.activities || []
       };
     }).sort((a, b) => b.activityCount - a.activityCount);
   }, [players, activities]);
