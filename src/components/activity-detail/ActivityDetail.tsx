@@ -1,89 +1,196 @@
 
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
-import { ActivityHeader } from "./ActivityHeader";
-import { ActivityDetailContent } from "./ActivityDetailContent";
-import { DeleteActivityDialog } from "./DeleteActivityDialog";
+import { 
+  Card, 
+  CardContent, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ActivityDetailHeader } from "./ActivityDetailHeader";
+import { ActivityResultSection } from "./ActivityResultSection";
+import { ActivityStatsSection } from "./ActivityStatsSection";
+import { ActivityParticipantSection } from "./ActivityParticipantSection";
+import { ActivityKioskSection } from "./ActivityKioskSection";
+import { ActivityMatchesSection } from "./ActivityMatchesSection";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ActivityDetailProps {
   activity: Activity;
   players: Player[];
-  onBack: () => void;
-  onEdit: (activity: Activity) => void;
-  onDelete: (activityId: string) => Promise<boolean>;
-  onUpdate: (activity: Activity) => void;
-  onKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  onClose: () => void;
+  onBack?: () => void;  // Added this prop to match usage in ActivityManagement.tsx
+  onEdit?: (activity: Activity) => void;
+  onActivityUpdate?: (updatedActivity: Activity) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
   onActivitySelect?: (activity: Activity | null) => void;
-  relatedActivities?: Activity[];
-  cupMatches?: Activity[];
+  onDeleteActivity?: (activityId: string) => void;
   allActivities?: Activity[];
-  onClose?: () => void;
+  cupMatches?: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
+  // Add these props to match with ActivityManagement.tsx usage
+  onUpdate?: (activity: Activity) => void;
+  onKioskUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
+  onDelete?: (activityId: string) => Promise<boolean>;
+  relatedActivities?: Activity[];
 }
 
-export function ActivityDetail({
-  activity,
-  players,
-  onBack,
-  onEdit,
-  onDelete,
+export function ActivityDetail({ 
+  activity, 
+  players, 
+  onClose, 
+  onBack, 
+  onEdit, 
+  onActivityUpdate,
   onUpdate,
+  onKioskAssignmentUpdate,
   onKioskUpdate,
   onActivitySelect,
-  relatedActivities = [],
+  onDeleteActivity,
+  onDelete,
+  allActivities,
+  relatedActivities,
   cupMatches = [],
-  allActivities = [],
-  onClose
+  onPlayerSelect
 }: ActivityDetailProps) {
+  const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Determine if this is a historical activity (past date)
   const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+  
+  const participatingPlayers = players.filter(
+    (player) => currentActivity.participants?.includes(player.id)
+  );
 
-  // Handle delete
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      const success = await onDelete(activity.id);
-      if (success) {
-        setIsDeleteDialogOpen(false);
-        onBack();
-      }
-    } catch (error) {
-      console.error("Error deleting activity:", error);
-    } finally {
-      setIsDeleting(false);
+  // Update activity handler
+  const handleActivityUpdate = (updatedActivity: Activity) => {
+    setCurrentActivity(updatedActivity);
+    
+    if (onActivityUpdate) {
+      onActivityUpdate(updatedActivity);
+    }
+    
+    // Also call onUpdate if provided
+    if (onUpdate) {
+      onUpdate(updatedActivity);
     }
   };
 
+  const handleDeleteActivity = () => {
+    if (onDeleteActivity) {
+      onDeleteActivity(currentActivity.id);
+      onClose();
+    } else if (onDelete) {
+      onDelete(currentActivity.id).then(success => {
+        if (success) {
+          if (onBack) onBack();
+          else onClose();
+        }
+      });
+    }
+  };
+
+  // Choose the appropriate close handler
+  const handleClose = onBack || onClose;
+
   return (
-    <div className="space-y-4">
-      {/* Header section with back button, title, and action buttons */}
-      <ActivityHeader 
-        activity={activity}
-        onClose={onClose || onBack}
-        onEdit={() => onEdit(activity)}
-        onDelete={() => setIsDeleteDialogOpen(true)}
+    <Card className="w-full lg:max-w-3xl mx-auto">
+      <ActivityDetailHeader 
+        activity={currentActivity}
+        isHistorical={isHistorical}
+        onClose={handleClose}
+        onEdit={onEdit}
+        onDeleteOpen={() => setIsDeleteDialogOpen(true)}
       />
 
-      {/* Main content */}
-      <ActivityDetailContent
-        activity={activity}
-        players={players}
-        onUpdate={onUpdate}
-        onKioskUpdate={onKioskUpdate}
-        onActivitySelect={onActivitySelect}
-        cupMatches={cupMatches}
-        isHistorical={isHistorical}
-      />
+      <CardContent className="space-y-6">
+        {/* Match Result (only for matches) */}
+        {currentActivity.type === "match" && (
+          <ActivityResultSection 
+            activity={currentActivity}
+            isHistorical={isHistorical}
+            updateActivity={handleActivityUpdate}
+          />
+        )}
+        
+        {/* Match Statistics (only for matches) */}
+        {currentActivity.type === "match" && (
+          <ActivityStatsSection 
+            activity={currentActivity}
+            players={players}
+            participatingPlayers={participatingPlayers}
+            updateActivity={handleActivityUpdate}
+            isHistorical={isHistorical}
+          />
+        )}
+        
+        {/* Participants section */}
+        <ActivityParticipantSection 
+          activity={currentActivity}
+          players={players}
+          updateActivity={handleActivityUpdate}
+          onPlayerSelect={onPlayerSelect}
+        />
+        
+        {/* Kiosk assignment (only for matches) */}
+        {currentActivity.type === "match" && (
+          <ActivityKioskSection 
+            activity={currentActivity}
+            players={players}
+            updateActivity={handleActivityUpdate}
+            onKioskAssignmentUpdate={onKioskAssignmentUpdate || 
+              (onKioskUpdate ? 
+                (activityId, playerId) => {
+                  onKioskUpdate(activityId, playerId);
+                  return Promise.resolve(true);
+                } : undefined)}
+          />
+        )}
+        
+        {/* Cup matches (only for cups) */}
+        {currentActivity.type === "cup" && cupMatches && cupMatches.length > 0 && (
+          <ActivityMatchesSection 
+            cupMatches={cupMatches}
+            onActivitySelect={onActivitySelect}
+          />
+        )}
+      </CardContent>
+      
+      <CardFooter className="flex justify-end">
+        <Button variant="outline" onClick={handleClose}>Stäng</Button>
+      </CardFooter>
 
       {/* Delete confirmation dialog */}
-      <DeleteActivityDialog
-        activityName={activity.name}
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onDelete={handleDelete}
-      />
-    </div>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Radera aktivitet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Är du säker på att du vill radera "{currentActivity.name}"? 
+              Denna åtgärd kan inte ångras och all information kopplad till aktiviteten kommer att försvinna.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteActivity} 
+              className="bg-red-500 hover:bg-red-700"
+            >
+              Radera
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }

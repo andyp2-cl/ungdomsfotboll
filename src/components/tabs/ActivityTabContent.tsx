@@ -4,7 +4,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BarChart3, Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
 import { ActivityList } from "@/components/ActivityList";
-import { ActivityDetailRefactored } from "@/components/activity-detail/ActivityDetailRefactored";
+import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
@@ -137,7 +137,7 @@ export function ActivityTabContent({
           allPlayers={players}
         />
       ) : selectedActivity ? (
-        <ActivityDetailRefactored 
+        <ActivityDetail 
           activity={selectedActivity}
           players={players}
           onBack={() => setSelectedActivity(null)}
