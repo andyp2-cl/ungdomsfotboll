@@ -2,23 +2,27 @@
 import React, { useMemo } from "react";
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, ResponsiveContainer, Tooltip, Legend, Cell } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface MatchesTabContentProps {
   activities: Activity[];
 }
 
 export function MatchesTabContent({ activities }: MatchesTabContentProps) {
+  // Filtrera ut endast genomförda matcher (de som har ett resultat)
+  const completedMatches = useMemo(() => {
+    return activities.filter(a => a.type === 'match' && a.result);
+  }, [activities]);
+  
   // Calculate match statistics
   const matchStats = useMemo(() => {
-    const matches = activities.filter(a => a.type === 'match');
     let wins = 0;
     let draws = 0;
     let losses = 0;
     let goalsScored = 0;
     let goalsConceded = 0;
     
-    matches.forEach(match => {
+    completedMatches.forEach(match => {
       if (!match.result) return;
       
       const [ourScore, theirScore] = match.result.split('-').map(Number);
@@ -33,16 +37,16 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     });
     
     return {
-      total: matches.length,
+      total: completedMatches.length,
       wins,
       draws,
       losses,
       goalsScored,
       goalsConceded,
       goalDifference: goalsScored - goalsConceded,
-      winPercentage: matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0
+      winPercentage: completedMatches.length > 0 ? Math.round((wins / completedMatches.length) * 100) : 0
     };
-  }, [activities]);
+  }, [completedMatches]);
   
   // Format data for charts
   const matchResultData = [
@@ -50,6 +54,15 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     { name: 'Oavgjorda', value: matchStats.draws, color: '#64748b' },
     { name: 'Förluster', value: matchStats.losses, color: '#ef4444' }
   ];
+
+  // Om det inte finns några genomförda matcher, visa ett meddelande
+  if (completedMatches.length === 0) {
+    return (
+      <div className="p-4 bg-muted rounded-lg text-center">
+        <p className="text-muted-foreground">Det finns inga genomförda matcher med resultat.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,8 +136,12 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
               <span>{matchStats.losses}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-blue-100 text-blue-800 rounded-md">
-              <span className="font-medium">Matcher utan resultat:</span>
-              <span>{matchStats.total - (matchStats.wins + matchStats.draws + matchStats.losses)}</span>
+              <span className="font-medium">Gjorda mål:</span>
+              <span>{matchStats.goalsScored}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-orange-100 text-orange-800 rounded-md">
+              <span className="font-medium">Insläppta mål:</span>
+              <span>{matchStats.goalsConceded}</span>
             </div>
           </div>
         </CardContent>
