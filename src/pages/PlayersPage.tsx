@@ -51,6 +51,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleImportActivities,
     handleScraped,
     handleClearHistorical,
+    handleAddActivity,
     handlePlayerActivitySelect,
     
     // Loading state
