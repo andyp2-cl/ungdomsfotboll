@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
@@ -14,7 +15,7 @@ export function usePlayers() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Default to list view
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "stats">("list"); // Updated to include "stats"
   const { toast } = useToast();
 
   // Update view mode if device type changes

@@ -16,9 +16,10 @@ import { getGradeColor } from '@/utils/gradeUtils';
 interface TeamStatisticsProps {
   players: Player[];
   activities: Activity[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
-export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
+export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStatisticsProps) {
   // Calculate player participation statistics
   const playerStats = useMemo(() => {
     return players.map(player => {
@@ -106,6 +107,16 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
   // Chart config
   const chartConfig = getGradeChartConfig();
 
+  // Helper function to handle player click if onPlayerSelect is provided
+  const handlePlayerClick = (playerId: string) => {
+    if (onPlayerSelect) {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        onPlayerSelect(player);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview">
@@ -189,7 +200,11 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
                         .filter(player => player.matchCount > 0)
                         .sort((a, b) => (b.goals + b.assists) - (a.goals + a.assists))
                         .map(player => (
-                          <tr key={player.id} className="border-b hover:bg-accent/5">
+                          <tr 
+                            key={player.id} 
+                            className="border-b hover:bg-accent/5 cursor-pointer"
+                            onClick={() => handlePlayerClick(player.id)}
+                          >
                             <td className="py-2">{player.name}</td>
                             <td className="py-2 text-center">{player.matchCount}</td>
                             <td className="py-2 text-center">{player.goals}</td>
@@ -224,7 +239,11 @@ export function TeamStatistics({ players, activities }: TeamStatisticsProps) {
                         .filter(player => player.matchCount >= 3) // Only show players with at least 3 matches
                         .sort((a, b) => b.winRate - a.winRate)
                         .map(player => (
-                          <tr key={player.id} className="border-b hover:bg-accent/5">
+                          <tr 
+                            key={player.id} 
+                            className="border-b hover:bg-accent/5 cursor-pointer"
+                            onClick={() => handlePlayerClick(player.id)}
+                          >
                             <td className="py-2">{player.name}</td>
                             <td className="py-2 text-center">{player.matchCount}</td>
                             <td className="py-2 text-center">{player.winCount}</td>
