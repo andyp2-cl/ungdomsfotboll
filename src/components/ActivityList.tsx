@@ -99,7 +99,7 @@ export function ActivityList({
         const participantPlayers = players.filter(p => activityParticipants.includes(p.id));
         
         // For more readable display, limit the number of participants shown
-        const maxDisplayedParticipants = isMobile ? 2 : 3;
+        const maxDisplayedParticipants = isMobile ? 3 : 5;
         const displayedParticipants = participantPlayers.slice(0, maxDisplayedParticipants);
         const remainingCount = participantPlayers.length - maxDisplayedParticipants;
         
@@ -137,34 +137,35 @@ export function ActivityList({
                 
                 {/* Participants list */}
                 {participantPlayers.length > 0 && (
-                  <div className="mt-1 space-y-1 pt-1 border-t border-dashed border-gray-200">
-                    <p className="text-xs text-muted-foreground font-medium">Deltagare:</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                      {displayedParticipants.map(player => (
+                  <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Deltagare:</p>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {displayedParticipants.map((player, index) => (
                         <button 
                           key={player.id} 
-                          className="flex items-center space-x-1 text-sm hover:bg-muted px-1 py-0.5 rounded"
+                          className="inline-flex items-center text-sm hover:bg-muted px-1.5 py-0.5 rounded"
                           onClick={(e) => {
                             e.stopPropagation();
                             onPlayerSelect && onPlayerSelect(player.id);
                           }}
                         >
-                          <Avatar className="h-5 w-5 flex-shrink-0">
+                          <Avatar className="h-4 w-4 mr-1 flex-shrink-0">
                             {player.image ? (
                               <AvatarImage src={player.image} alt={player.name} />
                             ) : (
-                              <AvatarFallback className="text-[10px]">
+                              <AvatarFallback className="text-[8px]">
                                 {player.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                               </AvatarFallback>
                             )}
                           </Avatar>
                           <span className="truncate">{player.name}</span>
+                          {index < displayedParticipants.length - 1 && <span className="ml-0.5 text-muted-foreground">,</span>}
                         </button>
                       ))}
                       {remainingCount > 0 && (
-                        <div className="flex items-center text-xs text-muted-foreground px-1 py-0.5">
-                          <span>+{remainingCount} fler</span>
-                        </div>
+                        <span className="text-xs text-muted-foreground ml-1">
+                          +{remainingCount} fler
+                        </span>
                       )}
                     </div>
                   </div>
