@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Player } from "@/types/player";
-import { X } from "lucide-react";
+import { Check, ChevronsUpDown, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,17 +25,11 @@ export function PlayerSearchPopover({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Debug logging to help identify issues
-  console.log("Available players:", availablePlayers);
-  console.log("Search query:", searchQuery);
-  
   // Filter available players based on search query
   const filteredPlayers = availablePlayers.filter(player => {
     if (!searchQuery.trim()) return true;
     return player.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
-  
-  console.log("Filtered players:", filteredPlayers);
 
   // Reset search when popover closes
   useEffect(() => {
@@ -70,17 +64,15 @@ export function PlayerSearchPopover({
           aria-expanded={open}
           className="w-full sm:w-[200px] justify-between"
         >
-          Välj spelare
-          <X 
-            className="h-4 w-4 shrink-0 opacity-50 ml-2" 
-            onClick={(e) => {
-              e.stopPropagation();
-              setSearchQuery("");
-            }}
-          />
+          <span className="truncate">
+            {selectedPlayers.length > 0 
+              ? `${selectedPlayers.length} valda` 
+              : "Välj spelare"}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-[250px] p-0" align="start">
         <Command>
           <CommandInput 
             placeholder="Sök spelare..." 
@@ -88,23 +80,23 @@ export function PlayerSearchPopover({
             onValueChange={setSearchQuery}
             className="h-9"
           />
-          <CommandList>
+          <CommandList className="max-h-[300px] overflow-auto">
             <CommandEmpty>Inga spelare hittades</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-auto">
+            <CommandGroup>
               {filteredPlayers.map((player) => (
                 <CommandItem
                   key={player.id}
                   value={player.id}
-                  onSelect={(value) => {
-                    handlePlayerSelect(value);
-                    setOpen(false); // Close popover after selection
-                  }}
-                  disabled={currentParticipantCount + selectedPlayers.length >= maxParticipants && !selectedPlayers.includes(player.id)}
+                  onSelect={() => handlePlayerSelect(player.id)}
+                  className="flex items-center justify-between cursor-pointer"
                 >
-                  <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
                     <span>{player.name}</span>
-                    {selectedPlayers.includes(player.id) && <X className="h-4 w-4 ml-2" />}
                   </div>
+                  {selectedPlayers.includes(player.id) && (
+                    <Check className="h-4 w-4" />
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
