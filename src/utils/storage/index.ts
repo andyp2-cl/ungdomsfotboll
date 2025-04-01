@@ -3,3 +3,4 @@
 export * from './tabs';
 export * from './playerStorage';
 export * from './activityStorage';
+export * from './backup';

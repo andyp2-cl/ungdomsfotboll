@@ -10,6 +10,7 @@ import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { Activity } from "@/types/player";
+import { BackupRestoreActions } from "@/components/BackupRestoreActions";
 
 interface PlayersPageProps {
   initialTab?: string;
@@ -130,52 +131,55 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   return (
     <PageContainer isLoading={isLoading}>
-      <MainTabs 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        playersContent={
-          <PlayerTabContent 
-            players={players}
-            activities={activities}
-            searchQuery={searchQuery}
-            selectedGrades={selectedGrades}
-            selectedPlayer={selectedPlayer}
-            viewMode={viewMode}
-            filteredPlayers={filteredPlayers}
-            isAddPlayerOpen={isAddPlayerOpen}
-            setSearchQuery={setSearchQuery}
-            handleGradeChange={handleGradeChange}
-            setSelectedPlayer={setSelectedPlayer}
-            setViewMode={setViewMode}
-            handlePlayerUpdate={handlePlayerUpdate}
-            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-            setIsAddPlayerOpen={setIsAddPlayerOpen}
-            setEditingPlayer={setEditingPlayer}
-            onActivitySelect={handlePlayerActivitySelect}
-          />
-        }
-        activitiesContent={
-          <ActivityTabContent 
-            activities={activities}
-            players={players}
-            selectedActivity={selectedActivity}
-            selectedActivityTypes={selectedActivityTypes}
-            filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
-            isAddActivityOpen={isAddActivityOpen}
-            handleActivityTypeChange={handleActivityTypeChange}
-            setSelectedActivity={setSelectedActivity}
-            handleActivityUpdate={handleActivityUpdate}
-            setIsAddActivityOpen={setIsAddActivityOpen}
-            setEditingActivity={setEditingActivity}
-            handleKioskAssignmentUpdate={handleKioskUpdate}
-            handleDeleteActivity={handleDelete}
-            handleImportedActivities={handleImportActivities}
-            handleScrapedMatches={handleScraped}
-            handleClearHistoricalActivities={handleClearHistorical}
-          />
-        }
-      />
+      <div className="flex justify-between items-center mb-4">
+        <MainTabs 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          playersContent={
+            <PlayerTabContent 
+              players={players}
+              activities={activities}
+              searchQuery={searchQuery}
+              selectedGrades={selectedGrades}
+              selectedPlayer={selectedPlayer}
+              viewMode={viewMode}
+              filteredPlayers={filteredPlayers}
+              isAddPlayerOpen={isAddPlayerOpen}
+              setSearchQuery={setSearchQuery}
+              handleGradeChange={handleGradeChange}
+              setSelectedPlayer={setSelectedPlayer}
+              setViewMode={setViewMode}
+              handlePlayerUpdate={handlePlayerUpdate}
+              handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+              setIsAddPlayerOpen={setIsAddPlayerOpen}
+              setEditingPlayer={setEditingPlayer}
+              onActivitySelect={handlePlayerActivitySelect}
+            />
+          }
+          activitiesContent={
+            <ActivityTabContent 
+              activities={activities}
+              players={players}
+              selectedActivity={selectedActivity}
+              selectedActivityTypes={selectedActivityTypes}
+              filteredActivities={filteredActivities}
+              filteredHistoricalActivities={filteredHistoricalActivities}
+              isAddActivityOpen={isAddActivityOpen}
+              handleActivityTypeChange={handleActivityTypeChange}
+              setSelectedActivity={setSelectedActivity}
+              handleActivityUpdate={handleActivityUpdate}
+              setIsAddActivityOpen={setIsAddActivityOpen}
+              setEditingActivity={setEditingActivity}
+              handleKioskAssignmentUpdate={handleKioskUpdate}
+              handleDeleteActivity={handleDelete}
+              handleImportedActivities={handleImportActivities}
+              handleScrapedMatches={handleScraped}
+              handleClearHistoricalActivities={handleClearHistorical}
+            />
+          }
+        />
+        <BackupRestoreActions />
+      </div>
 
       <PageDialogs 
         editingPlayer={editingPlayer}
