@@ -8,24 +8,34 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantActionsProps {
+  // Original props for popup usage
   activity?: Activity;
   nonParticipantPlayers?: Player[];
   onAddParticipant?: (playerId: string) => void;
+  
+  // Alternative props for direct button usage
   participantCount?: number; 
   isAddingPlayers?: boolean;
   setIsAddingPlayers?: Dispatch<SetStateAction<boolean>>;
   onClearAllParticipants?: () => void;
+  
+  // Common props
   isMobile?: boolean;
 }
 
 export function ParticipantActions({ 
+  // Original props
   activity, 
   nonParticipantPlayers = [], 
   onAddParticipant,
+  
+  // Alternative props
   participantCount,
   isAddingPlayers,
   setIsAddingPlayers,
   onClearAllParticipants,
+  
+  // Common props
   isMobile = false
 }: ParticipantActionsProps) {
   const [open, setOpen] = useState(false);

@@ -14,12 +14,20 @@ export const fetchPlayers = async (): Promise<Player[]> => {
       throw error;
     }
     
-    // Debug: Check for specific players in DB query results
-    const hasAlvin = data?.some(p => p.name?.includes('Alvin'));
-    console.log('Supabase query results contain Alvin:', hasAlvin);
-    
-    if (data?.length > 0 && data.length < 50) {
-      console.log('All players in DB:', data.map(p => p.name).join(', '));
+    // Debug: List all player names from database to help diagnose issues
+    if (data) {
+      console.log(`Fetched ${data.length} players from database:`);
+      console.log('Player names:', data.map(p => p.name).join(', '));
+      
+      // Specifically check for Alvin
+      const hasAlvin = data.some(p => p.name?.toLowerCase().includes('alvin'));
+      console.log('Supabase query results contain Alvin:', hasAlvin);
+      
+      if (!hasAlvin) {
+        console.warn('WARNING: Alvin not found in database results!');
+      }
+    } else {
+      console.warn('No players found in database!');
     }
     
     // Transform the database format to our application format
@@ -34,7 +42,7 @@ export const fetchPlayers = async (): Promise<Player[]> => {
     }));
     
     // Debug: Check for specific players after transformation
-    const hasAlvinAfterTransform = players.some(p => p.name?.includes('Alvin'));
+    const hasAlvinAfterTransform = players.some(p => p.name?.toLowerCase().includes('alvin'));
     console.log('Transformed players contains Alvin:', hasAlvinAfterTransform);
     
     return players;

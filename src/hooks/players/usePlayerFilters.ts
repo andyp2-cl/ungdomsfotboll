@@ -35,12 +35,28 @@ export function usePlayerFilters({
     // Log the number of players before filtering for debugging
     console.log("Total players before filtering:", players.length);
     
+    // Check if Alvin exists in the original players array
+    const hasAlvin = players.some(p => p.name?.toLowerCase().includes("alvin"));
+    console.log("Alvin exists in players array:", hasAlvin);
+    
     // Normalize the search query (remove case sensitivity and trim)
     const normalizedQuery = searchQuery.toLowerCase().trim();
+    
+    // Log the normalized search query for debugging
+    if (normalizedQuery) {
+      console.log("Normalized search query:", normalizedQuery);
+    }
     
     return players.filter(player => {
       // Make sure player.name exists and normalize it
       const playerName = player.name ? player.name.toLowerCase() : "";
+      
+      // Debug specific players
+      if (playerName.includes("alvin")) {
+        console.log("Found Alvin:", player.name);
+        console.log("Search match?", !normalizedQuery || playerName.includes(normalizedQuery));
+        console.log("Grade match?", selectedGrades.length === 0 || selectedGrades.includes(player.grade));
+      }
       
       // Check if player name includes the search query (more permissive search)
       // Only apply if searchQuery has content
@@ -68,9 +84,14 @@ export function usePlayerFilters({
 
   // Log filtered players count
   console.log("Filtered players count:", filteredPlayers.length);
+  
+  // Check for specific players in the filtered results
+  const hasAlvinInFiltered = filteredPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
+  console.log("Alvin found in filtered results:", hasAlvinInFiltered);
+  
   if (filteredPlayers.length < players.length) {
     console.log("Some players were filtered out. First 5 filtered players:", 
-      filteredPlayers.slice(0, 5).map(p => p.name));
+      filteredPlayers.slice(0, 5).map(p => p.name).join(", "));
   }
 
   return {

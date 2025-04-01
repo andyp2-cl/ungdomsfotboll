@@ -28,8 +28,12 @@ export function PlayersListContent({
   console.log("PlayersListContent received players:", filteredPlayers.length);
   
   // Check for specific players in the incoming dataset
-  const hasAlvin = filteredPlayers.some(p => p.name?.includes("Alvin"));
+  const hasAlvin = filteredPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
   console.log("Alvin in incoming filteredPlayers:", hasAlvin);
+  if (!hasAlvin) {
+    console.warn("WARNING: Alvin missing from filteredPlayers!");
+    console.log("First 10 players:", filteredPlayers.slice(0, 10).map(p => p.name).join(", "));
+  }
   
   // When no positions are selected, skip the position filtering altogether
   let displayPlayers = filteredPlayers;
@@ -40,7 +44,6 @@ export function PlayersListContent({
     displayPlayers = filteredPlayers.filter(player => {
       // If player has no positions property or it's not an array, skip this player for position filtering
       if (!player.positions) {
-        console.log(`Player ${player.name} has no positions property, skipping position filter`);
         return false;
       }
       
@@ -63,8 +66,11 @@ export function PlayersListContent({
   }
   
   // Final check for specific players
-  const hasAlvinAfterFilter = displayPlayers.some(p => p.name?.includes("Alvin"));
+  const hasAlvinAfterFilter = displayPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
   console.log("Alvin in final displayPlayers:", hasAlvinAfterFilter);
+  if (!hasAlvinAfterFilter && hasAlvin) {
+    console.warn("WARNING: Alvin filtered out by position filtering!");
+  }
   
   // Log for debugging
   console.log("Players to display:", displayPlayers.length);

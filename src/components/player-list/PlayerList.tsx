@@ -26,8 +26,14 @@ export function PlayerList({
   
   // Log for debugging what's coming into PlayerList
   console.log("PlayerList received players:", players.length);
-  const hasAlvin = players.some(p => p.name?.includes("Alvin"));
-  console.log("Alvin in PlayerList:", hasAlvin);
+  
+  // Check for specific players
+  const hasAlvin = players.some(p => p.name?.toLowerCase().includes("alvin"));
+  console.log("Alvin in PlayerList input:", hasAlvin);
+  if (!hasAlvin) {
+    console.warn("WARNING: Alvin missing from PlayerList input!");
+    console.log("Player names in PlayerList:", players.map(p => p.name).join(", "));
+  }
   
   // Filter out coaches if not requested - we'll do this here as a safety check
   // even though it's already done in PlayersListContent
@@ -42,7 +48,11 @@ export function PlayerList({
   // Apply sorting
   const sortedPlayers = sortPlayers(filteredPlayers);
   
-  // Final debug check
+  // Final debug check after filtering and sorting
+  const hasAlvinAfterProcessing = sortedPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
+  console.log("Alvin in PlayerList final output:", hasAlvinAfterProcessing);
+  
+  // Log final player count
   console.log("PlayerList final player count:", sortedPlayers.length);
 
   // Force grid view on mobile devices

@@ -18,13 +18,14 @@ export function ActivityStatsSection({
   updateActivity,
   isHistorical
 }: ActivityStatsSectionProps) {
+  // We'll allow editing stats for all matches, including historical ones
   return (
     <ActivityMatchStats
       activity={activity}
       players={players}
       participatingPlayers={participatingPlayers}
       updateActivity={updateActivity}
-      isHistorical={isHistorical}
+      isHistorical={false} // Always enable stats editing
     />
   );
 }
