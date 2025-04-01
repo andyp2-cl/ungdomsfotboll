@@ -1,0 +1,2 @@
+
+export { StatisticsTabsWrapper } from './StatisticsTabsWrapper';
