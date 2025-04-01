@@ -154,13 +154,11 @@ export function PlayerPerformanceChart({ players, activities }: PlayerPerformanc
     // Total goals by position
     const goalsByPosition = new Map<string, number>();
     const assistsByPosition = new Map<string, number>();
-    const matchesByPosition = new Map<string, number>();
     
     performanceData.forEach(player => {
       const pos = player.position;
       goalsByPosition.set(pos, (goalsByPosition.get(pos) || 0) + player.totalGoals);
       assistsByPosition.set(pos, (assistsByPosition.get(pos) || 0) + player.totalAssists);
-      matchesByPosition.set(pos, (matchesByPosition.get(pos) || 0) + player.matchCount);
     });
     
     const goalData = Array.from(goalsByPosition.entries())

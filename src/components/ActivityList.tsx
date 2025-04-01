@@ -104,7 +104,8 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         const player = players.find(p => p.id === playerId);
         return { 
           player: player ? player.name : "Okänd spelare", 
-          count 
+          count,
+          id: playerId
         };
       })
       .sort((a, b) => b.count - a.count);
@@ -119,8 +120,17 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         </div>
         <div className="ml-4">
           {goalScorers.map((scorer, index) => (
-            <div key={index}>
-              {scorer.player} ({scorer.count})
+            <div key={index} className="flex">
+              <Badge 
+                variant="outline"
+                className="text-xs py-0 h-5 mr-1 cursor-pointer hover:bg-accent text-green-700 border-green-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onPlayerSelect) onPlayerSelect(scorer.id);
+                }}
+              >
+                {scorer.player} ({scorer.count})
+              </Badge>
             </div>
           ))}
         </div>
@@ -137,7 +147,8 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         const player = players.find(p => p.id === playerId);
         return { 
           player: player ? player.name : "Okänd spelare", 
-          count 
+          count,
+          id: playerId
         };
       })
       .sort((a, b) => b.count - a.count);
@@ -152,8 +163,17 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         </div>
         <div className="ml-4">
           {assisters.map((assister, index) => (
-            <div key={index}>
-              {assister.player} ({assister.count})
+            <div key={index} className="flex">
+              <Badge 
+                variant="outline"
+                className="text-xs py-0 h-5 mr-1 cursor-pointer hover:bg-accent text-blue-700 border-blue-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onPlayerSelect) onPlayerSelect(assister.id);
+                }}
+              >
+                {assister.player} ({assister.count})
+              </Badge>
             </div>
           ))}
         </div>
@@ -206,7 +226,7 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
         return (
           <div key={group.date.toISOString()} className="space-y-2">
             <h3 className="font-medium text-sm capitalize">{dateString}</h3>
-            <div className={`grid grid-cols-1 ${historical ? 'md:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+            <div className={`grid grid-cols-1 ${historical ? 'md:grid-cols-1 lg:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
               {group.activities.map((activity) => (
                 <Card 
                   key={activity.id}
@@ -257,10 +277,14 @@ export function ActivityList({ activities, players, onSelect, onPlayerSelect }: 
                     )}
                     
                     {historical && activity.type === "match" && (
-                      <>
-                        {renderGoalStats(activity)}
-                        {renderAssistStats(activity)}
-                      </>
+                      <div className="flex flex-col md:flex-row md:gap-6">
+                        <div className="flex-1">
+                          {renderGoalStats(activity)}
+                        </div>
+                        <div className="flex-1">
+                          {renderAssistStats(activity)}
+                        </div>
+                      </div>
                     )}
                     
                     {activity.type === "cup" && activity.matches && activity.matches.length > 0 && (
