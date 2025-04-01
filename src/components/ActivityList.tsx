@@ -68,8 +68,13 @@ export function ActivityList({
     }
   };
 
+  // Determine grid columns based on whether it's historical view
+  const gridColumns = isHistorical 
+    ? 'grid-cols-1' 
+    : (isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
+
   return (
-    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+    <div className={`grid ${gridColumns} gap-4`}>
       {activities.map(activity => {
         // Get participant count
         const participantCount = activity.participants?.length || 0;

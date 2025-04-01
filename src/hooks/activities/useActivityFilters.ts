@@ -36,11 +36,28 @@ export function useActivityFilters(activities: Activity[]) {
     );
   };
 
-  // Filtrera aktiviteter (men använd inte selectedActivityTypes längre)
+  // Sortera kommande aktiviteter per månad (återgår till ursprunglig sortering)
   const filteredCurrentActivities = useMemo(() => {
-    return currentActivities
-      .sort((a, b) => {
-        const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+    // Group activities by month
+    const activitiesByMonth = currentActivities.reduce((acc, activity) => {
+      const date = new Date(activity.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = [];
+      }
+      
+      acc[monthKey].push(activity);
+      return acc;
+    }, {} as Record<string, Activity[]>);
+    
+    // Sort activities within each month
+    Object.keys(activitiesByMonth).forEach(month => {
+      activitiesByMonth[month].sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        
+        const dateComparison = dateA.getTime() - dateB.getTime();
         
         if (dateComparison === 0 && a.time && b.time) {
           return a.time.localeCompare(b.time);
@@ -48,6 +65,11 @@ export function useActivityFilters(activities: Activity[]) {
         
         return dateComparison;
       });
+    });
+    
+    // Flatten the sorted groups
+    const sortedMonthKeys = Object.keys(activitiesByMonth).sort();
+    return sortedMonthKeys.flatMap(month => activitiesByMonth[month]);
   }, [currentActivities]);
 
   const filteredHistoricalActivities = useMemo(() => {
