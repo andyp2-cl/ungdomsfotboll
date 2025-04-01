@@ -1,10 +1,29 @@
 
-import { useState } from "react";
-import { Activity, Player } from "@/types/player";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, MapPin, Clock, Edit, Trash2 } from "lucide-react";
+import { Activity, Player } from "@/types/player";
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Share2, 
+  Trash2, 
+  Users, 
+  Edit, 
+  Trophy 
+} from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { ActivityHeader } from "./ActivityHeader";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { ActivityMatchResult } from "./ActivityMatchResult";
@@ -16,128 +35,162 @@ import { DeleteActivityDialog } from "./DeleteActivityDialog";
 interface ActivityDetailProps {
   activity: Activity;
   players: Player[];
-  onClose: () => void;
-  onEdit?: (activity: Activity) => void;
-  onActivityUpdate?: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onBack: () => void;
+  onEdit: (activity: Activity) => void;
+  onDelete: (activityId: string) => Promise<boolean>;
+  onUpdate: (activity: Activity) => void;
+  onKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
-  onDeleteActivity?: (activityId: string) => void;
-  allActivities?: Activity[];
-  cupMatches?: Activity[];
-  onPlayerSelect?: (playerId: string) => void;
+  relatedActivities?: Activity[];
 }
 
-export function ActivityDetail({ 
-  activity, 
-  players, 
-  onClose, 
-  onEdit, 
-  onActivityUpdate,
-  onKioskAssignmentUpdate,
+export function ActivityDetail({
+  activity,
+  players,
+  onBack,
+  onEdit,
+  onDelete,
+  onUpdate,
+  onKioskUpdate,
   onActivitySelect,
-  onDeleteActivity,
-  allActivities,
-  cupMatches = [],
-  onPlayerSelect
+  relatedActivities = []
 }: ActivityDetailProps) {
-  const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
-  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const updateActivity = (updatedActivity: Activity) => {
-    setCurrentActivity(updatedActivity);
-    if (onActivityUpdate) {
-      onActivityUpdate(updatedActivity);
+  // Determine if this is a cup and find related matches
+  const isCup = activity.type === "cup";
+  const cupMatches = isCup && activity.matches
+    ? relatedActivities.filter(a => activity.matches?.includes(a.id))
+    : [];
+
+  // Find participants
+  const participantPlayers = players.filter(player => 
+    activity.participants?.includes(player.id)
+  );
+
+  // Assigned player for kiosk
+  const assignedPlayer = players.find(
+    player => player.id === activity.kioskAssignedPlayerId
+  );
+
+  // Handle delete
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await onDelete(activity.id);
+      if (success) {
+        setIsDeleteDialogOpen(false);
+        onBack();
+      }
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+    } finally {
+      setIsDeleting(false);
     }
-  };
-
-  const handleClose = () => {
-    onClose();
-  };
-
-  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
-  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
-  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-
-  const formatResult = () => {
-    if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
-      return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
-    }
-    return currentActivity.result || "";
   };
 
   return (
-    <Card className="w-full lg:max-w-3xl mx-auto">
-      <CardHeader>
-        <ActivityHeader 
-          activity={currentActivity}
-          formattedDate={formattedDate}
-          capitalizedDayOfWeek={capitalizedDayOfWeek}
-          isHistorical={isHistorical}
-          formatResult={formatResult}
-          onEdit={onEdit}
-          onDeleteOpen={() => setIsDeleteDialogOpen(true)}
-          onClose={handleClose}
-        />
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <ActivityParticipants
-          activity={currentActivity}
-          players={players}
-          updateActivity={updateActivity}
-          onPlayerSelect={onPlayerSelect}
-        />
+    <div className="space-y-4">
+      {/* Header section with back button, title, and action buttons */}
+      <ActivityHeader 
+        activity={activity}
+        onBack={onBack}
+        onEdit={() => onEdit(activity)}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+      />
 
-        {isHistorical && currentActivity.type === "match" && (
-          <>
-            <ActivityMatchResult
-              activity={currentActivity}
-              updateActivity={updateActivity}
+      {/* Main content card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center space-x-2">
+            <CardTitle>{activity.name}</CardTitle>
+            <Badge variant={activity.type === "match" ? "default" : "secondary"}>
+              {activity.type === "match" ? "Match" : "Cup"}
+            </Badge>
+          </div>
+          <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
+            <span className="flex items-center">
+              <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+              {new Date(activity.date).toLocaleDateString('sv-SE')}
+            </span>
+            {activity.time && (
+              <span className="flex items-center">
+                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                {activity.time}
+              </span>
+            )}
+            {activity.location && (
+              <span className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                {activity.location.name}
+                {activity.location.gpsLink && (
+                  <a
+                    href={activity.location.gpsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-1 text-blue-500 hover:underline"
+                  >
+                    (Karta)
+                  </a>
+                )}
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pb-3 space-y-6">
+          {/* Match result section (only for matches) */}
+          {activity.type === "match" && (
+            <ActivityMatchResult 
+              activity={activity} 
+              onUpdate={onUpdate} 
             />
-            
-            <ActivityMatchStats
-              activity={currentActivity}
+          )}
+
+          {/* Player statistics (only for matches) */}
+          {activity.type === "match" && (
+            <ActivityMatchStats 
+              activity={activity} 
+              players={participantPlayers}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {/* Cup matches section (only for cups) */}
+          {isCup && cupMatches.length > 0 && (
+            <ActivityCupMatches 
+              cupMatches={cupMatches}
+              onActivitySelect={onActivitySelect}
+            />
+          )}
+
+          {/* Participants section */}
+          <ActivityParticipants 
+            activity={activity}
+            participantPlayers={participantPlayers}
+            onUpdate={onUpdate}
+          />
+
+          {/* Kiosk assignment section */}
+          {activity.type === "match" && (
+            <ActivityKioskAssignment 
+              activity={activity}
               players={players}
-              participatingPlayers={players.filter(
-                (player) => currentActivity.participants?.includes(player.id)
-              )}
-              updateActivity={updateActivity}
+              assignedPlayer={assignedPlayer}
+              onKioskUpdate={onKioskUpdate}
             />
-          </>
-        )}
+          )}
+        </CardContent>
+      </Card>
 
-        {currentActivity.type === "match" && (
-          <ActivityKioskAssignment
-            activity={currentActivity}
-            players={players}
-            updateActivity={updateActivity}
-            onKioskAssignmentUpdate={onKioskAssignmentUpdate}
-          />
-        )}
-
-        {currentActivity.type === "cup" && (
-          <ActivityCupMatches
-            cupMatches={cupMatches}
-            onActivitySelect={onActivitySelect}
-          />
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button variant="outline" onClick={handleClose}>Stäng</Button>
-      </CardFooter>
-
-      {onDeleteActivity && (
-        <DeleteActivityDialog 
-          activityName={currentActivity.name}
-          isOpen={isDeleteDialogOpen} 
-          onOpenChange={setIsDeleteDialogOpen} 
-          onDelete={() => {
-            onDeleteActivity(currentActivity.id);
-            onClose();
-          }}
-        />
-      )}
-    </Card>
+      {/* Delete confirmation dialog */}
+      <DeleteActivityDialog
+        activityName={activity.name}
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onDelete={handleDelete}
+      />
+    </div>
   );
 }

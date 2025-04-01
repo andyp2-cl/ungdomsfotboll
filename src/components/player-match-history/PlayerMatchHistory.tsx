@@ -11,7 +11,7 @@ interface PlayerMatchHistoryProps {
 }
 
 export function PlayerMatchHistory({ player, activities, onActivitySelect }: PlayerMatchHistoryProps) {
-  // Find activities that this player participated in
+  // Find activities that this player participated in and sort by date (newest first)
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
