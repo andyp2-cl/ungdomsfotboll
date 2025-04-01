@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Activity, ActivityType, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
 import { ActivityList } from "@/components/ActivityList";
-import { ActivityDetail } from "@/components/ActivityDetail";
+import { ActivityDetail } from "@/components/activity-detail";
 import { FileImport } from "@/components/FileImport";
 import { MatchScraper } from "@/components/MatchScraper";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
