@@ -53,6 +53,8 @@ export interface Database {
           scraped: boolean | null
           cup_id: string | null
           created_at: string
+          home_score: number | null
+          away_score: number | null
         }
         Insert: {
           id: string
@@ -67,6 +69,8 @@ export interface Database {
           scraped?: boolean | null
           cup_id?: string | null
           created_at?: string
+          home_score?: number | null
+          away_score?: number | null
         }
         Update: {
           id?: string
@@ -81,6 +85,8 @@ export interface Database {
           scraped?: boolean | null
           cup_id?: string | null
           created_at?: string
+          home_score?: number | null
+          away_score?: number | null
         }
       }
       player_activities: {

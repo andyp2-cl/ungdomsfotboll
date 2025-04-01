@@ -1,106 +1,99 @@
 
 import React, { useMemo } from "react";
-import { Player, Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell,
-  LabelList
-} from 'recharts';
-import { getGradeColor } from '@/utils/gradeUtils';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface GoalsTabContentProps {
-  players: Player[];
   activities: Activity[];
+  players: Player[];
 }
 
-export function GoalsTabContent({ players, activities }: GoalsTabContentProps) {
-  // Beräkna målstatistik för spelare
-  const goalStats = useMemo(() => {
-    // Filtrera bara matcher
+export function GoalsTabContent({ activities, players }: GoalsTabContentProps) {
+  // Beräkna målstatistik
+  const playerStats = useMemo(() => {
     const matches = activities.filter(a => a.type === 'match');
+    const stats = new Map<string, { playerId: string, name: string, goals: number, assists: number, matches: number }>();
     
-    // Skapa ett objekt för att spåra mål och assist per spelare
-    const playerStats = players.reduce((acc, player) => {
-      acc[player.id] = { 
-        id: player.id,
-        name: player.name,
-        grade: player.grade,
-        goals: 0,
-        assists: 0,
-        matches: 0
-      };
-      return acc;
-    }, {} as Record<string, {
-      id: string;
-      name: string;
-      grade: string;
-      goals: number;
-      assists: number;
-      matches: number;
-    }>);
-    
-    // Räkna mål, assist och matcher för varje spelare
-    matches.forEach(match => {
-      if (match.player_stats?.goals) {
-        Object.entries(match.player_stats.goals).forEach(([playerId, goals]) => {
-          if (playerStats[playerId]) {
-            playerStats[playerId].goals += Number(goals);
-          }
+    // Initiera alla spelare
+    players.forEach(player => {
+      if (!player.positions?.includes("TRÄNARE")) {
+        stats.set(player.id, {
+          playerId: player.id,
+          name: player.name,
+          goals: 0,
+          assists: 0,
+          matches: 0
         });
       }
-      
-      if (match.player_stats?.assists) {
-        Object.entries(match.player_stats.assists).forEach(([playerId, assists]) => {
-          if (playerStats[playerId]) {
-            playerStats[playerId].assists += Number(assists);
-          }
-        });
-      }
-      
-      // Räkna matcher för deltagare
-      match.participants?.forEach(playerId => {
-        if (playerStats[playerId]) {
-          playerStats[playerId].matches++;
-        }
-      });
     });
     
-    // Konvertera till array och filtrera bort spelare utan aktivitet
-    return Object.values(playerStats)
-      .filter(player => player.goals > 0 || player.assists > 0)
-      .sort((a, b) => b.goals - a.goals || b.assists - a.assists);
-  }, [players, activities]);
-
-  // Beräkna totala mål och assist
-  const totals = useMemo(() => {
-    const totalGoals = goalStats.reduce((sum, player) => sum + player.goals, 0);
-    const totalAssists = goalStats.reduce((sum, player) => sum + player.assists, 0);
+    // Gå igenom alla matcher och räkna mål och assist
+    matches.forEach(match => {
+      if (!match.player_stats) return;
+      
+      // Räkna deltagande
+      match.participants?.forEach(playerId => {
+        const playerStat = stats.get(playerId);
+        if (playerStat) {
+          playerStat.matches += 1;
+        }
+      });
+      
+      // Räkna mål
+      if (match.player_stats.goals) {
+        Object.entries(match.player_stats.goals).forEach(([playerId, goals]) => {
+          const playerStat = stats.get(playerId);
+          if (playerStat) {
+            playerStat.goals += goals as number;
+          }
+        });
+      }
+      
+      // Räkna assist
+      if (match.player_stats.assists) {
+        Object.entries(match.player_stats.assists).forEach(([playerId, assists]) => {
+          const playerStat = stats.get(playerId);
+          if (playerStat) {
+            playerStat.assists += assists as number;
+          }
+        });
+      }
+    });
     
-    return { totalGoals, totalAssists };
-  }, [goalStats]);
-
-  // Skapa data för målskytt-diagram
-  const topScorers = goalStats.slice(0, 10);
+    // Konvertera till array och sortera efter flest mål
+    return Array.from(stats.values())
+      .filter(stat => stat.matches > 0) // Bara de som spelat någon match
+      .sort((a, b) => b.goals - a.goals);
+  }, [activities, players]);
+  
+  const topScorers = playerStats.slice(0, 15);
+  
+  // Beräkna total
+  const totalStats = useMemo(() => {
+    const goals = playerStats.reduce((sum, p) => sum + p.goals, 0);
+    const assists = playerStats.reduce((sum, p) => sum + p.assists, 0);
+    
+    return { goals, assists };
+  }, [playerStats]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
+      <Card className="md:col-span-2">
         <CardHeader>
-          <CardTitle>Målskyttar</CardTitle>
+          <CardTitle>Topp målskyttar</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={topScorers}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 70
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -108,25 +101,17 @@ export function GoalsTabContent({ players, activities }: GoalsTabContentProps) {
                   angle={-45} 
                   textAnchor="end" 
                   height={70}
-                  tick={{ fontSize: 12 }}
                 />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value, name) => {
-                    if (name === "Mål") return [`${value} mål`, name];
-                    return [`${value} assist`, name];
-                  }}
-                  labelFormatter={(label) => {
-                    const player = topScorers.find(p => p.name === label);
-                    return `${player?.name} (Nivå ${player?.grade})`;
-                  }}
+                  formatter={(value, name) => [value, name === "goals" ? "Mål" : "Assist"]}
+                  labelFormatter={(label) => `${label}`}
                 />
-                <Bar dataKey="goals" name="Mål">
-                  {topScorers.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getGradeColor(entry.grade)} />
-                  ))}
-                  <LabelList dataKey="goals" position="top" />
-                </Bar>
+                <Legend 
+                  formatter={(value) => value === "goals" ? "Mål" : "Assist"} 
+                />
+                <Bar dataKey="goals" name="goals" fill="#22c55e" />
+                <Bar dataKey="assists" name="assists" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -135,14 +120,65 @@ export function GoalsTabContent({ players, activities }: GoalsTabContentProps) {
       
       <Card>
         <CardHeader>
-          <CardTitle>Assists</CardTitle>
+          <CardTitle>Detaljerad målstatistik</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-4 bg-green-50 text-green-700 rounded-md text-center">
+                <div className="text-xl font-bold">{totalStats.goals}</div>
+                <div className="text-sm">Totalt antal mål</div>
+              </div>
+              <div className="p-4 bg-blue-50 text-blue-700 rounded-md text-center">
+                <div className="text-xl font-bold">{totalStats.assists}</div>
+                <div className="text-sm">Totalt antal assist</div>
+              </div>
+              <div className="p-4 bg-gray-50 text-gray-700 rounded-md text-center">
+                <div className="text-xl font-bold">{playerStats.length}</div>
+                <div className="text-sm">Aktiva spelare</div>
+              </div>
+            </div>
+            
+            <div className="border rounded-md mt-4">
+              <div className="grid grid-cols-4 font-semibold p-3 border-b">
+                <div>Namn</div>
+                <div className="text-center">Matcher</div>
+                <div className="text-center">Mål</div>
+                <div className="text-center">Assist</div>
+              </div>
+              <div className="divide-y">
+                {playerStats.slice(0, 20).map(player => (
+                  <div key={player.playerId} className="grid grid-cols-4 p-3">
+                    <div>{player.name}</div>
+                    <div className="text-center">{player.matches}</div>
+                    <div className="text-center text-green-600 font-semibold">{player.goals}</div>
+                    <div className="text-center text-blue-600 font-semibold">{player.assists}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Matcher per målskytt</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={topScorers.slice(0, 10).sort((a, b) => b.assists - a.assists)}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                data={topScorers.slice(0, 10).map(p => ({
+                  name: p.name,
+                  goalsPerMatch: p.matches > 0 ? Number((p.goals / p.matches).toFixed(2)) : 0
+                }))}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 70
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -150,71 +186,14 @@ export function GoalsTabContent({ players, activities }: GoalsTabContentProps) {
                   angle={-45} 
                   textAnchor="end" 
                   height={70}
-                  tick={{ fontSize: 12 }}
                 />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [`${value} assist`, "Assist"]}
-                  labelFormatter={(label) => {
-                    const player = topScorers.find(p => p.name === label);
-                    return `${player?.name} (Nivå ${player?.grade})`;
-                  }}
+                  formatter={(value) => [`${value} mål/match`, ""]}
                 />
-                <Bar dataKey="assists" name="Assist" fill="#8884d8">
-                  {topScorers.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill="#8884d8" />
-                  ))}
-                  <LabelList dataKey="assists" position="top" />
-                </Bar>
+                <Bar dataKey="goalsPerMatch" name="Mål per match" fill="#4f46e5" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Detaljerad målstatistik</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="p-2 text-left">Spelare</th>
-                  <th className="p-2 text-left">Nivå</th>
-                  <th className="p-2 text-center">Matcher</th>
-                  <th className="p-2 text-center">Mål</th>
-                  <th className="p-2 text-center">Assist</th>
-                  <th className="p-2 text-center">Poäng</th>
-                  <th className="p-2 text-center">Mål/match</th>
-                </tr>
-              </thead>
-              <tbody>
-                {goalStats.map((player, index) => (
-                  <tr key={player.id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                    <td className="p-2 font-medium">{player.name}</td>
-                    <td className="p-2">{player.grade}</td>
-                    <td className="p-2 text-center">{player.matches}</td>
-                    <td className="p-2 text-center font-bold">{player.goals}</td>
-                    <td className="p-2 text-center">{player.assists}</td>
-                    <td className="p-2 text-center">{player.goals + player.assists}</td>
-                    <td className="p-2 text-center">
-                      {player.matches > 0 
-                        ? (player.goals / player.matches).toFixed(1) 
-                        : "0.0"}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="bg-primary/10 font-bold">
-                  <td className="p-2" colSpan={3}>Total</td>
-                  <td className="p-2 text-center">{totals.totalGoals}</td>
-                  <td className="p-2 text-center">{totals.totalAssists}</td>
-                  <td className="p-2 text-center">{totals.totalGoals + totals.totalAssists}</td>
-                  <td className="p-2 text-center"></td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </CardContent>
       </Card>

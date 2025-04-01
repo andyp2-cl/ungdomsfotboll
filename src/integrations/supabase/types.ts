@@ -11,9 +11,11 @@ export type Database = {
     Tables: {
       activities: {
         Row: {
+          away_score: number | null
           created_at: string
           cup_id: string | null
           date: string
+          home_score: number | null
           id: string
           kiosk_assigned_player_id: string | null
           location_description: string | null
@@ -26,9 +28,11 @@ export type Database = {
           type: string
         }
         Insert: {
+          away_score?: number | null
           created_at?: string
           cup_id?: string | null
           date: string
+          home_score?: number | null
           id: string
           kiosk_assigned_player_id?: string | null
           location_description?: string | null
@@ -41,9 +45,11 @@ export type Database = {
           type: string
         }
         Update: {
+          away_score?: number | null
           created_at?: string
           cup_id?: string | null
           date?: string
+          home_score?: number | null
           id?: string
           kiosk_assigned_player_id?: string | null
           location_description?: string | null
