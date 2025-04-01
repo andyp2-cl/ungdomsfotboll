@@ -25,7 +25,7 @@ export function PlayerListTable({
   onPlayerSelect,
   onPlayerEdit
 }: PlayerListTableProps) {
-  const { getGradeColor, getGradeText, formatPositions, getActivityCount } = usePlayerFormatting();
+  const { getGradeColor, getGradeText, formatPositions } = usePlayerFormatting();
 
   const handleEditClick = (e: React.MouseEvent, player: Player) => {
     e.stopPropagation();
@@ -54,9 +54,6 @@ export function PlayerListTable({
           </TableHead>
           <TableHead onClick={() => toggleSort('grade')} className="cursor-pointer hover:bg-muted/50">
             Nivå <SortIcon field="grade" sortField={sortField} sortDirection={sortDirection} />
-          </TableHead>
-          <TableHead onClick={() => toggleSort('activities')} className="cursor-pointer hover:bg-muted/50">
-            Aktiviteter <SortIcon field="activities" sortField={sortField} sortDirection={sortDirection} />
           </TableHead>
           {onPlayerEdit && <TableHead className="w-16">Åtgärder</TableHead>}
         </TableRow>
@@ -102,11 +99,6 @@ export function PlayerListTable({
                   {getGradeText(player.grade)}
                 </Badge>
               )}
-            </TableCell>
-            <TableCell>
-              {getActivityCount(player) > 0 
-                ? `${getActivityCount(player)} aktiviteter`
-                : "Inga aktiviteter"}
             </TableCell>
             {onPlayerEdit && (
               <TableCell>

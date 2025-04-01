@@ -1,31 +1,12 @@
-
-import React from "react";
+import { useState } from "react";
 import { Player } from "@/types/player";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 
-export type SortField = 'name' | 'position' | 'grade' | 'activities';
-export type SortDirection = 'asc' | 'desc';
-
-interface PlayerListSortingProps {
-  sortField: SortField;
-  sortDirection: SortDirection;
-  toggleSort: (field: SortField) => void;
-}
-
-export const SortIcon = ({ field, sortField, sortDirection }: { 
-  field: SortField; 
-  sortField: SortField; 
-  sortDirection: SortDirection; 
-}) => {
-  if (sortField !== field) return null;
-  return sortDirection === 'asc' ? 
-    <ArrowDownAZ className="inline ml-1 h-4 w-4" /> : 
-    <ArrowUpAZ className="inline ml-1 h-4 w-4" />;
-};
+// Make sure to modify the SortField type to remove 'activities'
+export type SortField = 'name' | 'position' | 'grade';
 
 export function usePlayerSorting() {
-  const [sortField, setSortField] = React.useState<SortField>('name');
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -36,46 +17,37 @@ export function usePlayerSorting() {
     }
   };
 
-  const getActivityCount = (player: Player) => {
-    if (!player.activities || player.activities.length === 0) return 0;
-    return player.activities.length;
-  };
-
   const sortPlayers = (players: Player[]) => {
     return [...players].sort((a, b) => {
-      const direction = sortDirection === 'asc' ? 1 : -1;
+      const dirMod = sortDirection === 'asc' ? 1 : -1;
       
       switch (sortField) {
         case 'name':
-          return a.name.localeCompare(b.name) * direction;
+          return a.name.localeCompare(b.name) * dirMod;
         case 'position':
-          const positionsA = a.positions ? a.positions.join(' ') : '';
-          const positionsB = b.positions ? b.positions.join(' ') : '';
-          return positionsA.localeCompare(positionsB) * direction;
+          const posA = a.positions?.[0] || '';
+          const posB = b.positions?.[0] || '';
+          return posA.localeCompare(posB) * dirMod;
         case 'grade':
-          return a.grade.localeCompare(b.grade) * direction;
-        case 'activities':
-          const activitiesA = getActivityCount(a);
-          const activitiesB = getActivityCount(b);
-          return (activitiesA - activitiesB) * direction;
+          return a.grade.localeCompare(b.grade) * dirMod;
         default:
           return 0;
       }
     });
   };
 
-  return {
-    sortField,
-    sortDirection,
-    toggleSort,
-    sortPlayers
-  };
+  return { sortField, sortDirection, toggleSort, sortPlayers };
 }
 
-export function PlayerListSorting({ sortField, sortDirection, toggleSort }: PlayerListSortingProps) {
-  return (
-    <>
-      {/* This component doesn't render anything directly, it just provides the sorting logic */}
-    </>
-  );
+import { ArrowDown, ArrowUp } from "lucide-react";
+
+export function SortIcon({ field, sortField, sortDirection }: { 
+  field: SortField; 
+  sortField: SortField; 
+  sortDirection: 'asc' | 'desc';
+}) {
+  if (field === sortField) {
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4 inline-block ml-1" /> : <ArrowDown className="h-4 w-4 inline-block ml-1" />;
+  }
+  return null;
 }

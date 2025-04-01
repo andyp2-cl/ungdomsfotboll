@@ -38,16 +38,10 @@ export function usePlayerFormatting() {
     return positions.map(formatPosition).join(', ');
   };
 
-  const getActivityCount = (player: Player) => {
-    if (!player.activities || player.activities.length === 0) return 0;
-    return player.activities.length;
-  };
-
   return {
     getGradeColor,
     getGradeText,
     formatPosition,
-    formatPositions,
-    getActivityCount
+    formatPositions
   };
 }
