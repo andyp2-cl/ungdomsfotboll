@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -29,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
@@ -63,7 +63,8 @@ export function ActivityDetail({
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [matchResult, setMatchResult] = useState(currentActivity.result || "");
+  const [goalsScored, setGoalsScored] = useState(currentActivity.goalsScored || 0);
+  const [goalsConceded, setGoalsConceded] = useState(currentActivity.goalsConceded || 0);
   
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
   
@@ -217,9 +218,13 @@ export function ActivityDetail({
   };
 
   const saveMatchResult = () => {
+    const resultString = `${goalsScored}-${goalsConceded}`;
+    
     const updatedActivity = {
       ...currentActivity,
-      result: matchResult
+      result: resultString,
+      goalsScored: goalsScored,
+      goalsConceded: goalsConceded
     };
     
     setCurrentActivity(updatedActivity);
@@ -230,8 +235,15 @@ export function ActivityDetail({
     
     toast({
       title: "Matchresultat sparat",
-      description: `Resultat ${matchResult} har sparats för ${currentActivity.name}.`,
+      description: `Resultat ${resultString} har sparats för ${currentActivity.name}.`,
     });
+  };
+
+  const formatResult = () => {
+    if (currentActivity.goalsScored !== undefined && currentActivity.goalsConceded !== undefined) {
+      return `${currentActivity.goalsScored}-${currentActivity.goalsConceded}`;
+    }
+    return currentActivity.result || "";
   };
 
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
@@ -268,9 +280,9 @@ export function ActivityDetail({
                   Tidigare
                 </Badge>
               )}
-              {isHistorical && currentActivity.type === "match" && currentActivity.result && (
+              {isHistorical && currentActivity.type === "match" && formatResult() && (
                 <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300">
-                  {currentActivity.result}
+                  {formatResult()}
                 </Badge>
               )}
             </CardTitle>
@@ -471,15 +483,31 @@ export function ActivityDetail({
           <>
             <div className="border rounded-md p-4">
               <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
-              <div className="flex items-center gap-3">
-                <Input
-                  placeholder="t.ex. 2-1"
-                  value={matchResult}
-                  onChange={handleMatchResultChange}
-                  className="max-w-[120px]"
-                />
-                <Button size="sm" onClick={saveMatchResult}>Spara</Button>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div className="space-y-2">
+                  <Label htmlFor="goalsScored">Gjorda mål</Label>
+                  <Input
+                    id="goalsScored"
+                    type="number"
+                    min="0"
+                    value={goalsScored}
+                    onChange={(e) => setGoalsScored(Number(e.target.value))}
+                    className="max-w-[120px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="goalsConceded">Insläppta mål</Label>
+                  <Input
+                    id="goalsConceded"
+                    type="number"
+                    min="0"
+                    value={goalsConceded}
+                    onChange={(e) => setGoalsConceded(Number(e.target.value))}
+                    className="max-w-[120px]"
+                  />
+                </div>
               </div>
+              <Button size="sm" onClick={saveMatchResult}>Spara resultat</Button>
             </div>
             
             <div className="border rounded-md p-4">

@@ -28,6 +28,8 @@ export interface Activity {
   matches?: string[]; // Array of activity IDs that are matches within this cup (for cup type activities)
   playerStats?: PlayerStats; // Statistics for players in this activity
   result?: string; // Match result, e.g. "2-1"
+  goalsScored?: number; // Team's scored goals
+  goalsConceded?: number; // Team's conceded goals
 }
 
 export interface Player {

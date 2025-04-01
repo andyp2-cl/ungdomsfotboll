@@ -1,7 +1,10 @@
+
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, UserCircle, MapPin, Trophy, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, Clock, MapPin, ChevronRight, UserCircle, Coffee } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -11,291 +14,221 @@ interface ActivityListProps {
 }
 
 export function ActivityList({ activities, players, onSelect, onPlayerSelect }: ActivityListProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    return `${day}/${month}`;
-  };
-
-  const formatTime = (timeString?: string) => {
-    return timeString || '??:??';
-  };
-
-  const getParticipantNames = (activity: Activity) => {
-    if (!activity.participants?.length) return '0 deltagare';
-    
-    const participantCount = activity.participants.length;
-    const participantPlayers = players.filter(
-      player => activity.participants?.includes(player.id)
-    );
-    
-    const displayCount = Math.min(3, participantCount);
-    const displayNames = participantPlayers
-      .slice(0, displayCount)
-      .map(player => player.name)
-      .join(', ');
-    
-    const remainingCount = participantCount - displayCount;
-    
-    return (
-      <>
-        {displayNames}
-        {remainingCount > 0 && ` +${remainingCount} fler`}
-      </>
-    );
-  };
-
-  const renderParticipants = (activity: Activity) => {
-    if (!activity.participants?.length) {
-      return (
-        <div className="text-xs text-muted-foreground mt-1 flex items-center">
-          <Users className="h-3 w-3 mr-1" />
-          <span>Inga deltagare ännu</span>
-        </div>
-      );
-    }
-    
-    const participantPlayers = players.filter(
-      player => activity.participants?.includes(player.id)
-    );
-    
-    return (
-      <div className="mt-2 flex flex-wrap gap-1">
-        {participantPlayers.map(player => (
-          <Badge 
-            key={player.id} 
-            variant="outline"
-            className="text-xs py-0 h-5 cursor-pointer hover:bg-accent"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onPlayerSelect) onPlayerSelect(player.id);
-            }}
-          >
-            {player.image ? (
-              <img 
-                src={player.image} 
-                alt={player.name} 
-                className="h-3 w-3 rounded-full mr-1 object-cover"
-              />
-            ) : (
-              <UserCircle className="h-3 w-3 mr-1" />
-            )}
-            {player.name}
-          </Badge>
-        ))}
-      </div>
-    );
-  };
-
-  const getKioskPlayerName = (activity: Activity) => {
-    if (!activity.kioskAssignedPlayerId) return null;
-    const player = players.find(p => p.id === activity.kioskAssignedPlayerId);
-    return player ? player.name : "Okänd";
-  };
-  
-  const renderGoalStats = (activity: Activity) => {
-    if (!activity.playerStats?.goals) return null;
-    
-    const goalScorers = Object.entries(activity.playerStats.goals)
-      .filter(([_, count]) => count > 0)
-      .map(([playerId, count]) => {
-        const player = players.find(p => p.id === playerId);
-        return { 
-          player: player ? player.name : "Okänd spelare", 
-          count,
-          id: playerId
-        };
-      })
-      .sort((a, b) => b.count - a.count);
-      
-    if (goalScorers.length === 0) return null;
-    
-    return (
-      <div className="mt-2 text-xs">
-        <div className="flex items-center text-green-700">
-          <Trophy className="h-3 w-3 mr-1" />
-          <span>Målskyttar:</span>
-        </div>
-        <div className="ml-4">
-          {goalScorers.map((scorer, index) => (
-            <div key={index} className="flex">
-              <Badge 
-                variant="outline"
-                className="text-xs py-0 h-5 mr-1 cursor-pointer hover:bg-accent text-green-700 border-green-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onPlayerSelect) onPlayerSelect(scorer.id);
-                }}
-              >
-                {scorer.player} ({scorer.count})
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-  
-  const renderAssistStats = (activity: Activity) => {
-    if (!activity.playerStats?.assists) return null;
-    
-    const assisters = Object.entries(activity.playerStats.assists)
-      .filter(([_, count]) => count > 0)
-      .map(([playerId, count]) => {
-        const player = players.find(p => p.id === playerId);
-        return { 
-          player: player ? player.name : "Okänd spelare", 
-          count,
-          id: playerId
-        };
-      })
-      .sort((a, b) => b.count - a.count);
-      
-    if (assisters.length === 0) return null;
-    
-    return (
-      <div className="mt-2 text-xs">
-        <div className="flex items-center text-blue-700">
-          <Star className="h-3 w-3 mr-1" />
-          <span>Assist:</span>
-        </div>
-        <div className="ml-4">
-          {assisters.map((assister, index) => (
-            <div key={index} className="flex">
-              <Badge 
-                variant="outline"
-                className="text-xs py-0 h-5 mr-1 cursor-pointer hover:bg-accent text-blue-700 border-blue-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onPlayerSelect) onPlayerSelect(assister.id);
-                }}
-              >
-                {assister.player} ({assister.count})
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   if (activities.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Inga aktiviteter hittades</p>
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">Inga aktiviteter hittades.</p>
       </div>
     );
   }
-
-  const activityGroups = activities.reduce((groups, activity) => {
-    const date = new Date(activity.date);
-    const dateKey = date.toISOString().split('T')[0];
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('sv-SE');
+  };
+  
+  const sortedActivities = [...activities].sort((a, b) => {
+    // Sort by date, then by time if available
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
     
-    if (!groups[dateKey]) {
-      groups[dateKey] = {
-        date,
-        activities: []
-      };
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA.getTime() - dateB.getTime();
     }
     
-    groups[dateKey].activities.push(activity);
-    return groups;
-  }, {} as Record<string, { date: Date, activities: Activity[] }>);
+    if (a.time && b.time) {
+      return a.time.localeCompare(b.time);
+    }
+    
+    return 0;
+  });
   
-  const sortedGroups = Object.values(activityGroups)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-  
-  const isHistorical = (date: Date) => {
-    return date < new Date(new Date().setHours(0, 0, 0, 0));
+  const formatResult = (activity: Activity) => {
+    if (activity.goalsScored !== undefined && activity.goalsConceded !== undefined) {
+      return `${activity.goalsScored}-${activity.goalsConceded}`;
+    }
+    return activity.result || "";
   };
+
+  const groupedActivities: { [key: string]: Activity[] } = {};
+  
+  // Group activities by month
+  sortedActivities.forEach(activity => {
+    const date = new Date(activity.date);
+    const month = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    
+    if (!groupedActivities[month]) {
+      groupedActivities[month] = [];
+    }
+    
+    groupedActivities[month].push(activity);
+  });
+
+  // Get month names and sort keys
+  const getMonthName = (monthKey: string) => {
+    const [year, month] = monthKey.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' });
+  };
+  
+  const sortedMonthKeys = Object.keys(groupedActivities).sort((a, b) => {
+    const [yearA, monthA] = a.split('-').map(Number);
+    const [yearB, monthB] = b.split('-').map(Number);
+    
+    if (yearA !== yearB) {
+      return yearA - yearB;
+    }
+    
+    return monthA - monthB;
+  });
 
   return (
     <div className="space-y-6">
-      {sortedGroups.map((group) => {
-        const historical = isHistorical(group.date);
-        const dayOfWeek = group.date.toLocaleDateString('sv-SE', { weekday: 'long' });
-        const day = group.date.getDate();
-        const month = group.date.toLocaleDateString('sv-SE', { month: 'long' });
-        const year = group.date.getFullYear();
-        const dateString = `${dayOfWeek} ${day} ${month} ${year}`;
-        
-        return (
-          <div key={group.date.toISOString()} className="space-y-2">
-            <h3 className="font-medium text-sm capitalize">{dateString}</h3>
-            <div className={`grid grid-cols-1 gap-4 ${historical ? '' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-              {group.activities.map((activity) => (
-                <Card 
-                  key={activity.id}
-                  className="hover:bg-accent/5 cursor-pointer transition-colors"
-                  onClick={() => onSelect(activity)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium text-sm line-clamp-1 mb-1">{activity.name}</h3>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>{formatTime(activity.time)}</span>
+      {sortedMonthKeys.map(monthKey => (
+        <div key={monthKey} className="space-y-2">
+          <h3 className="font-semibold text-lg">{getMonthName(monthKey)}</h3>
+          <ScrollArea className="h-[400px] rounded-md border p-4">
+            <div className="space-y-2">
+              {groupedActivities[monthKey].map(activity => {
+                const formattedDate = formatDate(activity.date);
+                const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'short' });
+                const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+                
+                const participantCount = activity.participants?.length || 0;
+                const isKioskDuty = activity.kioskAssignedPlayerId != null;
+                
+                const kioskPlayer = activity.kioskAssignedPlayerId 
+                  ? players.find(p => p.id === activity.kioskAssignedPlayerId) 
+                  : undefined;
+                
+                const isPastActivity = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+                const hasResult = activity.type === 'match' && (formatResult(activity) || isPastActivity);
+                
+                return (
+                  <Card key={activity.id} className="hover:bg-accent/5 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row justify-between gap-2">
+                        <div className="flex-grow space-y-1">
+                          <div className="flex justify-between sm:justify-start sm:gap-3 items-center">
+                            <h4 className="font-medium">{activity.name}</h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              <Badge 
+                                variant={activity.type === "match" ? "default" : "secondary"}
+                              >
+                                {activity.type === "match" ? "Match" : "Cup"}
+                              </Badge>
+                              
+                              {isPastActivity && (
+                                <Badge variant="outline">Tidigare</Badge>
+                              )}
+                              
+                              {hasResult && formatResult(activity) && (
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                                  {formatResult(activity)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                            <div className="flex items-center">
+                              <CalendarIcon className="h-4 w-4 mr-1" />
+                              <span>{capitalizedDayOfWeek} {formattedDate}</span>
+                            </div>
+                            
+                            {activity.time && (
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1" />
+                                <span>{activity.time}</span>
+                              </div>
+                            )}
+                            
+                            {activity.location && (
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                <span>{activity.location.name}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 mt-1">
+                            {participantCount > 0 && (
+                              <Badge variant="outline" className="text-xs py-0 px-1.5">
+                                {participantCount} deltagare
+                              </Badge>
+                            )}
+                            
+                            {isKioskDuty && kioskPlayer && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs py-0 px-1.5 flex items-center gap-1 bg-amber-50 text-amber-800 border-amber-200"
+                              >
+                                <Coffee className="h-3 w-3" />
+                                <span>Kiosk: {kioskPlayer.name}</span>
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-end sm:flex-col sm:justify-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="w-full sm:w-auto"
+                            onClick={() => onSelect(activity)}
+                          >
+                            Visa <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Badge variant={activity.type === "match" ? "default" : "secondary"} className="text-xs">
-                          {activity.type === "match" ? "Match" : "Cup"}
-                        </Badge>
-                        {historical && (
-                          <Badge variant="outline" className="text-xs">
-                            Tidigare
-                          </Badge>
-                        )}
-                        {historical && activity.type === "match" && activity.result && (
-                          <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
-                            {activity.result}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {activity.location && (
-                      <div className="text-xs text-muted-foreground mt-1 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        <span>{activity.location.name}</span>
-                      </div>
-                    )}
-                    
-                    {renderParticipants(activity)}
-                    
-                    {activity.type === "match" && activity.kioskAssignedPlayerId && (
-                      <div className="mt-2 text-xs flex items-center">
-                        <Badge variant="outline" className="text-xs py-0 h-5">
-                          Kiosk: {getKioskPlayerName(activity)}
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    {historical && activity.type === "match" && (
-                      <div className="flex flex-col md:flex-row md:gap-6">
-                        <div className="flex-1">
-                          {renderGoalStats(activity)}
+                      
+                      {activity.participants && activity.participants.length > 0 && (
+                        <div className="mt-3 pt-2 border-t flex flex-wrap gap-1">
+                          {activity.participants.slice(0, 10).map(participantId => {
+                            const player = players.find(p => p.id === participantId);
+                            if (!player) return null;
+                            
+                            return (
+                              <div 
+                                key={player.id}
+                                className="flex items-center space-x-1 rounded-full bg-muted px-2 py-1 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onPlayerSelect) onPlayerSelect(player.id);
+                                }}
+                                title={player.name}
+                                role="button"
+                                tabIndex={0}
+                              >
+                                {player.image ? (
+                                  <img 
+                                    src={player.image} 
+                                    alt={player.name} 
+                                    className="h-4 w-4 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <UserCircle className="h-4 w-4 text-gray-400" />
+                                )}
+                                <span>{player.name}</span>
+                              </div>
+                            );
+                          })}
+                          
+                          {activity.participants.length > 10 && (
+                            <div className="rounded-full bg-muted px-2 py-1 text-xs">
+                              +{activity.participants.length - 10} fler
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1">
-                          {renderAssistStats(activity)}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {activity.type === "cup" && activity.matches && activity.matches.length > 0 && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        {activity.matches.length} matcher i cupen
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </div>
-        );
-      })}
+          </ScrollArea>
+        </div>
+      ))}
     </div>
   );
 }
