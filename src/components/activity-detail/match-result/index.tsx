@@ -6,6 +6,8 @@ import { ScoreForm } from './ScoreForm';
 import { ScoreSection } from './ScoreSection';
 import { ResultDisplay } from './ResultDisplay';
 import { ResultForm } from './ResultForm';
+import { ReadOnlyScoreDisplay } from './ReadOnlyScoreDisplay';
+import { EditableScoreForm } from './EditableScoreForm';
 
 export { 
   ActivityMatchResult,
@@ -14,7 +16,9 @@ export {
   ScoreForm,
   ScoreSection,
   ResultDisplay,
-  ResultForm
+  ResultForm,
+  ReadOnlyScoreDisplay,
+  EditableScoreForm
 };
 export * from './utils';
 export * from './PlayerStatsUtil';

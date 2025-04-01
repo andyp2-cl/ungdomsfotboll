@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
 import { isHomeMatch } from "./match-result/utils";
+import { ReadOnlyScoreDisplay } from "./match-result/ReadOnlyScoreDisplay";
+import { EditableScoreForm } from "./match-result/EditableScoreForm";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -51,64 +50,25 @@ export function QuickMatchResult({
   
   if (isReadOnly) {
     return (
-      <div className="flex items-center justify-center space-x-4 my-4">
-        <div className="text-center">
-          <p className="text-sm font-medium mb-1">{homeTeamLabel}</p>
-          <div className="bg-muted w-12 h-12 flex items-center justify-center rounded-md text-xl font-bold">
-            {formattedHomeScore}
-          </div>
-        </div>
-        <span className="text-2xl font-bold">-</span>
-        <div className="text-center">
-          <p className="text-sm font-medium mb-1">{awayTeamLabel}</p>
-          <div className="bg-muted w-12 h-12 flex items-center justify-center rounded-md text-xl font-bold">
-            {formattedAwayScore}
-          </div>
-        </div>
-      </div>
+      <ReadOnlyScoreDisplay
+        homeTeamLabel={homeTeamLabel}
+        awayTeamLabel={awayTeamLabel}
+        homeScore={formattedHomeScore}
+        awayScore={formattedAwayScore}
+      />
     );
   }
 
   return (
-    <div className="border rounded-md p-4 mt-4">
-      <h3 className="text-base font-medium mb-3">Uppdatera matchresultat</h3>
-      
-      <div className="grid grid-cols-3 gap-4 items-center mb-4">
-        <div className="text-center">
-          <label className="block text-sm font-medium mb-1">{homeTeamLabel}</label>
-          <Input
-            type="number"
-            min={0}
-            value={homeScore === undefined ? '' : homeScore}
-            onChange={(e) => setHomeScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center"
-          />
-        </div>
-        
-        <div className="flex justify-center items-center">
-          <span className="text-xl font-bold">-</span>
-        </div>
-        
-        <div className="text-center">
-          <label className="block text-sm font-medium mb-1">{awayTeamLabel}</label>
-          <Input
-            type="number"
-            min={0}
-            value={awayScore === undefined ? '' : awayScore}
-            onChange={(e) => setAwayScore(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center"
-          />
-        </div>
-      </div>
-      
-      <Button 
-        onClick={handleSave}
-        className="w-full"
-        disabled={isSaving}
-      >
-        <Save className="h-4 w-4 mr-2" />
-        {isSaving ? "Sparar..." : "Spara resultat"}
-      </Button>
-    </div>
+    <EditableScoreForm
+      homeTeamLabel={homeTeamLabel}
+      awayTeamLabel={awayTeamLabel}
+      homeScore={homeScore}
+      awayScore={awayScore}
+      onHomeScoreChange={setHomeScore}
+      onAwayScoreChange={setAwayScore}
+      onSave={handleSave}
+      isSaving={isSaving}
+    />
   );
 }
