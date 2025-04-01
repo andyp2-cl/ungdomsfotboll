@@ -31,12 +31,10 @@ export const useBackupRestore = () => {
         const processedActivity = { ...activity };
         
         // Make sure result property is set if we have scores
-        // Using type assertion to handle the database schema type
         if (activity.type === 'match' && 
             activity.home_score !== null && activity.home_score !== undefined && 
             activity.away_score !== null && activity.away_score !== undefined) {
-          // Add the result property (it doesn't exist in the DB schema but we need it in our app)
-          (processedActivity as any).result = `${activity.home_score}-${activity.away_score}`;
+          processedActivity.result = `${activity.home_score}-${activity.away_score}`;
         }
         
         return processedActivity;
@@ -54,12 +52,17 @@ export const useBackupRestore = () => {
       localStorage.setItem('hassleholmsif_backup', JSON.stringify(backupData));
       
       // Log backup to Supabase
-      await logDatabaseChange(
-        'backup',
-        'backup',
-        'all',
-        `Created backup: ${players.length} players and ${processedActivities.length} activities`
-      );
+      try {
+        await logDatabaseChange(
+          'backup',
+          'backup',
+          'all',
+          `Created backup: ${players.length} players and ${processedActivities.length} activities`
+        );
+      } catch (error) {
+        console.error("Error logging backup:", error);
+        // Non-critical error, continue with backup creation
+      }
       
       console.log("Backup created and stored in localStorage");
     } catch (error) {
@@ -87,7 +90,6 @@ export const useBackupRestore = () => {
     }
   };
   
-  // In the restoreBackup function, modify the restoration logic to ensure match results are preserved
   const restoreBackup = async (): Promise<boolean> => {
     try {
       const backupData = localStorage.getItem('hassleholmsif_backup');
@@ -112,77 +114,100 @@ export const useBackupRestore = () => {
       console.log("Restoring backup with activities:", backup.activities.length);
       console.log("Sample match data from backup:", backup.activities.filter(a => a.type === 'match').slice(0, 3));
       
-      // Restore players
+      // Restore players first
       try {
         await savePlayers(backup.players);
+        console.log("Players restored successfully");
       } catch (error) {
         console.error("Error restoring players:", error);
         // Continue with activities even if player restore fails
       }
       
-      // Restore activities
-      try {
-        // Make sure result, homeScore, and awayScore are properly preserved
-        const cleanedActivities = backup.activities.map(activity => {
-          // Create a shallow copy of the activity
-          const cleanActivity = { ...activity };
-          
-          // Convert database field names to application field names if needed
-          if (cleanActivity.home_score !== undefined && cleanActivity.homeScore === undefined) {
-            cleanActivity.homeScore = cleanActivity.home_score;
+      // Process activities to ensure all required fields are properly set
+      const processedActivities = backup.activities.map(activity => {
+        // Create a shallow copy of the activity
+        const processed = { ...activity };
+        
+        // Convert database field names to application field names if needed
+        if (processed.home_score !== undefined && processed.homeScore === undefined) {
+          processed.homeScore = processed.home_score;
+        }
+        
+        if (processed.away_score !== undefined && processed.awayScore === undefined) {
+          processed.awayScore = processed.away_score;
+        }
+        
+        if (processed.is_win !== undefined && processed.isWin === undefined) {
+          processed.isWin = processed.is_win;
+        }
+        
+        // Ensure match data is properly set
+        if (processed.type === 'match') {
+          // If we have homeScore and awayScore but no result, generate the result
+          if (processed.homeScore !== undefined && processed.awayScore !== undefined && !processed.result) {
+            processed.result = `${processed.homeScore}-${processed.awayScore}`;
           }
           
-          if (cleanActivity.away_score !== undefined && cleanActivity.awayScore === undefined) {
-            cleanActivity.awayScore = cleanActivity.away_score;
-          }
-          
-          if (cleanActivity.is_win !== undefined && cleanActivity.isWin === undefined) {
-            cleanActivity.isWin = cleanActivity.is_win;
-          }
-          
-          // Ensure homeScore, awayScore, and result are properly set
-          if (cleanActivity.type === 'match') {
-            // If we have homeScore and awayScore but no result, generate the result
-            if (cleanActivity.homeScore !== undefined && cleanActivity.awayScore !== undefined && !cleanActivity.result) {
-              cleanActivity.result = `${cleanActivity.homeScore}-${cleanActivity.awayScore}`;
+          // If we have a result but no scores, try to extract scores from the result
+          if (processed.result && (processed.homeScore === undefined || processed.awayScore === undefined)) {
+            const scores = processed.result.split('-').map(Number);
+            if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
+              processed.homeScore = scores[0];
+              processed.awayScore = scores[1];
             }
-            
-            // If we have a result but no scores, try to extract scores from the result
-            if (cleanActivity.result && (cleanActivity.homeScore === undefined || cleanActivity.awayScore === undefined)) {
-              const scores = cleanActivity.result.split('-').map(Number);
-              if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
-                cleanActivity.homeScore = scores[0];
-                cleanActivity.awayScore = scores[1];
+          }
+          
+          // Initialize or update player_stats
+          if (!processed.player_stats) {
+            processed.player_stats = {
+              goals: {},
+              assists: {},
+              scores: {
+                home: processed.homeScore,
+                away: processed.awayScore
+              },
+              isWin: processed.isWin
+            };
+          } else {
+            // Make sure player_stats is an object, not a string
+            if (typeof processed.player_stats === 'string') {
+              try {
+                processed.player_stats = JSON.parse(processed.player_stats);
+              } catch (e) {
+                console.error("Error parsing player_stats string:", e);
+                processed.player_stats = {
+                  goals: {},
+                  assists: {},
+                  scores: {
+                    home: processed.homeScore,
+                    away: processed.awayScore
+                  },
+                  isWin: processed.isWin
+                };
               }
             }
             
-            // Initialize player_stats if it doesn't exist
-            if (!cleanActivity.player_stats) {
-              cleanActivity.player_stats = {
-                goals: {},
-                assists: {},
-                scores: {
-                  home: cleanActivity.homeScore,
-                  away: cleanActivity.awayScore
-                },
-                isWin: cleanActivity.isWin
-              };
-            } else {
-              // Ensure player_stats.scores is set correctly
-              cleanActivity.player_stats.scores = {
-                home: cleanActivity.homeScore,
-                away: cleanActivity.awayScore
-              };
-            }
+            // Ensure player_stats.scores is set correctly
+            processed.player_stats.scores = {
+              home: processed.homeScore,
+              away: processed.awayScore
+            };
+            
+            // Ensure isWin is set correctly
+            processed.player_stats.isWin = processed.isWin;
           }
-          
-          return cleanActivity;
-        });
+        }
         
-        console.log("Processed activities for restore:", cleanedActivities.length);
-        console.log("Sample processed match data:", cleanedActivities.filter(a => a.type === 'match').slice(0, 3));
-        
-        await saveActivities(cleanedActivities);
+        return processed;
+      });
+      
+      console.log("Processed activities for restore:", processedActivities.length);
+      console.log("Sample processed match data:", processedActivities.filter(a => a.type === 'match').slice(0, 3));
+      
+      // Restore activities
+      try {
+        await saveActivities(processedActivities);
+        console.log("Activities restored successfully");
       } catch (error) {
         console.error("Error restoring activities:", error);
         return false;
