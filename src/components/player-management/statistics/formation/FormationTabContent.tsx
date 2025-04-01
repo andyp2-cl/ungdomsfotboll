@@ -16,7 +16,7 @@ interface FormationTabContentProps {
 }
 
 export function FormationTabContent({ players, activities }: FormationTabContentProps) {
-  const [selectedFormation, setSelectedFormation] = useState<string>("4-4-2");
+  const [selectedFormation, setSelectedFormation] = useState<string>("2-3-1");
   const [selectedTab, setSelectedTab] = useState<"overview" | "players">("overview");
 
   // Filter out coaches for field player analysis
