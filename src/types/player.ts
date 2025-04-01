@@ -8,10 +8,6 @@ export type ActivityType = 'match' | 'cup';
 export interface PlayerStats {
   goals?: Record<string, number>; // Record of player ID to number of goals
   assists?: Record<string, number>; // Record of player ID to number of assists
-  scores?: {
-    home?: number;
-    away?: number;
-  };
 }
 
 export interface Location {
