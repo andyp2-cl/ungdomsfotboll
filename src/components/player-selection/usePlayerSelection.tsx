@@ -20,9 +20,15 @@ export function usePlayerSelection({
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = useMemo(() => {
-    return players
+    console.log("All players:", players.length);
+    console.log("Current participant IDs:", currentParticipantIds);
+    
+    const filtered = players
       .filter(player => !currentParticipantIds.includes(player.id))
       .sort((a, b) => a.name.localeCompare(b.name));
+    
+    console.log("Available players after filtering:", filtered.length);
+    return filtered;
   }, [players, currentParticipantIds]);
 
   const handlePlayerSelect = (playerId: string) => {

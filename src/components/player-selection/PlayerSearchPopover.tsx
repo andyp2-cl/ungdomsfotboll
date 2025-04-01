@@ -25,11 +25,17 @@ export function PlayerSearchPopover({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Fix: Corrected filtering logic to properly handle case-insensitive search
+  // Debug logging to help identify issues
+  console.log("Available players:", availablePlayers);
+  console.log("Search query:", searchQuery);
+  
+  // Filter available players based on search query
   const filteredPlayers = availablePlayers.filter(player => {
     if (!searchQuery.trim()) return true;
     return player.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
+  
+  console.log("Filtered players:", filteredPlayers);
 
   // Reset search when popover closes
   useEffect(() => {
