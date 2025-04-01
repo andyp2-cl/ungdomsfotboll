@@ -98,8 +98,8 @@ export function ActivityList({
         const activityParticipants = activity.participants || [];
         const participantPlayers = players.filter(p => activityParticipants.includes(p.id));
         
-        // Show only the first few participants
-        const maxDisplayedParticipants = isMobile ? 3 : 4;
+        // For more readable display, limit the number of participants shown
+        const maxDisplayedParticipants = isMobile ? 2 : 3;
         const displayedParticipants = participantPlayers.slice(0, maxDisplayedParticipants);
         const remainingCount = participantPlayers.length - maxDisplayedParticipants;
         
@@ -123,46 +123,50 @@ export function ActivityList({
             </CardHeader>
             
             <CardContent className={isMobile ? "px-3 py-1" : ""}>
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col space-y-2">
                 {locationName && (
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 mr-1" />
+                    <MapPin className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                     <span className="truncate">{locationName}</span>
                   </div>
                 )}
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <User className="h-3.5 w-3.5 mr-1" />
+                  <User className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                   <span>{participantCount} {participantCount === 1 ? "deltagare" : "deltagare"}</span>
                 </div>
                 
-                {/* Participant avatars */}
+                {/* Participants list */}
                 {participantPlayers.length > 0 && (
-                  <div className="flex items-center mt-2 -space-x-2">
-                    {displayedParticipants.map(player => (
-                      <Avatar 
-                        key={player.id} 
-                        className="h-6 w-6 border border-background"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPlayerSelect && onPlayerSelect(player.id);
-                        }}
-                      >
-                        {player.image ? (
-                          <AvatarImage src={player.image} alt={player.name} />
-                        ) : (
-                          <AvatarFallback className="text-xs">
-                            {player.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                    ))}
-                    {remainingCount > 0 && (
-                      <Avatar className="h-6 w-6 border border-background">
-                        <AvatarFallback className="text-xs bg-muted">
-                          +{remainingCount}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                  <div className="mt-1 space-y-1 pt-1 border-t border-dashed border-gray-200">
+                    <p className="text-xs text-muted-foreground font-medium">Deltagare:</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                      {displayedParticipants.map(player => (
+                        <button 
+                          key={player.id} 
+                          className="flex items-center space-x-1 text-sm hover:bg-muted px-1 py-0.5 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPlayerSelect && onPlayerSelect(player.id);
+                          }}
+                        >
+                          <Avatar className="h-5 w-5 flex-shrink-0">
+                            {player.image ? (
+                              <AvatarImage src={player.image} alt={player.name} />
+                            ) : (
+                              <AvatarFallback className="text-[10px]">
+                                {player.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <span className="truncate">{player.name}</span>
+                        </button>
+                      ))}
+                      {remainingCount > 0 && (
+                        <div className="flex items-center text-xs text-muted-foreground px-1 py-0.5">
+                          <span>+{remainingCount} fler</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
