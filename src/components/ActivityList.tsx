@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +10,10 @@ interface ActivityListProps {
   players: Player[];
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
+  isHistorical?: boolean;
 }
 
-export function ActivityList({ activities, players, onSelect, onPlayerSelect }: ActivityListProps) {
+export function ActivityList({ activities, players, onSelect, onPlayerSelect, isHistorical }: ActivityListProps) {
   if (activities.length === 0) {
     return (
       <div className="text-center py-10">
