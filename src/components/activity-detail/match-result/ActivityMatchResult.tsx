@@ -33,8 +33,11 @@ export function ActivityMatchResult({
     setIsSaving(true);
     
     try {
-      // Determine win status based on scores
-      const isWin = calculateWinStatus(homeScore, awayScore, isHomeMatch(activity));
+      // Check if this is a home match for our team
+      const isHome = isHomeMatch(activity);
+      
+      // Determine win status based on scores and whether it's a home match
+      const isWin = calculateWinStatus(homeScore, awayScore, isHome);
       
       // First directly update the database to ensure the data is saved
       const { error } = await supabase
@@ -51,7 +54,7 @@ export function ActivityMatchResult({
         throw error;
       }
 
-      console.log("Match result saved to database:", { homeScore, awayScore, isWin });
+      console.log("Match result saved to database:", { homeScore, awayScore, isWin, isHome });
 
       // Create an updated activity with the new scores
       const updatedActivity = {

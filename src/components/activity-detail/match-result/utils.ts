@@ -21,6 +21,7 @@ export function getOutcomeText(homeScore?: number, awayScore?: number, isHomeTea
   if (isHomeTeam) {
     return homeScore > awayScore ? "Vinst" : "Förlust";
   } else {
+    // For away games, we WIN when awayScore is greater than homeScore
     return awayScore > homeScore ? "Vinst" : "Förlust";
   }
 }
@@ -33,6 +34,8 @@ export function getOutcomeColorClass(homeScore?: number, awayScore?: number, isH
   
   if (homeScore === awayScore) return "bg-blue-100 text-blue-700";
   
+  // For home games, win is when homeScore > awayScore
+  // For away games, win is when awayScore > homeScore
   const isWin = (isHomeTeam && homeScore > awayScore) || 
                (!isHomeTeam && awayScore > homeScore);
                
@@ -50,8 +53,10 @@ export function calculateWinStatus(homeScore?: number, awayScore?: number, isHom
   if (homeScore === awayScore) {
     return undefined; // Draw
   } else if (isHomeMatch) {
+    // For home games: win if homeScore > awayScore
     return homeScore > awayScore;
   } else {
+    // For away games: win if awayScore > homeScore
     return awayScore > homeScore;
   }
 }
