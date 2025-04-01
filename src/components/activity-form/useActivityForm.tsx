@@ -79,13 +79,19 @@ export function useActivityForm(
                          !values.name.toLowerCase().includes(' vs ') || 
                          values.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
         
-        const ourScore = isHomeTeam ? homeScore : awayScore;
-        const theirScore = isHomeTeam ? awayScore : homeScore;
-        
-        if (ourScore !== undefined && theirScore !== undefined) {
-          if (ourScore > theirScore) {
+        // Flip the logic here: If we're home team, we win if homeScore > awayScore
+        // If we're away team, we win if awayScore > homeScore
+        if (isHomeTeam) {
+          if (homeScore > awayScore) {
             isWin = true;
-          } else if (ourScore < theirScore) {
+          } else if (homeScore < awayScore) {
+            isWin = false;
+          }
+          // If scores are equal, isWin remains undefined (draw)
+        } else {
+          if (awayScore > homeScore) {
+            isWin = true;
+          } else if (awayScore < homeScore) {
             isWin = false;
           }
           // If scores are equal, isWin remains undefined (draw)

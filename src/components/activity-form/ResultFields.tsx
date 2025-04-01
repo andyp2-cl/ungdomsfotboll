@@ -28,13 +28,22 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                          !value.name?.toLowerCase().includes(' vs ') || 
                          value.name?.toLowerCase().split(' vs ')[0].includes('hässleholms if');
         
-        const ourScore = isHomeTeam ? value.homeScore : value.awayScore;
-        const theirScore = isHomeTeam ? value.awayScore : value.homeScore;
-        
-        if (ourScore !== undefined && theirScore !== undefined) {
-          if (ourScore > theirScore) {
+        // Fix the logic here: For Hässleholms IF
+        // If we're home team and homeScore > awayScore = WIN
+        // If we're away team and awayScore > homeScore = WIN
+        if (isHomeTeam) {
+          if (value.homeScore > value.awayScore) {
             form.setValue('isWin', true);
-          } else if (ourScore < theirScore) {
+          } else if (value.homeScore < value.awayScore) {
+            form.setValue('isWin', false);
+          } else {
+            // Draw - set to null or undefined
+            form.setValue('isWin', undefined);
+          }
+        } else {
+          if (value.awayScore > value.homeScore) {
+            form.setValue('isWin', true);
+          } else if (value.awayScore < value.homeScore) {
             form.setValue('isWin', false);
           } else {
             // Draw - set to null or undefined

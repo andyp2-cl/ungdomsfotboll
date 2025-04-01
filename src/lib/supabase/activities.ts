@@ -59,7 +59,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
               home: item.home_score,
               away: item.away_score
             },
-            // The issue was here - we need to use activity.isWin instead of item.is_win
             isWin: activity.isWin
           };
         } catch (e) {
@@ -71,7 +70,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
               home: item.home_score,
               away: item.away_score
             },
-            // Same fix here
             isWin: activity.isWin
           };
         }
@@ -83,7 +81,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
             home: item.home_score,
             away: item.away_score
           },
-          // And here
           isWin: activity.isWin
         };
       }

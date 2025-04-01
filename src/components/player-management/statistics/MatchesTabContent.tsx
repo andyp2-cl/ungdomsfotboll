@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,17 +22,41 @@ export function MatchesTabContent({ activities }: MatchesTabContentProps) {
     let goalsConceded = 0;
     
     completedMatches.forEach(match => {
-      if (!match.result) return;
-      
-      const [ourScore, theirScore] = match.result.split('-').map(Number);
-      if (isNaN(ourScore) || isNaN(theirScore)) return;
-      
-      goalsScored += ourScore;
-      goalsConceded += theirScore;
-      
-      if (ourScore > theirScore) wins++;
-      else if (ourScore === theirScore) draws++;
-      else losses++;
+      // First check if isWin is explicitly set
+      if (match.isWin !== undefined) {
+        if (match.isWin) {
+          wins++;
+        } else if (match.homeScore === match.awayScore) {
+          draws++;
+        } else {
+          losses++;
+        }
+      }
+      // Otherwise calculate based on scores
+      else if (match.result) {
+        const [homeScore, awayScore] = match.result.split('-').map(Number);
+        if (isNaN(homeScore) || isNaN(awayScore)) return;
+        
+        // Determine if we're home or away team
+        const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
+                         !match.name.toLowerCase().includes(' vs ') || 
+                         match.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
+        
+        // Calculate our score and opponent score
+        const ourScore = isHomeTeam ? homeScore : awayScore;
+        const theirScore = isHomeTeam ? awayScore : homeScore;
+        
+        goalsScored += ourScore;
+        goalsConceded += theirScore;
+        
+        if (ourScore > theirScore) {
+          wins++;
+        } else if (ourScore === theirScore) {
+          draws++;
+        } else {
+          losses++;
+        }
+      }
     });
     
     return {
