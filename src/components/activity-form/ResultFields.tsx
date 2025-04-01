@@ -3,8 +3,9 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Trophy } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues } from "./formSchema";
+import { ActivityFormValues, ResultFieldValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
+import { useEffect } from "react";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -12,6 +13,19 @@ interface ResultFieldsProps {
 }
 
 export function ResultFields({ form, activityType }: ResultFieldsProps) {
+  // Auto-compute the result string when scores change
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if ((name === 'homeScore' || name === 'awayScore') && 
+          value.homeScore !== undefined && 
+          value.awayScore !== undefined) {
+        form.setValue('result', `${value.homeScore}-${value.awayScore}`);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   if (activityType !== "match") {
     return null;
   }
@@ -35,7 +49,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   type="number" 
                   placeholder="0" 
                   {...field} 
-                  value={field.value || ''}
+                  value={field.value ?? ''}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
                 />
               </FormControl>
@@ -55,7 +69,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   type="number" 
                   placeholder="0" 
                   {...field} 
-                  value={field.value || ''}
+                  value={field.value ?? ''}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
                 />
               </FormControl>
@@ -71,7 +85,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
             <FormItem>
               <FormLabel>Resultat (text)</FormLabel>
               <FormControl>
-                <Input placeholder="2-1" {...field} />
+                <Input 
+                  placeholder="2-1" 
+                  {...field} 
+                  readOnly 
+                  className="bg-gray-50"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

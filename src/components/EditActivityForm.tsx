@@ -14,7 +14,7 @@ interface EditActivityFormProps {
 }
 
 export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFormProps) {
-  const { form, handleSubmit } = useActivityForm(activity, onSave);
+  const { form, handleSubmit, isSubmitting } = useActivityForm(activity, onSave);
 
   return (
     <Form {...form}>
@@ -22,7 +22,7 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
         <BasicInfoFields form={form} />
         <LocationFields form={form} />
         <ResultFields form={form} activityType={activity.type} />
-        <FormButtons onCancel={onCancel} />
+        <FormButtons onCancel={onCancel} isSubmitting={isSubmitting} />
       </form>
     </Form>
   );

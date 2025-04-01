@@ -3,13 +3,27 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues } from "./formSchema";
+import { ActivityFormValues, LocationFieldValues } from "./formSchema";
+import { useEffect } from "react";
+import { generateFootballFieldUrl } from "@/utils/locationUtils";
 
 interface LocationFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
 }
 
 export function LocationFields({ form }: LocationFieldsProps) {
+  // Auto-generate GPS link when location name changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'locationName' && value.locationName && !value.locationGps) {
+        const gpsLink = generateFootballFieldUrl(value.locationName);
+        form.setValue('locationGps', gpsLink);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
+  
   return (
     <div className="border-t pt-4 mt-4">
       <h3 className="font-medium flex items-center mb-3">

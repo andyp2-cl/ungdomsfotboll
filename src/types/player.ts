@@ -10,23 +10,25 @@ export interface PlayerStats {
   assists?: Record<string, number>; // Record of player ID to number of assists
 }
 
+export interface Location {
+  name: string;
+  description?: string;
+  gpsLink?: string;
+}
+
 export interface Activity {
   id: string;
   name: string;
   date: string;
   type: ActivityType;
   time?: string;
-  location?: {
-    name: string;
-    description?: string;
-    gpsLink?: string;
-  };
+  location?: Location;
   participants: string[]; // Player IDs
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
   matches?: string[]; // Activity IDs for cup matches
-  player_stats?: PlayerStats; // Changed from any to PlayerStats
+  player_stats?: PlayerStats;
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score

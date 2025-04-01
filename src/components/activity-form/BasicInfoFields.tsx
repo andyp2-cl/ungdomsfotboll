@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
+import { TimeInput } from "./TimeInput";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -95,19 +96,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tid</FormLabel>
-              <FormControl>
-                <Input placeholder="t.ex. 09:30" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <TimeInput form={form} />
       </div>
     </>
   );

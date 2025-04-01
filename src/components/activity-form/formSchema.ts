@@ -20,3 +20,17 @@ export const activityFormSchema = z.object({
 });
 
 export type ActivityFormValues = z.infer<typeof activityFormSchema>;
+
+// Result-specific types
+export interface ResultFieldValues {
+  result?: string;
+  homeScore?: number;
+  awayScore?: number;
+}
+
+// Location-specific types
+export interface LocationFieldValues {
+  locationName?: string;
+  locationDescription?: string;
+  locationGps?: string;
+}

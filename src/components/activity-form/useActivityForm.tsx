@@ -1,14 +1,17 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Activity } from "@/types/player";
+import { Activity, Location } from "@/types/player";
 import { format } from "date-fns";
 import { ActivityFormValues, activityFormSchema } from "./formSchema";
+import { useState } from "react";
 
 export function useActivityForm(
   activity: Activity,
   onSave: (updatedActivity: Activity) => void
 ) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Parse the ISO date string to a Date object
   const getInitialDate = () => {
     try {
@@ -34,35 +37,47 @@ export function useActivityForm(
     },
   });
 
-  const handleSubmit = (values: ActivityFormValues) => {
-    // Update activity with form values
-    const updatedActivity: Activity = {
-      ...activity,
-      name: values.name,
-      date: format(values.date, 'yyyy-MM-dd'),
-      type: values.type,
-      time: values.time || undefined,
-      result: values.result || undefined,
-      homeScore: values.homeScore,
-      awayScore: values.awayScore,
-    };
+  const handleSubmit = async (values: ActivityFormValues) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Construct location object if name is provided
+      let location: Location | undefined;
+      if (values.locationName) {
+        location = {
+          name: values.locationName,
+          description: values.locationDescription || undefined,
+          gpsLink: values.locationGps || undefined,
+        };
+      }
 
-    // Add location information if provided
-    if (values.locationName) {
-      updatedActivity.location = {
-        name: values.locationName,
-        description: values.locationDescription || undefined,
-        gpsLink: values.locationGps || undefined,
+      // Format date to ISO string
+      const formattedDate = format(values.date, 'yyyy-MM-dd');
+      
+      // Update activity with form values
+      const updatedActivity: Activity = {
+        ...activity,
+        name: values.name,
+        date: formattedDate,
+        type: values.type,
+        time: values.time || undefined,
+        location,
+        result: values.result || undefined,
+        homeScore: values.homeScore,
+        awayScore: values.awayScore,
       };
-    } else {
-      updatedActivity.location = undefined;
-    }
 
-    onSave(updatedActivity);
+      await onSave(updatedActivity);
+    } catch (error) {
+      console.error("Error saving activity:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return {
     form,
     handleSubmit,
+    isSubmitting,
   };
 }
