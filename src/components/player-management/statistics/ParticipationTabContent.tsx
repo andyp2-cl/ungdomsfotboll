@@ -12,7 +12,7 @@ interface ParticipationTabContentProps {
 export function ParticipationTabContent({ activities, players }: ParticipationTabContentProps) {
   // Beräkna deltagande per spelare
   const playerParticipation = useMemo(() => {
-    const stats = players
+    return players
       .filter(player => !player.positions?.includes("TRÄNARE"))
       .map(player => {
         const participatedActivities = activities.filter(activity => 
@@ -41,8 +41,6 @@ export function ParticipationTabContent({ activities, players }: ParticipationTa
         };
       })
       .sort((a, b) => b.totalActivities - a.totalActivities);
-      
-    return playerParticipation;
   }, [activities, players]);
   
   // Gruppera spelarna i deltagnivåer

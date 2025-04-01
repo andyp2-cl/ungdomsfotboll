@@ -8,7 +8,7 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/ActivityDetail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
-import { StatisticsTabContent } from "@/components/player-management/StatisticsTabContent";
+import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -132,7 +132,7 @@ export function ActivityTabContent({
       ) : (
         <>
           {activeView === "statistics" ? (
-            <StatisticsTabContent 
+            <StatisticsTabsWrapper 
               players={players}
               activities={activities}
               gradeData={gradeData}
