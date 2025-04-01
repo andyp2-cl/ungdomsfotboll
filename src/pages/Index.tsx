@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Users, Calendar, Database, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { BackupRestoreActions } from "@/components/BackupRestoreActions";
+import { BackupRestoreActions } from "@/components/backup-restore";
 
 const Index = () => {
   const [syncStatus, setSyncStatus] = useState<"connected" | "connecting" | "disconnected" | "not-configured">(
