@@ -91,6 +91,7 @@ export function PlayerSearchPopover({
                   value={player.id}
                   onSelect={(value) => {
                     handlePlayerSelect(value);
+                    setOpen(false); // Close popover after selection
                   }}
                   disabled={currentParticipantCount + selectedPlayers.length >= maxParticipants && !selectedPlayers.includes(player.id)}
                 >

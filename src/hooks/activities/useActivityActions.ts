@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { logDatabaseChange, permanentlyDeleteActivity } from "@/lib/supabase";
@@ -49,11 +50,15 @@ export function useActivityActions(
       return;
     }
     
+    // Make sure we properly merge the player_stats and preserve the result data
     const mergedActivity = {
       ...existingActivity,
       ...updatedActivity,
-      player_stats: updatedActivity.player_stats || existingActivity.player_stats
+      player_stats: updatedActivity.player_stats || existingActivity.player_stats,
+      result: updatedActivity.result ?? existingActivity.result
     };
+    
+    console.log("Updating activity with data:", mergedActivity);
     
     const updatedActivities = activities.map(activity => 
       activity.id === mergedActivity.id ? mergedActivity : activity

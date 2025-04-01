@@ -61,7 +61,8 @@ export function AddActivityForm({
       },
       time: time,
       matches: cupMatches,
-      participants: [] // Required participants property
+      participants: [], // Required participants property
+      player_stats: {} // Initialize empty player stats
     };
 
     onSave(newActivity);
