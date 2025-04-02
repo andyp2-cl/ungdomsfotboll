@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { ScoreDisplay } from "./ScoreDisplay";
@@ -32,6 +31,7 @@ export function ScoreSection({
   // Determine if we have a valid result to display
   const hasResult = homeScore !== undefined && awayScore !== undefined;
 
+  // For historical matches with a valid result, we only show the score display
   if (isHistorical && hasResult) {
     return (
       <ScoreDisplay 
@@ -40,20 +40,21 @@ export function ScoreSection({
         awayScore={awayScore} 
       />
     );
-  } else {
-    return (
-      <ScoreForm 
-        activity={activity}
-        homeScore={homeScore}
-        awayScore={awayScore}
-        setHomeScore={setHomeScore}
-        setAwayScore={setAwayScore}
-        manualWinStatus={manualWinStatus}
-        setManualWinStatus={setManualWinStatus}
-        onSave={onSave}
-        isSaving={isSaving}
-        isHistorical={isHistorical}
-      />
-    );
   }
+  
+  // Otherwise, show the score form for editing
+  return (
+    <ScoreForm 
+      activity={activity}
+      homeScore={homeScore}
+      awayScore={awayScore}
+      setHomeScore={setHomeScore}
+      setAwayScore={setAwayScore}
+      manualWinStatus={manualWinStatus}
+      setManualWinStatus={setManualWinStatus}
+      onSave={onSave}
+      isSaving={isSaving}
+      isHistorical={isHistorical}
+    />
+  );
 }
