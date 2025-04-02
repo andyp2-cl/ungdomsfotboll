@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ActivityResultSection } from "./match-result";
 import { MatchResultQuickView } from "./MatchResultQuickView";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
@@ -222,15 +220,6 @@ export function ActivityDetailView({
           onAddPlayers={handleAddPlayers}
           players={players}
         />
-
-        {isMatch && (
-          <ActivityResultSection
-            activity={currentActivity}
-            isHistorical={isHistorical}
-            updateActivity={onActivityUpdate || (() => {})}
-            onMatchResultUpdate={onMatchResultUpdate}
-          />
-        )}
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
