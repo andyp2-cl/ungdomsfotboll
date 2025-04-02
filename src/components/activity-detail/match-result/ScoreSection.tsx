@@ -52,7 +52,6 @@ export function ScoreSection({
         setManualWinStatus={setManualWinStatus}
         onSave={onSave}
         isSaving={isSaving}
-        isHistorical={isHistorical}
       />
     );
   }
