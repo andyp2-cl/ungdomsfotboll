@@ -17,11 +17,6 @@ export function ActivityResultSection({
   updateActivity,
   onMatchResultUpdate
 }: ActivityResultSectionProps) {
-  // This component is now removed for historical matches with results
-  if (isHistorical && activity.homeScore !== undefined && activity.awayScore !== undefined) {
-    return null;
-  }
-  
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
