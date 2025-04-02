@@ -32,7 +32,7 @@ export function ScoreSection({
   // Determine if we have a valid result to display
   const hasResult = homeScore !== undefined && awayScore !== undefined;
 
-  if (isHistorical && hasResult && false) { // Kept the original logic for consistency
+  if (isHistorical && hasResult) {
     return (
       <ScoreDisplay 
         activity={activity} 
