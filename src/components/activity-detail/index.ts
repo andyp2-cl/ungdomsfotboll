@@ -1,7 +1,6 @@
 
 import { ActivityDetail } from "./ActivityDetail";
 import { ActivityDetailHeader } from "./ActivityDetailHeader";
-import { ActivityResultSection } from "./match-result";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityKioskSection } from "./ActivityKioskSection";
@@ -14,11 +13,12 @@ import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { ActivityDetailView } from "./ActivityDetailView";
 import { ParticipantsSection } from "./ParticipantsSection";
 import { MatchResultQuickView } from "./MatchResultQuickView";
+import { MatchResultSection } from "./sections/MatchResultSection";
+import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 
 export {
   ActivityDetail,
   ActivityDetailHeader,
-  ActivityResultSection,
   ActivityStatsSection,
   ActivityParticipantSection,
   ActivityKioskSection,
@@ -30,5 +30,7 @@ export {
   ActivityDetailHeaderContent,
   ActivityDetailView,
   ParticipantsSection,
-  MatchResultQuickView
+  MatchResultQuickView,
+  MatchResultSection,
+  useActivityDetailActions
 };

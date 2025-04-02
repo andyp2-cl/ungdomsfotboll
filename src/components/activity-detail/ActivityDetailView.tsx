@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+
+import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { useToast } from "@/hooks/use-toast";
-import { MatchResultQuickView } from "./MatchResultQuickView";
+import { MatchResultSection } from "./sections/MatchResultSection";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { HeaderActionButtons } from "./HeaderActionButtons";
 import { ParticipantsSection } from "./ParticipantsSection";
+import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -42,29 +43,31 @@ export function ActivityDetailView({
   onPlayerSelect,
   onMatchResultUpdate
 }: ActivityDetailViewProps) {
-  const { toast } = useToast();
-  const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
-  const [isAddingPlayers, setIsAddingPlayers] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [clearParticipantsDialogOpen, setClearParticipantsDialogOpen] = useState(false);
+  const {
+    currentActivity,
+    setCurrentActivity,
+    isAddingPlayers,
+    setIsAddingPlayers,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    clearParticipantsDialogOpen,
+    setClearParticipantsDialogOpen,
+    isHistorical,
+    participatingPlayers,
+    handleActivityUpdate,
+    handleAddPlayers,
+    handleRemovePlayer,
+    handleClearAllParticipants
+  } = useActivityDetailActions({
+    activity,
+    players,
+    onActivityUpdate,
+    onKioskAssignmentUpdate
+  });
   
   useEffect(() => {
     setCurrentActivity(activity);
-  }, [activity]);
-
-  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
-  
-  const participatingPlayers = players.filter(
-    (player) => currentActivity.participants?.includes(player.id)
-  );
-
-  const handleActivityUpdate = (updatedActivity: Activity) => {
-    setCurrentActivity(updatedActivity);
-    
-    if (onActivityUpdate) {
-      onActivityUpdate(updatedActivity);
-    }
-  };
+  }, [activity, setCurrentActivity]);
 
   const handleDeleteActivity = () => {
     if (onDeleteActivity) {
@@ -74,103 +77,11 @@ export function ActivityDetailView({
   };
 
   const handleClose = onBack || onClose;
-
-  const handleAddPlayers = (playerIds: string[]) => {
-    const updatedParticipants = [
-      ...(currentActivity.participants || []),
-      ...playerIds
-    ];
-    
-    const updatedActivity = {
-      ...currentActivity,
-      participants: updatedParticipants
-    };
-    
-    handleActivityUpdate(updatedActivity);
-    
-    const playerNames = playerIds.map(id => 
-      players.find(p => p.id === id)?.name || "Spelare"
-    ).join(", ");
-    
-    toast({
-      title: "Spelare tillagda",
-      description: `${playerNames} har lagts till i aktiviteten.`,
-    });
-  };
-
-  const handleRemovePlayer = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    const updatedParticipants = (currentActivity.participants || []).filter(
-      id => id !== playerId
-    );
-    
-    const updatedActivity = {
-      ...currentActivity,
-      participants: updatedParticipants
-    };
-    
-    if (currentActivity.kioskAssignedPlayerId === playerId) {
-      updatedActivity.kioskAssignedPlayerId = undefined;
-      
-      if (onKioskAssignmentUpdate) {
-        onKioskAssignmentUpdate(currentActivity.id, undefined);
-      }
-    }
-    
-    handleActivityUpdate(updatedActivity);
-    
-    toast({
-      title: "Spelare borttagen",
-      description: `${player.name} har tagits bort från aktiviteten.`,
-    });
-  };
-
-  const handleClearAllParticipants = () => {
-    const updatedActivity = {
-      ...currentActivity,
-      participants: []
-    };
-    
-    if (currentActivity.kioskAssignedPlayerId) {
-      updatedActivity.kioskAssignedPlayerId = undefined;
-      
-      if (onKioskAssignmentUpdate) {
-        onKioskAssignmentUpdate(currentActivity.id, undefined);
-      }
-    }
-    
-    handleActivityUpdate(updatedActivity);
-    setClearParticipantsDialogOpen(false);
-    
-    toast({
-      title: "Deltagarlista rensad",
-      description: `Alla spelare har tagits bort från aktiviteten.`,
-    });
-  };
-
-  const handleQuickResultSave = async (homeScore?: number, awayScore?: number) => {
-    console.log("QuickMatchResult save called with:", {homeScore, awayScore});
-    if (onMatchResultUpdate) {
-      try {
-        await onMatchResultUpdate(activity.id, homeScore, awayScore);
-      } catch (error) {
-        console.error("Error in handleQuickResultSave:", error);
-        toast({
-          title: "Fel vid uppdatering av matchresultat",
-          description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
+  
+  const isMatch = activity.type === "match";
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-
-  const isMatch = activity.type === "match";
 
   return (
     <Card className="w-full lg:max-w-3xl mx-auto">
@@ -200,10 +111,9 @@ export function ActivityDetailView({
       </CardHeader>
       <CardContent className="space-y-6">
         {isMatch && (
-          <MatchResultQuickView 
+          <MatchResultSection 
             activity={activity}
-            onSave={handleQuickResultSave}
-            isReadOnly={false}
+            onMatchResultUpdate={onMatchResultUpdate}
           />
         )}
 
