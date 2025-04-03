@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,6 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
   const homeScore = activity.homeScore;
   const awayScore = activity.awayScore;
   const hasResult = homeScore !== undefined && awayScore !== undefined;
-  const isHome = isHomeMatch(activity);
   
   if (!hasResult) {
     return (
@@ -22,6 +20,32 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
     );
   }
 
+  // If we have a stored isWin value, use that to determine outcome text and color
+  // Otherwise calculate it based on scores
+  const isHome = isHomeMatch(activity);
+  
+  // Debug the stored win status
+  console.log("Displaying result with stored win status:", {
+    activityId: activity.id,
+    isWin: activity.isWin,
+    homeScore,
+    awayScore,
+    isHome
+  });
+  
+  // If we have a defined isWin value, use that directly
+  const outcomeText = activity.isWin === true 
+    ? "Vinst"
+    : activity.isWin === false
+      ? "Förlust"
+      : "Oavgjort";
+      
+  const outcomeColorClass = activity.isWin === true
+    ? "bg-green-100 text-green-800" 
+    : activity.isWin === false
+      ? "bg-red-100 text-red-800"
+      : "bg-gray-100 text-gray-800";
+  
   // Determine team labels
   const ourTeamLabel = "Våra mål";
   const theirTeamLabel = "Deras mål";
@@ -33,8 +57,8 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
           <span className="font-medium">Resultat:</span>
           <span className="text-lg font-bold">{homeScore}-{awayScore}</span>
         </div>
-        <div className={`px-3 py-1 rounded-full text-sm font-medium ${getOutcomeColorClass(homeScore, awayScore, isHome)}`}>
-          {getOutcomeText(homeScore, awayScore, isHome)}
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ${outcomeColorClass}`}>
+          {outcomeText}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 mt-3">

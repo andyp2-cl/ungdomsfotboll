@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 
@@ -16,6 +15,9 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     
     // Transform the database format to our application format
     const activities: Activity[] = (data || []).map(item => {
+      // Log the raw is_win value to debug
+      console.log(`Activity ${item.id} (${item.name}) has is_win:`, item.is_win);
+      
       const activity: Activity = {
         id: item.id,
         name: item.name,
@@ -35,8 +37,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
-        // Properly handle is_win with type check
-        isWin: typeof item.is_win === 'boolean' ? item.is_win : undefined
+        // Properly handle is_win with strict type checking - must be a boolean or undefined
+        isWin: item.is_win === true ? true : item.is_win === false ? false : undefined
       };
       
       // Set result field if home_score and away_score are available
@@ -59,7 +61,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
               home: item.home_score,
               away: item.away_score
             },
-            isWin: activity.isWin
+            isWin: activity.isWin // Use the activity-level isWin value
           };
         } catch (e) {
           console.error("Error parsing player_stats JSON:", e);
