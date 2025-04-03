@@ -130,7 +130,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     else if (value === "loss") field.onChange(false);
                     else field.onChange(undefined);
                   }}
-                  defaultValue={field.value === true ? "win" : field.value === false ? "loss" : "draw"}
+                  value={field.value === true ? "win" : field.value === false ? "loss" : "draw"}
                   className="flex flex-col space-y-1"
                 >
                   <FormItem className="flex items-center space-x-3 space-y-0">

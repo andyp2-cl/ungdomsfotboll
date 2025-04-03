@@ -4,6 +4,7 @@ import { ActivityFormValues } from "@/components/activity-form/formSchema";
 import { format } from "date-fns";
 import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 export async function handleActivitySubmit(
   values: ActivityFormValues,
@@ -39,29 +40,21 @@ export async function handleActivitySubmit(
       ? `${homeScore}-${awayScore}`
       : values.result || undefined;
     
-    // Determine if the match was a win for Hässleholms IF
-    let isWin: boolean | undefined = values.isWin;
+    // Get the win status from the form
+    let isWin = values.isWin;
     
     // Auto-calculate isWin if we have scores and it's not explicitly set
     if (homeScore !== undefined && awayScore !== undefined && isWin === undefined) {
-      const isHomeTeam = values.name.toLowerCase().includes('hässleholms if') && 
-                      !values.name.toLowerCase().includes(' vs ') || 
-                      values.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
-      
-      if (isHomeTeam) {
-        if (homeScore > awayScore) {
-          isWin = true;
-        } else if (homeScore < awayScore) {
-          isWin = false;
-        }
-      } else {
-        if (awayScore > homeScore) {
-          isWin = true;
-        } else if (awayScore < homeScore) {
-          isWin = false;
-        }
-      }
+      const isHomeTeam = isHomeMatch(originalActivity);
+      isWin = calculateWinStatus(homeScore, awayScore, isHomeTeam);
     }
+    
+    console.log("Form submission - win status:", {
+      explicitIsWin: values.isWin,
+      calculatedIsWin: isWin,
+      homeScore,
+      awayScore
+    });
     
     // Make sure originalActivity.player_stats is normalized
     const existingPlayerStats = normalizePlayerStats(originalActivity.player_stats);
@@ -95,29 +88,12 @@ export async function handleActivitySubmit(
       player_stats: updatedPlayerStats
     };
 
-    console.log("Before preserveMatchData:", {
-      originalActivity: {
-        playerStats: originalActivity.player_stats,
-        playerStatsType: typeof originalActivity.player_stats
-      },
-      formUpdatedActivity: {
-        playerStats: formUpdatedActivity.player_stats,
-        playerStatsType: typeof formUpdatedActivity.player_stats
-      }
-    });
-
     // Use preserveMatchData to ensure match statistics are maintained
     const updatedActivity = preserveMatchData(originalActivity, formUpdatedActivity);
     
-    console.log("Saving activity with preserved match data:", {
-      before: {
-        playerStats: originalActivity.player_stats,
-        playerStatsType: typeof originalActivity.player_stats
-      },
-      after: {
-        playerStats: updatedActivity.player_stats,
-        playerStatsType: typeof updatedActivity.player_stats
-      }
+    console.log("Saving activity with preserved match data and win status:", {
+      isWin: updatedActivity.isWin,
+      playerStats: updatedActivity.player_stats
     });
     
     await onSave(updatedActivity);

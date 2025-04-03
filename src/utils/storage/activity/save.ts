@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "./types";
@@ -26,10 +27,11 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
       
-      console.log("Saving activity with player_stats:", {
+      console.log("Saving activity with player_stats and win status:", {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
-        playerStatsType: typeof normalizedActivity.player_stats
+        isWin: normalizedActivity.isWin,
+        playerStats: normalizedPlayerStats
       });
       
       // Check if activity already exists to determine if this is an update or create

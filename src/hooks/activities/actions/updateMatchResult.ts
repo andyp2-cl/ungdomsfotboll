@@ -58,7 +58,8 @@ export const handleMatchResultUpdate = async (
       isWin
     };
     
-    console.log("Updated player stats:", updatedPlayerStats);
+    console.log("Updated player stats with win status:", updatedPlayerStats);
+    console.log("Is win calculated as:", isWin);
     
     // Update the activities array with the new result data
     const updatedActivities = activities.map(activity => 

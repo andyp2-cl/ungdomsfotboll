@@ -103,26 +103,18 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // Find cup matches by looking for activities with a cupId that matches a cup's id
-    console.log("All activities before processing cup matches:", activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
-    
-    // First, find all cup activities
+    // Find cup matches
     const cupActivities = activities.filter(activity => activity.type === 'cup');
-    console.log("Found cup activities:", cupActivities.map(a => a.id));
     
-    // Then for each cup, find its matches
+    // For each cup, find its matches
     cupActivities.forEach(cupActivity => {
       // Find all matches that have this cup as parent
       const matchesForCup = activities.filter(
         possibleMatch => possibleMatch.cupId === cupActivity.id
       );
       
-      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
-        matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
-      
       if (matchesForCup.length > 0) {
         cupActivity.matches = matchesForCup.map(match => match.id);
-        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
       }
     });
     

@@ -14,7 +14,7 @@ export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResul
   }
 
   const handleQuickResultSave = async (homeScore?: number, awayScore?: number) => {
-    console.log("QuickMatchResult save called with:", {homeScore, awayScore});
+    console.log("QuickMatchResult save called with:", {homeScore, awayScore, activityId: activity.id});
     if (onMatchResultUpdate) {
       try {
         await onMatchResultUpdate(activity.id, homeScore, awayScore);
@@ -25,10 +25,13 @@ export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResul
   };
 
   return (
-    <MatchResultQuickView 
-      activity={activity}
-      onSave={handleQuickResultSave}
-      isReadOnly={false}
-    />
+    <div className="border rounded-md p-4">
+      <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+      <MatchResultQuickView 
+        activity={activity}
+        onSave={handleQuickResultSave}
+        isReadOnly={false}
+      />
+    </div>
   );
 }
