@@ -41,3 +41,62 @@ export const calculateWinStatus = (
     return awayScore > homeScore;
   }
 };
+
+/**
+ * Extracts both team names from the activity name (if possible)
+ */
+export const extractTeamNames = (activity: Activity): { homeTeam: string; awayTeam: string } => {
+  const defaultNames = {
+    homeTeam: "Hemmalag",
+    awayTeam: "Bortalag"
+  };
+  
+  const nameParts = activity.name.split(' - ');
+  
+  if (nameParts.length === 2) {
+    return {
+      homeTeam: nameParts[0],
+      awayTeam: nameParts[1]
+    };
+  }
+  
+  return defaultNames;
+};
+
+/**
+ * Gets the appropriate text for a match outcome
+ */
+export const getOutcomeText = (
+  homeScore: number, 
+  awayScore: number, 
+  isHome: boolean
+): string => {
+  if (homeScore === awayScore) {
+    return "Oavgjort";
+  }
+  
+  // Determine if Hässleholms IF won
+  const didWin = isHome ? homeScore > awayScore : awayScore > homeScore;
+  
+  return didWin ? "Vinst" : "Förlust";
+};
+
+/**
+ * Gets the appropriate CSS class for styling based on the match outcome
+ */
+export const getOutcomeColorClass = (
+  homeScore: number, 
+  awayScore: number, 
+  isHome: boolean
+): string => {
+  if (homeScore === awayScore) {
+    return "bg-gray-100 text-gray-800"; // Draw styling
+  }
+  
+  // Determine if Hässleholms IF won
+  const didWin = isHome ? homeScore > awayScore : awayScore > homeScore;
+  
+  return didWin 
+    ? "bg-green-100 text-green-800" // Win styling
+    : "bg-red-100 text-red-800";    // Loss styling
+};
