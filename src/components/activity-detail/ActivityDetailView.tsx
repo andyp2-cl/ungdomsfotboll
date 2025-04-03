@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { MatchResultSection } from "./sections/MatchResultSection";
+import { MatchResultSection, StatsSection } from "./sections";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { HeaderActionButtons } from "./HeaderActionButtons";
@@ -114,6 +114,16 @@ export function ActivityDetailView({
           <MatchResultSection 
             activity={activity}
             onMatchResultUpdate={onMatchResultUpdate}
+          />
+        )}
+
+        {isMatch && (
+          <StatsSection
+            activity={currentActivity}
+            players={players}
+            participatingPlayers={participatingPlayers}
+            updateActivity={handleActivityUpdate}
+            isHistorical={isHistorical}
           />
         )}
 

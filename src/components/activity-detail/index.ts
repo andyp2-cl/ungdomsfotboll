@@ -13,6 +13,7 @@ import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { ActivityDetailView } from "./ActivityDetailView";
 import { ParticipantsSection } from "./ParticipantsSection";
 import { MatchResultQuickView } from "./MatchResultQuickView";
+import { StatsSection } from "./sections/StatsSection";
 import { MatchResultSection } from "./sections/MatchResultSection";
 import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 
@@ -31,6 +32,7 @@ export {
   ActivityDetailView,
   ParticipantsSection,
   MatchResultQuickView,
+  StatsSection,
   MatchResultSection,
   useActivityDetailActions
 };
