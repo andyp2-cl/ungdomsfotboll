@@ -38,7 +38,7 @@ export const handleMatchResultUpdate = async (
     const isHome = isHomeMatch(currentActivity);
     
     // Calculate win status based on scores
-    let isWin = undefined;
+    let isWin: boolean | undefined = undefined;
     if (homeScore !== undefined && awayScore !== undefined) {
       isWin = calculateWinStatus(homeScore, awayScore, isHome);
       console.log("Calculated win status for persistence:", isWin);
@@ -69,13 +69,22 @@ export const handleMatchResultUpdate = async (
             result: resultString,
             homeScore, 
             awayScore,
-            isWin, // Explicitly set the isWin property at the activity level
+            isWin, // Store isWin explicitly at activity level
             player_stats: updatedPlayerStats
           }
         : activity
     );
     
-    console.log("Updated activity with win status:", updatedActivities.find(a => a.id === activityId));
+    // Log the updated activity for debugging
+    const updatedActivity = updatedActivities.find(a => a.id === activityId);
+    console.log("Updated activity with win status:", {
+      id: updatedActivity?.id,
+      name: updatedActivity?.name,
+      isWin: updatedActivity?.isWin,
+      result: updatedActivity?.result,
+      homeScore: updatedActivity?.homeScore,
+      awayScore: updatedActivity?.awayScore
+    });
     
     // Update state and save to storage
     setActivities(updatedActivities);

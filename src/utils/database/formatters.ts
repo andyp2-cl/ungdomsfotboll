@@ -30,6 +30,9 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
 export const formatActivityForDatabase = (activity: Activity) => {
   const { location, ...rest } = activity;
   
+  // Convert isWin to a proper boolean or null for database storage
+  const isWinForDB = typeof activity.isWin === 'boolean' ? activity.isWin : null;
+  
   return {
     id: activity.id,
     name: activity.name,
@@ -45,7 +48,8 @@ export const formatActivityForDatabase = (activity: Activity) => {
     player_stats: activity.player_stats ? JSON.stringify(activity.player_stats) : null,
     result: activity.result || null,
     home_score: activity.homeScore !== undefined ? activity.homeScore : null,
-    away_score: activity.awayScore !== undefined ? activity.awayScore : null
+    away_score: activity.awayScore !== undefined ? activity.awayScore : null,
+    is_win: isWinForDB  // Make sure we're saving a clean boolean value to the database
   };
 };
 
@@ -105,6 +109,12 @@ export const formatActivityFromDatabase = (dbActivity: any): Activity => {
   
   if (dbActivity.away_score !== null && dbActivity.away_score !== undefined) {
     activity.awayScore = dbActivity.away_score;
+  }
+  
+  // Handle is_win correctly - ensure it's treated as a boolean
+  if (dbActivity.is_win !== null && dbActivity.is_win !== undefined) {
+    // Explicitly convert to a boolean to avoid type issues
+    activity.isWin = dbActivity.is_win === true;
   }
   
   return activity;

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +21,6 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
     );
   }
 
-  // If we have a stored isWin value, use that to determine outcome text and color
-  // Otherwise calculate it based on scores
   const isHome = isHomeMatch(activity);
   
   // Debug the stored win status
@@ -33,18 +32,28 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
     isHome
   });
   
-  // If we have a defined isWin value, use that directly
-  const outcomeText = activity.isWin === true 
-    ? "Vinst"
-    : activity.isWin === false
-      ? "Förlust"
-      : "Oavgjort";
+  // Determine outcome text based on stored isWin or calculate it
+  let outcomeText: string;
+  let outcomeColorClass: string;
+  
+  if (typeof activity.isWin === 'boolean') {
+    // If we have a defined isWin boolean, use that directly
+    outcomeText = activity.isWin === true 
+      ? "Vinst"
+      : "Förlust";
       
-  const outcomeColorClass = activity.isWin === true
-    ? "bg-green-100 text-green-800" 
-    : activity.isWin === false
-      ? "bg-red-100 text-red-800"
-      : "bg-gray-100 text-gray-800";
+    outcomeColorClass = activity.isWin === true
+      ? "bg-green-100 text-green-800" 
+      : "bg-red-100 text-red-800";
+  } else if (homeScore === awayScore) {
+    // Handle draw case
+    outcomeText = "Oavgjort";
+    outcomeColorClass = "bg-gray-100 text-gray-800";
+  } else {
+    // Calculate based on scores as fallback
+    outcomeText = getOutcomeText(homeScore, awayScore, isHome);
+    outcomeColorClass = getOutcomeColorClass(homeScore, awayScore, isHome);
+  }
   
   // Determine team labels
   const ourTeamLabel = "Våra mål";

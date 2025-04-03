@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { isHomeMatch, calculateWinStatus } from "./utils";
@@ -26,7 +27,12 @@ export function useResultSaver({
     manualWinStatus: boolean | undefined
   ) => {
     try {
-      console.log("Saving match result:", {homeScore, awayScore, activityId: activity.id});
+      console.log("Saving match result:", {
+        homeScore, 
+        awayScore, 
+        manualWinStatus, 
+        activityId: activity.id
+      });
       
       // Create result string if both scores are defined
       const resultString = homeScore !== undefined && awayScore !== undefined 
@@ -42,6 +48,7 @@ export function useResultSaver({
       // If no manual status, calculate based on scores
       if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
         isWin = calculateWinStatus(homeScore, awayScore, isHome);
+        console.log("Calculated win status:", isWin);
       }
       
       // Prepare updated player_stats with all necessary properties
@@ -84,6 +91,12 @@ export function useResultSaver({
         isWin,
         player_stats: updatedPlayerStats
       };
+      
+      console.log("Updated local activity state with win status:", {
+        id: updatedActivity.id,
+        name: updatedActivity.name,
+        isWin: updatedActivity.isWin
+      });
       
       // Use the update function from props
       updateActivity(updatedActivity);

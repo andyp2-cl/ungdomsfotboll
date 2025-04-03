@@ -37,7 +37,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
-        // Properly handle is_win with strict type checking - must be a boolean or undefined
+        // Properly handle is_win with strict type checking
         isWin: item.is_win === true ? true : item.is_win === false ? false : undefined
       };
       

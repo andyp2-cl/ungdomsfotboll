@@ -26,8 +26,6 @@ export const calculateWinStatus = (
   awayScore: number, 
   isHome: boolean
 ): boolean | undefined => {
-  console.log("Calculating win status with:", {homeScore, awayScore, isHome});
-  
   // If scores are the same, it's a draw (undefined)
   if (homeScore === awayScore) {
     return undefined;
