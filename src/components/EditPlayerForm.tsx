@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Save, X } from "lucide-react";
+import { ImageUploadField } from "./player-form/ImageUploadField";
 
 interface EditPlayerFormProps {
   player: Player;
@@ -21,6 +22,7 @@ interface EditPlayerFormProps {
 
 export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps) {
   const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
 
   const formSchema = z.object({
     name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
@@ -47,6 +49,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       grade: values.grade || "A", // Default to A if no grade selected (shouldn't happen due to validation)
       positions: values.positions,
       jerseyNumber: values.jerseyNumber || undefined,
+      image: imagePreview
     };
 
     onSave(updatedPlayer);
@@ -80,6 +83,11 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <ImageUploadField 
+          imagePreview={imagePreview} 
+          setImagePreview={setImagePreview} 
+        />
+
         <FormField
           control={form.control}
           name="name"
