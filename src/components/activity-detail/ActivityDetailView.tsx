@@ -25,6 +25,7 @@ interface ActivityDetailViewProps {
   cupMatches?: Activity[];
   onPlayerSelect?: (playerId: string) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  extraContent?: React.ReactNode; // New prop for extra content
 }
 
 export function ActivityDetailView({ 
@@ -41,7 +42,8 @@ export function ActivityDetailView({
   relatedActivities = [],
   cupMatches = [],
   onPlayerSelect,
-  onMatchResultUpdate
+  onMatchResultUpdate,
+  extraContent // New prop for extra content
 }: ActivityDetailViewProps) {
   const {
     currentActivity,
@@ -140,6 +142,9 @@ export function ActivityDetailView({
           onAddPlayers={handleAddPlayers}
           players={players}
         />
+        
+        {/* Render the extra content if provided */}
+        {extraContent}
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button variant="outline" onClick={handleClose}>Stäng</Button>

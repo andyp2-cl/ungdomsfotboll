@@ -44,31 +44,13 @@ export function AddPlayersToActivity({
   const handleAddPlayers = () => {
     if (selectedPlayerIds.length === 0) return;
     
-    // Check if adding these players would exceed the player limit
-    if (currentParticipantIds.length + selectedPlayerIds.length > 12) {
-      toast({
-        title: "Max antal spelare",
-        description: "Du kan inte lägga till fler än 12 spelare till en aktivitet.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+    // No player limit check anymore
     onAddPlayers(selectedPlayerIds);
     setSelectedPlayerIds([]);
   };
   
   const handleQuickSelect = (playerId: string) => {
-    // Check if adding this player would exceed the player limit
-    if (currentParticipantIds.length >= 12) {
-      toast({
-        title: "Max antal spelare",
-        description: "Du kan inte lägga till fler än 12 spelare till en aktivitet.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+    // No player limit check anymore
     onAddPlayers([playerId]);
   };
   
@@ -85,12 +67,12 @@ export function AddPlayersToActivity({
     <div className="mt-4 space-y-4">
       <div className="flex flex-col gap-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Välj flera spelare (max 10)</label>
+          <label className="text-sm font-medium">Välj flera spelare</label>
           <PlayerMultiSelectDropdown 
             availablePlayers={availablePlayers}
             selectedPlayers={selectedPlayerIds}
             onPlayerToggle={handlePlayerToggle}
-            maxSelections={10}
+            maxSelections={50} // Increased from 10 to 50 to effectively remove the limit
           />
         </div>
         
@@ -130,7 +112,7 @@ export function AddPlayersToActivity({
                 onClick={() => handleQuickSelect(player.id)}
                 className="flex items-center gap-2"
               >
-                <PlayerAvatar player={player} size="sm" />
+                <PlayerAvatar player={player} size="xs" />
                 <span className="truncate max-w-[100px]">{player.name}</span>
               </Button>
             ))}

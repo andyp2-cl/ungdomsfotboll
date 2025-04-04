@@ -47,15 +47,7 @@ export function usePlayerSelection({
   };
 
   const handleSinglePlayerAdd = (playerId: string) => {
-    // Check if adding this player would exceed the 12 player limit
-    if (currentParticipantIds.length >= 12) {
-      toast({
-        title: "Max antal spelare",
-        description: "Du kan inte lägga till fler än 12 spelare till en aktivitet.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // No player limit check anymore
     onAddPlayers([playerId]);
   };
 

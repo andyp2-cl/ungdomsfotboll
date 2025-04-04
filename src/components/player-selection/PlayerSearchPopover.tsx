@@ -20,7 +20,7 @@ export function PlayerSearchPopover({
   selectedPlayers,
   onPlayerSelect,
   currentParticipantCount,
-  maxParticipants = 12
+  maxParticipants = 999 // Changed from 12 to 999 to effectively remove the limit
 }: PlayerSearchPopoverProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,15 +42,7 @@ export function PlayerSearchPopover({
     if (selectedPlayers.includes(playerId)) {
       onPlayerSelect(playerId);
     } else {
-      // Check if adding this player would exceed the player limit
-      if (currentParticipantCount + selectedPlayers.length >= maxParticipants) {
-        toast({
-          title: "Max antal spelare",
-          description: `Du kan inte lägga till fler än ${maxParticipants} spelare till en aktivitet.`,
-          variant: "destructive"
-        });
-        return;
-      }
+      // No player limit check anymore
       onPlayerSelect(playerId);
     }
   };
