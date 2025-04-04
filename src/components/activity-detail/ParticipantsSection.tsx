@@ -47,11 +47,6 @@ export function ParticipantsSection({
                 Inga deltagare
               </Badge>
             )}
-            {participatingPlayers.length >= 12 && (
-              <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
-                Maxantal
-              </Badge>
-            )}
           </div>
         </AccordionTrigger>
         <AccordionContent>

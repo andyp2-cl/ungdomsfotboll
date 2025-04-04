@@ -23,16 +23,14 @@ export function ParticipantActionButtons({
 }: ParticipantActionButtonsProps) {
   return (
     <div className="flex flex-wrap gap-2">
-      {participantCount < 12 && (
-        <Button 
-          variant="outline" 
-          onClick={() => setIsAddingPlayers(!isAddingPlayers)}
-          className="flex-grow"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
-        </Button>
-      )}
+      <Button 
+        variant="outline" 
+        onClick={() => setIsAddingPlayers(!isAddingPlayers)}
+        className="flex-grow"
+      >
+        <UserPlus className="h-4 w-4 mr-2" />
+        {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
+      </Button>
       
       {participantCount > 0 && (
         <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
