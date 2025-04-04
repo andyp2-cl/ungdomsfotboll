@@ -62,6 +62,16 @@ export function ActivityTabContent({
     }
   };
 
+  // Modified to close any open detail when changing views
+  const handleViewChange = (value: "upcoming" | "historical" | "statistics") => {
+    if (value) {
+      setActiveView(value);
+      // Close any open details when changing views
+      setSelectedActivity(null);
+      setSelectedPlayer(null);
+    }
+  };
+
   const dummyPlayerUpdate = (player: Player) => {
     console.log("Player update not implemented in this context", player);
   };
@@ -100,9 +110,7 @@ export function ActivityTabContent({
           <ToggleGroup 
             type="single" 
             value={activeView} 
-            onValueChange={(value) => {
-              if (value) setActiveView(value as "upcoming" | "historical" | "statistics");
-            }} 
+            onValueChange={handleViewChange} 
             className={`justify-start ${isMobile ? 'w-full flex' : ''}`}
           >
             <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>

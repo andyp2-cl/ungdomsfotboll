@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { PlayerHeader } from "@/components/PlayerHeader";
 import { PlayerMatchHistory } from "@/components/player-match-history";
 import { X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
 
 interface PlayerDetailProps {
   player: Player;
@@ -66,6 +68,19 @@ export function PlayerDetail({
       </CardHeader>
       
       <CardContent>
+        {/* Player image display (if available) */}
+        {player.image && (
+          <div className="flex justify-center mb-4">
+            <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-primary/20">
+              <img 
+                src={player.image} 
+                alt={player.name} 
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Basic player information cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <Card>

@@ -49,7 +49,6 @@ export function usePlayerSelection({
   };
 
   const handleSinglePlayerAdd = (playerId: string) => {
-    // No player limit check anymore
     onAddPlayers([playerId]);
   };
 
