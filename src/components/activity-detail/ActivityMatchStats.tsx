@@ -3,6 +3,7 @@ import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityMatchStatsProps {
   activity: Activity;
@@ -19,6 +20,8 @@ export function ActivityMatchStats({
   updateActivity,
   isHistorical = false
 }: ActivityMatchStatsProps) {
+  const isMobile = useIsMobile();
+  
   // Get total goals and assists
   const getTotalGoals = () => {
     if (!activity.player_stats?.goals) return 0;
@@ -65,12 +68,12 @@ export function ActivityMatchStats({
             const assists = activity.player_stats?.assists?.[player.id] || 0;
             
             return (
-              <div key={player.id} className="flex justify-between items-center border-b pb-2">
-                <span className="font-medium">{player.name}</span>
-                <div className="flex items-center gap-4">
+              <div key={player.id} className={`flex ${isMobile ? 'flex-col' : 'justify-between'} items-start sm:items-center border-b pb-2`}>
+                <span className="font-medium mb-2 sm:mb-0">{player.name}</span>
+                <div className={`flex ${isMobile ? 'flex-col w-full space-y-2' : 'items-center gap-4'}`}>
                   <div className="flex items-center">
-                    <span className="text-xs mr-2">Mål:</span>
-                    <>
+                    <span className="text-xs mr-2 w-8">Mål:</span>
+                    <div className="flex items-center">
                       <Button 
                         variant="outline" 
                         size="icon" 
@@ -93,12 +96,12 @@ export function ActivityMatchStats({
                       >
                         +
                       </Button>
-                    </>
+                    </div>
                   </div>
                   
                   <div className="flex items-center">
-                    <span className="text-xs mr-2">Assist:</span>
-                    <>
+                    <span className="text-xs mr-2 w-8">Assist:</span>
+                    <div className="flex items-center">
                       <Button 
                         variant="outline" 
                         size="icon" 
@@ -121,7 +124,7 @@ export function ActivityMatchStats({
                       >
                         +
                       </Button>
-                    </>
+                    </div>
                   </div>
                 </div>
               </div>

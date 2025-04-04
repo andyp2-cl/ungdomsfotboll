@@ -9,6 +9,7 @@ import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { HeaderActionButtons } from "./HeaderActionButtons";
 import { ParticipantsSection } from "./ParticipantsSection";
 import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -45,6 +46,8 @@ export function ActivityDetailView({
   onMatchResultUpdate,
   extraContent // New prop for extra content
 }: ActivityDetailViewProps) {
+  const isMobile = useIsMobile();
+  
   const {
     currentActivity,
     setCurrentActivity,
@@ -86,8 +89,8 @@ export function ActivityDetailView({
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
   return (
-    <Card className="w-full lg:max-w-3xl mx-auto">
-      <CardHeader>
+    <Card className={`w-full ${isMobile ? 'mx-0 px-0' : 'lg:max-w-3xl mx-auto'}`}>
+      <CardHeader className={isMobile ? 'px-3' : ''}>
         <div className="flex justify-between items-start">
           <ActivityDetailHeaderContent 
             activity={currentActivity}
@@ -111,7 +114,7 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className={`space-y-6 ${isMobile ? 'px-3' : ''}`}>
         {isMatch && (
           <MatchResultSection 
             activity={activity}
@@ -146,7 +149,7 @@ export function ActivityDetailView({
         {/* Render the extra content if provided */}
         {extraContent}
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className={`flex justify-end ${isMobile ? 'px-3' : ''}`}>
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>
 

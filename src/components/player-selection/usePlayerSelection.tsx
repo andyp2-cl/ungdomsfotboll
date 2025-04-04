@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { Player, Activity } from "@/types/player";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UsePlayerSelectionProps {
   activity: Activity;
@@ -17,6 +18,7 @@ export function usePlayerSelection({
   onAddPlayers
 }: UsePlayerSelectionProps) {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = useMemo(() => {
@@ -56,6 +58,7 @@ export function usePlayerSelection({
     availablePlayers,
     handlePlayerSelect,
     handleAddPlayers,
-    handleSinglePlayerAdd
+    handleSinglePlayerAdd,
+    isMobile
   };
 }

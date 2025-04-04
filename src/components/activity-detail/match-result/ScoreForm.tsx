@@ -8,6 +8,7 @@ import { Save } from "lucide-react";
 import { isHomeMatch, extractTeamNames } from "./utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ScoreFormProps {
   activity: Activity;
@@ -36,6 +37,7 @@ export function ScoreForm({
 }: ScoreFormProps) {
   const isHome = isHomeMatch(activity);
   const teamNames = extractTeamNames(activity);
+  const isMobile = useIsMobile();
   
   // Determine if Hässleholms IF is the home or away team
   const isHassleholm = isHome ? 'home' : 'away';
@@ -71,8 +73,8 @@ export function ScoreForm({
           <h4 className="text-sm font-medium mb-2">Matchresultat</h4>
           <div className="grid grid-cols-3 gap-2 items-center">
             <div className="space-y-2">
-              <Label htmlFor="homeScore" className={isHassleholm === 'home' ? "font-semibold" : ""}>
-                {homeTeamLabel}
+              <Label htmlFor="homeScore" className={`${isHassleholm === 'home' ? "font-semibold" : ""} ${isMobile ? "text-sm" : ""}`}>
+                {isMobile ? (isHome ? "HIF" : teamNames.homeTeam) : homeTeamLabel}
               </Label>
               <Input
                 id="homeScore"
@@ -87,8 +89,8 @@ export function ScoreForm({
               -
             </div>
             <div className="space-y-2">
-              <Label htmlFor="awayScore" className={isHassleholm === 'away' ? "font-semibold" : ""}>
-                {awayTeamLabel}
+              <Label htmlFor="awayScore" className={`${isHassleholm === 'away' ? "font-semibold" : ""} ${isMobile ? "text-sm" : ""}`}>
+                {isMobile ? (!isHome ? "HIF" : teamNames.awayTeam) : awayTeamLabel}
               </Label>
               <Input
                 id="awayScore"
@@ -108,7 +110,7 @@ export function ScoreForm({
             <RadioGroup 
               value={winStatusValue} 
               onValueChange={handleWinStatusChange}
-              className="flex space-x-4"
+              className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="win" id="win" />

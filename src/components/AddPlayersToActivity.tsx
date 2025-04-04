@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "./player-selection/PlayerAvatar";
 import { toast } from "@/hooks/use-toast";
 import { PlayerMultiSelectDropdown } from "./player-selection/PlayerMultiSelectDropdown";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -21,6 +22,7 @@ export function AddPlayersToActivity({
   currentParticipantIds 
 }: AddPlayersToActivityProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -104,7 +106,7 @@ export function AddPlayersToActivity({
         <div className="mt-4">
           <h4 className="text-sm font-medium mb-2">Snabbval:</h4>
           <div className="flex flex-wrap gap-2">
-            {availablePlayers.slice(0, 8).map(player => (
+            {availablePlayers.slice(0, isMobile ? 4 : 8).map(player => (
               <Button 
                 key={player.id}
                 variant="outline" 

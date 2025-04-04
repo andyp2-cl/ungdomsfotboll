@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerSearchPopoverProps {
   availablePlayers: Player[];
@@ -24,6 +25,7 @@ export function PlayerSearchPopover({
 }: PlayerSearchPopoverProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useIsMobile();
   
   // Filter available players based on search query
   const filteredPlayers = availablePlayers.filter(player => {
@@ -64,7 +66,7 @@ export function PlayerSearchPopover({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0" align="start">
+      <PopoverContent className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-[250px]'} p-0`} align="start">
         <Command>
           <CommandInput 
             placeholder="Sök spelare..." 
