@@ -2,11 +2,12 @@
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ParticipantsList } from "./ParticipantsList";
+import { ParticipantList } from "./ParticipantList";
 import { ParticipantActionButtons } from "./ParticipantActionButtons";
 import { AddPlayersToActivity } from "../AddPlayersToActivity";
 import { Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ParticipantsSectionProps {
   activity: Activity;
@@ -35,6 +36,8 @@ export function ParticipantsSection({
   onAddPlayers,
   players
 }: ParticipantsSectionProps) {
+  const isMobile = useIsMobile();
+
   return (
     <Accordion type="single" collapsible defaultValue="participants">
       <AccordionItem value="participants">
@@ -50,10 +53,11 @@ export function ParticipantsSection({
           </div>
         </AccordionTrigger>
         <AccordionContent>
-          <ParticipantsList
+          <ParticipantList
             participants={participatingPlayers}
             onPlayerSelect={onPlayerSelect}
             onRemovePlayer={onRemovePlayer}
+            isMobile={isMobile}
           />
 
           <ParticipantActionButtons 

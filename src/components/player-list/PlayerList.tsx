@@ -24,36 +24,11 @@ export function PlayerList({
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
   
-  // Log for debugging what's coming into PlayerList
-  console.log("PlayerList received players:", players.length);
-  
-  // Check for specific players
-  const hasAlvin = players.some(p => p.name?.toLowerCase().includes("alvin"));
-  console.log("Alvin in PlayerList input:", hasAlvin);
-  if (!hasAlvin) {
-    console.warn("WARNING: Alvin missing from PlayerList input!");
-    console.log("Player names in PlayerList:", players.map(p => p.name).join(", "));
-  }
-  
-  // Filter out coaches if not requested - we'll do this here as a safety check
-  // even though it's already done in PlayersListContent
-  const filteredPlayers = !showCoaches 
-    ? players.filter(player => {
-        if (!player.positions) return true;
-        const positionsArray = Array.isArray(player.positions) ? player.positions : [player.positions];
-        return !positionsArray.includes("TRÄNARE");
-      })
-    : players;
+  // Filter out coaches if not requested
+  const filteredPlayers = players;
     
   // Apply sorting
   const sortedPlayers = sortPlayers(filteredPlayers);
-  
-  // Final debug check after filtering and sorting
-  const hasAlvinAfterProcessing = sortedPlayers.some(p => p.name?.toLowerCase().includes("alvin"));
-  console.log("Alvin in PlayerList final output:", hasAlvinAfterProcessing);
-  
-  // Log final player count
-  console.log("PlayerList final player count:", sortedPlayers.length);
 
   // Force grid view on mobile devices
   const effectiveViewMode = isMobile ? "grid" : viewMode;
