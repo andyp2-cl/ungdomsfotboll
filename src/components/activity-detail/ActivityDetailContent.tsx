@@ -38,11 +38,24 @@ export function ActivityDetailContent({
   // Determine if this is a cup
   const isCup = activity.type === "cup";
 
-  // Calculate if the activity is historical based on date if not explicitly provided
-  const isHistoricalByDate = !isHistorical && 
-    new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+  // Calculate if the activity is historical based on date and time if not explicitly provided
+  const isHistoricalByDate = !isHistorical && (() => {
+    const now = new Date();
+    const activityDate = new Date(activity.date);
+    
+    // If there's a time specified, add it to the activity date
+    if (activity.time) {
+      const [hours, minutes] = activity.time.split(':').map(Number);
+      activityDate.setHours(hours || 0, minutes || 0);
+    } else {
+      // If no time specified, use end of day (23:59:59)
+      activityDate.setHours(23, 59, 59);
+    }
+    
+    return activityDate < now;
+  })();
   
-  // Use either the provided value or calculate based on date
+  // Use either the provided value or calculate based on date and time
   const isActivityHistorical = isHistorical || isHistoricalByDate;
 
   return (

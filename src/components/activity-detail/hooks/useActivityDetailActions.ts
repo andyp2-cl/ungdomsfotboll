@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,19 +9,31 @@ interface UseActivityDetailActionsProps {
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
 }
 
-export function useActivityDetailActions({
-  activity,
-  players,
-  onActivityUpdate,
-  onKioskAssignmentUpdate
+export function useActivityDetailActions({ 
+  activity, 
+  players, 
+  onActivityUpdate, 
+  onKioskAssignmentUpdate 
 }: UseActivityDetailActionsProps) {
-  const { toast } = useToast();
   const [currentActivity, setCurrentActivity] = useState<Activity>(activity);
-  const [isAddingPlayers, setIsAddingPlayers] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [clearParticipantsDialogOpen, setClearParticipantsDialogOpen] = useState(false);
-
-  const isHistorical = new Date(activity.date) < new Date(new Date().setHours(0, 0, 0, 0));
+  const [isAddingPlayers, setIsAddingPlayers] = useState<boolean>(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+  const [clearParticipantsDialogOpen, setClearParticipantsDialogOpen] = useState<boolean>(false);
+  const { toast } = useToast();
+  
+  const isHistorical = useMemo(() => {
+    const now = new Date();
+    const activityDate = new Date(activity.date);
+    
+    if (activity.time) {
+      const [hours, minutes] = activity.time.split(':').map(Number);
+      activityDate.setHours(hours || 0, minutes || 0);
+    } else {
+      activityDate.setHours(23, 59, 59);
+    }
+    
+    return activityDate < now;
+  }, [activity]);
   
   const participatingPlayers = players.filter(
     (player) => currentActivity.participants?.includes(player.id)

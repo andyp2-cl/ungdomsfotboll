@@ -7,17 +7,25 @@ export function useActivityFilters(activities: Activity[]) {
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
 
   const { currentActivities, historicalActivities } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
     
     const current: Activity[] = [];
     const historical: Activity[] = [];
     
     activities.forEach(activity => {
       const activityDate = new Date(activity.date);
-      activityDate.setHours(0, 0, 0, 0);
       
-      if (activityDate >= today) {
+      // If there's a time specified, add it to the activity date
+      if (activity.time) {
+        const [hours, minutes] = activity.time.split(':').map(Number);
+        activityDate.setHours(hours || 0, minutes || 0);
+      } else {
+        // If no time specified, use end of day (23:59:59)
+        activityDate.setHours(23, 59, 59);
+      }
+      
+      // Compare with current time to determine if it's historical
+      if (activityDate >= now) {
         current.push(activity);
       } else {
         historical.push(activity);
@@ -36,7 +44,7 @@ export function useActivityFilters(activities: Activity[]) {
     );
   };
 
-  // Sortera kommande aktiviteter per månad (återgår till ursprunglig sortering)
+  // Sort the filtered activities
   const filteredCurrentActivities = useMemo(() => {
     // Group activities by month
     const activitiesByMonth = currentActivities.reduce((acc, activity) => {
