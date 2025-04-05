@@ -25,6 +25,14 @@ export function ActivityParticipants({
   const secondRowParticipants = safeParticipants.slice(participantsPerRow, participantsPerRow * 2);
   const remainingCount = safeParticipants.length - (participantsPerRow * 2);
 
+  if (safeParticipants.length === 0) {
+    return (
+      <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
+        <p className="text-xs text-muted-foreground font-medium">Inga deltagare ännu</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
       <p className="text-xs text-muted-foreground font-medium mb-1">Deltagare:</p>

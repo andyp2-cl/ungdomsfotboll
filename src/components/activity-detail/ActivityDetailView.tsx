@@ -10,6 +10,7 @@ import { HeaderActionButtons } from "./HeaderActionButtons";
 import { ParticipantsSection } from "./ParticipantsSection";
 import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -114,41 +115,43 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <CardContent className={`space-y-6 ${isMobile ? 'px-3' : ''}`}>
-        {isMatch && (
-          <MatchResultSection 
-            activity={activity}
-            onMatchResultUpdate={onMatchResultUpdate}
-          />
-        )}
+      <ScrollArea className={`${isMobile ? 'max-h-[70vh]' : ''}`}>
+        <CardContent className={`space-y-6 ${isMobile ? 'px-3' : ''}`}>
+          {isMatch && (
+            <MatchResultSection 
+              activity={activity}
+              onMatchResultUpdate={onMatchResultUpdate}
+            />
+          )}
 
-        {isMatch && (
-          <StatsSection
+          {isMatch && (
+            <StatsSection
+              activity={currentActivity}
+              players={players}
+              participatingPlayers={participatingPlayers}
+              updateActivity={handleActivityUpdate}
+              isHistorical={isHistorical}
+            />
+          )}
+
+          <ParticipantsSection 
             activity={currentActivity}
-            players={players}
             participatingPlayers={participatingPlayers}
-            updateActivity={handleActivityUpdate}
-            isHistorical={isHistorical}
+            isAddingPlayers={isAddingPlayers}
+            setIsAddingPlayers={setIsAddingPlayers}
+            clearParticipantsDialogOpen={clearParticipantsDialogOpen}
+            setClearParticipantsDialogOpen={setClearParticipantsDialogOpen}
+            onPlayerSelect={onPlayerSelect}
+            onRemovePlayer={handleRemovePlayer}
+            onClearAllParticipants={handleClearAllParticipants}
+            onAddPlayers={handleAddPlayers}
+            players={players}
           />
-        )}
-
-        <ParticipantsSection 
-          activity={currentActivity}
-          participatingPlayers={participatingPlayers}
-          isAddingPlayers={isAddingPlayers}
-          setIsAddingPlayers={setIsAddingPlayers}
-          clearParticipantsDialogOpen={clearParticipantsDialogOpen}
-          setClearParticipantsDialogOpen={setClearParticipantsDialogOpen}
-          onPlayerSelect={onPlayerSelect}
-          onRemovePlayer={handleRemovePlayer}
-          onClearAllParticipants={handleClearAllParticipants}
-          onAddPlayers={handleAddPlayers}
-          players={players}
-        />
-        
-        {/* Render the extra content if provided */}
-        {extraContent}
-      </CardContent>
+          
+          {/* Render the extra content if provided */}
+          {extraContent}
+        </CardContent>
+      </ScrollArea>
       <CardFooter className={`flex justify-end ${isMobile ? 'px-3' : ''}`}>
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>

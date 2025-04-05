@@ -42,33 +42,35 @@ export function EditableScoreForm({
   };
 
   return (
-    <div className="border rounded-md p-4 mt-4">
+    <div className="border rounded-md p-3 mt-4">
       <h3 className="text-base font-medium mb-3">Uppdatera matchresultat</h3>
       
-      <div className="grid grid-cols-3 gap-4 items-center mb-4">
+      <div className="grid grid-cols-3 gap-3 items-center mb-4">
         <div className="text-center">
-          <label className="block text-sm font-medium mb-1">{getShortLabel(homeTeamLabel)}</label>
+          <label className="block text-xs sm:text-sm font-medium mb-1">{getShortLabel(homeTeamLabel)}</label>
           <Input
             type="number"
+            inputMode="numeric"
             min={0}
             value={homeScore === undefined ? '' : homeScore}
             onChange={(e) => onHomeScoreChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center"
+            className="text-center h-9"
           />
         </div>
         
         <div className="flex justify-center items-center">
-          <span className="text-xl font-bold">-</span>
+          <span className="text-lg sm:text-xl font-bold">-</span>
         </div>
         
         <div className="text-center">
-          <label className="block text-sm font-medium mb-1">{getShortLabel(awayTeamLabel)}</label>
+          <label className="block text-xs sm:text-sm font-medium mb-1">{getShortLabel(awayTeamLabel)}</label>
           <Input
             type="number"
+            inputMode="numeric"
             min={0}
             value={awayScore === undefined ? '' : awayScore}
             onChange={(e) => onAwayScoreChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
-            className="text-center"
+            className="text-center h-9"
           />
         </div>
       </div>
@@ -77,6 +79,7 @@ export function EditableScoreForm({
         onClick={onSave}
         className="w-full"
         disabled={isSaving}
+        size={isMobile ? "sm" : "default"}
       >
         <Save className="h-4 w-4 mr-2" />
         {isSaving ? "Sparar..." : "Spara resultat"}

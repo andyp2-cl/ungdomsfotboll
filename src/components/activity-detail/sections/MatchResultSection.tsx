@@ -2,6 +2,8 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { MatchResultQuickView } from "../MatchResultQuickView";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchResultSectionProps {
   activity: Activity;
@@ -9,6 +11,8 @@ interface MatchResultSectionProps {
 }
 
 export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResultSectionProps) {
+  const isMobile = useIsMobile();
+  
   if (activity.type !== "match") {
     return null;
   }
@@ -25,8 +29,8 @@ export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResul
   };
 
   return (
-    <div className="border rounded-md p-4">
-      <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+    <div className="border rounded-md p-3 sm:p-4">
+      <h3 className="text-lg font-semibold mb-2 sm:mb-3">Matchresultat</h3>
       <MatchResultQuickView 
         activity={activity}
         onSave={handleQuickResultSave}
