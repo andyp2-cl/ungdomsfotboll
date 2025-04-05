@@ -1,24 +1,29 @@
 
 import React from "react";
-import { Player } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ActivityParticipantsProps {
-  participants: Player[];
+  activity?: Activity;
+  participants?: Player[];
   onPlayerSelect?: (playerId: string) => void;
   isMobile?: boolean;
 }
 
 export function ActivityParticipants({ 
-  participants, 
+  activity,
+  participants = [],
   onPlayerSelect,
   isMobile = false
 }: ActivityParticipantsProps) {
+  // Make sure participants is an array before using slice
+  const safeParticipants = Array.isArray(participants) ? participants : [];
+  
   // Split participants into two rows for better visibility
   const participantsPerRow = isMobile ? 3 : 5;
-  const firstRowParticipants = participants.slice(0, participantsPerRow);
-  const secondRowParticipants = participants.slice(participantsPerRow, participantsPerRow * 2);
-  const remainingCount = participants.length - (participantsPerRow * 2);
+  const firstRowParticipants = safeParticipants.slice(0, participantsPerRow);
+  const secondRowParticipants = safeParticipants.slice(participantsPerRow, participantsPerRow * 2);
+  const remainingCount = safeParticipants.length - (participantsPerRow * 2);
 
   return (
     <div className="mt-1 pt-1 border-t border-dashed border-gray-200">

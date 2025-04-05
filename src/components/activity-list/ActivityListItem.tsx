@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { formatActivityDate } from "@/utils/activity/dateUtils";
@@ -10,6 +11,7 @@ interface ActivityListItemProps {
   onSelect?: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
+  isMobile?: boolean;
 }
 
 export function ActivityListItem({
@@ -17,7 +19,8 @@ export function ActivityListItem({
   players,
   onSelect,
   onPlayerSelect,
-  isHistorical: forceHistorical
+  isHistorical: forceHistorical,
+  isMobile = false
 }: ActivityListItemProps) {
   // Calculate if the activity is historical based on date and time
   const isHistorical = forceHistorical || (() => {
@@ -42,6 +45,11 @@ export function ActivityListItem({
     }
   };
 
+  // Find participants for this activity
+  const participatingPlayers = players.filter(player => 
+    activity.participants?.includes(player.id)
+  );
+
   return (
     <div
       className="group border rounded-md p-4 hover:bg-accent hover:cursor-pointer"
@@ -61,9 +69,9 @@ export function ActivityListItem({
       </div>
       <div className="mt-2">
         <ActivityParticipants 
-          activity={activity}
-          players={players}
+          participants={participatingPlayers}
           onPlayerSelect={onPlayerSelect}
+          isMobile={isMobile}
         />
       </div>
     </div>
