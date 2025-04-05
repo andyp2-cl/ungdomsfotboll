@@ -27,7 +27,7 @@ interface ActivityDetailViewProps {
   cupMatches?: Activity[];
   onPlayerSelect?: (playerId: string) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  extraContent?: React.ReactNode; // New prop for extra content
+  extraContent?: React.ReactNode;
 }
 
 export function ActivityDetailView({ 
@@ -45,7 +45,7 @@ export function ActivityDetailView({
   cupMatches = [],
   onPlayerSelect,
   onMatchResultUpdate,
-  extraContent // New prop for extra content
+  extraContent
 }: ActivityDetailViewProps) {
   const isMobile = useIsMobile();
   
@@ -115,7 +115,7 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <ScrollArea className={`${isMobile ? 'max-h-[70vh]' : ''}`}>
+      <ScrollArea className={`${isMobile ? 'h-[calc(100vh-210px)]' : ''}`}>
         <CardContent className={`space-y-6 ${isMobile ? 'px-3' : ''}`}>
           {isMatch && (
             <MatchResultSection 
@@ -148,7 +148,6 @@ export function ActivityDetailView({
             players={players}
           />
           
-          {/* Render the extra content if provided */}
           {extraContent}
         </CardContent>
       </ScrollArea>
