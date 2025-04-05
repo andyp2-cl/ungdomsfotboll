@@ -90,8 +90,8 @@ export function ActivityDetailView({
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
   return (
-    <Card className={`w-full ${isMobile ? 'mx-0 px-0' : 'lg:max-w-3xl mx-auto'}`}>
-      <CardHeader className={isMobile ? 'px-3' : ''}>
+    <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 h-[100vh]' : 'lg:max-w-3xl mx-auto'}`}>
+      <CardHeader className={isMobile ? 'px-3 pb-2' : ''}>
         <div className="flex justify-between items-start">
           <ActivityDetailHeaderContent 
             activity={currentActivity}
@@ -115,7 +115,7 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <ScrollArea className={`${isMobile ? 'h-[calc(100vh-210px)]' : ''}`}>
+      <ScrollArea className={`flex-1 overflow-y-auto ${isMobile ? 'h-[calc(100vh-180px)]' : ''}`}>
         <CardContent className={`space-y-6 ${isMobile ? 'px-3' : ''}`}>
           {isMatch && (
             <MatchResultSection 
@@ -151,7 +151,7 @@ export function ActivityDetailView({
           {extraContent}
         </CardContent>
       </ScrollArea>
-      <CardFooter className={`flex justify-end ${isMobile ? 'px-3' : ''}`}>
+      <CardFooter className={`flex justify-end mt-auto ${isMobile ? 'px-3' : ''}`}>
         <Button variant="outline" onClick={handleClose}>Stäng</Button>
       </CardFooter>
 
