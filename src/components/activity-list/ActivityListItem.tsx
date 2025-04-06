@@ -4,6 +4,7 @@ import { Activity, Player } from "@/types/player";
 import { formatActivityDate } from "@/utils/activity/dateUtils";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { Badge } from "../ui/badge";
+import { getOutcomeColorClass } from "../activity-detail/match-result/utils";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -49,6 +50,26 @@ export function ActivityListItem({
   const participatingPlayers = players.filter(player => 
     activity.participants?.includes(player.id)
   );
+  
+  // Determine if we should show result (only for matches with results)
+  const showResult = activity.type === "match" && 
+    (activity.homeScore !== undefined && activity.awayScore !== undefined);
+    
+  // Determine result color class
+  let resultColorClass = "";
+  if (showResult) {
+    // Check for draw first
+    if (activity.homeScore === activity.awayScore) {
+      resultColorClass = "text-gray-600"; // Draw - gray/black color
+    }
+    // Check explicit isWin value
+    else if (activity.isWin === true) {
+      resultColorClass = "text-green-600"; // Win - green color
+    } 
+    else if (activity.isWin === false) {
+      resultColorClass = "text-red-600"; // Loss - red color
+    }
+  }
 
   return (
     <div
@@ -57,11 +78,18 @@ export function ActivityListItem({
     >
       <div className="flex justify-between items-start">
         <div className="text-lg font-semibold">{activity.name}</div>
-        {isHistorical && (
-          <Badge variant="outline">
-            Tidigare
-          </Badge>
-        )}
+        <div className="flex items-center space-x-2">
+          {showResult && (
+            <span className={`font-bold ${resultColorClass}`}>
+              {activity.homeScore}-{activity.awayScore}
+            </span>
+          )}
+          {isHistorical && (
+            <Badge variant="outline">
+              Tidigare
+            </Badge>
+          )}
+        </div>
       </div>
       <div className="text-muted-foreground">
         {formatActivityDate(activity.date)}

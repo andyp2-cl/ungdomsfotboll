@@ -50,33 +50,40 @@ export function ScoreForm({
   const handleWinStatusChange = (value: string) => {
     if (!setManualWinStatus) return;
     
-    if (value === "win") {
-      setManualWinStatus(true);
-    } else if (value === "loss") {
-      setManualWinStatus(false);
-    } else if (value === "draw") {
-      // This is the critical fix - set to undefined for draw
-      setManualWinStatus(undefined);
-      
-      // Optionally, if scores are not set, set them equal to represent a draw
-      if (homeScore === undefined && awayScore === undefined) {
-        setHomeScore(0);
-        setAwayScore(0);
-      } else if (homeScore !== undefined && awayScore === undefined) {
-        setAwayScore(homeScore);
-      } else if (homeScore === undefined && awayScore !== undefined) {
-        setHomeScore(awayScore);
-      }
+    switch (value) {
+      case "win":
+        setManualWinStatus(true);
+        break;
+      case "loss":
+        setManualWinStatus(false);
+        break;
+      case "draw":
+        // Set to undefined for draw - this is critical
+        setManualWinStatus(undefined);
+        
+        // Optionally, if scores are not equal, make them equal
+        if (homeScore !== awayScore) {
+          if (homeScore !== undefined && awayScore === undefined) {
+            setAwayScore(homeScore);
+          } else if (homeScore === undefined && awayScore !== undefined) {
+            setHomeScore(awayScore);
+          }
+        }
+        break;
     }
+    
+    console.log(`Changed win status to: ${value}, manualWinStatus will be: ${value === 'draw' ? 'undefined' : value === 'win'}`);
   };
 
   // Determine current value for the radio group
-  let winStatusValue = "draw"; // Default to draw
+  let winStatusValue;
   
   if (manualWinStatus === true) {
     winStatusValue = "win";
   } else if (manualWinStatus === false) {
     winStatusValue = "loss";
+  } else {
+    winStatusValue = "draw";
   }
   
   // Log the current state for debugging

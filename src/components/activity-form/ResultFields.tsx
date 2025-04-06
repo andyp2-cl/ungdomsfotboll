@@ -22,6 +22,11 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
           value.awayScore !== undefined) {
         // Update result string
         form.setValue('result', `${value.homeScore}-${value.awayScore}`);
+        
+        // If scores are equal, auto-set as draw (isWin = undefined)
+        if (value.homeScore === value.awayScore) {
+          form.setValue('isWin', undefined);
+        }
       }
     });
     
@@ -59,12 +64,11 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     // Also update the result field for immediate feedback
                     if (value !== undefined && form.getValues().awayScore !== undefined) {
                       form.setValue('result', `${value}-${form.getValues().awayScore}`);
-                    }
-                    
-                    // Auto-set draw if scores are equal
-                    if (value !== undefined && form.getValues().awayScore !== undefined && 
-                        value === form.getValues().awayScore) {
-                      form.setValue('isWin', undefined);
+                      
+                      // Auto-set draw if scores are equal
+                      if (value === form.getValues().awayScore) {
+                        form.setValue('isWin', undefined);
+                      }
                     }
                   }}
                 />
@@ -93,12 +97,11 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     // Also update the result field for immediate feedback
                     if (value !== undefined && form.getValues().homeScore !== undefined) {
                       form.setValue('result', `${form.getValues().homeScore}-${value}`);
-                    }
-                    
-                    // Auto-set draw if scores are equal
-                    if (value !== undefined && form.getValues().homeScore !== undefined && 
-                        value === form.getValues().homeScore) {
-                      form.setValue('isWin', undefined);
+                      
+                      // Auto-set draw if scores are equal
+                      if (value === form.getValues().homeScore) {
+                        form.setValue('isWin', undefined);
+                      }
                     }
                   }}
                 />
@@ -138,11 +141,16 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => {
+                    console.log(`Form radio changed to: ${value}`);
                     if (value === "win") field.onChange(true);
                     else if (value === "loss") field.onChange(false);
-                    else field.onChange(undefined); // Critical fix for draw
+                    else field.onChange(undefined); // For draw, explicitly set to undefined
                   }}
-                  value={field.value === true ? "win" : field.value === false ? "loss" : "draw"}
+                  value={
+                    field.value === true ? "win" : 
+                    field.value === false ? "loss" : 
+                    "draw" // Default to draw when undefined
+                  }
                   className="flex flex-col space-y-1"
                 >
                   <FormItem className="flex items-center space-x-3 space-y-0">

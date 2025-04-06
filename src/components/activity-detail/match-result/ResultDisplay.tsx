@@ -37,7 +37,7 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
   let outcomeText: string;
   let outcomeColorClass: string;
   
-  // Check for draw first
+  // Check for draw first - important to check this before checking isWin
   if (homeScore === awayScore) {
     outcomeText = "Oavgjort";
     outcomeColorClass = "bg-gray-100 text-gray-800";
