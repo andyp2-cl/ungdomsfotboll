@@ -40,8 +40,13 @@ export const handleMatchResultUpdate = async (
     // Calculate win status based on scores
     let isWin: boolean | undefined = undefined;
     if (homeScore !== undefined && awayScore !== undefined) {
-      isWin = calculateWinStatus(homeScore, awayScore, isHome);
-      console.log("Calculated win status for persistence:", isWin);
+      // For equal scores (draw), isWin should be undefined
+      if (homeScore === awayScore) {
+        isWin = undefined;
+      } else {
+        isWin = calculateWinStatus(homeScore, awayScore, isHome);
+      }
+      console.log("Calculated win status for persistence:", isWin, "isDraw:", homeScore === awayScore);
     }
     
     // Ensure player_stats is properly formatted
@@ -83,7 +88,8 @@ export const handleMatchResultUpdate = async (
       isWin: updatedActivity?.isWin,
       result: updatedActivity?.result,
       homeScore: updatedActivity?.homeScore,
-      awayScore: updatedActivity?.awayScore
+      awayScore: updatedActivity?.awayScore,
+      isDraw: updatedActivity?.homeScore === updatedActivity?.awayScore
     });
     
     // Update state and save to storage

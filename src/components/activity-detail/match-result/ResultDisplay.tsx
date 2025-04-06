@@ -29,31 +29,37 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
     isWin: activity.isWin,
     homeScore,
     awayScore,
-    isHome
+    isHome,
+    isDraw: homeScore === awayScore
   });
   
-  // Determine outcome text based on stored isWin or calculate it
+  // Determine outcome text and badge color
   let outcomeText: string;
   let outcomeColorClass: string;
   
-  if (typeof activity.isWin === 'boolean') {
-    // If we have a defined isWin boolean, use that directly
-    outcomeText = activity.isWin === true 
-      ? "Vinst"
-      : "Förlust";
-      
-    outcomeColorClass = activity.isWin === true
-      ? "bg-green-100 text-green-800" 
-      : "bg-red-100 text-red-800";
-  } else if (homeScore === awayScore) {
-    // Handle draw case
+  // Check for draw first
+  if (homeScore === awayScore) {
     outcomeText = "Oavgjort";
     outcomeColorClass = "bg-gray-100 text-gray-800";
-  } else {
-    // Calculate based on scores as fallback
+  }
+  // Check explicit isWin value
+  else if (typeof activity.isWin === 'boolean') {
+    outcomeText = activity.isWin ? "Vinst" : "Förlust";
+    outcomeColorClass = activity.isWin 
+      ? "bg-green-100 text-green-800" 
+      : "bg-red-100 text-red-800";
+  } 
+  // Calculate based on scores as fallback
+  else {
     outcomeText = getOutcomeText(homeScore, awayScore, isHome);
     outcomeColorClass = getOutcomeColorClass(homeScore, awayScore, isHome);
   }
+  
+  // Determine text color for score display
+  const scoreTextColorClass = 
+    outcomeText === "Vinst" ? "text-green-600" :
+    outcomeText === "Förlust" ? "text-red-600" :
+    "text-gray-600"; // Draw
   
   // Determine team labels
   const ourTeamLabel = "Våra mål";
@@ -64,7 +70,7 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <span className="font-medium">Resultat:</span>
-          <span className="text-lg font-bold">{homeScore}-{awayScore}</span>
+          <span className={`text-lg font-bold ${scoreTextColorClass}`}>{homeScore}-{awayScore}</span>
         </div>
         <div className={`px-3 py-1 rounded-full text-sm font-medium ${outcomeColorClass}`}>
           {outcomeText}
@@ -73,11 +79,11 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
       <div className="grid grid-cols-2 gap-4 mt-3">
         <div className="border rounded p-3 text-center">
           <div className="text-sm text-muted-foreground mb-1">{isHome ? ourTeamLabel : theirTeamLabel}</div>
-          <div className="text-xl font-bold">{isHome ? homeScore : awayScore}</div>
+          <div className={`text-xl font-bold ${isHome ? scoreTextColorClass : ""}`}>{homeScore}</div>
         </div>
         <div className="border rounded p-3 text-center">
           <div className="text-sm text-muted-foreground mb-1">{isHome ? theirTeamLabel : ourTeamLabel}</div>
-          <div className="text-xl font-bold">{isHome ? awayScore : homeScore}</div>
+          <div className={`text-xl font-bold ${!isHome ? scoreTextColorClass : ""}`}>{awayScore}</div>
         </div>
       </div>
     </div>

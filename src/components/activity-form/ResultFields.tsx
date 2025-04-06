@@ -60,6 +60,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     if (value !== undefined && form.getValues().awayScore !== undefined) {
                       form.setValue('result', `${value}-${form.getValues().awayScore}`);
                     }
+                    
+                    // Auto-set draw if scores are equal
+                    if (value !== undefined && form.getValues().awayScore !== undefined && 
+                        value === form.getValues().awayScore) {
+                      form.setValue('isWin', undefined);
+                    }
                   }}
                 />
               </FormControl>
@@ -87,6 +93,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     // Also update the result field for immediate feedback
                     if (value !== undefined && form.getValues().homeScore !== undefined) {
                       form.setValue('result', `${form.getValues().homeScore}-${value}`);
+                    }
+                    
+                    // Auto-set draw if scores are equal
+                    if (value !== undefined && form.getValues().homeScore !== undefined && 
+                        value === form.getValues().homeScore) {
+                      form.setValue('isWin', undefined);
                     }
                   }}
                 />
@@ -128,7 +140,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   onValueChange={(value) => {
                     if (value === "win") field.onChange(true);
                     else if (value === "loss") field.onChange(false);
-                    else field.onChange(undefined);
+                    else field.onChange(undefined); // Critical fix for draw
                   }}
                   value={field.value === true ? "win" : field.value === false ? "loss" : "draw"}
                   className="flex flex-col space-y-1"
@@ -137,7 +149,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     <FormControl>
                       <RadioGroupItem value="win" />
                     </FormControl>
-                    <FormLabel className="font-normal flex items-center">
+                    <FormLabel className="font-normal flex items-center cursor-pointer">
                       <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
                       Vinst
                     </FormLabel>
@@ -146,7 +158,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     <FormControl>
                       <RadioGroupItem value="draw" />
                     </FormControl>
-                    <FormLabel className="font-normal flex items-center">
+                    <FormLabel className="font-normal flex items-center cursor-pointer">
                       <MinusCircle className="h-4 w-4 mr-2 text-gray-500" />
                       Oavgjort
                     </FormLabel>
@@ -155,7 +167,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     <FormControl>
                       <RadioGroupItem value="loss" />
                     </FormControl>
-                    <FormLabel className="font-normal flex items-center">
+                    <FormLabel className="font-normal flex items-center cursor-pointer">
                       <XCircle className="h-4 w-4 mr-2 text-red-500" />
                       Förlust
                     </FormLabel>

@@ -37,29 +37,26 @@ export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayPro
   // Also determine text color for score display
   let scoreTextColorClass: string;
   
-  if (typeof activity.isWin === 'boolean') {
-    // Use the stored isWin value directly
+  // Handle draw case first
+  if (homeScore === awayScore) {
+    outcomeText = "Oavgjort";
+    outcomeColorClass = "bg-gray-100 text-gray-800";
+    scoreTextColorClass = "text-gray-600";
+  } 
+  // Then check explicit isWin property
+  else if (typeof activity.isWin === 'boolean') {
     if (activity.isWin === true) {
       outcomeText = "Vinst";
       outcomeColorClass = "bg-green-100 text-green-800";
       scoreTextColorClass = "text-green-600";
-    } else if (activity.isWin === false) {
+    } else {
       outcomeText = "Förlust";
       outcomeColorClass = "bg-red-100 text-red-800";
       scoreTextColorClass = "text-red-600";
-    } else {
-      // This shouldn't happen since we're checking for boolean, but TypeScript needs it
-      outcomeText = "Oavgjort";
-      outcomeColorClass = "bg-gray-100 text-gray-800";
-      scoreTextColorClass = "text-gray-600";
     }
-  } else if (homeScore === awayScore) {
-    // Handle draw case
-    outcomeText = "Oavgjort";
-    outcomeColorClass = "bg-gray-100 text-gray-800";
-    scoreTextColorClass = "text-gray-600";
-  } else {
-    // Calculate based on scores as fallback
+  } 
+  // Fallback to calculating based on scores
+  else {
     outcomeText = getOutcomeText(homeScore, awayScore, isHome);
     outcomeColorClass = getOutcomeColorClass(homeScore, awayScore, isHome);
     

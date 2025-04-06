@@ -55,16 +55,37 @@ export function ScoreForm({
     } else if (value === "loss") {
       setManualWinStatus(false);
     } else if (value === "draw") {
+      // This is the critical fix - set to undefined for draw
       setManualWinStatus(undefined);
+      
+      // Optionally, if scores are not set, set them equal to represent a draw
+      if (homeScore === undefined && awayScore === undefined) {
+        setHomeScore(0);
+        setAwayScore(0);
+      } else if (homeScore !== undefined && awayScore === undefined) {
+        setAwayScore(homeScore);
+      } else if (homeScore === undefined && awayScore !== undefined) {
+        setHomeScore(awayScore);
+      }
     }
   };
 
   // Determine current value for the radio group
-  const winStatusValue = manualWinStatus === true 
-    ? "win" 
-    : manualWinStatus === false 
-      ? "loss" 
-      : "draw";
+  let winStatusValue = "draw"; // Default to draw
+  
+  if (manualWinStatus === true) {
+    winStatusValue = "win";
+  } else if (manualWinStatus === false) {
+    winStatusValue = "loss";
+  }
+  
+  // Log the current state for debugging
+  console.log("ScoreForm render state:", { 
+    manualWinStatus, 
+    winStatusValue,
+    homeScore, 
+    awayScore 
+  });
 
   return (
     <div>
@@ -114,21 +135,21 @@ export function ScoreForm({
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="win" id="win" />
-                <Label htmlFor="win" className="flex items-center">
+                <Label htmlFor="win" className="flex items-center cursor-pointer">
                   <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
                   Vinst
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="draw" id="draw" />
-                <Label htmlFor="draw" className="flex items-center">
+                <Label htmlFor="draw" className="flex items-center cursor-pointer">
                   <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
                   Oavgjort
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="loss" id="loss" />
-                <Label htmlFor="loss" className="flex items-center">
+                <Label htmlFor="loss" className="flex items-center cursor-pointer">
                   <XCircle className="h-4 w-4 mr-1 text-red-600" />
                   Förlust
                 </Label>

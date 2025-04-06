@@ -50,7 +50,8 @@ export function ActivityTabContent({
   handleClearHistoricalActivities,
   handleMatchResultUpdate
 }: ActivityTabContentProps) {
-  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
+  // Default to historical view for matches
+  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const isMobile = useIsMobile();
 
