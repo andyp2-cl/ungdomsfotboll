@@ -1,50 +1,91 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import React, { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues } from "./formSchema";
-import { ActivityType } from "@/types/player";
-import { useEffect } from "react";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { ActivityFormValues } from "./formSchema";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ResultFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
-  activityType: ActivityType;
+  activityType: string;
 }
 
 export function ResultFields({ form, activityType }: ResultFieldsProps) {
-  // Auto-compute the result string when scores change
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if ((name === 'homeScore' || name === 'awayScore') && 
-          value.homeScore !== undefined && 
-          value.awayScore !== undefined) {
-        // Update result string
-        form.setValue('result', `${value.homeScore}-${value.awayScore}`);
-        
-        // If scores are equal, auto-set as draw (isWin = undefined)
-        if (value.homeScore === value.awayScore) {
-          form.setValue('isWin', undefined);
-        }
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
+  const isMobile = useIsMobile();
+  
+  // Only show result fields for matches
   if (activityType !== "match") {
     return null;
   }
+  
+  const homeScore = form.watch("homeScore");
+  const awayScore = form.watch("awayScore");
+  const isWin = form.watch("isWin");
+
+  // Log form values for debugging
+  console.log("Form values for match result:", { 
+    homeScore, 
+    awayScore, 
+    isWin: isWin === undefined ? "undefined/draw" : isWin 
+  });
+
+  // Handle win status when scores change
+  useEffect(() => {
+    if (homeScore && awayScore && parseInt(homeScore) === parseInt(awayScore)) {
+      form.setValue("isWin", undefined);
+    }
+  }, [homeScore, awayScore, form]);
+
+  // Fixed: Improved radio button change handler
+  const handleWinStatusChange = (value: string) => {
+    console.log("Form radio changed to:", value);
+    
+    switch (value) {
+      case "win":
+        form.setValue("isWin", true);
+        break;
+      case "loss":
+        form.setValue("isWin", false);
+        break;
+      case "draw":
+        // Critical fix: For draw, set to undefined instead of false
+        form.setValue("isWin", undefined);
+        
+        // If we have scores and they're not equal, make them equal
+        const currentHomeScore = form.getValues("homeScore");
+        const currentAwayScore = form.getValues("awayScore");
+        
+        if (currentHomeScore && currentAwayScore && 
+            parseInt(currentHomeScore) !== parseInt(currentAwayScore)) {
+          // If scores don't match, suggest equalizing them
+          if (window.confirm("Vill du göra målen lika för oavgjort?")) {
+            form.setValue("homeScore", currentHomeScore);
+            form.setValue("awayScore", currentHomeScore);
+          }
+        }
+        break;
+    }
+  };
+
+  // Determine current radio value based on isWin
+  let winStatusValue;
+  if (isWin === true) {
+    winStatusValue = "win";
+  } else if (isWin === false) {
+    winStatusValue = "loss";
+  } else {
+    winStatusValue = "draw";
+  }
 
   return (
-    <div className="border-t pt-4 mt-4">
-      <h3 className="font-medium flex items-center mb-3">
-        <Trophy className="h-4 w-4 mr-2" />
-        Resultat
-      </h3>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Matchresultat</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="homeScore"
@@ -52,28 +93,16 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
             <FormItem>
               <FormLabel>Hemmamål</FormLabel>
               <FormControl>
-                <Input 
-                  type="number" 
-                  placeholder="0" 
-                  {...field} 
-                  value={field.value ?? ''}
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Hemmamål"
+                  {...field}
                   onChange={(e) => {
-                    const value = e.target.value === '' ? undefined : parseInt(e.target.value);
-                    field.onChange(value);
-                    
-                    // Also update the result field for immediate feedback
-                    if (value !== undefined && form.getValues().awayScore !== undefined) {
-                      form.setValue('result', `${value}-${form.getValues().awayScore}`);
-                      
-                      // Auto-set draw if scores are equal
-                      if (value === form.getValues().awayScore) {
-                        form.setValue('isWin', undefined);
-                      }
-                    }
+                    field.onChange(e.target.value === "" ? undefined : e.target.value);
                   }}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -85,107 +114,50 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
             <FormItem>
               <FormLabel>Bortamål</FormLabel>
               <FormControl>
-                <Input 
-                  type="number" 
-                  placeholder="0" 
-                  {...field} 
-                  value={field.value ?? ''}
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Bortamål"
+                  {...field}
                   onChange={(e) => {
-                    const value = e.target.value === '' ? undefined : parseInt(e.target.value);
-                    field.onChange(value);
-                    
-                    // Also update the result field for immediate feedback
-                    if (value !== undefined && form.getValues().homeScore !== undefined) {
-                      form.setValue('result', `${form.getValues().homeScore}-${value}`);
-                      
-                      // Auto-set draw if scores are equal
-                      if (value === form.getValues().homeScore) {
-                        form.setValue('isWin', undefined);
-                      }
-                    }
+                    field.onChange(e.target.value === "" ? undefined : e.target.value);
                   }}
                 />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="result"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Resultat (text)</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="2-1" 
-                  {...field} 
-                  readOnly 
-                  className="bg-gray-50"
-                />
-              </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
       </div>
       
-      <div className="mt-4">
-        <FormField
-          control={form.control}
-          name="isWin"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Matchresultat för Hässleholms IF</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={(value) => {
-                    console.log(`Form radio changed to: ${value}`);
-                    if (value === "win") field.onChange(true);
-                    else if (value === "loss") field.onChange(false);
-                    else field.onChange(undefined); // For draw, explicitly set to undefined
-                  }}
-                  value={
-                    field.value === true ? "win" : 
-                    field.value === false ? "loss" : 
-                    "draw" // Default to draw when undefined
-                  }
-                  className="flex flex-col space-y-1"
-                >
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="win" />
-                    </FormControl>
-                    <FormLabel className="font-normal flex items-center cursor-pointer">
-                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                      Vinst
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="draw" />
-                    </FormControl>
-                    <FormLabel className="font-normal flex items-center cursor-pointer">
-                      <MinusCircle className="h-4 w-4 mr-2 text-gray-500" />
-                      Oavgjort
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="loss" />
-                    </FormControl>
-                    <FormLabel className="font-normal flex items-center cursor-pointer">
-                      <XCircle className="h-4 w-4 mr-2 text-red-500" />
-                      Förlust
-                    </FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div>
+        <FormLabel className="block mb-2">Matchresultat</FormLabel>
+        <RadioGroup 
+          value={winStatusValue} 
+          onValueChange={handleWinStatusChange}
+          className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="win" id="win" />
+            <Label htmlFor="win" className="flex items-center cursor-pointer">
+              <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
+              Vinst
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="draw" id="draw" />
+            <Label htmlFor="draw" className="flex items-center cursor-pointer">
+              <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
+              Oavgjort
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="loss" id="loss" />
+            <Label htmlFor="loss" className="flex items-center cursor-pointer">
+              <XCircle className="h-4 w-4 mr-1 text-red-600" />
+              Förlust
+            </Label>
+          </div>
+        </RadioGroup>
       </div>
     </div>
   );

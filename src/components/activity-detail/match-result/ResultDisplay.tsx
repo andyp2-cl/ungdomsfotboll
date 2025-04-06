@@ -43,12 +43,14 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
     outcomeColorClass = "bg-gray-100 text-gray-800";
   }
   // Check explicit isWin value
-  else if (typeof activity.isWin === 'boolean') {
-    outcomeText = activity.isWin ? "Vinst" : "Förlust";
-    outcomeColorClass = activity.isWin 
-      ? "bg-green-100 text-green-800" 
-      : "bg-red-100 text-red-800";
+  else if (activity.isWin === true) {
+    outcomeText = "Vinst";
+    outcomeColorClass = "bg-green-100 text-green-800";
   } 
+  else if (activity.isWin === false) {
+    outcomeText = "Förlust";
+    outcomeColorClass = "bg-red-100 text-red-800";
+  }
   // Calculate based on scores as fallback
   else {
     outcomeText = getOutcomeText(homeScore, awayScore, isHome);

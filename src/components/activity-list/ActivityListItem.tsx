@@ -69,6 +69,17 @@ export function ActivityListItem({
     else if (activity.isWin === false) {
       resultColorClass = "text-red-600"; // Loss - red color
     }
+    else {
+      // Fallback to calculating based on scores (though this shouldn't happen)
+      const isHome = activity.name.toLowerCase().includes("hässleholms if") && 
+                    activity.name.split(" - ")[0].toLowerCase().includes("hässleholms if");
+      
+      if (isHome) {
+        resultColorClass = activity.homeScore! > activity.awayScore! ? "text-green-600" : "text-red-600";
+      } else {
+        resultColorClass = activity.awayScore! > activity.homeScore! ? "text-green-600" : "text-red-600";
+      }
+    }
   }
 
   return (

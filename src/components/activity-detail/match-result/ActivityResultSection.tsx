@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { ScoreSection } from "./ScoreSection";
@@ -26,7 +25,17 @@ export function ActivityResultSection({
   useEffect(() => {
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
+    
+    // Important: Make sure we keep the three-state boolean for win status
     setManualWinStatus(activity.isWin);
+    
+    console.log("ActivityResultSection updated with activity:", { 
+      id: activity.id,
+      homeScore: activity.homeScore,
+      awayScore: activity.awayScore,
+      isWin: activity.isWin,
+      isDraw: activity.homeScore === activity.awayScore
+    });
   }, [activity]);
 
   // Use the result saver hook
@@ -39,6 +48,12 @@ export function ActivityResultSection({
   // Handle save button click
   const handleSave = async () => {
     setIsSaving(true);
+    console.log("Saving match result with:", {
+      homeScore,
+      awayScore,
+      manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus
+    });
+    
     try {
       await saveMatchResult(homeScore, awayScore, manualWinStatus);
     } finally {

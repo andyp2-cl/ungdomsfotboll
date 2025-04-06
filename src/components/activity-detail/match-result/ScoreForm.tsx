@@ -46,9 +46,11 @@ export function ScoreForm({
   const homeTeamLabel = isHome ? "Hässleholms IF (hemma)" : teamNames.homeTeam;
   const awayTeamLabel = !isHome ? "Hässleholms IF (borta)" : teamNames.awayTeam;
 
-  // Handle win status change
+  // Handle win status change with improved logic for draw
   const handleWinStatusChange = (value: string) => {
     if (!setManualWinStatus) return;
+    
+    console.log("ScoreForm handleWinStatusChange:", value);
     
     switch (value) {
       case "win":
@@ -62,12 +64,15 @@ export function ScoreForm({
         setManualWinStatus(undefined);
         
         // Optionally, if scores are not equal, make them equal
-        if (homeScore !== awayScore) {
-          if (homeScore !== undefined && awayScore === undefined) {
+        if (homeScore !== undefined && awayScore !== undefined && homeScore !== awayScore) {
+          if (window.confirm("Vill du göra målen lika för oavgjort?")) {
+            setHomeScore(homeScore);
             setAwayScore(homeScore);
-          } else if (homeScore === undefined && awayScore !== undefined) {
-            setHomeScore(awayScore);
           }
+        } else if (homeScore !== undefined && awayScore === undefined) {
+          setAwayScore(homeScore);
+        } else if (homeScore === undefined && awayScore !== undefined) {
+          setHomeScore(awayScore);
         }
         break;
     }
@@ -76,15 +81,14 @@ export function ScoreForm({
   };
 
   // Determine current value for the radio group
-  let winStatusValue;
+  let winStatusValue = "draw"; // Default to draw
   
   if (manualWinStatus === true) {
     winStatusValue = "win";
   } else if (manualWinStatus === false) {
     winStatusValue = "loss";
-  } else {
-    winStatusValue = "draw";
   }
+  // If undefined, it stays as "draw"
   
   // Log the current state for debugging
   console.log("ScoreForm render state:", { 
