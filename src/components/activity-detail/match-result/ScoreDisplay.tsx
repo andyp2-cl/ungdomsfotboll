@@ -43,10 +43,15 @@ export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayPro
       outcomeText = "Vinst";
       outcomeColorClass = "bg-green-100 text-green-800";
       scoreTextColorClass = "text-green-600";
-    } else {
+    } else if (activity.isWin === false) {
       outcomeText = "Förlust";
       outcomeColorClass = "bg-red-100 text-red-800";
       scoreTextColorClass = "text-red-600";
+    } else {
+      // This shouldn't happen since we're checking for boolean, but TypeScript needs it
+      outcomeText = "Oavgjort";
+      outcomeColorClass = "bg-gray-100 text-gray-800";
+      scoreTextColorClass = "text-gray-600";
     }
   } else if (homeScore === awayScore) {
     // Handle draw case

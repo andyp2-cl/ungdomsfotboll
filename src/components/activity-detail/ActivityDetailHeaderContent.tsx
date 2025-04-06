@@ -21,20 +21,18 @@ export function ActivityDetailHeaderContent({
 }: ActivityDetailHeaderContentProps) {
   // Determine result color based on win/loss/draw
   const getResultBadgeClass = () => {
-    if (!activity.isWin && activity.isWin !== false) {
-      // It's a draw or undefined
-      if (activity.homeScore === activity.awayScore && 
-          activity.homeScore !== undefined && 
-          activity.awayScore !== undefined) {
-        return "bg-gray-100 text-gray-800 border-gray-300";
-      }
-      // Default case
-      return "bg-blue-100 text-blue-800 border-blue-300";
+    if (activity.isWin === true) {
+      return "bg-green-100 text-green-800 border-green-300"; // Win
+    } else if (activity.isWin === false) {
+      return "bg-red-100 text-red-800 border-red-300"; // Loss
+    } else if (activity.homeScore === activity.awayScore && 
+        activity.homeScore !== undefined && 
+        activity.awayScore !== undefined) {
+      return "bg-gray-100 text-gray-800 border-gray-300"; // Draw
     }
     
-    return activity.isWin 
-      ? "bg-green-100 text-green-800 border-green-300" // Win
-      : "bg-red-100 text-red-800 border-red-300";     // Loss
+    // Default case
+    return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
   return (
