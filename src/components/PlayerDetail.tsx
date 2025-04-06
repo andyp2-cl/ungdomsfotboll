@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayerHeader } from "@/components/PlayerHeader";
 import { PlayerMatchHistory } from "@/components/player-match-history";
-import { X } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
+import { X, Edit } from "lucide-react";
+import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
 
 interface PlayerDetailProps {
   player: Player;
@@ -30,6 +29,8 @@ export function PlayerDetail({
   allPlayers,
   onActivitySelect
 }: PlayerDetailProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   // Find activities this player is participating in
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
@@ -46,21 +47,38 @@ export function PlayerDetail({
     }
   };
 
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handlePlayerUpdate = (updatedPlayer: Player) => {
+    onPlayerUpdate(updatedPlayer);
+  };
+
   return (
     <Card className="mb-6 relative">
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute top-2 right-2 z-10" 
-        onClick={onClose}
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      <div className="absolute top-2 right-2 z-10 flex space-x-2">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={handleEditClick}
+          title="Redigera spelare"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
       
       <CardHeader className="pb-0">
         <PlayerHeader 
           player={player} 
-          onEdit={() => onEdit(player)}
+          onEdit={handleEditClick}
           onPlayerUpdate={onPlayerUpdate}
           onBulkUpdate={onBulkUpdate}
           allPlayers={allPlayers}
@@ -93,10 +111,12 @@ export function PlayerDetail({
                   <span className="text-muted-foreground">Namn:</span>
                   <span className="font-medium">{player.name}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Nivå:</span>
-                  <span className="font-medium">{player.grade}</span>
-                </div>
+                {!player.positions?.includes("TRÄNARE") && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nivå:</span>
+                    <span className="font-medium">{player.grade}</span>
+                  </div>
+                )}
                 {player.positions && player.positions.length > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Position:</span>
@@ -147,6 +167,14 @@ export function PlayerDetail({
           onActivitySelect={handleActivitySelect}
         />
       </CardContent>
+      
+      {/* Edit player dialog */}
+      <EditPlayerDialog 
+        player={player}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onPlayerUpdate={handlePlayerUpdate}
+      />
     </Card>
   );
 }

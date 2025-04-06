@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { isHomeMatch, extractTeamNames } from "./utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ScoreFormProps {
@@ -120,16 +120,17 @@ export function ScoreForm({
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draw" id="draw" />
+                <Label htmlFor="draw" className="flex items-center">
+                  <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
+                  Oavgjort
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="loss" id="loss" />
                 <Label htmlFor="loss" className="flex items-center">
                   <XCircle className="h-4 w-4 mr-1 text-red-600" />
                   Förlust
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="draw" id="draw" />
-                <Label htmlFor="draw" className="flex items-center">
-                  Oavgjort
                 </Label>
               </div>
             </RadioGroup>

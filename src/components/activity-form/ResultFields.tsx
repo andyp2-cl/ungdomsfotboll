@@ -1,7 +1,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
 import { ActivityType } from "@/types/player";
@@ -146,7 +146,8 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                     <FormControl>
                       <RadioGroupItem value="draw" />
                     </FormControl>
-                    <FormLabel className="font-normal">
+                    <FormLabel className="font-normal flex items-center">
+                      <MinusCircle className="h-4 w-4 mr-2 text-gray-500" />
                       Oavgjort
                     </FormLabel>
                   </FormItem>

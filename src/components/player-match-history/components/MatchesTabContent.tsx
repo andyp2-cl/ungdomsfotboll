@@ -23,6 +23,20 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
     }
     return null;
   };
+  
+  // Helper to determine badge color based on match outcome
+  const getResultBadgeClass = (match: Activity) => {
+    if (match.isWin === true) {
+      return "bg-green-100 text-green-800 border-green-300";
+    } else if (match.isWin === false) {
+      return "bg-red-100 text-red-800 border-red-300";
+    } else if (match.homeScore === match.awayScore && 
+             match.homeScore !== undefined && 
+             match.awayScore !== undefined) {
+      return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+    return "bg-blue-100 text-blue-800 border-blue-300";
+  };
 
   return (
     <>
@@ -57,7 +71,7 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
                     <TableCell>{match.name}</TableCell>
                     <TableCell>
                       {result ? (
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                        <Badge className={getResultBadgeClass(match)}>
                           {result}
                         </Badge>
                       ) : (
