@@ -92,11 +92,14 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
             </Pie>
             <Tooltip 
               formatter={(value, name, props) => {
-                return [`${value} spelare (${props.payload.percentage}%)`, `Nivå ${props.payload.grade}`];
+                // Important: we need to use props.payload to access our custom data
+                // props.payload contains the original data item
+                return [`${props.payload.count} spelare (${props.payload.percentage}%)`, `Nivå ${props.payload.grade}`];
               }}
             />
             <Legend 
               formatter={(value, entry) => {
+                // Get the original data from entry.payload
                 const { payload } = entry;
                 return `Nivå ${payload.grade}: ${payload.count} spelare (${payload.percentage}%)`;
               }}
