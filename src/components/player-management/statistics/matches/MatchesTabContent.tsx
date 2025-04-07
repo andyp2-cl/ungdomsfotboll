@@ -39,9 +39,6 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
     let goalsScored = 0;
     let goalsConceded = 0;
     let cleanSheets = 0;
-    let comebackWins = 0;
-    let homeWins = 0;
-    let awayWins = 0;
     
     completedMatches.forEach(match => {
       // Get our team name for better detection
@@ -57,14 +54,6 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       // Then check if isWin is explicitly set
       else if (match.isWin === true) {
         wins++;
-        
-        // Count home/away wins based on our team position
-        if (isHomeTeam) {
-          homeWins++;
-        } else {
-          awayWins++;
-        }
-        
       } else if (match.isWin === false) {
         losses++;
       }
@@ -85,12 +74,6 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
         if (theirScore === 0) {
           cleanSheets++;
         }
-        
-        // Comeback wins - we won despite conceding first
-        // This is an approximation since we don't have timeline data
-        if (match.isWin === true && theirScore > 0) {
-          comebackWins++;
-        }
       }
     });
     
@@ -101,11 +84,8 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       losses,
       goalsScored,
       goalsConceded,
-      cleanSheets,
-      comebackWins,
-      homeWins,
-      awayWins,
-      winPercentage: completedMatches.length > 0 ? Math.round((wins / completedMatches.length) * 100) : 0
+      cleanSheets
+      // Removed winPercentage, comebackWins, homeWins, awayWins
     };
   }, [completedMatches]);
 

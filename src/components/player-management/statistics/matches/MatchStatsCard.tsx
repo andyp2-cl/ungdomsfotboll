@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy, ShieldCheck } from "lucide-react";
 
 interface MatchStatsCardProps {
   matchStats: {
@@ -9,71 +10,61 @@ interface MatchStatsCardProps {
     draws: number;
     losses: number;
     goalsScored: number;
+    goalsConceded: number;
     cleanSheets: number;
-    comebackWins: number;
   };
 }
 
 export function MatchStatsCard({ matchStats }: MatchStatsCardProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Detaljerad matchstatistik</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center">
+          <Trophy className="h-5 w-5 mr-2 text-amber-500" />
+          Matchstatistik
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <DetailedStatItem 
-            label="Totalt antal matcher:" 
-            value={matchStats.total} 
-            className="bg-muted"
-          />
-          <DetailedStatItem 
-            label="Vinster:" 
-            value={matchStats.wins} 
-            className="bg-green-100 text-green-800" 
-          />
-          <DetailedStatItem 
-            label="Oavgjorda:" 
-            value={matchStats.draws} 
-            className="bg-gray-100 text-gray-800" 
-          />
-          <DetailedStatItem 
-            label="Förluster:" 
-            value={matchStats.losses} 
-            className="bg-red-100 text-red-800" 
-          />
-          <DetailedStatItem 
-            label="Gjorda mål:" 
-            value={matchStats.goalsScored} 
-            className="bg-blue-100 text-blue-800" 
-          />
-          <DetailedStatItem 
-            label="Hållna nollor:" 
-            value={matchStats.cleanSheets} 
-            className="bg-emerald-100 text-emerald-800" 
-          />
-          <DetailedStatItem 
-            label="Comeback-vinster:" 
-            value={matchStats.comebackWins} 
-            className="bg-purple-100 text-purple-800" 
-          />
-        </div>
+        <dl className="grid grid-cols-2 gap-2">
+          <div className="p-2 rounded-md bg-muted/50">
+            <dt className="text-sm font-medium">Matcher</dt>
+            <dd className="text-2xl font-bold">{matchStats.total}</dd>
+          </div>
+          
+          <div className="p-2 rounded-md bg-green-50">
+            <dt className="text-sm font-medium text-green-700">Vinster</dt>
+            <dd className="text-2xl font-bold text-green-700">{matchStats.wins}</dd>
+          </div>
+          
+          <div className="p-2 rounded-md bg-amber-50">
+            <dt className="text-sm font-medium text-amber-700">Oavgjorda</dt>
+            <dd className="text-2xl font-bold text-amber-700">{matchStats.draws}</dd>
+          </div>
+          
+          <div className="p-2 rounded-md bg-red-50">
+            <dt className="text-sm font-medium text-red-700">Förluster</dt>
+            <dd className="text-2xl font-bold text-red-700">{matchStats.losses}</dd>
+          </div>
+          
+          <div className="p-2 rounded-md bg-blue-50">
+            <dt className="text-sm font-medium text-blue-700">Gjorda mål</dt>
+            <dd className="text-2xl font-bold text-blue-700">{matchStats.goalsScored}</dd>
+          </div>
+          
+          <div className="p-2 rounded-md bg-rose-50">
+            <dt className="text-sm font-medium text-rose-700">Insläppta mål</dt>
+            <dd className="text-2xl font-bold text-rose-700">{matchStats.goalsConceded}</dd>
+          </div>
+          
+          <div className="col-span-2 p-2 rounded-md bg-emerald-50">
+            <dt className="text-sm font-medium text-emerald-700 flex items-center">
+              <ShieldCheck className="h-4 w-4 mr-1" />
+              Nollor
+            </dt>
+            <dd className="text-2xl font-bold text-emerald-700">{matchStats.cleanSheets}</dd>
+          </div>
+        </dl>
       </CardContent>
     </Card>
-  );
-}
-
-interface DetailedStatItemProps {
-  label: string;
-  value: number;
-  className?: string;
-}
-
-function DetailedStatItem({ label, value, className = "" }: DetailedStatItemProps) {
-  return (
-    <div className={`flex justify-between items-center p-3 rounded-md ${className}`}>
-      <span className="font-medium">{label}</span>
-      <span>{value}</span>
-    </div>
   );
 }

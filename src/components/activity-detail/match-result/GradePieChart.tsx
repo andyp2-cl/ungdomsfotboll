@@ -1,7 +1,7 @@
 
 import React, { useMemo } from "react";
 import { Activity, Player, PlayerGrade } from "@/types/player";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface GradePieChartProps {
   activity: Activity;
@@ -97,15 +97,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
                 return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
               }}
             />
-            <Legend 
-              formatter={(value, entry: any) => {
-                // Get the original data from entry.payload
-                const payload = entry.payload;
-                return `${payload.grade}: ${payload.count} (${payload.percentage}%)`;
-              }}
-              iconSize={10} // Smaller legend icons
-              wrapperStyle={{ fontSize: '10px' }} // Smaller legend text
-            />
+            {/* Removed Legend component here */}
           </PieChart>
         </ResponsiveContainer>
       </div>
