@@ -17,6 +17,10 @@ export interface PlayerStatistics {
     activityDate: string;
     assists: number;
   }[];
+  wins: number;
+  draws: number;
+  losses: number;
+  winPercentage: number;
 }
 
 export const calculatePlayerStatistics = (player: Player, activities: Activity[]): PlayerStatistics => {
@@ -33,6 +37,9 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
 
   let totalGoals = 0;
   let totalAssists = 0;
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
   const goalsByActivity: PlayerStatistics['goalsByActivity'] = [];
   const assistsByActivity: PlayerStatistics['assistsByActivity'] = [];
 
@@ -60,6 +67,16 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
         assists: Number(assists)
       });
     }
+    
+    // Track match outcome stats
+    if (match.isWin === true) {
+      wins++;
+    } else if (match.isWin === false) {
+      losses++;
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
+              match.homeScore === match.awayScore) {
+      draws++;
+    }
   });
 
   return {
@@ -67,7 +84,13 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
     totalGoals,
     totalAssists,
     goalsByActivity,
-    assistsByActivity
+    assistsByActivity,
+    wins,
+    draws,
+    losses,
+    winPercentage: historicalMatches.length > 0 
+      ? Math.round((wins / historicalMatches.length) * 100) 
+      : 0
   };
 };
 

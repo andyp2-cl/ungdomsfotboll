@@ -35,7 +35,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
 
   // Handle win status when scores change
   useEffect(() => {
-    if (homeScore && awayScore && parseInt(homeScore) === parseInt(awayScore)) {
+    if (homeScore && awayScore && homeScore === awayScore) {
       form.setValue("isWin", undefined);
     }
   }, [homeScore, awayScore, form]);
@@ -60,7 +60,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
         const currentAwayScore = form.getValues("awayScore");
         
         if (currentHomeScore && currentAwayScore && 
-            parseInt(currentHomeScore) !== parseInt(currentAwayScore)) {
+            currentHomeScore !== currentAwayScore) {
           // If scores don't match, suggest equalizing them
           if (window.confirm("Vill du göra målen lika för oavgjort?")) {
             form.setValue("homeScore", currentHomeScore);

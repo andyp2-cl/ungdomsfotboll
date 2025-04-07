@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 import { getGradeColor } from '@/utils/gradeUtils';
 
@@ -16,6 +15,7 @@ export interface PlayerPerformanceData {
   totalAssists: number;
   matchCount: number;
   winCount: number;
+  drawCount: number;
   winRate: number;
   goalRate: number;
   fill: string;
@@ -52,6 +52,7 @@ export const preparePerformanceData = (players: Player[], activities: Activity[]
       let totalAssists = 0;
       let matchCount = 0;
       let winCount = 0;
+      let drawCount = 0;
       let goalMatches = 0;
 
       activities.forEach(activity => {
@@ -69,15 +70,13 @@ export const preparePerformanceData = (players: Player[], activities: Activity[]
             }
           }
           
-          if (activity.result) {
-            const resultParts = activity.result.split('-');
-            if (resultParts.length === 2) {
-              const ourScore = parseInt(resultParts[0], 10);
-              const theirScore = parseInt(resultParts[1], 10);
-              if (!isNaN(ourScore) && !isNaN(theirScore) && ourScore > theirScore) {
-                winCount++;
-              }
-            }
+          if (activity.isWin === true) {
+            winCount++;
+          } else if (activity.isWin === false) {
+            // loss, already handled by calculating winCount
+          } else if (activity.homeScore !== undefined && activity.awayScore !== undefined && 
+                   activity.homeScore === activity.awayScore) {
+            drawCount++;
           }
         }
       });
@@ -101,6 +100,7 @@ export const preparePerformanceData = (players: Player[], activities: Activity[]
         totalAssists,
         matchCount,
         winCount,
+        drawCount,
         winRate,
         goalRate,
         fill: getGradeColor(player.grade),

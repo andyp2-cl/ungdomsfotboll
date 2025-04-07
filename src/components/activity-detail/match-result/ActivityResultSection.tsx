@@ -1,20 +1,24 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { ScoreSection } from "./ScoreSection";
 import { useResultSaver } from "./ResultSaver";
+import { GradePieChart } from "./GradePieChart";
 
 interface ActivityResultSectionProps {
   activity: Activity;
   isHistorical: boolean;
   updateActivity: (updatedActivity: Activity) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  participatingPlayers?: any[];  // Added participatingPlayers prop
 }
 
 export function ActivityResultSection({ 
   activity, 
   isHistorical,
   updateActivity,
-  onMatchResultUpdate
+  onMatchResultUpdate,
+  participatingPlayers = []  // Default to empty array if not provided
 }: ActivityResultSectionProps) {
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
@@ -77,6 +81,14 @@ export function ActivityResultSection({
         isSaving={isSaving}
         isHistorical={isHistorical}
       />
+      
+      {/* Add the Grade Pie Chart */}
+      {participatingPlayers && participatingPlayers.length > 0 && (
+        <GradePieChart 
+          activity={activity} 
+          participatingPlayers={participatingPlayers} 
+        />
+      )}
     </div>
   );
 }

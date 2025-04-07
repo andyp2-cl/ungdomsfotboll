@@ -36,7 +36,9 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
       wins++;
     } else if (match.isWin === false) {
       losses++;
-    } else if (match.homeScore === match.awayScore && match.homeScore !== undefined) {
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
+              match.homeScore === match.awayScore) {
+      // Count as draw if scores are equal (and both defined)
       draws++;
     }
     // If no match outcome is explicitly set and there's no score equality, don't count it

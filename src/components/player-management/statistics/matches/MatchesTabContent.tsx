@@ -37,6 +37,7 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
     let draws = 0;
     let losses = 0;
     let goalsScored = 0;
+    let goalsConceded = 0;
     let cleanSheets = 0;
     let comebackWins = 0;
     let homeWins = 0;
@@ -46,6 +47,18 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       // First check if isWin is explicitly set
       if (match.isWin === true) {
         wins++;
+        
+        // Determine if we're home or away team
+        const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
+                        !match.name.toLowerCase().includes(' vs ') || 
+                        match.name.toLowerCase().split(' - ')[0].trim().toLowerCase().includes('hässleholms if');
+        
+        if (isHomeTeam) {
+          homeWins++;
+        } else {
+          awayWins++;
+        }
+        
       } else if (match.isWin === false) {
         losses++;
       } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
@@ -58,8 +71,8 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
           match.homeScore !== null && match.awayScore !== null) {
         // Determine if we're home or away team
         const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
-                         !match.name.toLowerCase().includes(' vs ') || 
-                         match.name.toLowerCase().split(' vs ')[0].includes('hässleholms if');
+                       !match.name.toLowerCase().includes(' vs ') || 
+                       match.name.toLowerCase().split(' - ')[0].trim().toLowerCase().includes('hässleholms if');
         
         // goalsScored is always OUR goals (Hässleholms IF)
         // goalsConceded is always THEIR goals (opponent)
@@ -67,25 +80,19 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
         const theirScore = isHomeTeam ? match.awayScore : match.homeScore;
         
         goalsScored += ourScore;
+        goalsConceded += theirScore;
         
         // Clean sheets - matches where we conceded 0 goals
         if (theirScore === 0) {
           cleanSheets++;
         }
         
-        // Count home/away wins
-        if (match.isWin === true) {
-          if (isHomeTeam) {
-            homeWins++;
-          } else {
-            awayWins++;
-          }
-          
-          // Comeback wins - we won despite conceding first
-          // This is an approximation since we don't have timeline data
-          if (theirScore > 0) {
-            comebackWins++;
-          }
+        // Count home/away wins - this is now handled above with the isWin check
+        
+        // Comeback wins - we won despite conceding first
+        // This is an approximation since we don't have timeline data
+        if (match.isWin === true && theirScore > 0) {
+          comebackWins++;
         }
       }
     });
@@ -95,14 +102,15 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       wins,
       draws,
       losses,
-      goalsScored: totalStats.goals,
+      goalsScored,
+      goalsConceded,
       cleanSheets,
       comebackWins,
       homeWins,
       awayWins,
       winPercentage: completedMatches.length > 0 ? Math.round((wins / completedMatches.length) * 100) : 0
     };
-  }, [completedMatches, totalStats]);
+  }, [completedMatches]);
 
   // If there are no completed matches, show a message
   if (completedMatches.length === 0) {

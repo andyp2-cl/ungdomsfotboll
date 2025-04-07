@@ -1,113 +1,105 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
-import { 
-  Card, 
-  CardContent
-} from "@/components/ui/card";
-import { ActivityMatchStats } from "./ActivityMatchStats";
-import { ActivityKioskAssignment } from "./ActivityKioskAssignment";
+import { ActivityDetailHeader } from "./ActivityDetailHeader";
+import { ActivityParticipantSection } from "./ActivityParticipantSection";
+import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
-import { ActivityParticipants } from "./ActivityParticipants";
-import { ActivityHeader } from "./ActivityHeader";
-import { ActivityMatchResult } from "./match-result";
+import { ActivityResultSection } from "./match-result";
+import { ParticipantsList } from "./ParticipantsList";
+import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 
 interface ActivityDetailContentProps {
   activity: Activity;
   players: Player[];
-  onUpdate: (activity: Activity) => void;
-  onKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
-  onActivitySelect?: (activity: Activity | null) => void;
+  onActivityUpdate: (activity: Activity) => void;
+  onPlayerSelect?: (playerId: string) => void;
+  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  onActivitySelect?: (activity: Activity) => void;
+  relatedActivities?: Activity[];
   cupMatches?: Activity[];
-  isHistorical?: boolean;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  allActivities?: Activity[];
 }
 
 export function ActivityDetailContent({
   activity,
   players,
-  onUpdate,
-  onKioskUpdate,
+  onActivityUpdate,
+  onPlayerSelect,
+  onKioskAssignmentUpdate,
   onActivitySelect,
+  relatedActivities = [],
   cupMatches = [],
-  isHistorical = false
+  onMatchResultUpdate,
+  allActivities = []
 }: ActivityDetailContentProps) {
-  // Find participants
-  const participantPlayers = players.filter(player => 
-    activity.participants?.includes(player.id)
-  );
-
-  // Determine if this is a cup
-  const isCup = activity.type === "cup";
-
-  // Calculate if the activity is historical based on date and time if not explicitly provided
-  const isHistoricalByDate = !isHistorical && (() => {
-    const now = new Date();
-    const activityDate = new Date(activity.date);
-    
-    // If there's a time specified, add it to the activity date
-    if (activity.time) {
-      const [hours, minutes] = activity.time.split(':').map(Number);
-      activityDate.setHours(hours || 0, minutes || 0);
-    } else {
-      // If no time specified, use end of day (23:59:59)
-      activityDate.setHours(23, 59, 59);
-    }
-    
-    return activityDate < now;
-  })();
-  
-  // Use either the provided value or calculate based on date and time
-  const isActivityHistorical = isHistorical || isHistoricalByDate;
+  const { 
+    participatingPlayers,
+    isHistorical,
+    handleParticipantAdd,
+    handleParticipantRemove
+  } = useActivityDetailActions(activity, players);
 
   return (
-    <Card>
-      <ActivityHeader activity={activity} />
+    <div className="space-y-6">
+      <ActivityDetailHeader 
+        activity={activity} 
+        isHistorical={isHistorical}
+      />
+      
+      {/* Show Match Result for match type activities */}
+      {activity.type === "match" && (
+        <ActivityResultSection 
+          activity={activity} 
+          isHistorical={isHistorical}
+          updateActivity={onActivityUpdate}
+          onMatchResultUpdate={onMatchResultUpdate}
+          participatingPlayers={participatingPlayers} 
+        />
+      )}
 
-      <CardContent className="pb-3 space-y-6">
-        {/* Match Result (only for matches) */}
-        {activity.type === "match" && (
-          <ActivityMatchResult 
-            activity={activity}
-            updateActivity={onUpdate}
-            isHistorical={isActivityHistorical}
+      {/* For cup type, show related matches */}
+      {activity.type === "cup" && cupMatches.length > 0 && (
+        <ActivityCupMatches 
+          cupMatches={cupMatches}
+          onActivitySelect={onActivitySelect}
+        />
+      )}
+      
+      {/* Related activities (if this is a cup match, show its parent cup) */}
+      {relatedActivities.length > 0 && (
+        <div className="border rounded-md p-4">
+          <h3 className="text-lg font-semibold mb-3">Relaterade aktiviteter</h3>
+          <ParticipantsList 
+            activities={relatedActivities}
+            onSelect={onActivitySelect}
           />
-        )}
-        
-        {/* Player statistics (only for matches) */}
-        {activity.type === "match" && (
-          <ActivityMatchStats 
-            activity={activity} 
-            players={players}
-            participatingPlayers={participantPlayers}
-            updateActivity={onUpdate}
-            isHistorical={isActivityHistorical}
-          />
-        )}
+        </div>
+      )}
 
-        {/* Cup matches section (only for cups) */}
-        {isCup && cupMatches && cupMatches.length > 0 && (
-          <ActivityCupMatches 
-            cupMatches={cupMatches}
-            onActivitySelect={onActivitySelect}
-          />
-        )}
-
-        {/* Participants section */}
-        <ActivityParticipants 
+      {/* Participant section */}
+      <ActivityParticipantSection 
+        activity={activity}
+        players={players}
+        participatingPlayers={participatingPlayers}
+        onParticipantAdd={handleParticipantAdd}
+        onParticipantRemove={handleParticipantRemove}
+        onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+        onPlayerSelect={onPlayerSelect}
+        updateActivity={onActivityUpdate}
+      />
+      
+      {/* Stats section for matches */}
+      {activity.type === "match" && (
+        <ActivityStatsSection 
           activity={activity}
           players={players}
-          updateActivity={onUpdate}
+          participatingPlayers={participatingPlayers}
+          updateActivity={onActivityUpdate}
+          isHistorical={isHistorical}
         />
-
-        {/* Kiosk assignment section (only for matches) */}
-        {activity.type === "match" && (
-          <ActivityKioskAssignment 
-            activity={activity}
-            players={players}
-            updateActivity={onUpdate}
-            onKioskAssignmentUpdate={onKioskUpdate}
-          />
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
