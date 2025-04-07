@@ -31,17 +31,18 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     if (goals > 0) matchesWithGoals++;
     if (assists > 0) matchesWithAssists++;
     
-    // First check if the isWin property is explicitly set
-    if (match.isWin === true) {
-      wins++;
-    } else if (match.isWin === false) {
-      losses++;
-    } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
-              match.homeScore === match.awayScore) {
-      // Count as draw if scores are equal (and both defined)
+    // First check if scores are equal (draw)
+    if (match.homeScore !== undefined && match.awayScore !== undefined && 
+        match.homeScore === match.awayScore) {
       draws++;
     }
-    // If no match outcome is explicitly set and there's no score equality, don't count it
+    // Then check explicit win/loss status
+    else if (match.isWin === true) {
+      wins++;
+    } 
+    else if (match.isWin === false) {
+      losses++;
+    }
   });
 
   return {

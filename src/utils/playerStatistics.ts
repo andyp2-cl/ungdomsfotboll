@@ -68,16 +68,25 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
       });
     }
     
-    // Track match outcome stats
-    if (match.isWin === true) {
-      wins++;
-    } else if (match.isWin === false) {
-      losses++;
-    } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
-              match.homeScore === match.awayScore) {
+    // First check for draw (equal scores)
+    if (match.homeScore !== undefined && match.awayScore !== undefined && 
+        match.homeScore === match.awayScore) {
       draws++;
     }
+    // Then check for explicit win/loss
+    else if (match.isWin === true) {
+      wins++;
+    } 
+    else if (match.isWin === false) {
+      losses++;
+    }
   });
+
+  // Calculate win percentage from matches that have a result
+  const matchesWithResult = wins + draws + losses;
+  const winPercentage = matchesWithResult > 0 
+    ? Math.round((wins / matchesWithResult) * 100) 
+    : 0;
 
   return {
     totalMatches: historicalMatches.length,
@@ -88,9 +97,7 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
     wins,
     draws,
     losses,
-    winPercentage: historicalMatches.length > 0 
-      ? Math.round((wins / historicalMatches.length) * 100) 
-      : 0
+    winPercentage
   };
 };
 

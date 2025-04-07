@@ -7,7 +7,6 @@ import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
 import { ActivityResultSection } from "./match-result";
 import { ParticipantsList } from "./ParticipantsList";
-import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -34,26 +33,46 @@ export function ActivityDetailContent({
   onMatchResultUpdate,
   allActivities = []
 }: ActivityDetailContentProps) {
-  const { 
-    participatingPlayers,
-    isHistorical,
-    handleParticipantAdd,
-    handleParticipantRemove
-  } = useActivityDetailActions(activity, players);
+  // Calculate if activity is historical
+  const isHistorical = (() => {
+    const activityDate = new Date(activity.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return activityDate < today;
+  })();
+  
+  // Filter players participating in this activity
+  const participatingPlayers = players.filter(
+    (player) => activity.participants?.includes(player.id)
+  );
+
+  // Handle direct updates to the activity
+  const updateActivity = (updatedActivity: Activity) => {
+    onActivityUpdate(updatedActivity);
+  };
 
   return (
     <div className="space-y-6">
-      <ActivityDetailHeader 
-        activity={activity} 
-        isHistorical={isHistorical}
-      />
+      {/* Activity header shows basic info, but not with full controls */}
+      <div className="border rounded-md p-4">
+        <h2 className="text-xl font-semibold mb-3">{activity.name}</h2>
+        <p className="text-muted-foreground">
+          {new Date(activity.date).toLocaleDateString()} {activity.time && `• ${activity.time}`}
+          {activity.location && ` • ${activity.location.name}`}
+        </p>
+        <div className="mt-2">
+          <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+            {activity.type === "match" ? "Match" : "Cup"}
+          </span>
+        </div>
+      </div>
       
       {/* Show Match Result for match type activities */}
       {activity.type === "match" && (
         <ActivityResultSection 
           activity={activity} 
           isHistorical={isHistorical}
-          updateActivity={onActivityUpdate}
+          updateActivity={updateActivity}
           onMatchResultUpdate={onMatchResultUpdate}
           participatingPlayers={participatingPlayers} 
         />
@@ -71,10 +90,17 @@ export function ActivityDetailContent({
       {relatedActivities.length > 0 && (
         <div className="border rounded-md p-4">
           <h3 className="text-lg font-semibold mb-3">Relaterade aktiviteter</h3>
-          <ParticipantsList 
-            activities={relatedActivities}
-            onSelect={onActivitySelect}
-          />
+          <ul className="space-y-2">
+            {relatedActivities.map(activity => (
+              <li 
+                key={activity.id}
+                onClick={() => onActivitySelect?.(activity)}
+                className="cursor-pointer hover:bg-gray-50 p-2 rounded-md"
+              >
+                {activity.name} - {new Date(activity.date).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -82,12 +108,8 @@ export function ActivityDetailContent({
       <ActivityParticipantSection 
         activity={activity}
         players={players}
-        participatingPlayers={participatingPlayers}
-        onParticipantAdd={handleParticipantAdd}
-        onParticipantRemove={handleParticipantRemove}
-        onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+        updateActivity={updateActivity}
         onPlayerSelect={onPlayerSelect}
-        updateActivity={onActivityUpdate}
       />
       
       {/* Stats section for matches */}
@@ -96,7 +118,7 @@ export function ActivityDetailContent({
           activity={activity}
           players={players}
           participatingPlayers={participatingPlayers}
-          updateActivity={onActivityUpdate}
+          updateActivity={updateActivity}
           isHistorical={isHistorical}
         />
       )}
