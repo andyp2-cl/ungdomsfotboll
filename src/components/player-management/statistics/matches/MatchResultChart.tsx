@@ -21,6 +21,22 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
     { name: "Förluster", value: matchStats.losses, color: "#dc2626" },
   ].filter(item => item.value > 0); // Only show segments with values > 0
   
+  // Define chart configuration
+  const chartConfig = {
+    wins: {
+      label: "Vinster",
+      color: "#16a34a"
+    },
+    draws: {
+      label: "Oavgjorda",
+      color: "#f59e0b"
+    },
+    losses: {
+      label: "Förluster",
+      color: "#dc2626"
+    }
+  };
+  
   // Skip rendering if no data or if all values are 0
   if (data.length === 0 || matchStats.total === 0) {
     return (
@@ -41,7 +57,7 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
         <CardTitle>Matchresultat</CardTitle>
       </CardHeader>
       <CardContent className="h-[250px]">
-        <ChartContainer>
+        <ChartContainer config={chartConfig}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
