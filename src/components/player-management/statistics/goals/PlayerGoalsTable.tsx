@@ -4,10 +4,9 @@ import { PlayerGoalStat } from "./calculateGoalStats";
 
 interface PlayerGoalsTableProps {
   playerStats: PlayerGoalStat[];
-  limit?: number;
 }
 
-export function PlayerGoalsTable({ playerStats, limit = 20 }: PlayerGoalsTableProps) {
+export function PlayerGoalsTable({ playerStats }: PlayerGoalsTableProps) {
   return (
     <div className="border rounded-md mt-4">
       <div className="grid grid-cols-4 font-semibold p-3 border-b">
@@ -16,8 +15,8 @@ export function PlayerGoalsTable({ playerStats, limit = 20 }: PlayerGoalsTablePr
         <div className="text-center">Mål</div>
         <div className="text-center">Assist</div>
       </div>
-      <div className="divide-y">
-        {playerStats.slice(0, limit).map(player => (
+      <div className="divide-y max-h-[500px] overflow-y-auto">
+        {playerStats.map(player => (
           <div key={player.playerId} className="grid grid-cols-4 p-3">
             <div>{player.name}</div>
             <div className="text-center">{player.matches}</div>
