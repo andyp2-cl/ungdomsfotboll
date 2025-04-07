@@ -58,7 +58,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
-        fontSize={12}
+        fontSize={10} // Smaller font size
         fontWeight="bold"
       >
         {`${gradeDistribution[index].grade}`}
@@ -67,9 +67,9 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
   };
 
   return (
-    <div className="mt-6">
-      <h4 className="text-sm font-medium mb-2">Nivåfördelning i matchen</h4>
-      <div className="h-[200px]">
+    <div className="mt-2">
+      <h4 className="text-xs font-medium mb-1">Nivåfördelning</h4>
+      <div className="h-[100px]"> {/* Reduced height from 200px to 100px */}
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -78,7 +78,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               cy="50%"
               labelLine={false}
               label={renderCustomizedLabel}
-              outerRadius={80}
+              outerRadius={40} // Reduced from 80 to 40
               fill="#8884d8"
               dataKey="count"
               nameKey="grade"
@@ -91,18 +91,20 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value, name, props) => {
-                // Important: we need to use props.payload to access our custom data
-                // props.payload contains the original data item
-                return [`${props.payload.count} spelare (${props.payload.percentage}%)`, `Nivå ${props.payload.grade}`];
+              formatter={(value, name, props: any) => {
+                // Access our custom data through props.payload
+                const payload = props.payload;
+                return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
               }}
             />
             <Legend 
-              formatter={(value, entry) => {
+              formatter={(value, entry: any) => {
                 // Get the original data from entry.payload
-                const { payload } = entry;
-                return `Nivå ${payload.grade}: ${payload.count} spelare (${payload.percentage}%)`;
+                const payload = entry.payload;
+                return `${payload.grade}: ${payload.count} (${payload.percentage}%)`;
               }}
+              iconSize={10} // Smaller legend icons
+              wrapperStyle={{ fontSize: '10px' }} // Smaller legend text
             />
           </PieChart>
         </ResponsiveContainer>

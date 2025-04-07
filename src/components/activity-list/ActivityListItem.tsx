@@ -93,39 +93,45 @@ export function ActivityListItem({
       onClick={handleSelect}
     >
       <div className="flex justify-between items-start">
-        <div className="text-lg font-semibold">{activity.name}</div>
-        <div className="flex items-center space-x-2">
-          {showResult && (
-            <span className={`font-bold ${resultColorClass}`}>
-              {activity.homeScore}-{activity.awayScore}
-            </span>
-          )}
-          {isHistorical && (
-            <Badge variant="outline">
-              Tidigare
-            </Badge>
+        <div className="w-3/4">
+          <div className="text-lg font-semibold">{activity.name}</div>
+          <div className="text-muted-foreground">
+            {formatActivityDate(activity.date)}
+            {activity.time && ` - ${activity.time}`}
+          </div>
+          <div className="mt-2">
+            <ActivityParticipants 
+              participants={participatingPlayers}
+              onPlayerSelect={onPlayerSelect}
+              isMobile={isMobile}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col items-end space-y-2 w-1/4">
+          <div className="flex items-center space-x-2">
+            {showResult && (
+              <span className={`font-bold ${resultColorClass}`}>
+                {activity.homeScore}-{activity.awayScore}
+              </span>
+            )}
+            {isHistorical && (
+              <Badge variant="outline">
+                Tidigare
+              </Badge>
+            )}
+          </div>
+          
+          {/* Add the grade pie chart to the right side when there are participants */}
+          {showGradePieChart && participatingPlayers.length > 3 && (
+            <div className="w-full">
+              <GradePieChart 
+                activity={activity}
+                participatingPlayers={participatingPlayers}
+              />
+            </div>
           )}
         </div>
       </div>
-      <div className="text-muted-foreground">
-        {formatActivityDate(activity.date)}
-        {activity.time && ` - ${activity.time}`}
-      </div>
-      <div className="mt-2">
-        <ActivityParticipants 
-          participants={participatingPlayers}
-          onPlayerSelect={onPlayerSelect}
-          isMobile={isMobile}
-        />
-      </div>
-      
-      {/* Add the grade pie chart when there are participants */}
-      {showGradePieChart && participatingPlayers.length > 3 && (
-        <GradePieChart 
-          activity={activity}
-          participatingPlayers={participatingPlayers}
-        />
-      )}
     </div>
   );
 }
