@@ -44,15 +44,21 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
     let awayWins = 0;
     
     completedMatches.forEach(match => {
-      // First check if isWin is explicitly set
-      if (match.isWin === true) {
+      // Get our team name for better detection
+      const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
+                      !match.name.toLowerCase().includes(' vs ') && 
+                      match.name.toLowerCase().split(' - ')[0].trim().toLowerCase().includes('hässleholms if');
+                      
+      // Check for draws first
+      if (match.homeScore !== undefined && match.awayScore !== undefined && 
+          match.homeScore === match.awayScore) {
+        draws++;
+      }
+      // Then check if isWin is explicitly set
+      else if (match.isWin === true) {
         wins++;
         
-        // Determine if we're home or away team
-        const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
-                        !match.name.toLowerCase().includes(' vs ') || 
-                        match.name.toLowerCase().split(' - ')[0].trim().toLowerCase().includes('hässleholms if');
-        
+        // Count home/away wins based on our team position
         if (isHomeTeam) {
           homeWins++;
         } else {
@@ -61,18 +67,11 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
         
       } else if (match.isWin === false) {
         losses++;
-      } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
-                match.homeScore === match.awayScore) {
-        draws++;
       }
       
       // Calculate our score and opponent score
       if (match.homeScore !== undefined && match.awayScore !== undefined && 
           match.homeScore !== null && match.awayScore !== null) {
-        // Determine if we're home or away team
-        const isHomeTeam = match.name.toLowerCase().includes('hässleholms if') && 
-                       !match.name.toLowerCase().includes(' vs ') || 
-                       match.name.toLowerCase().split(' - ')[0].trim().toLowerCase().includes('hässleholms if');
         
         // goalsScored is always OUR goals (Hässleholms IF)
         // goalsConceded is always THEIR goals (opponent)
@@ -86,8 +85,6 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
         if (theirScore === 0) {
           cleanSheets++;
         }
-        
-        // Count home/away wins - this is now handled above with the isWin check
         
         // Comeback wins - we won despite conceding first
         // This is an approximation since we don't have timeline data

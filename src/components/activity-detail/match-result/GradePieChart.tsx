@@ -46,7 +46,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
   };
 
   // Custom label for the pie chart
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, grade }: any) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
     const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
@@ -91,12 +91,14 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value, name, props) => [`${value} spelare (${props.payload.percentage}%)`, `Nivå ${props.payload.grade}`]} 
+              formatter={(value, name, props) => {
+                return [`${value} spelare (${props.payload.percentage}%)`, `Nivå ${props.payload.grade}`];
+              }}
             />
             <Legend 
               formatter={(value, entry) => {
                 const { payload } = entry;
-                return [`Nivå ${payload.grade}: ${payload.count} spelare (${payload.percentage}%)`];
+                return `Nivå ${payload.grade}: ${payload.count} spelare (${payload.percentage}%)`;
               }}
             />
           </PieChart>

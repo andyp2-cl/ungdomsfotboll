@@ -5,6 +5,7 @@ import { formatActivityDate } from "@/utils/activity/dateUtils";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { Badge } from "../ui/badge";
 import { getOutcomeColorClass } from "../activity-detail/match-result/utils";
+import { GradePieChart } from "../activity-detail/match-result/GradePieChart";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -82,6 +83,10 @@ export function ActivityListItem({
     }
   }
 
+  // Check if we should show the grade pie chart (only if there are participants)
+  const showGradePieChart = activity.type === "match" && 
+                           participatingPlayers.length > 0;
+
   return (
     <div
       className="group border rounded-md p-4 hover:bg-accent hover:cursor-pointer"
@@ -113,6 +118,14 @@ export function ActivityListItem({
           isMobile={isMobile}
         />
       </div>
+      
+      {/* Add the grade pie chart when there are participants */}
+      {showGradePieChart && participatingPlayers.length > 3 && (
+        <GradePieChart 
+          activity={activity}
+          participatingPlayers={participatingPlayers}
+        />
+      )}
     </div>
   );
 }
