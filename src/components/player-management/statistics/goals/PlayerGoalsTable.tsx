@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { Player } from "@/types/player";
 import { PlayerGoalStat } from "./calculateGoalStats";
 import { ArrowDownAZ, ArrowUpAZ, ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 

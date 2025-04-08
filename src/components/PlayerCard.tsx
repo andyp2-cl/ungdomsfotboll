@@ -2,8 +2,7 @@
 import { Player } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 
 interface PlayerCardProps {
   player: Player;
@@ -45,13 +44,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
     return formattedPosition;
   };
 
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onEdit) {
-      onEdit(player);
-    }
-  };
-
   const isCoach = player.positions?.includes('TRÄNARE');
 
   return (
@@ -85,19 +77,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             </Badge>
           )}
         </div>
-        
-        {onEdit && (
-          <div className="absolute bottom-2 right-2">
-            <Button 
-              size="icon" 
-              variant="secondary" 
-              className="h-8 w-8"
-              onClick={handleEditClick}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
       </div>
       
       <CardContent className="p-4">
