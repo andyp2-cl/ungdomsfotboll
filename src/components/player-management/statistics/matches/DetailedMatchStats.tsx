@@ -20,7 +20,7 @@ export function DetailedMatchStats({ label, value, className = "", onPlayerSelec
   return (
     <div 
       className={`flex justify-between items-center p-3 rounded-md ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''} ${className}`}
-      onClick={handleClick}
+      onClick={onPlayerSelect ? handleClick : undefined}
     >
       <span className="font-medium">{label}</span>
       <span>{value}</span>

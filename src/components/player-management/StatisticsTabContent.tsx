@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +7,6 @@ import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceA
 import { MatchesTabContent } from "@/components/player-management/statistics/matches/MatchesTabContent";
 import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
-import { FormationTabContent } from "@/components/player-management/statistics/formation/FormationTabContent";
 
 interface StatisticsTabContentProps {
   players: Player[];
