@@ -14,12 +14,14 @@ interface StatisticsTabContentProps {
   players: Player[];
   activities: Activity[];
   gradeData: { grade: string; players: number }[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
 export function StatisticsTabContent({ 
   players, 
   activities,
-  gradeData
+  gradeData,
+  onPlayerSelect
 }: StatisticsTabContentProps) {
   const activityCountByGrade = gradeData.map(gradeInfo => {
     const gradePlayers = players.filter(p => p.grade === gradeInfo.grade);
@@ -108,11 +110,19 @@ export function StatisticsTabContent({
         </TabsContent>
         
         <TabsContent value="matches">
-          <MatchesTabContent activities={activities} players={players} />
+          <MatchesTabContent 
+            activities={activities} 
+            players={players} 
+            onPlayerSelect={onPlayerSelect}
+          />
         </TabsContent>
         
         <TabsContent value="goals">
-          <GoalsTabContent activities={activities} players={players} />
+          <GoalsTabContent 
+            activities={activities} 
+            players={players}
+            onPlayerSelect={onPlayerSelect} 
+          />
         </TabsContent>
         
         <TabsContent value="participation">

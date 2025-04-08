@@ -9,12 +9,28 @@ import { DetailedMatchStats } from "./DetailedMatchStats";
 interface MatchesTabContentProps {
   activities: Activity[];
   players?: Player[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
-export function MatchesTabContent({ activities, players = [] }: MatchesTabContentProps) {
-  // Filter out only completed matches (those with a result)
+export function MatchesTabContent({ activities, players = [], onPlayerSelect }: MatchesTabContentProps) {
+  // Filter out only completed historical matches (those with a result)
   const completedMatches = useMemo(() => {
+    const now = new Date();
+    
     return activities.filter(a => {
+      // Filter out future matches
+      const matchDate = new Date(a.date);
+      if (a.time) {
+        const [hours, minutes] = a.time.split(':').map(Number);
+        matchDate.setHours(hours || 0, minutes || 0);
+      } else {
+        matchDate.setHours(23, 59, 59);
+      }
+      
+      if (matchDate > now) {
+        return false;
+      }
+      
       if (a.type !== 'match') return false;
       
       // Consider a match as having result if either result is set directly or 
@@ -77,6 +93,11 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       }
     });
     
+    // Calculate additional statistics for display
+    const winPercentage = completedMatches.length > 0 
+      ? Math.round((wins / completedMatches.length) * 100) 
+      : 0;
+    
     return {
       total: completedMatches.length,
       wins,
@@ -84,8 +105,11 @@ export function MatchesTabContent({ activities, players = [] }: MatchesTabConten
       losses,
       goalsScored,
       goalsConceded,
-      cleanSheets
-      // Removed winPercentage, comebackWins, homeWins, awayWins
+      cleanSheets,
+      winPercentage,
+      // Add empty values for homeWins and awayWins to match the expected interface
+      homeWins: 0,
+      awayWins: 0
     };
   }, [completedMatches]);
 

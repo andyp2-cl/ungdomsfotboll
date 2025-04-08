@@ -119,6 +119,7 @@ export function PlayerManagement({
             players={players} 
             activities={activities}
             gradeData={gradeData} 
+            onPlayerSelect={onPlayerSelect}
           />
         </TabsContent>
 

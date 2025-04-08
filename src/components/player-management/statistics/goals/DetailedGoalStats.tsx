@@ -11,9 +11,10 @@ interface DetailedGoalStatsProps {
     goals: number;
     assists: number;
   };
+  onPlayerSelect?: (playerId: string) => void;
 }
 
-export function DetailedGoalStats({ playerStats, totalStats }: DetailedGoalStatsProps) {
+export function DetailedGoalStats({ playerStats, totalStats, onPlayerSelect }: DetailedGoalStatsProps) {
   return (
     <Card>
       <CardHeader>
@@ -26,7 +27,10 @@ export function DetailedGoalStats({ playerStats, totalStats }: DetailedGoalStats
             playerCount={playerStats.length}
           />
           
-          <PlayerGoalsTable playerStats={playerStats} />
+          <PlayerGoalsTable 
+            playerStats={playerStats} 
+            onPlayerSelect={onPlayerSelect}
+          />
         </div>
       </CardContent>
     </Card>
