@@ -77,8 +77,7 @@ export function PlayerDetail({
       
       <CardHeader className="pb-0">
         <PlayerHeader 
-          player={player} 
-          onEdit={handleEditClick}
+          player={player}
           onPlayerUpdate={onPlayerUpdate}
           onBulkUpdate={onBulkUpdate}
           allPlayers={allPlayers}

@@ -85,7 +85,6 @@ export function StatisticsTabContent({
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Matchstatistik</TabsTrigger>
           <TabsTrigger value="participation">Deltagande</TabsTrigger>
-          <TabsTrigger value="formation">Formation</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -127,10 +126,6 @@ export function StatisticsTabContent({
         
         <TabsContent value="participation">
           <ParticipationTabContent activities={activities} players={players} />
-        </TabsContent>
-        
-        <TabsContent value="formation">
-          <FormationTabContent activities={activities} players={players} />
         </TabsContent>
       </Tabs>
     </div>
