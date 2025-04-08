@@ -52,6 +52,12 @@ export function PlayerGoalsTable({ playerStats, onPlayerSelect }: PlayerGoalsTab
     }
   };
 
+  const handlePlayerClick = (playerId: string) => {
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    }
+  };
+
   return (
     <div className="border rounded-md mt-4">
       <div className="grid grid-cols-4 font-semibold p-3 border-b">
@@ -85,7 +91,7 @@ export function PlayerGoalsTable({ playerStats, onPlayerSelect }: PlayerGoalsTab
           <div 
             key={player.playerId} 
             className={`grid grid-cols-4 p-3 ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''}`}
-            onClick={() => onPlayerSelect && onPlayerSelect(player.playerId)}
+            onClick={() => handlePlayerClick(player.playerId)}
           >
             <div>{player.name}</div>
             <div className="text-center">{player.matches}</div>

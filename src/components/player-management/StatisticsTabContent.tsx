@@ -83,7 +83,7 @@ export function StatisticsTabContent({
         <TabsList className="w-full md:w-auto">
           <TabsTrigger value="overview">Översikt</TabsTrigger>
           <TabsTrigger value="matches">Matcher</TabsTrigger>
-          <TabsTrigger value="goals">Målstatistik</TabsTrigger>
+          <TabsTrigger value="goals">Matchstatistik</TabsTrigger>
           <TabsTrigger value="participation">Deltagande</TabsTrigger>
           <TabsTrigger value="formation">Formation</TabsTrigger>
         </TabsList>
