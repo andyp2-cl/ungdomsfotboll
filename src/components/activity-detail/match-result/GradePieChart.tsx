@@ -1,39 +1,75 @@
 
-import React, { useMemo } from 'react';
-import { Activity } from "@/types/player";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { getGradeColor } from '@/utils/gradeUtils';
+import React, { useMemo } from "react";
+import { Activity, Player, PlayerGrade } from "@/types/player";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface GradePieChartProps {
   activity: Activity;
-  participatingPlayers: any[];
+  participatingPlayers: Player[];
 }
 
 export function GradePieChart({ activity, participatingPlayers }: GradePieChartProps) {
-  // Count players by grade
+  // Calculate grade distribution
   const gradeDistribution = useMemo(() => {
-    const distribution: Record<string, number> = {};
+    const grades: Record<PlayerGrade, number> = {
+      'A': 0,
+      'B': 0,
+      'C': 0,
+      'D': 0
+    };
     
     participatingPlayers.forEach(player => {
-      if (!player.positions?.includes("TRÄNARE") && player.grade) {
-        distribution[player.grade] = (distribution[player.grade] || 0) + 1;
+      if (player.grade && grades[player.grade as PlayerGrade] !== undefined) {
+        grades[player.grade as PlayerGrade]++;
       }
     });
-    
-    // Convert to array format for the chart
-    return Object.entries(distribution).map(([grade, count]) => ({
+
+    // Convert to array for recharts
+    return Object.entries(grades).map(([grade, count]) => ({
       grade,
       count,
-    })).sort((a, b) => a.grade.localeCompare(b.grade));
+      percentage: participatingPlayers.length ? Math.round((count / participatingPlayers.length) * 100) : 0
+    })).filter(item => item.count > 0);
   }, [participatingPlayers]);
-  
+
   // Skip rendering if no data
-  if (gradeDistribution.length === 0) return null;
-  
+  if (!gradeDistribution.length) {
+    return null;
+  }
+
+  // Colors for each grade
+  const GRADE_COLORS: Record<string, string> = {
+    'A': '#10b981', // green
+    'B': '#3b82f6', // blue
+    'C': '#f59e0b', // amber
+    'D': '#ef4444'  // red
+  };
+
+  // Custom label for the pie chart
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={10} // Smaller font size
+        fontWeight="bold"
+      >
+        {`${gradeDistribution[index].grade}`}
+      </text>
+    );
+  };
+
   return (
-    <div className="mt-6">
-      <h4 className="text-sm font-medium mb-2">Deltagarfördelning</h4>
-      <div className="h-[180px]">
+    <div className="mt-2">
+      <h4 className="text-xs font-medium mb-1">Nivåfördelning</h4>
+      <div className="h-[100px]"> {/* Reduced height from 200px to 100px */}
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -41,24 +77,27 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               cx="50%"
               cy="50%"
               labelLine={false}
-              outerRadius={70}
+              label={renderCustomizedLabel}
+              outerRadius={40} // Reduced from 80 to 40
               fill="#8884d8"
               dataKey="count"
               nameKey="grade"
-              label={({ grade, count, percent }) => 
-                `${grade}: ${count} (${(percent * 100).toFixed(0)}%)`
-              }
             >
               {gradeDistribution.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={getGradeColor(entry.grade)} 
+                  fill={GRADE_COLORS[entry.grade] || '#8884d8'} 
                 />
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value, name, props) => [`${value} spelare`, `Nivå ${props.payload.grade}`]}
+              formatter={(value, name, props: any) => {
+                // Access our custom data through props.payload
+                const payload = props.payload;
+                return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
+              }}
             />
+            {/* Removed Legend component here */}
           </PieChart>
         </ResponsiveContainer>
       </div>
