@@ -4,6 +4,7 @@ import { Activity } from "@/types/player";
 import { ScoreSection } from "./ScoreSection";
 import { useResultSaver } from "./ResultSaver";
 import { GradePieChart } from "./GradePieChart";
+import { Trophy, Users } from "lucide-react";
 
 interface ActivityResultSectionProps {
   activity: Activity;
@@ -66,8 +67,11 @@ export function ActivityResultSection({
   };
 
   return (
-    <div className="border rounded-md p-4">
-      <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+    <div className="border rounded-lg p-4 bg-white shadow-sm">
+      <h3 className="text-lg font-semibold mb-3 flex items-center">
+        <Trophy className="h-5 w-5 mr-2 text-amber-500" />
+        Matchresultat
+      </h3>
       
       <ScoreSection 
         activity={activity}
@@ -84,10 +88,16 @@ export function ActivityResultSection({
       
       {/* Add the Grade Pie Chart */}
       {participatingPlayers && participatingPlayers.length > 0 && (
-        <GradePieChart 
-          activity={activity} 
-          participatingPlayers={participatingPlayers} 
-        />
+        <div className="mt-6 pt-4 border-t">
+          <div className="flex items-center mb-2">
+            <Users className="h-5 w-5 mr-2 text-blue-500" />
+            <h3 className="font-semibold">Deltagarsammansättning</h3>
+          </div>
+          <GradePieChart 
+            activity={activity} 
+            participatingPlayers={participatingPlayers} 
+          />
+        </div>
       )}
     </div>
   );
