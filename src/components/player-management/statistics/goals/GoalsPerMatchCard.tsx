@@ -6,9 +6,10 @@ import { PlayerGoalStat } from "./calculateGoalStats";
 
 interface GoalsPerMatchCardProps {
   playerStats: PlayerGoalStat[];
+  className?: string;
 }
 
-export function GoalsPerMatchCard({ playerStats }: GoalsPerMatchCardProps) {
+export function GoalsPerMatchCard({ playerStats, className }: GoalsPerMatchCardProps) {
   const topScorers = playerStats.slice(0, 10);
   
   const chartData = topScorers.map(p => ({
@@ -17,7 +18,7 @@ export function GoalsPerMatchCard({ playerStats }: GoalsPerMatchCardProps) {
   }));
   
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Mål per match</CardTitle>
       </CardHeader>
