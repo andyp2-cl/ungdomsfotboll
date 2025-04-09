@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 
 export const mockPlayers: Player[] = [
@@ -37,11 +38,11 @@ export const mockPlayers: Player[] = [
   { id: "34", name: "Liam Karlsson Sjöstrand", grade: "D", positions: ["MF"], activities: [] },
   { id: "35", name: "Lincoln Stenhöös", grade: "D", positions: ["MF"], activities: [] },
   { id: "36", name: "Noah Åkesson nilsson", grade: "D", positions: ["BACK"], activities: [] },
-  { id: "37", name: "Andreas Petersson", grade: "A", positions: ["TRÄNARE"], activities: [] },
-  { id: "38", name: "Anna Zenthio", grade: "A", positions: ["TRÄNARE"], activities: [] },
+  { id: "37", name: "Andreas Petersson", positions: ["TRÄNARE"], activities: [] },
+  { id: "38", name: "Anna Zenthio", positions: ["TRÄNARE"], activities: [] },
   { id: "39", name: "Tage", grade: "A", positions: ["MV"], activities: [] },
-  { id: "40", name: "Ted Petersson", grade: "A", positions: ["TRÄNARE"], activities: [] },
-  { id: "41", name: "Tommie Hanson", grade: "A", positions: ["TRÄNARE"], activities: [] },
+  { id: "40", name: "Ted Petersson", positions: ["TRÄNARE"], activities: [] },
+  { id: "41", name: "Tommie Hanson", positions: ["TRÄNARE"], activities: [] },
 ];
 
 export const mockActivities: Activity[] = [

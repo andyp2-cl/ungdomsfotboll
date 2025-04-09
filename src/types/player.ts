@@ -43,7 +43,7 @@ export interface Activity {
 export interface Player {
   id: string;
   name: string;
-  grade: PlayerGrade;
+  grade?: PlayerGrade; // Changed to optional since trainers don't have a grade
   positions?: PlayerPosition[]; // Changed from position to positions array
   activities?: string[]; // Array of activity IDs this player is participating in
   jerseyNumber?: string; // Optional jersey number for the player

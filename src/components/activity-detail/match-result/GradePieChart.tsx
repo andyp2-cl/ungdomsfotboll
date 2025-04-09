@@ -18,7 +18,12 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
       'D': 0
     };
     
-    participatingPlayers.forEach(player => {
+    // Only count non-coach players
+    const nonCoachPlayers = participatingPlayers.filter(player => 
+      !player.positions?.includes('TRÄNARE')
+    );
+    
+    nonCoachPlayers.forEach(player => {
       if (player.grade && grades[player.grade as PlayerGrade] !== undefined) {
         grades[player.grade as PlayerGrade]++;
       }
@@ -28,7 +33,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     return Object.entries(grades).map(([grade, count]) => ({
       grade,
       count,
-      percentage: participatingPlayers.length ? Math.round((count / participatingPlayers.length) * 100) : 0
+      percentage: nonCoachPlayers.length ? Math.round((count / nonCoachPlayers.length) * 100) : 0
     })).filter(item => item.count > 0);
   }, [participatingPlayers]);
 

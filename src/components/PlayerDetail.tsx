@@ -41,6 +41,8 @@ export function PlayerDetail({
     activity.type === "match"
   );
 
+  const isCoach = player.positions?.includes('TRÄNARE');
+
   const handleActivitySelect = (activity: Activity) => {
     if (onActivitySelect) {
       onActivitySelect(activity);
@@ -110,7 +112,7 @@ export function PlayerDetail({
                   <span className="text-muted-foreground">Namn:</span>
                   <span className="font-medium">{player.name}</span>
                 </div>
-                {!player.positions?.includes("TRÄNARE") && (
+                {!isCoach && player.grade && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nivå:</span>
                     <span className="font-medium">{player.grade}</span>
@@ -119,10 +121,12 @@ export function PlayerDetail({
                 {player.positions && player.positions.length > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Position:</span>
-                    <span className="font-medium">{player.positions.join(", ")}</span>
+                    <span className="font-medium">
+                      {isCoach ? "Tränare" : player.positions.filter(p => p !== 'TRÄNARE').join(", ")}
+                    </span>
                   </div>
                 )}
-                {player.jerseyNumber && (
+                {player.jerseyNumber && !isCoach && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tröjnummer:</span>
                     <span className="font-medium">{player.jerseyNumber}</span>

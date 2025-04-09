@@ -17,7 +17,8 @@ export function usePlayerFormatting() {
     }
   };
 
-  const getGradeText = (grade: string) => {
+  const getGradeText = (grade: string | undefined) => {
+    if (!grade) return '';
     return `Nivå ${grade}`;
   };
 
@@ -35,6 +36,12 @@ export function usePlayerFormatting() {
 
   const formatPositions = (positions: string[] | undefined) => {
     if (!positions || positions.length === 0) return 'Odefinierad';
+    
+    const isTrainer = positions.includes('TRÄNARE');
+    if (isTrainer) {
+      return 'Tränare';
+    }
+    
     return positions.map(formatPosition).join(', ');
   };
 
