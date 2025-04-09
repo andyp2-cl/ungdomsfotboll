@@ -37,7 +37,10 @@ export function GoalsTabContent({ activities, players, onPlayerSelect }: GoalsTa
         className="col-span-full"
       />
       
-      <GoalsPerMatchCard playerStats={playerStats} className="col-span-full md:col-span-1" />
+      <GoalsPerMatchCard 
+        playerStats={playerStats} 
+        className="col-span-full md:col-span-1" 
+      />
     </div>
   );
 }

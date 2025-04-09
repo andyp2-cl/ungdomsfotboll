@@ -24,7 +24,7 @@ export function DetailedGoalStats({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Detaljerad målstatistik</CardTitle>
+        <CardTitle>Detaljerad matchstatistik</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
