@@ -55,7 +55,7 @@ export function StatisticsTabsWrapper({
         </TabsContent>
         
         <TabsContent value="formation">
-          <FormationTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
+          <FormationTabContent players={players} activities={activities} />
         </TabsContent>
       </Tabs>
     </div>

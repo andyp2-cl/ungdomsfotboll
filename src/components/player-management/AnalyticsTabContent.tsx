@@ -68,13 +68,15 @@ export function AnalyticsTabContent({
   const gradeChartConfig = {
     average: {
       label: "Genomsnitt per spelare",
-    }
+    },
+    gradeColors: {} // Add empty gradeColors to satisfy the type
   };
   
   const playerChartConfig = {
     activities: {
       label: "Antal aktiviteter",
-    }
+    },
+    gradeColors: {} // Add empty gradeColors to satisfy the type
   };
 
   return (

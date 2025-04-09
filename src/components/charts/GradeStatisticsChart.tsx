@@ -25,8 +25,14 @@ interface GradeStatisticsChartProps {
 }
 
 export function GradeStatisticsChart({ data, config }: GradeStatisticsChartProps) {
+  // Make sure config has gradeColors, and if not, use an empty object
+  const configWithGradeColors = {
+    ...config,
+    gradeColors: config.gradeColors || {}
+  };
+  
   return (
-    <ChartContainer config={config}>
+    <ChartContainer config={configWithGradeColors}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />

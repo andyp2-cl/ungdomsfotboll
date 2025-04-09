@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +50,10 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
   };
 
   // Chart config
-  const chartConfig = getGradeChartConfig();
+  const chartConfig = {
+    ...getGradeChartConfig(),
+    gradeColors: {} // Add required gradeColors field
+  };
 
   // Calculate participation by grade
   const gradeStats = useMemo(() => {

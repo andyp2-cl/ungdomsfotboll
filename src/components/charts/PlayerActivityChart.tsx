@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface PlayerActivityChartProps {
   data: any[];
   config: {
-    gradeColors: Record<string, string>;
+    gradeColors?: Record<string, string>; // Make gradeColors optional
   };
   onBarClick?: (playerId: string) => void;
 }

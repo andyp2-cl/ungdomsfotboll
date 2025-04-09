@@ -12,9 +12,10 @@ import { getGradeColor } from '@/utils/gradeUtils';
 interface OverviewTabContentProps {
   players: Player[];
   activities: Activity[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
-export function OverviewTabContent({ players, activities }: OverviewTabContentProps) {
+export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
   // Calculate player participation statistics
   const playerStats = useMemo(() => {
     return players.map(player => {
@@ -65,7 +66,10 @@ export function OverviewTabContent({ players, activities }: OverviewTabContentPr
   }, [players]);
 
   // Chart config
-  const chartConfig = getGradeChartConfig();
+  const chartConfig = {
+    ...getGradeChartConfig(),
+    gradeColors: {} // Add empty gradeColors to satisfy the type
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

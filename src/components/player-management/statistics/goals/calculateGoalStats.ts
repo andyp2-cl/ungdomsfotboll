@@ -2,6 +2,7 @@
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerGoalStat {
+  id: string;  // Added id for compatibility
   playerId: string;
   name: string;
   goals: number;
@@ -25,6 +26,7 @@ export function calculateGoalStats(activities: Activity[], players: Player[]): G
   players.forEach(player => {
     if (!player.positions?.includes("TRÄNARE")) {
       stats.set(player.id, {
+        id: player.id,  // Set id equal to playerId for compatibility
         playerId: player.id,
         name: player.name,
         goals: 0,
