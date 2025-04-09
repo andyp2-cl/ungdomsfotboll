@@ -1,105 +1,56 @@
 
-import React, { useState } from "react";
+import React from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlayerGoalStat } from "./calculateGoalStats";
-import { ArrowDownAZ, ArrowUpAZ, ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerGoalsTableProps {
   playerStats: PlayerGoalStat[];
   onPlayerSelect?: (playerId: string) => void;
 }
 
-type SortField = "name" | "matches" | "goals" | "assists";
-type SortDirection = "asc" | "desc";
-
 export function PlayerGoalsTable({ playerStats, onPlayerSelect }: PlayerGoalsTableProps) {
-  const [sortField, setSortField] = useState<SortField>("goals");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // Toggle direction if clicking the same field
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      // Set new field and default to descending for statistics, ascending for name
-      setSortField(field);
-      setSortDirection(field === "name" ? "asc" : "desc");
-    }
-  };
-
-  const sortedStats = [...playerStats].sort((a, b) => {
-    let comparison = 0;
-    
-    if (sortField === "name") {
-      comparison = a.name.localeCompare(b.name);
-    } else if (sortField === "matches") {
-      comparison = a.matches - b.matches;
-    } else if (sortField === "goals") {
-      comparison = a.goals - b.goals;
-    } else if (sortField === "assists") {
-      comparison = a.assists - b.assists;
-    }
-    
-    return sortDirection === "asc" ? comparison : -comparison;
-  });
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    
-    if (field === "name") {
-      return sortDirection === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />;
-    } else {
-      return sortDirection === "asc" ? <ArrowUpIcon className="h-4 w-4" /> : <ArrowDownIcon className="h-4 w-4" />;
-    }
-  };
-
+  const isMobile = useIsMobile();
+  const sortedStats = [...playerStats].sort((a, b) => b.goals - a.goals);
+  
   const handlePlayerClick = (playerId: string) => {
     if (onPlayerSelect) {
       onPlayerSelect(playerId);
     }
   };
-
+  
   return (
-    <div className="border rounded-md mt-4">
-      <div className="grid grid-cols-4 font-semibold p-3 border-b">
-        <button 
-          onClick={() => handleSort("name")} 
-          className="flex items-center gap-1 hover:text-primary transition-colors"
-        >
-          Namn {getSortIcon("name")}
-        </button>
-        <button 
-          onClick={() => handleSort("matches")} 
-          className="text-center flex items-center justify-center gap-1 hover:text-primary transition-colors"
-        >
-          Matcher {getSortIcon("matches")}
-        </button>
-        <button 
-          onClick={() => handleSort("goals")} 
-          className="text-center flex items-center justify-center gap-1 hover:text-primary transition-colors"
-        >
-          Mål {getSortIcon("goals")}
-        </button>
-        <button 
-          onClick={() => handleSort("assists")} 
-          className="text-center flex items-center justify-center gap-1 hover:text-primary transition-colors"
-        >
-          Assist {getSortIcon("assists")}
-        </button>
-      </div>
-      <div className="divide-y max-h-[500px] overflow-y-auto">
-        {sortedStats.map(player => (
-          <div 
-            key={player.playerId} 
-            className="grid grid-cols-4 p-3 cursor-pointer hover:bg-muted"
-            onClick={() => handlePlayerClick(player.playerId)}
-          >
-            <div>{player.name}</div>
-            <div className="text-center">{player.matches}</div>
-            <div className="text-center text-green-600 font-semibold">{player.goals}</div>
-            <div className="text-center text-blue-600 font-semibold">{player.assists}</div>
-          </div>
-        ))}
-      </div>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Spelare</TableHead>
+            <TableHead className="text-right">Matcher</TableHead>
+            <TableHead className="text-right">Mål</TableHead>
+            <TableHead className="text-right">Assist</TableHead>
+            <TableHead className="text-right">Mål/Match</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedStats.map((player) => (
+            <TableRow 
+              key={player.id} 
+              className={onPlayerSelect ? "cursor-pointer hover:bg-muted/50" : ""}
+              onClick={onPlayerSelect ? () => handlePlayerClick(player.id) : undefined}
+            >
+              <TableCell className="font-medium">{player.name}</TableCell>
+              <TableCell className="text-right">{player.matches}</TableCell>
+              <TableCell className="text-right">{player.goals}</TableCell>
+              <TableCell className="text-right">{player.assists}</TableCell>
+              <TableCell className="text-right">
+                {player.matches > 0 
+                  ? (player.goals / player.matches).toFixed(2) 
+                  : "0.00"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

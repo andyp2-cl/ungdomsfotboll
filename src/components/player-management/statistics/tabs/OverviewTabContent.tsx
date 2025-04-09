@@ -1,43 +1,58 @@
-
-import React from "react";
-import { Activity, Player } from "@/types/player";
+import React, { useMemo } from 'react';
+import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
 import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
-import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
-import { calculateGradeStats } from "@/components/team-statistics/utils/playerStatsUtils";
-import { getGradeColor } from "@/utils/gradeUtils";
+import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
+import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
+import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
+import { getGradeChartConfig } from "@/utils/gradeUtils";
+import { getGradeColor } from '@/utils/gradeUtils';
 
 interface OverviewTabContentProps {
   players: Player[];
   activities: Activity[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
-export function OverviewTabContent({ players, activities }: OverviewTabContentProps) {
-  // Calculate player activity data - FIXED to properly count participation
-  const playerActivityData = React.useMemo(() => {
-    return players
-      .filter(player => !player.positions?.includes("TRÄNARE"))
-      .map(player => {
-        // Count activities the player is participating in
-        const participatedActivities = activities.filter(activity => 
-          activity.participants?.includes(player.id)
-        ).length;
-        
-        return {
-          id: player.id,
-          name: player.name,
-          grade: player.grade,
-          activities: participatedActivities,
-          fill: getGradeColor(player.grade)
-        };
-      })
-      .sort((a, b) => b.activities - a.activities)
-      .slice(0, 10); // Top 10 players
+export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
+  // Calculate player participation statistics
+  const playerStats = useMemo(() => {
+    return players.map(player => {
+      const activityCount = player.activities?.length || 0;
+      const participationRate = activities.length > 0
+        ? Math.round((activityCount / activities.length) * 100)
+        : 0;
+
+      return {
+        id: player.id,
+        name: player.name,
+        grade: player.grade,
+        position: player.positions?.[0] || 'N/A',
+        jerseyNumber: player.jerseyNumber || '',
+        activityCount,
+        participationRate,
+        fill: getGradeColor(player.grade),
+        activities: activityCount,
+        player // Include the original player object for selection
+      };
+    }).sort((a, b) => b.activityCount - a.activityCount);
   }, [players, activities]);
 
-  // Calculate grade statistics - FIXED to properly count participation by grade
-  const gradeStats = React.useMemo(() => {
+  // Handle player click in charts
+  const handlePlayerClick = (playerId: string) => {
+    if (onPlayerSelect) {
+      const playerStat = playerStats.find(p => p.id === playerId);
+      if (playerStat?.player) {
+        onPlayerSelect(playerStat.player);
+      }
+    }
+  };
+
+  // Chart config
+  const chartConfig = getGradeChartConfig();
+
+  // Calculate participation by grade
+  const gradeStats = useMemo(() => {
     const gradeMap = new Map<string, { grade: string, count: number, players: number }>();
     
     // Initialize with all grades
@@ -51,13 +66,7 @@ export function OverviewTabContent({ players, activities }: OverviewTabContentPr
       
       const gradeData = gradeMap.get(player.grade)!;
       gradeData.players += 1;
-      
-      // Count activities for this player
-      const playerActivitiesCount = activities.filter(activity => 
-        activity.participants?.includes(player.id)
-      ).length;
-      
-      gradeData.count += playerActivitiesCount;
+      gradeData.count += player.activities?.length || 0;
       gradeMap.set(player.grade, gradeData);
     });
     
@@ -67,59 +76,45 @@ export function OverviewTabContent({ players, activities }: OverviewTabContentPr
         average: data.players > 0 ? Math.round((data.count / data.players) * 10) / 10 : 0
       }))
       .sort((a, b) => a.grade.localeCompare(b.grade));
-  }, [players, activities]);
-
-  // Chart configurations
-  const playerChartConfig = {
-    activities: {
-      label: "Antal aktiviteter"
-    }
-  };
-
-  const gradeChartConfig = {
-    average: {
-      label: "Genomsnitt per spelare"
-    }
-  };
+  }, [players]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Player activity chart */}
+      {/* Player activity participation */}
       <Card>
         <CardHeader>
           <CardTitle>Spelarnärvaro</CardTitle>
           <CardDescription>Antal aktiviteter per spelare</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <PlayerActivityChart data={playerActivityData} config={playerChartConfig} />
+          <div className="h-[300px] w-full">
+            <PlayerActivityChart 
+              data={playerStats} 
+              config={chartConfig} 
+              onBarClick={handlePlayerClick}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Grade statistics chart */}
+      {/* Activity by grade */}
       <Card>
         <CardHeader>
           <CardTitle>Närvaro per nivå</CardTitle>
-          <CardDescription>Genomsnittligt antal aktiviteter per nivå</CardDescription>
+          <CardDescription>Genomsnittligt antal aktiviteter per spelarnivå</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <GradeStatisticsChart data={gradeStats} config={gradeChartConfig} />
+          <div className="h-[300px] w-full">
+            <GradeStatisticsChart data={gradeStats} config={chartConfig} />
           </div>
         </CardContent>
       </Card>
 
-      {/* Player attendance analytics */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Närvaro Analys</CardTitle>
-          <CardDescription>Topp spelare baserat på närvaro</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PlayerAttendanceAnalytics players={players} activities={activities} />
-        </CardContent>
-      </Card>
+      {/* Player Count Card */}
+      <PlayerSummaryCard data={gradeStats} />
+      
+      {/* Monthly Activity Trends */}
+      <MonthlyActivityChart activities={activities} />
     </div>
   );
 }

@@ -12,12 +12,14 @@ interface StatisticsTabsWrapperProps {
   players: Player[];
   activities: Activity[];
   gradeData: { grade: string; players: number }[];
+  onPlayerSelect?: (player: Player) => void;
 }
 
 export function StatisticsTabsWrapper({ 
   players, 
   activities,
-  gradeData
+  gradeData,
+  onPlayerSelect
 }: StatisticsTabsWrapperProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "matches" | "goals" | "formation">("overview");
 
@@ -36,24 +38,24 @@ export function StatisticsTabsWrapper({
         <TabsList>
           <TabsTrigger value="overview">Översikt</TabsTrigger>
           <TabsTrigger value="matches">Matcher</TabsTrigger>
-          <TabsTrigger value="goals">Mål</TabsTrigger>
+          <TabsTrigger value="goals">Matchstatistik</TabsTrigger>
           <TabsTrigger value="formation">Formation</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
-          <OverviewTabContent players={players} activities={activities} />
+          <OverviewTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
         </TabsContent>
         
         <TabsContent value="matches">
-          <MatchesTabContent activities={activities} players={players} />
+          <MatchesTabContent activities={activities} players={players} onPlayerSelect={onPlayerSelect} />
         </TabsContent>
         
         <TabsContent value="goals">
-          <GoalsTabContent players={players} activities={activities} />
+          <GoalsTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
         </TabsContent>
         
         <TabsContent value="formation">
-          <FormationTabContent players={players} activities={activities} />
+          <FormationTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
         </TabsContent>
       </Tabs>
     </div>
