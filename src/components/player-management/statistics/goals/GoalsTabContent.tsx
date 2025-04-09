@@ -1,7 +1,6 @@
 
 import React, { useMemo } from "react";
 import { Activity, Player } from "@/types/player";
-import { TopScorersChart } from "./TopScorersChart";
 import { DetailedGoalStats } from "./DetailedGoalStats";
 import { GoalsPerMatchCard } from "./GoalsPerMatchCard";
 import { calculateGoalStats } from "./calculateGoalStats";
@@ -31,15 +30,14 @@ export function GoalsTabContent({ activities, players, onPlayerSelect }: GoalsTa
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <TopScorersChart playerStats={playerStats} />
-      
       <DetailedGoalStats 
         playerStats={playerStats}
         totalStats={totalStats}
         onPlayerSelect={handlePlayerSelect}
+        className="col-span-full"
       />
       
-      <GoalsPerMatchCard playerStats={playerStats} />
+      <GoalsPerMatchCard playerStats={playerStats} className="col-span-full md:col-span-1" />
     </div>
   );
 }

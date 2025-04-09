@@ -12,11 +12,17 @@ interface DetailedGoalStatsProps {
     assists: number;
   };
   onPlayerSelect?: (playerId: string) => void;
+  className?: string;
 }
 
-export function DetailedGoalStats({ playerStats, totalStats, onPlayerSelect }: DetailedGoalStatsProps) {
+export function DetailedGoalStats({ 
+  playerStats, 
+  totalStats, 
+  onPlayerSelect,
+  className = ""
+}: DetailedGoalStatsProps) {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Detaljerad målstatistik</CardTitle>
       </CardHeader>

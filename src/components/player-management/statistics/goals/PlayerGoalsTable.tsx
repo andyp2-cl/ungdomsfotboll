@@ -90,7 +90,7 @@ export function PlayerGoalsTable({ playerStats, onPlayerSelect }: PlayerGoalsTab
         {sortedStats.map(player => (
           <div 
             key={player.playerId} 
-            className={`grid grid-cols-4 p-3 ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''}`}
+            className="grid grid-cols-4 p-3 cursor-pointer hover:bg-muted"
             onClick={() => handlePlayerClick(player.playerId)}
           >
             <div>{player.name}</div>
