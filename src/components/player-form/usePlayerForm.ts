@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { v4 as uuidv4 } from "uuid";
-import { Player } from "@/types/player";
+import { Player, PlayerPosition } from "@/types/player";
 import { formSchema, PlayerFormValues } from "./formSchema";
 
 interface UsePlayerFormProps {
@@ -64,7 +64,7 @@ export function usePlayerForm({
       id: initialValues?.id || uuidv4(),
       name: data.name,
       grade: data.isTrainer ? undefined : data.grade, // Only set grade if not a trainer
-      positions: data.positions,
+      positions: data.positions as PlayerPosition[], // Cast to PlayerPosition[] to satisfy type checking
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],

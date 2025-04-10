@@ -21,7 +21,7 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 w-full max-w-md mx-auto px-2">
+      <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md mx-auto px-2">
         <ImageUploadField 
           imagePreview={imagePreview} 
           setImagePreview={setImagePreview} 
