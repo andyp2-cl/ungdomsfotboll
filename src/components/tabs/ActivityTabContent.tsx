@@ -106,16 +106,16 @@ export function ActivityTabContent({
 
   const isHistorical = activeView === "historical";
 
-  // Filter activities based on search query
-  const filteredBySearchActivities = isHistorical 
-    ? filteredHistoricalActivities.filter(activity => 
-        searchQuery 
-          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
-          : true)
-    : filteredActivities.filter(activity => 
-        searchQuery 
-          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
-          : true);
+  // Filter activities based on search query for both historical and upcoming
+  const displayedActivities = isHistorical 
+    ? filteredHistoricalActivities
+    : filteredActivities;
+  
+  const filteredBySearchActivities = displayedActivities.filter(activity => 
+    searchQuery 
+      ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+      : true
+  );
 
   return (
     <div className="space-y-6">
@@ -154,7 +154,7 @@ export function ActivityTabContent({
         <ActivitySearch
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          placeholder={`Sök ${isHistorical ? 'historiska ' : ''}matcher...`}
+          placeholder={`Sök matcher...`}
         />
       )}
       
