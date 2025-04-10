@@ -13,6 +13,8 @@ export interface PlayerStats {
     away?: number;
   }; // Score information for matches
   isWin?: boolean; // Whether the match was a win for Hässleholms IF
+  cup_matches?: string[]; // Array of cup match IDs for tracking
+  [key: string]: any; // Allow additional properties
 }
 
 export interface Location {
