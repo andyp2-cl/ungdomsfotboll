@@ -64,7 +64,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
       const { error: updateCupError } = await supabase
         .from('activities')
         .update({ 
-          player_stats: activity.player_stats
+          player_stats: activity.player_stats as any // Use type assertion to avoid incompatibility
         })
         .eq('id', activity.id);
         

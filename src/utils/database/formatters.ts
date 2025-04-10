@@ -64,7 +64,7 @@ export const formatDatabasePlayer = (item: any) => {
     console.error("Player name is not a string:", item.name);
   }
 
-  // Handle positions - ensure it's an array
+  // Handle positions - ensure it's an array of strings
   let positions: string[] = [];
   if (item.position) {
     positions = Array.isArray(item.position) 
@@ -158,7 +158,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
           away: item.away_score
         },
         isWin: activity.isWin,
-        cup_matches: stats.cup_matches || []
+        cup_matches: stats.cup_matches || [] // Now this property is properly typed
       };
     } catch (e) {
       console.error("Error parsing player_stats JSON:", e);

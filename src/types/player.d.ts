@@ -33,7 +33,8 @@ export interface PlayerStats {
     away?: number;
   };
   isWin?: boolean;
-  cup_matches?: string[]; // This is now properly defined in the type
+  cup_matches?: string[]; // Properly defined for cup match tracking
+  [key: string]: any; // Add index signature to allow additional properties
 }
 
 export interface Activity {

@@ -18,7 +18,7 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
       throw playersError;
     }
     
-    const players = playersData.map(formatDatabasePlayer);
+    const players = playersData.map(formatDatabasePlayer) as Player[];
     
     // Then, get player-activity relationships and populate the activities array
     const { data: playerActivitiesData, error: relationshipError } = await supabase
