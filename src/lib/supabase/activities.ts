@@ -1,3 +1,4 @@
+
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 
@@ -33,7 +34,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         scraped: item.scraped || false,
         participants: [],
         cupId: item.cup_id || undefined,
-        matches: Array.isArray(item.matches) ? item.matches : [], // Ensure matches is always an array
+        matches: [], // Initialize with empty array
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
@@ -53,6 +54,11 @@ export const fetchActivities = async (): Promise<Activity[]> => {
           const stats = typeof item.player_stats === 'string' 
             ? JSON.parse(item.player_stats) 
             : item.player_stats;
+            
+          // Extract cup matches from player_stats.cup_matches
+          if (stats.cup_matches && Array.isArray(stats.cup_matches)) {
+            activity.matches = stats.cup_matches;
+          }
             
           activity.player_stats = {
             goals: stats.goals || {},

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "./types";
@@ -46,18 +45,22 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           }
         }
         
-        // Also update the cup's matches array in the database
+        // Store the matches array as a player_stats JSON field since we don't have a dedicated matches column
+        // This keeps track of the match IDs that belong to this cup
         const { error: cupUpdateError } = await supabase
           .from('activities')
           .update({ 
-            matches: activity.matches 
+            player_stats: {
+              ...activity.player_stats,
+              cup_matches: activity.matches 
+            }
           })
           .eq('id', activity.id);
           
         if (cupUpdateError) {
-          console.error(`Error updating matches array for cup ${activity.name}:`, cupUpdateError);
+          console.error(`Error updating cup matches in player_stats for cup ${activity.name}:`, cupUpdateError);
         } else {
-          console.log(`Successfully updated matches array for cup ${activity.name}`);
+          console.log(`Successfully updated cup matches in player_stats for cup ${activity.name}`);
           
           // Log the cup matches update
           await logDatabaseChange(
@@ -92,15 +95,21 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           if (!cupMatches.includes(activity.id)) {
             const updatedMatches = [...cupMatches, activity.id];
             
+            // Update the cup's player_stats to include this match
             const { error: cupUpdateError } = await supabase
               .from('activities')
-              .update({ matches: updatedMatches })
+              .update({ 
+                player_stats: {
+                  ...cup.player_stats,
+                  cup_matches: updatedMatches
+                }
+              })
               .eq('id', cup.id);
               
             if (cupUpdateError) {
-              console.error(`Error adding match to cup's matches array:`, cupUpdateError);
+              console.error(`Error adding match to cup's player_stats:`, cupUpdateError);
             } else {
-              console.log(`Successfully added match ${activity.name} to cup ${cup.name}'s matches array`);
+              console.log(`Successfully added match ${activity.name} to cup ${cup.name}'s player_stats`);
               
               // Log the cup association
               await logDatabaseChange(
