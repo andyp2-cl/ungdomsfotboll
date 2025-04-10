@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { ScoreSection } from "./ScoreSection";
 import { useResultSaver } from "./ResultSaver";
-import { GradePieChart } from "./GradePieChart";
 
 interface ActivityResultSectionProps {
   activity: Activity;
@@ -81,14 +79,6 @@ export function ActivityResultSection({
         isSaving={isSaving}
         isHistorical={isHistorical}
       />
-      
-      {/* Add the Grade Pie Chart */}
-      {participatingPlayers && participatingPlayers.length > 0 && (
-        <GradePieChart 
-          activity={activity} 
-          participatingPlayers={participatingPlayers} 
-        />
-      )}
     </div>
   );
 }

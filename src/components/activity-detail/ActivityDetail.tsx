@@ -34,7 +34,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
   // Only show add matches button for cups
   const isCup = props.activity.type === "cup";
   
-  const handleAddMatches = () => {
+  const handleAddMatches = async () => {
     if (!props.onActivityUpdate || newMatches.length === 0) return;
     
     try {
@@ -53,7 +53,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
             description: match.locationDescription
           } : undefined,
           cupId: props.activity.id, // Link to the cup
-          participants: [],
+          participants: [], // Start with empty participants list
         };
       });
       
@@ -66,13 +66,14 @@ export function ActivityDetail(props: ActivityDetailProps) {
         ]
       };
       
-      // Update all activities (first the cup, then the new matches)
-      props.onActivityUpdate(updatedActivity);
+      // Update the cup activity first
+      await props.onActivityUpdate(updatedActivity);
       
       // Update each new match activity
-      newActivities.forEach(activity => {
-        props.onActivityUpdate && props.onActivityUpdate(activity);
-      });
+      for (const activity of newActivities) {
+        console.log("Saving new match activity:", activity);
+        await props.onActivityUpdate(activity);
+      }
       
       toast({
         title: "Matcher tillagda",

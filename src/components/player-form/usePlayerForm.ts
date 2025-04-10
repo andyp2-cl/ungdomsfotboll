@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { v4 as uuidv4 } from "uuid";
 import { Player } from "@/types/player";
-import { formSchema } from "./formSchema";
+import { formSchema, PlayerFormValues } from "./formSchema";
 
 interface UsePlayerFormProps {
   onSave: (player: Player) => void;
@@ -19,7 +19,7 @@ export function usePlayerForm({
 }: UsePlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(initialValues?.image);
 
-  const form = useForm({
+  const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialValues?.name || "",
@@ -34,7 +34,7 @@ export function usePlayerForm({
   const isTrainer = form.watch("isTrainer");
 
   // When isTrainer changes, update positions and grade
-  React.useEffect(() => {
+  useEffect(() => {
     if (isTrainer) {
       // Add TRÄNARE position if it's not already there
       const currentPositions = form.getValues("positions") || [];
@@ -58,7 +58,7 @@ export function usePlayerForm({
     }
   }, [isTrainer, form]);
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: PlayerFormValues) => {
     // Create new player object
     const newPlayer: Player = {
       id: initialValues?.id || uuidv4(),

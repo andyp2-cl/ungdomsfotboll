@@ -11,6 +11,7 @@ import { ParticipantsSection } from "./ParticipantsSection";
 import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { GradeDistributionChart } from "./GradeDistributionChart";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -147,6 +148,14 @@ export function ActivityDetailView({
             onAddPlayers={handleAddPlayers}
             players={players}
           />
+          
+          {/* Show grade distribution chart for both matches and cups */}
+          {participatingPlayers.length > 0 && (
+            <GradeDistributionChart
+              activity={currentActivity}
+              participatingPlayers={participatingPlayers}
+            />
+          )}
           
           {extraContent}
         </CardContent>
