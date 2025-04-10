@@ -45,6 +45,73 @@ export const formatActivityForDatabase = (activity: Activity) => {
 };
 
 /**
+ * Formats a player object from database format to our application format
+ */
+export const formatDatabasePlayer = (item: any) => {
+  // First check that the required fields exist
+  if (!item || !item.id || !item.name) {
+    console.error("Invalid player data from database:", item);
+    throw new Error("Invalid player data structure");
+  }
+
+  // Split the name into firstName and lastName if not already done
+  let firstName = "", lastName = "";
+  if (typeof item.name === 'string') {
+    const nameParts = item.name.trim().split(/\s+/);
+    firstName = nameParts[0] || "";
+    lastName = nameParts.slice(1).join(" ") || "";
+  } else {
+    console.error("Player name is not a string:", item.name);
+  }
+
+  // Handle positions - ensure it's an array
+  let positions: string[] = [];
+  if (item.position) {
+    positions = Array.isArray(item.position) 
+      ? item.position 
+      : typeof item.position === 'string'
+        ? [item.position]
+        : [];
+  }
+
+  return {
+    id: item.id,
+    firstName,
+    lastName,
+    name: item.name, // Keep the original name too
+    grade: item.grade,
+    positions,
+    image: item.image,
+    active: true, // Default to active
+    activities: [], // Will be populated separately
+    jerseyNumber: item.jersey_number
+  };
+};
+
+/**
+ * Formats a player object from our application format to the database format
+ */
+export const formatPlayerForDatabase = (player: any) => {
+  // Ensure player has an ID
+  if (!player.id) {
+    console.error("Player is missing an ID:", player);
+    throw new Error("Player must have an ID");
+  }
+
+  // Create a full name if firstName and lastName exist but name doesn't
+  const fullName = player.name || `${player.firstName || ''} ${player.lastName || ''}`.trim();
+  
+  return {
+    id: player.id,
+    name: fullName,
+    grade: player.grade || null,
+    position: player.positions || [],
+    jersey_number: player.jerseyNumber || null,
+    image: player.image || null
+  };
+};
+
+/**
  * Formats an activity object from database format to our application format
  */
 export const formatActivityFromDatabase = (item: any): Activity => {

@@ -33,7 +33,7 @@ export interface PlayerStats {
     away?: number;
   };
   isWin?: boolean;
-  cup_matches?: string[]; // Added this for storing cup match IDs
+  cup_matches?: string[]; // This is now properly defined in the type
 }
 
 export interface Activity {
