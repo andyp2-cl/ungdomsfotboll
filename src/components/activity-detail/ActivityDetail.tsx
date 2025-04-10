@@ -66,14 +66,15 @@ export function ActivityDetail(props: ActivityDetailProps) {
         ]
       };
       
-      // Update the cup activity first
-      await props.onActivityUpdate(updatedActivity);
-      
-      // Update each new match activity
+      // First update each new match activity
       for (const activity of newActivities) {
         console.log("Saving new match activity:", activity);
         await props.onActivityUpdate(activity);
       }
+      
+      // Then update the cup activity with references to the matches
+      console.log("Updating cup activity with match references:", updatedActivity.matches);
+      await props.onActivityUpdate(updatedActivity);
       
       toast({
         title: "Matcher tillagda",
