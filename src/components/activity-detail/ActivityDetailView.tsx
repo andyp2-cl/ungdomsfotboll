@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -148,14 +149,12 @@ export function ActivityDetailView({
             players={players}
           />
           
-          {/* Always show grade distribution chart for both matches and cups */}
+          {/* Show grade distribution chart for both matches and cups */}
           {participatingPlayers.length > 0 && (
-            <div className="border rounded-md p-4">
-              <GradeDistributionChart
-                activity={currentActivity}
-                participatingPlayers={participatingPlayers}
-              />
-            </div>
+            <GradeDistributionChart
+              activity={currentActivity}
+              participatingPlayers={participatingPlayers}
+            />
           )}
           
           {extraContent}

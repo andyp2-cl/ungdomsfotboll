@@ -33,7 +33,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         scraped: item.scraped || false,
         participants: [],
         cupId: item.cup_id || undefined,
-        matches: Array.isArray(item.matches) ? item.matches : [], // Ensure matches is always an array
+        matches: [], // We'll populate this for cup activities
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
@@ -105,34 +105,19 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // Process cup-match relationships
-    console.log("Processing cup-match relationships");
-    
-    // First, identify all cups and matches
+    // Find cup matches
     const cupActivities = activities.filter(activity => activity.type === 'cup');
-    const matchActivities = activities.filter(activity => activity.type === 'match');
     
-    // For each cup, check its matches array and verify with the cup_id in match activities
+    // For each cup, find its matches
     cupActivities.forEach(cupActivity => {
-      // Get matches that have this cup as parent via cup_id
-      const matchesWithCupId = matchActivities.filter(
-        match => match.cupId === cupActivity.id
+      // Find all matches that have this cup as parent
+      const matchesForCup = activities.filter(
+        possibleMatch => possibleMatch.cupId === cupActivity.id
       );
       
-      // Initialize matches array if needed
-      if (!cupActivity.matches) {
-        cupActivity.matches = [];
+      if (matchesForCup.length > 0) {
+        cupActivity.matches = matchesForCup.map(match => match.id);
       }
-      
-      // Add any matches that have this cup as parent via cup_id but aren't in the matches array
-      matchesWithCupId.forEach(match => {
-        if (!cupActivity.matches?.includes(match.id)) {
-          console.log(`Adding match ${match.id} to cup ${cupActivity.id} matches array`);
-          cupActivity.matches?.push(match.id);
-        }
-      });
-      
-      console.log(`Cup ${cupActivity.name} has ${cupActivity.matches.length} matches after processing`);
     });
     
     return activities;
