@@ -87,6 +87,9 @@ export function ActivityListItem({
   const showGradePieChart = activity.type === "match" && 
                            participatingPlayers.length > 0;
 
+  // Visa badge för cupmatcher
+  const isCupMatch = activity.cupId !== undefined;
+
   return (
     <div
       className="group border rounded-md p-4 hover:bg-accent hover:cursor-pointer"
@@ -99,7 +102,12 @@ export function ActivityListItem({
             {formatActivityDate(activity.date)}
             {activity.time && ` - ${activity.time}`}
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap gap-2">
+            {isCupMatch && (
+              <Badge variant="secondary" className="text-xs">
+                Cupmatch
+              </Badge>
+            )}
             <ActivityParticipants 
               participants={participatingPlayers}
               onPlayerSelect={onPlayerSelect}

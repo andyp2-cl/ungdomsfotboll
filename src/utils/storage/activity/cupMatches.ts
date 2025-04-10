@@ -3,52 +3,56 @@ import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "./types";
 
-// Update match cup associations for cup activities
+/**
+ * Update cup-match relationships in database
+ * - När en match skapas inne från en cup, sätts matchens cup_id till cupens id
+ * - Detta skapar en tydlig one-to-many relation från cup till matcher
+ */
 export const updateCupMatches = async (activity: Activity, activities: Activity[]): Promise<void> => {
   try {
-    // For new cup activities, also add a reference to their matches
+    // Om aktiviteten är en cup och har matcher...
     if (activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
-      console.log(`Cup ${activity.name} has ${activity.matches.length} matches, ensuring they have the correct cupId`);
+      console.log(`Cup ${activity.name} har ${activity.matches.length} matcher, uppdaterar deras cupId`);
       
-      // Get the match activities
+      // Hämta matchaktiviteterna
       const matchActivities = activities.filter(a => activity.matches?.includes(a.id));
-      console.log(`Found ${matchActivities.length} match activities for cup ${activity.name}:`, 
+      console.log(`Hittade ${matchActivities.length} matchaktiviteter för cup ${activity.name}:`, 
         matchActivities.map(m => ({id: m.id, name: m.name})));
       
-      // Update each match with the cup ID
+      // Uppdatera varje match med cup-ID
       for (const matchActivity of matchActivities) {
-        console.log(`Updating match ${matchActivity.name} with cupId ${activity.id}`);
+        console.log(`Uppdaterar match ${matchActivity.name} med cupId ${activity.id}`);
         
-        // Update the match in the database with the cupId
+        // Uppdatera matchen i databasen med cupId
         const { error: updateError } = await supabase
           .from('activities')
           .update({ cup_id: activity.id })
           .eq('id', matchActivity.id);
           
         if (updateError) {
-          console.error(`Error updating cupId for match ${matchActivity.name}:`, updateError);
+          console.error(`Fel vid uppdatering av cupId för match ${matchActivity.name}:`, updateError);
         } else {
-          console.log(`Successfully updated cupId for match ${matchActivity.name}`);
+          console.log(`Uppdaterade cupId för match ${matchActivity.name}`);
           
-          // Log the cup association
+          // Logga cup-kopplingen
           await logDatabaseChange(
             'update',
             'activity',
             matchActivity.id,
-            `Associated match "${matchActivity.name}" with cup "${activity.name}"`
+            `Kopplade match "${matchActivity.name}" till cup "${activity.name}"`
           );
         }
       }
       
-      // Additional logging for cup-match relationships
+      // Logga alla cup-matchrelationer
       await logDatabaseChange(
         'update',
         'activity',
         activity.id,
-        `Associated ${activity.matches.length} matches with cup "${activity.name}"`
+        `Kopplade ${activity.matches.length} matcher till cup "${activity.name}"`
       );
     }
   } catch (error) {
-    console.error("Error updating cup matches:", error);
+    console.error("Fel vid uppdatering av cup-matcher:", error);
   }
 };

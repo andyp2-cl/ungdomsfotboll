@@ -31,14 +31,14 @@ export function ActivityDetail(props: ActivityDetailProps) {
   const [newMatches, setNewMatches] = useState<CupMatch[]>([]);
   const { toast } = useToast();
   
-  // Only show add matches button for cups
+  // Visa bara knappen "Lägg till matcher" för cuper
   const isCup = props.activity.type === "cup";
   
   const handleAddMatches = async () => {
     if (!props.onActivityUpdate || newMatches.length === 0) return;
     
     try {
-      // Create activities for each new match
+      // Skapa aktiviteter för varje ny match
       const cupDate = props.activity.date;
       const newActivities: Activity[] = newMatches.map(match => {
         const newId = uuidv4();
@@ -52,12 +52,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
             name: match.location,
             description: match.locationDescription
           } : undefined,
-          cupId: props.activity.id, // Link to the cup
-          participants: [], // Start with empty participants list
+          cupId: props.activity.id, // Koppla till cupen direkt
+          participants: [], // Börja med tom deltagarlista
         };
       });
       
-      // Add the matches to the cup
+      // Uppdatera cup-aktiviteten med matcherna
       const updatedActivity = { 
         ...props.activity,
         matches: [
@@ -66,12 +66,14 @@ export function ActivityDetail(props: ActivityDetailProps) {
         ]
       };
       
-      // Update the cup activity first
+      console.log("Uppdaterad cup-aktivitet:", updatedActivity);
+      
+      // Uppdatera cup-aktiviteten först
       await props.onActivityUpdate(updatedActivity);
       
-      // Update each new match activity
+      // Uppdatera varje ny match-aktivitet
       for (const activity of newActivities) {
-        console.log("Saving new match activity:", activity);
+        console.log("Sparar ny match-aktivitet:", activity);
         await props.onActivityUpdate(activity);
       }
       
@@ -80,12 +82,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
         description: `${newActivities.length} nya matcher har lagts till i cupen.`
       });
       
-      // Reset and close
+      // Återställ och stäng
       setNewMatches([]);
       setIsAddMatchDialogOpen(false);
       
     } catch (error) {
-      console.error("Error adding matches:", error);
+      console.error("Fel vid tillägg av matcher:", error);
       toast({
         title: "Fel",
         description: "Det gick inte att lägga till matcherna.",
@@ -94,7 +96,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
     }
   };
   
-  // Add button to the component
+  // Knapp för att lägga till matcher
   const AddMatchesButton = () => {
     if (!isCup) return null;
     
@@ -118,7 +120,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
         extraContent={<AddMatchesButton />}
       />
       
-      {/* Dialog for adding matches to cup */}
+      {/* Dialog för att lägga till matcher i cupen */}
       {isCup && (
         <Dialog open={isAddMatchDialogOpen} onOpenChange={setIsAddMatchDialogOpen}>
           <DialogContent className="sm:max-w-lg">

@@ -89,7 +89,8 @@ export const handleMatchResultUpdate = async (
       result: updatedActivity?.result,
       homeScore: updatedActivity?.homeScore,
       awayScore: updatedActivity?.awayScore,
-      isDraw: updatedActivity?.homeScore === updatedActivity?.awayScore
+      isDraw: updatedActivity?.homeScore === updatedActivity?.awayScore,
+      cupId: updatedActivity?.cupId
     });
     
     // Update state and save to storage

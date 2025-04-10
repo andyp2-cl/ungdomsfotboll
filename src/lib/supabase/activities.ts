@@ -1,3 +1,4 @@
+
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 
@@ -33,7 +34,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         scraped: item.scraped || false,
         participants: [],
         cupId: item.cup_id || undefined,
-        matches: [], // We'll populate this for cup activities
+        matches: [], // Initialisera tom matchlista för cuper
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
@@ -105,15 +106,16 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // Find cup matches
+    // För varje cup-aktivitet, hitta matcherna baserat på cupId-relationerna
     const cupActivities = activities.filter(activity => activity.type === 'cup');
     
-    // For each cup, find its matches
     cupActivities.forEach(cupActivity => {
-      // Find all matches that have this cup as parent
+      // Hitta alla matcher som har denna cup som förälder (via cupId)
       const matchesForCup = activities.filter(
         possibleMatch => possibleMatch.cupId === cupActivity.id
       );
+      
+      console.log(`Cup ${cupActivity.name} (${cupActivity.id}) har ${matchesForCup.length} matcher baserat på cupId-relationen`);
       
       if (matchesForCup.length > 0) {
         cupActivity.matches = matchesForCup.map(match => match.id);

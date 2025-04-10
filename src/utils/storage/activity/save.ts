@@ -31,7 +31,8 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
         isWin: normalizedActivity.isWin,
-        playerStats: normalizedPlayerStats
+        playerStats: normalizedPlayerStats,
+        cupId: normalizedActivity.cupId
       });
       
       // Check if activity already exists to determine if this is an update or create
