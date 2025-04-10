@@ -1,7 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
-import { Activity } from "./types";
+import { Activity, PlayerStats } from "@/types/player";
 
 /**
  * Update cup-match relationships in database
@@ -13,6 +13,22 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
     // Om aktiviteten är en cup och har matcher...
     if (activity.type === 'cup' && activity.matches && activity.matches.length > 0) {
       console.log(`Cup ${activity.name} har ${activity.matches.length} matcher, uppdaterar deras cupId`);
+      
+      // Ensure player_stats exists and initialize cup_matches array if needed
+      if (!activity.player_stats) {
+        activity.player_stats = {
+          goals: {},
+          assists: {},
+          cup_matches: []
+        };
+      }
+      
+      if (!activity.player_stats.cup_matches) {
+        activity.player_stats.cup_matches = [];
+      }
+      
+      // Store match IDs in player_stats.cup_matches for persistence
+      activity.player_stats.cup_matches = activity.matches;
       
       // Hämta matchaktiviteterna
       const matchActivities = activities.filter(a => activity.matches?.includes(a.id));
@@ -42,6 +58,20 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
             `Kopplade match "${matchActivity.name}" till cup "${activity.name}"`
           );
         }
+      }
+      
+      // Uppdatera cups player_stats med cup_matches array
+      const { error: updateCupError } = await supabase
+        .from('activities')
+        .update({ 
+          player_stats: activity.player_stats
+        })
+        .eq('id', activity.id);
+        
+      if (updateCupError) {
+        console.error(`Fel vid uppdatering av cup_matches för cup ${activity.name}:`, updateCupError);
+      } else {
+        console.log(`Uppdaterade cup_matches för cup ${activity.name}:`, activity.player_stats.cup_matches);
       }
       
       // Logga alla cup-matchrelationer

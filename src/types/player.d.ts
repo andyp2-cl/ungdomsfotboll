@@ -1,3 +1,4 @@
+
 import { Database } from './supabase';
 
 export type Json =
@@ -24,6 +25,17 @@ export interface Player {
   [key: string]: any;
 }
 
+export interface PlayerStats {
+  goals: Record<string, number>;
+  assists: Record<string, number>;
+  scores?: {
+    home?: number;
+    away?: number;
+  };
+  isWin?: boolean;
+  cup_matches?: string[]; // Added this for storing cup match IDs
+}
+
 export interface Activity {
   id: string;
   name: string;
@@ -44,15 +56,7 @@ export interface Activity {
   homeScore?: number;
   awayScore?: number;
   isWin?: boolean;
-  player_stats?: {
-    goals: Record<string, number>;
-    assists: Record<string, number>;
-    scores?: {
-      home?: number;
-      away?: number;
-    };
-    isWin?: boolean;
-  };
+  player_stats?: PlayerStats;
   [key: string]: any;
 }
 

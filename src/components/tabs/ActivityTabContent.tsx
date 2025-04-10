@@ -3,13 +3,14 @@ import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { BarChart3, Calendar, Clock, List, Plus, Trash2 } from "lucide-react";
+import { BarChart3, Calendar, Clock, List, Plus, Trash2, Search } from "lucide-react";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -53,6 +54,7 @@ export function ActivityTabContent({
   // Default to historical view for matches
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const isMobile = useIsMobile();
 
   const handlePlayerSelect = (playerId: string) => {
@@ -104,6 +106,17 @@ export function ActivityTabContent({
 
   const isHistorical = activeView === "historical";
 
+  // Filter activities based on search query
+  const filteredBySearchActivities = isHistorical 
+    ? filteredHistoricalActivities.filter(activity => 
+        searchQuery 
+          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+          : true)
+    : filteredActivities.filter(activity => 
+        searchQuery 
+          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+          : true);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -136,6 +149,14 @@ export function ActivityTabContent({
           </Button>
         </div>
       </div>
+      
+      {activeView !== "statistics" && (
+        <ActivitySearch
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          placeholder={`Sök ${isHistorical ? 'historiska ' : ''}matcher...`}
+        />
+      )}
       
       {selectedPlayer ? (
         <PlayerDetail 
@@ -173,12 +194,13 @@ export function ActivityTabContent({
             />
           ) : (
             <ActivityList 
-              activities={activeView === "upcoming" ? filteredActivities : filteredHistoricalActivities}
+              activities={filteredBySearchActivities}
               players={players}
               onSelect={setSelectedActivity}
               onPlayerSelect={handlePlayerSelect}
               isHistorical={isHistorical}
               isMobile={isMobile}
+              noResultsMessage={searchQuery ? `Inga matcher hittades för "${searchQuery}"` : "Inga aktiviteter hittades"}
             />
           )}
         </>

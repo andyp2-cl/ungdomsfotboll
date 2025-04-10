@@ -1,14 +1,14 @@
 
-import { Activity } from "@/types/player";
+import { Activity, PlayerStats } from "@/types/player";
 
 /**
  * Formats an activity object from our application format to the database format
  */
 export const formatActivityForDatabase = (activity: Activity) => {
-  // Extrahera player_stats för att säkerställa korrekt format
-  let playerStatsJson = activity.player_stats;
+  // Extract player_stats to ensure correct format
+  let playerStatsJson: any = activity.player_stats;
   
-  // Om player_stats är en sträng, parsea den
+  // If player_stats is a string, parse it
   if (typeof playerStatsJson === 'string') {
     try {
       playerStatsJson = JSON.parse(playerStatsJson);
@@ -18,12 +18,12 @@ export const formatActivityForDatabase = (activity: Activity) => {
     }
   }
   
-  // Om player_stats är undefined eller null, skapa ett tomt objekt
+  // If player_stats is undefined or null, create an empty object
   if (!playerStatsJson) {
     playerStatsJson = { goals: {}, assists: {} };
   }
   
-  // Skapa det formaterade objektet
+  // Create the formatted object
   return {
     id: activity.id,
     name: activity.name,
@@ -40,7 +40,7 @@ export const formatActivityForDatabase = (activity: Activity) => {
     home_score: activity.homeScore,
     away_score: activity.awayScore,
     is_win: activity.isWin,
-    player_stats: playerStatsJson,
+    player_stats: playerStatsJson, // This is now compatible with JSON
   };
 };
 
@@ -48,7 +48,7 @@ export const formatActivityForDatabase = (activity: Activity) => {
  * Formats an activity object from database format to our application format
  */
 export const formatActivityFromDatabase = (item: any): Activity => {
-  // Skapa grundaktiviteten
+  // Create the base activity
   const activity: Activity = {
     id: item.id,
     name: item.name,
@@ -64,7 +64,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     scraped: item.scraped || false,
     participants: [],
     cupId: item.cup_id || undefined,
-    matches: [], // Kommer att populeras senare om det är en cup
+    matches: [], // Will be populated later if it's a cup
     homeScore: item.home_score,
     awayScore: item.away_score,
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined
@@ -90,7 +90,8 @@ export const formatActivityFromDatabase = (item: any): Activity => {
           home: item.home_score,
           away: item.away_score
         },
-        isWin: activity.isWin
+        isWin: activity.isWin,
+        cup_matches: stats.cup_matches || []
       };
     } catch (e) {
       console.error("Error parsing player_stats JSON:", e);

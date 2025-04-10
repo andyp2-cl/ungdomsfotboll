@@ -10,6 +10,7 @@ interface ActivityListProps {
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
   isMobile?: boolean;
+  noResultsMessage?: string;
 }
 
 export function ActivityList({ 
@@ -18,12 +19,13 @@ export function ActivityList({
   onSelect, 
   onPlayerSelect,
   isHistorical = false,
-  isMobile = false
+  isMobile = false,
+  noResultsMessage = "Inga aktiviteter hittades"
 }: ActivityListProps) {
   if (activities.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg text-muted-foreground">Inga aktiviteter hittades</p>
+        <p className="text-lg text-muted-foreground">{noResultsMessage}</p>
       </div>
     );
   }
@@ -50,3 +52,4 @@ export function ActivityList({
 
 export * from "./ActivityListItem";
 export * from "./ActivityParticipants";
+export * from "./ActivitySearch";

@@ -1,7 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
-import { Activity } from "./types";
+import { Activity } from "@/types/player";
 import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cupMatches";

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { Activity } from "./types";
+import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters";
 
 // Get activities from Supabase
@@ -37,17 +37,23 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     console.log("Cup activities:", cupActivities.map(a => a.id));
     
     cupActivities.forEach(cupActivity => {
-      // Find all matches that reference this cup ID
-      const matchesForCup = activities.filter(
-        possibleMatch => possibleMatch.cupId === cupActivity.id
-      );
-      
-      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
-        matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
-      
-      if (matchesForCup.length > 0) {
-        cupActivity.matches = matchesForCup.map(match => match.id);
-        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
+      // First check cup_matches in player_stats
+      if (cupActivity.player_stats?.cup_matches && cupActivity.player_stats.cup_matches.length > 0) {
+        cupActivity.matches = cupActivity.player_stats.cup_matches;
+        console.log(`Cup ${cupActivity.name} has ${cupActivity.matches.length} matches from player_stats.cup_matches`);
+      } else {
+        // Fallback: Find all matches that reference this cup ID
+        const matchesForCup = activities.filter(
+          possibleMatch => possibleMatch.cupId === cupActivity.id
+        );
+        
+        console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
+          matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
+        
+        if (matchesForCup.length > 0) {
+          cupActivity.matches = matchesForCup.map(match => match.id);
+          console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
+        }
       }
     });
     
