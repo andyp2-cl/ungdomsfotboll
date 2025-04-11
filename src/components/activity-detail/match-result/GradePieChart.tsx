@@ -42,7 +42,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     return null;
   }
 
-  // Colors for each grade - restore the original colors
+  // Colors for each grade
   const GRADE_COLORS: Record<string, string> = {
     'A': '#10b981', // green
     'B': '#3b82f6', // blue
@@ -63,7 +63,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
-        fontSize={12}
+        fontSize={10} // Smaller font size
         fontWeight="bold"
       >
         {`${gradeDistribution[index].grade}`}
@@ -74,7 +74,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
   return (
     <div className="mt-2">
       <h4 className="text-xs font-medium mb-1">Nivåfördelning</h4>
-      <div className="h-[200px]"> {/* Restored to original height of 200px */}
+      <div className="h-[100px]"> {/* Reduced height from 200px to 100px */}
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -83,7 +83,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               cy="50%"
               labelLine={false}
               label={renderCustomizedLabel}
-              outerRadius={80} /* Fixed: Removed curly braces around this comment */
+              outerRadius={40} // Reduced from 80 to 40
               fill="#8884d8"
               dataKey="count"
               nameKey="grade"
@@ -102,6 +102,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
                 return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
               }}
             />
+            {/* Removed Legend component here */}
           </PieChart>
         </ResponsiveContainer>
       </div>

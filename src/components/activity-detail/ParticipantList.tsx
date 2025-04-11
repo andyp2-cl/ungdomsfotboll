@@ -14,18 +14,6 @@ interface ParticipantListProps {
   isMobile?: boolean;
 }
 
-// Map position codes to readable position names
-const getPositionName = (position: string): string => {
-  switch (position) {
-    case 'MV': return 'Målvakt';
-    case 'BACK': return 'Back';
-    case 'MF': return 'Mittfältare';
-    case 'ANF': return 'Anfallare';
-    case 'TRÄNARE': return 'Tränare';
-    default: return position;
-  }
-};
-
 export function ParticipantList({ 
   participants, 
   onRemoveParticipant,
@@ -151,7 +139,7 @@ export function ParticipantList({
                                 variant="outline" 
                                 className={isMobile ? "text-xs py-0 px-1" : "text-xs"}
                               >
-                                {getPositionName(position)}
+                                {position}
                               </Badge>
                             ))
                         ) : (
@@ -159,7 +147,7 @@ export function ParticipantList({
                             variant="outline" 
                             className={isMobile ? "text-xs py-0 px-1" : "text-xs"}
                           >
-                            {getPositionName(player.positions)}
+                            {player.positions}
                           </Badge>
                         )}
                         {Array.isArray(player.positions) && 
