@@ -8,13 +8,17 @@ interface ActivityParticipantsProps {
   participants?: Player[];
   onPlayerSelect?: (playerId: string) => void;
   isMobile?: boolean;
+  totalCount?: number;  // Added to display the total count of participants
+  players?: Player[];   // Added to support both direct participants and looking up players
 }
 
 export function ActivityParticipants({ 
   activity,
   participants = [],
   onPlayerSelect,
-  isMobile = false
+  isMobile = false,
+  totalCount,
+  players = []
 }: ActivityParticipantsProps) {
   // Make sure participants is an array before using slice
   const safeParticipants = Array.isArray(participants) ? participants : [];
@@ -23,7 +27,7 @@ export function ActivityParticipants({
   const participantsPerRow = isMobile ? 3 : 5;
   const firstRowParticipants = safeParticipants.slice(0, participantsPerRow);
   const secondRowParticipants = safeParticipants.slice(participantsPerRow, participantsPerRow * 2);
-  const remainingCount = safeParticipants.length - (participantsPerRow * 2);
+  const remainingCount = (totalCount !== undefined ? totalCount : safeParticipants.length) - (participantsPerRow * 2);
 
   if (safeParticipants.length === 0) {
     return (
@@ -78,6 +82,23 @@ interface ParticipantBadgeProps {
 }
 
 function ParticipantBadge({ player, onPlayerSelect, showComma }: ParticipantBadgeProps) {
+  // Add safe handling for player.name
+  const displayName = player?.name || "Unknown";
+  
+  // Create a safe initial for the avatar fallback that doesn't rely on split
+  const getInitials = (name: string): string => {
+    if (!name) return "?";
+    
+    // Split the name and get initials
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).substring(0, 2);
+    }
+    return name.substring(0, 2);
+  };
+
+  const initials = getInitials(displayName);
+
   return (
     <button 
       className="inline-flex items-center text-sm hover:bg-muted px-1.5 py-0.5 rounded"
@@ -88,14 +109,14 @@ function ParticipantBadge({ player, onPlayerSelect, showComma }: ParticipantBadg
     >
       <Avatar className="h-4 w-4 mr-1 flex-shrink-0">
         {player.image ? (
-          <AvatarImage src={player.image} alt={player.name} />
+          <AvatarImage src={player.image} alt={displayName} />
         ) : (
           <AvatarFallback className="text-[8px]">
-            {player.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+            {initials}
           </AvatarFallback>
         )}
       </Avatar>
-      <span className="truncate">{player.name}</span>
+      <span className="truncate">{displayName}</span>
       {showComma && <span className="ml-0.5 text-muted-foreground">,</span>}
     </button>
   );

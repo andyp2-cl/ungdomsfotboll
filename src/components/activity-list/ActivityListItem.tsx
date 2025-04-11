@@ -39,6 +39,11 @@ export function ActivityListItem({
   // Is this a cup match?
   const isCupMatch = activity.cupId ? true : false;
   
+  // Get participant players from player IDs
+  const participantPlayers = participants
+    .map(id => players.find(p => p.id === id))
+    .filter(player => player !== undefined) as Player[];
+
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -86,10 +91,10 @@ export function ActivityListItem({
               <span>{participants.length} deltagare</span>
             </div>
             <ActivityParticipants 
-              participants={participants.slice(0, 5)} 
-              players={players}
+              participants={participantPlayers} 
               onPlayerSelect={onPlayerSelect}
               totalCount={participants.length}
+              isMobile={isMobile}
             />
           </div>
         </div>
