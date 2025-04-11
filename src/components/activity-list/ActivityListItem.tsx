@@ -36,6 +36,26 @@ export function ActivityListItem({
     resultMessage = `Resultat: ${activity.homeScore}-${activity.awayScore}`;
   }
   
+  // Determine result color based on win/loss/draw
+  const getResultTextColor = () => {
+    // Draw
+    if (activity.homeScore === activity.awayScore && 
+        activity.homeScore !== undefined && 
+        activity.awayScore !== undefined) {
+      return "text-gray-600";
+    }
+    
+    // Win/Loss based on stored value
+    if (activity.isWin === true) {
+      return "text-green-600";
+    } else if (activity.isWin === false) {
+      return "text-red-600";
+    }
+    
+    // Default
+    return "";
+  };
+  
   // Is this a cup match?
   const isCupMatch = activity.cupId ? true : false;
   
@@ -80,7 +100,7 @@ export function ActivityListItem({
           </div>
           
           {resultMessage && (
-            <div className="text-sm font-medium mt-1">
+            <div className={`text-sm font-medium mt-1 ${getResultTextColor()}`}>
               {resultMessage}
             </div>
           )}
