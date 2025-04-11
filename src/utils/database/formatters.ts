@@ -126,12 +126,25 @@ export const formatActivityFromDatabase = (item: any): Activity => {
  * Formats a player object from our application format to the database format
  */
 export const formatPlayerForDatabase = (player: any) => {
+  // Ensure positions is properly formatted for database storage
+  let positions = player.positions;
+  
+  // If positions is an array, join it into a string
+  if (Array.isArray(positions)) {
+    positions = positions;
+  } else if (typeof positions === 'string') {
+    // If it's already a string, convert to array (space-separated)
+    positions = positions.split(' ').filter(p => p.trim() !== '');
+  } else {
+    positions = null;
+  }
+  
   // Create a formatted player object for database storage
   return {
     id: player.id,
     name: player.name,
     grade: player.grade || null,
-    position: player.positions || null,
+    position: positions || null,
     jersey_number: player.jerseyNumber || null,
     image: player.image || null
   };
@@ -142,9 +155,26 @@ export const formatPlayerForDatabase = (player: any) => {
  */
 export const formatDatabasePlayer = (dbPlayer: any) => {
   // Ensure the position is always an array
-  const positions = dbPlayer.position ? 
-    (Array.isArray(dbPlayer.position) ? dbPlayer.position : [dbPlayer.position]) 
-    : [];
+  let positions: string[] = [];
+  
+  if (dbPlayer.position) {
+    if (Array.isArray(dbPlayer.position)) {
+      positions = dbPlayer.position;
+    } else if (typeof dbPlayer.position === 'string') {
+      // If it contains brackets and quotes, it might be a JSON string
+      if (dbPlayer.position.includes('[') && dbPlayer.position.includes('"')) {
+        try {
+          positions = JSON.parse(dbPlayer.position);
+        } catch (e) {
+          // If parsing fails, treat as space-separated string
+          positions = dbPlayer.position.split(' ').filter(p => p.trim() !== '');
+        }
+      } else {
+        // Treat as space-separated string
+        positions = dbPlayer.position.split(' ').filter(p => p.trim() !== '');
+      }
+    }
+  }
   
   return {
     id: dbPlayer.id,

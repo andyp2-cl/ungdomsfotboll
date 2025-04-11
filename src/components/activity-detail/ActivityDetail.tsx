@@ -16,9 +16,9 @@ interface ActivityDetailProps {
   onBack?: () => void;
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
-  onDeleteActivity?: (activityId: string) => void;
+  onDeleteActivity?: (activityId: string) => Promise<boolean>;
   allActivities?: Activity[];
   relatedActivities?: Activity[];
   cupMatches?: Activity[];
@@ -118,6 +118,10 @@ export function ActivityDetail(props: ActivityDetailProps) {
       <ActivityDetailView 
         {...props} 
         extraContent={<AddMatchesButton />}
+        // Ensure the function type aligns with what ActivityDetailView expects
+        onKioskAssignmentUpdate={props.onKioskAssignmentUpdate}
+        onDeleteActivity={props.onDeleteActivity}
+        onMatchResultUpdate={props.onMatchResultUpdate}
       />
       
       {/* Dialog för att lägga till matcher i cupen */}

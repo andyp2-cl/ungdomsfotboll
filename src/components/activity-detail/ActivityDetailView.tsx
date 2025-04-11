@@ -12,6 +12,7 @@ import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GradeDistributionChart } from "./GradeDistributionChart";
+import { GradePieChart } from "./match-result/GradePieChart";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -76,11 +77,15 @@ export function ActivityDetailView({
     setCurrentActivity(activity);
   }, [activity, setCurrentActivity]);
 
-  const handleDeleteActivity = () => {
+  const handleDeleteActivity = async () => {
     if (onDeleteActivity) {
-      onDeleteActivity(currentActivity.id);
-      onClose();
+      const success = await onDeleteActivity(currentActivity.id);
+      if (success) {
+        onClose();
+      }
+      return success;
     }
+    return false;
   };
 
   const handleClose = onBack || onClose;
@@ -151,10 +156,16 @@ export function ActivityDetailView({
           
           {/* Show grade distribution chart for both matches and cups */}
           {participatingPlayers.length > 0 && (
-            <GradeDistributionChart
-              activity={currentActivity}
-              participatingPlayers={participatingPlayers}
-            />
+            <>
+              <GradeDistributionChart
+                activity={currentActivity}
+                participatingPlayers={participatingPlayers}
+              />
+              <GradePieChart
+                activity={currentActivity}
+                participatingPlayers={participatingPlayers}
+              />
+            </>
           )}
           
           {extraContent}

@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +7,7 @@ interface UseActivityDetailActionsProps {
   activity: Activity;
   players: Player[];
   onActivityUpdate?: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
 }
 
 export function useActivityDetailActions({ 
@@ -87,7 +88,11 @@ export function useActivityDetailActions({
       updatedActivity.kioskAssignedPlayerId = undefined;
       
       if (onKioskAssignmentUpdate) {
-        onKioskAssignmentUpdate(currentActivity.id, undefined);
+        // Handle the Promise correctly
+        onKioskAssignmentUpdate(currentActivity.id, undefined)
+          .catch(error => {
+            console.error("Error updating kiosk assignment:", error);
+          });
       }
     }
     
@@ -109,7 +114,11 @@ export function useActivityDetailActions({
       updatedActivity.kioskAssignedPlayerId = undefined;
       
       if (onKioskAssignmentUpdate) {
-        onKioskAssignmentUpdate(currentActivity.id, undefined);
+        // Handle the Promise correctly
+        onKioskAssignmentUpdate(currentActivity.id, undefined)
+          .catch(error => {
+            console.error("Error updating kiosk assignment:", error);
+          });
       }
     }
     
