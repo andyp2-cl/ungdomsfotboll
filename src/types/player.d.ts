@@ -34,6 +34,7 @@ export interface PlayerStats {
   };
   isWin?: boolean;
   cup_matches?: string[]; // This property is used for storing cup match IDs
+  [key: string]: any; // Adding index signature for Json compatibility
 }
 
 export interface Activity {
