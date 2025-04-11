@@ -1,4 +1,3 @@
-
 import { Activity, PlayerStats } from "@/types/player";
 
 /**
@@ -141,6 +140,7 @@ export const formatPlayerForDatabase = (player: any) => {
  * Formats a player from database format to our application format
  */
 export const formatDatabasePlayer = (dbPlayer: any) => {
+  // Ensure the position is always an array
   const positions = dbPlayer.position ? 
     (Array.isArray(dbPlayer.position) ? dbPlayer.position : [dbPlayer.position]) 
     : [];

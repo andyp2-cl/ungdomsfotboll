@@ -33,10 +33,11 @@ export function TeamFormationAnalysis({ players }: TeamFormationAnalysisProps) {
     fieldPlayers.forEach(player => {
       if (player.positions && player.positions.length > 0) {
         // Skip if position is TRÄNARE
-        const position = player.positions[0];
-        if (position !== "TRÄNARE" && positions[position] !== undefined) {
-          positions[position]++;
-        }
+        player.positions.forEach(position => {
+          if (position !== "TRÄNARE" && positions[position] !== undefined) {
+            positions[position]++;
+          }
+        });
       }
     });
 
