@@ -83,7 +83,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
               cy="50%"
               labelLine={false}
               label={renderCustomizedLabel}
-              outerRadius={80} {/* Restored to original size of 80 */}
+              outerRadius={80} /* Fixed: Removed curly braces around this comment */
               fill="#8884d8"
               dataKey="count"
               nameKey="grade"
