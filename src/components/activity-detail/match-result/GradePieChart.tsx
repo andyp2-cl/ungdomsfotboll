@@ -102,7 +102,6 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
                 return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
               }}
             />
-            {/* Removed Legend component here */}
           </PieChart>
         </ResponsiveContainer>
       </div>

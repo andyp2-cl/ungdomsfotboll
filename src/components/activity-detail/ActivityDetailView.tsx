@@ -20,9 +20,9 @@ interface ActivityDetailViewProps {
   onBack?: () => void;
   onEdit?: (activity: Activity) => void;
   onActivityUpdate?: (updatedActivity: Activity) => void;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => void;
+  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
-  onDeleteActivity?: (activityId: string) => void;
+  onDeleteActivity?: (activityId: string) => Promise<boolean>;
   allActivities?: Activity[];
   relatedActivities?: Activity[];
   cupMatches?: Activity[];
