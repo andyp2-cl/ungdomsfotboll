@@ -1,23 +1,9 @@
 
-import React from "react";
-import { format } from "date-fns";
-import { sv } from "date-fns/locale";
-import { CalendarClock, Users, MapPin, Award, Trophy } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { ActivityParticipants } from "./ActivityParticipants";
+import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
-
-// Helper function to format date nicely
-const formatDate = (dateString: string) => {
-  try {
-    const date = new Date(dateString);
-    return format(date, "EEE d MMM", { locale: sv });
-  } catch (e) {
-    console.error("Error formatting date:", e);
-    return dateString;
-  }
-};
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -28,94 +14,82 @@ interface ActivityListItemProps {
   isMobile?: boolean;
 }
 
-export function ActivityListItem({
-  activity,
-  players,
+export function ActivityListItem({ 
+  activity, 
+  players, 
   onSelect,
   onPlayerSelect,
   isHistorical = false,
-  isMobile = false
+  isMobile = false 
 }: ActivityListItemProps) {
-  const { id, name, date, time, location, type, cupId, participants } = activity;
+  const { name, date, time, location, participants = [] } = activity;
   
-  const activityDate = formatDate(date);
+  const formattedDate = new Date(date).toLocaleDateString('sv-SE');
+  const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
   
-  // Get participant player objects by IDs - making sure we only include valid players
-  const participantPlayers = participants
-    .map(id => players.find(p => p.id === id))
-    .filter(player => player !== undefined) as Player[];
+  // Calculate the result message
+  let resultMessage = '';
+  if (isHistorical && activity.result) {
+    resultMessage = `Resultat: ${activity.result}`;
+  } else if (isHistorical && activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    resultMessage = `Resultat: ${activity.homeScore}-${activity.awayScore}`;
+  }
   
-  const isCupMatch = cupId !== undefined;
-  
-  // Check if we have a match result
-  const hasResult = activity.result !== undefined && activity.result !== "";
-  const resultText = hasResult 
-    ? `${activity.result}`
-    : "";
-    
-  const isWin = activity.isWin;
-  
-  // Determine result style based on win/loss
-  const resultStyle = isWin === undefined 
-    ? "" 
-    : isWin 
-      ? "text-green-500 font-semibold" 
-      : "text-red-500 font-semibold";
+  // Is this a cup match?
+  const isCupMatch = activity.cupId ? true : false;
   
   return (
     <Card 
-      className={`cursor-pointer hover:shadow-md transition-shadow`}
+      className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={() => onSelect(activity)}
     >
-      <CardHeader className="p-4 pb-2">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col">
-            <div className="text-lg font-semibold">{name}</div>
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
-              <CalendarClock className="h-3.5 w-3.5" />
-              <span>{activityDate}</span>
-              {time && <span>• {time}</span>}
+      <CardContent className="p-4">
+        <div className="flex flex-col space-y-2">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+            <h3 className="font-bold text-base">{name}</h3>
+            <div className="flex gap-2 items-center">
+              {isCupMatch && <CupMatchBadge />}
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-1">
-            {isCupMatch && <CupMatchBadge />}
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8 text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>{capitalizedDayOfWeek} {formattedDate}</span>
+            </div>
             
-            {/* Activity type indicator */}
-            {type === "match" && !isCupMatch && (
-              <div className="flex items-center text-sm">
-                <Award className="h-4 w-4 mr-1" />
-                <span>Match</span>
+            {time && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{time}</span>
               </div>
             )}
             
-            {/* Result display (if historical and has result) */}
-            {isHistorical && hasResult && (
-              <div className={`text-base ${resultStyle}`}>
-                {resultText}
+            {location?.name && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Map className="h-4 w-4" />
+                <span>{location.name}</span>
               </div>
             )}
           </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="p-4 pt-2">
-        <div className="flex flex-col gap-2">
-          {/* Location info */}
-          {location && (
-            <div className="text-sm flex items-center text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 mr-1" />
-              <span>{location.name}</span>
+          
+          {resultMessage && (
+            <div className="text-sm font-medium mt-1">
+              {resultMessage}
             </div>
           )}
           
-          {/* Participants */}
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <div className="mt-2">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <Users className="h-4 w-4" />
+              <span>{participants.length} deltagare</span>
+            </div>
             <ActivityParticipants 
-              players={participantPlayers}
+              participants={participants.slice(0, 5)} 
+              players={players}
               onPlayerSelect={onPlayerSelect}
-              showCount={!isMobile}
+              totalCount={participants.length}
             />
           </div>
         </div>

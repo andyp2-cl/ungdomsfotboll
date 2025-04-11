@@ -33,8 +33,7 @@ export interface PlayerStats {
     away?: number;
   };
   isWin?: boolean;
-  cup_matches?: string[]; // Properly defined for cup match tracking
-  [key: string]: any; // Add index signature to allow additional properties
+  cup_matches?: string[]; // Added this for storing cup match IDs
 }
 
 export interface Activity {

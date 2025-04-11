@@ -3,23 +3,21 @@ import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export interface ActivityParticipantsProps {
+interface ActivityParticipantsProps {
   activity?: Activity;
-  players: Player[]; // Make sure this is defined in the interface
+  participants?: Player[];
   onPlayerSelect?: (playerId: string) => void;
-  showCount?: boolean;
   isMobile?: boolean;
 }
 
 export function ActivityParticipants({ 
   activity,
-  players = [],
+  participants = [],
   onPlayerSelect,
-  showCount = true,
   isMobile = false
 }: ActivityParticipantsProps) {
   // Make sure participants is an array before using slice
-  const safeParticipants = Array.isArray(players) ? players : [];
+  const safeParticipants = Array.isArray(participants) ? participants : [];
   
   // Split participants into two rows for better visibility
   const participantsPerRow = isMobile ? 3 : 5;
@@ -62,7 +60,7 @@ export function ActivityParticipants({
               showComma={index < secondRowParticipants.length - 1} 
             />
           ))}
-          {remainingCount > 0 && showCount && (
+          {remainingCount > 0 && (
             <span className="text-xs text-muted-foreground ml-1">
               +{remainingCount} fler
             </span>
