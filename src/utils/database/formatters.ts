@@ -102,7 +102,8 @@ export const formatActivityFromDatabase = (item: any): Activity => {
           home: item.home_score,
           away: item.away_score
         },
-        isWin: activity.isWin
+        isWin: activity.isWin,
+        cup_matches: []
       };
     }
   } else {
@@ -113,7 +114,8 @@ export const formatActivityFromDatabase = (item: any): Activity => {
         home: item.home_score,
         away: item.away_score
       },
-      isWin: activity.isWin
+      isWin: activity.isWin,
+      cup_matches: []
     };
   }
   
