@@ -1,5 +1,5 @@
 
-import { Activity, PlayerStats } from "@/types/player";
+import { Activity, PlayerStats, PlayerPosition } from "@/types/player";
 
 /**
  * Formats an activity object from our application format to the database format
@@ -134,7 +134,7 @@ export const formatPlayerForDatabase = (player: any) => {
     positions = positions;
   } else if (typeof positions === 'string') {
     // If it's already a string, convert to array (space-separated)
-    positions = positions.split(' ').filter(p => p.trim() !== '');
+    positions = positions.split(' ').filter((p: string) => p.trim() !== '');
   } else {
     positions = null;
   }
@@ -154,24 +154,36 @@ export const formatPlayerForDatabase = (player: any) => {
  * Formats a player from database format to our application format
  */
 export const formatDatabasePlayer = (dbPlayer: any) => {
-  // Ensure the position is always an array
-  let positions: string[] = [];
+  // Ensure the position is always an array of PlayerPosition
+  let positions: PlayerPosition[] = [];
   
   if (dbPlayer.position) {
     if (Array.isArray(dbPlayer.position)) {
-      positions = dbPlayer.position;
+      // Validate each position is a valid PlayerPosition
+      positions = dbPlayer.position.filter((pos: string) => 
+        ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(pos)
+      ) as PlayerPosition[];
     } else if (typeof dbPlayer.position === 'string') {
       // If it contains brackets and quotes, it might be a JSON string
       if (dbPlayer.position.includes('[') && dbPlayer.position.includes('"')) {
         try {
-          positions = JSON.parse(dbPlayer.position);
+          const parsed = JSON.parse(dbPlayer.position);
+          // Validate each parsed position
+          positions = Array.isArray(parsed) ? 
+            parsed.filter((pos: string) => 
+              ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(pos)
+            ) as PlayerPosition[] : [];
         } catch (e) {
           // If parsing fails, treat as space-separated string
-          positions = dbPlayer.position.split(' ').filter(p => p.trim() !== '');
+          positions = dbPlayer.position
+            .split(' ')
+            .filter(p => p.trim() !== '' && ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(p)) as PlayerPosition[];
         }
       } else {
         // Treat as space-separated string
-        positions = dbPlayer.position.split(' ').filter(p => p.trim() !== '');
+        positions = dbPlayer.position
+          .split(' ')
+          .filter(p => p.trim() !== '' && ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(p)) as PlayerPosition[];
       }
     }
   }

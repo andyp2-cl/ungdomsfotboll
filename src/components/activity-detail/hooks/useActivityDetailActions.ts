@@ -88,10 +88,20 @@ export function useActivityDetailActions({
       updatedActivity.kioskAssignedPlayerId = undefined;
       
       if (onKioskAssignmentUpdate) {
-        // Handle the Promise correctly
-        onKioskAssignmentUpdate(currentActivity.id, undefined)
+        // Return the Promise to ensure proper typing
+        return onKioskAssignmentUpdate(currentActivity.id, undefined)
+          .then(() => {
+            handleActivityUpdate(updatedActivity);
+            
+            toast({
+              title: "Spelare borttagen",
+              description: `${player.name} har tagits bort från aktiviteten.`,
+            });
+            return true;
+          })
           .catch(error => {
             console.error("Error updating kiosk assignment:", error);
+            return false;
           });
       }
     }
@@ -102,6 +112,8 @@ export function useActivityDetailActions({
       title: "Spelare borttagen",
       description: `${player.name} har tagits bort från aktiviteten.`,
     });
+    
+    return Promise.resolve(true);
   };
 
   const handleClearAllParticipants = () => {
@@ -114,10 +126,21 @@ export function useActivityDetailActions({
       updatedActivity.kioskAssignedPlayerId = undefined;
       
       if (onKioskAssignmentUpdate) {
-        // Handle the Promise correctly
-        onKioskAssignmentUpdate(currentActivity.id, undefined)
+        // Return the Promise for proper typing
+        return onKioskAssignmentUpdate(currentActivity.id, undefined)
+          .then(() => {
+            handleActivityUpdate(updatedActivity);
+            setClearParticipantsDialogOpen(false);
+            
+            toast({
+              title: "Deltagarlista rensad",
+              description: `Alla spelare har tagits bort från aktiviteten.`,
+            });
+            return true;
+          })
           .catch(error => {
             console.error("Error updating kiosk assignment:", error);
+            return false;
           });
       }
     }
@@ -129,6 +152,8 @@ export function useActivityDetailActions({
       title: "Deltagarlista rensad",
       description: `Alla spelare har tagits bort från aktiviteten.`,
     });
+    
+    return Promise.resolve(true);
   };
 
   return {
