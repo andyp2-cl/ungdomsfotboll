@@ -119,3 +119,37 @@ export const formatActivityFromDatabase = (item: any): Activity => {
   
   return activity;
 };
+
+/**
+ * Formats a player object from our application format to the database format
+ */
+export const formatPlayerForDatabase = (player: any) => {
+  // Create a formatted player object for database storage
+  return {
+    id: player.id,
+    name: player.name,
+    grade: player.grade || null,
+    position: player.positions || null,
+    jersey_number: player.jerseyNumber || null,
+    image: player.image || null
+  };
+};
+
+/**
+ * Formats a player from database format to our application format
+ */
+export const formatDatabasePlayer = (dbPlayer: any) => {
+  const positions = dbPlayer.position ? 
+    (Array.isArray(dbPlayer.position) ? dbPlayer.position : [dbPlayer.position]) 
+    : [];
+  
+  return {
+    id: dbPlayer.id,
+    name: dbPlayer.name,
+    grade: dbPlayer.grade || undefined,
+    positions: positions,
+    jerseyNumber: dbPlayer.jersey_number || undefined,
+    image: dbPlayer.image || undefined,
+    activities: [] // Will be populated separately
+  };
+};
