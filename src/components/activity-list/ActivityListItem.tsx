@@ -75,7 +75,7 @@ export function ActivityListItem({
     >
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Left Column - Basic Match Info */}
+          {/* Left Column - Match Info and Participants */}
           <div className="flex-1 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
               <h3 className="font-bold text-base">{name}</h3>
@@ -104,40 +104,39 @@ export function ActivityListItem({
                 </div>
               )}
             </div>
+            
+            {/* Participants List - Moved back to left column */}
+            <div className="mt-3">
+              <ActivityParticipants 
+                participants={participantPlayers} 
+                onPlayerSelect={onPlayerSelect}
+                totalCount={participants.length}
+                isMobile={isMobile}
+              />
+            </div>
           </div>
 
-          {/* Right Column - Result and Participants */}
-          <div className="flex-1">
+          {/* Right Column - Result, Participant Count, and Grade Distribution */}
+          <div className="md:w-48 flex flex-col items-end">
             {resultMessage && (
               <div className={`text-sm font-medium mb-3 ${getResultTextColor()}`}>
                 {resultMessage}
               </div>
             )}
             
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
               <Users className="h-4 w-4" />
               <span>{participants.length} deltagare</span>
             </div>
 
-            <div className="flex gap-4 items-start">
-              <div className="flex-1">
-                <ActivityParticipants 
-                  participants={participantPlayers} 
-                  onPlayerSelect={onPlayerSelect}
-                  totalCount={participants.length}
-                  isMobile={isMobile}
+            {showGradeChart && (
+              <div className="hidden md:block w-24 h-24">
+                <GradePieChart 
+                  activity={activity} 
+                  participatingPlayers={participantPlayers} 
                 />
               </div>
-
-              {showGradeChart && (
-                <div className="hidden md:block w-24 h-24">
-                  <GradePieChart 
-                    activity={activity} 
-                    participatingPlayers={participantPlayers} 
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </CardContent>
