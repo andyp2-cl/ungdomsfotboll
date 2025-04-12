@@ -74,63 +74,70 @@ export function ActivityListItem({
       onClick={() => onSelect(activity)}
     >
       <CardContent className="p-4">
-        <div className="flex flex-col space-y-2">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-            <h3 className="font-bold text-base">{name}</h3>
-            <div className="flex gap-2 items-center">
-              {isCupMatch && <CupMatchBadge />}
-            </div>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-4 md:gap-8 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{capitalizedDayOfWeek} {formattedDate}</span>
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Left Column - Basic Match Info */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+              <h3 className="font-bold text-base">{name}</h3>
+              <div className="flex gap-2 items-center">
+                {isCupMatch && <CupMatchBadge />}
+              </div>
             </div>
             
-            {time && (
+            <div className="flex flex-col md:flex-row gap-4 md:gap-8 text-sm mt-2">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{time}</span>
+                <Calendar className="h-4 w-4" />
+                <span>{capitalizedDayOfWeek} {formattedDate}</span>
+              </div>
+              
+              {time && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>{time}</span>
+                </div>
+              )}
+              
+              {location?.name && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Map className="h-4 w-4" />
+                  <span>{location.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column - Result and Participants */}
+          <div className="flex-1">
+            {resultMessage && (
+              <div className={`text-sm font-medium mb-3 ${getResultTextColor()}`}>
+                {resultMessage}
               </div>
             )}
             
-            {location?.name && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Map className="h-4 w-4" />
-                <span>{location.name}</span>
-              </div>
-            )}
-          </div>
-          
-          {resultMessage && (
-            <div className={`text-sm font-medium mt-1 ${getResultTextColor()}`}>
-              {resultMessage}
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <Users className="h-4 w-4" />
-                <span>{participants.length} deltagare</span>
-              </div>
-              <ActivityParticipants 
-                participants={participantPlayers} 
-                onPlayerSelect={onPlayerSelect}
-                totalCount={participants.length}
-                isMobile={isMobile}
-              />
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <Users className="h-4 w-4" />
+              <span>{participants.length} deltagare</span>
             </div>
 
-            {showGradeChart && (
-              <div className="hidden md:block">
-                <GradePieChart 
-                  activity={activity} 
-                  participatingPlayers={participantPlayers} 
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <ActivityParticipants 
+                  participants={participantPlayers} 
+                  onPlayerSelect={onPlayerSelect}
+                  totalCount={participants.length}
+                  isMobile={isMobile}
                 />
               </div>
-            )}
+
+              {showGradeChart && (
+                <div className="hidden md:block w-24 h-24">
+                  <GradePieChart 
+                    activity={activity} 
+                    participatingPlayers={participantPlayers} 
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
