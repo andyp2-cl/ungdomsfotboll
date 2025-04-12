@@ -20,6 +20,11 @@ export function StatsSection({
   updateActivity,
   isHistorical
 }: StatsSectionProps) {
+  // Only show stats section for historical matches
+  if (!isHistorical) {
+    return null;
+  }
+  
   // Get total goals and assists
   const getTotalGoals = () => {
     if (!activity.player_stats?.goals) return 0;
@@ -31,7 +36,7 @@ export function StatsSection({
     return Object.values(activity.player_stats.assists).reduce((sum, assists) => sum + (assists as number), 0);
   };
 
-  // Update player stats - always allow editing regardless of historical status
+  // Update player stats - always allow editing for historical matches
   const updatePlayerStat = (playerId: string, statType: 'goals' | 'assists', value: number) => {
     console.log(`Updating ${statType} for player ${playerId} to ${value}`);
     

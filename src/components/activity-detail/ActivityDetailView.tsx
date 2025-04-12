@@ -12,7 +12,6 @@ import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GradeDistributionChart } from "./GradeDistributionChart";
-import { GradePieChart } from "./match-result/GradePieChart";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -130,7 +129,8 @@ export function ActivityDetailView({
             />
           )}
 
-          {isMatch && (
+          {/* Only show StatsSection if the match is historical */}
+          {isMatch && isHistorical && (
             <StatsSection
               activity={currentActivity}
               players={players}
@@ -154,18 +154,12 @@ export function ActivityDetailView({
             players={players}
           />
           
-          {/* Show grade distribution chart for both matches and cups */}
+          {/* Only show one GradePieChart in the detailed view */}
           {participatingPlayers.length > 0 && (
-            <>
-              <GradeDistributionChart
-                activity={currentActivity}
-                participatingPlayers={participatingPlayers}
-              />
-              <GradePieChart
-                activity={currentActivity}
-                participatingPlayers={participatingPlayers}
-              />
-            </>
+            <GradeDistributionChart
+              activity={currentActivity}
+              participatingPlayers={participatingPlayers}
+            />
           )}
           
           {extraContent}

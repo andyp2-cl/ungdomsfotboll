@@ -4,6 +4,7 @@ import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
+import { GradePieChart } from "../activity-detail/match-result/GradePieChart"; 
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -64,6 +65,9 @@ export function ActivityListItem({
     .map(id => players.find(p => p.id === id))
     .filter(player => player !== undefined) as Player[];
 
+  // Determine if the grade pie chart should be shown
+  const showGradeChart = participantPlayers.length > 0;
+
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -105,17 +109,28 @@ export function ActivityListItem({
             </div>
           )}
           
-          <div className="mt-2">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Users className="h-4 w-4" />
-              <span>{participants.length} deltagare</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+            <div>
+              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                <Users className="h-4 w-4" />
+                <span>{participants.length} deltagare</span>
+              </div>
+              <ActivityParticipants 
+                participants={participantPlayers} 
+                onPlayerSelect={onPlayerSelect}
+                totalCount={participants.length}
+                isMobile={isMobile}
+              />
             </div>
-            <ActivityParticipants 
-              participants={participantPlayers} 
-              onPlayerSelect={onPlayerSelect}
-              totalCount={participants.length}
-              isMobile={isMobile}
-            />
+
+            {showGradeChart && (
+              <div className="hidden md:block">
+                <GradePieChart 
+                  activity={activity} 
+                  participatingPlayers={participantPlayers} 
+                />
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
