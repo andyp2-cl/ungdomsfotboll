@@ -56,9 +56,13 @@ export function usePlayerFilters({
       const normalizedName = normalizeString(player.name);
       const nameMatches = !searchQuery || normalizedName.includes(normalizedQuery);
       
+      // Skip grade filtering for coaches
+      const isCoach = player.positions?.includes('TRÄNARE');
+      
       // Check if player grade is selected, or no grades are selected
-      const gradeMatches = selectedGrades.length === 0 || 
-        selectedGrades.includes(player.grade);
+      // Coaches are excluded from grade filtering
+      const gradeMatches = isCoach || selectedGrades.length === 0 || 
+        (player.grade && selectedGrades.includes(player.grade));
       
       // Check if player has at least one of the selected positions, or no positions are selected
       const positionMatches = selectedPositions.length === 0 || 
@@ -68,6 +72,7 @@ export function usePlayerFilters({
       console.log(`Filtering ${player.name}:`, {
         normalizedName,
         nameMatches,
+        isCoach,
         gradeMatches,
         positionMatches,
         included: nameMatches && gradeMatches && positionMatches

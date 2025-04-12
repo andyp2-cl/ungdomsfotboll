@@ -24,8 +24,13 @@ export function PlayerList({
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
   
-  // Filter out coaches if not requested
-  const filteredPlayers = players;
+  // Filter out coaches if showCoaches is false
+  const filteredPlayers = showCoaches 
+    ? players
+    : players.filter(player => {
+        if (!player.positions) return true;
+        return !player.positions.includes('TRÄNARE');
+      });
     
   // Apply sorting
   const sortedPlayers = sortPlayers(filteredPlayers);
