@@ -72,39 +72,36 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
   };
 
   return (
-    <div className="mt-2">
-      <h4 className="text-xs font-medium mb-1">Nivåfördelning</h4>
-      <div className="h-[100px]"> {/* Reduced height from 200px to 100px */}
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={gradeDistribution}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={40} // Reduced from 80 to 40
-              fill="#8884d8"
-              dataKey="count"
-              nameKey="grade"
-            >
-              {gradeDistribution.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={GRADE_COLORS[entry.grade] || '#8884d8'} 
-                />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value, name, props: any) => {
-                // Access our custom data through props.payload
-                const payload = props.payload;
-                return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="h-[100px]"> {/* Removed heading and kept the height */}
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={gradeDistribution}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={40} // Reduced from 80 to 40
+            fill="#8884d8"
+            dataKey="count"
+            nameKey="grade"
+          >
+            {gradeDistribution.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={GRADE_COLORS[entry.grade] || '#8884d8'} 
+              />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value, name, props: any) => {
+              // Access our custom data through props.payload
+              const payload = props.payload;
+              return [`${payload.count} spelare (${payload.percentage}%)`, `Nivå ${payload.grade}`];
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 }

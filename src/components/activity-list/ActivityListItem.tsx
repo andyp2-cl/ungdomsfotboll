@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -29,7 +28,6 @@ export function ActivityListItem({
   const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
   
-  // Calculate the result message
   let resultMessage = '';
   if (isHistorical && activity.result) {
     resultMessage = `Resultat: ${activity.result}`;
@@ -37,35 +35,28 @@ export function ActivityListItem({
     resultMessage = `Resultat: ${activity.homeScore}-${activity.awayScore}`;
   }
   
-  // Determine result color based on win/loss/draw
   const getResultTextColor = () => {
-    // Draw
     if (activity.homeScore === activity.awayScore && 
         activity.homeScore !== undefined && 
         activity.awayScore !== undefined) {
       return "text-gray-600";
     }
     
-    // Win/Loss based on stored value
     if (activity.isWin === true) {
       return "text-green-600";
     } else if (activity.isWin === false) {
       return "text-red-600";
     }
     
-    // Default
     return "";
   };
   
-  // Is this a cup match?
   const isCupMatch = activity.cupId ? true : false;
   
-  // Get participant players from player IDs
   const participantPlayers = participants
     .map(id => players.find(p => p.id === id))
     .filter(player => player !== undefined) as Player[];
 
-  // Determine if the grade pie chart should be shown
   const showGradeChart = participantPlayers.length > 0;
 
   return (
@@ -75,7 +66,6 @@ export function ActivityListItem({
     >
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Left Column - Match Info and Participants */}
           <div className="flex-1 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
               <h3 className="font-bold text-base">{name}</h3>
@@ -105,7 +95,6 @@ export function ActivityListItem({
               )}
             </div>
             
-            {/* Participants List - Moved back to left column */}
             <div className="mt-3">
               <ActivityParticipants 
                 participants={participantPlayers} 
@@ -116,8 +105,7 @@ export function ActivityListItem({
             </div>
           </div>
 
-          {/* Right Column - Result, Participant Count, and Grade Distribution */}
-          <div className="md:w-48 flex flex-col items-end">
+          <div className="md:w-48 flex flex-col items-end justify-start">
             {resultMessage && (
               <div className={`text-sm font-medium mb-3 ${getResultTextColor()}`}>
                 {resultMessage}
@@ -130,7 +118,7 @@ export function ActivityListItem({
             </div>
 
             {showGradeChart && (
-              <div className="hidden md:block w-24 h-24">
+              <div className="hidden md:block w-24 h-24 overflow-hidden">
                 <GradePieChart 
                   activity={activity} 
                   participatingPlayers={participantPlayers} 
