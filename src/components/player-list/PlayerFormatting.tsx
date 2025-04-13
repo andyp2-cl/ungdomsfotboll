@@ -1,5 +1,29 @@
-
 import { Player } from "@/types/player";
+
+// Add this function that was missing
+export function getPositionsString(positions: string[] | undefined): string {
+  if (!positions || positions.length === 0) return 'Odefinierad';
+  
+  const isTrainer = positions.includes('TRÄNARE');
+  if (isTrainer) {
+    return 'Tränare';
+  }
+  
+  return positions.map(formatPosition).join(', ');
+}
+
+// Format individual position
+function formatPosition(position: string): string {
+  if (position === 'TRÄNARE') return 'Tränare';
+  
+  let formattedPosition = position
+    .replace('MV', 'Målvakt')
+    .replace('BACK', 'Back')
+    .replace('MF', 'Mittfält')
+    .replace('ANF', 'Anfall');
+  
+  return formattedPosition;
+}
 
 export function usePlayerFormatting() {
   const getGradeColor = (grade: string) => {
@@ -20,18 +44,6 @@ export function usePlayerFormatting() {
   const getGradeText = (grade: string | undefined) => {
     if (!grade) return '';
     return `Nivå ${grade}`;
-  };
-
-  const formatPosition = (position: string) => {
-    if (position === 'TRÄNARE') return 'Tränare';
-    
-    let formattedPosition = position
-      .replace('MV', 'Målvakt')
-      .replace('BACK', 'Back')
-      .replace('MF', 'Mittfält')
-      .replace('ANF', 'Anfall');
-    
-    return formattedPosition;
   };
 
   const formatPositions = (positions: string[] | undefined) => {
