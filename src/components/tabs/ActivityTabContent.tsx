@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -66,9 +67,10 @@ export function ActivityTabContent({
     }
   };
 
-  const handleViewChange = (value: "upcoming" | "historical" | "statistics") => {
-    if (value) {
-      setActiveView(value);
+  // Modified to properly handle view changes and ensure statistics tab works
+  const handleViewChange = (value: string) => {
+    if (value === "upcoming" || value === "historical" || value === "statistics") {
+      setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
       setSelectedPlayer(null);
     }

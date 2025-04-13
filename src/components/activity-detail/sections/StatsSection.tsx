@@ -4,6 +4,7 @@ import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Minus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StatsSectionProps {
   activity: Activity;
@@ -20,6 +21,8 @@ export function StatsSection({
   updateActivity,
   isHistorical
 }: StatsSectionProps) {
+  const isMobile = useIsMobile();
+  
   // Only show stats section for historical matches
   if (!isHistorical) {
     return null;
@@ -58,12 +61,12 @@ export function StatsSection({
   };
 
   return (
-    <div className="border rounded-md p-4">
-      <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
+    <div className={`border rounded-md ${isMobile ? 'p-3' : 'p-4'}`}>
+      <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-3`}>Matchstatistik</h3>
       
       {participatingPlayers.length > 0 ? (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground mb-2">
+          <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground mb-2`}>
             Uppdatera statistik för spelarnas mål och assist:
           </p>
           
@@ -72,16 +75,16 @@ export function StatsSection({
             const assists = activity.player_stats?.assists?.[player.id] || 0;
             
             return (
-              <div key={player.id} className="flex justify-between items-center border-b pb-2">
-                <span className="font-medium">{player.name}</span>
-                <div className="flex items-center gap-4">
+              <div key={player.id} className={`${isMobile ? 'flex flex-col gap-2' : 'flex justify-between items-center'} border-b pb-2`}>
+                <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>{player.name}</span>
+                <div className={`${isMobile ? 'flex justify-between' : 'flex items-center gap-4'}`}>
                   <div className="flex items-center">
-                    <span className="text-xs mr-2">Mål:</span>
+                    <span className={`${isMobile ? 'text-xs mr-1' : 'text-xs mr-2'}`}>Mål:</span>
                     <>
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-7 w-7 rounded-full"
+                        className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} rounded-full`}
                         onClick={() => {
                           if (goals > 0) {
                             updatePlayerStat(player.id, 'goals', goals - 1);
@@ -89,27 +92,27 @@ export function StatsSection({
                         }}
                         disabled={goals === 0}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'}`} />
                       </Button>
                       <span className="mx-2 w-6 text-center">{goals}</span>
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-7 w-7 rounded-full"
+                        className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} rounded-full`}
                         onClick={() => updatePlayerStat(player.id, 'goals', goals + 1)}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'}`} />
                       </Button>
                     </>
                   </div>
                   
                   <div className="flex items-center">
-                    <span className="text-xs mr-2">Assist:</span>
+                    <span className={`${isMobile ? 'text-xs mr-1' : 'text-xs mr-2'}`}>Assist:</span>
                     <>
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-7 w-7 rounded-full"
+                        className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} rounded-full`}
                         onClick={() => {
                           if (assists > 0) {
                             updatePlayerStat(player.id, 'assists', assists - 1);
@@ -117,16 +120,16 @@ export function StatsSection({
                         }}
                         disabled={assists === 0}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'}`} />
                       </Button>
                       <span className="mx-2 w-6 text-center">{assists}</span>
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-7 w-7 rounded-full"
+                        className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} rounded-full`}
                         onClick={() => updatePlayerStat(player.id, 'assists', assists + 1)}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'}`} />
                       </Button>
                     </>
                   </div>
@@ -135,11 +138,11 @@ export function StatsSection({
             );
           })}
           
-          <div className="mt-4 flex gap-4 justify-center">
-            <Badge variant="outline" className="text-sm px-3 py-1 bg-green-50 text-green-700 border-green-200">
+          <div className={`mt-4 flex gap-4 justify-center ${isMobile ? 'text-xs' : ''}`}>
+            <Badge variant="outline" className={`${isMobile ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1'} bg-green-50 text-green-700 border-green-200`}>
               Mål: {getTotalGoals()}
             </Badge>
-            <Badge variant="outline" className="text-sm px-3 py-1 bg-blue-50 text-blue-700 border-blue-200">
+            <Badge variant="outline" className={`${isMobile ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1'} bg-blue-50 text-blue-700 border-blue-200`}>
               Assist: {getTotalAssists()}
             </Badge>
           </div>

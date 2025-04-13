@@ -25,11 +25,16 @@ export function MobileNavBar({ activeTab, onTabChange }: MobileNavBarProps) {
       navigate('/players');
     } else if (tab === 'activities') {
       navigate('/activities');
+      // If we're already on the activities page but changing to activities tab,
+      // make sure the tab change takes effect
+      if (window.location.pathname === '/activities') {
+        onTabChange('activities');
+      }
     } else if (tab === 'statistics') {
-      // Kan dirigeras till en framtida statistiksida om det behövs
+      // Navigate to activities page first, then switch to statistics tab
       navigate('/activities');
-      // Aktivera statistikfliken efter navigering
-      setTimeout(() => onTabChange('statistics'), 100);
+      // Use a small delay to ensure navigation completes before switching tabs
+      setTimeout(() => onTabChange('statistics'), 50);
     }
   };
 
