@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Calendar, BarChart3, Menu } from "lucide-react";
@@ -31,10 +30,7 @@ export function MobileNavBar({ activeTab, onTabChange }: MobileNavBarProps) {
         onTabChange('activities');
       }
     } else if (tab === 'statistics') {
-      // Navigate to activities page first, then switch to statistics tab
-      navigate('/activities');
-      // Use a small delay to ensure navigation completes before switching tabs
-      setTimeout(() => onTabChange('statistics'), 50);
+      navigate('/statistics');
     }
   };
 
