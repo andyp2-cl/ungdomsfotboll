@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import { Activity, Player, PlayerGrade } from "@/types/player";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GradePieChartProps {
   activity: Activity;
@@ -9,6 +10,8 @@ interface GradePieChartProps {
 }
 
 export function GradePieChart({ activity, participatingPlayers }: GradePieChartProps) {
+  const isMobile = useIsMobile();
+  
   // Calculate grade distribution
   const gradeDistribution = useMemo(() => {
     const grades: Record<PlayerGrade, number> = {
@@ -50,7 +53,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     'D': '#ef4444'  // red
   };
 
-  // Custom label for the pie chart
+  // Custom label for the pie chart - smaller on mobile
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
@@ -63,7 +66,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
-        fontSize={10} // Smaller font size
+        fontSize={isMobile ? 8 : 10} // Even smaller font size on mobile
         fontWeight="bold"
       >
         {`${gradeDistribution[index].grade}`}
@@ -71,8 +74,11 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     );
   };
 
+  // Calculate chart size based on device
+  const chartSize = isMobile ? 30 : 40; // Smaller on mobile
+
   return (
-    <div className="h-[100px]"> {/* Removed heading and kept the height */}
+    <div className="h-[100px] w-full flex items-center justify-center">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -81,7 +87,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={40} // Reduced from 80 to 40
+            outerRadius={chartSize}
             fill="#8884d8"
             dataKey="count"
             nameKey="grade"

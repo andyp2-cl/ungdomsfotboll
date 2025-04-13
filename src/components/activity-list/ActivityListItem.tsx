@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -118,7 +119,7 @@ export function ActivityListItem({
             </div>
 
             {showGradeChart && (
-              <div className="hidden md:block w-24 h-24 overflow-hidden">
+              <div className="w-24 h-24 overflow-hidden">
                 <GradePieChart 
                   activity={activity} 
                   participatingPlayers={participantPlayers} 

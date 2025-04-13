@@ -2,6 +2,7 @@
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { GradePieChart } from "./match-result/GradePieChart";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GradeDistributionChartProps {
   activity: Activity;
@@ -9,6 +10,8 @@ interface GradeDistributionChartProps {
 }
 
 export function GradeDistributionChart({ activity, participatingPlayers }: GradeDistributionChartProps) {
+  const isMobile = useIsMobile();
+  
   if (!participatingPlayers || participatingPlayers.length === 0) {
     return null;
   }
@@ -18,7 +21,7 @@ export function GradeDistributionChart({ activity, participatingPlayers }: Grade
   return (
     <div className="mt-4 border-t pt-4">
       <h4 className="text-sm font-medium mb-2">Nivåfördelning - Spelare</h4>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-2 sm:grid-cols-4 gap-2'}`}>
         {['A', 'B', 'C', 'D'].map(grade => {
           const count = participatingPlayers.filter(p => p.grade === grade).length;
           const percentage = participatingPlayers.length > 0 
@@ -42,8 +45,8 @@ export function GradeDistributionChart({ activity, participatingPlayers }: Grade
               key={grade} 
               className={`rounded-md py-2 px-3 text-center ${bgColor}`}
             >
-              <div className="font-bold">Nivå {grade}</div>
-              <div className="text-sm">{count} st ({percentage}%)</div>
+              <div className={`font-bold ${isMobile ? 'text-sm' : ''}`}>Nivå {grade}</div>
+              <div className={`${isMobile ? 'text-xs' : 'text-sm'}`}>{count} st ({percentage}%)</div>
             </div>
           );
         })}
