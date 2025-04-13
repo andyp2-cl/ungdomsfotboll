@@ -7,9 +7,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface GradePieChartProps {
   activity: Activity;
   participatingPlayers: Player[];
+  compact?: boolean; // Added compact prop as optional boolean
 }
 
-export function GradePieChart({ activity, participatingPlayers }: GradePieChartProps) {
+export function GradePieChart({ activity, participatingPlayers, compact = false }: GradePieChartProps) {
   const isMobile = useIsMobile();
   
   // Calculate grade distribution
@@ -53,11 +54,17 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     'D': '#ef4444'  // red
   };
 
-  // Custom label for the pie chart - smaller on mobile
+  // Calculate chart size based on device and compact prop
+  const chartSize = compact ? 20 : isMobile ? 30 : 40;
+
+  // Custom label for the pie chart - smaller on mobile or in compact mode
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
     const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+    
+    // Smaller font when compact
+    const fontSize = compact ? 6 : isMobile ? 8 : 10;
     
     return (
       <text 
@@ -66,7 +73,7 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
-        fontSize={isMobile ? 8 : 10} // Even smaller font size on mobile
+        fontSize={fontSize}
         fontWeight="bold"
       >
         {`${gradeDistribution[index].grade}`}
@@ -74,11 +81,8 @@ export function GradePieChart({ activity, participatingPlayers }: GradePieChartP
     );
   };
 
-  // Calculate chart size based on device
-  const chartSize = isMobile ? 30 : 40; // Smaller on mobile
-
   return (
-    <div className="h-[100px] w-full flex items-center justify-center">
+    <div className={`${compact ? 'h-[60px]' : 'h-[100px]'} w-full flex items-center justify-center`}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
