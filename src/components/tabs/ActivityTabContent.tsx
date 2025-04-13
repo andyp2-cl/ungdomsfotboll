@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -11,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
+import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
+import { toast } from "sonner";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -51,10 +52,10 @@ export function ActivityTabContent({
   handleClearHistoricalActivities,
   handleMatchResultUpdate
 }: ActivityTabContentProps) {
-  // Default to historical view for matches
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
 
   const handlePlayerSelect = (playerId: string) => {
@@ -65,13 +66,25 @@ export function ActivityTabContent({
     }
   };
 
-  // Modified to close any open detail when changing views
   const handleViewChange = (value: "upcoming" | "historical" | "statistics") => {
     if (value) {
       setActiveView(value);
-      // Close any open details when changing views
       setSelectedActivity(null);
       setSelectedPlayer(null);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Data uppdaterad");
+    } catch (error) {
+      toast.error("Kunde inte uppdatera data");
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -106,7 +119,6 @@ export function ActivityTabContent({
 
   const isHistorical = activeView === "historical";
 
-  // Filter activities based on search query
   const filteredBySearchActivities = isHistorical 
     ? filteredHistoricalActivities.filter(activity => 
         searchQuery 
@@ -116,6 +128,81 @@ export function ActivityTabContent({
         searchQuery 
           ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
           : true);
+
+  const renderContent = () => {
+    if (selectedPlayer) {
+      return (
+        <PlayerDetail 
+          player={selectedPlayer} 
+          activities={activities} 
+          onClose={() => setSelectedPlayer(null)}
+          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
+          onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
+          allPlayers={players}
+        />
+      );
+    }
+    
+    if (selectedActivity) {
+      return (
+        <ActivityDetail 
+          activity={selectedActivity}
+          players={players}
+          onBack={() => setSelectedActivity(null)}
+          onEdit={setEditingActivity}
+          onDeleteActivity={handleDeleteActivity}
+          onActivityUpdate={handleActivityUpdate}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onActivitySelect={setSelectedActivity}
+          relatedActivities={activities.filter(a => 
+            a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id
+          )}
+          cupMatches={selectedActivity.type === 'cup' 
+            ? activities.filter(a => a.cupId === selectedActivity.id)
+            : []}
+          allActivities={activities}
+          onClose={() => setSelectedActivity(null)}
+          onMatchResultUpdate={handleMatchResultUpdate}
+          onPlayerSelect={handlePlayerSelect}
+        />
+      );
+    }
+    
+    if (activeView === "statistics") {
+      return (
+        <StatisticsTabsWrapper 
+          players={players}
+          activities={activities}
+          gradeData={players.reduce((acc, player) => {
+            if (player.positions?.includes("TRÄNARE")) return acc;
+            
+            const grade = player.grade;
+            const existingGrade = acc.find(item => item.grade === grade);
+            
+            if (existingGrade) {
+              existingGrade.players++;
+            } else {
+              acc.push({ grade, players: 1 });
+            }
+            
+            return acc;
+          }, [] as { grade: string, players: number }[]).sort((a, b) => a.grade.localeCompare(b.grade))}
+        />
+      );
+    }
+    
+    return (
+      <ActivityList 
+        activities={filteredBySearchActivities}
+        players={players}
+        onSelect={setSelectedActivity}
+        onPlayerSelect={handlePlayerSelect}
+        isHistorical={isHistorical}
+        isMobile={isMobile}
+        noResultsMessage={searchQuery ? `Inga matcher hittades för "${searchQuery}"` : "Inga aktiviteter hittades"}
+      />
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -158,53 +245,9 @@ export function ActivityTabContent({
         />
       )}
       
-      {selectedPlayer ? (
-        <PlayerDetail 
-          player={selectedPlayer} 
-          activities={activities} 
-          onClose={() => setSelectedPlayer(null)}
-          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
-          onPlayerUpdate={dummyPlayerUpdate}
-          allPlayers={players}
-        />
-      ) : selectedActivity ? (
-        <ActivityDetail 
-          activity={selectedActivity}
-          players={players}
-          onBack={() => setSelectedActivity(null)}
-          onEdit={setEditingActivity}
-          onDeleteActivity={handleDeleteActivity}
-          onActivityUpdate={handleActivityUpdate}
-          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-          onActivitySelect={setSelectedActivity}
-          relatedActivities={relatedActivities}
-          cupMatches={cupMatches}
-          allActivities={activities}
-          onClose={() => setSelectedActivity(null)}
-          onMatchResultUpdate={handleMatchResultUpdate}
-          onPlayerSelect={handlePlayerSelect}
-        />
-      ) : (
-        <>
-          {activeView === "statistics" ? (
-            <StatisticsTabsWrapper 
-              players={players}
-              activities={activities}
-              gradeData={gradeData}
-            />
-          ) : (
-            <ActivityList 
-              activities={filteredBySearchActivities}
-              players={players}
-              onSelect={setSelectedActivity}
-              onPlayerSelect={handlePlayerSelect}
-              isHistorical={isHistorical}
-              isMobile={isMobile}
-              noResultsMessage={searchQuery ? `Inga matcher hittades för "${searchQuery}"` : "Inga aktiviteter hittades"}
-            />
-          )}
-        </>
-      )}
+      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
+        {renderContent()}
+      </PullToRefresh>
     </div>
   );
 }

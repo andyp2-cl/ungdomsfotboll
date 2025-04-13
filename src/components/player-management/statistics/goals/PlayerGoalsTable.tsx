@@ -66,7 +66,45 @@ export function PlayerGoalsTable({ playerStats, onPlayerSelect }: PlayerGoalsTab
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? <ChevronUp className="h-4 w-4 inline ml-1" /> : <ChevronDown className="h-4 w-4 inline ml-1" />;
   };
+
+  // Mobile card view for players
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {sortedStats.map((player) => (
+          <div 
+            key={player.id}
+            className={`border rounded-lg p-4 ${onPlayerSelect ? "cursor-pointer active:bg-muted/70" : ""}`}
+            onClick={onPlayerSelect ? () => handlePlayerClick(player.id) : undefined}
+          >
+            <div className="font-medium text-lg mb-2">{player.name}</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-muted-foreground">Matcher</div>
+                <div className="font-medium">{player.matches}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Mål</div>
+                <div className="font-medium">{player.goals}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Assist</div>
+                <div className="font-medium">{player.assists}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Mål/Match</div>
+                <div className="font-medium">
+                  {player.matches > 0 ? (player.goals / player.matches).toFixed(2) : "0.00"}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   
+  // Regular desktop table view
   return (
     <div className="overflow-x-auto">
       <Table>

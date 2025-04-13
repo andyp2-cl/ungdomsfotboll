@@ -5,6 +5,8 @@ import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
+import { MobileNavBar } from "@/components/mobile-nav/MobileNavBar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayersPageContentProps {
   // Tab state
@@ -95,9 +97,11 @@ export function PlayersPageContent({
   handleAddActivity,
   onPlayerActivitySelect
 }: PlayersPageContentProps) {
+  const isMobile = useIsMobile();
+  
   return (
     <>
-      <div className="mb-4">
+      <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
         <MainTabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -158,6 +162,11 @@ export function PlayersPageContent({
         handleActivityUpdate={handleActivityUpdate}
         handleAddPlayer={handleAddPlayer}
         handleAddActivity={handleAddActivity}
+      />
+      
+      <MobileNavBar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
       />
     </>
   );
