@@ -65,38 +65,38 @@ export function ActivityListItem({
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={() => onSelect(activity)}
     >
-      <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-              <h3 className="font-bold text-base">{name}</h3>
+              <h3 className={`font-bold ${isMobile ? 'text-base' : ''}`}>{name}</h3>
               <div className="flex gap-2 items-center">
                 {isCupMatch && <CupMatchBadge />}
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4 md:gap-8 text-sm mt-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
+            <div className={`flex flex-wrap gap-2 text-sm mt-2 ${isMobile ? 'text-xs' : ''}`}>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 <span>{capitalizedDayOfWeek} {formattedDate}</span>
               </div>
               
               {time && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   <span>{time}</span>
                 </div>
               )}
               
               {location?.name && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Map className="h-4 w-4" />
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Map className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   <span>{location.name}</span>
                 </div>
               )}
             </div>
             
-            <div className="mt-3">
+            <div className={`${isMobile ? 'mt-2' : 'mt-3'}`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
                 onPlayerSelect={onPlayerSelect}
@@ -108,21 +108,31 @@ export function ActivityListItem({
 
           <div className="md:w-48 flex flex-col items-end justify-start">
             {resultMessage && (
-              <div className={`text-sm font-medium mb-3 ${getResultTextColor()}`}>
+              <div className={`${isMobile ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
                 {resultMessage}
               </div>
             )}
             
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-              <Users className="h-4 w-4" />
-              <span>{participants.length} deltagare</span>
+            <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+              <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              <span className={isMobile ? 'text-xs' : ''}>{participants.length} deltagare</span>
             </div>
 
-            {showGradeChart && (
+            {showGradeChart && !isMobile && (
               <div className="w-24 h-24 overflow-hidden">
                 <GradePieChart 
                   activity={activity} 
                   participatingPlayers={participantPlayers} 
+                />
+              </div>
+            )}
+            
+            {showGradeChart && isMobile && (
+              <div className="w-16 h-16 overflow-hidden">
+                <GradePieChart 
+                  activity={activity} 
+                  participatingPlayers={participantPlayers} 
+                  compact={true}
                 />
               </div>
             )}

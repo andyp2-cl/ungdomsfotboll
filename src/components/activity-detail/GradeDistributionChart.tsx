@@ -19,9 +19,9 @@ export function GradeDistributionChart({ activity, participatingPlayers }: Grade
   // We've moved the GradePieChart to the overview list item, so we'll use a different
   // visualization or information here in the detailed view
   return (
-    <div className="mt-4 border-t pt-4">
-      <h4 className="text-sm font-medium mb-2">Nivåfördelning - Spelare</h4>
-      <div className={`grid ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-2 sm:grid-cols-4 gap-2'}`}>
+    <div className={`${isMobile ? 'mt-3 border-t pt-3' : 'mt-4 border-t pt-4'}`}>
+      <h4 className={`${isMobile ? 'text-sm' : ''} font-medium mb-2`}>Nivåfördelning - Spelare</h4>
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-2 sm:grid-cols-4 gap-3'}`}>
         {['A', 'B', 'C', 'D'].map(grade => {
           const count = participatingPlayers.filter(p => p.grade === grade).length;
           const percentage = participatingPlayers.length > 0 
@@ -46,7 +46,7 @@ export function GradeDistributionChart({ activity, participatingPlayers }: Grade
               className={`rounded-md py-2 px-3 text-center ${bgColor}`}
             >
               <div className={`font-bold ${isMobile ? 'text-sm' : ''}`}>Nivå {grade}</div>
-              <div className={`${isMobile ? 'text-xs' : 'text-sm'}`}>{count} st ({percentage}%)</div>
+              <div className={isMobile ? 'text-xs' : 'text-sm'}>{count} st ({percentage}%)</div>
             </div>
           );
         })}

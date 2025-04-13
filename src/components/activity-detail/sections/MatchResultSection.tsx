@@ -29,8 +29,8 @@ export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResul
   };
 
   return (
-    <div className="border rounded-md p-3 sm:p-4">
-      <h3 className="text-lg font-semibold mb-2 sm:mb-3">Matchresultat</h3>
+    <div className={`border rounded-md ${isMobile ? 'p-3' : 'p-4'}`}>
+      <h3 className={`font-semibold ${isMobile ? 'text-base mb-2' : 'text-lg mb-3'}`}>Matchresultat</h3>
       <MatchResultQuickView 
         activity={activity}
         onSave={handleQuickResultSave}

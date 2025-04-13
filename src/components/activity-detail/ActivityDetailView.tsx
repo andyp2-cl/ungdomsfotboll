@@ -96,8 +96,8 @@ export function ActivityDetailView({
 
   return (
     <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 h-[100dvh]' : 'lg:max-w-3xl mx-auto'}`}>
-      <CardHeader className={isMobile ? 'px-3 py-2' : ''}>
-        <div className="flex justify-between items-start">
+      <CardHeader className={isMobile ? 'px-3 py-3 border-b' : ''}>
+        <div className="flex justify-between items-start gap-2">
           <ActivityDetailHeaderContent 
             activity={currentActivity}
             formattedDate={formattedDate}
@@ -121,7 +121,7 @@ export function ActivityDetailView({
         </div>
       </CardHeader>
       <ScrollArea className={`flex-1 overflow-y-auto ${isMobile ? 'h-[calc(100dvh-140px)]' : ''}`}>
-        <CardContent className={`space-y-6 ${isMobile ? 'px-3 pb-16' : ''}`}>
+        <CardContent className={`space-y-6 ${isMobile ? 'px-3 pb-20' : ''}`}>
           {isMatch && (
             <MatchResultSection 
               activity={activity}
@@ -154,7 +154,7 @@ export function ActivityDetailView({
             players={players}
           />
           
-          {/* Only show one GradePieChart in the detailed view */}
+          {/* Only show grade distribution in the detailed view if we have participants */}
           {participatingPlayers.length > 0 && (
             <GradeDistributionChart
               activity={currentActivity}
@@ -165,8 +165,14 @@ export function ActivityDetailView({
           {extraContent}
         </CardContent>
       </ScrollArea>
-      <CardFooter className={`flex justify-end mt-auto ${isMobile ? 'px-3 py-2 border-t' : ''}`}>
-        <Button variant="outline" onClick={handleClose}>Stäng</Button>
+      <CardFooter className={`flex justify-end mt-auto ${isMobile ? 'px-3 py-3 border-t' : ''}`}>
+        <Button 
+          variant="outline" 
+          onClick={handleClose}
+          className={isMobile ? "w-full h-11" : ""}
+        >
+          Stäng
+        </Button>
       </CardFooter>
 
       <DeleteActivityDialog

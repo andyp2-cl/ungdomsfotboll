@@ -25,6 +25,11 @@ export function MobileNavBar({ activeTab, onTabChange }: MobileNavBarProps) {
       navigate('/players');
     } else if (tab === 'activities') {
       navigate('/activities');
+    } else if (tab === 'statistics') {
+      // Kan dirigeras till en framtida statistiksida om det behövs
+      navigate('/activities');
+      // Aktivera statistikfliken efter navigering
+      setTimeout(() => onTabChange('statistics'), 100);
     }
   };
 

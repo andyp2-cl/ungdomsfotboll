@@ -102,11 +102,11 @@ export function ScoreForm({
     <div>
       <div className="grid grid-cols-1 gap-4">
         <div className="mb-4">
-          <h4 className="text-sm font-medium mb-2">Matchresultat</h4>
-          <div className="grid grid-cols-3 gap-2 items-center">
+          <h4 className="text-sm font-medium mb-3">Resultat</h4>
+          <div className="grid grid-cols-3 gap-3 items-center">
             <div className="space-y-2">
               <Label htmlFor="homeScore" className={`${isHassleholm === 'home' ? "font-semibold" : ""} ${isMobile ? "text-sm" : ""}`}>
-                {isMobile ? (isHome ? "HIF" : teamNames.homeTeam) : homeTeamLabel}
+                {isMobile ? (isHome ? "HIF" : teamNames.homeTeam.substring(0, 8)) : homeTeamLabel}
               </Label>
               <Input
                 id="homeScore"
@@ -114,7 +114,7 @@ export function ScoreForm({
                 min="0"
                 value={homeScore === undefined ? "" : homeScore}
                 onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={isHassleholm === 'home' ? "border-blue-200" : ""}
+                className={`${isHassleholm === 'home' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
               />
             </div>
             <div className="flex justify-center items-center text-lg font-bold">
@@ -122,7 +122,7 @@ export function ScoreForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="awayScore" className={`${isHassleholm === 'away' ? "font-semibold" : ""} ${isMobile ? "text-sm" : ""}`}>
-                {isMobile ? (!isHome ? "HIF" : teamNames.awayTeam) : awayTeamLabel}
+                {isMobile ? (!isHome ? "HIF" : teamNames.awayTeam.substring(0, 8)) : awayTeamLabel}
               </Label>
               <Input
                 id="awayScore"
@@ -130,7 +130,7 @@ export function ScoreForm({
                 min="0"
                 value={awayScore === undefined ? "" : awayScore}
                 onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={isHassleholm === 'away' ? "border-blue-200" : ""}
+                className={`${isHassleholm === 'away' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
               />
             </div>
           </div>
@@ -138,28 +138,28 @@ export function ScoreForm({
         
         {setManualWinStatus && (
           <div className="mb-4">
-            <h4 className="text-sm font-medium mb-2">Matchresultat</h4>
+            <h4 className="text-sm font-medium mb-3">Matchresultat</h4>
             <RadioGroup 
               value={winStatusValue} 
               onValueChange={handleWinStatusChange}
-              className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
+              className={`flex ${isMobile ? 'flex-row justify-between' : 'space-x-4'}`}
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="win" id="win" />
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+                <RadioGroupItem value="win" id="win" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="win" className="flex items-center cursor-pointer">
                   <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
                   Vinst
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="draw" id="draw" />
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+                <RadioGroupItem value="draw" id="draw" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="draw" className="flex items-center cursor-pointer">
                   <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
                   Oavgjort
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="loss" id="loss" />
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+                <RadioGroupItem value="loss" id="loss" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="loss" className="flex items-center cursor-pointer">
                   <XCircle className="h-4 w-4 mr-1 text-red-600" />
                   Förlust
@@ -172,7 +172,7 @@ export function ScoreForm({
         <Button 
           onClick={onSave} 
           disabled={isSaving}
-          className="w-full"
+          className={isMobile ? "w-full h-12 mt-2" : "w-full"}
         >
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? "Sparar..." : "Spara resultat"}

@@ -39,9 +39,9 @@ export function ParticipantsSection({
   const isMobile = useIsMobile();
 
   return (
-    <Accordion type="single" collapsible defaultValue="participants">
-      <AccordionItem value="participants">
-        <AccordionTrigger className="py-2">
+    <Accordion type="single" collapsible defaultValue="participants" className={isMobile ? "border rounded-lg" : ""}>
+      <AccordionItem value="participants" className={isMobile ? "border-none" : ""}>
+        <AccordionTrigger className={isMobile ? "px-3 py-2" : "py-2"}>
           <div className="flex items-center">
             <Users className="h-5 w-5 mr-2" />
             <span>Deltagare ({participatingPlayers.length})</span>
@@ -52,7 +52,7 @@ export function ParticipantsSection({
             )}
           </div>
         </AccordionTrigger>
-        <AccordionContent>
+        <AccordionContent className={isMobile ? "px-3 pb-3" : ""}>
           <ParticipantList
             participants={participatingPlayers}
             onPlayerSelect={onPlayerSelect}
