@@ -15,13 +15,13 @@ interface ActivitiesTabContentProps {
   isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
   setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
-  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => void;
-  handleDeleteActivity: (activityId: string) => void;
-  handleImportedActivities: (activities: Activity[]) => void;
-  handleClearHistoricalActivities: () => void;
+  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  handleDeleteActivity: (activityId: string) => Promise<boolean>;
+  handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
+  handleClearHistoricalActivities: () => Promise<boolean>;
 }
 
 export function ActivitiesTabContent({
@@ -64,7 +64,14 @@ export function ActivitiesTabContent({
         onActivityUpdate={handleActivityUpdate}
         onAddActivityClick={() => setIsAddActivityOpen(true)}
         onEditActivityClick={setEditingActivity}
-        onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+        onKioskAssignmentUpdate={async (activityId, playerId) => {
+          try {
+            await handleKioskAssignmentUpdate(activityId, playerId);
+            return true;
+          } catch (error) {
+            return false;
+          }
+        }}
         onDeleteActivity={handleDeleteActivity}
         onImportedActivities={handleImportedActivities}
         onClearHistoricalActivities={handleClearHistoricalActivities}

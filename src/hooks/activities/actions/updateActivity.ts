@@ -13,7 +13,7 @@ export const handleActivityUpdate = async (
   setPlayers: (players: Player[]) => void,
   toast: any,
   updatedActivity: Activity
-) => {
+): Promise<void> => {
   console.log("handleActivityUpdate called with:", {
     activityId: updatedActivity.id,
     activityName: updatedActivity.name

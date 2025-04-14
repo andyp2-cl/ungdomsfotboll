@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -57,6 +58,15 @@ export function usePlayers(initialTab?: string) {
     handleClearHistoricalActivities,
     handleMatchResultUpdate
   } = useActivities(players, setPlayers);
+
+  // Wrapper for activity update
+  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
+    try {
+      await handleActivityUpdate(activity);
+    } catch (error) {
+      console.error("Error updating activity:", error);
+    }
+  };
 
   // Wrapper functions to ensure proper return types
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
@@ -153,7 +163,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate,
+    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,

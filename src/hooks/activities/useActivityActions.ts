@@ -18,8 +18,8 @@ export function useActivityActions(
   historicalActivities: Activity[]
 ) {
   return {
-    handleActivityUpdate: (updatedActivity: Activity) => 
-      handleActivityUpdate(activities, setActivities, players, setPlayers, toast, updatedActivity),
+    handleActivityUpdate: async (updatedActivity: Activity): Promise<void> => 
+      await handleActivityUpdate(activities, setActivities, players, setPlayers, toast, updatedActivity),
       
     handleDeleteActivity: (activityId: string) => 
       handleDeleteActivity(activities, setActivities, players, setPlayers, toast, activityId),

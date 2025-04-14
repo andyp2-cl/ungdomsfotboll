@@ -16,13 +16,13 @@ interface ActivityManagementProps {
   filteredHistoricalActivities: Activity[];
   onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
-  onActivityUpdate: (activity: Activity) => void;
+  onActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
   onAddActivityClick: () => void;
   onEditActivityClick: (activity: Activity) => void;
-  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => void;
-  onDeleteActivity?: (activityId: string) => void;
-  onImportedActivities: (importedActivities: Activity[]) => void;
-  onClearHistoricalActivities?: () => void;
+  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  onDeleteActivity?: (activityId: string) => Promise<boolean>;
+  onImportedActivities: (importedActivities: Activity[]) => Promise<boolean>;
+  onClearHistoricalActivities?: () => Promise<boolean>;
 }
 
 export function ActivityManagement({
@@ -77,8 +77,7 @@ export function ActivityManagement({
 
   const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
     try {
-      onKioskAssignmentUpdate(activityId, playerId);
-      return true;
+      return await onKioskAssignmentUpdate(activityId, playerId);
     } catch (error) {
       console.error("Error updating kiosk assignment:", error);
       return false;
@@ -88,8 +87,7 @@ export function ActivityManagement({
   const handleDeleteActivity = async (activityId: string): Promise<boolean> => {
     try {
       if (onDeleteActivity) {
-        onDeleteActivity(activityId);
-        return true;
+        return await onDeleteActivity(activityId);
       }
       return false;
     } catch (error) {
@@ -116,7 +114,13 @@ export function ActivityManagement({
             onEditActivityClick={onEditActivityClick}
             handleKioskUpdate={handleKioskUpdate}
             handleDeleteActivity={handleDeleteActivity}
-            cupMatches={cupMatches}
+            cupMatches={selectedActivity?.type === 'cup' 
+              ? activities.filter(a => a.cupId === selectedActivity.id)
+              : []}
+            handleMatchResultUpdate={async (activityId, homeScore, awayScore) => {
+              // Provide empty implementation since it's not required here
+              console.log("Match result update not implemented in ActivityManagement");
+            }}
           />
         </TabsContent>
         
@@ -134,7 +138,9 @@ export function ActivityManagement({
             onEditActivityClick={onEditActivityClick}
             handleKioskUpdate={handleKioskUpdate}
             handleDeleteActivity={handleDeleteActivity}
-            cupMatches={cupMatches}
+            cupMatches={selectedActivity?.type === 'cup' 
+              ? activities.filter(a => a.cupId === selectedActivity.id)
+              : []}
             onClearHistoricalActivities={onClearHistoricalActivities}
           />
         </TabsContent>
