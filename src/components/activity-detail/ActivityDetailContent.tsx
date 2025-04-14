@@ -55,6 +55,7 @@ export function ActivityDetailContent({
   // Handle match result updates
   const handleMatchResultUpdate = async (homeScore?: number, awayScore?: number) => {
     if (onMatchResultUpdate) {
+      // Pass the activity.id as the first parameter to match the expected function signature
       await onMatchResultUpdate(activity.id, homeScore, awayScore);
     }
   };
