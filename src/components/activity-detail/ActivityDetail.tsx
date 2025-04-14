@@ -13,7 +13,7 @@ interface ActivityDetailProps {
   onClose: () => void;
   onBack?: () => void;
   onEdit?: (activity: Activity) => void;
-  onActivityUpdate?: (updatedActivity: Activity) => void;
+  onActivityUpdate?: (updatedActivity: Activity) => Promise<void>;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
   onDeleteActivity?: (activityId: string) => Promise<boolean>;
@@ -31,7 +31,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
   const isCup = props.activity.type === "cup";
   const matchActivities = props.cupMatches || [];
   
-  const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]) => {
+  const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]): Promise<void> => {
     if (!props.onActivityUpdate) return;
     
     setIsLoading(true);
@@ -41,7 +41,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
       const createdMatches = await addCupMatches(
         props.activity, 
         newMatches, 
-        props.onActivityUpdate
+        // Convert onActivityUpdate to return Promise<void>
+        async (activity: Activity): Promise<void> => {
+          if (props.onActivityUpdate) {
+            await props.onActivityUpdate(activity);
+          }
+        }
       );
       
       toast({
@@ -50,7 +55,6 @@ export function ActivityDetail(props: ActivityDetailProps) {
         duration: 5000
       });
       
-      return createdMatches;
     } catch (error) {
       console.error("Error adding cup matches:", error);
       toast({

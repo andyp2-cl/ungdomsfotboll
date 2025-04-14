@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Edit } from "lucide-react";
