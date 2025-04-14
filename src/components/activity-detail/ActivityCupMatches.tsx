@@ -1,55 +1,45 @@
 
 import { Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Clock, MapPin } from "lucide-react";
+import { formatDate } from "@/utils/formatDate";
+import { ChevronRight } from "lucide-react";
 
 interface ActivityCupMatchesProps {
   cupMatches: Activity[];
-  onActivitySelect?: (activity: Activity | null) => void;
+  onActivitySelect?: (activity: Activity) => void;
 }
 
 export function ActivityCupMatches({ cupMatches, onActivitySelect }: ActivityCupMatchesProps) {
+  if (!cupMatches || cupMatches.length === 0) {
+    return null;
+  }
+
   return (
     <div className="border rounded-md p-4">
-      <h3 className="text-lg font-semibold mb-3">Matcher i cupen</h3>
-      
-      {cupMatches && cupMatches.length > 0 ? (
-        <div className="space-y-2">
-          {cupMatches.map(match => (
-            <div key={match.id} className="p-2 border rounded-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="font-medium">{match.name}</div>
-                  <div className="text-sm text-muted-foreground flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {match.time || "Tid ej satt"}
-                    {match.location && (
-                      <span className="ml-2">
-                        <MapPin className="h-3 w-3 inline mr-1" />
-                        {match.location.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8"
-                  onClick={() => {
-                    if (onActivitySelect) {
-                      onActivitySelect(match);
-                    }
-                  }}
-                >
-                  Visa
-                </Button>
+      <h3 className="text-lg font-semibold mb-3">Cupmatcher ({cupMatches.length})</h3>
+      <div className="space-y-2">
+        {cupMatches.map((match) => (
+          <div
+            key={match.id}
+            onClick={() => onActivitySelect && onActivitySelect(match)}
+            className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
+          >
+            <div>
+              <div className="font-medium">{match.name}</div>
+              <div className="text-sm text-gray-500 flex flex-wrap gap-2">
+                <span>{formatDate(match.date)}</span>
+                {match.time && <span>• {match.time}</span>}
+                {match.location?.name && <span>• {match.location.name}</span>}
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-muted-foreground">Inga matcher tillagda i denna cup ännu.</p>
-      )}
+            <div className="flex items-center">
+              {match.homeScore !== undefined && match.awayScore !== undefined && (
+                <div className="mr-2 font-medium">{match.homeScore}-{match.awayScore}</div>
+              )}
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

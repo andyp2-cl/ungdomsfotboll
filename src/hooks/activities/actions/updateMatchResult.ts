@@ -1,115 +1,96 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { normalizePlayerStats } from "../utils/playerStatsUtils";
 import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 /**
- * Handles updating a match result for an activity
+ * Updates match result for an activity
  */
 export const handleMatchResultUpdate = async (
   activities: Activity[],
   setActivities: (activities: Activity[]) => void,
   toast: any,
   activityId: string, 
-  homeScore?: number,
+  homeScore?: number, 
   awayScore?: number
-) => {
+): Promise<void> => {
   try {
-    console.log("Updating match result for activity:", activityId, {homeScore, awayScore});
+    console.log("handleMatchResultUpdate called:", { activityId, homeScore, awayScore });
     
-    // Create result string if both scores are defined
-    const resultString = (homeScore !== undefined && awayScore !== undefined) 
-      ? `${homeScore}-${awayScore}` 
-      : undefined;
-      
-    // Find the current activity to get its data
-    const currentActivity = activities.find(a => a.id === activityId);
-    if (!currentActivity) {
-      toast({
-        title: "Fel",
-        description: "Kunde inte hitta aktiviteten för att uppdatera resultatet.",
-        variant: "destructive"
-      });
-      return;
+    // Find the activity
+    const activity = activities.find((a) => a.id === activityId);
+    
+    if (!activity) {
+      console.error("Activity not found:", activityId);
+      throw new Error("Activity not found");
     }
-
-    // Determine if this is a home match for our team
-    const isHome = isHomeMatch(currentActivity);
+    
+    // Determine if this is a home match
+    const isHome = isHomeMatch(activity);
     
     // Calculate win status based on scores
     let isWin: boolean | undefined = undefined;
     if (homeScore !== undefined && awayScore !== undefined) {
-      // For equal scores (draw), isWin should be undefined
-      if (homeScore === awayScore) {
-        isWin = undefined;
-      } else {
-        isWin = calculateWinStatus(homeScore, awayScore, isHome);
-      }
-      console.log("Calculated win status for persistence:", isWin, "isDraw:", homeScore === awayScore);
+      isWin = calculateWinStatus(homeScore, awayScore, isHome);
     }
     
-    // Ensure player_stats is properly formatted
-    const existingPlayerStats = normalizePlayerStats(currentActivity.player_stats);
-    
-    // Update the player_stats with new score data
-    const updatedPlayerStats = {
-      ...existingPlayerStats,
-      goals: existingPlayerStats.goals || {},
-      assists: existingPlayerStats.assists || {},
-      scores: {
-        home: homeScore,
-        away: awayScore
-      },
-      isWin
+    // Create the result string
+    const resultString = homeScore !== undefined && awayScore !== undefined
+      ? `${homeScore}-${awayScore}`
+      : undefined;
+
+    // Create updated activity with new scores
+    const updatedActivity: Activity = {
+      ...activity,
+      homeScore,
+      awayScore,
+      result: resultString,
+      isWin,
+      player_stats: {
+        ...(activity.player_stats || { goals: {}, assists: {} }),
+        scores: {
+          home: homeScore || 0,
+          away: awayScore || 0
+        },
+        isWin
+      }
     };
     
-    console.log("Updated player stats with win status:", updatedPlayerStats);
-    
-    // Update the activities array with the new result data
-    const updatedActivities = activities.map(activity => 
-      activity.id === activityId 
-        ? { 
-            ...activity, 
-            result: resultString,
-            homeScore, 
-            awayScore,
-            isWin, // Store isWin explicitly at activity level
-            player_stats: updatedPlayerStats
-          }
-        : activity
-    );
-    
-    // Log the updated activity for debugging
-    const updatedActivity = updatedActivities.find(a => a.id === activityId);
-    console.log("Updated activity with win status:", {
-      id: updatedActivity?.id,
-      name: updatedActivity?.name,
-      isWin: updatedActivity?.isWin,
-      result: updatedActivity?.result,
-      homeScore: updatedActivity?.homeScore,
-      awayScore: updatedActivity?.awayScore,
-      isDraw: updatedActivity?.homeScore === updatedActivity?.awayScore,
-      cupId: updatedActivity?.cupId
+    console.log("Updated activity with results:", {
+      id: updatedActivity.id,
+      name: updatedActivity.name,
+      homeScore,
+      awayScore,
+      isWin,
+      result: resultString
     });
     
-    // Update state and save to storage
+    // Update activities array
+    const updatedActivities = activities.map(a => 
+      a.id === activityId ? updatedActivity : a
+    );
+    
+    // Update state first for immediate feedback
     setActivities(updatedActivities);
+    
+    // Then save to storage
     await saveActivities(updatedActivities);
     
     // Show success message
     toast({
-      title: "Matchresultat uppdaterat",
+      title: "Matchresultat sparat",
       description: resultString 
-        ? `Resultatet ${resultString} har sparats.`
-        : "Matchresultatet har rensats.",
+        ? `Resultat ${resultString} har sparats för ${activity.name}.` 
+        : `Matchresultat har rensats för ${activity.name}.`,
     });
+    
   } catch (error) {
     console.error("Error updating match result:", error);
     toast({
-      title: "Fel vid uppdatering av matchresultat",
-      description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
+      title: "Ett fel uppstod",
+      description: "Kunde inte spara matchresultat. Försök igen.",
       variant: "destructive"
     });
+    throw error;
   }
 };

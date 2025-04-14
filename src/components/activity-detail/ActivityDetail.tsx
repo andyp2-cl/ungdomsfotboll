@@ -66,20 +66,29 @@ export function ActivityDetail(props: ActivityDetailProps) {
         ]
       };
       
-      console.log("Uppdaterad cup-aktivitet:", updatedActivity);
+      console.log("Uppdaterad cup-aktivitet med nya matcher:", {
+        cupId: updatedActivity.id,
+        matchIds: updatedActivity.matches,
+        numMatches: updatedActivity.matches?.length || 0
+      });
       
       // Uppdatera cup-aktiviteten först
       await props.onActivityUpdate(updatedActivity);
       
       // Uppdatera varje ny match-aktivitet
       for (const activity of newActivities) {
-        console.log("Sparar ny match-aktivitet:", activity);
+        console.log("Sparar ny match-aktivitet:", {
+          id: activity.id,
+          name: activity.name,
+          cupId: activity.cupId
+        });
         await props.onActivityUpdate(activity);
       }
       
       toast({
         title: "Matcher tillagda",
-        description: `${newActivities.length} nya matcher har lagts till i cupen.`
+        description: `${newActivities.length} nya matcher har lagts till i cupen.`,
+        duration: 5000
       });
       
       // Återställ och stäng
@@ -118,16 +127,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
       <ActivityDetailView 
         {...props} 
         extraContent={<AddMatchesButton />}
-        // Ensure the function type aligns with what ActivityDetailView expects
-        onKioskAssignmentUpdate={props.onKioskAssignmentUpdate}
-        onDeleteActivity={props.onDeleteActivity}
-        onMatchResultUpdate={props.onMatchResultUpdate}
       />
       
       {/* Dialog för att lägga till matcher i cupen */}
       {isCup && (
         <Dialog open={isAddMatchDialogOpen} onOpenChange={setIsAddMatchDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Lägg till matcher i {props.activity.name}</DialogTitle>
             </DialogHeader>

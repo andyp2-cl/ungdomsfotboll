@@ -30,30 +30,39 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // IMPROVED: Log all activities with their cup IDs before processing
     console.log("All activities with cup IDs before matching:", 
-      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
+      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cup_id || a.cupId})));
     
     // For cup activities, find matches that have this cup as parent
     const cupActivities = activities.filter(a => a.type === 'cup');
-    console.log("Cup activities:", cupActivities.map(a => a.id));
+    console.log("Cup activities found:", cupActivities.length);
     
     cupActivities.forEach(cupActivity => {
       // First check cup_matches in player_stats
       if (cupActivity.player_stats?.cup_matches && cupActivity.player_stats.cup_matches.length > 0) {
         cupActivity.matches = cupActivity.player_stats.cup_matches;
         console.log(`Cup ${cupActivity.name} has ${cupActivity.matches.length} matches from player_stats.cup_matches`);
-      } else {
-        // Fallback: Find all matches that reference this cup ID
-        const matchesForCup = activities.filter(
-          possibleMatch => possibleMatch.cupId === cupActivity.id
-        );
-        
-        console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
-          matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
-        
-        if (matchesForCup.length > 0) {
-          cupActivity.matches = matchesForCup.map(match => match.id);
-          console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
-        }
+      } 
+      
+      // Find all matches that reference this cup ID (regardless of player_stats)
+      const matchesForCup = activities.filter(
+        possibleMatch => (possibleMatch.cupId === cupActivity.id || possibleMatch.cup_id === cupActivity.id)
+      );
+      
+      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
+        matchesForCup.length > 0 ? matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId || m.cup_id})) : 'none');
+      
+      if (matchesForCup.length > 0) {
+        // Always overwrite with the actual matches found in the database
+        cupActivity.matches = matchesForCup.map(match => match.id);
+        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
+      }
+    });
+    
+    // Make sure all match activities have the correct cupId property
+    activities.forEach(activity => {
+      if (activity.cup_id && !activity.cupId) {
+        activity.cupId = activity.cup_id;
+        console.log(`Set cupId for activity ${activity.name} to ${activity.cupId}`);
       }
     });
     

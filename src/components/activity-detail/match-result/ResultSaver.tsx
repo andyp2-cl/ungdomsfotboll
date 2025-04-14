@@ -3,7 +3,7 @@ import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { isHomeMatch, calculateWinStatus } from "./utils";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 interface UseResultSaverParams {
   activity: Activity;
@@ -106,6 +106,7 @@ export function useResultSaver({
         description: resultString 
           ? `Resultat ${resultString} har sparats för ${activity.name}.` 
           : `Matchresultat har rensats för ${activity.name}.`,
+        duration: 5000
       });
 
       return true;

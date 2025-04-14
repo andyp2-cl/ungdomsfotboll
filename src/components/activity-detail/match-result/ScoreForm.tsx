@@ -112,6 +112,7 @@ export function ScoreForm({
                 id="homeScore"
                 type="number"
                 min="0"
+                inputMode="numeric"
                 value={homeScore === undefined ? "" : homeScore}
                 onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
                 className={`${isHassleholm === 'home' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
@@ -128,6 +129,7 @@ export function ScoreForm({
                 id="awayScore"
                 type="number"
                 min="0"
+                inputMode="numeric"
                 value={awayScore === undefined ? "" : awayScore}
                 onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
                 className={`${isHassleholm === 'away' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
@@ -142,23 +144,23 @@ export function ScoreForm({
             <RadioGroup 
               value={winStatusValue} 
               onValueChange={handleWinStatusChange}
-              className={`flex ${isMobile ? 'flex-row justify-between' : 'space-x-4'}`}
+              className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
             >
-              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md w-full' : 'space-x-2'}`}>
                 <RadioGroupItem value="win" id="win" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="win" className="flex items-center cursor-pointer">
                   <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
                   Vinst
                 </Label>
               </div>
-              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md w-full' : 'space-x-2'}`}>
                 <RadioGroupItem value="draw" id="draw" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="draw" className="flex items-center cursor-pointer">
                   <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
                   Oavgjort
                 </Label>
               </div>
-              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md' : 'space-x-2'}`}>
+              <div className={`flex items-center ${isMobile ? 'px-3 py-2 border rounded-md w-full' : 'space-x-2'}`}>
                 <RadioGroupItem value="loss" id="loss" className={isMobile ? "mr-2" : ""} />
                 <Label htmlFor="loss" className="flex items-center cursor-pointer">
                   <XCircle className="h-4 w-4 mr-1 text-red-600" />
