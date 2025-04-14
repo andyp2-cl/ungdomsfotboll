@@ -28,7 +28,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       activity.participants = activityPlayerRelations.map(relation => relation.player_id);
     });
     
-    // IMPROVED: Log all activities with their cup IDs before processing
+    // Log all activities with their cup IDs before processing
     console.log("All activities with cup IDs before matching:", 
       activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
     
@@ -37,13 +37,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     console.log("Cup activities found:", cupActivities.length);
     
     cupActivities.forEach(cupActivity => {
-      // First check cup_matches in player_stats
-      if (cupActivity.player_stats?.cup_matches && cupActivity.player_stats.cup_matches.length > 0) {
-        cupActivity.matches = cupActivity.player_stats.cup_matches;
-        console.log(`Cup ${cupActivity.name} has ${cupActivity.matches.length} matches from player_stats.cup_matches`);
-      } 
-      
-      // Find all matches that reference this cup ID (regardless of player_stats)
+      // Find all matches that reference this cup ID
       const matchesForCup = activities.filter(
         possibleMatch => (possibleMatch.cupId === cupActivity.id)
       );
@@ -52,17 +46,19 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
         matchesForCup.length > 0 ? matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})) : 'none');
       
       if (matchesForCup.length > 0) {
-        // Always overwrite with the actual matches found in the database
+        // Set matches array with the match IDs
         cupActivity.matches = matchesForCup.map(match => match.id);
         console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
+      } else {
+        // Ensure matches array is initialized even if empty
+        cupActivity.matches = [];
       }
     });
     
-    // Make sure all match activities have the correct cupId property
+    // Check for any activities that lack expected properties
     activities.forEach(activity => {
-      // This property mapping should be handled by formatActivityFromDatabase
-      if (!activity.cupId) {
-        console.log(`Activity ${activity.name} lacks cupId`);
+      if (activity.type === 'match' && !activity.cupId) {
+        console.log(`Match activity ${activity.name} lacks cupId`);
       }
     });
     

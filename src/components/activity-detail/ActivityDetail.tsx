@@ -2,12 +2,10 @@
 import { Activity, Player } from "@/types/player";
 import { ActivityDetailView } from "./ActivityDetailView";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CupMatchesForm, CupMatch } from "@/components/CupMatchesForm";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
-import { Plus } from "lucide-react";
+import { CupMatchesManager } from "../cup-management/CupMatchesManager";
+import { CupMatchesView } from "./CupMatchesView";
+import { addCupMatches } from "@/utils/storage/activity/cupMatches";
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -27,141 +25,79 @@ interface ActivityDetailProps {
 }
 
 export function ActivityDetail(props: ActivityDetailProps) {
-  const [isAddMatchDialogOpen, setIsAddMatchDialogOpen] = useState(false);
-  const [newMatches, setNewMatches] = useState<CupMatch[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  // Visa bara knappen "Lägg till matcher" för cuper
   const isCup = props.activity.type === "cup";
+  const matchActivities = props.cupMatches || [];
   
-  const handleAddMatches = async () => {
-    if (!props.onActivityUpdate || newMatches.length === 0) return;
+  const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]) => {
+    if (!props.onActivityUpdate) return;
+    
+    setIsLoading(true);
     
     try {
-      // Skapa aktiviteter för varje ny match
-      const cupDate = props.activity.date;
-      const newActivities: Activity[] = newMatches.map(match => {
-        const newId = uuidv4();
-        return {
-          id: newId,
-          name: match.name,
-          date: cupDate,
-          type: "match",
-          time: match.time,
-          location: match.location ? {
-            name: match.location,
-            description: match.locationDescription
-          } : undefined,
-          cupId: props.activity.id, // Koppla till cupen direkt
-          participants: [], // Börja med tom deltagarlista
-        };
-      });
-      
-      // Uppdatera cup-aktiviteten med matcherna
-      const updatedActivity = { 
-        ...props.activity,
-        matches: [
-          ...(props.activity.matches || []),
-          ...newActivities.map(a => a.id)
-        ]
-      };
-      
-      console.log("Uppdaterad cup-aktivitet med nya matcher:", {
-        cupId: updatedActivity.id,
-        matchIds: updatedActivity.matches,
-        numMatches: updatedActivity.matches?.length || 0
-      });
-      
-      // Uppdatera cup-aktiviteten först
-      await props.onActivityUpdate(updatedActivity);
-      
-      // Uppdatera varje ny match-aktivitet
-      for (const activity of newActivities) {
-        console.log("Sparar ny match-aktivitet:", {
-          id: activity.id,
-          name: activity.name,
-          cupId: activity.cupId
-        });
-        await props.onActivityUpdate(activity);
-      }
+      // Använd vår nya hjälpfunktion för att lägga till cup-matcher
+      const createdMatches = await addCupMatches(
+        props.activity, 
+        newMatches, 
+        props.onActivityUpdate
+      );
       
       toast({
         title: "Matcher tillagda",
-        description: `${newActivities.length} nya matcher har lagts till i cupen.`,
+        description: `${createdMatches.length} nya matcher har lagts till i cupen.`,
         duration: 5000
       });
       
-      // Återställ och stäng
-      setNewMatches([]);
-      setIsAddMatchDialogOpen(false);
-      
+      return createdMatches;
     } catch (error) {
-      console.error("Fel vid tillägg av matcher:", error);
+      console.error("Error adding cup matches:", error);
       toast({
-        title: "Fel",
-        description: "Det gick inte att lägga till matcherna.",
-        variant: "destructive"
+        title: "Ett fel inträffade",
+        description: "Det gick inte att lägga till matcherna. Försök igen.",
+        variant: "destructive",
+        duration: 5000
       });
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  // Knapp för att lägga till matcher
-  const AddMatchesButton = () => {
+  // Render extra content for cup activities
+  const renderCupContent = () => {
     if (!isCup) return null;
     
     return (
-      <Button 
-        onClick={() => setIsAddMatchDialogOpen(true)} 
-        variant="outline" 
-        size="sm"
-        className="mt-4"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Lägg till matcher
-      </Button>
+      <>
+        {/* Manager för att lägga till matcher */}
+        <CupMatchesManager 
+          cupActivity={props.activity}
+          matchActivities={matchActivities}
+          onAddMatches={handleAddMatches}
+          onEditMatch={(matchId) => {
+            const match = props.allActivities?.find(a => a.id === matchId);
+            if (match && props.onActivitySelect) {
+              props.onActivitySelect(match);
+            }
+          }}
+        />
+        
+        {/* Visa existerande cup-matcher */}
+        <CupMatchesView 
+          cupActivity={props.activity}
+          matchActivities={matchActivities}
+          onActivitySelect={props.onActivitySelect}
+        />
+      </>
     );
   };
   
   return (
-    <>
-      <ActivityDetailView 
-        {...props} 
-        extraContent={<AddMatchesButton />}
-      />
-      
-      {/* Dialog för att lägga till matcher i cupen */}
-      {isCup && (
-        <Dialog open={isAddMatchDialogOpen} onOpenChange={setIsAddMatchDialogOpen}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Lägg till matcher i {props.activity.name}</DialogTitle>
-            </DialogHeader>
-            
-            <div className="py-4">
-              <CupMatchesForm
-                cupDate={props.activity.date}
-                matches={newMatches}
-                onMatchesChange={setNewMatches}
-              />
-              
-              <div className="flex justify-end space-x-2 mt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsAddMatchDialogOpen(false)}
-                >
-                  Avbryt
-                </Button>
-                <Button 
-                  onClick={handleAddMatches}
-                  disabled={newMatches.length === 0}
-                >
-                  Lägg till {newMatches.length} matcher
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
+    <ActivityDetailView 
+      {...props} 
+      extraContent={renderCupContent()}
+    />
   );
 }
