@@ -80,6 +80,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
           cupActivity={props.activity}
           matchActivities={matchActivities}
           onAddMatches={handleAddMatches}
+          onMatchResultUpdate={props.onMatchResultUpdate}
           onEditMatch={(matchId) => {
             const match = props.allActivities?.find(a => a.id === matchId);
             if (match && props.onActivitySelect) {

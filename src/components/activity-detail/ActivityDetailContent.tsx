@@ -7,6 +7,7 @@ import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
 import { ActivityResultSection } from "./match-result";
 import { ParticipantsList } from "./ParticipantsList";
+import { MatchResultQuickView } from "./MatchResultQuickView";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -51,6 +52,13 @@ export function ActivityDetailContent({
     onActivityUpdate(updatedActivity);
   };
 
+  // Handle match result updates
+  const handleMatchResultUpdate = async (homeScore?: number, awayScore?: number) => {
+    if (onMatchResultUpdate) {
+      await onMatchResultUpdate(activity.id, homeScore, awayScore);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Activity header shows basic info, but not with full controls */}
@@ -73,7 +81,7 @@ export function ActivityDetailContent({
           activity={activity} 
           isHistorical={isHistorical}
           updateActivity={updateActivity}
-          onMatchResultUpdate={onMatchResultUpdate}
+          onMatchResultUpdate={handleMatchResultUpdate}
           participatingPlayers={participatingPlayers} 
         />
       )}
@@ -98,10 +106,24 @@ export function ActivityDetailContent({
                 className="cursor-pointer hover:bg-gray-50 p-2 rounded-md"
               >
                 {activity.name} - {new Date(activity.date).toLocaleDateString()}
+                {activity.homeScore !== undefined && activity.awayScore !== undefined && (
+                  <span className="ml-2 font-medium">
+                    {activity.homeScore}-{activity.awayScore}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Match Result Quick View for cup matches */}
+      {activity.type === "match" && activity.cupId && (
+        <MatchResultQuickView
+          activity={activity}
+          onSave={handleMatchResultUpdate}
+          isReadOnly={false}
+        />
       )}
 
       {/* Participant section */}

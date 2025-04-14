@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
@@ -7,7 +8,7 @@ import { MatchFormItem } from "./MatchFormItem";
 interface MatchFormListProps {
   matches: CupMatch[];
   onAddMatch: () => void;
-  updateMatch: (index: number, field: keyof CupMatch, value: string) => void;
+  updateMatch: (index: number, field: keyof CupMatch, value: string | number | undefined) => void;
   removeMatch: (index: number) => void;
 }
 

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,15 @@ interface CupMatchesManagerProps {
   matchActivities: Activity[];
   onAddMatches: (newMatches: Omit<Activity, 'id'>[]) => Promise<void>;
   onEditMatch?: (matchId: string) => void;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function CupMatchesManager({
   cupActivity,
   matchActivities,
   onAddMatches,
-  onEditMatch
+  onEditMatch,
+  onMatchResultUpdate
 }: CupMatchesManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newMatches, setNewMatches] = useState<CupMatch[]>([]);
@@ -39,12 +42,24 @@ export function CupMatchesManager({
     setNewMatches([...newMatches, newMatch]);
   };
 
-  const updateMatch = (index: number, field: keyof CupMatch, value: string) => {
+  const updateMatch = (index: number, field: keyof CupMatch, value: string | number | undefined) => {
     const updatedMatches = [...newMatches];
     updatedMatches[index] = {
       ...updatedMatches[index],
       [field]: value,
     };
+    
+    // Om både hemma- och bortaresultat finns, skapa ett resultatsträngen
+    if (field === "homeScore" || field === "awayScore") {
+      const homeScore = field === "homeScore" ? value : updatedMatches[index].homeScore;
+      const awayScore = field === "awayScore" ? value : updatedMatches[index].awayScore;
+      
+      if (homeScore !== undefined && awayScore !== undefined) {
+        updatedMatches[index].result = `${homeScore}-${awayScore}`;
+      } else {
+        updatedMatches[index].result = undefined;
+      }
+    }
     
     setNewMatches(updatedMatches);
   };
@@ -70,6 +85,9 @@ export function CupMatchesManager({
         } : undefined,
         cupId: cupActivity.id,
         participants: [],
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        result: match.result,
       }));
       
       await onAddMatches(newActivities);

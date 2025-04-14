@@ -19,10 +19,13 @@ export function MatchResultQuickView({
   }
 
   return (
-    <QuickMatchResult 
-      activity={activity}
-      onSave={onSave}
-      isReadOnly={isReadOnly}
-    />
+    <div className="border rounded-md p-4">
+      <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+      <QuickMatchResult 
+        activity={activity}
+        onSave={onSave}
+        isReadOnly={isReadOnly}
+      />
+    </div>
   );
 }

@@ -30,6 +30,11 @@ export function MatchListView({ matches, onEditMatch }: MatchListViewProps) {
                       {match.location.description && ` - ${match.location.description}`}
                     </Badge>
                   )}
+                  {match.homeScore !== undefined && match.awayScore !== undefined && (
+                    <Badge variant="secondary" className="font-semibold">
+                      {match.homeScore}-{match.awayScore}
+                    </Badge>
+                  )}
                 </div>
               </div>
               

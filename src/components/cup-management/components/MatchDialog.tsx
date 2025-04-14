@@ -12,7 +12,7 @@ interface MatchDialogProps {
   cupName: string;
   newMatches: CupMatch[];
   onAddMatch: () => void;
-  updateMatch: (index: number, field: keyof CupMatch, value: string) => void;
+  updateMatch: (index: number, field: keyof CupMatch, value: string | number | undefined) => void;
   removeMatch: (index: number) => void;
   handleSubmit: () => Promise<void>;
   isSubmitting: boolean;

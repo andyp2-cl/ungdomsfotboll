@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { CupMatch } from "../types";
 interface MatchFormItemProps {
   match: CupMatch;
   index: number;
-  updateMatch: (index: number, field: keyof CupMatch, value: string) => void;
+  updateMatch: (index: number, field: keyof CupMatch, value: string | number | undefined) => void;
   removeMatch: (index: number) => void;
 }
 
@@ -46,7 +47,7 @@ export function MatchFormItem({
               <Label htmlFor={`match-location-${index}`}>Plats</Label>
               <Input
                 id={`match-location-${index}`}
-                value={match.location}
+                value={match.location || ""}
                 onChange={(e) => updateMatch(index, "location", e.target.value)}
                 placeholder="Platsnamn"
               />
@@ -57,10 +58,41 @@ export function MatchFormItem({
             <Label htmlFor={`match-location-desc-${index}`}>Beskrivning av plats</Label>
             <Input
               id={`match-location-desc-${index}`}
-              value={match.locationDescription}
+              value={match.locationDescription || ""}
               onChange={(e) => updateMatch(index, "locationDescription", e.target.value)}
               placeholder="T.ex. A-plan 11-manna"
             />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div>
+              <Label htmlFor={`match-home-score-${index}`}>Mål hemmalag</Label>
+              <Input
+                id={`match-home-score-${index}`}
+                type="number"
+                min="0"
+                value={match.homeScore !== undefined ? match.homeScore : ""}
+                onChange={(e) => {
+                  const value = e.target.value !== "" ? parseInt(e.target.value) : undefined;
+                  updateMatch(index, "homeScore", value);
+                }}
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`match-away-score-${index}`}>Mål bortalag</Label>
+              <Input
+                id={`match-away-score-${index}`}
+                type="number"
+                min="0"
+                value={match.awayScore !== undefined ? match.awayScore : ""}
+                onChange={(e) => {
+                  const value = e.target.value !== "" ? parseInt(e.target.value) : undefined;
+                  updateMatch(index, "awayScore", value);
+                }}
+                placeholder="0"
+              />
+            </div>
           </div>
         </div>
         

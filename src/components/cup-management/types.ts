@@ -5,4 +5,7 @@ export interface CupMatch {
   time: string;
   location?: string;
   locationDescription?: string;
+  homeScore?: number;
+  awayScore?: number;
+  result?: string;
 }
