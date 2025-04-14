@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
@@ -108,6 +108,15 @@ export function ActivityTabContent({
         <ActivityTabViewContent 
           activeView={activeView}
           renderContent={renderContent}
+          players={players}
+          activities={activities}
+          onActivitySelect={setSelectedActivity}
+          onPlayerSelect={handlePlayerSelect}
+          onEditActivity={setEditingActivity}
+          onActivityUpdate={handleActivityUpdate}
+          onDeleteActivity={handleDeleteActivity}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onMatchResultUpdate={handleMatchResultUpdate}
         />
       </PullToRefresh>
     </div>

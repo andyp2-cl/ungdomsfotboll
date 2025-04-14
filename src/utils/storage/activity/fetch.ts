@@ -30,7 +30,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // IMPROVED: Log all activities with their cup IDs before processing
     console.log("All activities with cup IDs before matching:", 
-      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cup_id || a.cupId})));
+      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
     
     // For cup activities, find matches that have this cup as parent
     const cupActivities = activities.filter(a => a.type === 'cup');
@@ -45,11 +45,11 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
       // Find all matches that reference this cup ID (regardless of player_stats)
       const matchesForCup = activities.filter(
-        possibleMatch => (possibleMatch.cupId === cupActivity.id || possibleMatch.cup_id === cupActivity.id)
+        possibleMatch => (possibleMatch.cupId === cupActivity.id)
       );
       
       console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
-        matchesForCup.length > 0 ? matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId || m.cup_id})) : 'none');
+        matchesForCup.length > 0 ? matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})) : 'none');
       
       if (matchesForCup.length > 0) {
         // Always overwrite with the actual matches found in the database
@@ -60,8 +60,9 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // Make sure all match activities have the correct cupId property
     activities.forEach(activity => {
-      if (activity.cup_id && !activity.cupId) {
-        activity.cupId = activity.cup_id;
+      // This property mapping should be handled by formatActivityFromDatabase
+      if (!activity.cupId && activity.cup_id) {
+        activity.cupId = activity.cup_id as unknown as string;
         console.log(`Set cupId for activity ${activity.name} to ${activity.cupId}`);
       }
     });

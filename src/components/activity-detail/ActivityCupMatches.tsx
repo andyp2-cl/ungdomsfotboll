@@ -23,15 +23,15 @@ export function ActivityCupMatches({ cupMatches, onActivitySelect }: ActivityCup
             onClick={() => onActivitySelect && onActivitySelect(match)}
             className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
           >
-            <div>
-              <div className="font-medium">{match.name}</div>
-              <div className="text-sm text-gray-500 flex flex-wrap gap-2">
+            <div className="flex-grow min-w-0">
+              <div className="font-medium text-sm sm:text-base truncate">{match.name}</div>
+              <div className="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-1 sm:gap-2">
                 <span>{formatDate(match.date)}</span>
                 {match.time && <span>• {match.time}</span>}
-                {match.location?.name && <span>• {match.location.name}</span>}
+                {match.location?.name && <span className="truncate">• {match.location.name}</span>}
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center ml-2 shrink-0">
               {match.homeScore !== undefined && match.awayScore !== undefined && (
                 <div className="mr-2 font-medium">{match.homeScore}-{match.awayScore}</div>
               )}

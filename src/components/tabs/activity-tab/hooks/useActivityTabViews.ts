@@ -99,7 +99,7 @@ export const useActivityTabViews = ({
       );
       
       return {
-        type: "player-detail",
+        viewType: "player-detail",
         player: selectedPlayer,
         activities: playerActivities
       };
@@ -111,7 +111,7 @@ export const useActivityTabViews = ({
       const cupMatches = getCupMatches(selectedActivity);
       
       return {
-        type: "activity-detail",
+        viewType: "activity-detail",
         activity: selectedActivity,
         relatedActivities,
         cupMatches
@@ -120,7 +120,7 @@ export const useActivityTabViews = ({
     
     // Handle Activities list view
     return {
-      type: "activities-list",
+      viewType: "activities-list",
       activities: filteredBySearchActivities
     };
   }, [
