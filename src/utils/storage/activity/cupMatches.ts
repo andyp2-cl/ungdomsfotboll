@@ -5,34 +5,32 @@ import { Activity } from "@/types/player";
 
 /**
  * Update cup-match relationships in database
- * - När en match skapas inne från en cup, sätts matchens cupId till cupens id
- * - Detta skapar en tydlig one-to-many relation från cup till matcher
  */
 export const updateCupMatches = async (activity: Activity, activities: Activity[]): Promise<void> => {
   try {
-    // Om aktiviteten är en cup och har matcher...
+    // If the activity is a cup and has matches...
     if (activity.type === 'cup') {
       console.log(`Processing cup ${activity.name} (${activity.id})`);
       
-      // Hämta matcher som har denna cup som förälder
+      // Get matches that have this cup as parent
       const matchActivities = activities.filter(a => a.cupId === activity.id);
       console.log(`Found ${matchActivities.length} matches with cupId=${activity.id}`);
       
-      // Säkerställ att cup-aktiviteten har en matches-array
+      // Ensure the cup activity has a matches array
       if (!activity.matches) {
         activity.matches = [];
       }
       
-      // Uppdatera matches-array med IDs för alla matcher som har denna cup som förälder
+      // Update matches array with IDs of all matches that have this cup as parent
       const matchIds = matchActivities.map(m => m.id);
       
-      // Om det finns ändringar i matches-arrayen...
+      // If there are changes in the matches array...
       const hasChanges = JSON.stringify(activity.matches.sort()) !== JSON.stringify(matchIds.sort());
       
       if (hasChanges) {
         console.log(`Updating cup ${activity.name} with ${matchIds.length} match IDs`);
         
-        // Uppdatera cup-aktiviteten med den nya matches-arrayen
+        // Update cup activity with the new matches array
         activity.matches = matchIds;
         
         // Ensure player_stats exists
@@ -46,7 +44,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         // Update cup_matches in player_stats for persistence
         activity.player_stats.cup_matches = matchIds;
         
-        // Uppdatera cup-aktiviteten i databasen
+        // Update cup activity in database
         const { error: updateError } = await supabase
           .from('activities')
           .update({ 
@@ -61,7 +59,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         
         console.log(`Updated cup ${activity.name} with ${matchIds.length} match IDs`);
         
-        // Logga ändringen
+        // Log the change
         await logDatabaseChange(
           'update',
           'activity',
@@ -70,12 +68,12 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         );
       }
       
-      // Se till att alla matcher har korrekt cupId
+      // Ensure all matches have the correct cupId
       for (const matchActivity of matchActivities) {
         if (matchActivity.cupId !== activity.id) {
           console.log(`Updating match ${matchActivity.name} with cupId=${activity.id}`);
           
-          // Uppdatera matchaktiviteten i databasen
+          // Update match activity in database
           const { error: updateError } = await supabase
             .from('activities')
             .update({ cup_id: activity.id })
@@ -88,7 +86,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           
           console.log(`Updated cupId for match ${matchActivity.name}`);
           
-          // Logga ändringen
+          // Log the change
           await logDatabaseChange(
             'update',
             'activity',
@@ -120,6 +118,8 @@ export const addCupMatches = async (
       cupActivity.matches = [];
     }
     
+    console.log(`Starting to add ${newMatchActivities.length} matches to cup ${cupActivity.name}`);
+    
     // Create each match activity
     for (const matchData of newMatchActivities) {
       // Create a new activity with uuid
@@ -143,6 +143,8 @@ export const addCupMatches = async (
     
     // Update the cup with new matches array
     if (createdMatches.length > 0) {
+      console.log(`Updating cup ${cupActivity.name} with ${createdMatches.length} new matches`);
+      
       // Ensure player_stats exists
       if (!cupActivity.player_stats) {
         cupActivity.player_stats = {
@@ -157,7 +159,7 @@ export const addCupMatches = async (
       // Update the cup activity
       await onActivityUpdate(cupActivity);
       
-      console.log(`Updated cup ${cupActivity.name} with ${createdMatches.length} new matches`);
+      console.log(`Updated cup ${cupActivity.name} with ${createdMatches.length} new matches, total matches: ${cupActivity.matches.length}`);
     }
     
     return createdMatches;

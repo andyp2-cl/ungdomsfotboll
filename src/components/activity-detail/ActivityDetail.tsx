@@ -37,7 +37,9 @@ export function ActivityDetail(props: ActivityDetailProps) {
     setIsLoading(true);
     
     try {
-      // Använd vår nya hjälpfunktion för att lägga till cup-matcher
+      console.log("Adding cup matches:", newMatches.length);
+      
+      // Use our helper function to add cup matches
       const createdMatches = await addCupMatches(
         props.activity, 
         newMatches, 
@@ -45,9 +47,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
         async (activity: Activity): Promise<void> => {
           if (props.onActivityUpdate) {
             await props.onActivityUpdate(activity);
+            console.log("Activity updated:", activity.id);
           }
         }
       );
+      
+      console.log("Created matches:", createdMatches.length);
       
       toast({
         title: "Matcher tillagda",
@@ -63,7 +68,6 @@ export function ActivityDetail(props: ActivityDetailProps) {
         variant: "destructive",
         duration: 5000
       });
-      throw error;
     } finally {
       setIsLoading(false);
     }

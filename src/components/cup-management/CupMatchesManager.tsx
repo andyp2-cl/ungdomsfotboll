@@ -10,6 +10,7 @@ import {
   MatchListView,
   EmptyMatchesView
 } from "./components";
+import { useToast } from "@/hooks/use-toast";
 
 interface CupMatchesManagerProps {
   cupActivity: Activity;
@@ -29,6 +30,7 @@ export function CupMatchesManager({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newMatches, setNewMatches] = useState<CupMatch[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleAddMatch = () => {
     const newMatch: CupMatch = {
@@ -49,7 +51,7 @@ export function CupMatchesManager({
       [field]: value,
     };
     
-    // Om både hemma- och bortaresultat finns, skapa ett resultatsträngen
+    // If both home and away scores exist, create the result string
     if (field === "homeScore" || field === "awayScore") {
       const homeScore = field === "homeScore" ? value : updatedMatches[index].homeScore;
       const awayScore = field === "awayScore" ? value : updatedMatches[index].awayScore;
@@ -69,11 +71,31 @@ export function CupMatchesManager({
   };
 
   const handleSubmit = async () => {
-    if (newMatches.length === 0) return;
+    if (newMatches.length === 0) {
+      toast({
+        title: "Inga matcher att lägga till",
+        description: "Lägg till minst en match innan du sparar",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validate matches
+    const invalidMatches = newMatches.filter(match => !match.name.trim());
+    if (invalidMatches.length > 0) {
+      toast({
+        title: "Ofullständiga matcher",
+        description: "Alla matcher måste ha ett namn",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
+      console.log("Submitting matches:", newMatches);
+      
       const newActivities = newMatches.map(match => ({
         name: match.name,
         date: cupActivity.date,
@@ -92,10 +114,21 @@ export function CupMatchesManager({
       
       await onAddMatches(newActivities);
       
+      toast({
+        title: "Matcher tillagda",
+        description: `${newMatches.length} matcher har lagts till i cupen.`,
+      });
+      
+      // Clear form and close dialog
       setNewMatches([]);
       setIsAddDialogOpen(false);
     } catch (error) {
       console.error("Error adding matches:", error);
+      toast({
+        title: "Ett fel inträffade",
+        description: "Det gick inte att lägga till matcherna. Försök igen.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +150,8 @@ export function CupMatchesManager({
       {matchActivities.length > 0 ? (
         <MatchListView 
           matches={matchActivities} 
-          onEditMatch={onEditMatch} 
+          onEditMatch={onEditMatch}
+          onMatchResultUpdate={onMatchResultUpdate}
         />
       ) : (
         <EmptyMatchesView onAddClick={() => setIsAddDialogOpen(true)} />
