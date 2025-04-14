@@ -53,10 +53,10 @@ export function ActivityDetailContent({
   };
 
   // Handle match result updates
-  const handleMatchResultUpdate = async (homeScore?: number, awayScore?: number) => {
+  // Modified to match the expected signature with activityId as first parameter
+  const handleMatchResultUpdate = async (activityId: string, homeScore?: number, awayScore?: number) => {
     if (onMatchResultUpdate) {
-      // Pass the activity.id as the first parameter to match the expected function signature
-      await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      await onMatchResultUpdate(activityId, homeScore, awayScore);
     }
   };
 
@@ -122,7 +122,7 @@ export function ActivityDetailContent({
       {activity.type === "match" && activity.cupId && (
         <MatchResultQuickView
           activity={activity}
-          onSave={handleMatchResultUpdate}
+          onSave={(homeScore, awayScore) => handleMatchResultUpdate(activity.id, homeScore, awayScore)}
           isReadOnly={false}
         />
       )}
