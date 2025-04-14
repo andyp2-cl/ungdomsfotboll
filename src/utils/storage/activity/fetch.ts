@@ -61,9 +61,8 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     // Make sure all match activities have the correct cupId property
     activities.forEach(activity => {
       // This property mapping should be handled by formatActivityFromDatabase
-      if (!activity.cupId && activity.cup_id) {
-        activity.cupId = activity.cup_id;
-        console.log(`Set cupId for activity ${activity.name} to ${activity.cupId}`);
+      if (!activity.cupId) {
+        console.log(`Activity ${activity.name} lacks cupId`);
       }
     });
     
