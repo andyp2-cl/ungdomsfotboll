@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -25,13 +24,13 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid" | "stats";
-  setViewMode: (mode: "list" | "grid" | "stats") => void;
-  handleGradeChange: (grade: PlayerGrade) => void;
-  handlePlayerUpdate: (player: Player) => void;
-  handleBulkPlayerUpdate: (players: Player[]) => void;
-  handleAddPlayer: (player: Player) => void;
+  selectedGrades: string[];
+  viewMode: string;
+  setViewMode: (mode: string) => void;
+  handleGradeChange: (grade: string) => void;
+  handlePlayerUpdate: (player: Player) => Promise<void>;
+  handleBulkPlayerUpdate: (players: Player[]) => Promise<void>;
+  handleAddPlayer: (player: Player) => Promise<void>;
   
   // Activity data
   filteredActivities: Activity[];
@@ -44,129 +43,90 @@ interface PlayersPageContentProps {
   setIsAddActivityOpen: (isOpen: boolean) => void;
   selectedActivityTypes: string[];
   handleActivityTypeChange: (type: string) => void;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
-  handleAddActivity: (activity: Activity) => void;
+  handleAddActivity: (activity: Activity) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => void;
 }
 
-export function PlayersPageContent({
-  // Tab state
-  activeTab,
-  setActiveTab,
-  
-  // Player data
-  players,
-  activities,
-  filteredPlayers,
-  selectedPlayer,
-  setSelectedPlayer,
-  editingPlayer,
-  setEditingPlayer,
-  isAddPlayerOpen,
-  setIsAddPlayerOpen,
-  searchQuery,
-  setSearchQuery,
-  selectedGrades,
-  viewMode,
-  setViewMode,
-  handleGradeChange,
-  handlePlayerUpdate,
-  handleBulkPlayerUpdate,
-  handleAddPlayer,
-  
-  // Activity data
-  filteredActivities,
-  filteredHistoricalActivities,
-  selectedActivity,
-  setSelectedActivity,
-  editingActivity,
-  setEditingActivity,
-  isAddActivityOpen,
-  setIsAddActivityOpen,
-  selectedActivityTypes,
-  handleActivityTypeChange,
-  handleActivityUpdate,
-  handleKioskUpdate,
-  handleDelete,
-  handleImportActivities,
-  handleClearHistorical,
-  handleAddActivity,
-  onPlayerActivitySelect
-}: PlayersPageContentProps) {
+export function PlayersPageContent(props: PlayersPageContentProps) {
+  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
+    await props.handleActivityUpdate(activity);
+  };
+
   const isMobile = useIsMobile();
   
   return (
     <>
       <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
         <MainTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTab={props.activeTab}
+          setActiveTab={props.setActiveTab}
           playersContent={
             <PlayerTabContent 
-              players={players}
-              activities={activities}
-              searchQuery={searchQuery}
-              selectedGrades={selectedGrades}
-              selectedPlayer={selectedPlayer}
-              viewMode={viewMode}
-              filteredPlayers={filteredPlayers}
-              isAddPlayerOpen={isAddPlayerOpen}
-              setSearchQuery={setSearchQuery}
-              handleGradeChange={handleGradeChange}
-              setSelectedPlayer={setSelectedPlayer}
-              setViewMode={setViewMode}
-              handlePlayerUpdate={handlePlayerUpdate}
-              handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-              setIsAddPlayerOpen={setIsAddPlayerOpen}
-              setEditingPlayer={setEditingPlayer}
-              onActivitySelect={onPlayerActivitySelect}
+              players={props.players}
+              activities={props.activities}
+              searchQuery={props.searchQuery}
+              selectedGrades={props.selectedGrades}
+              selectedPlayer={props.selectedPlayer}
+              viewMode={props.viewMode}
+              filteredPlayers={props.filteredPlayers}
+              isAddPlayerOpen={props.isAddPlayerOpen}
+              setSearchQuery={props.setSearchQuery}
+              handleGradeChange={props.handleGradeChange}
+              setSelectedPlayer={props.setSelectedPlayer}
+              setViewMode={props.setViewMode}
+              handlePlayerUpdate={props.handlePlayerUpdate}
+              handleBulkPlayerUpdate={props.handleBulkPlayerUpdate}
+              setIsAddPlayerOpen={props.setIsAddPlayerOpen}
+              setEditingPlayer={props.setEditingPlayer}
+              onActivitySelect={props.onPlayerActivitySelect}
             />
           }
           activitiesContent={
             <ActivityTabContent 
-              activities={activities}
-              players={players}
-              selectedActivity={selectedActivity}
-              selectedActivityTypes={selectedActivityTypes}
-              filteredActivities={filteredActivities}
-              filteredHistoricalActivities={filteredHistoricalActivities}
-              isAddActivityOpen={isAddActivityOpen}
-              handleActivityTypeChange={handleActivityTypeChange}
-              setSelectedActivity={setSelectedActivity}
-              handleActivityUpdate={handleActivityUpdate}
-              setIsAddActivityOpen={setIsAddActivityOpen}
-              setEditingActivity={setEditingActivity}
-              handleKioskAssignmentUpdate={handleKioskUpdate}
-              handleDeleteActivity={handleDelete}
-              handleImportedActivities={handleImportActivities}
-              handleClearHistoricalActivities={handleClearHistorical}
+              activities={props.activities}
+              players={props.players}
+              selectedActivity={props.selectedActivity}
+              selectedActivityTypes={props.selectedActivityTypes}
+              filteredActivities={props.filteredActivities}
+              filteredHistoricalActivities={props.filteredHistoricalActivities}
+              isAddActivityOpen={props.isAddActivityOpen}
+              handleActivityTypeChange={props.handleActivityTypeChange}
+              setSelectedActivity={props.setSelectedActivity}
+              handleActivityUpdate={handleActivityUpdateWrapper}
+              setIsAddActivityOpen={props.setIsAddActivityOpen}
+              setEditingActivity={props.setEditingActivity}
+              handleKioskAssignmentUpdate={props.handleKioskUpdate}
+              handleDeleteActivity={props.handleDelete}
+              handleImportedActivities={props.handleImportActivities}
+              handleClearHistoricalActivities={props.handleClearHistorical}
             />
           }
         />
       </div>
 
       <PageDialogs 
-        editingPlayer={editingPlayer}
-        editingActivity={editingActivity}
-        isAddPlayerOpen={isAddPlayerOpen}
-        isAddActivityOpen={isAddActivityOpen}
-        setEditingPlayer={setEditingPlayer}
-        setEditingActivity={setEditingActivity}
-        setIsAddPlayerOpen={setIsAddPlayerOpen}
-        setIsAddActivityOpen={setIsAddActivityOpen}
-        handlePlayerUpdate={handlePlayerUpdate}
-        handleActivityUpdate={handleActivityUpdate}
-        handleAddPlayer={handleAddPlayer}
-        handleAddActivity={handleAddActivity}
+        editingPlayer={props.editingPlayer}
+        editingActivity={props.editingActivity}
+        isAddPlayerOpen={props.isAddPlayerOpen}
+        isAddActivityOpen={props.isAddActivityOpen}
+        setEditingPlayer={props.setEditingPlayer}
+        setEditingActivity={props.setEditingActivity}
+        setIsAddPlayerOpen={props.setIsAddPlayerOpen}
+        setIsAddActivityOpen={props.setIsAddActivityOpen}
+        handlePlayerUpdate={props.handlePlayerUpdate}
+        handleActivityUpdate={handleActivityUpdateWrapper}
+        handleAddPlayer={props.handleAddPlayer}
+        handleAddActivity={props.handleAddActivity}
       />
       
       <MobileNavBar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
+        activeTab={props.activeTab} 
+        onTabChange={props.setActiveTab}
       />
     </>
   );

@@ -1,162 +1,121 @@
 
-import { useState, useEffect } from "react";
-import { usePlayers } from "@/hooks/players/usePlayers";
-import { useActivities } from "@/hooks/activities/useActivities";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlayersTabContent } from "@/components/player-management/PlayersTabContent";
-import { ActivitiesTabContent } from "@/components/player-management/ActivitiesTabContent";
-import { AnalyticsTabContent } from "@/components/player-management/AnalyticsTabContent";
-import { StatisticsTabContent } from "@/components/player-management/StatisticsTabContent";
-import { AddPlayerForm } from "@/components/AddPlayerForm";
-import { EditActivityForm } from "@/components/EditActivityForm";
+import { PageContainer } from "@/components/page-containers/PageContainer";
+import { usePlayers } from "@/hooks/usePlayers";
+import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 
-export default function PlayerManagementPage() {
-  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  
-  // Player state and actions
-  const { players, isLoading: playersLoading, setPlayers, handlePlayerUpdate } = usePlayers();
-  
-  // Activity state and actions
+interface PlayersPageProps {
+  initialTab?: string;
+}
+
+export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const {
-    // State
+    // Tab state
+    activeTab,
+    setActiveTab,
+    
+    // Player data
+    players,
+    filteredPlayers,
+    selectedPlayer,
+    setSelectedPlayer,
+    editingPlayer,
+    setEditingPlayer,
+    isAddPlayerOpen,
+    setIsAddPlayerOpen,
+    searchQuery,
+    setSearchQuery,
+    selectedGrades,
+    viewMode,
+    setViewMode,
+    handleGradeChange,
+    handlePlayerUpdate,
+    handleBulkPlayerUpdate,
+    handleAddPlayer,
+    
+    // Activity data
     activities,
-    isLoading: activitiesLoading,
+    filteredActivities,
+    filteredHistoricalActivities,
     selectedActivity,
     setSelectedActivity,
     editingActivity,
     setEditingActivity,
     isAddActivityOpen,
     setIsAddActivityOpen,
-    
-    // Filters
     selectedActivityTypes,
-    filteredActivities,
-    filteredHistoricalActivities,
     handleActivityTypeChange,
-    
-    // Actions
     handleActivityUpdate,
-    handleDeleteActivity,
-    handleKioskAssignmentUpdate,
+    handleKioskUpdate,
+    handleDelete,
+    handleImportActivities,
+    handleClearHistorical,
     handleAddActivity,
-    handleImportedActivities,
-    handleClearHistoricalActivities
-  } = useActivities(players, setPlayers);
-  
-  // Compute counts for player grades
-  const gradeData = players.reduce((acc, player) => {
-    if (player.positions?.includes("TRÄNARE")) return acc;
+    handlePlayerActivitySelect,
+    handleMatchResult,
     
-    const grade = player.grade;
-    const existingGrade = acc.find(item => item.grade === grade);
-    
-    if (existingGrade) {
-      existingGrade.players++;
-    } else {
-      acc.push({ grade, players: 1 });
-    }
-    
-    return acc;
-  }, [] as { grade: string, players: number }[]);
-  
-  // Sort grades (A, B, C, D)
-  gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
-  
-  // Check if data is loading
-  const isLoading = playersLoading || activitiesLoading;
+    // Loading state
+    isLoading
+  } = usePlayers(initialTab);
+
+  // Wrapper functions to ensure proper return types
+  const handleKioskUpdateWrapper = async (activityId: string, playerId?: string): Promise<boolean> => {
+    return await handleKioskUpdate(activityId, playerId);
+  };
+
+  const handleImportActivitiesWrapper = async (activities: Activity[]): Promise<boolean> => {
+    return await handleImportActivities(activities);
+  };
+
+  const handleClearHistoricalWrapper = async (): Promise<boolean> => {
+    return await handleClearHistorical();
+  };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <h1 className="text-3xl font-bold">Spelarhallning</h1>
-      
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-xl text-muted-foreground">Laddar data...</p>
-        </div>
-      ) : (
-        <Tabs defaultValue="players">
-          <TabsList className="mb-6">
-            <TabsTrigger value="players">Spelare</TabsTrigger>
-            <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
-            <TabsTrigger value="analytics">Analys</TabsTrigger>
-            <TabsTrigger value="statistics">Statistik</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="players" className="space-y-4">
-            <PlayersTabContent 
-              players={players}
-              activities={activities}
-              searchQuery=""
-              selectedGrades={[]}
-              selectedPositions={[]}
-              activeFiltersCount={0}
-              selectedPlayer={null}
-              viewMode="list"
-              filteredPlayers={players}
-              onSearchChange={() => {}}
-              onGradeChange={() => {}}
-              onPositionChange={() => {}}
-              onPlayerSelect={() => {}}
-              onPlayerUpdate={handlePlayerUpdate}
-              onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-              onEditPlayerClick={() => {}}
-              isMobile={false}
-            />
-          </TabsContent>
-          
-          <TabsContent value="activities">
-            <ActivitiesTabContent
-              activities={activities}
-              players={players}
-              selectedActivity={selectedActivity}
-              selectedActivityTypes={selectedActivityTypes}
-              filteredActivities={filteredActivities}
-              filteredHistoricalActivities={filteredHistoricalActivities}
-              isAddActivityOpen={isAddActivityOpen}
-              handleActivityTypeChange={handleActivityTypeChange}
-              setSelectedActivity={setSelectedActivity}
-              handleActivityUpdate={handleActivityUpdate}
-              setIsAddActivityOpen={setIsAddActivityOpen}
-              setEditingActivity={setEditingActivity}
-              handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-              handleDeleteActivity={handleDeleteActivity}
-              handleImportedActivities={handleImportedActivities}
-              handleClearHistoricalActivities={handleClearHistoricalActivities}
-            />
-          </TabsContent>
-          
-          <TabsContent value="analytics">
-            <AnalyticsTabContent 
-              players={players}
-              activities={filteredActivities}
-              gradeData={gradeData}
-            />
-          </TabsContent>
-          
-          <TabsContent value="statistics">
-            <StatisticsTabContent 
-              players={players}
-              activities={filteredActivities}
-              gradeData={gradeData}
-            />
-          </TabsContent>
-        </Tabs>
-      )}
-      
-      {isAddPlayerOpen && (
-        <AddPlayerForm 
-          onSave={() => setIsAddPlayerOpen(false)}
-          onCancel={() => setIsAddPlayerOpen(false)}
-        />
-      )}
-      
-      {editingActivity && (
-        <EditActivityForm
-          activity={editingActivity}
-          onSave={handleActivityUpdate}
-          onCancel={() => setEditingActivity(null)}
-        />
-      )}
-    </div>
+    <PageContainer isLoading={isLoading}>
+      <PlayersPageContent 
+        // Tab state
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        
+        // Player data
+        players={players}
+        activities={activities}
+        filteredPlayers={filteredPlayers}
+        selectedPlayer={selectedPlayer}
+        setSelectedPlayer={setSelectedPlayer}
+        editingPlayer={editingPlayer}
+        setEditingPlayer={setEditingPlayer}
+        isAddPlayerOpen={isAddPlayerOpen}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedGrades={selectedGrades}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        handleGradeChange={handleGradeChange}
+        handlePlayerUpdate={handlePlayerUpdate}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+        handleAddPlayer={handleAddPlayer}
+        
+        // Activity data
+        filteredActivities={filteredActivities}
+        filteredHistoricalActivities={filteredHistoricalActivities}
+        selectedActivity={selectedActivity}
+        setSelectedActivity={setSelectedActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        isAddActivityOpen={isAddActivityOpen}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        selectedActivityTypes={selectedActivityTypes}
+        handleActivityTypeChange={handleActivityTypeChange}
+        handleActivityUpdate={handleActivityUpdate}
+        handleKioskUpdate={handleKioskUpdateWrapper}
+        handleDelete={handleDelete}
+        handleImportActivities={handleImportActivitiesWrapper}
+        handleClearHistorical={handleClearHistoricalWrapper}
+        handleAddActivity={handleAddActivity}
+        onPlayerActivitySelect={handlePlayerActivitySelect}
+      />
+    </PageContainer>
   );
 }

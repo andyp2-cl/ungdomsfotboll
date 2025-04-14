@@ -17,7 +17,7 @@ interface ActivityTabContentProps {
   filteredActivities: Activity[];
   onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
-  onActivityUpdate: (activity: Activity) => void;
+  onActivityUpdate: (activity: Activity) => Promise<void>;
   onAddActivityClick: () => void;
   onEditActivityClick: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
