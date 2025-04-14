@@ -15,7 +15,7 @@ interface HistoricalActivitiesContentProps {
   filteredHistoricalActivities: Activity[];
   onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
-  onActivityUpdate: (activity: Activity) => void;
+  onActivityUpdate: (activity: Activity) => Promise<void>;
   onAddActivityClick: () => void;
   onEditActivityClick: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
@@ -41,6 +41,11 @@ export function HistoricalActivitiesContent({
   onClearHistoricalActivities
 }: HistoricalActivitiesContentProps) {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  // Wrap onActivityUpdate to ensure it returns Promise<void>
+  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
+    await onActivityUpdate(activity);
+  };
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -101,7 +106,7 @@ export function HistoricalActivitiesContent({
         filteredActivities={filteredHistoricalActivities}
         onActivityTypeChange={onActivityTypeChange}
         onActivitySelect={onActivitySelect}
-        onActivityUpdate={onActivityUpdate}
+        onActivityUpdate={handleActivityUpdate}
         onAddActivityClick={onAddActivityClick}
         onEditActivityClick={onEditActivityClick}
         handleKioskUpdate={handleKioskUpdate}

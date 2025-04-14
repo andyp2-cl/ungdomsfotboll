@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import { CupMatch } from "../CupMatchesForm";
+import { CupMatch } from "../types";
 import { MatchFormItem } from "./MatchFormItem";
 
 interface MatchFormListProps {

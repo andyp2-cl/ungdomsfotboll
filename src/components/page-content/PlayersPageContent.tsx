@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -24,8 +25,8 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: string[];
-  viewMode: string;
+  selectedGrades: PlayerGrade[];  // Changed from string[] to PlayerGrade[]
+  viewMode: "list" | "grid" | "stats";  // Explicit union type
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;

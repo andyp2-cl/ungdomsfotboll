@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
-import { CupMatch } from "./CupMatchesForm";
+import { CupMatch } from "./types";
 import { 
   MatchDialog, 
   MatchListView,
@@ -60,7 +59,6 @@ export function CupMatchesManager({
     setIsSubmitting(true);
     
     try {
-      // Transform CupMatch objects to Activity objects
       const newActivities = newMatches.map(match => ({
         name: match.name,
         date: cupActivity.date,
@@ -76,7 +74,6 @@ export function CupMatchesManager({
       
       await onAddMatches(newActivities);
       
-      // Reset and close dialog
       setNewMatches([]);
       setIsAddDialogOpen(false);
     } catch (error) {

@@ -15,7 +15,7 @@ interface ActivityTabViewContentProps {
   onActivitySelect?: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   onEditActivity?: (activity: Activity) => void;
-  onActivityUpdate?: (activity: Activity) => Promise<void>; // Updated to Promise<void>
+  onActivityUpdate?: (activity: Activity) => Promise<void>;
   onDeleteActivity?: (activityId: string) => Promise<boolean>;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
@@ -60,6 +60,13 @@ export function ActivityTabViewContent({
     ) : null;
   }
 
+  // Ensure onActivityUpdate returns Promise<void>
+  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
+    if (onActivityUpdate) {
+      await onActivityUpdate(activity);
+    }
+  };
+
   switch (content.viewType) {
     case "player-detail":
       return (
@@ -80,7 +87,7 @@ export function ActivityTabViewContent({
           players={players}
           onBack={() => onActivitySelect && onActivitySelect(null)}
           onEdit={onEditActivity}
-          onActivityUpdate={onActivityUpdate}
+          onActivityUpdate={handleActivityUpdate}
           onKioskAssignmentUpdate={onKioskAssignmentUpdate}
           onDeleteActivity={onDeleteActivity}
           onActivitySelect={onActivitySelect}

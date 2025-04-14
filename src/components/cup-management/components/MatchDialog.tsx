@@ -3,7 +3,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CupMatch } from "../CupMatchesForm";
+import { CupMatch } from "../types";
 import { MatchFormList } from "./MatchFormList";
 
 interface MatchDialogProps {

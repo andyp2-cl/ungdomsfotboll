@@ -56,6 +56,26 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     isLoading
   } = usePlayers(initialTab);
 
+  // Converting Promise<boolean> to Promise<void> for player update functions
+  const handlePlayerUpdateWrapper = async (player: any) => {
+    await handlePlayerUpdate(player);
+  };
+  
+  const handleBulkPlayerUpdateWrapper = async (players: any[]) => {
+    await handleBulkPlayerUpdate(players);
+  };
+  
+  const handleAddPlayerWrapper = async (player: any) => {
+    await handleAddPlayer(player);
+  };
+
+  // Create a wrapper for setViewMode to match expected (mode: string) => void signature
+  const setViewModeWrapper = (mode: string) => {
+    if (mode === "grid" || mode === "list" || mode === "stats") {
+      setViewMode(mode);
+    }
+  };
+
   return (
     <PageContainer isLoading={isLoading}>
       <PlayersPageContent 
@@ -77,11 +97,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         setSearchQuery={setSearchQuery}
         selectedGrades={selectedGrades}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={setViewModeWrapper}
         handleGradeChange={handleGradeChange}
-        handlePlayerUpdate={handlePlayerUpdate}
-        handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-        handleAddPlayer={handleAddPlayer}
+        handlePlayerUpdate={handlePlayerUpdateWrapper}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
+        handleAddPlayer={handleAddPlayerWrapper}
         
         // Activity data
         filteredActivities={filteredActivities}
