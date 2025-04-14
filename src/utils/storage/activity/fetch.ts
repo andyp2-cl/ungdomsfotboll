@@ -62,7 +62,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     activities.forEach(activity => {
       // This property mapping should be handled by formatActivityFromDatabase
       if (!activity.cupId && activity.cup_id) {
-        activity.cupId = activity.cup_id as unknown as string;
+        activity.cupId = activity.cup_id;
         console.log(`Set cupId for activity ${activity.name} to ${activity.cupId}`);
       }
     });
