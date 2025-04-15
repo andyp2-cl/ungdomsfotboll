@@ -4,6 +4,7 @@ import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -109,6 +110,3 @@ export function QuickMatchResult({
     </div>
   );
 }
-
-// Fix missing Badge import
-import { Badge } from "@/components/ui/badge";

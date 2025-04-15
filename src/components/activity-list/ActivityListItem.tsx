@@ -5,6 +5,7 @@ import { ActivityParticipants } from "./ActivityParticipants";
 import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { GradePieChart } from "../activity-detail/match-result/GradePieChart"; 
+import { Badge } from "@/components/ui/badge";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -69,10 +70,15 @@ export function ActivityListItem({
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-              <h3 className={`font-bold ${isMobile ? 'text-base' : ''}`}>{name}</h3>
-              <div className="flex gap-2 items-center">
-                {isCupMatch && <CupMatchBadge />}
-              </div>
+              <h3 className={`font-bold ${isMobile ? 'text-base' : ''} flex items-center flex-wrap gap-2`}>
+                {name}
+                {isCupMatch && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Trophy className="h-3.5 w-3.5" />
+                    Cupmatch
+                  </Badge>
+                )}
+              </h3>
             </div>
             
             <div className={`flex flex-wrap gap-2 text-sm mt-2 ${isMobile ? 'text-xs' : ''}`}>

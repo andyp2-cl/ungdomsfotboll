@@ -2,6 +2,8 @@
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
+import { formatActivityForDatabase } from "@/utils/database/formatters";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Update cup-match relationships in database
@@ -53,52 +55,12 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           .eq('id', activity.id);
           
         if (updateError) {
-          console.error(`Error updating cup_matches for cup ${activity.name}:`, updateError);
-          throw updateError;
-        }
-        
-        console.log(`Updated cup ${activity.name} with ${matchIds.length} match IDs`);
-        
-        // Log the change
-        await logDatabaseChange(
-          'update',
-          'activity',
-          activity.id,
-          `Updated cup "${activity.name}" with ${matchIds.length} matches`
-        );
-      }
-      
-      // Ensure all matches have the correct cupId
-      for (const matchActivity of matchActivities) {
-        if (matchActivity.cupId !== activity.id) {
-          console.log(`Updating match ${matchActivity.name} with cupId=${activity.id}`);
-          
-          // Update match activity in database
-          const { error: updateError } = await supabase
-            .from('activities')
-            .update({ cup_id: activity.id })
-            .eq('id', matchActivity.id);
-            
-          if (updateError) {
-            console.error(`Error updating cupId for match ${matchActivity.name}:`, updateError);
-            throw updateError;
-          }
-          
-          console.log(`Updated cupId for match ${matchActivity.name}`);
-          
-          // Log the change
-          await logDatabaseChange(
-            'update',
-            'activity',
-            matchActivity.id,
-            `Connected match "${matchActivity.name}" to cup "${activity.name}"`
-          );
+          console.error(`Error updating cup activity: ${updateError.message}`);
         }
       }
     }
   } catch (error) {
     console.error("Error updating cup-match relationships:", error);
-    throw error;
   }
 };
 
@@ -107,62 +69,46 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
  */
 export const addCupMatches = async (
   cupActivity: Activity,
-  newMatchActivities: Omit<Activity, 'id'>[],
-  onActivityUpdate: (activity: Activity) => Promise<void>
+  newMatches: Omit<Activity, 'id'>[],
+  updateActivity: (activity: Activity) => Promise<void>
 ): Promise<Activity[]> => {
   try {
-    const createdMatches: Activity[] = [];
+    console.log(`Adding ${newMatches.length} matches to cup ${cupActivity.name}`);
     
-    // Ensure cupActivity has matches array
-    if (!cupActivity.matches) {
-      cupActivity.matches = [];
+    // Create full activities with IDs
+    const matchActivities: Activity[] = newMatches.map(match => ({
+      ...match,
+      id: uuidv4(),
+      // Make sure cupId is set
+      cupId: cupActivity.id
+    }));
+    
+    // Update the cup to add these matches
+    const updatedCup = { ...cupActivity };
+    
+    // Initialize matches array if it doesn't exist
+    if (!updatedCup.matches) {
+      updatedCup.matches = [];
     }
     
-    console.log(`Starting to add ${newMatchActivities.length} matches to cup ${cupActivity.name}`);
+    // Add new match IDs
+    updatedCup.matches = [
+      ...updatedCup.matches,
+      ...matchActivities.map(m => m.id)
+    ];
     
-    // Create each match activity
-    for (const matchData of newMatchActivities) {
-      // Create a new activity with uuid
-      const newMatchActivity: Activity = {
-        id: crypto.randomUUID(),
-        ...matchData,
-        participants: [], // Ensure participants array exists
-      };
-      
-      console.log(`Creating match ${newMatchActivity.name} with cupId=${cupActivity.id}`);
-      
-      // Save the new match
-      await onActivityUpdate(newMatchActivity);
-      
-      // Add to created matches list
-      createdMatches.push(newMatchActivity);
-      
-      // Add match ID to cup's matches array
-      cupActivity.matches.push(newMatchActivity.id);
+    // First update the cup to reference these new matches
+    await updateActivity(updatedCup);
+    
+    // Then create each match activity
+    for (const match of matchActivities) {
+      // Save the activity to the database and state
+      await updateActivity(match);
     }
     
-    // Update the cup with new matches array
-    if (createdMatches.length > 0) {
-      console.log(`Updating cup ${cupActivity.name} with ${createdMatches.length} new matches`);
-      
-      // Ensure player_stats exists
-      if (!cupActivity.player_stats) {
-        cupActivity.player_stats = {
-          goals: {},
-          assists: {}
-        };
-      }
-      
-      // Set cup_matches in player_stats for persistence
-      cupActivity.player_stats.cup_matches = cupActivity.matches;
-      
-      // Update the cup activity
-      await onActivityUpdate(cupActivity);
-      
-      console.log(`Updated cup ${cupActivity.name} with ${createdMatches.length} new matches, total matches: ${cupActivity.matches.length}`);
-    }
+    console.log(`Successfully added ${matchActivities.length} matches to cup ${cupActivity.name}`);
+    return matchActivities;
     
-    return createdMatches;
   } catch (error) {
     console.error("Error adding cup matches:", error);
     throw error;

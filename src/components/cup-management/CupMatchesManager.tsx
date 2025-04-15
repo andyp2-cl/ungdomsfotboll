@@ -94,7 +94,7 @@ export function CupMatchesManager({
     setIsSubmitting(true);
     
     try {
-      console.log("Submitting matches:", newMatches);
+      console.log("Submitting cup matches:", newMatches);
       
       const newActivities = newMatches.map(match => ({
         name: match.name,
@@ -105,11 +105,14 @@ export function CupMatchesManager({
           name: match.location,
           description: match.locationDescription
         } : undefined,
-        cupId: cupActivity.id,
+        cupId: cupActivity.id, // Critical: Set the cupId to link to parent cup
         participants: [],
         homeScore: match.homeScore,
         awayScore: match.awayScore,
         result: match.result,
+        // Add isWin if scores are defined
+        isWin: match.homeScore !== undefined && match.awayScore !== undefined ? 
+          (match.homeScore > match.awayScore) : undefined
       }));
       
       await onAddMatches(newActivities);

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CupMatchesManager } from "../cup-management/CupMatchesManager";
 import { CupMatchesView } from "./CupMatchesView";
-import { addCupMatches } from "@/utils/storage/activity/cupMatches";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ActivityDetailProps {
   activity: Activity;
@@ -39,24 +39,44 @@ export function ActivityDetail(props: ActivityDetailProps) {
     try {
       console.log("Adding cup matches:", newMatches.length);
       
-      // Use our helper function to add cup matches
-      const createdMatches = await addCupMatches(
-        props.activity, 
-        newMatches, 
-        // Convert onActivityUpdate to return Promise<void>
-        async (activity: Activity): Promise<void> => {
-          if (props.onActivityUpdate) {
-            await props.onActivityUpdate(activity);
-            console.log("Activity updated:", activity.id);
-          }
-        }
-      );
+      // Create full Activity objects with IDs
+      const activitiesWithIds = newMatches.map(match => ({
+        ...match,
+        id: uuidv4(), // Generate unique ID for each match
+      }));
       
-      console.log("Created matches:", createdMatches.length);
+      // Get the current activity to update
+      const updatedCupActivity = { ...props.activity };
+      
+      // Ensure matches array exists
+      if (!updatedCupActivity.matches) {
+        updatedCupActivity.matches = [];
+      }
+      
+      // Add new match IDs to the cup's matches array
+      updatedCupActivity.matches = [
+        ...updatedCupActivity.matches,
+        ...activitiesWithIds.map(a => a.id)
+      ];
+      
+      console.log("Updated cup with match IDs:", updatedCupActivity.matches);
+      
+      // First update the cup activity to reference these new matches
+      if (props.onActivityUpdate) {
+        await props.onActivityUpdate(updatedCupActivity);
+      }
+      
+      // Then create each match activity
+      for (const match of activitiesWithIds) {
+        if (props.onActivityUpdate) {
+          await props.onActivityUpdate(match as Activity);
+          console.log("Created match:", match.id, match.name);
+        }
+      }
       
       toast({
         title: "Matcher tillagda",
-        description: `${createdMatches.length} nya matcher har lagts till i cupen.`,
+        description: `${activitiesWithIds.length} nya matcher har lagts till i cupen.`,
         duration: 5000
       });
       
@@ -94,11 +114,13 @@ export function ActivityDetail(props: ActivityDetailProps) {
         />
         
         {/* Visa existerande cup-matcher */}
-        <CupMatchesView 
-          cupActivity={props.activity}
-          matchActivities={matchActivities}
-          onActivitySelect={props.onActivitySelect}
-        />
+        {matchActivities.length > 0 && (
+          <CupMatchesView 
+            cupActivity={props.activity}
+            matchActivities={matchActivities}
+            onActivitySelect={props.onActivitySelect}
+          />
+        )}
       </>
     );
   };

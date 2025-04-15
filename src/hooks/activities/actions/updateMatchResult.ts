@@ -62,7 +62,8 @@ export const handleMatchResultUpdate = async (
       homeScore,
       awayScore,
       isWin,
-      result: resultString
+      result: resultString,
+      cupId: updatedActivity.cupId
     });
     
     // Update activities array

@@ -1,12 +1,20 @@
 
-import { Badge } from "@/components/ui/badge";
-import { Trophy } from "lucide-react";
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Trophy } from 'lucide-react';
 
-export function CupMatchBadge() {
+interface CupMatchBadgeProps {
+  className?: string;
+}
+
+export function CupMatchBadge({ className }: CupMatchBadgeProps) {
   return (
-    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-      <Trophy className="h-3 w-3" />
-      <span>Cupmatch</span>
+    <Badge 
+      variant="outline" 
+      className={`flex items-center gap-1 ${className || ''}`}
+    >
+      <Trophy className="h-3.5 w-3.5" />
+      Cupmatch
     </Badge>
   );
 }
