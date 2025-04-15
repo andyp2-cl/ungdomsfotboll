@@ -1,8 +1,8 @@
 
-import React from "react";
 import { Activity } from "@/types/player";
+import { MapPin, Calendar, Clock, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, MapPin } from "lucide-react";
+import { CupMatchBadge } from "../activity-list/CupMatchBadge";
 
 interface ActivityDetailHeaderContentProps {
   activity: Activity;
@@ -19,76 +19,56 @@ export function ActivityDetailHeaderContent({
   isHistorical,
   formatResult
 }: ActivityDetailHeaderContentProps) {
-  // Determine result color based on win/loss/draw
-  const getResultBadgeClass = () => {
-    // Check for draw first
-    if (activity.homeScore === activity.awayScore && 
-        activity.homeScore !== undefined && 
-        activity.awayScore !== undefined) {
-      return "bg-gray-100 text-gray-800 border-gray-300"; // Draw
-    }
-    
-    // Then check explicit win/loss
-    if (activity.isWin === true) {
-      return "bg-green-100 text-green-800 border-green-300"; // Win
-    } else if (activity.isWin === false) {
-      return "bg-red-100 text-red-800 border-red-300"; // Loss
-    }
-    
-    // Default case
-    return "bg-blue-100 text-blue-800 border-blue-300";
-  };
+  const result = formatResult();
+  const isCupMatch = !!activity.cupId;
 
   return (
-    <div>
-      <div className="text-2xl mb-1 flex items-center">
-        {activity.name}
-        <Badge 
-          variant={activity.type === "match" ? "default" : "secondary"}
-          className="ml-3"
-        >
-          {activity.type === "match" ? "Match" : "Cup"}
-        </Badge>
-        {isHistorical && (
-          <Badge variant="outline" className="ml-2">
-            Tidigare
-          </Badge>
-        )}
-        {isHistorical && activity.type === "match" && formatResult() && (
-          <Badge variant="outline" className={`ml-2 ${getResultBadgeClass()}`}>
-            {formatResult()}
-          </Badge>
-        )}
+    <div className="space-y-1 flex-1">
+      <div className="flex items-center gap-2 flex-wrap">
+        <h2 className="text-lg font-semibold text-foreground line-clamp-2">
+          {activity.name}
+        </h2>
+        {isCupMatch && <CupMatchBadge />}
       </div>
-      <div className="flex flex-col gap-1 text-muted-foreground">
-        <div className="flex items-center">
-          <CalendarIcon className="h-4 w-4 mr-1" />
-          {capitalizedDayOfWeek} {formattedDate}
+      
+      <div className="flex flex-col text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>
+            {capitalizedDayOfWeek} {formattedDate}
+          </span>
           {activity.time && (
-            <span className="ml-2 flex items-center">
-              <Clock className="h-4 w-4 ml-2 mr-1" />
-              {activity.time}
-            </span>
+            <>
+              <span className="mx-1">•</span>
+              <Clock className="h-3.5 w-3.5 mr-1" />
+              <span>{activity.time}</span>
+            </>
           )}
         </div>
         
-        {activity.location && (
-          <div className="flex items-center mt-1">
-            <MapPin className="h-4 w-4 mr-1" />
-            <span>{activity.location.name}</span>
-            {activity.location.description && (
-              <span className="text-muted-foreground ml-1">({activity.location.description})</span>
-            )}
-            {activity.location.gpsLink && (
-              <a 
-                href={activity.location.gpsLink} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="ml-2 text-blue-600 hover:underline text-sm"
-              >
-                GPS
-              </a>
-            )}
+        {activity.location?.name && (
+          <div className="flex items-center gap-1 mt-1">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>
+              {activity.location.name}
+              {activity.location.description && (
+                <span className="text-xs opacity-75"> ({activity.location.description})</span>
+              )}
+            </span>
+          </div>
+        )}
+        
+        {isHistorical && result && (
+          <div className="mt-1">
+            <Badge 
+              variant={activity.isWin ? "success" : 
+                     (activity.homeScore === activity.awayScore && 
+                      activity.homeScore !== undefined && 
+                      activity.awayScore !== undefined) ? "outline" : "destructive"}
+              className="font-semibold"
+            >
+              Resultat: {result}
+            </Badge>
           </div>
         )}
       </div>
