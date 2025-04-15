@@ -14,8 +14,8 @@ export function CupMatchBadge({ className, compact = false }: CupMatchBadgeProps
       variant="outline" 
       className={`flex items-center gap-1 ${className || ''}`}
     >
-      <Trophy className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
-      {!compact && "Cupmatch"}
+      <Trophy className="h-3 w-3" />
+      {!compact && "Cup"}
     </Badge>
   );
 }

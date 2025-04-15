@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export const updateCupMatches = async (activity: Activity, activities: Activity[]): Promise<void> => {
   try {
+    console.log("updateCupMatches called for activity:", activity.id, activity.name);
+    
     // If the activity is a cup and has matches...
     if (activity.type === 'cup') {
       console.log(`Processing cup ${activity.name} (${activity.id})`);
@@ -46,7 +48,8 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           .from('activities')
           .update({ 
             matches: allMatchIds, 
-            player_stats: activity.player_stats
+            player_stats: activity.player_stats,
+            type: activity.type
           })
           .eq('id', activity.id);
           
@@ -69,28 +72,34 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         
         if (!parentCup.matches.includes(activity.id)) {
           console.log(`Adding match ${activity.id} to cup ${parentCup.id}`);
-          parentCup.matches.push(activity.id);
+          
+          const updatedCup = { ...parentCup };
+          updatedCup.matches = [...updatedCup.matches, activity.id];
           
           // Update parent cup in database
-          if (!parentCup.player_stats) {
-            parentCup.player_stats = {
+          if (!updatedCup.player_stats) {
+            updatedCup.player_stats = {
               goals: {},
               assists: {}
             };
           }
           
-          parentCup.player_stats.cup_matches = parentCup.matches;
+          updatedCup.player_stats.cup_matches = updatedCup.matches;
+          
+          console.log("Updating parent cup with match ID:", updatedCup.matches);
           
           const { error: updateError } = await supabase
             .from('activities')
             .update({ 
-              matches: parentCup.matches, 
-              player_stats: parentCup.player_stats 
+              matches: updatedCup.matches, 
+              player_stats: updatedCup.player_stats 
             })
-            .eq('id', parentCup.id);
+            .eq('id', updatedCup.id);
             
           if (updateError) {
             console.error(`Error updating parent cup: ${updateError.message}`);
+          } else {
+            console.log(`Successfully updated parent cup with match ID ${activity.id}`);
           }
         }
       }
@@ -116,7 +125,9 @@ export const addCupMatches = async (
       ...match,
       id: uuidv4(),
       // Make sure cupId is set
-      cupId: cupActivity.id
+      cupId: cupActivity.id,
+      // Ensure matches is initialized as empty array
+      matches: []
     }));
     
     // Update the cup to add these matches

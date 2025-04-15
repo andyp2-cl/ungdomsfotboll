@@ -31,6 +31,9 @@ export function ActivityDetail(props: ActivityDetailProps) {
   const isCup = props.activity.type === "cup";
   const matchActivities = props.cupMatches || [];
   
+  console.log("ActivityDetail rendering with cupMatches:", matchActivities.length, 
+    matchActivities.map(m => ({id: m.id, name: m.name})));
+  
   const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]): Promise<void> => {
     if (!props.onActivityUpdate) return;
     
@@ -64,10 +67,12 @@ export function ActivityDetail(props: ActivityDetailProps) {
       // First update the cup activity to reference these new matches
       if (props.onActivityUpdate) {
         await props.onActivityUpdate(updatedCupActivity);
+        console.log("Cup updated with new match references");
       }
       
       // Then create each match activity
       for (const match of activitiesWithIds) {
+        console.log("Creating match:", match.id, match.name);
         if (props.onActivityUpdate) {
           await props.onActivityUpdate(match as Activity);
           console.log("Created match:", match.id, match.name);
@@ -109,6 +114,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
             const match = props.allActivities?.find(a => a.id === matchId);
             if (match && props.onActivitySelect) {
               props.onActivitySelect(match);
+              console.log("Navigating to match:", match.id, match.name);
             }
           }}
         />

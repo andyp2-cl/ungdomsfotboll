@@ -112,8 +112,16 @@ export function CupMatchesManager({
         result: match.result,
         // Add isWin if scores are defined
         isWin: match.homeScore !== undefined && match.awayScore !== undefined ? 
-          (match.homeScore > match.awayScore) : undefined
+          (match.homeScore > match.awayScore) : undefined,
+        // Add matches array as empty to avoid undefined issues
+        matches: [],
+        player_stats: {
+          goals: {},
+          assists: {},
+        }
       }));
+      
+      console.log("Created new activities:", newActivities);
       
       await onAddMatches(newActivities);
       

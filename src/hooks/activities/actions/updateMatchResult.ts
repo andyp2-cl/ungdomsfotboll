@@ -73,14 +73,20 @@ export const handleMatchResultUpdate = async (
         console.log(`This is a cup match. Parent cup: ${parentCup.name}`);
         
         // Ensure cup has a matches array
-        if (!parentCup.matches) {
-          parentCup.matches = [];
+        const updatedCup = { ...parentCup };
+        if (!updatedCup.matches) {
+          updatedCup.matches = [];
         }
         
         // Add match to cup if not already there
-        if (!parentCup.matches.includes(updatedActivity.id)) {
-          console.log(`Adding match ${updatedActivity.id} to cup ${parentCup.id}`);
-          parentCup.matches.push(updatedActivity.id);
+        if (!updatedCup.matches.includes(updatedActivity.id)) {
+          console.log(`Adding match ${updatedActivity.id} to cup ${updatedCup.id}`);
+          updatedCup.matches.push(updatedActivity.id);
+          
+          // Update activities array with updated cup
+          activities = activities.map(a => 
+            a.id === updatedCup.id ? updatedCup : a
+          );
         }
       }
     }

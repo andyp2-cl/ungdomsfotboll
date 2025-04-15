@@ -32,7 +32,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         name: normalizedActivity.name,
         isWin: normalizedActivity.isWin,
         playerStats: normalizedPlayerStats,
-        cupId: normalizedActivity.cupId
+        cupId: normalizedActivity.cupId,
+        type: normalizedActivity.type,
+        matches: normalizedActivity.matches?.length || 0
       });
       
       // Check if activity already exists to determine if this is an update or create
@@ -72,9 +74,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Handle player-activity relationships
       await updateActivityParticipants(normalizedActivity);
       
-      // For cup activities, handle cup-match relationships
-      if (activity.type === 'cup') {
-        console.log(`Processing cup-match relationships for cup ${activity.name}`);
+      // For cup activities or cup matches, handle cup-match relationships
+      if (activity.type === 'cup' || activity.cupId) {
+        console.log(`Processing cup-match relationships for ${activity.type} ${activity.name}`);
         await updateCupMatches(normalizedActivity, activities);
       }
     }

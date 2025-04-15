@@ -15,6 +15,8 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     const activities = activitiesData.map(formatActivityFromDatabase);
     
+    console.log(`Fetched ${activities.length} activities from database`);
+    
     // Then, get player-activity relationships and populate the participants array
     const { data: playerActivitiesData, error: relationshipError } = await supabase
       .from('player_activities')
@@ -29,40 +31,69 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     });
     
     // Log all activities with their cup IDs before processing
-    console.log("All activities with cup IDs before matching:", 
-      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})));
+    console.log("All activities with cup IDs before linking cups and matches:", 
+      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})).length);
     
-    // For cup activities, find matches that have this cup as parent
+    // For cup activities, find matches that have this cup as parent via multiple strategies
     const cupActivities = activities.filter(a => a.type === 'cup');
     console.log("Cup activities found:", cupActivities.length);
     
     cupActivities.forEach(cupActivity => {
-      // Find all matches that reference this cup ID
-      const matchesForCup = activities.filter(
-        possibleMatch => (possibleMatch.cupId === cupActivity.id)
+      // Strategy 1: Look for matches explicitly defined in the cup's matches array
+      let cupMatches = [];
+      if (cupActivity.matches && cupActivity.matches.length > 0) {
+        const explicitMatches = activities.filter(a => 
+          cupActivity.matches?.includes(a.id)
+        );
+        cupMatches = [...explicitMatches];
+      }
+      
+      // Strategy 2: Look for matches that reference this cup via cupId
+      const implicitMatches = activities.filter(a => 
+        a.cupId === cupActivity.id && a.type === 'match'
       );
       
-      console.log(`Looking for matches with cupId=${cupActivity.id} (${cupActivity.name}), found:`, 
-        matchesForCup.length > 0 ? matchesForCup.map(m => ({id: m.id, name: m.name, cupId: m.cupId})) : 'none');
+      if (implicitMatches.length > 0) {
+        // Add any implicit matches that weren't already found via the matches array
+        const implicitMatchIds = implicitMatches.map(m => m.id);
+        const missingMatches = implicitMatches.filter(m => 
+          !cupMatches.some(cm => cm.id === m.id)
+        );
+        
+        if (missingMatches.length > 0) {
+          cupMatches = [...cupMatches, ...missingMatches];
+        }
+      }
       
-      if (matchesForCup.length > 0) {
-        // Set matches array with the match IDs
-        cupActivity.matches = matchesForCup.map(match => match.id);
-        console.log(`Set ${matchesForCup.length} matches for cup ${cupActivity.name}:`, cupActivity.matches);
-      } else {
-        // Ensure matches array is initialized even if empty
-        cupActivity.matches = [];
+      // Ensure we don't have duplicate matches
+      const uniqueMatchIds = [...new Set(cupMatches.map(m => m.id))];
+      
+      // Update the cup's matches array with all found matches
+      cupActivity.matches = uniqueMatchIds;
+      
+      console.log(`Cup ${cupActivity.name} (${cupActivity.id}) has ${uniqueMatchIds.length} total matches after linking`);
+    });
+    
+    // Strategy 3: Also ensure all matches with cupId properly reference their parent cup
+    const matchesWithCupId = activities.filter(a => a.cupId && a.type === 'match');
+    console.log(`Found ${matchesWithCupId.length} matches with cupId references`);
+    
+    matchesWithCupId.forEach(matchActivity => {
+      const parentCup = activities.find(a => a.id === matchActivity.cupId);
+      if (parentCup && parentCup.type === 'cup') {
+        // Make sure this match is in the parent cup's matches array
+        if (!parentCup.matches) {
+          parentCup.matches = [];
+        }
+        
+        if (!parentCup.matches.includes(matchActivity.id)) {
+          console.log(`Adding match ${matchActivity.id} to cup ${parentCup.id}'s matches array`);
+          parentCup.matches.push(matchActivity.id);
+        }
       }
     });
     
-    // Check for any activities that lack expected properties
-    activities.forEach(activity => {
-      if (activity.type === 'match' && !activity.cupId) {
-        console.log(`Match activity ${activity.name} lacks cupId`);
-      }
-    });
-    
-    console.log("Retrieved activities from Supabase:", activities.length);
+    console.log("Retrieved and linked activities from Supabase:", activities.length);
     return activities;
   } catch (error) {
     console.error("Error fetching activities:", error);

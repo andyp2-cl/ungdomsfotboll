@@ -25,10 +25,10 @@ export function ActivityDetailHeaderContent({
   return (
     <div className="space-y-1 flex-1">
       <div className="flex items-center gap-2 flex-wrap">
-        <h2 className="text-lg font-semibold text-foreground line-clamp-2">
+        <h2 className="text-base font-semibold text-foreground line-clamp-2 pr-1">
           {activity.name}
         </h2>
-        {isCupMatch && <CupMatchBadge />}
+        {isCupMatch && <CupMatchBadge compact={true} />}
       </div>
       
       <div className="flex flex-col text-sm text-muted-foreground">
