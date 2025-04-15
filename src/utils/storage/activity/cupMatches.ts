@@ -57,6 +57,15 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           console.error(`Error updating cup activity: ${updateError.message}`);
         } else {
           console.log(`Successfully updated cup ${activity.id} with ${allMatchIds.length} matches`);
+          
+          // Also update all matches to make sure they reference this cup
+          for (const matchId of allMatchIds) {
+            console.log(`Ensuring match ${matchId} has cupId set to ${activity.id}`);
+            await supabase
+              .from('activities')
+              .update({ cup_id: activity.id })
+              .eq('id', matchId);
+          }
         }
       }
     }
@@ -65,38 +74,54 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
     if (activity.cupId) {
       console.log(`Processing match ${activity.name} (${activity.id}) with cupId: ${activity.cupId}`);
       
-      const parentCup = activities.find(a => a.id === activity.cupId);
-      
-      if (parentCup && parentCup.type === 'cup') {
-        if (!parentCup.matches) {
-          parentCup.matches = [];
-        }
+      // First, update this match to ensure its cup_id field is set correctly
+      const { error: matchUpdateError } = await supabase
+        .from('activities')
+        .update({ cup_id: activity.cupId })
+        .eq('id', activity.id);
         
-        if (!parentCup.matches.includes(activity.id)) {
-          console.log(`Adding match ${activity.id} to cup ${parentCup.id}`);
+      if (matchUpdateError) {
+        console.error(`Error updating match with cupId: ${matchUpdateError.message}`);
+      } else {
+        console.log(`Updated match ${activity.id} with cupId ${activity.cupId}`);
+      }
+      
+      // Then find the parent cup activity
+      const { data: parentCupData, error: cupFetchError } = await supabase
+        .from('activities')
+        .select('id, matches, player_stats')
+        .eq('id', activity.cupId)
+        .single();
+        
+      if (cupFetchError) {
+        console.error(`Error fetching parent cup: ${cupFetchError.message}`);
+      } else if (parentCupData) {
+        let cupMatches = parentCupData.matches || [];
+        
+        if (!cupMatches.includes(activity.id)) {
+          console.log(`Adding match ${activity.id} to cup ${parentCupData.id}`);
           
-          const updatedCup = { ...parentCup };
-          updatedCup.matches = [...updatedCup.matches, activity.id];
+          cupMatches = [...cupMatches, activity.id];
           
-          // Update parent cup in database
-          if (!updatedCup.player_stats) {
-            updatedCup.player_stats = {
-              goals: {},
-              assists: {}
-            };
+          let playerStats = parentCupData.player_stats || {};
+          if (typeof playerStats === 'string') {
+            try {
+              playerStats = JSON.parse(playerStats);
+            } catch (e) {
+              playerStats = {};
+            }
           }
           
-          updatedCup.player_stats.cup_matches = updatedCup.matches;
+          playerStats.cup_matches = cupMatches;
           
-          console.log("Updating parent cup with match ID:", updatedCup.matches);
-          
+          // Update parent cup in database
           const { error: updateError } = await supabase
             .from('activities')
             .update({ 
-              matches: updatedCup.matches, 
-              player_stats: updatedCup.player_stats 
+              matches: cupMatches, 
+              player_stats: playerStats 
             })
-            .eq('id', updatedCup.id);
+            .eq('id', parentCupData.id);
             
           if (updateError) {
             console.error(`Error updating parent cup: ${updateError.message}`);
@@ -104,7 +129,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
             console.log(`Successfully updated parent cup with match ID ${activity.id}`);
           }
         } else {
-          console.log(`Match ${activity.id} already in cup ${parentCup.id}'s matches array`);
+          console.log(`Match ${activity.id} already in cup ${parentCupData.id}'s matches array`);
         }
       } else {
         console.error(`Failed to find parent cup with ID ${activity.cupId} for match ${activity.id}`);

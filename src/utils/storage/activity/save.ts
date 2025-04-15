@@ -47,6 +47,12 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
+      // Ensure cup_id is properly set if cupId exists
+      if (formattedActivity.cupId) {
+        formattedActivity.cup_id = formattedActivity.cupId;
+        console.log(`Setting cup_id to ${formattedActivity.cupId} for ${formattedActivity.name}`);
+      }
+      
       // Upsert the activity
       const { error: upsertError } = await supabase
         .from('activities')
@@ -77,7 +83,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       // For cup activities or cup matches, handle cup-match relationships
       if (activity.type === 'cup' || activity.cupId) {
-        console.log(`Processing cup-match relationships for ${activity.type === 'cup' ? 'cup' : 'match'} ${activity.name}`);
+        console.log(`Processing cup-match relationships for ${activity.type === 'cup' ? 'cup' : 'match'} ${activity.name} (${activity.id})`);
         await updateCupMatches(normalizedActivity, activities);
       }
     }

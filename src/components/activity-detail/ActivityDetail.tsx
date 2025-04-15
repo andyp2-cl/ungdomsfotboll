@@ -1,7 +1,7 @@
 
 import { Activity, Player } from "@/types/player";
 import { ActivityDetailView } from "./ActivityDetailView";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CupMatchesManager } from "../cup-management/CupMatchesManager";
 import { CupMatchesView } from "./CupMatchesView";
@@ -26,27 +26,45 @@ interface ActivityDetailProps {
 
 export function ActivityDetail(props: ActivityDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [localCupMatches, setLocalCupMatches] = useState<Activity[]>([]);
   const { toast } = useToast();
   
   const isCup = props.activity.type === "cup";
-  const matchActivities = props.cupMatches || [];
+  const activityId = props.activity.id;
   
-  console.log("ActivityDetail rendering with activity:", props.activity.id, props.activity.name, props.activity.type);
-  console.log("Cup matches count:", matchActivities.length);
-  
-  if (props.activity.type === 'cup') {
-    const cupId = props.activity.id;
-    const matchesByReference = props.allActivities?.filter(a => a.cupId === cupId) || [];
-    console.log(`Cup ${props.activity.name} has ${matchesByReference.length} matches by cupId reference`);
-    
-    if (props.activity.matches) {
-      console.log(`Cup ${props.activity.name} has ${props.activity.matches.length} matches in its matches array`);
-      const matchActivitiesById = props.allActivities?.filter(a => 
-        props.activity.matches?.includes(a.id)
-      ) || [];
-      console.log(`Found ${matchActivitiesById.length} actual match activities from the matches array`);
+  // Process incoming cup matches and update local state
+  useEffect(() => {
+    if (isCup) {
+      // First try to get matches from the props.cupMatches if available
+      if (props.cupMatches && props.cupMatches.length > 0) {
+        console.log("Setting local cup matches from props.cupMatches:", props.cupMatches.length);
+        setLocalCupMatches(props.cupMatches);
+      } 
+      // Then try to find matches via props.allActivities by checking the cupId
+      else if (props.allActivities) {
+        const matchesWithCupId = props.allActivities.filter(a => a.cupId === activityId);
+        console.log("Found matches by cupId:", matchesWithCupId.length);
+        setLocalCupMatches(matchesWithCupId);
+      }
     }
-  }
+  }, [isCup, props.cupMatches, props.allActivities, activityId]);
+  
+  useEffect(() => {
+    console.log("ActivityDetail re-rendered with:");
+    console.log("- activity:", props.activity.id, props.activity.name, props.activity.type);
+    console.log("- props.cupMatches:", props.cupMatches?.length);
+    console.log("- localCupMatches:", localCupMatches.length);
+    
+    if (props.activity.type === 'cup') {
+      // Log activity matches array
+      console.log(`Cup ${props.activity.name} has matches array:`, props.activity.matches || []);
+      
+      // Look for matches by cupId reference
+      const matchesWithCupId = props.allActivities?.filter(a => a.cupId === props.activity.id) || [];
+      console.log(`Found ${matchesWithCupId.length} matches with cupId reference:`, 
+        matchesWithCupId.map(m => ({id: m.id, name: m.name})));
+    }
+  }, [props.activity, props.cupMatches, localCupMatches, props.allActivities]);
   
   const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]): Promise<void> => {
     if (!props.onActivityUpdate) return;
@@ -60,6 +78,7 @@ export function ActivityDetail(props: ActivityDetailProps) {
       const activitiesWithIds = newMatches.map(match => ({
         ...match,
         id: uuidv4(), // Generate unique ID for each match
+        cupId: props.activity.id, // Ensure cupId is explicitly set
       }));
       
       // Get the current activity to update
@@ -86,12 +105,15 @@ export function ActivityDetail(props: ActivityDetailProps) {
       
       // Then create each match activity
       for (const match of activitiesWithIds) {
-        console.log("Creating match:", match.id, match.name);
+        console.log("Creating match:", match.id, match.name, "with cupId:", match.cupId);
         if (props.onActivityUpdate) {
           await props.onActivityUpdate(match as Activity);
           console.log("Created match:", match.id, match.name);
         }
       }
+      
+      // Update local state with new matches
+      setLocalCupMatches(prevMatches => [...prevMatches, ...activitiesWithIds as Activity[]]);
       
       toast({
         title: "Matcher tillagda",
@@ -111,6 +133,9 @@ export function ActivityDetail(props: ActivityDetailProps) {
       setIsLoading(false);
     }
   };
+  
+  // Decide which matches to display
+  const matchActivities = localCupMatches.length > 0 ? localCupMatches : (props.cupMatches || []);
   
   // Render extra content for cup activities
   const renderCupContent = () => {

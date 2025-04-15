@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Activity } from "@/types/player";
 import { formatDate } from "@/utils/formatDate";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,9 +20,12 @@ export function CupMatchesView({
   matchActivities,
   onActivitySelect 
 }: CupMatchesViewProps) {
-  console.log("CupMatchesView rendering with matchActivities:", matchActivities.length, 
-    matchActivities.map(m => ({id: m.id, name: m.name})));
-    
+  useEffect(() => {
+    console.log("CupMatchesView rendering with matchActivities:", matchActivities.length, 
+      matchActivities.map(m => ({id: m.id, name: m.name, cupId: m.cupId})));
+  }, [matchActivities]);
+  
+  // Check for both length and defined matchActivities array
   if (!matchActivities || matchActivities.length === 0) {
     return (
       <div className="border rounded-md p-6 text-center">

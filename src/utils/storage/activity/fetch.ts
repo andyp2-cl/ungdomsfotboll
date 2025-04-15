@@ -17,6 +17,11 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     console.log(`Fetched ${activities.length} activities from database`);
     
+    // Log all activities with cup ID for debugging
+    const activitiesWithCupId = activities.filter(a => a.cupId);
+    console.log(`Found ${activitiesWithCupId.length} activities with cupId:`, 
+      activitiesWithCupId.map(a => ({ id: a.id, name: a.name, cupId: a.cupId })));
+    
     // Then, get player-activity relationships and populate the participants array
     const { data: playerActivitiesData, error: relationshipError } = await supabase
       .from('player_activities')
@@ -64,6 +69,15 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
       if (implicitMatches.length > 0) {
         console.log(`Cup ${cupActivity.name} has ${implicitMatches.length} implicit matches via cupId`);
+        
+        // Make sure each match in implicitMatches has its cupId set correctly
+        implicitMatches.forEach(match => {
+          if (match.cupId !== cupActivity.id) {
+            match.cupId = cupActivity.id;
+            console.log(`Fixed cupId for match ${match.id}`);
+          }
+        });
+        
         // Add any implicit matches that weren't already found via the matches array
         const missingMatches = implicitMatches.filter(m => 
           !cupMatches.some(cm => cm.id === m.id)
@@ -101,6 +115,15 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
           parentCup.matches.push(matchActivity.id);
         }
       }
+    });
+    
+    // Final debugging: log cups and their matches
+    cupActivities.forEach(cup => {
+      console.log(`Cup ${cup.name} (${cup.id}) final matches array:`, cup.matches);
+      const actualMatchActivities = cup.matches
+        ? activities.filter(a => cup.matches.includes(a.id))
+        : [];
+      console.log(`Found ${actualMatchActivities.length} actual match activities for cup ${cup.name}`);
     });
     
     console.log("Retrieved and linked activities from Supabase:", activities.length);
