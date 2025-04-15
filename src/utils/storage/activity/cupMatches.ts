@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export const updateCupMatches = async (activity: Activity, activities: Activity[]): Promise<void> => {
   try {
-    console.log("updateCupMatches called for activity:", activity.id, activity.name);
+    console.log("updateCupMatches called for activity:", activity.id, activity.name, activity.type);
     
     // If the activity is a cup and has matches...
     if (activity.type === 'cup') {
@@ -19,13 +19,13 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
       // Get both explicit matches (in matches array) and implicit matches (with cupId)
       const explicitMatches = activity.matches || [];
       const implicitMatches = activities
-        .filter(a => a.cupId === activity.id)
+        .filter(a => a.cupId === activity.id && a.type === 'match')
         .map(a => a.id);
       
       // Combine all match IDs (remove duplicates)
       const allMatchIds = [...new Set([...explicitMatches, ...implicitMatches])];
       
-      console.log(`Found ${allMatchIds.length} total matches for cup ${activity.id}`);
+      console.log(`Found ${allMatchIds.length} total matches for cup ${activity.id}:`, allMatchIds);
       
       // Update the cup activity with all match IDs
       if (allMatchIds.length > 0) {
@@ -63,6 +63,8 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
     
     // If the activity is a match with a cupId, ensure it's in the cup's matches array
     if (activity.cupId) {
+      console.log(`Processing match ${activity.name} (${activity.id}) with cupId: ${activity.cupId}`);
+      
       const parentCup = activities.find(a => a.id === activity.cupId);
       
       if (parentCup && parentCup.type === 'cup') {
@@ -101,7 +103,11 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           } else {
             console.log(`Successfully updated parent cup with match ID ${activity.id}`);
           }
+        } else {
+          console.log(`Match ${activity.id} already in cup ${parentCup.id}'s matches array`);
         }
+      } else {
+        console.error(`Failed to find parent cup with ID ${activity.cupId} for match ${activity.id}`);
       }
     }
   } catch (error) {
@@ -148,12 +154,14 @@ export const addCupMatches = async (
     
     // First update the cup to reference these new matches
     await updateActivity(updatedCup);
+    console.log("Updated cup with match references successfully");
     
     // Then create each match activity
     for (const match of matchActivities) {
-      console.log(`Creating match ${match.id}: ${match.name}`);
+      console.log(`Creating match ${match.id}: ${match.name} with cupId: ${match.cupId}`);
       // Save the activity to the database and state
       await updateActivity(match);
+      console.log(`Successfully created match ${match.id}: ${match.name}`);
     }
     
     console.log(`Successfully added ${matchActivities.length} matches to cup ${cupActivity.name}`);

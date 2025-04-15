@@ -12,7 +12,7 @@ export function CupMatchBadge({ className, compact = false }: CupMatchBadgeProps
   return (
     <Badge 
       variant="outline" 
-      className={`flex items-center gap-1 ${className || ''}`}
+      className={`flex items-center gap-1 border-amber-500 text-amber-700 bg-amber-50 ${className || ''}`}
     >
       <Trophy className="h-3 w-3" />
       {!compact && "Cup"}

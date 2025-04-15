@@ -31,8 +31,22 @@ export function ActivityDetail(props: ActivityDetailProps) {
   const isCup = props.activity.type === "cup";
   const matchActivities = props.cupMatches || [];
   
-  console.log("ActivityDetail rendering with cupMatches:", matchActivities.length, 
-    matchActivities.map(m => ({id: m.id, name: m.name})));
+  console.log("ActivityDetail rendering with activity:", props.activity.id, props.activity.name, props.activity.type);
+  console.log("Cup matches count:", matchActivities.length);
+  
+  if (props.activity.type === 'cup') {
+    const cupId = props.activity.id;
+    const matchesByReference = props.allActivities?.filter(a => a.cupId === cupId) || [];
+    console.log(`Cup ${props.activity.name} has ${matchesByReference.length} matches by cupId reference`);
+    
+    if (props.activity.matches) {
+      console.log(`Cup ${props.activity.name} has ${props.activity.matches.length} matches in its matches array`);
+      const matchActivitiesById = props.allActivities?.filter(a => 
+        props.activity.matches?.includes(a.id)
+      ) || [];
+      console.log(`Found ${matchActivitiesById.length} actual match activities from the matches array`);
+    }
+  }
   
   const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]): Promise<void> => {
     if (!props.onActivityUpdate) return;
@@ -120,13 +134,11 @@ export function ActivityDetail(props: ActivityDetailProps) {
         />
         
         {/* Visa existerande cup-matcher */}
-        {matchActivities.length > 0 && (
-          <CupMatchesView 
-            cupActivity={props.activity}
-            matchActivities={matchActivities}
-            onActivitySelect={props.onActivitySelect}
-          />
-        )}
+        <CupMatchesView 
+          cupActivity={props.activity}
+          matchActivities={matchActivities}
+          onActivitySelect={props.onActivitySelect}
+        />
       </>
     );
   };

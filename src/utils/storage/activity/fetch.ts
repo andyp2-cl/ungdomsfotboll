@@ -32,12 +32,20 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // Log all activities with their cup IDs before processing
     console.log("All activities with cup IDs before linking cups and matches:", 
-      activities.map(a => ({id: a.id, name: a.name, type: a.type, cupId: a.cupId})).length);
+      activities.filter(a => a.cupId).length);
     
     // For cup activities, find matches that have this cup as parent via multiple strategies
     const cupActivities = activities.filter(a => a.type === 'cup');
     console.log("Cup activities found:", cupActivities.length);
     
+    // First pass: ensure all cup activities have a matches array
+    cupActivities.forEach(cupActivity => {
+      if (!cupActivity.matches) {
+        cupActivity.matches = [];
+      }
+    });
+    
+    // Second pass: Process cup-match relationships
     cupActivities.forEach(cupActivity => {
       // Strategy 1: Look for matches explicitly defined in the cup's matches array
       let cupMatches = [];
@@ -46,6 +54,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
           cupActivity.matches?.includes(a.id)
         );
         cupMatches = [...explicitMatches];
+        console.log(`Cup ${cupActivity.name} has ${explicitMatches.length} explicit matches`);
       }
       
       // Strategy 2: Look for matches that reference this cup via cupId
@@ -54,13 +63,14 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       );
       
       if (implicitMatches.length > 0) {
+        console.log(`Cup ${cupActivity.name} has ${implicitMatches.length} implicit matches via cupId`);
         // Add any implicit matches that weren't already found via the matches array
-        const implicitMatchIds = implicitMatches.map(m => m.id);
         const missingMatches = implicitMatches.filter(m => 
           !cupMatches.some(cm => cm.id === m.id)
         );
         
         if (missingMatches.length > 0) {
+          console.log(`Adding ${missingMatches.length} missing matches to cup ${cupActivity.name}`);
           cupMatches = [...cupMatches, ...missingMatches];
         }
       }

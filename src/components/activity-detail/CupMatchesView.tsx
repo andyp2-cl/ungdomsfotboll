@@ -20,6 +20,9 @@ export function CupMatchesView({
   matchActivities,
   onActivitySelect 
 }: CupMatchesViewProps) {
+  console.log("CupMatchesView rendering with matchActivities:", matchActivities.length, 
+    matchActivities.map(m => ({id: m.id, name: m.name})));
+    
   if (!matchActivities || matchActivities.length === 0) {
     return (
       <div className="border rounded-md p-6 text-center">

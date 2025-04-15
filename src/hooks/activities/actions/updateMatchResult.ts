@@ -66,6 +66,11 @@ export const handleMatchResultUpdate = async (
       cupId: updatedActivity.cupId
     });
     
+    // Update activities array
+    const updatedActivities = activities.map(a => 
+      a.id === activityId ? updatedActivity : a
+    );
+    
     // If this is a cup match (has cupId), also update the cup's matches array
     if (updatedActivity.cupId) {
       const parentCup = activities.find(a => a.id === updatedActivity.cupId);
@@ -84,17 +89,11 @@ export const handleMatchResultUpdate = async (
           updatedCup.matches.push(updatedActivity.id);
           
           // Update activities array with updated cup
-          activities = activities.map(a => 
-            a.id === updatedCup.id ? updatedCup : a
-          );
+          updatedActivities[updatedActivities.findIndex(a => a.id === updatedCup.id)] = updatedCup;
+          console.log(`Updated cup ${updatedCup.id} with match ID ${updatedActivity.id}`);
         }
       }
     }
-    
-    // Update activities array
-    const updatedActivities = activities.map(a => 
-      a.id === activityId ? updatedActivity : a
-    );
     
     // Update state first for immediate feedback
     setActivities(updatedActivities);

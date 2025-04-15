@@ -27,14 +27,15 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
       
-      console.log("Saving activity with player_stats and win status:", {
+      console.log("Saving activity with details:", {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
-        isWin: normalizedActivity.isWin,
-        playerStats: normalizedPlayerStats,
-        cupId: normalizedActivity.cupId,
         type: normalizedActivity.type,
-        matches: normalizedActivity.matches?.length || 0
+        cupId: normalizedActivity.cupId,
+        matches: normalizedActivity.matches?.length || 0,
+        isWin: normalizedActivity.isWin,
+        homeScore: normalizedActivity.homeScore,
+        awayScore: normalizedActivity.awayScore
       });
       
       // Check if activity already exists to determine if this is an update or create
@@ -76,7 +77,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       // For cup activities or cup matches, handle cup-match relationships
       if (activity.type === 'cup' || activity.cupId) {
-        console.log(`Processing cup-match relationships for ${activity.type} ${activity.name}`);
+        console.log(`Processing cup-match relationships for ${activity.type === 'cup' ? 'cup' : 'match'} ${activity.name}`);
         await updateCupMatches(normalizedActivity, activities);
       }
     }
