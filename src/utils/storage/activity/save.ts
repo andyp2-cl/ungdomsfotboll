@@ -4,7 +4,7 @@ import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
 import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
-import { updateCupMatches } from "./cupMatches";
+import { updateCupMatches } from "./cup-matches";
 import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 
 // Save activities to Supabase
