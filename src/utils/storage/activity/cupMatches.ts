@@ -47,7 +47,6 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         const { error: updateError } = await supabase
           .from('activities')
           .update({ 
-            matches: allMatchIds, 
             player_stats: activity.player_stats,
             type: activity.type
           })
@@ -100,22 +99,19 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         // We need to parse or initialize the matches array
         let cupMatches = [];
         
-        // Try to get matches from data
-        if (parentCup.matches && Array.isArray(parentCup.matches)) {
-          cupMatches = [...parentCup.matches];
-        } else {
-          // Try to get cup_matches from player_stats as a fallback
-          const playerStats = parentCup.player_stats || {};
-          if (typeof playerStats === 'string') {
-            try {
-              const parsedStats = JSON.parse(playerStats);
+        // Try to get cup_matches from player_stats as the source of truth
+        const playerStats = parentCup.player_stats || {};
+        if (typeof playerStats === 'string') {
+          try {
+            const parsedStats = JSON.parse(playerStats);
+            if (parsedStats && typeof parsedStats === 'object') {
               cupMatches = parsedStats.cup_matches || [];
-            } catch (e) {
-              cupMatches = [];
             }
-          } else {
-            cupMatches = playerStats.cup_matches || [];
+          } catch (e) {
+            cupMatches = [];
           }
+        } else if (playerStats && typeof playerStats === 'object') {
+          cupMatches = playerStats.cup_matches || [];
         }
         
         // Add this match to the cup's matches if not already present
@@ -125,24 +121,28 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
           cupMatches.push(activity.id);
           
           // Ensure player_stats is properly formatted
-          let playerStats = parentCup.player_stats || {};
-          if (typeof playerStats === 'string') {
+          let updatedPlayerStats = playerStats;
+          if (typeof updatedPlayerStats === 'string') {
             try {
-              playerStats = JSON.parse(playerStats);
+              updatedPlayerStats = JSON.parse(updatedPlayerStats);
             } catch (e) {
-              playerStats = {};
+              updatedPlayerStats = { goals: {}, assists: {} };
             }
+          } else if (!updatedPlayerStats || typeof updatedPlayerStats !== 'object') {
+            updatedPlayerStats = { goals: {}, assists: {} };
           }
           
           // Add cup_matches to player_stats
-          playerStats.cup_matches = cupMatches;
+          updatedPlayerStats = {
+            ...updatedPlayerStats,
+            cup_matches: cupMatches
+          };
           
           // Update parent cup in database
           const { error: updateError } = await supabase
             .from('activities')
             .update({ 
-              matches: cupMatches, 
-              player_stats: playerStats 
+              player_stats: updatedPlayerStats
             })
             .eq('id', parentCup.id);
             

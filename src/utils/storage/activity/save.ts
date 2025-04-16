@@ -48,9 +48,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       const isNewActivity = !existingActivity;
       
       // Ensure cup_id is properly set if cupId exists
-      if (formattedActivity.cupId) {
-        formattedActivity.cup_id = formattedActivity.cupId;
-        console.log(`Setting cup_id to ${formattedActivity.cupId} for ${formattedActivity.name}`);
+      if (normalizedActivity.cupId) {
+        formattedActivity.cup_id = normalizedActivity.cupId;
+        console.log(`Setting cup_id to ${normalizedActivity.cupId} for ${normalizedActivity.name}`);
       }
       
       // Upsert the activity
