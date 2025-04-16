@@ -87,23 +87,45 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
       }
       
       // Then find the parent cup activity
-      const { data: parentCupData, error: cupFetchError } = await supabase
+      const parentCupResult = await supabase
         .from('activities')
-        .select('id, matches, player_stats')
+        .select('*')
         .eq('id', activity.cupId)
         .single();
         
-      if (cupFetchError) {
-        console.error(`Error fetching parent cup: ${cupFetchError.message}`);
-      } else if (parentCupData) {
-        let cupMatches = parentCupData.matches || [];
+      if (parentCupResult.error) {
+        console.error(`Error fetching parent cup: ${parentCupResult.error.message}`);
+      } else if (parentCupResult.data) {
+        const parentCup = parentCupResult.data;
+        // We need to parse or initialize the matches array
+        let cupMatches = [];
         
+        // Try to get matches from data
+        if (parentCup.matches && Array.isArray(parentCup.matches)) {
+          cupMatches = [...parentCup.matches];
+        } else {
+          // Try to get cup_matches from player_stats as a fallback
+          const playerStats = parentCup.player_stats || {};
+          if (typeof playerStats === 'string') {
+            try {
+              const parsedStats = JSON.parse(playerStats);
+              cupMatches = parsedStats.cup_matches || [];
+            } catch (e) {
+              cupMatches = [];
+            }
+          } else {
+            cupMatches = playerStats.cup_matches || [];
+          }
+        }
+        
+        // Add this match to the cup's matches if not already present
         if (!cupMatches.includes(activity.id)) {
-          console.log(`Adding match ${activity.id} to cup ${parentCupData.id}`);
+          console.log(`Adding match ${activity.id} to cup ${parentCup.id}`);
           
-          cupMatches = [...cupMatches, activity.id];
+          cupMatches.push(activity.id);
           
-          let playerStats = parentCupData.player_stats || {};
+          // Ensure player_stats is properly formatted
+          let playerStats = parentCup.player_stats || {};
           if (typeof playerStats === 'string') {
             try {
               playerStats = JSON.parse(playerStats);
@@ -112,6 +134,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
             }
           }
           
+          // Add cup_matches to player_stats
           playerStats.cup_matches = cupMatches;
           
           // Update parent cup in database
@@ -121,7 +144,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
               matches: cupMatches, 
               player_stats: playerStats 
             })
-            .eq('id', parentCupData.id);
+            .eq('id', parentCup.id);
             
           if (updateError) {
             console.error(`Error updating parent cup: ${updateError.message}`);
@@ -129,7 +152,7 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
             console.log(`Successfully updated parent cup with match ID ${activity.id}`);
           }
         } else {
-          console.log(`Match ${activity.id} already in cup ${parentCupData.id}'s matches array`);
+          console.log(`Match ${activity.id} already in cup ${parentCup.id}'s matches array`);
         }
       } else {
         console.error(`Failed to find parent cup with ID ${activity.cupId} for match ${activity.id}`);
