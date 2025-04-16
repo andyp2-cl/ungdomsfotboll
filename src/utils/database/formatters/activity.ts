@@ -1,30 +1,6 @@
 
-import { Activity, PlayerStats } from "@/types/player";
-
-// Helper function to normalize player stats
-const normalizePlayerStats = (playerStatsJson: any): PlayerStats => {
-  // If player_stats is undefined or null, create an empty object
-  if (!playerStatsJson) {
-    return { goals: {}, assists: {} };
-  }
-  
-  // If player_stats is a string, parse it
-  if (typeof playerStatsJson === 'string') {
-    try {
-      playerStatsJson = JSON.parse(playerStatsJson);
-    } catch (e) {
-      console.error("Error parsing player_stats string:", e);
-      return { goals: {}, assists: {} };
-    }
-  }
-  
-  // Create a properly formatted object
-  return {
-    ...playerStatsJson,
-    goals: playerStatsJson.goals || {},
-    assists: playerStatsJson.assists || {}
-  };
-};
+import { Activity } from "@/types/player";
+import { normalizePlayerStats, formatPlayerStatsFromDatabase } from './player-stats';
 
 /**
  * Formats an activity object from our application format to the database format
@@ -86,49 +62,8 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     activity.result = `${item.home_score}-${item.away_score}`;
   }
   
-  // Handle player_stats properly
-  if (item.player_stats) {
-    try {
-      const stats = typeof item.player_stats === 'string' 
-        ? JSON.parse(item.player_stats) 
-        : item.player_stats;
-        
-      activity.player_stats = {
-        goals: stats.goals || {},
-        assists: stats.assists || {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin,
-        cup_matches: stats.cup_matches || []
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats JSON:", e);
-      activity.player_stats = {
-        goals: {},
-        assists: {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin,
-        cup_matches: []
-      };
-    }
-  } else {
-    activity.player_stats = {
-      goals: {},
-      assists: {},
-      scores: {
-        home: item.home_score,
-        away: item.away_score
-      },
-      isWin: activity.isWin,
-      cup_matches: []
-    };
-  }
+  // Handle player_stats using the utility function
+  activity.player_stats = formatPlayerStatsFromDatabase(item);
   
   return activity;
 };
-
