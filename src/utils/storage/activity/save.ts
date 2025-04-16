@@ -5,7 +5,7 @@ import { Activity } from "@/types/player";
 import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cup-matches";
-import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
+import { normalizePlayerStats } from "@/utils/database/formatters/player-stats";
 
 // Save activities to Supabase
 export const saveActivities = async (activities: Activity[]): Promise<void> => {
