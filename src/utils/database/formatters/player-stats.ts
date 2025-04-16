@@ -32,6 +32,22 @@ export const normalizePlayerStats = (playerStatsJson: any): PlayerStats => {
  * Formats player stats from database format to application format
  */
 export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
+  if (!item) {
+    return {
+      goals: {},
+      assists: {},
+      scores: {
+        home: undefined,
+        away: undefined
+      },
+      isWin: undefined,
+      cup_matches: []
+    };
+  }
+  
+  // Explicit handling of isWin to avoid undefined reference issues
+  const isWinValue = item.is_win === true ? true : item.is_win === false ? false : undefined;
+  
   if (item.player_stats) {
     try {
       const stats = typeof item.player_stats === 'string' 
@@ -45,7 +61,7 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
           home: item.home_score,
           away: item.away_score
         },
-        isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
+        isWin: isWinValue,
         cup_matches: stats.cup_matches || []
       };
     } catch (e) {
@@ -61,7 +77,7 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
       home: item.home_score,
       away: item.away_score
     },
-    isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
+    isWin: isWinValue,
     cup_matches: []
   };
 };
