@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 
@@ -34,7 +33,8 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         scraped: item.scraped || false,
         participants: [],
         cupId: item.cup_id || undefined,
-        matches: [], // Initialisera tom matchlista för cuper
+        cupName: item.cup_name || undefined, // Add cupName field
+        matches: [], // Initialize empty matches array for cups
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,
         awayScore: item.away_score,
@@ -106,21 +106,20 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
-    // För varje cup-aktivitet, hitta matcherna baserat på cupId-relationerna
-    const cupActivities = activities.filter(activity => activity.type === 'cup');
+    // Group related cup activities
+    const matchesByCup = new Map<string, Activity[]>();
     
-    cupActivities.forEach(cupActivity => {
-      // Hitta alla matcher som har denna cup som förälder (via cupId)
-      const matchesForCup = activities.filter(
-        possibleMatch => possibleMatch.cupId === cupActivity.id
-      );
-      
-      console.log(`Cup ${cupActivity.name} (${cupActivity.id}) har ${matchesForCup.length} matcher baserat på cupId-relationen`);
-      
-      if (matchesForCup.length > 0) {
-        cupActivity.matches = matchesForCup.map(match => match.id);
+    // First, organize matches by cup name
+    activities.forEach(activity => {
+      if (activity.type === 'match' && activity.cupName) {
+        if (!matchesByCup.has(activity.cupName)) {
+          matchesByCup.set(activity.cupName, []);
+        }
+        matchesByCup.get(activity.cupName)?.push(activity);
       }
     });
+    
+    console.log(`Found matches for ${matchesByCup.size} different cups`);
     
     return activities;
   } catch (error) {
@@ -129,7 +128,29 @@ export const fetchActivities = async (): Promise<Activity[]> => {
   }
 };
 
-// NEW FUNCTION: Permanently delete activity from Supabase
+// NEW FUNCTION: Find related cup matches
+export const findMatchesByCupName = (activities: Activity[], cupName: string): Activity[] => {
+  if (!cupName) return [];
+  
+  return activities.filter(activity => 
+    activity.type === 'match' && activity.cupName === cupName
+  );
+};
+
+// NEW FUNCTION: Find all cup names
+export const getAllCupNames = (activities: Activity[]): string[] => {
+  const cupNames = new Set<string>();
+  
+  activities.forEach(activity => {
+    if (activity.cupName) {
+      cupNames.add(activity.cupName);
+    }
+  });
+  
+  return Array.from(cupNames);
+};
+
+// Existing function
 export const permanentlyDeleteActivity = async (activityId: string): Promise<boolean> => {
   try {
     // First delete all player-activity relationships

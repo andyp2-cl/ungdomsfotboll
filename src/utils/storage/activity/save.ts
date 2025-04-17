@@ -31,7 +31,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
         type: normalizedActivity.type,
-        cupId: normalizedActivity.cupId,
+        cupName: normalizedActivity.cupName,
         matches: normalizedActivity.matches?.length || 0,
         isWin: normalizedActivity.isWin,
         homeScore: normalizedActivity.homeScore,
@@ -47,10 +47,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
-      // Ensure cup_id is properly set if cupId exists
-      if (normalizedActivity.cupId) {
-        formattedActivity.cup_id = normalizedActivity.cupId;
-        console.log(`Setting cup_id to ${normalizedActivity.cupId} for ${normalizedActivity.name}`);
+      // Ensure cup_name is properly set if cupName exists (new field)
+      if (normalizedActivity.cupName) {
+        formattedActivity.cup_name = normalizedActivity.cupName;
+        console.log(`Setting cup_name to ${normalizedActivity.cupName} for ${normalizedActivity.name}`);
       }
       
       // Upsert the activity
@@ -81,10 +81,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Handle player-activity relationships
       await updateActivityParticipants(normalizedActivity);
       
-      // For cup activities or cup matches, handle cup-match relationships
-      if (activity.type === 'cup' || activity.cupId) {
-        console.log(`Processing cup-match relationships for ${activity.type === 'cup' ? 'cup' : 'match'} ${activity.name} (${activity.id})`);
-        await updateCupMatches(normalizedActivity, activities);
+      // For cup activities, we'll use the new cupName approach instead of the complex relationship
+      if (activity.type === 'match' && activity.cupName) {
+        console.log(`Match ${activity.name} is part of cup: ${activity.cupName}`);
       }
     }
   } catch (error) {

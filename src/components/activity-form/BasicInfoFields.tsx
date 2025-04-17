@@ -11,12 +11,34 @@ import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
 import { TimeInput } from "./TimeInput";
+import { useEffect, useState } from "react";
+import { getAllCupNames } from "@/lib/supabase/activities";
+import { useQuery } from "@tanstack/react-query";
+import { getStoredActivities } from "@/utils/storage/activity/fetch";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
 }
 
 export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
+  const [cupNames, setCupNames] = useState<string[]>([]);
+  const activityType = form.watch("type");
+  
+  // Only fetch cup names if we're working with activities
+  const { data: activities } = useQuery({
+    queryKey: ["activities"],
+    queryFn: getStoredActivities,
+    enabled: activityType === 'match', // Only fetch when needed
+  });
+  
+  // Extract cup names when activities are loaded
+  useEffect(() => {
+    if (activities) {
+      const names = getAllCupNames(activities);
+      setCupNames(names);
+    }
+  }, [activities]);
+
   return (
     <>
       <FormField
@@ -54,6 +76,35 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           </FormItem>
         )}
       />
+
+      {/* Show Cup Name field for match type */}
+      {activityType === "match" && (
+        <FormField
+          control={form.control}
+          name="cupName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cup (valfritt)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Välj cup eller lämna tom" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Ingen cup</SelectItem>
+                  {cupNames.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField

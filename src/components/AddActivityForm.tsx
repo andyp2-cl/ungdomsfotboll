@@ -8,6 +8,10 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAllCupNames } from "@/lib/supabase/activities";
+import { useQuery } from "@tanstack/react-query";
+import { getStoredActivities } from "@/utils/storage/activity/fetch";
 
 interface AddActivityFormProps {
   onSave: (activity: Activity) => void;
@@ -29,7 +33,23 @@ export function AddActivityForm({
   const [locationDescription, setLocationDescription] = useState("");
   const [locationGpsLink, setLocationGpsLink] = useState("");
   const [time, setTime] = useState("");
-  const [cupMatches, setCupMatches] = useState<string[]>([]);
+  const [cupName, setCupName] = useState("");
+  const [cupNames, setCupNames] = useState<string[]>([]);
+  
+  // Fetch activities to get existing cup names
+  const { data: activities } = useQuery({
+    queryKey: ["activities"],
+    queryFn: getStoredActivities,
+    enabled: type === 'match', // Only fetch when needed
+  });
+  
+  // Extract cup names when activities are loaded
+  useEffect(() => {
+    if (activities) {
+      const names = getAllCupNames(activities);
+      setCupNames(names);
+    }
+  }, [activities]);
 
   useEffect(() => {
     if (onTypeChange) {
@@ -60,7 +80,7 @@ export function AddActivityForm({
         gpsLink: locationGpsLink
       },
       time: time,
-      matches: cupMatches,
+      cupName: type === "match" ? cupName : undefined, // Only set cupName for matches
       participants: [], // Required participants property
       player_stats: {} // Initialize empty player stats
     };
@@ -95,6 +115,27 @@ export function AddActivityForm({
           </div>
         </RadioGroup>
       </div>
+      
+      {/* Cup name field for match type */}
+      {type === "match" && (
+        <div>
+          <Label htmlFor="cupName">Cup (valfritt)</Label>
+          <Select onValueChange={setCupName} value={cupName}>
+            <SelectTrigger>
+              <SelectValue placeholder="Välj cup eller lämna tom" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Ingen cup</SelectItem>
+              {cupNames.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      
       <div>
         <Label htmlFor="date">Datum</Label>
         <DatePicker

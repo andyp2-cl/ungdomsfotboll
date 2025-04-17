@@ -21,7 +21,8 @@ export const formatActivityForDatabase = (activity: Activity) => {
     location_gps_link: activity.location?.gpsLink,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId,
     scraped: activity.scraped,
-    cup_id: activity.cupId,
+    cup_id: activity.cupId, // Keep for backward compatibility
+    cup_name: activity.cupName, // New field for cup name-based matching
     result: activity.result,
     home_score: activity.homeScore,
     away_score: activity.awayScore,
@@ -50,6 +51,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     scraped: item.scraped || false,
     participants: [],
     cupId: item.cup_id || undefined,
+    cupName: item.cup_name || undefined, // Add cupName field
     matches: [],
     homeScore: item.home_score,
     awayScore: item.away_score,

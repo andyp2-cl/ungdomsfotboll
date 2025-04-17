@@ -1,79 +1,74 @@
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Activity } from "@/types/player";
+import { activityFormSchema, ActivityFormValues } from "./formSchema";
 import { format } from "date-fns";
-import { ActivityFormValues, activityFormSchema } from "./formSchema";
-import { useState, useEffect } from "react";
-import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
-import { handleActivitySubmit } from "@/utils/activity/handleActivitySubmit";
 
 export function useActivityForm(
-  activity: Activity,
-  onSave: (updatedActivity: Activity) => void
+  initialActivity: Activity | null,
+  onSave: (activity: Activity) => void
 ) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Normalize activity.player_stats before using
-  const normalizedActivity = {
-    ...activity,
-    player_stats: normalizePlayerStats(activity.player_stats)
-  };
-
-  // Parse the ISO date string to a Date object
-  const getInitialDate = () => {
-    try {
-      return new Date(normalizedActivity.date);
-    } catch (e) {
-      return new Date();
-    }
-  };
-
+  // Create form with default values
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
-      name: normalizedActivity.name,
-      type: normalizedActivity.type,
-      date: getInitialDate(),
-      time: normalizedActivity.time || "",
-      locationName: normalizedActivity.location?.name || "",
-      locationDescription: normalizedActivity.location?.description || "",
-      locationGps: normalizedActivity.location?.gpsLink || "",
-      result: normalizedActivity.result || "",
-      homeScore: normalizedActivity.homeScore,
-      awayScore: normalizedActivity.awayScore,
-      isWin: normalizedActivity.isWin,
+      name: initialActivity?.name || "",
+      type: initialActivity?.type || "match",
+      date: initialActivity?.date ? new Date(initialActivity.date) : new Date(),
+      time: initialActivity?.time || "",
+      location: {
+        name: initialActivity?.location?.name || "",
+        description: initialActivity?.location?.description || "",
+        gpsLink: initialActivity?.location?.gpsLink || "",
+      },
+      homeScore: initialActivity?.homeScore,
+      awayScore: initialActivity?.awayScore,
+      cupName: initialActivity?.cupName || "", // Set cup name if exists
     },
   });
 
-  // Auto-compute the result string when scores change
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if ((name === 'homeScore' || name === 'awayScore') && 
-          value.homeScore !== undefined && 
-          value.awayScore !== undefined) {
-        // Update result string
-        form.setValue('result', `${value.homeScore}-${value.awayScore}`);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
+  // Handle form submission
   const handleSubmit = async (values: ActivityFormValues) => {
     setIsSubmitting(true);
     
     try {
-      await handleActivitySubmit(values, normalizedActivity, onSave, setIsSubmitting);
+      // Create updated activity object
+      const updatedActivity: Activity = {
+        ...(initialActivity || { id: "", participants: [] }), // Ensure we have a base activity
+        name: values.name,
+        type: values.type,
+        date: format(values.date, 'yyyy-MM-dd'),
+        time: values.time,
+        location: values.location?.name
+          ? {
+              name: values.location.name,
+              description: values.location.description,
+              gpsLink: values.location.gpsLink,
+            }
+          : undefined,
+        homeScore: values.homeScore,
+        awayScore: values.awayScore,
+        cupName: values.cupName, // Save cup name for matches
+      };
+
+      // Update result string
+      if (values.homeScore !== undefined && values.awayScore !== undefined) {
+        updatedActivity.result = `${values.homeScore}-${values.awayScore}`;
+        updatedActivity.isWin = values.homeScore > values.awayScore;
+      }
+
+      // Call save handler
+      await onSave(updatedActivity);
     } catch (error) {
+      console.error("Error saving activity:", error);
+    } finally {
       setIsSubmitting(false);
-      console.error("Error in form submission:", error);
     }
   };
 
-  return {
-    form,
-    handleSubmit,
-    isSubmitting,
-  };
+  return { form, handleSubmit, isSubmitting };
 }
