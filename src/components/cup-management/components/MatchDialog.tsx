@@ -10,6 +10,8 @@ interface MatchDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   cupName: string;
+  cupDate?: string;
+  cupLocation?: string;
   newMatches: CupMatch[];
   onAddMatch: () => void;
   updateMatch: (index: number, field: keyof CupMatch, value: string | number | undefined) => void;
@@ -22,6 +24,8 @@ export function MatchDialog({
   isOpen,
   onOpenChange,
   cupName,
+  cupDate,
+  cupLocation,
   newMatches,
   onAddMatch,
   updateMatch,
@@ -34,6 +38,15 @@ export function MatchDialog({
       <DialogContent className="sm:max-w-lg max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Lägg till matcher i {cupName}</DialogTitle>
+          {(cupDate || cupLocation) && (
+            <div className="text-sm text-muted-foreground mt-1">
+              {cupDate && <div>Datum: {cupDate}</div>}
+              {cupLocation && <div>Plats: {cupLocation}</div>}
+              <p className="text-xs italic mt-1">
+                Alla matcher kommer att ärva cupens datum och plats.
+              </p>
+            </div>
+          )}
         </DialogHeader>
         
         <ScrollArea className="max-h-[60vh] pr-3">
@@ -42,6 +55,7 @@ export function MatchDialog({
             onAddMatch={onAddMatch}
             updateMatch={updateMatch}
             removeMatch={removeMatch}
+            showOnlyNameAndScore={true}
           />
         </ScrollArea>
         

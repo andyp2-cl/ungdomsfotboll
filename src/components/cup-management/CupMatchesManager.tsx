@@ -36,9 +36,7 @@ export function CupMatchesManager({
     const newMatch: CupMatch = {
       id: uuidv4(),
       name: "",
-      time: "",
-      location: "",
-      locationDescription: "",
+      // Don't set time, location, etc. as they'll inherit from cup
     };
     
     setNewMatches([...newMatches, newMatch]);
@@ -98,14 +96,12 @@ export function CupMatchesManager({
       
       const newActivities = newMatches.map(match => ({
         name: match.name,
-        date: cupActivity.date,
+        date: cupActivity.date, // Inherit date from cup
         type: "match" as const,
-        time: match.time,
-        location: match.location ? {
-          name: match.location,
-          description: match.locationDescription
-        } : undefined,
+        time: cupActivity.time, // Inherit time from cup
+        location: cupActivity.location, // Inherit full location object from cup
         cupId: cupActivity.id, // Critical: Set the cupId to link to parent cup
+        cupName: cupActivity.name, // Also set the cup name for better reference
         participants: [],
         homeScore: match.homeScore,
         awayScore: match.awayScore,
@@ -172,6 +168,8 @@ export function CupMatchesManager({
         isOpen={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         cupName={cupActivity.name}
+        cupDate={cupActivity.date}
+        cupLocation={cupActivity.location?.name || ''}
         newMatches={newMatches}
         onAddMatch={handleAddMatch}
         updateMatch={updateMatch}

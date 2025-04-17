@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Edit, Clock, MapPin, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatDate";
 import { QuickMatchResult } from "@/components/activity-detail/QuickMatchResult";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 interface MatchListViewProps {
   matches: Activity[];
@@ -15,6 +15,27 @@ interface MatchListViewProps {
 }
 
 export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: MatchListViewProps) {
+  const getResultTextColor = (activity: Activity): string => {
+    if (activity.homeScore === undefined || activity.awayScore === undefined) {
+      return "";
+    }
+    
+    if (activity.homeScore === activity.awayScore) {
+      return "text-black";
+    }
+    
+    if (typeof activity.isWin === 'boolean') {
+      return activity.isWin ? "text-green-600" : "text-red-600";
+    }
+    
+    const isHome = isHomeMatch(activity);
+    const isWin = isHome ? 
+      activity.homeScore > activity.awayScore : 
+      activity.awayScore > activity.homeScore;
+    
+    return isWin ? "text-green-600" : "text-red-600";
+  };
+  
   return (
     <div className="space-y-3">
       {matches.map((match) => (
@@ -62,7 +83,12 @@ export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: Mat
                 )}
               </div>
               
-              {/* Match result component */}
+              {match.homeScore !== undefined && match.awayScore !== undefined && (
+                <div className={`text-lg font-bold mt-1 ${getResultTextColor(match)}`}>
+                  Resultat: {match.homeScore}-{match.awayScore}
+                </div>
+              )}
+              
               {onMatchResultUpdate && (
                 <div className="mt-2">
                   <QuickMatchResult
@@ -71,6 +97,7 @@ export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: Mat
                       onMatchResultUpdate(match.id, homeScore, awayScore)
                     }
                     isReadOnly={false}
+                    resultColorClass={getResultTextColor(match)}
                   />
                 </div>
               )}

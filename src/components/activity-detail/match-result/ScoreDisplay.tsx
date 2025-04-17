@@ -2,7 +2,7 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
-import { isHomeMatch, getOutcomeText, getOutcomeColorClass, extractTeamNames } from "./utils";
+import { isHomeMatch, getOutcomeText, extractTeamNames } from "./utils";
 
 interface ScoreDisplayProps {
   activity: Activity;
@@ -41,7 +41,7 @@ export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayPro
   if (homeScore === awayScore) {
     outcomeText = "Oavgjort";
     outcomeColorClass = "bg-gray-100 text-gray-800";
-    scoreTextColorClass = "text-gray-600";
+    scoreTextColorClass = "text-black";
   } 
   // Then check explicit isWin property
   else if (typeof activity.isWin === 'boolean') {
@@ -58,15 +58,17 @@ export function ScoreDisplay({ activity, homeScore, awayScore }: ScoreDisplayPro
   // Fallback to calculating based on scores
   else {
     outcomeText = getOutcomeText(homeScore, awayScore, isHome);
-    outcomeColorClass = getOutcomeColorClass(homeScore, awayScore, isHome);
     
     // Determine score text color based on outcome
     if (outcomeText === "Vinst") {
       scoreTextColorClass = "text-green-600";
+      outcomeColorClass = "bg-green-100 text-green-800";
     } else if (outcomeText === "Förlust") {
       scoreTextColorClass = "text-red-600";
+      outcomeColorClass = "bg-red-100 text-red-800";
     } else {
-      scoreTextColorClass = "text-gray-600";
+      scoreTextColorClass = "text-black";
+      outcomeColorClass = "bg-gray-100 text-gray-800";
     }
   }
 
