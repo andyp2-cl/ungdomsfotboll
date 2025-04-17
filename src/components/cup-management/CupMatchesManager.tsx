@@ -36,8 +36,7 @@ export function CupMatchesManager({
     const newMatch: CupMatch = {
       id: uuidv4(),
       name: "",
-      time: "", // Add the required time property
-      // Don't set location, etc. as they'll inherit from cup
+      // Don't set time, location, etc. as they'll inherit from cup
     };
     
     setNewMatches([...newMatches, newMatch]);
