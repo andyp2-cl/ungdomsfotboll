@@ -22,3 +22,41 @@ export const formatActivityForDatabase = (activity: Activity): any => {
   
   return formattedActivity;
 };
+
+/**
+ * Format Activity object from database to application format
+ * - Converts flat database structure to nested object structure
+ */
+export const formatActivityFromDatabase = (item: any): Activity => {
+  const activity: Activity = {
+    id: item.id,
+    name: item.name,
+    date: item.date,
+    type: item.type as "match" | "cup",
+    time: item.time || undefined,
+    location: item.location_name ? {
+      name: item.location_name,
+      description: item.location_description || undefined,
+      gpsLink: item.location_gps_link || undefined
+    } : undefined,
+    kioskAssignedPlayerId: item.kiosk_assigned_player_id || undefined,
+    scraped: item.scraped || false,
+    participants: [],
+    cupId: item.cup_id || undefined,
+    cupName: item.cup_name || undefined,
+    matches: [], // Initialize empty matches array for cups
+    homeScore: item.home_score,
+    awayScore: item.away_score,
+    // Properly handle is_win with strict type checking
+    isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
+    player_stats: item.player_stats || { goals: {}, assists: {} }
+  };
+  
+  // Set result field if home_score and away_score are available
+  if (item.home_score !== null && item.home_score !== undefined && 
+      item.away_score !== null && item.away_score !== undefined) {
+    activity.result = `${item.home_score}-${item.away_score}`;
+  }
+  
+  return activity;
+};

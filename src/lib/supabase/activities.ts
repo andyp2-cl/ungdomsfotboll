@@ -1,3 +1,4 @@
+
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 
@@ -33,7 +34,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
         scraped: item.scraped || false,
         participants: [],
         cupId: item.cup_id || undefined,
-        cupName: item.cup_name || undefined, // Add cupName field
+        cupName: item.cup_name || undefined,
         matches: [], // Initialize empty matches array for cups
         result: undefined, // Initialize with undefined
         homeScore: item.home_score,

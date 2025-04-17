@@ -1,7 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { Activity } from "@/types/player";
-import { formatActivityFromDatabase } from "@/utils/database/formatters";
+import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
 
 // Get activities from Supabase
 export const getStoredActivities = async (): Promise<Activity[]> => {
@@ -13,7 +13,14 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
     if (activitiesError) throw activitiesError;
     
-    const activities = activitiesData.map(formatActivityFromDatabase);
+    // Ensure we have data before proceeding
+    if (!activitiesData) {
+      console.log("No activities data found in database");
+      return [];
+    }
+    
+    // Format all activities properly with correct typing
+    const activities: Activity[] = activitiesData.map(formatActivityFromDatabase);
     
     console.log(`Fetched ${activities.length} activities from database`);
     
@@ -31,7 +38,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // Populate participants for each activity
     activities.forEach(activity => {
-      const activityPlayerRelations = playerActivitiesData.filter(pa => pa.activity_id === activity.id);
+      const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
       activity.participants = activityPlayerRelations.map(relation => relation.player_id);
     });
     
@@ -53,7 +60,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     // Second pass: Process cup-match relationships
     cupActivities.forEach(cupActivity => {
       // Strategy 1: Look for matches explicitly defined in the cup's matches array
-      let cupMatches = [];
+      let cupMatches: Activity[] = [];
       if (cupActivity.matches && cupActivity.matches.length > 0) {
         const explicitMatches = activities.filter(a => 
           cupActivity.matches?.includes(a.id)
@@ -98,13 +105,24 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       console.log(`Cup ${cupActivity.name} (${cupActivity.id}) has ${uniqueMatchIds.length} total matches after linking`);
     });
     
-    // Strategy 3: Also ensure all matches with cupId properly reference their parent cup
-    const matchesWithCupId = activities.filter(a => a.cupId && a.type === 'match');
-    console.log(`Found ${matchesWithCupId.length} matches with cupId references`);
+    // Strategy 3: Also ensure all matches with cupName properly reference their parent cup
+    const matchesWithCupName = activities.filter(a => a.cupName && a.type === 'match');
+    console.log(`Found ${matchesWithCupName.length} matches with cupName references`);
     
-    matchesWithCupId.forEach(matchActivity => {
-      const parentCup = activities.find(a => a.id === matchActivity.cupId);
-      if (parentCup && parentCup.type === 'cup') {
+    matchesWithCupName.forEach(matchActivity => {
+      // Find cup activities with the same name
+      const relatedCups = activities.filter(a => 
+        a.type === 'cup' && a.name === matchActivity.cupName
+      );
+      
+      if (relatedCups.length > 0) {
+        // Link to the first cup with matching name
+        const parentCup = relatedCups[0];
+        if (!matchActivity.cupId) {
+          matchActivity.cupId = parentCup.id;
+          console.log(`Linked match ${matchActivity.name} to cup ${parentCup.name} via cupName`);
+        }
+        
         // Make sure this match is in the parent cup's matches array
         if (!parentCup.matches) {
           parentCup.matches = [];
@@ -121,7 +139,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     cupActivities.forEach(cup => {
       console.log(`Cup ${cup.name} (${cup.id}) final matches array:`, cup.matches);
       const actualMatchActivities = cup.matches
-        ? activities.filter(a => cup.matches.includes(a.id))
+        ? activities.filter(a => cup.matches?.includes(a.id))
         : [];
       console.log(`Found ${actualMatchActivities.length} actual match activities for cup ${cup.name}`);
     });

@@ -15,11 +15,11 @@ export async function handleActivitySubmit(
   try {
     // Construct location object if name is provided
     let location: Location | undefined;
-    if (values.locationName) {
+    if (values.location?.name) {
       location = {
-        name: values.locationName,
-        description: values.locationDescription || undefined,
-        gpsLink: values.locationGps || undefined,
+        name: values.location.name,
+        description: values.location.description || undefined,
+        gpsLink: values.location.gpsLink || undefined,
       };
     }
 
@@ -38,7 +38,7 @@ export async function handleActivitySubmit(
     // Create result string if both scores exist
     const result = (homeScore !== undefined && awayScore !== undefined)
       ? `${homeScore}-${awayScore}`
-      : values.result || undefined;
+      : undefined;
     
     // Get the win status from the form
     let isWin = values.isWin;
@@ -85,6 +85,7 @@ export async function handleActivitySubmit(
       homeScore,
       awayScore,
       isWin,
+      cupName: values.cupName && values.cupName !== "no-cup" ? values.cupName : undefined,
       player_stats: updatedPlayerStats
     };
 
