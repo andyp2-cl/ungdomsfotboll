@@ -80,7 +80,7 @@ export function AddActivityForm({
         gpsLink: locationGpsLink
       },
       time: time,
-      cupName: type === "match" ? cupName : undefined,
+      cupName: type === "match" && cupName !== "no-cup" ? cupName : undefined,
       participants: [],
       player_stats: {}
     };
@@ -125,7 +125,7 @@ export function AddActivityForm({
               <SelectValue placeholder="Välj cup eller lämna tom" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Ingen cup</SelectItem>
+              <SelectItem value="no-cup">Ingen cup</SelectItem>
               {cupNames.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}

@@ -53,7 +53,10 @@ export function useActivityForm(
           : undefined,
         homeScore: values.homeScore,
         awayScore: values.awayScore,
-        cupName: values.cupName,
+        // Only set cupName if it's not "no-cup" and we're dealing with a match
+        cupName: values.type === "match" && values.cupName && values.cupName !== "no-cup" 
+          ? values.cupName 
+          : undefined,
         isWin: values.isWin
       };
 

@@ -47,10 +47,13 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
-      // Ensure cup_name is properly set if cupName exists (new field)
-      if (normalizedActivity.cupName) {
+      // Ensure cup_name is properly set if cupName exists
+      if (normalizedActivity.cupName && normalizedActivity.cupName !== "no-cup") {
         formattedActivity.cup_name = normalizedActivity.cupName;
         console.log(`Setting cup_name to ${normalizedActivity.cupName} for ${normalizedActivity.name}`);
+      } else {
+        // Ensure cup_name is null if no valid cupName exists
+        formattedActivity.cup_name = null;
       }
       
       // Upsert the activity
@@ -82,7 +85,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       await updateActivityParticipants(normalizedActivity);
       
       // For cup activities, we'll use the new cupName approach instead of the complex relationship
-      if (activity.type === 'match' && activity.cupName) {
+      if (activity.type === 'match' && activity.cupName && activity.cupName !== "no-cup") {
         console.log(`Match ${activity.name} is part of cup: ${activity.cupName}`);
       }
     }

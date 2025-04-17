@@ -85,14 +85,14 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cup (valfritt)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
+              <Select onValueChange={field.onChange} value={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Välj cup eller lämna tom" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Ingen cup</SelectItem>
+                  <SelectItem value="no-cup">Ingen cup</SelectItem>
                   {cupNames.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}

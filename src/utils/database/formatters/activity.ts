@@ -1,71 +1,24 @@
 
 import { Activity } from "@/types/player";
-import { normalizePlayerStats, formatPlayerStatsFromDatabase } from './player-stats';
 
 /**
- * Formats an activity object from our application format to the database format
+ * Format Activity object for database storage
+ * - Converts nested objects into flat structure
  */
-export const formatActivityForDatabase = (activity: Activity) => {
-  // Extract player_stats to ensure correct format
-  const playerStatsJson = normalizePlayerStats(activity.player_stats);
+export const formatActivityForDatabase = (activity: Activity): any => {
+  const { location, player_stats, ...rest } = activity;
   
-  // Create the formatted object
-  return {
-    id: activity.id,
-    name: activity.name,
-    date: activity.date,
-    type: activity.type,
-    time: activity.time,
-    location_name: activity.location?.name,
-    location_description: activity.location?.description,
-    location_gps_link: activity.location?.gpsLink,
-    kiosk_assigned_player_id: activity.kioskAssignedPlayerId,
-    scraped: activity.scraped,
-    cup_id: activity.cupId, // Keep for backward compatibility
-    cup_name: activity.cupName, // New field for cup name-based matching
-    result: activity.result,
-    home_score: activity.homeScore,
-    away_score: activity.awayScore,
-    is_win: activity.isWin,
-    player_stats: playerStatsJson,
+  const formattedActivity = {
+    ...rest,
+    location_name: location?.name || null,
+    location_description: location?.description || null,
+    location_gps_link: location?.gpsLink || null,
+    player_stats: player_stats || {},
+    // Handle special fields
+    cup_name: activity.cupName && activity.cupName !== "no-cup" ? activity.cupName : null,
   };
-};
 
-/**
- * Formats an activity object from database format to our application format
- */
-export const formatActivityFromDatabase = (item: any): Activity => {
-  // Create the base activity
-  const activity: Activity = {
-    id: item.id,
-    name: item.name,
-    date: item.date,
-    type: item.type,
-    time: item.time || undefined,
-    location: item.location_name ? {
-      name: item.location_name,
-      description: item.location_description || undefined,
-      gpsLink: item.location_gps_link || undefined
-    } : undefined,
-    kioskAssignedPlayerId: item.kiosk_assigned_player_id || undefined,
-    scraped: item.scraped || false,
-    participants: [],
-    cupId: item.cup_id || undefined,
-    cupName: item.cup_name || undefined, // Add cupName field
-    matches: [],
-    homeScore: item.home_score,
-    awayScore: item.away_score,
-    isWin: item.is_win === true ? true : item.is_win === false ? false : undefined
-  };
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name})`);
   
-  // Set result field if home_score and away_score are available
-  if (item.home_score !== null && item.home_score !== undefined && 
-      item.away_score !== null && item.away_score !== undefined) {
-    activity.result = `${item.home_score}-${item.away_score}`;
-  }
-  
-  // Handle player_stats using the utility function
-  activity.player_stats = formatPlayerStatsFromDatabase(item);
-  
-  return activity;
+  return formattedActivity;
 };
