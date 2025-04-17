@@ -7,6 +7,17 @@ import { PlayerAvatar } from "./player-selection/PlayerAvatar";
 import { toast } from "@/hooks/use-toast";
 import { PlayerMultiSelectDropdown } from "./player-selection/PlayerMultiSelectDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
+import { getStoredActivities } from "@/utils/storage/activity/fetch";
+import { findMatchesByCupName } from "@/lib/supabase/activities";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -22,7 +33,17 @@ export function AddPlayersToActivity({
   currentParticipantIds 
 }: AddPlayersToActivityProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [selectedCup, setSelectedCup] = useState<string>("");
   const isMobile = useIsMobile();
+  
+  // Fetch all activities to get cups
+  const { data: activities, isLoading } = useQuery({
+    queryKey: ["activities"],
+    queryFn: getStoredActivities,
+  });
+  
+  // Get all cups from activities
+  const cups = activities?.filter(act => act.type === "cup") || [];
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -43,16 +64,52 @@ export function AddPlayersToActivity({
     );
   };
   
+  // Handle cup selection
+  const handleCupSelect = (cupId: string) => {
+    setSelectedCup(cupId);
+    
+    if (cupId === "no-cup") {
+      return;
+    }
+    
+    // Find selected cup
+    const selectedCupActivity = cups.find(cup => cup.id === cupId);
+    
+    if (selectedCupActivity && selectedCupActivity.participants && selectedCupActivity.participants.length > 0) {
+      // Filter out participants that are already in the match
+      const newParticipants = selectedCupActivity.participants.filter(
+        participantId => !currentParticipantIds.includes(participantId)
+      );
+      
+      if (newParticipants.length > 0) {
+        // Add all cup participants to the match
+        onAddPlayers(newParticipants);
+        toast({
+          title: "Deltagare tillagda",
+          description: `${newParticipants.length} deltagare från ${selectedCupActivity.name} har lagts till.`,
+        });
+      } else {
+        toast({
+          title: "Inga nya deltagare",
+          description: "Alla deltagare från denna cup är redan tillagda i matchen.",
+        });
+      }
+    } else {
+      toast({
+        title: "Inga deltagare",
+        description: "Den valda cupen har inga deltagare.",
+      });
+    }
+  };
+  
   const handleAddPlayers = () => {
     if (selectedPlayerIds.length === 0) return;
     
-    // No player limit check anymore
     onAddPlayers(selectedPlayerIds);
     setSelectedPlayerIds([]);
   };
   
   const handleQuickSelect = (playerId: string) => {
-    // No player limit check anymore
     onAddPlayers([playerId]);
   };
   
@@ -67,6 +124,29 @@ export function AddPlayersToActivity({
 
   return (
     <div className="mt-4 space-y-4">
+      {/* Cup selection */}
+      {activity.type === "match" && cups.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="cup-select">Välj cup för att lägga till alla deltagare</Label>
+          <Select 
+            onValueChange={handleCupSelect} 
+            value={selectedCup}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Välj en cup" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="no-cup">Ingen cup</SelectItem>
+              {cups.map((cup) => (
+                <SelectItem key={cup.id} value={cup.id}>
+                  {cup.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium">Välj flera spelare</label>
