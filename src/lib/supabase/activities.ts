@@ -1,6 +1,6 @@
-
 import { supabase } from './client';
 import { Activity } from '@/types/player';
+import { formatActivityFromDatabase } from '@/utils/database/formatters/activity';
 
 // Function to fetch activities from Supabase
 export const fetchActivities = async (): Promise<Activity[]> => {
@@ -16,80 +16,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     
     // Transform the database format to our application format
     const activities: Activity[] = (data || []).map(item => {
-      // Log the raw is_win value to debug
-      console.log(`Activity ${item.id} (${item.name}) has is_win:`, item.is_win);
-      
-      const activity: Activity = {
-        id: item.id,
-        name: item.name,
-        date: item.date,
-        type: item.type as any,
-        time: item.time || undefined,
-        location: item.location_name ? {
-          name: item.location_name,
-          description: item.location_description || undefined,
-          gpsLink: item.location_gps_link || undefined
-        } : undefined,
-        kioskAssignedPlayerId: item.kiosk_assigned_player_id || undefined,
-        scraped: item.scraped || false,
-        participants: [],
-        cupId: item.cup_id || undefined,
-        cupName: item.cup_name || undefined,
-        matches: [], // Initialize empty matches array for cups
-        result: undefined, // Initialize with undefined
-        homeScore: item.home_score,
-        awayScore: item.away_score,
-        // Properly handle is_win with strict type checking
-        isWin: item.is_win === true ? true : item.is_win === false ? false : undefined
-      };
-      
-      // Set result field if home_score and away_score are available
-      if (item.home_score !== null && item.home_score !== undefined && 
-          item.away_score !== null && item.away_score !== undefined) {
-        activity.result = `${item.home_score}-${item.away_score}`;
-      }
-      
-      // Handle player_stats properly
-      if (item.player_stats) {
-        try {
-          const stats = typeof item.player_stats === 'string' 
-            ? JSON.parse(item.player_stats) 
-            : item.player_stats;
-            
-          activity.player_stats = {
-            goals: stats.goals || {},
-            assists: stats.assists || {},
-            scores: {
-              home: item.home_score,
-              away: item.away_score
-            },
-            isWin: activity.isWin // Use the activity-level isWin value
-          };
-        } catch (e) {
-          console.error("Error parsing player_stats JSON:", e);
-          activity.player_stats = {
-            goals: {},
-            assists: {},
-            scores: {
-              home: item.home_score,
-              away: item.away_score
-            },
-            isWin: activity.isWin
-          };
-        }
-      } else {
-        activity.player_stats = {
-          goals: {},
-          assists: {},
-          scores: {
-            home: item.home_score,
-            away: item.away_score
-          },
-          isWin: activity.isWin
-        };
-      }
-      
-      return activity;
+      return formatActivityFromDatabase(item);
     });
     
     // Fetch participant relationships
