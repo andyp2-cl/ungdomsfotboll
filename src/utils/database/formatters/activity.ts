@@ -49,13 +49,53 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     awayScore: item.away_score,
     // Properly handle is_win with strict type checking
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
-    player_stats: item.player_stats || { goals: {}, assists: {} }
+    player_stats: { goals: {}, assists: {} }
   };
   
   // Set result field if home_score and away_score are available
   if (item.home_score !== null && item.home_score !== undefined && 
       item.away_score !== null && item.away_score !== undefined) {
     activity.result = `${item.home_score}-${item.away_score}`;
+  }
+  
+  // Handle player_stats properly
+  if (item.player_stats) {
+    try {
+      const stats = typeof item.player_stats === 'string' 
+        ? JSON.parse(item.player_stats) 
+        : item.player_stats;
+        
+      activity.player_stats = {
+        goals: stats.goals || {},
+        assists: stats.assists || {},
+        scores: {
+          home: item.home_score,
+          away: item.away_score
+        },
+        isWin: activity.isWin // Use the activity-level isWin value
+      };
+    } catch (e) {
+      console.error("Error parsing player_stats JSON:", e);
+      activity.player_stats = {
+        goals: {},
+        assists: {},
+        scores: {
+          home: item.home_score,
+          away: item.away_score
+        },
+        isWin: activity.isWin
+      };
+    }
+  } else {
+    activity.player_stats = {
+      goals: {},
+      assists: {},
+      scores: {
+        home: item.home_score,
+        away: item.away_score
+      },
+      isWin: activity.isWin
+    };
   }
   
   return activity;

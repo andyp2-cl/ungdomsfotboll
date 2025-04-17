@@ -33,21 +33,21 @@ export function AddActivityForm({
   const [locationDescription, setLocationDescription] = useState("");
   const [locationGpsLink, setLocationGpsLink] = useState("");
   const [time, setTime] = useState("");
-  const [cupName, setCupName] = useState("");
+  const [cupName, setCupName] = useState("no-cup");
   const [cupNames, setCupNames] = useState<string[]>([]);
   
   // Fetch activities to get existing cup names
-  const { data: activities } = useQuery({
+  const { data: activities, isLoading } = useQuery({
     queryKey: ["activities"],
     queryFn: getStoredActivities,
-    enabled: type === 'match', // Only fetch when needed
   });
   
   // Extract cup names when activities are loaded
   useEffect(() => {
-    if (activities) {
+    if (activities && activities.length > 0) {
       const names = getAllCupNames(activities);
       setCupNames(names);
+      console.log("Cup names loaded in AddActivityForm:", names);
     }
   }, [activities]);
 
@@ -120,9 +120,13 @@ export function AddActivityForm({
       {type === "match" && (
         <div>
           <Label htmlFor="cupName">Cup (valfritt)</Label>
-          <Select onValueChange={setCupName} value={cupName}>
+          <Select 
+            onValueChange={setCupName} 
+            value={cupName}
+            disabled={isLoading || cupNames.length === 0}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Välj cup eller lämna tom" />
+              <SelectValue placeholder={isLoading ? "Laddar cuper..." : "Välj cup eller lämna tom"} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="no-cup">Ingen cup</SelectItem>
@@ -133,6 +137,11 @@ export function AddActivityForm({
               ))}
             </SelectContent>
           </Select>
+          {cupNames.length === 0 && !isLoading && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Inga cuper hittades. Skapa en cup först.
+            </p>
+          )}
         </div>
       )}
       

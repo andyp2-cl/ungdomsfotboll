@@ -24,18 +24,18 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
   const [cupNames, setCupNames] = useState<string[]>([]);
   const activityType = form.watch("type");
   
-  // Only fetch cup names if we're working with activities
-  const { data: activities } = useQuery({
+  // Fetch activities to get cup names
+  const { data: activities, isLoading } = useQuery({
     queryKey: ["activities"],
     queryFn: getStoredActivities,
-    enabled: activityType === 'match', // Only fetch when needed
   });
   
   // Extract cup names when activities are loaded
   useEffect(() => {
-    if (activities) {
+    if (activities && activities.length > 0) {
       const names = getAllCupNames(activities);
       setCupNames(names);
+      console.log("Cup names in dropdown:", names);
     }
   }, [activities]);
 
@@ -85,10 +85,14 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cup (valfritt)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || undefined}>
+              <Select 
+                onValueChange={field.onChange} 
+                value={field.value || "no-cup"}
+                disabled={isLoading || cupNames.length === 0}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Välj cup eller lämna tom" />
+                    <SelectValue placeholder={isLoading ? "Laddar..." : "Välj cup eller lämna tom"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -100,6 +104,11 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {cupNames.length === 0 && !isLoading && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Inga cuper hittades. Skapa en cup först.
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}

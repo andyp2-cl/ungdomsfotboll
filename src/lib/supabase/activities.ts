@@ -56,26 +56,33 @@ export const fetchActivities = async (): Promise<Activity[]> => {
   }
 };
 
-// NEW FUNCTION: Find related cup matches
+// Get all cup names from activities - consider both cup types and match types with cupName
+export const getAllCupNames = (activities: Activity[]): string[] => {
+  const cupNames = new Set<string>();
+  
+  activities.forEach(activity => {
+    // Include names from cup type activities
+    if (activity.type === 'cup' && activity.name) {
+      cupNames.add(activity.name);
+    }
+    
+    // Also include names from match type activities that reference a cup
+    if (activity.cupName) {
+      cupNames.add(activity.cupName);
+    }
+  });
+  
+  console.log("Found cup names:", Array.from(cupNames));
+  return Array.from(cupNames);
+};
+
+// Find matches by cup name
 export const findMatchesByCupName = (activities: Activity[], cupName: string): Activity[] => {
   if (!cupName) return [];
   
   return activities.filter(activity => 
     activity.type === 'match' && activity.cupName === cupName
   );
-};
-
-// NEW FUNCTION: Find all cup names
-export const getAllCupNames = (activities: Activity[]): string[] => {
-  const cupNames = new Set<string>();
-  
-  activities.forEach(activity => {
-    if (activity.cupName) {
-      cupNames.add(activity.cupName);
-    }
-  });
-  
-  return Array.from(cupNames);
 };
 
 // Existing function
