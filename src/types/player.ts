@@ -34,6 +34,7 @@ export interface Activity {
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
+  cupName?: string; // Add cupName field
   matches?: string[]; // Activity IDs for cup matches
   player_stats?: PlayerStats;
   result?: string; // Match result, e.g. "2-1"

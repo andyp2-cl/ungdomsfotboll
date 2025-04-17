@@ -80,9 +80,9 @@ export function AddActivityForm({
         gpsLink: locationGpsLink
       },
       time: time,
-      cupName: type === "match" ? cupName : undefined, // Only set cupName for matches
-      participants: [], // Required participants property
-      player_stats: {} // Initialize empty player stats
+      cupName: type === "match" ? cupName : undefined,
+      participants: [],
+      player_stats: {}
     };
 
     onSave(newActivity);

@@ -3,7 +3,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues, LocationFieldValues } from "./formSchema";
+import { ActivityFormValues } from "./formSchema";
 import { useEffect } from "react";
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
 
@@ -15,9 +15,9 @@ export function LocationFields({ form }: LocationFieldsProps) {
   // Auto-generate GPS link when location name changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'locationName' && value.locationName && !value.locationGps) {
-        const gpsLink = generateFootballFieldUrl(value.locationName);
-        form.setValue('locationGps', gpsLink);
+      if (name === 'location.name' && value.location?.name && !value.location?.gpsLink) {
+        const gpsLink = generateFootballFieldUrl(value.location.name);
+        form.setValue('location.gpsLink', gpsLink);
       }
     });
     
@@ -33,7 +33,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
       
       <FormField
         control={form.control}
-        name="locationName"
+        name="location.name"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Platsnamn</FormLabel>
@@ -48,7 +48,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <FormField
           control={form.control}
-          name="locationDescription"
+          name="location.description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Beskrivning</FormLabel>
@@ -62,7 +62,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
 
         <FormField
           control={form.control}
-          name="locationGps"
+          name="location.gpsLink"
           render={({ field }) => (
             <FormItem>
               <FormLabel>GPS-länk</FormLabel>

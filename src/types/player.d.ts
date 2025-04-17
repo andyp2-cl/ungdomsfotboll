@@ -52,6 +52,7 @@ export interface Activity {
   scraped?: boolean;
   participants: string[];
   cupId?: string;
+  cupName?: string; // Add proper type definition for cupName
   matches?: string[];
   result?: string;
   homeScore?: number;

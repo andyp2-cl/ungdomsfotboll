@@ -27,7 +27,8 @@ export function useActivityForm(
       },
       homeScore: initialActivity?.homeScore,
       awayScore: initialActivity?.awayScore,
-      cupName: initialActivity?.cupName || "", // Set cup name if exists
+      cupName: initialActivity?.cupName || "",
+      isWin: initialActivity?.isWin,
     },
   });
 
@@ -52,13 +53,13 @@ export function useActivityForm(
           : undefined,
         homeScore: values.homeScore,
         awayScore: values.awayScore,
-        cupName: values.cupName, // Save cup name for matches
+        cupName: values.cupName,
+        isWin: values.isWin
       };
 
       // Update result string
       if (values.homeScore !== undefined && values.awayScore !== undefined) {
         updatedActivity.result = `${values.homeScore}-${values.awayScore}`;
-        updatedActivity.isWin = values.homeScore > values.awayScore;
       }
 
       // Call save handler

@@ -13,7 +13,15 @@ export const activityFormSchema = z.object({
   }).optional(),
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
-  cupName: z.string().optional(), // New field for cup relationship
+  cupName: z.string().optional(),
+  isWin: z.boolean().optional(), // Add isWin field to the schema
 });
 
 export type ActivityFormValues = z.infer<typeof activityFormSchema>;
+
+// Export nested location structure to avoid type errors
+export type LocationValues = {
+  name?: string;
+  description?: string;
+  gpsLink?: string;
+};

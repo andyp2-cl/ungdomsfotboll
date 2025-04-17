@@ -35,12 +35,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
 
   // Handle win status when scores change
   useEffect(() => {
-    if (homeScore && awayScore && homeScore === awayScore) {
+    if (homeScore !== undefined && awayScore !== undefined && homeScore === awayScore) {
       form.setValue("isWin", undefined);
     }
   }, [homeScore, awayScore, form]);
 
-  // Fixed: Improved radio button change handler
+  // Improved radio button change handler
   const handleWinStatusChange = (value: string) => {
     console.log("Form radio changed to:", value);
     
@@ -59,7 +59,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
         const currentHomeScore = form.getValues("homeScore");
         const currentAwayScore = form.getValues("awayScore");
         
-        if (currentHomeScore && currentAwayScore && 
+        if (currentHomeScore !== undefined && currentAwayScore !== undefined && 
             currentHomeScore !== currentAwayScore) {
           // If scores don't match, suggest equalizing them
           if (window.confirm("Vill du göra målen lika för oavgjort?")) {
@@ -97,9 +97,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   type="number"
                   min="0"
                   placeholder="Hemmamål"
-                  {...field}
+                  value={field.value === undefined ? '' : field.value}
                   onChange={(e) => {
-                    field.onChange(e.target.value === "" ? undefined : e.target.value);
+                    const value = e.target.value === "" ? 
+                      undefined : 
+                      parseInt(e.target.value, 10);
+                    field.onChange(value);
                   }}
                 />
               </FormControl>
@@ -118,9 +121,12 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
                   type="number"
                   min="0"
                   placeholder="Bortamål"
-                  {...field}
+                  value={field.value === undefined ? '' : field.value}
                   onChange={(e) => {
-                    field.onChange(e.target.value === "" ? undefined : e.target.value);
+                    const value = e.target.value === "" ? 
+                      undefined : 
+                      parseInt(e.target.value, 10);
+                    field.onChange(value);
                   }}
                 />
               </FormControl>
