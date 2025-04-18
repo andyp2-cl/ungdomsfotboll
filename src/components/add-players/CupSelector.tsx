@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Activity } from "@/types/player";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { 
   Select,
@@ -44,6 +44,7 @@ export function CupSelector({
   }, [cups]);
   
   const handleCupSelect = (cupId: string) => {
+    console.log(`Cup selected: ${cupId}`);
     onCupSelect(cupId);
     
     if (cupId === "no-cup") {
@@ -54,11 +55,7 @@ export function CupSelector({
     
     if (!selectedCupActivity) {
       console.error(`Failed to find cup with ID: ${cupId}`);
-      toast({
-        title: "Fel",
-        description: "Kunde inte hitta den valda cupen.",
-        variant: "destructive",
-      });
+      toast.error("Kunde inte hitta den valda cupen.");
       return;
     }
     
@@ -73,22 +70,13 @@ export function CupSelector({
       
       if (newParticipants.length > 0) {
         onAddPlayers(newParticipants);
-        toast({
-          title: "Deltagare tillagda",
-          description: `${newParticipants.length} deltagare från ${selectedCupActivity.name} har lagts till.`,
-        });
+        toast.success(`${newParticipants.length} deltagare från ${selectedCupActivity.name} har lagts till.`);
       } else {
-        toast({
-          title: "Inga nya deltagare",
-          description: "Alla deltagare från denna cup är redan tillagda i matchen.",
-        });
+        toast.info("Alla deltagare från denna cup är redan tillagda i matchen.");
       }
     } else {
       console.log(`Cup ${selectedCupActivity.name} has no participants`);
-      toast({
-        title: "Inga deltagare",
-        description: "Den valda cupen har inga deltagare.",
-      });
+      toast.warning("Den valda cupen har inga deltagare.");
     }
   };
 

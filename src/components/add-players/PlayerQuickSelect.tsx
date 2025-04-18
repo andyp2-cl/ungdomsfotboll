@@ -17,12 +17,17 @@ export function PlayerQuickSelect({ availablePlayers, onQuickSelect }: PlayerQui
 
   // Calculate how many players to show based on screen size
   const playersToShow = isMobile ? 4 : 8;
+  
+  // Sort by name for easier selection
+  const sortedPlayers = [...availablePlayers]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, playersToShow);
 
   return (
     <div className="mt-4">
       <h4 className="text-sm font-medium mb-2">Snabbval:</h4>
       <div className="flex flex-wrap gap-2">
-        {availablePlayers.slice(0, playersToShow).map(player => (
+        {sortedPlayers.map(player => (
           <Button 
             key={player.id}
             variant="outline" 

@@ -21,15 +21,15 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     player_stats: player_stats || {},
     cup_name: activity.cupName || null,
     cup_id: activity.cupId || null,
-    home_score: activity.homeScore,
-    away_score: activity.awayScore,
-    is_win: activity.isWin,
+    home_score: activity.homeScore !== undefined ? activity.homeScore : null,
+    away_score: activity.awayScore !== undefined ? activity.awayScore : null,
+    is_win: activity.isWin !== undefined ? activity.isWin : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false
   };
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name})`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {

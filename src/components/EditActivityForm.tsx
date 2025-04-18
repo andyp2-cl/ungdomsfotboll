@@ -6,6 +6,7 @@ import { BasicInfoFields } from "./activity-form/BasicInfoFields";
 import { LocationFields } from "./activity-form/LocationFields";
 import { ResultFields } from "./activity-form/ResultFields";
 import { FormButtons } from "./activity-form/FormButtons";
+import { toast } from "sonner";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -14,7 +15,7 @@ interface EditActivityFormProps {
 }
 
 export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFormProps) {
-  console.log("EditActivityForm render with activity:", activity.id);
+  console.log("EditActivityForm render with activity:", activity.id, "date:", activity.date);
   
   // Create a clean copy of the activity with normalized player_stats
   const normalizedActivity = {
@@ -22,7 +23,17 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
     player_stats: normalizePlayerStats(activity.player_stats)
   };
   
-  const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, onSave);
+  const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, async (updatedActivity) => {
+    try {
+      console.log("Submitting activity update with date:", updatedActivity.date);
+      await onSave(updatedActivity);
+      toast.success("Aktivitet uppdaterad");
+    } catch (error) {
+      console.error("Failed to save activity:", error);
+      toast.error("Kunde inte spara aktiviteten");
+      throw error;
+    }
+  });
 
   return (
     <Form {...form}>

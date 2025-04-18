@@ -2,6 +2,7 @@
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { normalizePlayerStats } from "../utils/playerStatsUtils";
+import { toast } from "sonner";
 
 /**
  * Handles updating an existing activity
@@ -56,8 +57,13 @@ export const handleActivityUpdate = async (
     
     // Save to storage in the background
     try {
+      console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
       await saveActivities([normalizedActivity]);
       console.log("Activity saved successfully to database");
+      
+      if (process.env.NODE_ENV === 'development') {
+        toast.success(`Aktivitet sparad till databasen: ${normalizedActivity.id}`);
+      }
     } catch (saveError) {
       console.error("Error saving activity to database:", saveError);
       toast({

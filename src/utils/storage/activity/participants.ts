@@ -8,7 +8,7 @@ import { Activity } from "@/types/player";
 export const updateActivityParticipants = async (activity: Activity): Promise<void> => {
   if (!activity.id) {
     console.error("Cannot update participants: Activity ID is missing");
-    return;
+    throw new Error("Activity ID is missing");
   }
   
   try {
@@ -76,6 +76,8 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
         activity_id: activity.id,
         player_id: playerId
       }));
+      
+      console.log(`Adding ${playersToAdd.length} participants to activity ${activity.id}:`, newRelationships);
       
       const { error: insertError } = await supabase
         .from('player_activities')
