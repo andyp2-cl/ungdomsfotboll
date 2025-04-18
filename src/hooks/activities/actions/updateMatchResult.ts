@@ -1,105 +1,119 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 /**
- * Updates match result (score) for an existing activity
+ * Updates match result for an activity
  */
 export const handleMatchResultUpdate = async (
   activities: Activity[],
   setActivities: (activities: Activity[]) => void,
   toast: any,
-  activityId: string,
-  homeScore?: number,
+  activityId: string, 
+  homeScore?: number, 
   awayScore?: number
 ): Promise<void> => {
   try {
-    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
+    console.log("handleMatchResultUpdate called:", { activityId, homeScore, awayScore });
     
-    // Find the existing activity
-    const activity = activities.find(a => a.id === activityId);
+    // Find the activity
+    const activity = activities.find((a) => a.id === activityId);
     
     if (!activity) {
-      console.error(`Activity not found: ${activityId}`);
-      toast({
-        title: "Kunde inte uppdatera matchresultat",
-        description: "Matchen hittades inte.",
-        variant: "destructive"
-      });
-      return;
+      console.error("Activity not found:", activityId);
+      throw new Error("Activity not found");
     }
     
-    // Create the updated activity object
-    const updatedActivity = { 
-      ...activity,
-      homeScore, 
-      awayScore
-    };
+    // Determine if this is a home match
+    const isHome = isHomeMatch(activity);
     
-    // Add result string if both scores are defined
+    // Calculate win status based on scores
+    let isWin: boolean | undefined = undefined;
     if (homeScore !== undefined && awayScore !== undefined) {
-      updatedActivity.result = `${homeScore}-${awayScore}`;
-      
-      // Set isWin based on scores
-      updatedActivity.isWin = homeScore > awayScore;
-    } else {
-      // Clear result if scores aren't defined
-      updatedActivity.result = undefined;
-      updatedActivity.isWin = undefined;
+      isWin = calculateWinStatus(homeScore, awayScore, isHome);
     }
     
-    // Update the player stats scores
-    if (!updatedActivity.player_stats) {
-      updatedActivity.player_stats = { goals: {}, assists: {} };
-    }
-    
-    updatedActivity.player_stats = {
-      ...updatedActivity.player_stats,
-      scores: {
-        home: homeScore,
-        away: awayScore
-      },
-      isWin: updatedActivity.isWin
+    // Create the result string
+    const resultString = homeScore !== undefined && awayScore !== undefined
+      ? `${homeScore}-${awayScore}`
+      : undefined;
+
+    // Create updated activity with new scores
+    const updatedActivity: Activity = {
+      ...activity,
+      homeScore,
+      awayScore,
+      result: resultString,
+      isWin,
+      player_stats: {
+        ...(activity.player_stats || { goals: {}, assists: {} }),
+        scores: {
+          home: homeScore || 0,
+          away: awayScore || 0
+        },
+        isWin
+      }
     };
+    
+    console.log("Updated activity with results:", {
+      id: updatedActivity.id,
+      name: updatedActivity.name,
+      homeScore,
+      awayScore,
+      isWin,
+      result: resultString,
+      cupId: updatedActivity.cupId
+    });
     
     // Update activities array
     const updatedActivities = activities.map(a => 
       a.id === activityId ? updatedActivity : a
     );
     
-    // Update state
+    // If this is a cup match (has cupId), also update the cup's matches array
+    if (updatedActivity.cupId) {
+      const parentCup = activities.find(a => a.id === updatedActivity.cupId);
+      if (parentCup && parentCup.type === 'cup') {
+        console.log(`This is a cup match. Parent cup: ${parentCup.name}`);
+        
+        // Ensure cup has a matches array
+        const updatedCup = { ...parentCup };
+        if (!updatedCup.matches) {
+          updatedCup.matches = [];
+        }
+        
+        // Add match to cup if not already there
+        if (!updatedCup.matches.includes(updatedActivity.id)) {
+          console.log(`Adding match ${updatedActivity.id} to cup ${updatedCup.id}`);
+          updatedCup.matches.push(updatedActivity.id);
+          
+          // Update activities array with updated cup
+          updatedActivities[updatedActivities.findIndex(a => a.id === updatedCup.id)] = updatedCup;
+          console.log(`Updated cup ${updatedCup.id} with match ID ${updatedActivity.id}`);
+        }
+      }
+    }
+    
+    // Update state first for immediate feedback
     setActivities(updatedActivities);
     
-    // Save to database
-    try {
-      await saveActivities([updatedActivity]);
-      console.log("Match result saved successfully to database");
-      
-      toast({
-        title: "Resultat uppdaterat",
-        description: homeScore !== undefined && awayScore !== undefined ? 
-          `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-          "Resultat borttaget",
-      });
-    } catch (saveError) {
-      console.error("Error saving match result to database:", saveError);
-      
-      // Restore previous state
-      setActivities(activities);
-      
-      toast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte spara matchresultatet. Försök igen.",
-        variant: "destructive"
-      });
-      
-      throw saveError;
-    }
+    // Then save to storage
+    await saveActivities(updatedActivities);
+    
+    // Show success message
+    toast({
+      title: "Matchresultat sparat",
+      description: resultString 
+        ? `Resultat ${resultString} har sparats för ${activity.name}.` 
+        : `Matchresultat har rensats för ${activity.name}.`,
+    });
+    
   } catch (error) {
-    console.error("Error in handleMatchResultUpdate:", error);
+    console.error("Error updating match result:", error);
     toast({
       title: "Ett fel uppstod",
-      description: "Kunde inte uppdatera matchresultatet. Försök igen.",
+      description: "Kunde inte spara matchresultat. Försök igen.",
       variant: "destructive"
     });
     throw error;

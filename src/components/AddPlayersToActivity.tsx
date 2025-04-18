@@ -1,9 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
-import { CupSelector } from "./add-players/CupSelector";
-import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
-import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PlayerAvatar } from "./player-selection/PlayerAvatar";
+import { toast } from "@/hooks/use-toast";
+import { PlayerMultiSelectDropdown } from "./player-selection/PlayerMultiSelectDropdown";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -19,7 +22,7 @@ export function AddPlayersToActivity({
   currentParticipantIds 
 }: AddPlayersToActivityProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
-  const [selectedCup, setSelectedCup] = useState<string>("");
+  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -31,6 +34,7 @@ export function AddPlayersToActivity({
     selectedPlayerIds.includes(player.id)
   );
   
+  // Toggle player selection
   const handlePlayerToggle = (playerId: string) => {
     setSelectedPlayerIds(prev => 
       prev.includes(playerId)
@@ -41,8 +45,15 @@ export function AddPlayersToActivity({
   
   const handleAddPlayers = () => {
     if (selectedPlayerIds.length === 0) return;
+    
+    // No player limit check anymore
     onAddPlayers(selectedPlayerIds);
     setSelectedPlayerIds([]);
+  };
+  
+  const handleQuickSelect = (playerId: string) => {
+    // No player limit check anymore
+    onAddPlayers([playerId]);
   };
   
   // If no available players, show a message
@@ -56,27 +67,60 @@ export function AddPlayersToActivity({
 
   return (
     <div className="mt-4 space-y-4">
-      {activity.type === "match" && (
-        <CupSelector
-          selectedCup={selectedCup}
-          onCupSelect={setSelectedCup}
-          currentParticipantIds={currentParticipantIds}
-          onAddPlayers={onAddPlayers}
-        />
-      )}
-
-      <PlayerMultiSelect
-        availablePlayers={availablePlayers}
-        selectedPlayerIds={selectedPlayerIds}
-        onPlayerToggle={handlePlayerToggle}
-        selectedPlayers={selectedPlayers}
-        onAddPlayers={handleAddPlayers}
-      />
+      <div className="flex flex-col gap-3">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Välj flera spelare</label>
+          <PlayerMultiSelectDropdown 
+            availablePlayers={availablePlayers}
+            selectedPlayers={selectedPlayerIds}
+            onPlayerToggle={handlePlayerToggle}
+            maxSelections={50} // Increased from 10 to 50 to effectively remove the limit
+          />
+        </div>
+        
+        {selectedPlayerIds.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/30">
+            {selectedPlayers.map(player => (
+              <div 
+                key={player.id}
+                className="flex items-center gap-1 bg-background border rounded-full px-2 py-1 text-sm"
+              >
+                <PlayerAvatar player={player} size="xs" />
+                <span className="truncate max-w-[100px]">{player.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <Button 
+          onClick={handleAddPlayers}
+          disabled={selectedPlayerIds.length === 0}
+          className="w-full"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Lägg till {selectedPlayerIds.length} spelare
+        </Button>
+      </div>
       
-      <PlayerQuickSelect
-        availablePlayers={availablePlayers}
-        onQuickSelect={(playerId) => onAddPlayers([playerId])}
-      />
+      {availablePlayers.length > 0 && (
+        <div className="mt-4">
+          <h4 className="text-sm font-medium mb-2">Snabbval:</h4>
+          <div className="flex flex-wrap gap-2">
+            {availablePlayers.slice(0, isMobile ? 4 : 8).map(player => (
+              <Button 
+                key={player.id}
+                variant="outline" 
+                size="sm"
+                onClick={() => handleQuickSelect(player.id)}
+                className="flex items-center gap-2"
+              >
+                <PlayerAvatar player={player} size="xs" />
+                <span className="truncate max-w-[100px]">{player.name}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
