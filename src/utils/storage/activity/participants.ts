@@ -2,158 +2,108 @@
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { v4 as uuidv4 } from 'uuid';
-import { Activity } from "./types";
+import { Activity } from "@/types/player";
 
 // Handle participant relationships for an activity
 export const updateActivityParticipants = async (activity: Activity): Promise<void> => {
+  if (!activity.id) {
+    console.error("Cannot update participants: Activity ID is missing");
+    throw new Error("Activity ID is missing");
+  }
+  
   try {
-    // Get current relationships for this activity regardless of participant array
-    const { data: existingRelations, error: fetchError } = await supabase
+    console.log(`Updating participants for activity ${activity.id} (${activity.name})`);
+    
+    // Get current relationships for this activity
+    const { data: existingRelationships, error: fetchError } = await supabase
       .from('player_activities')
       .select('*')
       .eq('activity_id', activity.id);
-        
-    if (fetchError) throw fetchError;
+      
+    if (fetchError) {
+      console.error("Error fetching existing participant relationships:", fetchError);
+      throw fetchError;
+    }
     
-    // If participants array is empty or undefined, we want to remove all relations
+    const existingPlayerIds = existingRelationships?.map(relation => relation.player_id) || [];
+    console.log(`Found ${existingPlayerIds.length} existing participants`);
+    
+    // If no participants in activity, just return
     if (!activity.participants || activity.participants.length === 0) {
-      // If there are any existing relations, delete them all
-      if (existingRelations && existingRelations.length > 0) {
-        console.log(`Clearing all participants (${existingRelations.length}) from activity ${activity.name}`);
+      if (existingPlayerIds.length > 0) {
+        console.log(`Removing all ${existingPlayerIds.length} participants from activity ${activity.id}`);
         
-        // Log the participant removal for each player first
-        for (const relation of existingRelations) {
-          // Get player name if available
-          let playerName = "Player";
-          try {
-            const { data: playerData } = await supabase
-              .from('players')
-              .select('name')
-              .eq('id', relation.player_id)
-              .single();
-            
-            if (playerData) {
-              playerName = playerData.name;
-            }
-          } catch (e) {
-            console.error("Error fetching player name:", e);
-          }
-          
-          await logDatabaseChange(
-            'delete',
-            'player_activity',
-            `${relation.player_id}-${activity.id}`,
-            `Removed player "${playerName}" from activity "${activity.name}"`
-          );
-        }
-        
-        // Now delete the actual relations
-        const { error: deleteError } = await supabase
+        // Delete all existing relationships for this activity
+        const { error: deleteAllError } = await supabase
           .from('player_activities')
           .delete()
           .eq('activity_id', activity.id);
           
-        if (deleteError) throw deleteError;
+        if (deleteAllError) {
+          console.error("Error deleting all participant relationships:", deleteAllError);
+          throw deleteAllError;
+        }
+      }
+      return;
+    }
+    
+    // Determine which participants to add and remove
+    const playersToAdd = activity.participants.filter(id => !existingPlayerIds.includes(id));
+    const playersToRemove = existingPlayerIds.filter(id => !activity.participants.includes(id));
+    
+    console.log(`Participants to add: ${playersToAdd.length}, to remove: ${playersToRemove.length}`);
+    
+    // Remove participants that are no longer in the list
+    if (playersToRemove.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('player_activities')
+        .delete()
+        .eq('activity_id', activity.id)
+        .in('player_id', playersToRemove);
         
-        // Log that all participants were cleared
+      if (deleteError) {
+        console.error("Error removing participants:", deleteError);
+        throw deleteError;
+      }
+      
+      console.log(`Removed ${playersToRemove.length} participants from activity ${activity.id}`);
+    }
+    
+    // Add new participants
+    if (playersToAdd.length > 0) {
+      const newRelationships = playersToAdd.map(playerId => ({
+        id: uuidv4(),
+        activity_id: activity.id,
+        player_id: playerId
+      }));
+      
+      console.log(`Adding ${playersToAdd.length} participants to activity ${activity.id}:`, newRelationships);
+      
+      const { error: insertError } = await supabase
+        .from('player_activities')
+        .insert(newRelationships);
+        
+      if (insertError) {
+        console.error("Error adding participants:", insertError);
+        throw insertError;
+      }
+      
+      console.log(`Added ${playersToAdd.length} participants to activity ${activity.id}`);
+      
+      // Log changes for audit trail
+      try {
         await logDatabaseChange(
           'update',
-          'activity',
+          'activity_participants',
           activity.id,
-          `Cleared all participants (${existingRelations.length}) from activity "${activity.name}"`
+          `Added ${playersToAdd.length} participants to ${activity.name}`
         );
-      }
-    } else {
-      // Normal handling for activities with participants
-      // Delete relationships that are no longer valid
-      const existingPlayerIds = existingRelations.map(rel => rel.player_id);
-      const playerIdsToRemove = existingPlayerIds.filter(
-        playerId => !activity.participants?.includes(playerId)
-      );
-      
-      if (playerIdsToRemove.length > 0) {
-        // Log each player removal individually
-        for (const playerId of playerIdsToRemove) {
-          // Get player name if available
-          let playerName = "Player";
-          try {
-            const { data: playerData } = await supabase
-              .from('players')
-              .select('name')
-              .eq('id', playerId)
-              .single();
-            
-            if (playerData) {
-              playerName = playerData.name;
-            }
-          } catch (e) {
-            console.error("Error fetching player name:", e);
-          }
-          
-          await logDatabaseChange(
-            'delete',
-            'player_activity',
-            `${playerId}-${activity.id}`,
-            `Removed player "${playerName}" from activity "${activity.name}"`
-          );
-        }
-        
-        const { error: deleteError } = await supabase
-          .from('player_activities')
-          .delete()
-          .eq('activity_id', activity.id)
-          .in('player_id', playerIdsToRemove);
-          
-        if (deleteError) throw deleteError;
-      }
-      
-      // Add new relationships
-      const newPlayerIds = activity.participants.filter(
-        playerId => !existingPlayerIds.includes(playerId)
-      );
-      
-      if (newPlayerIds.length > 0) {
-        const newRelations = newPlayerIds.map(playerId => ({
-          id: uuidv4(),
-          player_id: playerId,
-          activity_id: activity.id
-        }));
-        
-        const { error: insertError } = await supabase
-          .from('player_activities')
-          .insert(newRelations);
-          
-        if (insertError) throw insertError;
-        
-        // Log the added relations
-        for (const playerId of newPlayerIds) {
-          // Get player name if available
-          let playerName = "Player";
-          try {
-            const { data: playerData } = await supabase
-              .from('players')
-              .select('name')
-              .eq('id', playerId)
-              .single();
-            
-            if (playerData) {
-              playerName = playerData.name;
-            }
-          } catch (e) {
-            console.error("Error fetching player name:", e);
-          }
-          
-          await logDatabaseChange(
-            'create',
-            'player_activity',
-            `${playerId}-${activity.id}`,
-            `Added player "${playerName}" to activity "${activity.name}"`
-          );
-        }
+      } catch (logError) {
+        console.error("Error logging participant changes (continuing anyway):", logError);
       }
     }
   } catch (error) {
-    console.error("Error updating activity participants:", error);
+    console.error(`Error updating participants for activity ${activity.id}:`, error);
     throw error;
   }
 };

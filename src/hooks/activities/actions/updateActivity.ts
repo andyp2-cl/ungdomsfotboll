@@ -2,6 +2,7 @@
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { normalizePlayerStats } from "../utils/playerStatsUtils";
+import { toast } from "sonner";
 
 /**
  * Handles updating an existing activity
@@ -16,7 +17,11 @@ export const handleActivityUpdate = async (
 ): Promise<void> => {
   console.log("handleActivityUpdate called with:", {
     activityId: updatedActivity.id,
-    activityName: updatedActivity.name
+    activityName: updatedActivity.name,
+    date: updatedActivity.date,
+    cupId: updatedActivity.cupId,
+    cupName: updatedActivity.cupName,
+    participantsCount: updatedActivity.participants?.length || 0
   });
   
   try {
@@ -25,6 +30,11 @@ export const handleActivityUpdate = async (
     
     if (!existingActivity) {
       console.error("Activity not found:", updatedActivity.id);
+      toast({
+        title: "Kunde inte uppdatera aktivitet",
+        description: "Aktiviteten hittades inte.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -43,10 +53,28 @@ export const handleActivityUpdate = async (
     setActivities(updatedActivities);
     
     // Create a clone to avoid mutation during async operations
-    const activitiesClone = [...updatedActivities];
+    const activitiesToSave = [...updatedActivities];
     
     // Save to storage in the background
-    await saveActivities(activitiesClone);
+    try {
+      console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
+      await saveActivities([normalizedActivity]);
+      console.log("Activity saved successfully to database");
+      
+      if (process.env.NODE_ENV === 'development') {
+        toast.success(`Aktivitet sparad till databasen: ${normalizedActivity.id}`);
+      }
+    } catch (saveError) {
+      console.error("Error saving activity to database:", saveError);
+      toast({
+        title: "Databasfel",
+        description: "Det gick inte att spara aktiviteten till databasen. Försök igen.",
+        variant: "destructive"
+      });
+      // Revert the state update since the database save failed
+      setActivities(activities);
+      throw saveError;
+    }
     
     // Update player-activity relationships if needed
     if (normalizedActivity.participants) {

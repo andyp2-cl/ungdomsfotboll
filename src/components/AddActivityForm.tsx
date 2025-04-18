@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getAllCupNames } from "@/lib/supabase/activities";
 import { useQuery } from "@tanstack/react-query";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
+import { toast } from "sonner";
 
 interface AddActivityFormProps {
   onSave: (activity: Activity) => void;
@@ -27,7 +28,7 @@ export function AddActivityForm({
   onDateChange 
 }: AddActivityFormProps) {
   const [name, setName] = useState("");
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [type, setType] = useState<ActivityType>("match");
   const [locationName, setLocationName] = useState("");
   const [locationDescription, setLocationDescription] = useState("");
@@ -35,6 +36,7 @@ export function AddActivityForm({
   const [time, setTime] = useState("");
   const [cupName, setCupName] = useState("no-cup");
   const [cupNames, setCupNames] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Fetch activities to get existing cup names
   const { data: activities, isLoading } = useQuery({
@@ -63,29 +65,62 @@ export function AddActivityForm({
     }
   }, [date, onDateChange]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !date) {
-      alert("Namn och datum måste fyllas i.");
+      toast.error("Namn och datum måste fyllas i.");
       return;
     }
 
-    const newActivity: Activity = {
-      id: uuidv4(),
-      name: name,
-      date: format(date, 'yyyy-MM-dd'),
-      type: type,
-      location: {
-        name: locationName,
-        description: locationDescription,
-        gpsLink: locationGpsLink
-      },
-      time: time,
-      cupName: type === "match" && cupName !== "no-cup" ? cupName : undefined,
-      participants: [],
-      player_stats: {}
-    };
+    setIsSaving(true);
 
-    onSave(newActivity);
+    try {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      console.log(`Creating activity with date: ${formattedDate}`);
+      
+      const activityId = uuidv4();
+      const newActivity: Activity = {
+        id: activityId,
+        name: name,
+        date: formattedDate,
+        type: type,
+        location: {
+          name: locationName,
+          description: locationDescription,
+          gpsLink: locationGpsLink
+        },
+        time: time,
+        participants: [],
+        player_stats: {}
+      };
+      
+      // If it's a cup, set the cup name and cup ID to the activity name and activity ID
+      if (type === "cup") {
+        newActivity.cupName = name;
+        newActivity.cupId = activityId; // Set cupId to this activity's ID
+        console.log(`Created new cup: ${name} with ID: ${activityId}`);
+      } 
+      // If it's a match and a cup is selected, save the cup reference
+      else if (type === "match" && cupName !== "no-cup") {
+        newActivity.cupName = cupName;
+        
+        // Try to find the cup ID from existing cups
+        if (activities) {
+          const matchingCup = activities.find(a => a.type === "cup" && a.name === cupName);
+          if (matchingCup) {
+            newActivity.cupId = matchingCup.id;
+            console.log(`Linked match to cup: ${cupName} (${matchingCup.id})`);
+          }
+        }
+      }
+
+      await onSave(newActivity);
+      toast.success(`${type === "cup" ? "Cup" : "Match"} sparad!`);
+    } catch (error) {
+      console.error("Error saving activity:", error);
+      toast.error("Det gick inte att spara aktiviteten. Försök igen.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -104,6 +139,7 @@ export function AddActivityForm({
           defaultValue="match" 
           className="flex gap-2" 
           onValueChange={(value) => setType(value as ActivityType)}
+          value={type}
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="match" id="match" />
@@ -191,8 +227,12 @@ export function AddActivityForm({
         <Button type="button" variant="secondary" onClick={onCancel}>
           Avbryt
         </Button>
-        <Button type="button" onClick={handleSave}>
-          Spara
+        <Button 
+          type="button" 
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? "Sparar..." : "Spara"}
         </Button>
       </div>
     </div>
