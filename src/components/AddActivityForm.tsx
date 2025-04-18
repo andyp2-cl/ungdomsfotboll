@@ -77,8 +77,9 @@ export function AddActivityForm({
       const formattedDate = format(date, 'yyyy-MM-dd');
       console.log(`Creating activity with date: ${formattedDate}`);
       
+      const activityId = uuidv4();
       const newActivity: Activity = {
-        id: uuidv4(),
+        id: activityId,
         name: name,
         date: formattedDate,
         type: type,
@@ -92,13 +93,24 @@ export function AddActivityForm({
         player_stats: {}
       };
       
-      // If it's a cup, set the cup name to the activity name
+      // If it's a cup, set the cup name and cup ID to the activity name and activity ID
       if (type === "cup") {
         newActivity.cupName = name;
+        newActivity.cupId = activityId; // Set cupId to this activity's ID
+        console.log(`Created new cup: ${name} with ID: ${activityId}`);
       } 
       // If it's a match and a cup is selected, save the cup reference
       else if (type === "match" && cupName !== "no-cup") {
         newActivity.cupName = cupName;
+        
+        // Try to find the cup ID from existing cups
+        if (activities) {
+          const matchingCup = activities.find(a => a.type === "cup" && a.name === cupName);
+          if (matchingCup) {
+            newActivity.cupId = matchingCup.id;
+            console.log(`Linked match to cup: ${cupName} (${matchingCup.id})`);
+          }
+        }
       }
 
       await onSave(newActivity);

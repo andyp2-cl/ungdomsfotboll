@@ -29,7 +29,14 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     scraped: activity.scraped || false
   };
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}`);
+  // Special handling for cup type
+  if (activity.type === 'cup') {
+    // For cup activities, ensure the cup_id is set to the activity's own ID
+    formattedActivity.cup_id = activity.id;
+    formattedActivity.cup_name = activity.name;
+  }
+
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, cupName: ${formattedActivity.cup_name}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {
@@ -69,6 +76,18 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
     player_stats: { goals: {}, assists: {} }
   };
+  
+  // For cup type activities, make sure cupId and cupName are set properly
+  if (activity.type === 'cup') {
+    // For cups, set cupId to its own ID if not already set
+    if (!activity.cupId) {
+      activity.cupId = activity.id;
+    }
+    // For cups, set cupName to its own name if not already set
+    if (!activity.cupName) {
+      activity.cupName = activity.name;
+    }
+  }
   
   // Set result field if home_score and away_score are available
   if (item.home_score !== null && item.home_score !== undefined && 

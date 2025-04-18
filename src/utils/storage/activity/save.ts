@@ -16,6 +16,13 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Clone the activity to avoid mutations during processing
       const activityToSave = { ...activity };
       
+      // Set cupId to the activity's id if it's a cup type
+      if (activityToSave.type === "cup") {
+        activityToSave.cupId = activityToSave.id;
+        activityToSave.cupName = activityToSave.name;
+        console.log(`Setting cupId and cupName for cup activity: ${activityToSave.id}`);
+      }
+      
       // Normalize player_stats to ensure it's always an object before saving
       const normalizedPlayerStats = normalizePlayerStats(activityToSave.player_stats);
       

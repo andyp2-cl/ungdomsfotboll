@@ -31,17 +31,36 @@ export function CupSelector({
     queryFn: getStoredActivities,
   });
   
-  const cups = activities?.filter(act => act.type === "cup") || [];
+  // Make sure to filter by type AND verify cups have correct fields
+  const cups = activities?.filter(act => 
+    act.type === "cup" && 
+    act.id && // Ensure we have a valid ID
+    act.name // Ensure the cup has a name
+  ) || [];
   
   // Debug logging
   useEffect(() => {
-    if (cups.length > 0) {
-      console.log(`Found ${cups.length} cups for selection`);
+    if (activities) {
+      const allCups = activities.filter(act => act.type === "cup");
+      console.log(`Found ${allCups.length} cups in total, ${cups.length} valid cups for selection`);
+      
+      // Log details about any malformed cups
+      if (allCups.length > cups.length) {
+        console.warn("Some cups may be malformed:", 
+          allCups.filter(act => !act.id || !act.name).map(c => ({
+            id: c.id, 
+            name: c.name, 
+            dateCreated: c.date
+          }))
+        );
+      }
+      
+      // Log all valid cups
       cups.forEach(cup => {
         console.log(`Cup ${cup.name} (${cup.id}) has ${cup.participants?.length || 0} participants`);
       });
     }
-  }, [cups]);
+  }, [activities, cups]);
   
   const handleCupSelect = (cupId: string) => {
     console.log(`Cup selected: ${cupId}`);
