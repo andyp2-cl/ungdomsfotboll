@@ -36,7 +36,6 @@ export function CupMatchesManager({
     const newMatch: CupMatch = {
       id: uuidv4(),
       name: "",
-      time: "", // Add empty time to satisfy TypeScript requirements
       // Don't set time, location, etc. as they'll inherit from cup
     };
     
@@ -103,7 +102,7 @@ export function CupMatchesManager({
         location: cupActivity.location, // Inherit full location object from cup
         cupId: cupActivity.id, // Critical: Set the cupId to link to parent cup
         cupName: cupActivity.name, // Also set the cup name for better reference
-        participants: [...cupActivity.participants], // Inherit participants from cup
+        participants: [],
         homeScore: match.homeScore,
         awayScore: match.awayScore,
         result: match.result,
