@@ -2,18 +2,31 @@
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { v4 as uuidv4 } from 'uuid';
-import { Activity } from "./types";
+import { Activity } from "@/types/player";
 
 // Handle participant relationships for an activity
 export const updateActivityParticipants = async (activity: Activity): Promise<void> => {
+  if (!activity.id) {
+    console.error("Cannot update participants: Activity ID is missing");
+    return;
+  }
+  
   try {
+    console.log(`Updating participants for activity ${activity.id} (${activity.name})`);
+    
     // Get current relationships for this activity regardless of participant array
     const { data: existingRelations, error: fetchError } = await supabase
       .from('player_activities')
       .select('*')
       .eq('activity_id', activity.id);
         
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Error fetching existing player-activity relations:", fetchError);
+      throw fetchError;
+    }
+    
+    // Log existing relations for debugging
+    console.log(`Found ${existingRelations?.length || 0} existing participant relations`);
     
     // If participants array is empty or undefined, we want to remove all relations
     if (!activity.participants || activity.participants.length === 0) {
@@ -53,7 +66,12 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           .delete()
           .eq('activity_id', activity.id);
           
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error("Error deleting player-activity relations:", deleteError);
+          throw deleteError;
+        }
+        
+        console.log(`Successfully cleared all participants from activity ${activity.name}`);
         
         // Log that all participants were cleared
         await logDatabaseChange(
@@ -65,13 +83,16 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
       }
     } else {
       // Normal handling for activities with participants
+      const existingPlayerIds = existingRelations?.map(rel => rel.player_id) || [];
+      
       // Delete relationships that are no longer valid
-      const existingPlayerIds = existingRelations.map(rel => rel.player_id);
       const playerIdsToRemove = existingPlayerIds.filter(
         playerId => !activity.participants?.includes(playerId)
       );
       
       if (playerIdsToRemove.length > 0) {
+        console.log(`Removing ${playerIdsToRemove.length} participants from activity ${activity.name}`);
+        
         // Log each player removal individually
         for (const playerId of playerIdsToRemove) {
           // Get player name if available
@@ -104,7 +125,12 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           .eq('activity_id', activity.id)
           .in('player_id', playerIdsToRemove);
           
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error("Error deleting player-activity relations:", deleteError);
+          throw deleteError;
+        }
+        
+        console.log(`Successfully removed ${playerIdsToRemove.length} participants from activity ${activity.name}`);
       }
       
       // Add new relationships
@@ -113,6 +139,8 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
       );
       
       if (newPlayerIds.length > 0) {
+        console.log(`Adding ${newPlayerIds.length} new participants to activity ${activity.name}`);
+        
         const newRelations = newPlayerIds.map(playerId => ({
           id: uuidv4(),
           player_id: playerId,
@@ -123,7 +151,12 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           .from('player_activities')
           .insert(newRelations);
           
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error inserting player-activity relations:", insertError);
+          throw insertError;
+        }
+        
+        console.log(`Successfully added ${newPlayerIds.length} participants to activity ${activity.name}`);
         
         // Log the added relations
         for (const playerId of newPlayerIds) {
@@ -152,6 +185,8 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
         }
       }
     }
+    
+    console.log(`Participant update completed for activity ${activity.name}`);
   } catch (error) {
     console.error("Error updating activity participants:", error);
     throw error;

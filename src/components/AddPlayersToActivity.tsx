@@ -17,7 +17,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
-import { findMatchesByCupName } from "@/lib/supabase/activities";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -75,7 +74,18 @@ export function AddPlayersToActivity({
     // Find selected cup
     const selectedCupActivity = cups.find(cup => cup.id === cupId);
     
+    if (!selectedCupActivity) {
+      toast({
+        title: "Cup hittades inte",
+        description: "Den valda cupen kunde inte hittas.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (selectedCupActivity && selectedCupActivity.participants && selectedCupActivity.participants.length > 0) {
+      console.log(`Adding participants from cup ${selectedCupActivity.name} (${selectedCupActivity.participants.length} participants)`);
+      
       // Filter out participants that are already in the match
       const newParticipants = selectedCupActivity.participants.filter(
         participantId => !currentParticipantIds.includes(participantId)
@@ -135,11 +145,11 @@ export function AddPlayersToActivity({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Välj en cup" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background">
               <SelectItem value="no-cup">Ingen cup</SelectItem>
               {cups.map((cup) => (
                 <SelectItem key={cup.id} value={cup.id}>
-                  {cup.name}
+                  {cup.name} ({cup.participants?.length || 0} deltagare)
                 </SelectItem>
               ))}
             </SelectContent>

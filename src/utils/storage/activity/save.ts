@@ -31,7 +31,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
         type: normalizedActivity.type,
+        cupId: normalizedActivity.cupId,
         cupName: normalizedActivity.cupName,
+        date: normalizedActivity.date,
+        participants: normalizedActivity.participants?.length || 0,
         matches: normalizedActivity.matches?.length || 0,
         isWin: normalizedActivity.isWin,
         homeScore: normalizedActivity.homeScore,
@@ -39,11 +42,16 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       });
       
       // Check if activity already exists to determine if this is an update or create
-      const { data: existingActivity } = await supabase
+      const { data: existingActivity, error: checkError } = await supabase
         .from('activities')
         .select('id')
         .eq('id', activity.id)
         .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error checking if activity exists:", checkError);
+        throw checkError;
+      }
       
       const isNewActivity = !existingActivity;
       
@@ -54,6 +62,12 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       } else {
         // Ensure cup_name is null if no valid cupName exists
         formattedActivity.cup_name = null;
+      }
+      
+      // Ensure cupId is properly set
+      if (normalizedActivity.cupId) {
+        formattedActivity.cup_id = normalizedActivity.cupId;
+        console.log(`Setting cup_id to ${normalizedActivity.cupId} for ${normalizedActivity.name}`);
       }
       
       // Upsert the activity
@@ -82,11 +96,12 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       }
       
       // Handle player-activity relationships
-      await updateActivityParticipants(normalizedActivity);
-      
-      // For cup activities, we'll use the new cupName approach instead of the complex relationship
-      if (activity.type === 'match' && activity.cupName && activity.cupName !== "no-cup") {
-        console.log(`Match ${activity.name} is part of cup: ${activity.cupName}`);
+      try {
+        await updateActivityParticipants(normalizedActivity);
+        console.log(`Updated participants for activity: ${activity.name} (${activity.participants?.length || 0} participants)`);
+      } catch (participantError) {
+        console.error("Error updating activity participants:", participantError);
+        throw participantError;
       }
     }
   } catch (error) {

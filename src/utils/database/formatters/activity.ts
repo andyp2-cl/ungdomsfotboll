@@ -16,6 +16,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     player_stats: player_stats || {},
     // Handle special fields
     cup_name: activity.cupName && activity.cupName !== "no-cup" ? activity.cupName : null,
+    cup_id: activity.cupId || null,
   };
 
   console.log(`Formatted activity for database: ${activity.id} (${activity.name})`);
