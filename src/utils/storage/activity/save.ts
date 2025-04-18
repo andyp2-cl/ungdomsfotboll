@@ -25,14 +25,18 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         player_stats: normalizedPlayerStats
       };
       
+      // Format the activity for database storage
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
       
+      // Log detailed information about the activity being saved
       console.log("Saving activity with details:", {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
         type: normalizedActivity.type,
         cupId: normalizedActivity.cupId,
         cupName: normalizedActivity.cupName,
+        cup_id: formattedActivity.cup_id,
+        cup_name: formattedActivity.cup_name,
         date: normalizedActivity.date,
         participants: normalizedActivity.participants?.length || 0,
         matches: normalizedActivity.matches?.length || 0,
@@ -55,25 +59,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
-      // Ensure cup_name is properly set if cupName exists
-      if (normalizedActivity.cupName && normalizedActivity.cupName !== "no-cup") {
-        formattedActivity.cup_name = normalizedActivity.cupName;
-        console.log(`Setting cup_name to ${normalizedActivity.cupName} for ${normalizedActivity.name}`);
-      } else {
-        // Ensure cup_name is null if no valid cupName exists
-        formattedActivity.cup_name = null;
-      }
-      
-      // Ensure cupId is properly set
-      if (normalizedActivity.cupId) {
-        formattedActivity.cup_id = normalizedActivity.cupId;
-        console.log(`Setting cup_id to ${normalizedActivity.cupId} for ${normalizedActivity.name}`);
-      }
-      
-      // Upsert the activity
+      // Upsert the activity - this is where we actually save to the database
       const { error: upsertError } = await supabase
         .from('activities')
-        .upsert(formattedActivity, { onConflict: 'id' });
+        .upsert(formattedActivity);
         
       if (upsertError) {
         console.error("Error upserting activity:", upsertError);

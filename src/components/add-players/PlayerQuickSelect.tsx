@@ -15,11 +15,14 @@ export function PlayerQuickSelect({ availablePlayers, onQuickSelect }: PlayerQui
   
   if (availablePlayers.length === 0) return null;
 
+  // Calculate how many players to show based on screen size
+  const playersToShow = isMobile ? 4 : 8;
+
   return (
     <div className="mt-4">
       <h4 className="text-sm font-medium mb-2">Snabbval:</h4>
       <div className="flex flex-wrap gap-2">
-        {availablePlayers.slice(0, isMobile ? 4 : 8).map(player => (
+        {availablePlayers.slice(0, playersToShow).map(player => (
           <Button 
             key={player.id}
             variant="outline" 

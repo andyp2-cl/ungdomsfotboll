@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Activity } from "@/types/player";
 import { toast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -26,12 +26,22 @@ export function CupSelector({
   currentParticipantIds,
   onAddPlayers
 }: CupSelectorProps) {
-  const { data: activities } = useQuery({
+  const { data: activities, isLoading, error } = useQuery({
     queryKey: ["activities"],
     queryFn: getStoredActivities,
   });
   
   const cups = activities?.filter(act => act.type === "cup") || [];
+  
+  // Debug logging
+  useEffect(() => {
+    if (cups.length > 0) {
+      console.log(`Found ${cups.length} cups for selection`);
+      cups.forEach(cup => {
+        console.log(`Cup ${cup.name} (${cup.id}) has ${cup.participants?.length || 0} participants`);
+      });
+    }
+  }, [cups]);
   
   const handleCupSelect = (cupId: string) => {
     onCupSelect(cupId);
@@ -42,10 +52,24 @@ export function CupSelector({
     
     const selectedCupActivity = cups.find(cup => cup.id === cupId);
     
+    if (!selectedCupActivity) {
+      console.error(`Failed to find cup with ID: ${cupId}`);
+      toast({
+        title: "Fel",
+        description: "Kunde inte hitta den valda cupen.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log(`Selected cup: ${selectedCupActivity.name} with ${selectedCupActivity.participants?.length || 0} participants`);
+    
     if (selectedCupActivity?.participants?.length) {
       const newParticipants = selectedCupActivity.participants.filter(
         participantId => !currentParticipantIds.includes(participantId)
       );
+      
+      console.log(`Found ${newParticipants.length} new participants to add`);
       
       if (newParticipants.length > 0) {
         onAddPlayers(newParticipants);
@@ -60,6 +84,7 @@ export function CupSelector({
         });
       }
     } else {
+      console.log(`Cup ${selectedCupActivity.name} has no participants`);
       toast({
         title: "Inga deltagare",
         description: "Den valda cupen har inga deltagare.",
@@ -67,6 +92,8 @@ export function CupSelector({
     }
   };
 
+  if (isLoading) return <div>Laddar cuper...</div>;
+  if (error) return <div>Kunde inte hämta cuper</div>;
   if (!cups.length) return null;
 
   return (
@@ -76,14 +103,14 @@ export function CupSelector({
         onValueChange={handleCupSelect} 
         value={selectedCup}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" id="cup-select">
           <SelectValue placeholder="Välj en cup" />
         </SelectTrigger>
         <SelectContent className="bg-background">
           <SelectItem value="no-cup">Ingen cup</SelectItem>
           {cups.map((cup) => (
             <SelectItem key={cup.id} value={cup.id}>
-              {cup.name}
+              {cup.name} ({cup.participants?.length || 0} deltagare)
             </SelectItem>
           ))}
         </SelectContent>
