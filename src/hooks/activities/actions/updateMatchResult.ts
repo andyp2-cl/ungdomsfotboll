@@ -62,19 +62,21 @@ export const handleMatchResultUpdate = async (
       isWin: updatedActivity.isWin
     };
     
-    // Update activities array
-    const updatedActivities = activities.map(a => 
-      a.id === activityId ? updatedActivity : a
-    );
-    
-    // Update state
-    setActivities(updatedActivities);
-    
-    // Save to database
+    // Save to database FIRST, before updating the local state
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
-      await saveActivities([updatedActivity]);
+      
+      // Create a clean copy for saving to avoid circular references
+      const activityToSave = JSON.parse(JSON.stringify(updatedActivity));
+      await saveActivities([activityToSave]);
+      
       console.log("Match result saved successfully to database");
+      
+      // Only update local state AFTER successful database save
+      const updatedActivities = activities.map(a => 
+        a.id === activityId ? updatedActivity : a
+      );
+      setActivities(updatedActivities);
       
       toast({
         title: "Resultat uppdaterat",
@@ -84,9 +86,6 @@ export const handleMatchResultUpdate = async (
       });
     } catch (saveError) {
       console.error("Error saving match result to database:", saveError);
-      
-      // Restore previous state
-      setActivities(activities);
       
       toast({
         title: "Ett fel uppstod",

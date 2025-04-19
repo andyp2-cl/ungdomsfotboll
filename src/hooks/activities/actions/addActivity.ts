@@ -32,14 +32,30 @@ export const handleAddActivity = async (
       activityToSave.cupName = activityToSave.name;
     }
 
-    // Save to database
+    // Save to database FIRST, before updating the local state
     try {
       console.log("Saving new activity to database:", activityToSave.id);
-      await saveActivities([activityToSave]);
+      
+      // Create a clean copy for saving to avoid any issues
+      const cleanActivityToSave = JSON.parse(JSON.stringify(activityToSave));
+      await saveActivities([cleanActivityToSave]);
+      
       console.log(`Successfully saved activity ${activityToSave.name} (${activityToSave.id}) to database`);
+      
+      // Only update local state AFTER successful database save
+      const updatedActivities = [...activities, activityToSave];
+      setActivities(updatedActivities);
+      
+      console.log(`Added new ${activityToSave.type}: ${activityToSave.name}`);
+      
+      // Fix: Using toast function correctly
+      toast({
+        title: "Aktivitet skapad",
+        description: `${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`
+      });
     } catch (saveError) {
       console.error("Error saving activity to database:", saveError);
-      // Fix: Using toast function directly instead of toast.error
+      // Fix: Using toast function correctly
       toast({
         title: "Error",
         description: "Kunde inte spara aktiviteten till databasen.",
@@ -47,20 +63,9 @@ export const handleAddActivity = async (
       });
       throw saveError;
     }
-
-    // Update local state with the new array
-    const updatedActivities = [...activities, activityToSave];
-    setActivities(updatedActivities);
-
-    console.log(`Added new ${activityToSave.type}: ${activityToSave.name}`);
-    // Fix: Using toast function directly
-    toast({
-      title: "Aktivitet skapad",
-      description: `${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`
-    });
   } catch (error) {
     console.error("Error in handleAddActivity:", error);
-    // Fix: Using toast function directly
+    // Fix: Using toast function correctly
     toast({
       title: "Error",
       description: `Ett fel uppstod: ${error.message || "Kunde inte skapa aktivitet"}`,

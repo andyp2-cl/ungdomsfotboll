@@ -49,10 +49,7 @@ export const handleActivityUpdate = async (
       activity.id === normalizedActivity.id ? normalizedActivity : activity
     );
     
-    // Update state first to prevent UI freezes
-    setActivities(updatedActivities);
-    
-    // Save to database - CRITICAL FIX: Make sure we pass a copy of the activity
+    // Try to save to database FIRST, before updating UI state (ÄNDRA ORDNING)
     try {
       console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
       
@@ -62,9 +59,42 @@ export const handleActivityUpdate = async (
       await saveActivities([activityToSave]);
       console.log("Activity saved successfully to database");
       
-      if (process.env.NODE_ENV === 'development') {
-        toast.success(`Aktivitet sparad till databasen: ${normalizedActivity.id}`);
+      // Only update state AFTER successful database save
+      setActivities(updatedActivities);
+      
+      // Update player-activity relationships if needed
+      if (normalizedActivity.participants) {
+        const updatedPlayers = players.map(player => {
+          const isParticipating = normalizedActivity.participants?.includes(player.id);
+          let playerActivities = player.activities || [];
+          
+          if (isParticipating && !playerActivities.includes(normalizedActivity.id)) {
+            return {
+              ...player,
+              activities: [...playerActivities, normalizedActivity.id]
+            };
+          } else if (!isParticipating && playerActivities.includes(normalizedActivity.id)) {
+            return {
+              ...player,
+              activities: playerActivities.filter(id => id !== normalizedActivity.id)
+            };
+          }
+          
+          return player;
+        });
+        
+        setPlayers(updatedPlayers);
+        
+        // Skapa en kopia av spelarlistan för att undvika mutationer
+        const playersToSave = JSON.parse(JSON.stringify(updatedPlayers));
+        await savePlayers(playersToSave);
       }
+      
+      // Show success notification AFTER everything is saved
+      toast({
+        title: "Aktivitet uppdaterad",
+        description: `${normalizedActivity.name} har uppdaterats.`,
+      });
     } catch (saveError) {
       console.error("Error saving activity to database:", saveError);
       toast({
@@ -72,43 +102,8 @@ export const handleActivityUpdate = async (
         description: "Det gick inte att spara aktiviteten till databasen. Försök igen.",
         variant: "destructive"
       });
-      // Revert the state update since the database save failed
-      setActivities(activities);
       throw saveError;
     }
-    
-    // Update player-activity relationships if needed
-    if (normalizedActivity.participants) {
-      const updatedPlayers = players.map(player => {
-        const isParticipating = normalizedActivity.participants?.includes(player.id);
-        let playerActivities = player.activities || [];
-        
-        if (isParticipating && !playerActivities.includes(normalizedActivity.id)) {
-          return {
-            ...player,
-            activities: [...playerActivities, normalizedActivity.id]
-          };
-        } else if (!isParticipating && playerActivities.includes(normalizedActivity.id)) {
-          return {
-            ...player,
-            activities: playerActivities.filter(id => id !== normalizedActivity.id)
-          };
-        }
-        
-        return player;
-      });
-      
-      setPlayers(updatedPlayers);
-      
-      // Fixa: Skapa en kopia av spelarlistan för att undvika mutationer
-      const playersToSave = JSON.parse(JSON.stringify(updatedPlayers));
-      await savePlayers(playersToSave);
-    }
-    
-    toast({
-      title: "Aktivitet uppdaterad",
-      description: `${normalizedActivity.name} har uppdaterats.`,
-    });
   } catch (error) {
     console.error("Error saving activity updates:", error);
     
