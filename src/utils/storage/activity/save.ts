@@ -66,13 +66,14 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
-      // CRITICAL FIX: Log the actual data being sent to Supabase
-      console.log("Data being sent to Supabase:", JSON.stringify(formattedActivity));
+      // CRITICAL FIX: Serialize JSON data to avoid circular references
+      const cleanFormattedActivity = JSON.parse(JSON.stringify(formattedActivity));
+      console.log("Data being sent to Supabase:", JSON.stringify(cleanFormattedActivity));
       
       // Upsert the activity - this is where we actually save to the database
       const { error: upsertError } = await supabase
         .from('activities')
-        .upsert(formattedActivity);
+        .upsert(cleanFormattedActivity);
         
       if (upsertError) {
         console.error("Error upserting activity:", upsertError);
@@ -96,8 +97,12 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       // Handle player-activity relationships
       try {
-        await updateActivityParticipants(normalizedActivity);
-        console.log(`Updated participants for activity: ${activity.name} (${activity.participants?.length || 0} participants)`);
+        if (normalizedActivity.participants && normalizedActivity.participants.length > 0) {
+          await updateActivityParticipants(normalizedActivity);
+          console.log(`Updated participants for activity: ${activity.name} (${normalizedActivity.participants?.length || 0} participants)`);
+        } else {
+          console.log(`No participants to update for activity: ${activity.name}`);
+        }
       } catch (participantError) {
         console.error("Error updating activity participants:", participantError);
         throw participantError;

@@ -68,14 +68,13 @@ export function AddPlayersToActivity({
 
   return (
     <div className="mt-4 space-y-4">
-      {activity.type === "match" && (
-        <CupSelector
-          selectedCup={selectedCup}
-          onCupSelect={setSelectedCup}
-          currentParticipantIds={currentParticipantIds}
-          onAddPlayers={onAddPlayers}
-        />
-      )}
+      {/* Cup Selector - show for both match and cup types */}
+      <CupSelector
+        selectedCup={selectedCup}
+        onCupSelect={setSelectedCup}
+        currentParticipantIds={currentParticipantIds}
+        onAddPlayers={onAddPlayers}
+      />
 
       <PlayerMultiSelect
         availablePlayers={availablePlayers}
