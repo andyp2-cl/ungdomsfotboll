@@ -14,7 +14,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
   try {
     for (const activity of activities) {
       // Clone the activity to avoid mutations during processing
-      const activityToSave = { ...activity };
+      const activityToSave = structuredClone(activity);
       
       // Set cupId to the activity's id if it's a cup type
       if (activityToSave.type === "cup") {
@@ -32,9 +32,6 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         player_stats: normalizedPlayerStats
       };
       
-      // Format the activity for database storage
-      const formattedActivity = formatActivityForDatabase(normalizedActivity);
-      
       // Log detailed information about the activity being saved
       console.log("Saving activity with details:", {
         id: normalizedActivity.id,
@@ -42,14 +39,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         type: normalizedActivity.type,
         cupId: normalizedActivity.cupId,
         cupName: normalizedActivity.cupName,
-        cup_id: formattedActivity.cup_id,
-        cup_name: formattedActivity.cup_name,
         date: normalizedActivity.date,
         participants: normalizedActivity.participants?.length || 0,
         matches: normalizedActivity.matches?.length || 0,
-        isWin: normalizedActivity.isWin,
-        homeScore: normalizedActivity.homeScore,
-        awayScore: normalizedActivity.awayScore
       });
       
       // Check if activity already exists to determine if this is an update or create
@@ -66,7 +58,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
-      // CRITICAL FIX: Serialize JSON data to avoid circular references
+      // Format the activity for database storage
+      const formattedActivity = formatActivityForDatabase(normalizedActivity);
+      
+      // CRITICAL FIX: Make a safe copy of the formatted activity to avoid circular references
       const cleanFormattedActivity = JSON.parse(JSON.stringify(formattedActivity));
       console.log("Data being sent to Supabase:", JSON.stringify(cleanFormattedActivity));
       
@@ -106,6 +101,17 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       } catch (participantError) {
         console.error("Error updating activity participants:", participantError);
         throw participantError;
+      }
+      
+      // Handle cup matches if this is a cup activity
+      if (normalizedActivity.type === "cup" && normalizedActivity.matches && normalizedActivity.matches.length > 0) {
+        try {
+          await updateCupMatches(normalizedActivity.id, normalizedActivity.matches);
+          console.log(`Updated ${normalizedActivity.matches.length} matches for cup: ${normalizedActivity.name}`);
+        } catch (cupMatchError) {
+          console.error("Error updating cup matches:", cupMatchError);
+          throw cupMatchError;
+        }
       }
     }
   } catch (error) {

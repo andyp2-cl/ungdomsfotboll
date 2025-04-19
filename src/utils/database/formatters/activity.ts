@@ -29,11 +29,12 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     scraped: activity.scraped || false
   };
 
-  // Special handling for cup type
+  // Special handling for cup type activities
   if (activity.type === 'cup') {
     // For cup activities, ensure the cup_id is set to the activity's own ID
     formattedActivity.cup_id = activity.id;
     formattedActivity.cup_name = activity.name;
+    console.log(`Cup activity detected: Setting cup_id=${activity.id}, cup_name=${activity.name}`);
   }
 
   console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, cupName: ${formattedActivity.cup_name}`);

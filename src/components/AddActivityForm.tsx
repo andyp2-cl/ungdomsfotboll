@@ -83,21 +83,25 @@ export function AddActivityForm({
         name: name,
         date: formattedDate,
         type: type,
-        location: {
+        location: locationName ? {
           name: locationName,
           description: locationDescription,
           gpsLink: locationGpsLink
-        },
+        } : undefined,
         time: time,
         participants: [],
-        player_stats: {}
+        matches: [],
+        player_stats: {
+          goals: {},
+          assists: {}
+        }
       };
       
       // If it's a cup, set the cup name and cup ID to the activity name and activity ID
       if (type === "cup") {
         newActivity.cupName = name;
         newActivity.cupId = activityId; // Set cupId to this activity's ID
-        console.log(`Created new cup: ${name} with ID: ${activityId}`);
+        console.log(`Created new cup: ${name} with ID: ${activityId}, cupId: ${activityId}`);
       } 
       // If it's a match and a cup is selected, save the cup reference
       else if (type === "match" && cupName !== "no-cup") {
@@ -113,6 +117,7 @@ export function AddActivityForm({
         }
       }
 
+      console.log("Saving new activity:", JSON.stringify(newActivity));
       await onSave(newActivity);
       toast.success(`${type === "cup" ? "Cup" : "Match"} sparad!`);
     } catch (error) {
