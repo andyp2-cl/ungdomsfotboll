@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { isHomeMatch, calculateWinStatus } from "./utils";
@@ -108,6 +109,7 @@ export function useResultSaver({
       // Use the update function from props
       updateActivity(updatedActivity);
       
+      // Using the toast methods correctly
       toast({
         title: "Matchresultat sparat",
         description: resultString 

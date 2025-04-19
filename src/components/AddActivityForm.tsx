@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType } from "@/types/player";
 import { Input } from '@/components/ui/input';
@@ -118,8 +117,13 @@ export function AddActivityForm({
       }
 
       console.log("Saving new activity:", JSON.stringify(newActivity));
-      await onSave(newActivity);
-      toast.success(`${type === "cup" ? "Cup" : "Match"} sparad!`);
+      try {
+        await onSave(newActivity);
+        toast.success(`${type === "cup" ? "Cup" : "Match"} sparad!`);
+      } catch (error) {
+        console.error("Error in onSave callback:", error);
+        toast.error("Det gick inte att spara aktiviteten. Försök igen.");
+      }
     } catch (error) {
       console.error("Error saving activity:", error);
       toast.error("Det gick inte att spara aktiviteten. Försök igen.");

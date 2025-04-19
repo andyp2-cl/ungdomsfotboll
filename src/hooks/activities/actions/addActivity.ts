@@ -39,19 +39,33 @@ export const handleAddActivity = async (
       console.log(`Successfully saved activity ${activityToSave.name} (${activityToSave.id}) to database`);
     } catch (saveError) {
       console.error("Error saving activity to database:", saveError);
-      toast.error("Kunde inte spara aktiviteten till databasen.");
+      // Fix: Using toast function directly instead of toast.error
+      toast({
+        title: "Error",
+        description: "Kunde inte spara aktiviteten till databasen.",
+        variant: "destructive"
+      });
       throw saveError;
     }
 
-    // Update local state - FIX: Pass the new array directly instead of a function
+    // Update local state with the new array
     const updatedActivities = [...activities, activityToSave];
     setActivities(updatedActivities);
 
     console.log(`Added new ${activityToSave.type}: ${activityToSave.name}`);
-    toast.success(`${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`);
+    // Fix: Using toast function directly
+    toast({
+      title: "Aktivitet skapad",
+      description: `${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`
+    });
   } catch (error) {
     console.error("Error in handleAddActivity:", error);
-    toast.error(`Ett fel uppstod: ${error.message || "Kunde inte skapa aktivitet"}`);
+    // Fix: Using toast function directly
+    toast({
+      title: "Error",
+      description: `Ett fel uppstod: ${error.message || "Kunde inte skapa aktivitet"}`,
+      variant: "destructive"
+    });
     throw error;
   }
 };
