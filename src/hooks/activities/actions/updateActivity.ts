@@ -52,13 +52,14 @@ export const handleActivityUpdate = async (
     // Update state first to prevent UI freezes
     setActivities(updatedActivities);
     
-    // Create a clone to avoid mutation during async operations
-    const activitiesToSave = [...updatedActivities];
-    
-    // Save to storage in the background
+    // Save to database - CRITICAL FIX: Make sure we pass a copy of the activity
     try {
       console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
-      await saveActivities([normalizedActivity]);
+      
+      // Create a clean copy that won't be mutated by other code
+      const activityToSave = JSON.parse(JSON.stringify(normalizedActivity));
+      
+      await saveActivities([activityToSave]);
       console.log("Activity saved successfully to database");
       
       if (process.env.NODE_ENV === 'development') {
@@ -98,7 +99,10 @@ export const handleActivityUpdate = async (
       });
       
       setPlayers(updatedPlayers);
-      await savePlayers(updatedPlayers);
+      
+      // Fixa: Skapa en kopia av spelarlistan för att undvika mutationer
+      const playersToSave = JSON.parse(JSON.stringify(updatedPlayers));
+      await savePlayers(playersToSave);
     }
     
     toast({

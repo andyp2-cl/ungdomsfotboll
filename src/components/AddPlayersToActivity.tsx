@@ -4,6 +4,7 @@ import { Player, Activity } from "@/types/player";
 import { CupSelector } from "./add-players/CupSelector";
 import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
+import { toast } from "sonner";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -41,8 +42,19 @@ export function AddPlayersToActivity({
   
   const handleAddPlayers = () => {
     if (selectedPlayerIds.length === 0) return;
-    onAddPlayers(selectedPlayerIds);
-    setSelectedPlayerIds([]);
+    
+    // Log before saving
+    console.log(`Adding ${selectedPlayerIds.length} players to activity ${activity.id}`);
+    
+    try {
+      onAddPlayers(selectedPlayerIds);
+      setSelectedPlayerIds([]);
+      
+      toast.success(`${selectedPlayerIds.length} spelare tillagda`);
+    } catch (error) {
+      console.error("Error adding players to activity:", error);
+      toast.error("Kunde inte lägga till spelare");
+    }
   };
   
   // If no available players, show a message
@@ -75,7 +87,10 @@ export function AddPlayersToActivity({
       
       <PlayerQuickSelect
         availablePlayers={availablePlayers}
-        onQuickSelect={(playerId) => onAddPlayers([playerId])}
+        onQuickSelect={(playerId) => {
+          console.log("Quick selecting player:", playerId);
+          onAddPlayers([playerId]);
+        }}
       />
     </div>
   );

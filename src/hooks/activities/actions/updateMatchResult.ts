@@ -72,6 +72,7 @@ export const handleMatchResultUpdate = async (
     
     // Save to database
     try {
+      console.log("Saving match result to database for activity:", updatedActivity.id);
       await saveActivities([updatedActivity]);
       console.log("Match result saved successfully to database");
       

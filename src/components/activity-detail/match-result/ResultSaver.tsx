@@ -1,9 +1,9 @@
-
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { isHomeMatch, calculateWinStatus } from "./utils";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
 import { supabase } from "@/lib/supabase";
+import { formatActivityForDatabase } from "@/utils/database/formatters";
 
 interface UseResultSaverParams {
   activity: Activity;
@@ -63,22 +63,29 @@ export function useResultSaver({
       // If we have the onMatchResultUpdate prop, use it
       if (onMatchResultUpdate) {
         await onMatchResultUpdate(activity.id, homeScore, awayScore);
+        console.log("Used onMatchResultUpdate to save result");
       } else {
-        // Otherwise directly update the database
+        // Otherwise directly update the database - FORMATTED FOR DATABASE!
+        console.log("Directly updating database with match result");
+        const formattedActivity = {
+          id: activity.id,
+          home_score: homeScore,
+          away_score: awayScore,
+          is_win: isWin,
+          result: resultString,
+          player_stats: updatedPlayerStats
+        };
+        
         const { error } = await supabase
           .from('activities')
-          .update({
-            home_score: homeScore,
-            away_score: awayScore,
-            is_win: isWin,
-            result: resultString,
-            player_stats: updatedPlayerStats
-          })
+          .update(formattedActivity)
           .eq('id', activity.id);
           
         if (error) {
           console.error("Error saving match result to database:", error);
           throw error;
+        } else {
+          console.log("Successfully saved match result directly to database");
         }
       }
       

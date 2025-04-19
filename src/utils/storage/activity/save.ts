@@ -66,6 +66,9 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       
       const isNewActivity = !existingActivity;
       
+      // CRITICAL FIX: Log the actual data being sent to Supabase
+      console.log("Data being sent to Supabase:", JSON.stringify(formattedActivity));
+      
       // Upsert the activity - this is where we actually save to the database
       const { error: upsertError } = await supabase
         .from('activities')
