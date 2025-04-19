@@ -43,8 +43,9 @@ export const handleAddActivity = async (
       throw saveError;
     }
 
-    // Update local state
-    setActivities((prevActivities) => [...prevActivities, activityToSave]);
+    // Update local state - FIX: Pass the new array directly instead of a function
+    const updatedActivities = [...activities, activityToSave];
+    setActivities(updatedActivities);
 
     console.log(`Added new ${activityToSave.type}: ${activityToSave.name}`);
     toast.success(`${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`);

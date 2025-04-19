@@ -106,8 +106,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Handle cup matches if this is a cup activity
       if (normalizedActivity.type === "cup" && normalizedActivity.matches && normalizedActivity.matches.length > 0) {
         try {
-          await updateCupMatches(normalizedActivity.id, normalizedActivity.matches);
-          console.log(`Updated ${normalizedActivity.matches.length} matches for cup: ${normalizedActivity.name}`);
+          // FIX: Convert string IDs to Activity objects if needed
+          const matchesToUpdate = normalizedActivity.matches;
+          await updateCupMatches(normalizedActivity.id, matchesToUpdate);
+          console.log(`Updated ${matchesToUpdate.length} matches for cup: ${normalizedActivity.name}`);
         } catch (cupMatchError) {
           console.error("Error updating cup matches:", cupMatchError);
           throw cupMatchError;
