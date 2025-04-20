@@ -1,31 +1,29 @@
 
-import React from "react";
 import { Activity, Player } from "@/types/player";
+import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityTabViewContentProps {
   activeView: "upcoming" | "historical" | "statistics";
   renderContent: () => any;
-  players?: Player[];
-  activities?: Activity[];
-  onActivitySelect?: (activity: Activity) => void;
-  onPlayerSelect?: (playerId: string) => void;
-  onEditActivity?: (activity: Activity) => void;
-  onActivityUpdate?: (activity: Activity) => Promise<void>;
-  onDeleteActivity?: (activityId: string) => Promise<boolean>;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
+  players: Player[];
+  activities: Activity[];
+  onActivitySelect: (activity: Activity | null) => void;
+  onPlayerSelect: (playerId: string) => void;
+  onEditActivity: (activity: Activity) => void;
+  onActivityUpdate: (activity: Activity) => Promise<void>;
+  onDeleteActivity: (activityId: string) => Promise<boolean>;
+  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityTabViewContent({
   activeView,
   renderContent,
-  players = [],
-  activities = [],
+  players,
+  activities,
   onActivitySelect,
   onPlayerSelect,
   onEditActivity,
@@ -34,73 +32,74 @@ export function ActivityTabViewContent({
   onKioskAssignmentUpdate,
   onMatchResultUpdate
 }: ActivityTabViewContentProps) {
-  const isMobile = useIsMobile();
+  // Get content from renderContent
   const content = renderContent();
   
-  if (!content) {
-    return activeView === "statistics" ? (
-      <StatisticsTabsWrapper
+  // If activeView is statistics, render the statistics wrapper
+  if (activeView === "statistics") {
+    const gradeData = players.reduce((acc, player) => {
+      if (player.positions?.includes("TRÄNARE")) return acc;
+      
+      const grade = player.grade;
+      const existingGrade = acc.find(item => item.grade === grade);
+      
+      if (existingGrade) {
+        existingGrade.players++;
+      } else {
+        acc.push({ grade, players: 1 });
+      }
+      
+      return acc;
+    }, [] as { grade: string, players: number }[]);
+    
+    gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
+    
+    return (
+      <StatisticsTabsWrapper 
         players={players}
         activities={activities}
-        gradeData={players.reduce((acc, player) => {
-          if (player.positions?.includes("TRÄNARE")) return acc;
-          
-          const grade = player.grade;
-          const existingGrade = acc.find(item => item.grade === grade);
-          
-          if (existingGrade) {
-            existingGrade.players++;
-          } else if (grade) {
-            acc.push({ grade, players: 1 });
-          }
-          
-          return acc;
-        }, [] as { grade: string, players: number }[]).sort((a, b) => a.grade.localeCompare(b.grade))}
+        gradeData={gradeData}
       />
-    ) : null;
+    );
   }
-
-  // Ensure onActivityUpdate returns Promise<void>
-  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
-    if (onActivityUpdate) {
-      await onActivityUpdate(activity);
-    }
-  };
-
-  switch (content.viewType) {
-    case "player-detail":
+  
+  // Handle view rendering based on content type
+  if (content) {
+    if (content.viewType === "player-detail" && content.player) {
       return (
         <PlayerDetail 
           player={content.player} 
-          activities={content.activities} 
-          onClose={() => onPlayerSelect && onPlayerSelect("")}
+          activities={content.activities || activities} 
+          onClose={() => onPlayerSelect("")}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}
           onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
           allPlayers={players}
         />
       );
-      
-    case "activity-detail":
+    }
+    
+    if (content.viewType === "activity-detail" && content.activity) {
       return (
         <ActivityDetail 
           activity={content.activity}
           players={players}
-          onBack={() => onActivitySelect && onActivitySelect(null)}
+          onBack={() => onActivitySelect(null)}
           onEdit={onEditActivity}
-          onActivityUpdate={handleActivityUpdate}
-          onKioskAssignmentUpdate={onKioskAssignmentUpdate}
           onDeleteActivity={onDeleteActivity}
+          onActivityUpdate={onActivityUpdate}
+          onKioskAssignmentUpdate={onKioskAssignmentUpdate}
           onActivitySelect={onActivitySelect}
-          relatedActivities={content.relatedActivities}
-          cupMatches={content.cupMatches}
+          relatedActivities={content.relatedActivities || []}
+          cupMatches={content.cupMatches || []}
           allActivities={activities}
-          onClose={() => onActivitySelect && onActivitySelect(null)}
+          onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
           onPlayerSelect={onPlayerSelect}
         />
       );
-      
-    case "activities-list":
+    }
+    
+    if (content.viewType === "activities-list") {
       return (
         <ActivityList 
           activities={content.activities}
@@ -108,12 +107,11 @@ export function ActivityTabViewContent({
           onSelect={onActivitySelect}
           onPlayerSelect={onPlayerSelect}
           isHistorical={activeView === "historical"}
-          isMobile={isMobile}
-          noResultsMessage={"Inga aktiviteter hittades"}
+          noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
         />
       );
-      
-    default:
-      return null;
+    }
   }
+  
+  return null;
 }

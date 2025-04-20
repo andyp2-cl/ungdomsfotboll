@@ -4,6 +4,7 @@ import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ActivityManagement } from "@/components/ActivityManagement";
+import { ActivityTabContent as NewActivityTabContent } from "@/components/tabs/activity-tab";
 
 interface ActivitiesTabContentProps {
   activities: Activity[];
@@ -22,6 +23,7 @@ interface ActivitiesTabContentProps {
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivitiesTabContent({
@@ -40,7 +42,8 @@ export function ActivitiesTabContent({
   handleKioskAssignmentUpdate,
   handleDeleteActivity,
   handleImportedActivities,
-  handleClearHistoricalActivities
+  handleClearHistoricalActivities,
+  handleMatchResultUpdate
 }: ActivitiesTabContentProps) {
   return (
     <div className="space-y-6">
@@ -52,29 +55,25 @@ export function ActivitiesTabContent({
         </Button>
       </div>
       
-      <ActivityManagement
+      {/* Use the new refactored ActivityTabContent component */}
+      <NewActivityTabContent
         activities={activities}
         players={players}
         selectedActivity={selectedActivity}
         selectedActivityTypes={selectedActivityTypes}
         filteredActivities={filteredActivities}
         filteredHistoricalActivities={filteredHistoricalActivities}
-        onActivityTypeChange={handleActivityTypeChange}
-        onActivitySelect={setSelectedActivity}
-        onActivityUpdate={handleActivityUpdate}
-        onAddActivityClick={() => setIsAddActivityOpen(true)}
-        onEditActivityClick={setEditingActivity}
-        onKioskAssignmentUpdate={async (activityId, playerId) => {
-          try {
-            await handleKioskAssignmentUpdate(activityId, playerId);
-            return true;
-          } catch (error) {
-            return false;
-          }
-        }}
-        onDeleteActivity={handleDeleteActivity}
-        onImportedActivities={handleImportedActivities}
-        onClearHistoricalActivities={handleClearHistoricalActivities}
+        isAddActivityOpen={isAddActivityOpen}
+        handleActivityTypeChange={handleActivityTypeChange}
+        setSelectedActivity={setSelectedActivity}
+        handleActivityUpdate={handleActivityUpdate}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        setEditingActivity={setEditingActivity}
+        handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+        handleDeleteActivity={handleDeleteActivity}
+        handleImportedActivities={handleImportedActivities}
+        handleClearHistoricalActivities={handleClearHistoricalActivities}
+        handleMatchResultUpdate={handleMatchResultUpdate}
       />
     </div>
   );
