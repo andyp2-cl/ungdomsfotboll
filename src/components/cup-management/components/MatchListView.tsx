@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatDate";
 import { QuickMatchResult } from "@/components/activity-detail/QuickMatchResult";
 import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchListViewProps {
   matches: Activity[];
@@ -15,6 +17,8 @@ interface MatchListViewProps {
 }
 
 export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: MatchListViewProps) {
+  const isMobile = useIsMobile();
+  
   const getResultTextColor = (activity: Activity): string => {
     if (activity.homeScore === undefined || activity.awayScore === undefined) {
       return "";
@@ -40,7 +44,7 @@ export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: Mat
     <div className="space-y-3">
       {matches.map((match) => (
         <Card key={match.id} className="overflow-hidden">
-          <CardContent className="p-4">
+          <CardContent className={isMobile ? "p-3" : "p-4"}>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -65,7 +69,7 @@ export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: Mat
                       <Badge variant="outline" className="font-normal flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {match.location.name}
-                        {match.location.description && ` - ${match.location.description}`}
+                        {match.location.description && (isMobile ? "" : ` - ${match.location.description}`)}
                       </Badge>
                     )}
                   </div>
@@ -78,13 +82,13 @@ export function MatchListView({ matches, onEditMatch, onMatchResultUpdate }: Mat
                     onClick={() => onEditMatch(match.id)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
-                    Redigera
+                    {isMobile ? "" : "Redigera"}
                   </Button>
                 )}
               </div>
               
               {match.homeScore !== undefined && match.awayScore !== undefined && (
-                <div className={`text-lg font-bold mt-1 ${getResultTextColor(match)}`}>
+                <div className={`${isMobile ? "text-base" : "text-lg"} font-bold mt-1 ${getResultTextColor(match)}`}>
                   Resultat: {match.homeScore}-{match.awayScore}
                 </div>
               )}

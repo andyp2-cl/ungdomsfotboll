@@ -115,7 +115,7 @@ export function ScoreForm({
                 inputMode="numeric"
                 value={homeScore === undefined ? "" : homeScore}
                 onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={`${isHassleholm === 'home' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
+                className={`${isHassleholm === 'home' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg text-center" : ""}`}
               />
             </div>
             <div className="flex justify-center items-center text-lg font-bold">
@@ -132,7 +132,7 @@ export function ScoreForm({
                 inputMode="numeric"
                 value={awayScore === undefined ? "" : awayScore}
                 onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={`${isHassleholm === 'away' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg" : ""}`}
+                className={`${isHassleholm === 'away' ? "border-blue-200" : ""} ${isMobile ? "h-12 text-lg text-center" : ""}`}
               />
             </div>
           </div>

@@ -6,6 +6,7 @@ import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { GradePieChart } from "../activity-detail/match-result/GradePieChart"; 
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -13,7 +14,6 @@ interface ActivityListItemProps {
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
-  isMobile?: boolean;
 }
 
 export function ActivityListItem({ 
@@ -21,10 +21,10 @@ export function ActivityListItem({
   players, 
   onSelect,
   onPlayerSelect,
-  isHistorical = false,
-  isMobile = false 
+  isHistorical = false
 }: ActivityListItemProps) {
   const { name, date, time, location, participants = [] } = activity;
+  const isMobile = useIsMobile();
   
   const formattedDate = new Date(date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });

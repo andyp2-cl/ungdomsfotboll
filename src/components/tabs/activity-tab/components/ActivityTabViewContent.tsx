@@ -4,6 +4,7 @@ import { StatisticsTabsWrapper } from "@/components/player-management/statistics
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityTabViewContentProps {
   activeView: "upcoming" | "historical" | "statistics";
@@ -32,6 +33,8 @@ export function ActivityTabViewContent({
   onKioskAssignmentUpdate,
   onMatchResultUpdate
 }: ActivityTabViewContentProps) {
+  const isMobile = useIsMobile();
+  
   // Get content from renderContent
   const content = renderContent();
   
@@ -107,6 +110,7 @@ export function ActivityTabViewContent({
           onSelect={onActivitySelect}
           onPlayerSelect={onPlayerSelect}
           isHistorical={activeView === "historical"}
+          isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
         />
       );

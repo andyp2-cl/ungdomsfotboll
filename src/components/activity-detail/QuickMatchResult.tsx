@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, X, Edit2 } from "lucide-react";
-import { isHomeMatch } from "./match-result/utils";
-import { extractTeamNames } from "./match-result/utils";
+import { Save } from "lucide-react";
+import { extractTeamNames, isHomeMatch } from "./match-result/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -16,114 +17,107 @@ interface QuickMatchResultProps {
 
 export function QuickMatchResult({ 
   activity, 
-  onSave,
+  onSave, 
   isReadOnly = false,
   resultColorClass = ""
 }: QuickMatchResultProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
   
-  const isHome = isHomeMatch(activity);
   const teamNames = extractTeamNames(activity);
+  const isHome = isHomeMatch(activity);
   
-  // Reset scores to activity values if editing is cancelled
-  const handleCancel = () => {
-    setHomeScore(activity.homeScore);
-    setAwayScore(activity.awayScore);
-    setIsEditing(false);
-  };
+  // Determine if Hässleholms IF is the home or away team
+  const isHassleholm = isHome ? 'home' : 'away';
   
-  const handleSaveClick = async () => {
+  // Create appropriate labels
+  const homeTeamLabel = isHome ? "HIF" : teamNames.homeTeam.substring(0, isMobile ? 8 : 15);
+  const awayTeamLabel = !isHome ? "HIF" : teamNames.awayTeam.substring(0, isMobile ? 8 : 15);
+  
+  const handleSave = async () => {
+    if (isReadOnly) return;
+    
     setIsSaving(true);
     try {
       await onSave(homeScore, awayScore);
-      setIsEditing(false);
+      toast({
+        title: "Resultat sparat",
+        description: "Matchresultatet har sparats framgångsrikt.",
+      });
+    } catch (error) {
+      console.error("Error saving match result:", error);
+      toast({
+        title: "Ett fel uppstod",
+        description: "Kunde inte spara resultat. Försök igen.",
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false);
     }
   };
-  
-  // Display read-only result if not editing
-  if (!isEditing) {
-    const hasResult = activity.homeScore !== undefined && activity.awayScore !== undefined;
-    
-    return (
-      <div className="flex items-center justify-between">
-        <div>
-          {hasResult ? (
-            <div className={`font-medium ${resultColorClass}`}>
-              Resultat: {activity.homeScore}-{activity.awayScore}
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3 items-center">
+        <div className="space-y-1">
+          <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'home' ? "font-semibold" : ""}`}>
+            {homeTeamLabel}
+          </div>
+          {isReadOnly ? (
+            <div className={`text-center text-lg font-bold ${resultColorClass}`}>
+              {homeScore !== undefined ? homeScore : "-"}
             </div>
           ) : (
-            <div className="text-muted-foreground">Inget resultat registrerat</div>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={homeScore === undefined ? "" : homeScore}
+              onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
+              className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'home' ? "border-blue-200" : ""}`}
+            />
           )}
         </div>
         
-        {!isReadOnly && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsEditing(true)}
-            className="h-8"
-          >
-            <Edit2 className="h-3.5 w-3.5 mr-1" />
-            {hasResult ? "Ändra" : "Lägg till"}
-          </Button>
-        )}
-      </div>
-    );
-  }
-  
-  // Display editable form
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <div className="text-xs text-muted-foreground mb-1">
-            {isHome ? "Hässleholms IF" : teamNames.homeTeam}
-          </div>
-          <Input
-            type="number"
-            min="0"
-            placeholder="0"
-            value={homeScore === undefined ? "" : homeScore}
-            onChange={(e) => setHomeScore(e.target.value === "" ? undefined : parseInt(e.target.value))}
-          />
+        <div className="flex justify-center items-center">
+          <div className="text-xl font-bold">-</div>
         </div>
-        <div>
-          <div className="text-xs text-muted-foreground mb-1">
-            {!isHome ? "Hässleholms IF" : teamNames.awayTeam}
+        
+        <div className="space-y-1">
+          <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'away' ? "font-semibold" : ""}`}>
+            {awayTeamLabel}
           </div>
-          <Input
-            type="number"
-            min="0"
-            placeholder="0"
-            value={awayScore === undefined ? "" : awayScore}
-            onChange={(e) => setAwayScore(e.target.value === "" ? undefined : parseInt(e.target.value))}
-          />
+          {isReadOnly ? (
+            <div className={`text-center text-lg font-bold ${resultColorClass}`}>
+              {awayScore !== undefined ? awayScore : "-"}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={awayScore === undefined ? "" : awayScore}
+              onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
+              className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'away' ? "border-blue-200" : ""}`}
+            />
+          )}
         </div>
       </div>
-      <div className="flex justify-end space-x-2">
+      
+      {!isReadOnly && (
         <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleCancel}
+          onClick={handleSave} 
           disabled={isSaving}
+          className={`w-full ${isMobile ? 'h-10' : ''}`}
+          size={isMobile ? "sm" : "default"}
         >
-          <X className="h-4 w-4 mr-1" />
-          Avbryt
+          <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
+          {isSaving ? "Sparar..." : "Spara resultat"}
         </Button>
-        <Button 
-          size="sm" 
-          onClick={handleSaveClick}
-          disabled={isSaving}
-        >
-          <Save className="h-4 w-4 mr-1" />
-          {isSaving ? "Sparar..." : "Spara"}
-        </Button>
-      </div>
+      )}
     </div>
   );
 }
