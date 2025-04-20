@@ -14,6 +14,7 @@ interface ActivityListItemProps {
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
+  isMobile?: boolean; // Add isMobile prop to the interface
 }
 
 export function ActivityListItem({ 
@@ -21,10 +22,15 @@ export function ActivityListItem({
   players, 
   onSelect,
   onPlayerSelect,
-  isHistorical = false
+  isHistorical = false,
+  isMobile
 }: ActivityListItemProps) {
+  // Use the hook only if isMobile is not provided
+  const mobileFromHook = useIsMobile();
+  // Use passed isMobile prop if provided, otherwise use the hook value
+  const isMobileView = isMobile !== undefined ? isMobile : mobileFromHook;
+  
   const { name, date, time, location, participants = [] } = activity;
-  const isMobile = useIsMobile();
   
   const formattedDate = new Date(date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });
@@ -66,11 +72,11 @@ export function ActivityListItem({
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={() => onSelect(activity)}
     >
-      <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+      <CardContent className={`${isMobileView ? 'p-3' : 'p-4'}`}>
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-              <h3 className={`font-bold ${isMobile ? 'text-base' : ''} flex items-center flex-wrap gap-2`}>
+              <h3 className={`font-bold ${isMobileView ? 'text-base' : ''} flex items-center flex-wrap gap-2`}>
                 {name}
                 {isCupMatch && (
                   <Badge variant="outline" className="flex items-center gap-1">
@@ -81,50 +87,50 @@ export function ActivityListItem({
               </h3>
             </div>
             
-            <div className={`flex flex-wrap gap-2 text-sm mt-2 ${isMobile ? 'text-xs' : ''}`}>
+            <div className={`flex flex-wrap gap-2 text-sm mt-2 ${isMobileView ? 'text-xs' : ''}`}>
               <div className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <Calendar className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 <span>{capitalizedDayOfWeek} {formattedDate}</span>
               </div>
               
               {time && (
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <Clock className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   <span>{time}</span>
                 </div>
               )}
               
               {location?.name && (
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <Map className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <Map className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   <span>{location.name}</span>
                 </div>
               )}
             </div>
             
-            <div className={`${isMobile ? 'mt-2' : 'mt-3'}`}>
+            <div className={`${isMobileView ? 'mt-2' : 'mt-3'}`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
                 onPlayerSelect={onPlayerSelect}
                 totalCount={participants.length}
-                isMobile={isMobile}
+                isMobile={isMobileView}
               />
             </div>
           </div>
 
           <div className="md:w-48 flex flex-col items-end justify-start">
             {resultMessage && (
-              <div className={`${isMobile ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
+              <div className={`${isMobileView ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
                 {resultMessage}
               </div>
             )}
             
             <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
-              <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              <span className={isMobile ? 'text-xs' : ''}>{participants.length} deltagare</span>
+              <Users className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              <span className={isMobileView ? 'text-xs' : ''}>{participants.length} deltagare</span>
             </div>
 
-            {showGradeChart && !isMobile && (
+            {showGradeChart && !isMobileView && (
               <div className="w-24 h-24 overflow-hidden">
                 <GradePieChart 
                   activity={activity} 
@@ -133,7 +139,7 @@ export function ActivityListItem({
               </div>
             )}
             
-            {showGradeChart && isMobile && (
+            {showGradeChart && isMobileView && (
               <div className="w-16 h-16 overflow-hidden">
                 <GradePieChart 
                   activity={activity} 
