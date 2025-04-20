@@ -34,16 +34,33 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       });
     }
     
+    // Process cups and matches relationship
+    // For each cup, set its name on related matches
+    // and for each match, find its corresponding cup name
+    const cups = activities.filter(activity => activity.type === 'cup');
+    const matches = activities.filter(activity => activity.type === 'match');
+    
+    // Set cupName for matches based on cup ID
+    matches.forEach(match => {
+      if (match.cupId) {
+        const relatedCup = cups.find(cup => cup.id === match.cupId);
+        if (relatedCup) {
+          match.cupName = relatedCup.name;
+          console.log(`Set cupName=${relatedCup.name} for match ${match.id}`);
+        }
+      }
+    });
+    
     // Group related cup activities
     const matchesByCup = new Map<string, Activity[]>();
     
-    // First, organize matches by cup name
-    activities.forEach(activity => {
-      if (activity.type === 'match' && activity.cupName) {
-        if (!matchesByCup.has(activity.cupName)) {
-          matchesByCup.set(activity.cupName, []);
+    // First, organize matches by cup ID
+    matches.forEach(activity => {
+      if (activity.cupId) {
+        if (!matchesByCup.has(activity.cupId)) {
+          matchesByCup.set(activity.cupId, []);
         }
-        matchesByCup.get(activity.cupName)?.push(activity);
+        matchesByCup.get(activity.cupId)?.push(activity);
       }
     });
     
@@ -56,7 +73,7 @@ export const fetchActivities = async (): Promise<Activity[]> => {
   }
 };
 
-// Get all cup names from activities - consider both cup types and match types with cupName
+// Get all cup names from activities - consider both cup types
 export const getAllCupNames = (activities: Activity[]): string[] => {
   const cupNames = new Set<string>();
   
@@ -64,11 +81,6 @@ export const getAllCupNames = (activities: Activity[]): string[] => {
     // Include names from cup type activities
     if (activity.type === 'cup' && activity.name) {
       cupNames.add(activity.name);
-    }
-    
-    // Also include names from match type activities that reference a cup
-    if (activity.cupName) {
-      cupNames.add(activity.cupName);
     }
   });
   
@@ -80,9 +92,23 @@ export const getAllCupNames = (activities: Activity[]): string[] => {
 export const findMatchesByCupName = (activities: Activity[], cupName: string): Activity[] => {
   if (!cupName) return [];
   
-  return activities.filter(activity => 
-    activity.type === 'match' && activity.cupName === cupName
-  );
+  return activities.filter(activity => {
+    if (activity.type !== 'match') return false;
+    
+    // Check if this match references a cup with this name
+    // This cupName might be assigned in memory rather than from DB
+    if (activity.cupName === cupName) return true;
+    
+    // Or check if the match references a cup ID that belongs to a cup with this name
+    if (activity.cupId) {
+      const relatedCup = activities.find(cup => 
+        cup.type === 'cup' && cup.id === activity.cupId && cup.name === cupName
+      );
+      return !!relatedCup;
+    }
+    
+    return false;
+  });
 };
 
 // Existing function

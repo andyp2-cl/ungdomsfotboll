@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
@@ -6,12 +5,20 @@ import { formatActivityForDatabase } from "@/utils/database/formatters";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cup-matches";
 import { normalizePlayerStats } from "@/utils/database/formatters/player-stats";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 // Save activities to Supabase
 export const saveActivities = async (activities: Activity[]): Promise<void> => {
   console.log("Saving activities to Supabase:", activities.length);
   
   try {
+    // First check if Supabase is properly configured
+    const isConnected = await isSupabaseConfigured();
+    
+    if (!isConnected) {
+      throw new Error("Supabase connection is not properly configured or is not working");
+    }
+    
     for (const activity of activities) {
       // Clone the activity to avoid mutations during processing
       const activityToSave = structuredClone(activity);
@@ -19,8 +26,8 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Set cupId to the activity's id if it's a cup type
       if (activityToSave.type === "cup") {
         activityToSave.cupId = activityToSave.id;
-        activityToSave.cupName = activityToSave.name;
-        console.log(`Setting cupId and cupName for cup activity: ${activityToSave.id}`);
+        // We'll keep cupName in the local model but handle it differently for database storage
+        console.log(`Setting cupId for cup activity: ${activityToSave.id}`);
       }
       
       // Normalize player_stats to ensure it's always an object before saving
@@ -38,7 +45,6 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         name: normalizedActivity.name,
         type: normalizedActivity.type,
         cupId: normalizedActivity.cupId,
-        cupName: normalizedActivity.cupName,
         date: normalizedActivity.date,
         participants: normalizedActivity.participants?.length || 0,
         matches: normalizedActivity.matches?.length || 0,
@@ -52,7 +58,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         .single();
         
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error("Error checking if activity exists:", checkError);
+        console.error("Error checking if activity exists:", checkError.message, checkError.details);
         throw checkError;
       }
       
@@ -71,7 +77,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         .upsert(cleanFormattedActivity);
         
       if (upsertError) {
-        console.error("Error upserting activity:", upsertError);
+        console.error("Error upserting activity:", upsertError.message, upsertError.details);
         throw upsertError;
       }
       

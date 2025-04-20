@@ -5,6 +5,7 @@ import { isHomeMatch, calculateWinStatus } from "./utils";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
 import { supabase } from "@/lib/supabase";
 import { formatActivityForDatabase } from "@/utils/database/formatters";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 interface UseResultSaverParams {
   activity: Activity;
@@ -35,6 +36,18 @@ export function useResultSaver({
         activityId: activity.id
       });
       
+      // Check if Supabase is configured first
+      const isConnected = await isSupabaseConfigured();
+      if (!isConnected) {
+        console.error("Supabase connection not configured properly");
+        toast({
+          title: "Databasfel",
+          description: "Kunde inte ansluta till databasen. Kontrollera internetanslutningen.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
       // Create result string if both scores are defined
       const resultString = homeScore !== undefined && awayScore !== undefined 
         ? `${homeScore}-${awayScore}` 
@@ -63,8 +76,18 @@ export function useResultSaver({
       
       // If we have the onMatchResultUpdate prop, use it
       if (onMatchResultUpdate) {
-        await onMatchResultUpdate(activity.id, homeScore, awayScore);
-        console.log("Used onMatchResultUpdate to save result");
+        try {
+          await onMatchResultUpdate(activity.id, homeScore, awayScore);
+          console.log("Used onMatchResultUpdate to save result");
+        } catch (error: any) {
+          console.error("Error in onMatchResultUpdate:", error);
+          toast({
+            title: "Ett fel uppstod",
+            description: `Kunde inte spara ändringar: ${error?.message || "Okänt fel"}`,
+            variant: "destructive"
+          });
+          throw error;
+        }
       } else {
         // Otherwise directly update the database - FORMATTED FOR DATABASE!
         console.log("Directly updating database with match result");
@@ -83,7 +106,12 @@ export function useResultSaver({
           .eq('id', activity.id);
           
         if (error) {
-          console.error("Error saving match result to database:", error);
+          console.error("Error saving match result to database:", error.message, error.details);
+          toast({
+            title: "Databasfel",
+            description: `Kunde inte spara matchresultat: ${error.message}`,
+            variant: "destructive"
+          });
           throw error;
         } else {
           console.log("Successfully saved match result directly to database");
@@ -119,11 +147,11 @@ export function useResultSaver({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save match result:", error);
       toast({
         title: "Kunde inte spara matchresultat",
-        description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
+        description: `Ett fel uppstod: ${error?.message || "Okänt fel"}`,
         variant: "destructive"
       });
       return false;

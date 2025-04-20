@@ -96,10 +96,11 @@ export function AddActivityForm({
         }
       };
       
-      // If it's a cup, set the cup name and cup ID to the activity name and activity ID
+      // Set up cup relationship for cup types or match referencing cups
       if (type === "cup") {
-        newActivity.cupName = name;
         newActivity.cupId = activityId; // Set cupId to this activity's ID
+        // We keep cupName in memory but handle differently for database
+        newActivity.cupName = name;
         console.log(`Created new cup: ${name} with ID: ${activityId}, cupId: ${activityId}`);
       } 
       // If it's a match and a cup is selected, save the cup reference
@@ -120,13 +121,14 @@ export function AddActivityForm({
       try {
         await onSave(newActivity);
         toast.success(`${type === "cup" ? "Cup" : "Match"} sparad!`);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error in onSave callback:", error);
-        toast.error("Det gick inte att spara aktiviteten. Försök igen.");
+        const errorMessage = error?.message || "Det gick inte att spara aktiviteten";
+        toast.error(`Det gick inte att spara aktiviteten: ${errorMessage}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving activity:", error);
-      toast.error("Det gick inte att spara aktiviteten. Försök igen.");
+      toast.error(`Det gick inte att spara aktiviteten: ${error?.message || "Okänt fel"}`);
     } finally {
       setIsSaving(false);
     }

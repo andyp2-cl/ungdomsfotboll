@@ -1,6 +1,7 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /**
  * Handle adding a new activity
@@ -19,6 +20,18 @@ export const handleAddActivity = async (
       date: newActivity.date,
       cupId: newActivity.cupId
     });
+    
+    // First check if Supabase is configured
+    const isConnected = await isSupabaseConfigured();
+    if (!isConnected) {
+      console.error("Supabase connection is not properly configured");
+      toast({
+        title: "Databasfel",
+        description: "Kunde inte ansluta till databasen. Kontrollera internetanslutningen.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Make a clean copy of the new activity to avoid reference issues
     const activityToSave = structuredClone(newActivity);
@@ -51,20 +64,20 @@ export const handleAddActivity = async (
         title: "Aktivitet skapad",
         description: `${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`
       });
-    } catch (saveError) {
+    } catch (saveError: any) {
       console.error("Error saving activity to database:", saveError);
       toast({
         title: "Error",
-        description: "Kunde inte spara aktiviteten till databasen.",
+        description: `Kunde inte spara aktiviteten till databasen: ${saveError?.message || "Okänt fel"}`,
         variant: "destructive"
       });
       throw saveError;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in handleAddActivity:", error);
     toast({
       title: "Error",
-      description: `Ett fel uppstod: ${error.message || "Kunde inte skapa aktivitet"}`,
+      description: `Ett fel uppstod: ${error?.message || "Kunde inte skapa aktivitet"}`,
       variant: "destructive"
     });
     throw error;

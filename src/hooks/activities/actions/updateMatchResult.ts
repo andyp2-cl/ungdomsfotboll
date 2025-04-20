@@ -1,6 +1,7 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /**
  * Updates match result (score) for an existing activity
@@ -15,6 +16,18 @@ export const handleMatchResultUpdate = async (
 ): Promise<void> => {
   try {
     console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
+    
+    // First check if Supabase is configured
+    const isConnected = await isSupabaseConfigured();
+    if (!isConnected) {
+      console.error("Supabase connection is not properly configured");
+      toast({
+        title: "Databasfel",
+        description: "Kunde inte ansluta till databasen. Kontrollera internetanslutningen.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Find the existing activity
     const activity = activities.find(a => a.id === activityId);
@@ -84,22 +97,22 @@ export const handleMatchResultUpdate = async (
           `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
           "Resultat borttaget",
       });
-    } catch (saveError) {
+    } catch (saveError: any) {
       console.error("Error saving match result to database:", saveError);
       
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte spara matchresultatet. Försök igen.",
+        description: `Kunde inte spara matchresultatet: ${saveError?.message || "Okänt fel"}`,
         variant: "destructive"
       });
       
       throw saveError;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in handleMatchResultUpdate:", error);
     toast({
       title: "Ett fel uppstod",
-      description: "Kunde inte uppdatera matchresultatet. Försök igen.",
+      description: `Kunde inte uppdatera matchresultatet: ${error?.message || "Okänt fel"}`,
       variant: "destructive"
     });
     throw error;
