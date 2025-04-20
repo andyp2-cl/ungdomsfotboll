@@ -1,7 +1,6 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { toast } from "sonner";
 
 /**
  * Handle adding a new activity
@@ -48,14 +47,12 @@ export const handleAddActivity = async (
       
       console.log(`Added new ${activityToSave.type}: ${activityToSave.name}`);
       
-      // Fix: Using toast function correctly
       toast({
         title: "Aktivitet skapad",
         description: `${activityToSave.type === "cup" ? "Cup" : "Match"} skapad: ${activityToSave.name}`
       });
     } catch (saveError) {
       console.error("Error saving activity to database:", saveError);
-      // Fix: Using toast function correctly
       toast({
         title: "Error",
         description: "Kunde inte spara aktiviteten till databasen.",
@@ -65,7 +62,6 @@ export const handleAddActivity = async (
     }
   } catch (error) {
     console.error("Error in handleAddActivity:", error);
-    // Fix: Using toast function correctly
     toast({
       title: "Error",
       description: `Ett fel uppstod: ${error.message || "Kunde inte skapa aktivitet"}`,

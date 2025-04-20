@@ -14,7 +14,7 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
       .limit(1);
     
     if (error) {
-      console.error("Supabase connection test failed:", error);
+      console.error("Supabase connection test failed:", error.message);
       return false;
     }
     

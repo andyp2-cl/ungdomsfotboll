@@ -2,7 +2,6 @@
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { normalizePlayerStats } from "../utils/playerStatsUtils";
-import { toast } from "sonner";
 
 /**
  * Handles updating an existing activity
@@ -49,7 +48,7 @@ export const handleActivityUpdate = async (
       activity.id === normalizedActivity.id ? normalizedActivity : activity
     );
     
-    // Try to save to database FIRST, before updating UI state (ÄNDRA ORDNING)
+    // Try to save to database FIRST, before updating UI state
     try {
       console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
       
@@ -85,7 +84,7 @@ export const handleActivityUpdate = async (
         
         setPlayers(updatedPlayers);
         
-        // Skapa en kopia av spelarlistan för att undvika mutationer
+        // Create a copy of the players list to avoid mutations
         const playersToSave = JSON.parse(JSON.stringify(updatedPlayers));
         await savePlayers(playersToSave);
       }
