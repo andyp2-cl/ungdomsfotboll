@@ -95,8 +95,8 @@ export function ActivityDetailView({
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
   return (
-    <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 h-[100dvh]' : 'lg:max-w-3xl mx-auto'}`}>
-      <CardHeader className={isMobile ? 'px-3 py-3 border-b' : ''}>
+    <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 max-h-[100dvh] overflow-hidden' : 'lg:max-w-3xl mx-auto'}`}>
+      <CardHeader className={isMobile ? 'px-3 py-3 border-b flex-shrink-0' : ''}>
         <div className="flex justify-between items-start gap-2">
           <ActivityDetailHeaderContent 
             activity={currentActivity}
@@ -120,8 +120,8 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <ScrollArea className={`flex-1 overflow-y-auto ${isMobile ? 'h-[calc(100dvh-140px)]' : ''}`}>
-        <CardContent className={`space-y-6 ${isMobile ? 'px-3 pb-20' : ''}`}>
+      <div className={`flex-grow overflow-y-auto ${isMobile ? 'pb-16' : ''}`}>
+        <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4' : ''}`}>
           {isMatch && (
             <MatchResultSection 
               activity={activity}
@@ -165,8 +165,8 @@ export function ActivityDetailView({
           {/* Render extra content (like cup matches) */}
           {extraContent}
         </CardContent>
-      </ScrollArea>
-      <CardFooter className={`flex justify-end mt-auto ${isMobile ? 'px-3 py-3 border-t' : ''}`}>
+      </div>
+      <CardFooter className={`${isMobile ? 'px-3 py-3 border-t bg-background sticky bottom-0' : ''}`}>
         <Button 
           variant="outline" 
           onClick={handleClose}
