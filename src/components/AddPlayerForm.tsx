@@ -7,7 +7,6 @@ import { ImageUploadField } from "./player-form/ImageUploadField";
 import { PlayerPositionField } from "./player-form/PlayerPositionField";
 import { FormButtons } from "./player-form/FormButtons";
 import { usePlayerForm } from "./player-form/usePlayerForm";
-import { Checkbox } from "./ui/checkbox";
 
 export interface AddPlayerFormProps {
   onSave: (player: Player) => void;
@@ -15,7 +14,7 @@ export interface AddPlayerFormProps {
 }
 
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
-  const { form, imagePreview, setImagePreview, handleSubmit, isTrainer } = usePlayerForm({ 
+  const { form, imagePreview, setImagePreview, handleSubmit } = usePlayerForm({ 
     onSave, 
     onCancel 
   });
@@ -42,31 +41,29 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
           )}
         />
 
-        {!isTrainer && (
-          <FormField
-            control={form.control}
-            name="grade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nivå</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || "A"}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Välj nivå" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="A">Nivå A</SelectItem>
-                    <SelectItem value="B">Nivå B</SelectItem>
-                    <SelectItem value="C">Nivå C</SelectItem>
-                    <SelectItem value="D">Nivå D</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={form.control}
+          name="grade"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nivå</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Välj nivå" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="A">Nivå A</SelectItem>
+                  <SelectItem value="B">Nivå B</SelectItem>
+                  <SelectItem value="C">Nivå C</SelectItem>
+                  <SelectItem value="D">Nivå D</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <PlayerPositionField form={form} />
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Player } from "@/types/player";
 
@@ -30,7 +29,7 @@ export function usePlayerSorting() {
           const posB = b.positions?.[0] || '';
           return posA.localeCompare(posB) * dirMod;
         case 'grade':
-          return (a.grade || '').localeCompare(b.grade || '') * dirMod;
+          return a.grade.localeCompare(b.grade) * dirMod;
         default:
           return 0;
       }

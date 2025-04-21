@@ -2,7 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { BackupData } from "./types";
 import { processMatchData } from "./utils";
-import { Player, PlayerPosition } from "@/types/player";
+import { Player } from "@/types/player";
 
 /**
  * Creates a backup of all players and activities data and stores it in localStorage
@@ -48,41 +48,14 @@ export const createBackup = async (): Promise<void> => {
     }
     
     // Create a properly typed copy of players with activities property
-    const playersWithActivities: Player[] = players.map(player => {
-      // Properly convert position from string to array of PlayerPosition
-      let positions: PlayerPosition[] = [];
-      
-      if (player.position) {
-        // Handle position based on its type
-        if (typeof player.position === 'string') {
-          try {
-            // Try to parse as JSON if it contains brackets
-            if (player.position.includes('[')) {
-              const parsed = JSON.parse(player.position);
-              positions = Array.isArray(parsed) ? parsed as PlayerPosition[] : [];
-            } else {
-              // Treat as space-separated values
-              positions = player.position.split(' ').filter(p => p.trim() !== '') as PlayerPosition[];
-            }
-          } catch (e) {
-            // If parsing fails, try to use as a single value
-            positions = player.position.trim() ? [player.position as unknown as PlayerPosition] : [];
-          }
-        } else if (Array.isArray(player.position)) {
-          positions = player.position as PlayerPosition[];
-        }
-      }
-
-      return {
-        id: player.id,
-        name: player.name,
-        grade: player.grade as any,
-        positions: positions,
-        jersey_number: player.jersey_number || undefined,
-        image: player.image || undefined,
-        activities: [], // Initialize with empty array
-      };
-    });
+    const playersWithActivities: (Player & { activities?: string[] })[] = players.map(player => ({
+      ...player,
+      activities: [], // Initialize with empty array
+      // Convert database fields to expected format
+      grade: player.grade as any,
+      positions: player.position ? JSON.parse(player.position) : undefined,
+      jerseyNumber: player.jersey_number
+    }));
     
     // Attach activities to players
     if (playerActivitiesData && playerActivitiesData.length > 0) {

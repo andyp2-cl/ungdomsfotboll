@@ -1,23 +1,30 @@
-
-import { Player, Activity, PlayerPosition } from '@/types/player';
+import { Player, Activity } from "@/types/player";
+import { getGradeColor } from '@/utils/gradeUtils';
 
 export interface PlayerPerformanceData {
   id: string;
   name: string;
-  position?: string;
-  totalGoals: number;
-  totalAssists: number;
+  grade: string;
+  position: string;
+  jerseyNumber: string;
+  activityCount: number;
+  participationRate: number;
   goalsAvg: number;
   assistsAvg: number;
+  totalGoals: number;
+  totalAssists: number;
   matchCount: number;
   winCount: number;
   drawCount: number;
-  lossCount: number;
   winRate: number;
+  goalRate: number;
+  fill: string;
+  activities: string[];
 }
 
 export interface PositionPerformanceData {
   position: string;
+  count: number;
   participationAvg: number;
   goalsAvg: number;
   assistsAvg: number;
@@ -26,189 +33,149 @@ export interface PositionPerformanceData {
 }
 
 export interface TeamSummaryData {
-  totalGoals: number;
-  totalAssists: number;
   goalData: { name: string; value: number }[];
   assistData: { name: string; value: number }[];
 }
 
-// Chart colors for consistent styling
-export const CHART_COLORS = [
-  '#4f46e5', // indigo-600
-  '#0891b2', // cyan-600
-  '#16a34a', // green-600
-  '#ca8a04', // yellow-600
-  '#ea580c', // orange-600
-  '#dc2626', // red-600
-  '#d946ef', // fuchsia-500
-  '#8b5cf6', // violet-500
-];
+export const CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-// Prepare player performance data from players and activities
-export function preparePerformanceData(players: Player[], activities: Activity[], sortedActivities: Activity[]): PlayerPerformanceData[] {
+export const preparePerformanceData = (players: Player[], activities: Activity[], sortedActivities: Activity[]): PlayerPerformanceData[] => {
   return players
-    .filter(player => player.positions && !player.positions.includes("TRÄNARE"))
+    .filter(player => !player.positions?.includes('TRÄNARE'))
     .map(player => {
-      // Find activities this player participated in
-      const playerActivities = activities.filter(activity => 
-        activity.participants && 
-        activity.participants.includes(player.id) &&
-        activity.type === 'match'
-      );
+      const participationCount = player.activities?.length || 0;
+      const participationRate = sortedActivities.length > 0 
+        ? Math.round((participationCount / sortedActivities.length) * 100) 
+        : 0;
       
-      // Calculate total goals and assists
       let totalGoals = 0;
       let totalAssists = 0;
+      let matchCount = 0;
       let winCount = 0;
       let drawCount = 0;
-      let lossCount = 0;
-      
-      playerActivities.forEach(activity => {
-        // Goals
-        if (activity.player_stats?.goals && activity.player_stats.goals[player.id]) {
-          totalGoals += activity.player_stats.goals[player.id];
-        }
-        
-        // Assists
-        if (activity.player_stats?.assists && activity.player_stats.assists[player.id]) {
-          totalAssists += activity.player_stats.assists[player.id];
-        }
-        
-        // Win/Draw/Loss
-        if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
-          if (activity.homeScore === activity.awayScore) {
-            drawCount++;
-          } else if (activity.isWin === true) {
+      let goalMatches = 0;
+
+      activities.forEach(activity => {
+        if (activity.type === "match" && activity.participants?.includes(player.id)) {
+          matchCount++;
+          
+          if (activity.player_stats) {
+            const goals = activity.player_stats.goals?.[player.id] || 0;
+            const assists = activity.player_stats.assists?.[player.id] || 0;
+            totalGoals += goals;
+            totalAssists += assists;
+            
+            if (goals > 0) {
+              goalMatches++;
+            }
+          }
+          
+          if (activity.isWin === true) {
             winCount++;
           } else if (activity.isWin === false) {
-            lossCount++;
+            // loss, already handled by calculating winCount
+          } else if (activity.homeScore !== undefined && activity.awayScore !== undefined && 
+                   activity.homeScore === activity.awayScore) {
+            drawCount++;
           }
         }
       });
-      
-      // Calculate averages and rates
-      const matchCount = playerActivities.length;
-      const goalsAvg = matchCount > 0 ? totalGoals / matchCount : 0;
-      const assistsAvg = matchCount > 0 ? totalAssists / matchCount : 0;
-      const matchesWithResult = winCount + drawCount + lossCount;
-      const winRate = matchesWithResult > 0 ? Math.round((winCount / matchesWithResult) * 100) : 0;
+
+      const goalsAvg = matchCount > 0 ? (totalGoals / matchCount) : 0;
+      const assistsAvg = matchCount > 0 ? (totalAssists / matchCount) : 0;
+      const winRate = matchCount > 0 ? Math.round((winCount / matchCount) * 100) : 0;
+      const goalRate = matchCount > 0 ? Math.round((goalMatches / matchCount) * 100) : 0;
       
       return {
         id: player.id,
         name: player.name,
-        position: player.positions ? player.positions[0] : undefined,
+        grade: player.grade,
+        position: player.positions?.[0] || 'N/A',
+        jerseyNumber: player.jerseyNumber || '',
+        activityCount: participationCount,
+        participationRate: participationRate,
+        goalsAvg: goalsAvg,
+        assistsAvg: assistsAvg,
         totalGoals,
         totalAssists,
-        goalsAvg,
-        assistsAvg,
         matchCount,
         winCount,
         drawCount,
-        lossCount,
-        winRate
+        winRate,
+        goalRate,
+        fill: getGradeColor(player.grade),
+        activities: player.activities || []
       };
     })
-    .filter(data => data.matchCount > 0); // Only include players who participated in matches
-}
+    .sort((a, b) => a.name.localeCompare(b.name));
+};
 
-// Calculate position-based performance data
-export function calculatePositionData(performanceData: PlayerPerformanceData[]): PositionPerformanceData[] {
-  const positionMap = new Map<string, {
-    players: number;
-    totalParticipation: number;
-    totalGoals: number;
-    totalAssists: number;
-    totalWinRate: number;
-    totalMatches: number;
-  }>();
+export const calculatePositionData = (performanceData: PlayerPerformanceData[]): PositionPerformanceData[] => {
+  const positions = new Map<string, PositionPerformanceData>();
   
-  // Group and calculate totals by position
   performanceData.forEach(player => {
-    const position = player.position || 'Unknown';
-    
-    if (!positionMap.has(position)) {
-      positionMap.set(position, {
-        players: 0,
-        totalParticipation: 0,
-        totalGoals: 0,
-        totalAssists: 0,
-        totalWinRate: 0,
-        totalMatches: 0
-      });
-    }
-    
-    const posData = positionMap.get(position)!;
-    posData.players++;
-    posData.totalGoals += player.totalGoals;
-    posData.totalAssists += player.totalAssists;
-    posData.totalWinRate += player.winRate;
-    posData.totalMatches += player.matchCount;
-  });
-  
-  // Convert to array and calculate averages
-  return Array.from(positionMap.entries()).map(([position, data]) => {
-    return {
-      position,
-      participationAvg: Math.round(data.totalMatches / data.players),
-      goalsAvg: data.totalGoals / data.players,
-      assistsAvg: data.totalAssists / data.players,
-      winRate: Math.round(data.totalWinRate / data.players),
-      avgMatches: data.totalMatches / data.players
+    const pos = player.position;
+    const current = positions.get(pos) || { 
+      position: pos, 
+      count: 0, 
+      participationAvg: 0, 
+      goalsAvg: 0, 
+      assistsAvg: 0, 
+      winRate: 0,
+      avgMatches: 0
     };
+    
+    current.count += 1;
+    current.participationAvg += player.participationRate;
+    current.goalsAvg += player.goalsAvg;
+    current.assistsAvg += player.assistsAvg;
+    current.winRate += player.winRate;
+    current.avgMatches += player.matchCount;
+    
+    positions.set(pos, current);
   });
-}
-
-// Get top scorers sorted by goals
-export function getTopScorers(performanceData: PlayerPerformanceData[]): PlayerPerformanceData[] {
-  return [...performanceData]
-    .sort((a, b) => {
-      // Sort by goals first, then by assists
-      const goalsDiff = b.totalGoals - a.totalGoals;
-      return goalsDiff !== 0 ? goalsDiff : b.totalAssists - a.totalAssists;
-    })
-    .slice(0, 10); // Get top 10 scorers
-}
-
-// Get win rate data sorted by win percentage
-export function getWinRateData(performanceData: PlayerPerformanceData[]): PlayerPerformanceData[] {
-  return [...performanceData]
-    .filter(player => player.matchCount >= 3) // Only include players with at least 3 matches
-    .sort((a, b) => b.winRate - a.winRate)
-    .slice(0, 10); // Get top 10 by win rate
-}
-
-// Calculate team summary stats
-export function calculateTeamSummary(performanceData: PlayerPerformanceData[]): TeamSummaryData {
-  // Calculate totals
-  const totalGoals = performanceData.reduce((sum, player) => sum + player.totalGoals, 0);
-  const totalAssists = performanceData.reduce((sum, player) => sum + player.totalAssists, 0);
   
-  // Prepare position-based goal data
-  const positionGoals = new Map<string, number>();
+  return Array.from(positions.values()).map(data => ({
+    ...data,
+    participationAvg: data.count > 0 ? Math.round(data.participationAvg / data.count) : 0,
+    goalsAvg: data.count > 0 ? Number((data.goalsAvg / data.count).toFixed(2)) : 0,
+    assistsAvg: data.count > 0 ? Number((data.assistsAvg / data.count).toFixed(2)) : 0,
+    winRate: data.count > 0 ? Math.round(data.winRate / data.count) : 0,
+    avgMatches: data.count > 0 ? Number((data.avgMatches / data.count).toFixed(1)) : 0,
+  }));
+};
+
+export const getTopScorers = (performanceData: PlayerPerformanceData[]): PlayerPerformanceData[] => {
+  return [...performanceData]
+    .filter(player => player.totalGoals > 0)
+    .sort((a, b) => b.totalGoals - a.totalGoals)
+    .slice(0, 10);
+};
+
+export const getWinRateData = (performanceData: PlayerPerformanceData[]): PlayerPerformanceData[] => {
+  return [...performanceData]
+    .filter(player => player.matchCount >= 3)
+    .sort((a, b) => b.winRate - a.winRate)
+    .slice(0, 10);
+};
+
+export const calculateTeamSummary = (performanceData: PlayerPerformanceData[]): TeamSummaryData => {
+  const goalsByPosition = new Map<string, number>();
+  const assistsByPosition = new Map<string, number>();
   
   performanceData.forEach(player => {
-    if (player.position) {
-      const position = player.position;
-      positionGoals.set(
-        position, 
-        (positionGoals.get(position) || 0) + player.totalGoals
-      );
-    }
+    const pos = player.position;
+    goalsByPosition.set(pos, (goalsByPosition.get(pos) || 0) + player.totalGoals);
+    assistsByPosition.set(pos, (assistsByPosition.get(pos) || 0) + player.totalAssists);
   });
   
-  // Format for charts
-  const goalData = Array.from(positionGoals.entries()).map(([name, value]) => ({ name, value }));
-  const assistData = Array.from(positionGoals.entries()).map(([name, value]) => ({ 
-    name, 
-    value: performanceData
-      .filter(p => p.position === name)
-      .reduce((sum, player) => sum + player.totalAssists, 0) 
-  }));
+  const goalData = Array.from(goalsByPosition.entries())
+    .map(([name, value]) => ({ name, value }))
+    .filter(item => item.value > 0);
+    
+  const assistData = Array.from(assistsByPosition.entries())
+    .map(([name, value]) => ({ name, value }))
+    .filter(item => item.value > 0);
   
-  return {
-    totalGoals,
-    totalAssists,
-    goalData,
-    assistData
-  };
-}
+  return { goalData, assistData };
+};

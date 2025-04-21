@@ -63,12 +63,7 @@ export function ActivityManagement({
   }, [selectedActivity, activities]);
   
   const cupMatches = selectedActivity?.type === 'cup' && selectedActivity.matches 
-    ? activities.filter(activity => {
-        if (typeof selectedActivity.matches === 'string') {
-          return activity.id === selectedActivity.matches;
-        }
-        return Array.isArray(selectedActivity.matches) && selectedActivity.matches.includes(activity.id);
-      })
+    ? activities.filter(activity => selectedActivity.matches?.includes(activity.id))
     : [];
   
   if (selectedActivity?.type === 'cup') {

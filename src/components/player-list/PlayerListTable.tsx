@@ -1,92 +1,115 @@
 
-import React from 'react';
-import { Player } from '@/types/player';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Player } from "@/types/player";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, UserCircle } from "lucide-react";
+import { SortField, SortIcon } from "./PlayerListSorting";
+import { usePlayerFormatting } from "./PlayerFormatting";
 
-export type SortField = 'name' | 'grade' | 'position' | 'jerseyNumber';
-
-export interface PlayerListTableProps {
+interface PlayerListTableProps {
   players: Player[];
-  onPlayerSelect: (player: Player) => void;
-  onPlayerEdit: (player: Player) => void;
-  sortField: SortField;  
+  sortField: SortField;
   sortDirection: 'asc' | 'desc';
   toggleSort: (field: SortField) => void;
+  onPlayerSelect: (player: Player) => void;
+  onPlayerEdit?: (player: Player) => void;
 }
 
-export function PlayerListTable({ 
-  players, 
-  onPlayerSelect, 
-  onPlayerEdit,
+export function PlayerListTable({
+  players,
   sortField,
   sortDirection,
-  toggleSort
+  toggleSort,
+  onPlayerSelect,
+  onPlayerEdit
 }: PlayerListTableProps) {
-  const SortIcon = sortDirection === 'asc' ? ChevronUp : ChevronDown;
+  const { getGradeColor, getGradeText } = usePlayerFormatting();
+
+  const handleEditClick = (e: React.MouseEvent, player: Player) => {
+    e.stopPropagation();
+    if (onPlayerEdit) {
+      onPlayerEdit(player);
+    }
+  };
+
+  if (players.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">Inga spelare hittades</p>
+      </div>
+    );
+  }
   
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead onClick={() => toggleSort('name')} className="cursor-pointer">
-              <div className="flex items-center">
-                Namn
-                {sortField === 'name' && <SortIcon className="ml-2 h-4 w-4" />}
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead onClick={() => toggleSort('name')} className="cursor-pointer hover:bg-muted/50">
+            Namn <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
+          </TableHead>
+          <TableHead onClick={() => toggleSort('grade')} className="cursor-pointer hover:bg-muted/50">
+            Nivå <SortIcon field="grade" sortField={sortField} sortDirection={sortDirection} />
+          </TableHead>
+          {onPlayerEdit && <TableHead className="w-16">Åtgärder</TableHead>}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {players.map((player) => (
+          <TableRow 
+            key={player.id} 
+            onClick={() => onPlayerSelect(player)}
+            className="cursor-pointer hover:bg-muted/50"
+          >
+            <TableCell className="font-medium">
+              <div className="flex items-center gap-2">
+                {player.image ? (
+                  <img 
+                    src={player.image} 
+                    alt={player.name} 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <UserCircle className="h-5 w-5 text-gray-400" />
+                  </div>
+                )}
+                <span>
+                  {player.name}
+                  {player.jerseyNumber && (
+                    <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                      #{player.jerseyNumber}
+                    </span>
+                  )}
+                </span>
               </div>
-            </TableHead>
-            <TableHead onClick={() => toggleSort('grade')} className="cursor-pointer w-20">
-              <div className="flex items-center">
-                Grad
-                {sortField === 'grade' && <SortIcon className="ml-2 h-4 w-4" />}
-              </div>
-            </TableHead>
-            <TableHead onClick={() => toggleSort('position')} className="cursor-pointer hidden md:table-cell">
-              <div className="flex items-center">
-                Position
-                {sortField === 'position' && <SortIcon className="ml-2 h-4 w-4" />}
-              </div>
-            </TableHead>
-            <TableHead onClick={() => toggleSort('jerseyNumber')} className="cursor-pointer w-24 hidden md:table-cell">
-              <div className="flex items-center">
-                Tröja
-                {sortField === 'jerseyNumber' && <SortIcon className="ml-2 h-4 w-4" />}
-              </div>
-            </TableHead>
-            <TableHead className="w-24 text-right">Åtgärder</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {players.map((player) => (
-            <TableRow 
-              key={player.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onPlayerSelect(player)}
-            >
-              <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.grade}</TableCell>
-              <TableCell className="hidden md:table-cell">
-                {player.positions && player.positions.length > 0 ? player.positions[0] : 'N/A'}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">{player.jerseyNumber || '-'}</TableCell>
-              <TableCell className="text-right">
+            </TableCell>
+            <TableCell>
+              {player.positions && player.positions.includes('TRÄNARE') ? (
+                <Badge className="bg-gray-500 hover:bg-gray-600">
+                  Tränare
+                </Badge>
+              ) : (
+                <Badge className={getGradeColor(player.grade)}>
+                  {getGradeText(player.grade)}
+                </Badge>
+              )}
+            </TableCell>
+            {onPlayerEdit && (
+              <TableCell>
                 <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPlayerEdit(player);
-                  }}
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={(e) => handleEditClick(e, player)}
                 >
-                  Redigera
+                  <Edit className="h-4 w-4" />
                 </Button>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

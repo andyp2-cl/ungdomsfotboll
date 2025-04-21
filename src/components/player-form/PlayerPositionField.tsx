@@ -1,48 +1,14 @@
 
-import React from 'react';
-import { FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { CheckboxGroup, CheckboxItem } from "@/components/ui/checkbox-group";
-import { UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { UseFormReturn } from "react-hook-form";
+import { PlayerFormValues, positionOptions } from "./formSchema";
 
-export type PlayerPositionFieldProps = {
-  form: UseFormReturn<any>;
-  positions?: string[];
-  setPositions?: (positions: string[]) => void;
-};
+interface PlayerPositionFieldProps {
+  form: UseFormReturn<PlayerFormValues>;
+}
 
-export function PlayerPositionField({ form, positions, setPositions }: PlayerPositionFieldProps) {
-  const positionLabels = {
-    MV: "Målvakt",
-    BACK: "Back",
-    MF: "Mittfältare",
-    ANF: "Anfallare",
-    TRÄNARE: "Tränare"
-  };
-
-  // Use form-controlled positions or prop-based ones
-  const selectedPositions = form?.getValues?.('positions') || positions || [];
-  
-  const handlePositionChange = (position: string, checked: boolean) => {
-    let newPositions: string[];
-    
-    if (checked) {
-      // Add position
-      newPositions = [...selectedPositions, position];
-    } else {
-      // Remove position
-      newPositions = selectedPositions.filter(pos => pos !== position);
-    }
-    
-    // Update form and/or props
-    if (form) {
-      form.setValue('positions', newPositions);
-    }
-    
-    if (setPositions) {
-      setPositions(newPositions);
-    }
-  };
-
+export function PlayerPositionField({ form }: PlayerPositionFieldProps) {
   return (
     <FormField
       control={form.control}
@@ -50,18 +16,43 @@ export function PlayerPositionField({ form, positions, setPositions }: PlayerPos
       render={() => (
         <FormItem>
           <FormLabel>Positioner</FormLabel>
-          <CheckboxGroup className="grid grid-cols-2 gap-2 mt-2">
-            {Object.entries(positionLabels).map(([value, label]) => (
-              <CheckboxItem
-                key={value}
-                id={`position-${value}`}
-                checked={selectedPositions.includes(value)}
-                onCheckedChange={(checked) => handlePositionChange(value, !!checked)}
-              >
-                {label}
-              </CheckboxItem>
+          <div className="flex flex-col space-y-2">
+            {positionOptions.map((position) => (
+              <FormField
+                key={position.value}
+                control={form.control}
+                name="positions"
+                render={({ field }) => {
+                  return (
+                    <div className="flex items-center space-x-2 py-1">
+                      <Checkbox
+                        id={`position-${position.value}`}
+                        checked={field.value?.includes(position.value)}
+                        onCheckedChange={(checked) => {
+                          let updatedPositions = [...(field.value || [])];
+                          if (checked) {
+                            updatedPositions.push(position.value);
+                          } else {
+                            updatedPositions = updatedPositions.filter(
+                              (p) => p !== position.value
+                            );
+                          }
+                          field.onChange(updatedPositions);
+                        }}
+                      />
+                      <label
+                        htmlFor={`position-${position.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {position.label}
+                      </label>
+                    </div>
+                  );
+                }}
+              />
             ))}
-          </CheckboxGroup>
+          </div>
+          <FormMessage />
         </FormItem>
       )}
     />

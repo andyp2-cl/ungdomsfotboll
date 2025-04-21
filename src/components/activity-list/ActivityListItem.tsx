@@ -1,132 +1,156 @@
 
-import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, MapPin, Clock, Users, Shield } from "lucide-react";
-import { formatParticipantsCount } from "@/utils/activityHelpers";
-import { Badge } from "@/components/ui/badge";
 import { ActivityParticipants } from "./ActivityParticipants";
+import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
+import { GradePieChart } from "../activity-detail/match-result/GradePieChart"; 
+import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityListItemProps {
   activity: Activity;
   players: Player[];
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
-  isMobile?: boolean;
   isHistorical?: boolean;
+  isMobile?: boolean; // Add isMobile prop to the interface
 }
 
 export function ActivityListItem({ 
   activity, 
-  players,
+  players, 
   onSelect,
   onPlayerSelect,
-  isMobile = false,
-  isHistorical = false
+  isHistorical = false,
+  isMobile
 }: ActivityListItemProps) {
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('sv-SE', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
-    } catch (e) {
-      return dateString;
+  // Use the hook only if isMobile is not provided
+  const mobileFromHook = useIsMobile();
+  // Use passed isMobile prop if provided, otherwise use the hook value
+  const isMobileView = isMobile !== undefined ? isMobile : mobileFromHook;
+  
+  const { name, date, time, location, participants = [] } = activity;
+  
+  const formattedDate = new Date(date).toLocaleDateString('sv-SE');
+  const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+  
+  let resultMessage = '';
+  if (isHistorical && activity.result) {
+    resultMessage = `Resultat: ${activity.result}`;
+  } else if (isHistorical && activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    resultMessage = `Resultat: ${activity.homeScore}-${activity.awayScore}`;
+  }
+  
+  const getResultTextColor = () => {
+    if (activity.homeScore === activity.awayScore && 
+        activity.homeScore !== undefined && 
+        activity.awayScore !== undefined) {
+      return "text-gray-600";
     }
+    
+    if (activity.isWin === true) {
+      return "text-green-600";
+    } else if (activity.isWin === false) {
+      return "text-red-600";
+    }
+    
+    return "";
   };
   
-  // Format location display
-  const location = activity.location?.name || 'Plats ej angiven';
+  const isCupMatch = activity.cupId ? true : false;
   
-  // Count participants
-  const participantCount = activity.participants?.length || 0;
-  
-  // Card click handler
-  const handleCardClick = () => {
-    onSelect(activity);
-  };
-  
-  // For mobile, we want a more compact layout
-  const iconClass = isMobile ? "h-4 w-4" : "h-5 w-5";
-  const textClass = isMobile ? "text-sm" : "text-base";
-  
+  const participantPlayers = participants
+    .map(id => players.find(p => p.id === id))
+    .filter(player => player !== undefined) as Player[];
+
+  const showGradeChart = participantPlayers.length > 0;
+
   return (
     <Card 
-      className="hover:bg-accent/5 transition-colors cursor-pointer overflow-hidden"
-      onClick={handleCardClick}
+      className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
+      onClick={() => onSelect(activity)}
     >
-      <CardContent className="p-4 pb-0">
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between items-start">
-              <h3 className="font-medium text-lg line-clamp-2">{activity.name}</h3>
+      <CardContent className={`${isMobileView ? 'p-3' : 'p-4'}`}>
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 flex flex-col">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+              <h3 className={`font-bold ${isMobileView ? 'text-base' : ''} flex items-center flex-wrap gap-2`}>
+                {name}
+                {isCupMatch && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Trophy className="h-3.5 w-3.5" />
+                    Cupmatch
+                  </Badge>
+                )}
+              </h3>
             </div>
             
-            <div className="flex flex-wrap gap-1 mt-1">
-              {activity.type === "match" && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-800 hover:bg-blue-100">Match</Badge>
+            <div className={`flex flex-wrap gap-2 text-sm mt-2 ${isMobileView ? 'text-xs' : ''}`}>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span>{capitalizedDayOfWeek} {formattedDate}</span>
+              </div>
+              
+              {time && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <span>{time}</span>
+                </div>
               )}
               
-              {activity.type === "cup" && (
-                <Badge variant="outline" className="bg-amber-50 text-amber-800 hover:bg-amber-100">Cup</Badge>
+              {location?.name && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Map className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <span>{location.name}</span>
+                </div>
               )}
-              
-              {activity.type === "match" && activity.cupName && (
-                <CupMatchBadge cupName={activity.cupName} />
-              )}
-              
-              {activity.result && (
-                <Badge variant={activity.isWin ? "success" : activity.isWin === false ? "destructive" : "outline"}>
-                  {activity.result}
-                </Badge>
-              )}
-              
-              {activity.league_id && activity.leagueName && (
-                <Badge variant="outline" className="bg-green-50 text-green-800 hover:bg-green-100 flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  {activity.leagueName}
-                </Badge>
-              )}
+            </div>
+            
+            <div className={`${isMobileView ? 'mt-2' : 'mt-3'}`}>
+              <ActivityParticipants 
+                participants={participantPlayers} 
+                onPlayerSelect={onPlayerSelect}
+                totalCount={participants.length}
+                isMobile={isMobileView}
+              />
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Calendar className={iconClass} />
-              <span className={textClass}>{formatDate(activity.date)}</span>
-            </div>
-            
-            {activity.time && (
-              <div className="flex items-center gap-2">
-                <Clock className={iconClass} />
-                <span className={textClass}>{activity.time}</span>
+
+          <div className="md:w-48 flex flex-col items-end justify-start">
+            {resultMessage && (
+              <div className={`${isMobileView ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
+                {resultMessage}
               </div>
             )}
             
-            <div className="flex items-center gap-2">
-              <MapPin className={iconClass} />
-              <span className={textClass}>{location}</span>
+            <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
+              <Users className={`${isMobileView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              <span className={isMobileView ? 'text-xs' : ''}>{participants.length} deltagare</span>
             </div>
+
+            {showGradeChart && !isMobileView && (
+              <div className="w-24 h-24 overflow-hidden">
+                <GradePieChart 
+                  activity={activity} 
+                  participatingPlayers={participantPlayers} 
+                />
+              </div>
+            )}
             
-            <div className="flex items-center gap-2">
-              <Users className={iconClass} />
-              <span className={textClass}>{formatParticipantsCount(participantCount)}</span>
-            </div>
+            {showGradeChart && isMobileView && (
+              <div className="w-16 h-16 overflow-hidden">
+                <GradePieChart 
+                  activity={activity} 
+                  participatingPlayers={participantPlayers} 
+                  compact={true}
+                />
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
-      
-      <CardFooter className="px-4 py-2 border-t bg-muted/30 flex justify-between">
-        <ActivityParticipants 
-          activity={activity}
-          players={players}
-          onPlayerSelect={onPlayerSelect}
-        />
-      </CardFooter>
     </Card>
   );
 }

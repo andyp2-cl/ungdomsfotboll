@@ -1,14 +1,11 @@
 
-import { Activity } from "@/types/player";
-import { addCupMatches } from "./cup-matches/add";
+import { addCupMatches, updateCupMatches } from './cup-matches';
 
-// Re-export the addCupMatches function for backwards compatibility
-export { addCupMatches as addCupMatchesToActivity };
+// Re-export the functions from the new location
+// This file is kept for backwards compatibility but should be considered deprecated
+export { addCupMatches, updateCupMatches };
 
-// Original functionality to be maintained for backward compatibility
-export const addCupMatchesLegacy = async (
-  cupActivity: Activity,
-  matches: Activity[]
-): Promise<boolean> => {
-  return await addCupMatches(cupActivity, matches);
-};
+/**
+ * @deprecated Use functions from cup-matches directory instead
+ */
+console.warn('Warning: Direct imports from cupMatches.ts are deprecated. Import from cup-matches directory instead.');

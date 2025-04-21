@@ -1,102 +1,54 @@
 
-// Player-related types
-export type PlayerPosition = "MV" | "BACK" | "MF" | "ANF" | "TRÄNARE";
+export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
-export type PlayerGrade = "A" | "B" | "C" | "D";
+export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 
-export interface Player {
-  id: string;
-  name: string;
-  grade: PlayerGrade;
-  positions?: PlayerPosition[];
-  jerseyNumber?: string;
-  image?: string;
-  stats?: PlayerStats;
-  activities?: string[];
-}
+export type ActivityType = 'match' | 'cup';
 
 export interface PlayerStats {
-  goals: number;
-  assists: number;
-  matches: number;
-  wins: number;
-  draws: number;
-  losses: number;
+  goals?: Record<string, number>; // Record of player ID to number of goals
+  assists?: Record<string, number>; // Record of player ID to number of assists
+  scores?: {
+    home?: number;
+    away?: number;
+  }; // Score information for matches
+  isWin?: boolean; // Whether the match was a win for Hässleholms IF
+  cup_matches?: string[]; // IDs of cup match activities
+  [key: string]: any; // Allow for additional properties
 }
 
-// Activity-related types
-export type ActivityType = "match" | "cup";
+export interface Location {
+  name: string;
+  description?: string;
+  gpsLink?: string;
+}
 
 export interface Activity {
   id: string;
   name: string;
-  type: ActivityType;
   date: string;
+  type: ActivityType;
   time?: string;
-  location?: {
-    name: string;
-    description?: string;
-    gpsLink?: string;
-  };
-  participants?: string[];
+  location?: Location;
+  participants: string[]; // Player IDs
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
-  cupName?: string;
-  matches?: string[];
-  homeScore?: number;
-  awayScore?: number;
-  result?: string;
-  isWin?: boolean;
-  player_stats?: {
-    goals: Record<string, number>;
-    assists: Record<string, number>;
-    scores?: {
-      home: number;
-      away: number;
-    };
-    isWin?: boolean;
-  };
-  league_id?: string;
-  leagueName?: string;
+  cupName?: string; // Add cupName field
+  matches?: string[]; // Activity IDs for cup matches
+  player_stats?: PlayerStats;
+  result?: string; // Match result, e.g. "2-1"
+  homeScore?: number; // Home team's score
+  awayScore?: number; // Away team's score
+  isWin?: boolean; // Whether the match was a win for Hässleholms IF
 }
 
-// League-related types
-export interface League {
+export interface Player {
   id: string;
   name: string;
-  year: number;
-  division: string;
-  created_at: string;
-}
-
-// Form schema types
-export interface ActivityFormSchema {
-  name: string;
-  type: ActivityType;
-  date: Date;
-  time?: string;
-  location?: {
-    name?: string;
-    description?: string;
-    gpsLink?: string;
-  };
-  homeScore?: number;
-  awayScore?: number;
-  cupName?: string;
-  isWin?: boolean;
-  league_id?: string;
-}
-
-export interface PlayerFormSchema {
-  name: string;
-  grade: PlayerGrade;
-  positions: PlayerPosition[];
-  jerseyNumber?: string;
-  image?: string;
-}
-
-// Add extensions to Activity type to support form interactions
-export interface ActivityFormValues extends Omit<ActivityFormSchema, "date"> {
-  date: Date;
+  grade?: PlayerGrade; // Changed to optional since trainers don't have a grade
+  positions?: PlayerPosition[]; // Changed from position to positions array
+  activities?: string[]; // Array of activity IDs this player is participating in
+  jerseyNumber?: string; // Optional jersey number for the player
+  image?: string; // URL to player's image
 }

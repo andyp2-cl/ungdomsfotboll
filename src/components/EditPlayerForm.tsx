@@ -27,7 +27,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
   const formSchema = z.object({
     name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
     grade: z.enum(["A", "B", "C", "D"]).optional(),
-    positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"] as const)),
+    positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"])).optional(),
     jerseyNumber: z.string().optional(),
   });
 
@@ -35,7 +35,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: player.name,
-      grade: isTrainer ? undefined : player.grade as PlayerGrade,
+      grade: isTrainer ? undefined : player.grade,
       positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
     },

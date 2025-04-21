@@ -1,112 +1,76 @@
 
 import { Activity } from "@/types/player";
+import { MapPin, Calendar, Clock, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Clock, Trophy, Shield } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
-interface CupMatchBadgeProps {
-  cupName: string;
-}
-
-// Create a CupMatchBadge component
-export function CupMatchBadge({ cupName }: CupMatchBadgeProps) {
-  return (
-    <Badge variant="outline" className="bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1">
-      <Trophy className="h-3 w-3" />
-      {cupName}
-    </Badge>
-  );
-}
+import { CupMatchBadge } from "../activity-list/CupMatchBadge";
 
 interface ActivityDetailHeaderContentProps {
   activity: Activity;
-  isMobile?: boolean; 
+  formattedDate: string;
+  capitalizedDayOfWeek: string;
+  isHistorical: boolean;
+  formatResult: () => string;
 }
 
-export function ActivityDetailHeaderContent({ activity, isMobile = false }: ActivityDetailHeaderContentProps) {
-  // Fetch league info if league_id is present
-  const { data: league } = useQuery({
-    queryKey: ["league", activity.league_id],
-    queryFn: async () => {
-      if (!activity.league_id) return null;
-      
-      const { data, error } = await supabase
-        .from("leagues")
-        .select("*")
-        .eq("id", activity.league_id)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching league:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!activity.league_id,
-  });
-  
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('sv-SE', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
-    } catch (e) {
-      return dateString;
-    }
-  };
-  
-  // Format location display
-  const location = activity.location?.name || 'Plats ej angiven';
-  
-  // For mobile, we want a more compact layout
-  const iconClass = isMobile ? "h-4 w-4" : "h-5 w-5";
-  const textClass = isMobile ? "text-sm" : "text-base";
-  
+export function ActivityDetailHeaderContent({
+  activity,
+  formattedDate,
+  capitalizedDayOfWeek,
+  isHistorical,
+  formatResult
+}: ActivityDetailHeaderContentProps) {
+  const result = formatResult();
+  const isCupMatch = !!activity.cupId;
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-1 mt-1">
-        {activity.type === "match" && (
-          <Badge variant="outline" className="bg-blue-50 text-blue-800 hover:bg-blue-100">Match</Badge>
-        )}
-        
-        {activity.type === "cup" && (
-          <Badge variant="outline" className="bg-amber-50 text-amber-800 hover:bg-amber-100">Cup</Badge>
-        )}
-        
-        {activity.type === "match" && activity.cupName && (
-          <CupMatchBadge cupName={activity.cupName} />
-        )}
-        
-        {activity.league_id && league && (
-          <Badge variant="outline" className="bg-green-50 text-green-800 hover:bg-green-100 flex items-center gap-1">
-            <Shield className="h-3 w-3" />
-            {league.name}
-          </Badge>
-        )}
+    <div className="space-y-1 flex-1">
+      <div className="flex items-center gap-2 flex-wrap">
+        <h2 className="text-base font-semibold text-foreground line-clamp-2 pr-1">
+          {activity.name}
+        </h2>
+        {isCupMatch && <CupMatchBadge compact={true} />}
       </div>
       
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Calendar className={iconClass} />
-          <span className={textClass}>{formatDate(activity.date)}</span>
+      <div className="flex flex-col text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>
+            {capitalizedDayOfWeek} {formattedDate}
+          </span>
+          {activity.time && (
+            <>
+              <span className="mx-1">•</span>
+              <Clock className="h-3.5 w-3.5 mr-1" />
+              <span>{activity.time}</span>
+            </>
+          )}
         </div>
         
-        {activity.time && (
-          <div className="flex items-center gap-2">
-            <Clock className={iconClass} />
-            <span className={textClass}>{activity.time}</span>
+        {activity.location?.name && (
+          <div className="flex items-center gap-1 mt-1">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>
+              {activity.location.name}
+              {activity.location.description && (
+                <span className="text-xs opacity-75"> ({activity.location.description})</span>
+              )}
+            </span>
           </div>
         )}
         
-        <div className="flex items-center gap-2">
-          <MapPin className={iconClass} />
-          <span className={textClass}>{location}</span>
-        </div>
+        {isHistorical && result && (
+          <div className="mt-1">
+            <Badge 
+              variant={activity.isWin ? "success" : 
+                     (activity.homeScore === activity.awayScore && 
+                      activity.homeScore !== undefined && 
+                      activity.awayScore !== undefined) ? "outline" : "destructive"}
+              className="font-semibold"
+            >
+              Resultat: {result}
+            </Badge>
+          </div>
+        )}
       </div>
     </div>
   );

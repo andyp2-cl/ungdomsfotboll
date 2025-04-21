@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 import { formatActivityFromDatabase } from '@/utils/database/formatters/activity';
@@ -32,25 +31,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
       activities.forEach(activity => {
         const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
         activity.participants = activityPlayerRelations.map(relation => relation.player_id);
-      });
-    }
-    
-    // Fetch league data to get league names
-    const { data: leaguesData, error: leaguesError } = await supabase
-      .from('leagues')
-      .select('*');
-      
-    if (leaguesError) {
-      console.error('Error fetching leagues:', leaguesError);
-    } else {
-      // Populate league names for activities
-      activities.forEach(activity => {
-        if (activity.league_id) {
-          const league = leaguesData?.find(l => l.id === activity.league_id);
-          if (league) {
-            activity.leagueName = league.name;
-          }
-        }
       });
     }
     
