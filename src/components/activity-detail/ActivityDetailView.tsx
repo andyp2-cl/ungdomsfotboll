@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -90,9 +89,6 @@ export function ActivityDetailView({
   const handleClose = onBack || onClose;
   
   const isMatch = activity.type === "match";
-  const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
-  const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
-  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
   return (
     <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 max-h-[100dvh] overflow-hidden' : 'lg:max-w-3xl mx-auto'}`}>

@@ -1,104 +1,112 @@
 
+import React from "react";
+import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { positionOptions } from "./formSchema";
-import { UseFormReturn } from "react-hook-form";
-import { PlayerFormValues } from "./formSchema";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { PlayerPosition } from "@/types/player";
-import { useEffect } from "react";
 
 interface PlayerPositionFieldProps {
-  form: UseFormReturn<PlayerFormValues>;
+  form: UseFormReturn<any>;
 }
 
 export function PlayerPositionField({ form }: PlayerPositionFieldProps) {
   const isTrainer = form.watch("isTrainer");
 
-  // Handle isTrainer changes
-  useEffect(() => {
-    const positions = form.getValues("positions");
+  // Update positions when trainer status changes
+  React.useEffect(() => {
+    const currentPositions = form.getValues("positions") || [];
+    
     if (isTrainer) {
-      // Add TRÄNARE to positions if not already there
-      if (!positions.includes("TRÄNARE")) {
-        form.setValue("positions", [...positions, "TRÄNARE"]);
+      // If becoming a trainer, ensure TRÄNARE is in positions
+      if (!currentPositions.includes("TRÄNARE")) {
+        form.setValue("positions", [...currentPositions, "TRÄNARE"]);
       }
     } else {
-      // Remove TRÄNARE from positions if it exists
-      if (positions.includes("TRÄNARE")) {
-        form.setValue(
-          "positions",
-          positions.filter(pos => pos !== "TRÄNARE")
-        );
+      // If no longer a trainer, remove TRÄNARE from positions
+      if (currentPositions.includes("TRÄNARE")) {
+        form.setValue("positions", currentPositions.filter(pos => pos !== "TRÄNARE"));
       }
     }
-  }, [isTrainer, form]);
+  }, [form, isTrainer]);
+
+  // Available positions
+  const positions: { label: string; value: PlayerPosition }[] = [
+    { label: "Målvakt", value: "MV" },
+    { label: "Back", value: "BACK" },
+    { label: "Mittfältare", value: "MF" },
+    { label: "Anfallare", value: "ANF" },
+    { label: "Tränare", value: "TRÄNARE" },
+  ];
 
   return (
-    <>
-      <FormField
-        control={form.control}
-        name="isTrainer"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-            <Checkbox
-              checked={field.value}
-              onCheckedChange={field.onChange}
-              id="isTrainer"
-            />
-            <div className="space-y-1 leading-none">
-              <FormLabel htmlFor="isTrainer">Tränare</FormLabel>
-            </div>
-          </FormItem>
-        )}
-      />
-
-      {!isTrainer && (
-        <FormField
-          control={form.control}
-          name="positions"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel>Position</FormLabel>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {positionOptions.filter(option => option.value !== "TRÄNARE").map((option) => (
-                    <FormField
-                      key={option.value}
-                      control={form.control}
-                      name="positions"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={option.value}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <Checkbox
-                              checked={field.value?.includes(option.value)}
-                              onCheckedChange={(checked) => {
-                                const currentPositions = field.value || [];
-                                const updated = checked
-                                  ? [...currentPositions, option.value]
-                                  : currentPositions.filter(
-                                      (value) => value !== option.value
-                                    );
-                                field.onChange(updated);
-                              }}
-                            />
-                            <FormLabel className="font-normal">
-                              {option.label}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <FormField
+      control={form.control}
+      name="positions"
+      render={() => (
+        <FormItem>
+          <div className="mb-2">
+            <FormLabel>Position</FormLabel>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {positions
+              .filter(pos => isTrainer ? pos.value === "TRÄNARE" : true)
+              .map((position) => (
+                <FormField
+                  key={position.value}
+                  control={form.control}
+                  name="positions"
+                  render={({ field }) => {
+                    const isSelected = field.value?.includes(position.value);
+                    
+                    return (
+                      <FormItem
+                        key={position.value}
+                        className="flex items-center space-x-1 space-y-0"
+                      >
+                        <FormControl>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              const currentValues = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentValues, position.value]);
+                              } else {
+                                field.onChange(
+                                  currentValues.filter((val: string) => val !== position.value)
+                                );
+                              }
+                            }}
+                            id={`position-${position.value}`}
+                            className="hidden"
+                          />
+                        </FormControl>
+                        <Badge
+                          variant={isSelected ? "default" : "outline"}
+                          className="px-3 py-1 cursor-pointer select-none"
+                          onClick={() => {
+                            const currentValues = field.value || [];
+                            if (currentValues.includes(position.value)) {
+                              field.onChange(
+                                currentValues.filter((val: string) => val !== position.value)
+                              );
+                            } else {
+                              field.onChange([...currentValues, position.value]);
+                            }
+                          }}
+                        >
+                          {position.label}
+                        </Badge>
+                      </FormItem>
+                    );
+                  }}
+                />
+              ))}
+          </div>
+          <FormMessage />
+        </FormItem>
       )}
-    </>
+    />
   );
 }

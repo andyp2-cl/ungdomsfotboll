@@ -2,7 +2,7 @@
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, MapPin, Clock, Users, TrophyIcon, Shield } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, Shield } from "lucide-react";
 import { formatParticipantsCount } from "@/utils/activityHelpers";
 import { Badge } from "@/components/ui/badge";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -14,6 +14,7 @@ interface ActivityListItemProps {
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isMobile?: boolean;
+  isHistorical?: boolean;
 }
 
 export function ActivityListItem({ 
@@ -21,7 +22,8 @@ export function ActivityListItem({
   players,
   onSelect,
   onPlayerSelect,
-  isMobile = false
+  isMobile = false,
+  isHistorical = false
 }: ActivityListItemProps) {
   // Format date
   const formatDate = (dateString: string) => {

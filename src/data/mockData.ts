@@ -1,8 +1,20 @@
-
 import { Activity, Player } from "@/types/player";
 
-export const mockPlayers: Player[] = [
-  { id: "1", name: "Acke Kristiansson", grade: "A", positions: ["BACK", "MF"], activities: [] },
+export const mockPlayers: any[] = [
+  {
+    id: "01",
+    name: "Alexander Andersson",
+    grade: "A",
+    positions: ["MV"],
+    activities: []
+  },
+  { 
+    id: "1", 
+    name: "Acke Kristiansson", 
+    grade: "A", 
+    positions: ["BACK", "MF"], 
+    activities: []
+  },
   { id: "2", name: "Alvin Hansson", grade: "A", positions: ["MF"], activities: [] },
   { id: "3", name: "Colin Brandt", grade: "A", positions: ["BACK"], activities: [] },
   { id: "4", name: "David Tanase", grade: "A", positions: ["MF", "ANF"], activities: [] },
@@ -43,6 +55,8 @@ export const mockPlayers: Player[] = [
   { id: "39", name: "Tage", grade: "A", positions: ["MV"], activities: [] },
   { id: "40", name: "Ted Petersson", positions: ["TRÄNARE"], activities: [] },
   { id: "41", name: "Tommie Hanson", positions: ["TRÄNARE"], activities: [] },
+  { id: "t1", name: "Stefan Svensson", positions: ["TRÄNARE"], grade: "A", activities: [] },
+  { id: "t2", name: "Henrik Hansson", positions: ["TRÄNARE"], grade: "A", activities: [] },
 ];
 
 export const mockActivities: Activity[] = [

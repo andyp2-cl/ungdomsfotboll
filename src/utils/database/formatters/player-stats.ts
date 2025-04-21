@@ -36,11 +36,6 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
     return {
       goals: {},
       assists: {},
-      scores: {
-        home: undefined,
-        away: undefined
-      },
-      isWin: undefined,
       cup_matches: []
     };
   }
@@ -57,12 +52,8 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
       return {
         goals: stats.goals || {},
         assists: stats.assists || {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: isWinValue,
-        cup_matches: stats.cup_matches || []
+        cup_matches: stats.cup_matches || [],
+        isWin: isWinValue
       };
     } catch (e) {
       console.error("Error parsing player_stats JSON:", e);
@@ -73,10 +64,6 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
   return {
     goals: {},
     assists: {},
-    scores: {
-      home: item.home_score,
-      away: item.away_score
-    },
     isWin: isWinValue,
     cup_matches: []
   };

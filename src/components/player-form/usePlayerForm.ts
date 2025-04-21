@@ -23,7 +23,7 @@ export function usePlayerForm({ onSave, onCancel, player }: UsePlayerFormProps) 
       name: player?.name || "",
       grade: player?.grade || "A",
       positions: player?.positions || [],
-      jerseyNumber: player?.jersey_number || "",
+      jerseyNumber: player?.jerseyNumber || "",
       isTrainer: isTrainer || false,
     },
   });
@@ -42,16 +42,13 @@ export function usePlayerForm({ onSave, onCancel, player }: UsePlayerFormProps) 
       positions: values.positions,
       image: imagePreview,
       activities: player?.activities || [],
+      // Add grade conditionally
+      grade: !values.isTrainer ? values.grade : undefined,
     };
 
-    // Only add grade if not a trainer
-    if (!values.isTrainer) {
-      newPlayer.grade = values.grade;
-    }
-    
     // Only add jersey number if provided and not a trainer
     if (jerseyNumber && !values.isTrainer) {
-      newPlayer.jersey_number = jerseyNumber;
+      newPlayer.jerseyNumber = jerseyNumber;
     }
     
     onSave(newPlayer);

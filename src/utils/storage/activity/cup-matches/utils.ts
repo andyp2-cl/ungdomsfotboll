@@ -1,63 +1,65 @@
 
 import { Activity } from "@/types/player";
-import { Json } from "@/types/supabase";
 
 /**
- * Extract cup matches array from player_stats
+ * Find cup matches by cup name
  */
-export function extractCupMatchesFromPlayerStats(playerStats: any): string[] {
-  // Handle string format (needs parsing)
-  if (typeof playerStats === 'string') {
-    try {
-      const parsedStats = JSON.parse(playerStats);
-      if (parsedStats && typeof parsedStats === 'object') {
-        return Array.isArray(parsedStats.cup_matches) ? parsedStats.cup_matches : [];
-      }
-    } catch (e) {
-      console.error("Error parsing player_stats JSON:", e);
-      return [];
-    }
-  }
+export const findCupMatchesByCupName = (
+  activities: Activity[],
+  cupName: string
+): Activity[] => {
+  if (!cupName) return [];
   
-  // Handle object format
-  if (playerStats && typeof playerStats === 'object' && 'cup_matches' in playerStats) {
-    return Array.isArray(playerStats.cup_matches) ? playerStats.cup_matches : [];
-  }
+  const matches = activities.filter(
+    (activity) => 
+      activity.type === 'match' && 
+      activity.cupName === cupName
+  );
   
-  return [];
-}
+  return matches;
+};
 
 /**
- * Safely update player stats with cup matches
+ * Find cup matches by cup ID
  */
-export function addMatchToPlayerStats(playerStats: any, matchId: string): Record<string, any> {
-  let updatedStats = playerStats;
+export const findCupMatchesByCupId = (
+  activities: Activity[],
+  cupId: string
+): Activity[] => {
+  if (!cupId) return [];
   
-  // If playerStats is a string, parse it first
-  if (typeof updatedStats === 'string') {
-    try {
-      updatedStats = JSON.parse(updatedStats);
-    } catch (e) {
-      updatedStats = { goals: {}, assists: {} };
+  const matches = activities.filter(
+    (activity) => 
+      activity.type === 'match' && 
+      activity.cupId === cupId
+  );
+  
+  return matches;
+};
+
+/**
+ * Find all cup matches related to a cup
+ */
+export const findAllCupMatches = (
+  activities: Activity[],
+  cupActivity: Activity
+): Activity[] => {
+  if (!cupActivity) return [];
+  
+  // Find by ID
+  const matchesById = findCupMatchesByCupId(activities, cupActivity.id);
+  
+  // Find by name
+  const matchesByName = findCupMatchesByCupName(activities, cupActivity.name);
+  
+  // Combine and deduplicate
+  const allMatches = [...matchesById];
+  
+  matchesByName.forEach(match => {
+    if (!allMatches.some(m => m.id === match.id)) {
+      allMatches.push(match);
     }
-  }
+  });
   
-  // If playerStats is null/undefined or not an object, initialize it
-  if (!updatedStats || typeof updatedStats !== 'object') {
-    updatedStats = { goals: {}, assists: {} };
-  }
-  
-  // Get existing cup matches or initialize as empty array
-  let cupMatches = Array.isArray(updatedStats.cup_matches) ? updatedStats.cup_matches : [];
-  
-  // Add the match if not already present
-  if (!cupMatches.includes(matchId)) {
-    cupMatches.push(matchId);
-  }
-  
-  // Return updated player stats
-  return {
-    ...updatedStats,
-    cup_matches: cupMatches
-  };
-}
+  return allMatches;
+};

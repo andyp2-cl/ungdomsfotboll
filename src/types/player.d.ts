@@ -29,10 +29,6 @@ export interface Player {
 export interface PlayerStats {
   goals: Record<string, number>;
   assists: Record<string, number>;
-  scores?: {
-    home?: number;
-    away?: number;
-  };
   isWin?: boolean;
   cup_matches?: string[];
   [key: string]: any;

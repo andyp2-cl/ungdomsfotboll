@@ -1,115 +1,134 @@
-
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Player } from "@/types/player";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, UserCircle } from "lucide-react";
-import { SortField, SortIcon } from "./PlayerListSorting";
-import { usePlayerFormatting } from "./PlayerFormatting";
 
 interface PlayerListTableProps {
   players: Player[];
-  sortField: SortField;
-  sortDirection: 'asc' | 'desc';
-  toggleSort: (field: SortField) => void;
   onPlayerSelect: (player: Player) => void;
-  onPlayerEdit?: (player: Player) => void;
 }
 
-export function PlayerListTable({
-  players,
-  sortField,
-  sortDirection,
-  toggleSort,
-  onPlayerSelect,
-  onPlayerEdit
-}: PlayerListTableProps) {
-  const { getGradeColor, getGradeText } = usePlayerFormatting();
+interface PositionBadgeProps {
+  position: string;
+}
 
-  const handleEditClick = (e: React.MouseEvent, player: Player) => {
-    e.stopPropagation();
-    if (onPlayerEdit) {
-      onPlayerEdit(player);
-    }
-  };
+function PositionBadge({ position }: PositionBadgeProps) {
+  let badgeText = position;
+  let badgeColor = "bg-gray-100 text-gray-700";
 
-  if (players.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-muted-foreground">Inga spelare hittades</p>
-      </div>
-    );
+  switch (position) {
+    case "MV":
+      badgeText = "Målvakt";
+      badgeColor = "bg-blue-100 text-blue-700";
+      break;
+    case "BACK":
+      badgeText = "Back";
+      badgeColor = "bg-green-100 text-green-700";
+      break;
+    case "MF":
+      badgeText = "Mittfältare";
+      badgeColor = "bg-orange-100 text-orange-700";
+      break;
+    case "ANF":
+      badgeText = "Anfallare";
+      badgeColor = "bg-red-100 text-red-700";
+      break;
+    case "TRÄNARE":
+      badgeText = "Tränare";
+      badgeColor = "bg-amber-100 text-amber-700";
+      break;
+    default:
+      break;
   }
+
+  return (
+    <Badge className={`${badgeColor} rounded-full`}>{badgeText}</Badge>
+  );
+}
+
+export function PlayerListTable({ players, onPlayerSelect }: PlayerListTableProps) {
+  const [search, setSearch] = useState("");
+
+  const filteredPlayers = useMemo(() => {
+    const lowerCaseSearch = search.toLowerCase();
+    return players.filter(player =>
+      player.name.toLowerCase().includes(lowerCaseSearch)
+    );
+  }, [search, players]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
   
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead onClick={() => toggleSort('name')} className="cursor-pointer hover:bg-muted/50">
-            Namn <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
-          </TableHead>
-          <TableHead onClick={() => toggleSort('grade')} className="cursor-pointer hover:bg-muted/50">
-            Nivå <SortIcon field="grade" sortField={sortField} sortDirection={sortDirection} />
-          </TableHead>
-          {onPlayerEdit && <TableHead className="w-16">Åtgärder</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {players.map((player) => (
-          <TableRow 
-            key={player.id} 
-            onClick={() => onPlayerSelect(player)}
-            className="cursor-pointer hover:bg-muted/50"
-          >
-            <TableCell className="font-medium">
-              <div className="flex items-center gap-2">
-                {player.image ? (
-                  <img 
-                    src={player.image} 
-                    alt={player.name} 
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    <UserCircle className="h-5 w-5 text-gray-400" />
-                  </div>
-                )}
-                <span>
-                  {player.name}
-                  {player.jersey_number && (
-                    <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                      #{player.jersey_number}
-                    </span>
-                  )}
-                </span>
-              </div>
-            </TableCell>
-            <TableCell>
-              {player.position && player.position.includes('TRÄNARE') ? (
-                <Badge className="bg-gray-500 hover:bg-gray-600">
-                  Tränare
-                </Badge>
-              ) : (
-                <Badge className={getGradeColor(player.grade)}>
-                  {getGradeText(player.grade)}
-                </Badge>
-              )}
-            </TableCell>
-            {onPlayerEdit && (
-              <TableCell>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={(e) => handleEditClick(e, player)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            )}
+    <div className="rounded-md border">
+      <div className="p-4">
+        <Input
+          type="search"
+          placeholder="Sök spelare..."
+          value={search}
+          onChange={handleSearchChange}
+        />
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="pl-4">Namn</TableHead>
+            <TableHead className="text-center">Tröjnummer</TableHead>
+            <TableHead>Position</TableHead>
+            <TableHead>Nivå</TableHead>
+            <TableHead>Aktiviteter</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody className="divide-y">
+          {filteredPlayers.map(player => {
+            const isCoach = player.positions?.includes('TRÄNARE');
+            return (
+              <TableRow 
+                key={player.id}
+                className={`hover:bg-muted/50 cursor-pointer ${isCoach ? 'bg-amber-50/30' : ''}`}
+                onClick={() => onPlayerSelect(player)}
+              >
+                <TableCell className="p-2 pl-4 align-middle">{player.name}</TableCell>
+                <TableCell className="p-2 align-middle text-center">
+                  {player.jerseyNumber ? `#${player.jerseyNumber}` : '-'}
+                </TableCell>
+                <TableCell className="p-2 align-middle">
+                  {isCoach ? (
+                    <Badge variant="outline" className="bg-amber-100">Tränare</Badge>
+                  ) : (
+                    player.positions && player.positions.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {player.positions.map(pos => (
+                          <PositionBadge key={pos} position={pos} />
+                        ))}
+                      </div>
+                    ) : '-'
+                  )}
+                </TableCell>
+                <TableCell className="p-2 align-middle">{player.grade || '-'}</TableCell>
+                <TableCell className="p-2 align-middle">{player.activities?.length || 0}</TableCell>
+              </TableRow>
+            );
+          })}
+          {filteredPlayers.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center p-4">
+                Inga spelare hittades.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

@@ -1,162 +1,118 @@
 
-import { Activity } from "@/types/player";
-import { useToast } from "@/hooks/use-toast";
-import { isHomeMatch, calculateWinStatus } from "./utils";
-import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { supabase } from "@/lib/supabase";
-import { formatActivityForDatabase } from "@/utils/database/formatters";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { useState } from 'react';
+import { Activity, Player, PlayerStats } from '@/types/player';
+import { Button } from '@/components/ui/button';
+import { Check, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase/client';
 
-interface UseResultSaverParams {
+interface ResultSaverProps {
   activity: Activity;
-  updateActivity: (updatedActivity: Activity) => void;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  homeScore: number | undefined;
+  awayScore: number | undefined;
+  isWin: boolean | undefined;
+  onSaved: () => void;
+  onCancel: () => void;
 }
 
-export function useResultSaver({ 
-  activity, 
-  updateActivity, 
-  onMatchResultUpdate 
-}: UseResultSaverParams) {
+export default function ResultSaver({
+  activity,
+  homeScore,
+  awayScore,
+  isWin,
+  onSaved,
+  onCancel,
+}: ResultSaverProps) {
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
 
-  /**
-   * Saves the match result to the database and updates local state
-   */
-  const saveMatchResult = async (
-    homeScore: number | undefined, 
-    awayScore: number | undefined, 
-    manualWinStatus: boolean | undefined
-  ) => {
-    try {
-      console.log("Saving match result:", {
-        homeScore, 
-        awayScore, 
-        manualWinStatus, 
-        activityId: activity.id
+  const handleSave = async () => {
+    if (homeScore === undefined || awayScore === undefined) {
+      toast({
+        title: 'Fel',
+        description: 'Båda hemma- och bortaresultat måste anges',
+        variant: 'destructive',
       });
-      
-      // Check if Supabase is configured first
-      const isConnected = await isSupabaseConfigured();
-      if (!isConnected) {
-        console.error("Supabase connection not configured properly");
-        toast({
-          title: "Databasfel",
-          description: "Kunde inte ansluta till databasen. Kontrollera internetanslutningen.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Create result string if both scores are defined
-      const resultString = homeScore !== undefined && awayScore !== undefined 
-        ? `${homeScore}-${awayScore}` 
-        : undefined;
-      
-      // Determine if this is a home match for our team
-      const isHome = isHomeMatch(activity);
-      
-      // Determine win status - we'll respect the manually set status if available
-      let isWin = manualWinStatus;
-      
-      // If no manual status, calculate based on scores
-      if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
-        isWin = calculateWinStatus(homeScore, awayScore, isHome);
-        console.log("Calculated win status:", isWin);
-      }
-      
-      // Prepare updated player_stats with all necessary properties
-      const updatedPlayerStats = prepareUpdatedPlayerStats(
-        activity, 
-        homeScore, 
-        awayScore, 
-        isWin, 
-        isHome
-      );
-      
-      // If we have the onMatchResultUpdate prop, use it
-      if (onMatchResultUpdate) {
-        try {
-          await onMatchResultUpdate(activity.id, homeScore, awayScore);
-          console.log("Used onMatchResultUpdate to save result");
-        } catch (error: any) {
-          console.error("Error in onMatchResultUpdate:", error);
-          toast({
-            title: "Ett fel uppstod",
-            description: `Kunde inte spara ändringar: ${error?.message || "Okänt fel"}`,
-            variant: "destructive"
-          });
-          throw error;
-        }
-      } else {
-        // Otherwise directly update the database - FORMATTED FOR DATABASE!
-        console.log("Directly updating database with match result");
-        const formattedActivity = {
-          id: activity.id,
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Format the result string
+      const result = `${homeScore}-${awayScore}`;
+
+      // Create updated player_stats
+      const currentPlayerStats = activity.player_stats || { 
+        goals: {}, 
+        assists: {} 
+      };
+
+      // Update the activity in Supabase
+      const { error } = await supabase
+        .from('activities')
+        .update({
           home_score: homeScore,
           away_score: awayScore,
           is_win: isWin,
-          result: resultString,
-          player_stats: updatedPlayerStats
-        };
-        
-        const { error } = await supabase
-          .from('activities')
-          .update(formattedActivity)
-          .eq('id', activity.id);
-          
-        if (error) {
-          console.error("Error saving match result to database:", error.message, error.details);
-          toast({
-            title: "Databasfel",
-            description: `Kunde inte spara matchresultat: ${error.message}`,
-            variant: "destructive"
-          });
-          throw error;
-        } else {
-          console.log("Successfully saved match result directly to database");
-        }
+          result,
+          player_stats: currentPlayerStats
+        })
+        .eq('id', activity.id);
+
+      if (error) {
+        throw error;
       }
-      
-      // Then update the local state
-      const updatedActivity = {
+
+      // Update local activity object with new values
+      const updatedActivity: Activity = {
         ...activity,
-        result: resultString,
+        result,
         homeScore,
         awayScore,
         isWin,
-        player_stats: updatedPlayerStats
+        player_stats: currentPlayerStats
       };
-      
-      console.log("Updated local activity state with win status:", {
-        id: updatedActivity.id,
-        name: updatedActivity.name,
-        isWin: updatedActivity.isWin
-      });
-      
-      // Use the update function from props
-      updateActivity(updatedActivity);
-      
-      // Using the toast methods correctly
-      toast({
-        title: "Matchresultat sparat",
-        description: resultString 
-          ? `Resultat ${resultString} har sparats för ${activity.name}.` 
-          : `Matchresultat har rensats för ${activity.name}.`,
-        duration: 5000
-      });
 
-      return true;
-    } catch (error: any) {
-      console.error("Failed to save match result:", error);
+      // Call the onSaved callback with the updated activity
+      onSaved();
+
       toast({
-        title: "Kunde inte spara matchresultat",
-        description: `Ett fel uppstod: ${error?.message || "Okänt fel"}`,
-        variant: "destructive"
+        title: 'Resultat sparat',
+        description: 'Matchen har uppdaterats med nytt resultat',
       });
-      return false;
+    } catch (error: any) {
+      toast({
+        title: 'Ett fel inträffade',
+        description: error.message || 'Kunde inte spara resultatet',
+        variant: 'destructive',
+      });
+      console.error('Error saving match result:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  return { saveMatchResult };
+  return (
+    <div className="flex gap-2 mt-4">
+      <Button
+        onClick={handleSave}
+        disabled={isSaving || homeScore === undefined || awayScore === undefined}
+        className="flex-1"
+      >
+        {isSaving ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sparar...
+          </>
+        ) : (
+          <>
+            <Check className="mr-2 h-4 w-4" /> Spara resultat
+          </>
+        )}
+      </Button>
+      <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+        Avbryt
+      </Button>
+    </div>
+  );
 }

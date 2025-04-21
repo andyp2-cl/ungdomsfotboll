@@ -10,17 +10,17 @@ export function createPlayerWithCompatibility(player: Player): Player {
     ...player,
     // Ensure positions is always available
     get positions() {
-      return player.position || player.positions || [];
+      return player.positions || [];
     },
-    // Ensure position is always available
+    // Ensure position is always available for backward compatibility
     get position() {
-      return player.positions || player.position || [];
+      return player.positions || [];
     },
     // Ensure jerseyNumber is always available
     get jerseyNumber() {
-      return player.jersey_number;
+      return player.jerseyNumber;
     },
-    // Ensure jersey_number is always available
+    // Ensure jersey_number is always available for backward compatibility
     get jersey_number() {
       return player.jerseyNumber || player.jersey_number;
     }
