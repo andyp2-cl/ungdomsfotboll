@@ -15,7 +15,7 @@ export function GradePieChart({ activity, participatingPlayers, compact = false 
   
   // Calculate grade distribution
   const gradeDistribution = useMemo(() => {
-    const grades: Record<PlayerGrade, number> = {
+    const grades: Record<string, number> = {
       'A': 0,
       'B': 0,
       'C': 0,
@@ -24,12 +24,12 @@ export function GradePieChart({ activity, participatingPlayers, compact = false 
     
     // Only count non-coach players
     const nonCoachPlayers = participatingPlayers.filter(player => 
-      !player.positions?.includes('TRÄNARE')
+      !player.position?.includes('TRÄNARE')
     );
     
     nonCoachPlayers.forEach(player => {
-      if (player.grade && grades[player.grade as PlayerGrade] !== undefined) {
-        grades[player.grade as PlayerGrade]++;
+      if (player.grade && grades[player.grade] !== undefined) {
+        grades[player.grade]++;
       }
     });
 

@@ -24,9 +24,9 @@ export function usePlayerForm({
     defaultValues: {
       name: initialValues?.name || "",
       grade: initialValues?.grade || "A",
-      positions: initialValues?.positions || [],
-      jerseyNumber: initialValues?.jerseyNumber || "",
-      isTrainer: initialValues?.positions?.includes("TRÄNARE") || false
+      positions: initialValues?.position || [],
+      jerseyNumber: initialValues?.jersey_number || "",
+      isTrainer: initialValues?.position?.includes("TRÄNARE") || false
     },
   });
 
@@ -64,8 +64,8 @@ export function usePlayerForm({
       id: initialValues?.id || uuidv4(),
       name: data.name,
       grade: data.isTrainer ? undefined : data.grade, // Only set grade if not a trainer
-      positions: data.positions as PlayerPosition[], // Cast to PlayerPosition[] to satisfy type checking
-      jerseyNumber: data.jerseyNumber || undefined,
+      position: data.positions as PlayerPosition[], // Cast to PlayerPosition[]
+      jersey_number: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
     };

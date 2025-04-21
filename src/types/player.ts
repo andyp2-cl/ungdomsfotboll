@@ -1,8 +1,9 @@
+
 export interface Player {
   id: string;
   name: string;
-  grade: string;
-  position?: string;
+  grade?: PlayerGrade;
+  position?: string[];
   jersey_number?: string;
   image?: string;
   activities?: string[];
@@ -13,14 +14,17 @@ export interface Player {
 }
 
 export type PlayerGrade =
-  | "A-lag"
-  | "U19"
-  | "U17"
-  | "U16"
-  | "U15"
-  | "U14"
-  | "U13"
-  | "Annan";
+  | "A"
+  | "B"
+  | "C"
+  | "D";
+
+export type PlayerPosition =
+  | "MV"
+  | "BACK"
+  | "MF"
+  | "ANF"
+  | "TRÄNARE";
 
 export type ActivityType = "match" | "cup";
 
@@ -47,18 +51,22 @@ export interface Activity {
   awayScore?: number;
   result?: string;
   isWin?: boolean;
-  player_stats?: {
-    goals?: { [playerId: string]: number };
-    assists?: { [playerId: string]: number };
-    scores?: {
-      home?: number;
-      away?: number;
-    };
-    isWin?: boolean;
-  };
+  player_stats?: PlayerStats;
   [key: string]: any;
   league_id?: string;
   leagueName?: string;  // For UI display purposes
+}
+
+export interface PlayerStats {
+  goals: Record<string, number>;
+  assists: Record<string, number>;
+  scores?: {
+    home?: number;
+    away?: number;
+  };
+  isWin?: boolean;
+  cup_matches?: string[]; // This property is used for storing cup match IDs
+  [key: string]: any; // Adding index signature for Json compatibility
 }
 
 export interface League {
