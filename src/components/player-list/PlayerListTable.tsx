@@ -77,16 +77,16 @@ export function PlayerListTable({
                 )}
                 <span>
                   {player.name}
-                  {player.jerseyNumber && (
+                  {player.jersey_number && (
                     <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                      #{player.jerseyNumber}
+                      #{player.jersey_number}
                     </span>
                   )}
                 </span>
               </div>
             </TableCell>
             <TableCell>
-              {player.positions && player.positions.includes('TRÄNARE') ? (
+              {player.position && player.position.includes('TRÄNARE') ? (
                 <Badge className="bg-gray-500 hover:bg-gray-600">
                   Tränare
                 </Badge>

@@ -5,6 +5,7 @@ import { PlayerListTable } from "./PlayerListTable";
 import { PlayerGridView } from "./PlayerGridView";
 import { usePlayerSorting } from "./PlayerListSorting";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { adaptPlayersWithCompatibility } from "@/utils/playerCompatibility";
 
 interface PlayerListProps {
   players: Player[];
@@ -24,12 +25,15 @@ export function PlayerList({
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
   
+  // Apply compatibility adapter to players
+  const compatiblePlayers = adaptPlayersWithCompatibility(players);
+  
   // Filter out coaches if showCoaches is false
   const filteredPlayers = showCoaches 
-    ? players
-    : players.filter(player => {
-        if (!player.positions) return true;
-        return !player.positions.includes('TRÄNARE');
+    ? compatiblePlayers
+    : compatiblePlayers.filter(player => {
+        if (!player.position) return true;
+        return !player.position.includes('TRÄNARE');
       });
     
   // Apply sorting

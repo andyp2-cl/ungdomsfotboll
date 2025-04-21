@@ -1,3 +1,4 @@
+
 import { Player, Activity } from "@/types/player";
 import { getGradeColor } from '@/utils/gradeUtils';
 
@@ -41,7 +42,7 @@ export const CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d
 
 export const preparePerformanceData = (players: Player[], activities: Activity[], sortedActivities: Activity[]): PlayerPerformanceData[] => {
   return players
-    .filter(player => !player.positions?.includes('TRÄNARE'))
+    .filter(player => !player.position?.includes('TRÄNARE'))
     .map(player => {
       const participationCount = player.activities?.length || 0;
       const participationRate = sortedActivities.length > 0 
@@ -90,8 +91,8 @@ export const preparePerformanceData = (players: Player[], activities: Activity[]
         id: player.id,
         name: player.name,
         grade: player.grade,
-        position: player.positions?.[0] || 'N/A',
-        jerseyNumber: player.jerseyNumber || '',
+        position: player.position?.[0] || 'N/A',
+        jerseyNumber: player.jersey_number || '',
         activityCount: participationCount,
         participationRate: participationRate,
         goalsAvg: goalsAvg,

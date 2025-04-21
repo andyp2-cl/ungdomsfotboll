@@ -1,83 +1,67 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { v4 as uuidv4 } from "uuid";
-import { Player, PlayerPosition } from "@/types/player";
 import { formSchema, PlayerFormValues } from "./formSchema";
+import { Player, PlayerPosition } from "@/types/player";
 
-interface UsePlayerFormProps {
+export interface UsePlayerFormProps {
   onSave: (player: Player) => void;
   onCancel: () => void;
-  initialValues?: Partial<Player>;
+  player?: Partial<Player>;
 }
 
-export function usePlayerForm({
-  onSave,
-  onCancel,
-  initialValues
-}: UsePlayerFormProps) {
-  const [imagePreview, setImagePreview] = useState<string | undefined>(initialValues?.image);
-
+export function usePlayerForm({ onSave, onCancel, player }: UsePlayerFormProps) {
+  const [imagePreview, setImagePreview] = useState<string | undefined>(player?.image);
+  
+  // Detect if player is a trainer
+  const isTrainer = player?.positions?.includes("TRÄNARE");
+  
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialValues?.name || "",
-      grade: initialValues?.grade || "A",
-      positions: initialValues?.position || [],
-      jerseyNumber: initialValues?.jersey_number || "",
-      isTrainer: initialValues?.position?.includes("TRÄNARE") || false
+      name: player?.name || "",
+      grade: player?.grade || "A",
+      positions: player?.positions || [],
+      jerseyNumber: player?.jersey_number || "",
+      isTrainer: isTrainer || false,
     },
   });
 
-  // Watch for changes in isTrainer field
-  const isTrainer = form.watch("isTrainer");
+  // Watch the isTrainer value for UI conditionals
+  const isTrainerWatch = form.watch("isTrainer");
 
-  // When isTrainer changes, update positions and grade
-  useEffect(() => {
-    if (isTrainer) {
-      // Add TRÄNARE position if it's not already there
-      const currentPositions = form.getValues("positions") || [];
-      if (!currentPositions.includes("TRÄNARE")) {
-        form.setValue("positions", [...currentPositions, "TRÄNARE" as PlayerPosition]);
-      }
-      form.setValue("grade", undefined); // Remove grade for trainers
-    } else {
-      // Remove TRÄNARE position if it exists
-      const currentPositions = form.getValues("positions") || [];
-      if (currentPositions.includes("TRÄNARE")) {
-        form.setValue(
-          "positions", 
-          currentPositions.filter(pos => pos !== "TRÄNARE")
-        );
-      }
-      // If grade was cleared, set it back to default
-      if (!form.getValues("grade")) {
-        form.setValue("grade", "A");
-      }
-    }
-  }, [isTrainer, form]);
-
-  const handleSubmit = (data: PlayerFormValues) => {
-    // Create new player object
+  // Handle form submission
+  const handleSubmit = form.handleSubmit((values) => {
+    const jerseyNumber = values.jerseyNumber;
+    
+    // Create player object
     const newPlayer: Player = {
-      id: initialValues?.id || uuidv4(),
-      name: data.name,
-      grade: data.isTrainer ? undefined : data.grade, // Only set grade if not a trainer
-      position: data.positions as PlayerPosition[], // Cast to PlayerPosition[]
-      jersey_number: data.jerseyNumber || undefined,
+      id: player?.id || crypto.randomUUID(),
+      name: values.name,
+      positions: values.positions,
       image: imagePreview,
-      activities: initialValues?.activities || [],
+      activities: player?.activities || [],
     };
 
+    // Only add grade if not a trainer
+    if (!values.isTrainer) {
+      newPlayer.grade = values.grade;
+    }
+    
+    // Only add jersey number if provided and not a trainer
+    if (jerseyNumber && !values.isTrainer) {
+      newPlayer.jersey_number = jerseyNumber;
+    }
+    
     onSave(newPlayer);
-  };
+  });
 
-  return {
-    form,
-    imagePreview,
-    setImagePreview,
-    handleSubmit: form.handleSubmit(handleSubmit),
-    isTrainer,
+  return { 
+    form, 
+    imagePreview, 
+    setImagePreview, 
+    handleSubmit,
+    isTrainer: isTrainerWatch 
   };
 }

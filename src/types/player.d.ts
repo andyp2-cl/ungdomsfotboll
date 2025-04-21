@@ -17,12 +17,16 @@ export interface Player {
   lastName: string;
   email?: string;
   phone?: string;
-  positions?: string[];
+  positions?: string[];  // Changed from position to positions
   grade?: PlayerGrade;
   image?: string;
   active?: boolean;
   activities?: string[];
+  jersey_number?: string; // Keep original property name
   [key: string]: any;
+  // Compatibility getter
+  get position(): string[] | undefined;
+  get jerseyNumber(): string | undefined;
 }
 
 export interface PlayerStats {
