@@ -1,43 +1,47 @@
 
-import React from "react";
-import { PlayerPosition } from "@/types/player";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { UseFormReturn } from "react-hook-form";
+import React from 'react';
+import { FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { CheckboxGroup, CheckboxItem } from "@/components/ui/checkbox-group";
+import { UseFormReturn } from 'react-hook-form';
 
-interface PlayerPositionFieldProps {
+export type PlayerPositionFieldProps = {
   form: UseFormReturn<any>;
-  positions: PlayerPosition[];
-  setPositions: (positions: PlayerPosition[]) => void;
-}
+  positions?: string[];
+  setPositions?: (positions: string[]) => void;
+};
 
-export function PlayerPositionField({ 
-  form, 
-  positions, 
-  setPositions 
-}: PlayerPositionFieldProps) {
-  const handlePositionChange = (position: PlayerPosition) => {
-    if (positions.includes(position)) {
-      setPositions(positions.filter(p => p !== position));
-    } else {
-      setPositions([...positions, position]);
-    }
+export function PlayerPositionField({ form, positions, setPositions }: PlayerPositionFieldProps) {
+  const positionLabels = {
+    MV: "Målvakt",
+    BACK: "Back",
+    MF: "Mittfältare",
+    ANF: "Anfallare",
+    TRÄNARE: "Tränare"
   };
 
-  // Position options with readable labels
-  const positionOptions = [
-    { value: "MV", label: "Målvakt" },
-    { value: "BACK", label: "Back" },
-    { value: "MF", label: "Mittfältare" },
-    { value: "ANF", label: "Anfallare" },
-    { value: "TRÄNARE", label: "Tränare" }
-  ];
+  // Use form-controlled positions or prop-based ones
+  const selectedPositions = form?.getValues?.('positions') || positions || [];
+  
+  const handlePositionChange = (position: string, checked: boolean) => {
+    let newPositions: string[];
+    
+    if (checked) {
+      // Add position
+      newPositions = [...selectedPositions, position];
+    } else {
+      // Remove position
+      newPositions = selectedPositions.filter(pos => pos !== position);
+    }
+    
+    // Update form and/or props
+    if (form) {
+      form.setValue('positions', newPositions);
+    }
+    
+    if (setPositions) {
+      setPositions(newPositions);
+    }
+  };
 
   return (
     <FormField
@@ -45,28 +49,19 @@ export function PlayerPositionField({
       name="positions"
       render={() => (
         <FormItem>
-          <div className="mb-4">
-            <FormLabel>Position</FormLabel>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {positionOptions.map((option) => (
-              <FormItem
-                key={option.value}
-                className="flex flex-row items-start space-x-3 space-y-0"
+          <FormLabel>Positioner</FormLabel>
+          <CheckboxGroup className="grid grid-cols-2 gap-2 mt-2">
+            {Object.entries(positionLabels).map(([value, label]) => (
+              <CheckboxItem
+                key={value}
+                id={`position-${value}`}
+                checked={selectedPositions.includes(value)}
+                onCheckedChange={(checked) => handlePositionChange(value, !!checked)}
               >
-                <FormControl>
-                  <Checkbox
-                    checked={positions.includes(option.value as PlayerPosition)}
-                    onCheckedChange={() => handlePositionChange(option.value as PlayerPosition)}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal">
-                  {option.label}
-                </FormLabel>
-              </FormItem>
+                {label}
+              </CheckboxItem>
             ))}
-          </div>
-          <FormMessage />
+          </CheckboxGroup>
         </FormItem>
       )}
     />

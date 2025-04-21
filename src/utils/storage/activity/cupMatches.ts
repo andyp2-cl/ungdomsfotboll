@@ -6,7 +6,7 @@ import { addCupMatches } from "./cup-matches/add";
 export { addCupMatches as addCupMatchesToActivity };
 
 // Original functionality to be maintained for backward compatibility
-export const addCupMatches = async (
+export const addCupMatchesLegacy = async (
   cupActivity: Activity,
   matches: Activity[]
 ): Promise<boolean> => {

@@ -1,35 +1,53 @@
-
-import { Player } from "@/types/player";
+// Utility functions to ensure compatibility between different player data formats
 
 /**
- * This adapter ensures backward compatibility for Player objects
- * by providing access to both older and newer property names.
+ * Ensures a player object has all required fields in the expected format
  */
-export function createPlayerWithCompatibility(player: Player): Player {
+export function normalizePlayer(player: any): any {
+  if (!player) return null;
+  
   return {
-    ...player,
-    // Ensure positions is always available
-    get positions() {
-      return player.positions || [];
-    },
-    // Ensure position is always available for backward compatibility
-    get position() {
-      return player.positions || [];
-    },
-    // Ensure jerseyNumber is always available
-    get jerseyNumber() {
-      return player.jerseyNumber;
-    },
-    // Ensure jersey_number is always available for backward compatibility
-    get jersey_number() {
-      return player.jerseyNumber || player.jersey_number;
-    }
+    id: player.id || '',
+    name: player.name || '',
+    grade: player.grade || 'C',
+    positions: Array.isArray(player.positions) ? player.positions : [],
+    jerseyNumber: player.jerseyNumber || player.jersey_number || '',
+    image: player.image || '',
+    activities: Array.isArray(player.activities) ? player.activities : [],
+    // Add any other fields that need normalization
+  };
+}
+
+// Convert old format players to new format
+export function convertOldPlayerToNew(oldPlayer: any): any {
+  if (!oldPlayer) return null;
+
+  return {
+    ...oldPlayer,
+    // Convert jersey_number to jerseyNumber if needed
+    jerseyNumber: oldPlayer.jerseyNumber || oldPlayer.jersey_number || undefined,
+    // Keep any other properties
   };
 }
 
 /**
- * This function adapts an array of players to include compatibility properties
+ * Merges player data from different sources, prioritizing newer data
  */
-export function adaptPlayersWithCompatibility(players: Player[]): Player[] {
-  return players.map(createPlayerWithCompatibility);
+export function mergePlayerData(oldPlayer: any, newPlayer: any): any {
+  if (!oldPlayer) return newPlayer;
+  if (!newPlayer) return oldPlayer;
+  
+  return {
+    ...oldPlayer,
+    ...newPlayer,
+    // Special handling for arrays - concat and deduplicate
+    positions: [...new Set([
+      ...(Array.isArray(oldPlayer.positions) ? oldPlayer.positions : []),
+      ...(Array.isArray(newPlayer.positions) ? newPlayer.positions : [])
+    ])],
+    activities: [...new Set([
+      ...(Array.isArray(oldPlayer.activities) ? oldPlayer.activities : []),
+      ...(Array.isArray(newPlayer.activities) ? newPlayer.activities : [])
+    ])],
+  };
 }
