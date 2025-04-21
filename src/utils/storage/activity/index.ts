@@ -8,5 +8,6 @@ export * from './cup-matches';
 export * from './delete';
 
 // Re-export the deprecated file for backwards compatibility
-// This should be removed in future versions
-export * from './cupMatches';
+// But explicitly handle the addCupMatches to avoid ambiguity
+import { addCupMatches as deprecatedAddCupMatches } from './cupMatches';
+export { deprecatedAddCupMatches as addCupMatchesLegacy };
