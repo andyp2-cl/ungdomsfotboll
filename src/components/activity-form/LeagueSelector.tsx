@@ -38,7 +38,7 @@ export function LeagueSelector({ form, activityType }: LeagueSelectorProps) {
           <FormLabel>Liga</FormLabel>
           <Select 
             onValueChange={field.onChange} 
-            value={field.value || ""}
+            value={field.value || "none"}
             disabled={isLoading}
           >
             <FormControl>
@@ -47,7 +47,7 @@ export function LeagueSelector({ form, activityType }: LeagueSelectorProps) {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="">Ingen liga</SelectItem>
+              <SelectItem value="none">Ingen liga</SelectItem>
               {leagues?.map((league) => (
                 <SelectItem key={league.id} value={league.id}>
                   {league.name}
