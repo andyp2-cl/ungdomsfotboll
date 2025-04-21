@@ -1,8 +1,8 @@
 
 // Player-related types
-export type PlayerPosition = "MÅLVAKT" | "FÖRSVAR" | "MITTFÄLT" | "FORWARD" | "TRÄNARE";
+export type PlayerPosition = "MV" | "BACK" | "MF" | "ANF" | "TRÄNARE";
 
-export type PlayerGrade = "P9" | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | string;
+export type PlayerGrade = "A" | "B" | "C" | "D";
 
 export interface Player {
   id: string;
@@ -12,6 +12,7 @@ export interface Player {
   jerseyNumber?: string;
   image?: string;
   stats?: PlayerStats;
+  activities?: string[];
 }
 
 export interface PlayerStats {
@@ -42,7 +43,7 @@ export interface Activity {
   scraped?: boolean;
   cupId?: string;
   cupName?: string;
-  matches?: Activity[];
+  matches?: string[];
   homeScore?: number;
   awayScore?: number;
   result?: string;

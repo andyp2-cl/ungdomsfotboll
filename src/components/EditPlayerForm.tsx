@@ -37,7 +37,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       name: player.name,
       grade: isTrainer ? undefined : player.grade as PlayerGrade,
       positions: player.positions || [],
-      jerseyNumber: player.jersey_number || "",
+      jerseyNumber: player.jerseyNumber || "",
     },
   });
 
@@ -49,7 +49,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       // Only set grade if not a trainer
       grade: isTrainer ? undefined : (values.grade || "A"),
       positions: values.positions,
-      jersey_number: values.jerseyNumber || undefined,
+      jerseyNumber: values.jerseyNumber || undefined,
       image: imagePreview
     };
 

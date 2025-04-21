@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,10 +126,10 @@ export function PlayerDetail({
                     </span>
                   </div>
                 )}
-                {player.jersey_number && !isCoach && (
+                {player.jerseyNumber && !isCoach && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tröjnummer:</span>
-                    <span className="font-medium">{player.jersey_number}</span>
+                    <span className="font-medium">{player.jerseyNumber}</span>
                   </div>
                 )}
               </div>

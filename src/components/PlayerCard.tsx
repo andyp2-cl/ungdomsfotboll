@@ -82,9 +82,9 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
       <CardContent className="p-4">
         <h3 className="font-semibold truncate">
           {player.name}
-          {player.jersey_number && !isCoach && (
+          {player.jerseyNumber && !isCoach && (
             <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-              #{player.jersey_number}
+              #{player.jerseyNumber}
             </span>
           )}
         </h3>

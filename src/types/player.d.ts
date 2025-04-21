@@ -10,23 +10,20 @@ export type Json =
   | Json[]
 
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
+export type PlayerPosition = "MV" | "BACK" | "MF" | "ANF" | "TRÄNARE";
 
 export interface Player {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email?: string;
   phone?: string;
-  positions?: string[];  // Changed from position to positions
+  positions?: PlayerPosition[];
   grade?: PlayerGrade;
   image?: string;
   active?: boolean;
   activities?: string[];
-  jersey_number?: string; // Keep original property name
+  jerseyNumber?: string;
   [key: string]: any;
-  // Compatibility getter
-  get position(): string[] | undefined;
-  get jerseyNumber(): string | undefined;
 }
 
 export interface PlayerStats {
@@ -37,8 +34,8 @@ export interface PlayerStats {
     away?: number;
   };
   isWin?: boolean;
-  cup_matches?: string[]; // This property is used for storing cup match IDs
-  [key: string]: any; // Adding index signature for Json compatibility
+  cup_matches?: string[];
+  [key: string]: any;
 }
 
 export interface Activity {
@@ -56,13 +53,15 @@ export interface Activity {
   scraped?: boolean;
   participants: string[];
   cupId?: string;
-  cupName?: string; // Add proper type definition for cupName
+  cupName?: string;
   matches?: string[];
   result?: string;
   homeScore?: number;
   awayScore?: number;
   isWin?: boolean;
   player_stats?: PlayerStats;
+  league_id?: string;
+  leagueName?: string;
   [key: string]: any;
 }
 

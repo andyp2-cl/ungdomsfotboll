@@ -13,7 +13,7 @@ export const positionOptions = [
 export const formSchema = z.object({
   name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
   grade: z.enum(["A", "B", "C", "D"]).optional(),
-  positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"])),
+  positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"] as const)),
   jerseyNumber: z.string().optional(),
   isTrainer: z.boolean().default(false),
 });

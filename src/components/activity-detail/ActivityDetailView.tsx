@@ -100,15 +100,7 @@ export function ActivityDetailView({
         <div className="flex justify-between items-start gap-2">
           <ActivityDetailHeaderContent 
             activity={currentActivity}
-            formattedDate={formattedDate}
-            capitalizedDayOfWeek={capitalizedDayOfWeek}
-            isHistorical={isHistorical}
-            formatResult={() => {
-              if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
-                return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
-              }
-              return currentActivity.result || "";
-            }}
+            isMobile={isMobile}
           />
           <HeaderActionButtons 
             onEdit={onEdit}

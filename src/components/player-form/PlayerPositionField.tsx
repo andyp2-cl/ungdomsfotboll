@@ -20,14 +20,14 @@ export function PlayerPositionField({ form }: PlayerPositionFieldProps) {
     if (isTrainer) {
       // Add TRÄNARE to positions if not already there
       if (!positions.includes("TRÄNARE")) {
-        form.setValue("positions", [...positions, "TRÄNARE" as PlayerPosition]);
+        form.setValue("positions", [...positions, "TRÄNARE"]);
       }
     } else {
       // Remove TRÄNARE from positions if it exists
       if (positions.includes("TRÄNARE")) {
         form.setValue(
           "positions",
-          positions.filter(pos => pos !== "TRÄNARE") as PlayerPosition[]
+          positions.filter(pos => pos !== "TRÄNARE")
         );
       }
     }
@@ -73,11 +73,11 @@ export function PlayerPositionField({ form }: PlayerPositionFieldProps) {
                             className="flex flex-row items-start space-x-3 space-y-0"
                           >
                             <Checkbox
-                              checked={field.value?.includes(option.value as PlayerPosition)}
+                              checked={field.value?.includes(option.value)}
                               onCheckedChange={(checked) => {
                                 const currentPositions = field.value || [];
                                 const updated = checked
-                                  ? [...currentPositions, option.value as PlayerPosition]
+                                  ? [...currentPositions, option.value]
                                   : currentPositions.filter(
                                       (value) => value !== option.value
                                     );

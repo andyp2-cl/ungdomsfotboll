@@ -1,10 +1,23 @@
 
-import { Activity, Player } from "@/types/player";
+import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ClipboardList, MapPin, Clock, Trophy, Shield } from "lucide-react";
-import { CupMatchBadge } from "@/components/activity-list/CupMatchBadge";
+import { Calendar, MapPin, Clock, Trophy, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+interface CupMatchBadgeProps {
+  cupName: string;
+}
+
+// Create a CupMatchBadge component
+export function CupMatchBadge({ cupName }: CupMatchBadgeProps) {
+  return (
+    <Badge variant="outline" className="bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1">
+      <Trophy className="h-3 w-3" />
+      {cupName}
+    </Badge>
+  );
+}
 
 interface ActivityDetailHeaderContentProps {
   activity: Activity;
