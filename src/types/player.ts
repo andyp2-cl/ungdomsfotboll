@@ -3,7 +3,7 @@ export interface Player {
   id: string;
   name: string;
   grade?: PlayerGrade;
-  positions?: PlayerPosition[];  // Changed from position to positions
+  positions?: PlayerPosition[]; 
   jersey_number?: string;
   image?: string;
   activities?: string[];
@@ -11,6 +11,11 @@ export interface Player {
     goals?: { [activityId: string]: number };
     assists?: { [activityId: string]: number };
   };
+  [key: string]: any; // Allow additional properties
+
+  // Compatibility getters
+  position?: PlayerPosition[];
+  jerseyNumber?: string;
 }
 
 export type PlayerGrade =

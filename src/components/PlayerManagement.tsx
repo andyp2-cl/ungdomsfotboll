@@ -65,7 +65,7 @@ export function PlayerManagement({
   const activeFiltersCount = selectedPositions.length;
 
   const playerGradeCounts = players.reduce((acc, player) => {
-    if (player.position?.includes("TRÄNARE")) return acc;
+    if (player.positions?.includes("TRÄNARE")) return acc;
     
     const grade = player.grade;
     if (!acc[grade]) {

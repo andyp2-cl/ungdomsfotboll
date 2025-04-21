@@ -59,7 +59,7 @@ export function calculatePlayerStats(players: Player[], activities: Activity[]):
       name: player.name,
       grade: player.grade,
       position: player.positions?.[0] || 'N/A',
-      jerseyNumber: player.jerseyNumber || '',
+      jerseyNumber: player.jersey_number || '',
       activityCount,
       participationRate,
       goals: totalGoals,

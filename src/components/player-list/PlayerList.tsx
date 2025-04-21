@@ -32,8 +32,8 @@ export function PlayerList({
   const filteredPlayers = showCoaches 
     ? compatiblePlayers
     : compatiblePlayers.filter(player => {
-        if (!player.position) return true;
-        return !player.position.includes('TRÄNARE');
+        if (!player.positions) return true;
+        return !player.positions.includes('TRÄNARE');
       });
     
   // Apply sorting

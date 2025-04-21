@@ -10,19 +10,19 @@ export function createPlayerWithCompatibility(player: Player): Player {
     ...player,
     // Ensure positions is always available
     get positions() {
-      return this.position || [];
+      return player.position || [];
     },
     // Ensure position is always available
     get position() {
-      return this.positions || [];
+      return player.positions || [];
     },
     // Ensure jerseyNumber is always available
     get jerseyNumber() {
-      return this.jersey_number;
+      return player.jersey_number;
     },
     // Ensure jersey_number is always available
-    set jerseyNumber(value) {
-      this.jersey_number = value;
+    get jersey_number() {
+      return player.jerseyNumber;
     }
   };
 }

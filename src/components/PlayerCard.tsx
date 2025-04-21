@@ -44,7 +44,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
     return formattedPosition;
   };
 
-  const isCoach = player.position?.includes('TRÄNARE');
+  const isCoach = player.positions?.includes('TRÄNARE');
 
   return (
     <Card 
@@ -90,8 +90,8 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         </h3>
         {!isCoach && (
           <p className="text-sm text-muted-foreground">
-            {player.position && player.position.length > 0
-              ? player.position
+            {player.positions && player.positions.length > 0
+              ? player.positions
                   .filter(pos => pos !== 'TRÄNARE')
                   .map(formatPosition)
                   .join(', ')

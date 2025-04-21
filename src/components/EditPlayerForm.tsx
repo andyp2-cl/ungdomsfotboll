@@ -21,7 +21,7 @@ interface EditPlayerFormProps {
 }
 
 export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps) {
-  const [isTrainer, setIsTrainer] = useState(player.position?.includes("TRÄNARE") || false);
+  const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
   const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
 
   const formSchema = z.object({
@@ -36,7 +36,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
     defaultValues: {
       name: player.name,
       grade: isTrainer ? undefined : player.grade as PlayerGrade,
-      positions: player.position || [],
+      positions: player.positions || [],
       jerseyNumber: player.jersey_number || "",
     },
   });
@@ -48,7 +48,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       name: values.name,
       // Only set grade if not a trainer
       grade: isTrainer ? undefined : (values.grade || "A"),
-      position: values.positions,
+      positions: values.positions,
       jersey_number: values.jerseyNumber || undefined,
       image: imagePreview
     };

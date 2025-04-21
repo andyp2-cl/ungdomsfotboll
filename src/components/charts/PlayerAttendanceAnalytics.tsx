@@ -13,7 +13,7 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
   // Calculate attendance rates for each player
   const attendanceData = useMemo(() => {
     return players
-      .filter(player => !player.position?.includes('TRÄNARE')) // Filter out trainers
+      .filter(player => !player.positions?.includes('TRÄNARE')) // Filter out trainers
       .map(player => {
         // Count activities the player is participating in
         const participatingCount = player.activities?.length || 0;

@@ -44,7 +44,7 @@ export function PlayerGridView({ players, onPlayerSelect, onPlayerEdit }: Player
                 <div>
                   <h3 className="font-medium">{playerName}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {getPositionsString(player.position)}
+                    {getPositionsString(player.positions)}
                   </p>
                 </div>
                 {player.grade && (

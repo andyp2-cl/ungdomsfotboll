@@ -24,7 +24,7 @@ export function GradePieChart({ activity, participatingPlayers, compact = false 
     
     // Only count non-coach players
     const nonCoachPlayers = participatingPlayers.filter(player => 
-      !player.position?.includes('TRÄNARE')
+      !player.positions?.includes('TRÄNARE')
     );
     
     nonCoachPlayers.forEach(player => {

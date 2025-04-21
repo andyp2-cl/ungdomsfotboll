@@ -45,7 +45,7 @@ export function ParticipantsList({
           </Button>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
-              {player.position?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
+              {player.positions?.includes("TRÄNARE") ? 'Tränare' : `Nivå ${player.grade}`}
             </Badge>
             <Button 
               variant="ghost" 
