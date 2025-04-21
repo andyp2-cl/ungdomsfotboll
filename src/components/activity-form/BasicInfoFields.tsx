@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +14,7 @@ import { useEffect, useState } from "react";
 import { getAllCupNames } from "@/lib/supabase/activities";
 import { useQuery } from "@tanstack/react-query";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
+import { LeagueSelector } from "./LeagueSelector";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -24,13 +24,11 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
   const [cupNames, setCupNames] = useState<string[]>([]);
   const activityType = form.watch("type");
   
-  // Fetch activities to get cup names
   const { data: activities, isLoading } = useQuery({
     queryKey: ["activities"],
     queryFn: getStoredActivities,
   });
   
-  // Extract cup names when activities are loaded
   useEffect(() => {
     if (activities && activities.length > 0) {
       const names = getAllCupNames(activities);
@@ -77,7 +75,6 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
         )}
       />
 
-      {/* Show Cup Name field for match type */}
       {activityType === "match" && (
         <FormField
           control={form.control}
@@ -158,6 +155,8 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
 
         <TimeInput form={form} />
       </div>
+
+      <LeagueSelector form={form} activityType={activityType} />
     </>
   );
 }

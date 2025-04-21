@@ -1,21 +1,28 @@
-
-export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
-
-export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
-
-export type ActivityType = 'match' | 'cup';
-
-export interface PlayerStats {
-  goals?: Record<string, number>; // Record of player ID to number of goals
-  assists?: Record<string, number>; // Record of player ID to number of assists
-  scores?: {
-    home?: number;
-    away?: number;
-  }; // Score information for matches
-  isWin?: boolean; // Whether the match was a win for Hässleholms IF
-  cup_matches?: string[]; // IDs of cup match activities
-  [key: string]: any; // Allow for additional properties
+export interface Player {
+  id: string;
+  name: string;
+  grade: string;
+  position?: string;
+  jersey_number?: string;
+  image?: string;
+  activities?: string[];
+  player_stats?: {
+    goals?: { [activityId: string]: number };
+    assists?: { [activityId: string]: number };
+  };
 }
+
+export type PlayerGrade =
+  | "A-lag"
+  | "U19"
+  | "U17"
+  | "U16"
+  | "U15"
+  | "U14"
+  | "U13"
+  | "Annan";
+
+export type ActivityType = "match" | "cup";
 
 export interface Location {
   name: string;
@@ -27,28 +34,37 @@ export interface Activity {
   id: string;
   name: string;
   date: string;
-  type: ActivityType;
   time?: string;
+  type: ActivityType;
   location?: Location;
-  participants: string[]; // Player IDs
+  participants?: string[];
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
-  cupName?: string; // Add cupName field
-  matches?: string[]; // Activity IDs for cup matches
-  player_stats?: PlayerStats;
-  result?: string; // Match result, e.g. "2-1"
-  homeScore?: number; // Home team's score
-  awayScore?: number; // Away team's score
-  isWin?: boolean; // Whether the match was a win for Hässleholms IF
+  cupName?: string;
+  matches?: string[];
+  homeScore?: number;
+  awayScore?: number;
+  result?: string;
+  isWin?: boolean;
+  player_stats?: {
+    goals?: { [playerId: string]: number };
+    assists?: { [playerId: string]: number };
+    scores?: {
+      home?: number;
+      away?: number;
+    };
+    isWin?: boolean;
+  };
+  [key: string]: any;
+  league_id?: string;
+  leagueName?: string;  // For UI display purposes
 }
 
-export interface Player {
+export interface League {
   id: string;
   name: string;
-  grade?: PlayerGrade; // Changed to optional since trainers don't have a grade
-  positions?: PlayerPosition[]; // Changed from position to positions array
-  activities?: string[]; // Array of activity IDs this player is participating in
-  jerseyNumber?: string; // Optional jersey number for the player
-  image?: string; // URL to player's image
+  year: number;
+  division: string;
+  created_at?: string;
 }

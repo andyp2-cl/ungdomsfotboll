@@ -24,7 +24,8 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     is_win: activity.isWin !== undefined ? activity.isWin : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
-    scraped: activity.scraped || false
+    scraped: activity.scraped || false,
+    league_id: activity.league_id || null
   };
 
   // Special handling for cup type activities
@@ -74,7 +75,8 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     awayScore: item.away_score,
     // Properly handle is_win with strict type checking
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
-    player_stats: { goals: {}, assists: {} }
+    player_stats: { goals: {}, assists: {} },
+    league_id: item.league_id || undefined
   };
   
   // For cup type activities, make sure cupId is set properly

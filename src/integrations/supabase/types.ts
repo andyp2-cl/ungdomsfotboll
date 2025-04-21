@@ -19,6 +19,7 @@ export type Database = {
           id: string
           is_win: boolean | null
           kiosk_assigned_player_id: string | null
+          league_id: string | null
           location_description: string | null
           location_gps_link: string | null
           location_name: string | null
@@ -38,6 +39,7 @@ export type Database = {
           id: string
           is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
+          league_id?: string | null
           location_description?: string | null
           location_gps_link?: string | null
           location_name?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           id?: string
           is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
+          league_id?: string | null
           location_description?: string | null
           location_gps_link?: string | null
           location_name?: string | null
@@ -67,7 +70,15 @@ export type Database = {
           time?: string | null
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activities_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       database_logs: {
         Row: {
@@ -93,6 +104,30 @@ export type Database = {
           entity_type?: string
           id?: string
           timestamp?: string
+        }
+        Relationships: []
+      }
+      leagues: {
+        Row: {
+          created_at: string
+          division: string
+          id: string
+          name: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          division: string
+          id?: string
+          name: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          division?: string
+          id?: string
+          name?: string
+          year?: number
         }
         Relationships: []
       }
