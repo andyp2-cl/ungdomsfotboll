@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Player, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
@@ -8,6 +7,7 @@ import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceA
 import { MatchesTabContent } from "@/components/player-management/statistics/matches/MatchesTabContent";
 import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
+import { LeagueStatisticsContent } from "@/components/player-management/statistics/LeagueStatisticsContent";
 
 interface StatisticsTabContentProps {
   players: Player[];
@@ -86,6 +86,7 @@ export function StatisticsTabContent({
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Matchstatistik</TabsTrigger>
           <TabsTrigger value="participation">Deltagande</TabsTrigger>
+          <TabsTrigger value="leagues">Ligor</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -127,6 +128,14 @@ export function StatisticsTabContent({
         
         <TabsContent value="participation">
           <ParticipationTabContent activities={activities} players={players} />
+        </TabsContent>
+        
+        <TabsContent value="leagues">
+          <LeagueStatisticsContent 
+            activities={activities} 
+            players={players}
+            onPlayerSelect={onPlayerSelect}
+          />
         </TabsContent>
       </Tabs>
     </div>
