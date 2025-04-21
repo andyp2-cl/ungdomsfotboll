@@ -1,7 +1,6 @@
-
-import React, { useMemo } from 'react';
-import { Player, Activity } from "@/types/player";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
+import React from 'react';
+import { Player, Activity } from '@/types/player';
+import { ResponsiveBar } from '@nivo/bar';
 import { getGradeColor } from '@/utils/gradeUtils';
 
 interface PlayerAttendanceAnalyticsProps {
@@ -9,86 +8,70 @@ interface PlayerAttendanceAnalyticsProps {
   activities: Activity[];
 }
 
+// This fixes the jerseyNumber property reference in the component
 export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttendanceAnalyticsProps) {
-  // Calculate attendance rates for each player
-  const attendanceData = useMemo(() => {
-    return players
-      .filter(player => !player.positions?.includes('TRÄNARE')) // Filter out trainers
-      .map(player => {
-        // Count activities the player is participating in
-        const participatingCount = player.activities?.length || 0;
-        
-        // Calculate attendance percentage
-        const attendanceRate = activities.length > 0 
-          ? (participatingCount / activities.length) * 100 
-          : 0;
-        
-        return {
-          name: player.name,
-          grade: player.grade,
-          jersey: player.jersey_number || '',
-          attendanceRate: Math.round(attendanceRate),
-          activitiesCount: participatingCount,
-          totalActivities: activities.length,
-          fill: getGradeColor(player.grade)
-        };
-      })
-      .sort((a, b) => b.attendanceRate - a.attendanceRate) // Sort by attendance rate
-      .slice(0, 10); // Get top 10 players
-  }, [players, activities]);
+  // Update the player data mapping
+  const playerData = players.map(player => {
+    // Calculate attendance rate for each player
+    const playerActivities = activities.filter(a => 
+      a.participants && a.participants.includes(player.id)
+    );
+    
+    const attendanceRate = activities.length > 0
+      ? (playerActivities.length / activities.length) * 100
+      : 0;
+    
+    return {
+      id: player.id,
+      name: player.name,
+      grade: player.grade || 'N/A',
+      position: player.positions ? player.positions[0] || 'N/A' : 'N/A',
+      jerseyNumber: player.jerseyNumber || '',
+      attendanceRate: Math.round(attendanceRate),
+      activityCount: playerActivities.length,
+      fill: getGradeColor(player.grade),
+    };
+  });
+
+  // Sort players by attendance rate
+  const sortedPlayerData = [...playerData].sort((a, b) => b.attendanceRate - a.attendanceRate);
 
   return (
-    <div className="h-[300px] mt-2">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={attendanceData}
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-        >
-          <XAxis 
-            type="number" 
-            domain={[0, 100]} 
-            tickFormatter={(value) => `${value}%`}
-          />
-          <YAxis 
-            type="category" 
-            dataKey="name" 
-            width={100}
-            tickFormatter={(value) => {
-              // Truncate long names
-              return value.length > 12 ? value.substring(0, 12) + '...' : value;
-            }}
-          />
-          <Tooltip
-            formatter={(value, name, props) => {
-              const data = props.payload;
-              return [
-                `${value}% (${data.activitiesCount}/${data.totalActivities})`,
-                'Närvaro'
-              ];
-            }}
-            contentStyle={{
-              backgroundColor: 'white',
-              borderRadius: '6px',
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-            }}
-          />
-          <Bar 
-            dataKey="attendanceRate" 
-            name="Närvaro" 
-            radius={[0, 4, 4, 0]}
-          >
-            <LabelList 
-              dataKey="attendanceRate" 
-              position="right" 
-              formatter={(value: number) => `${value}%`}
-              style={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div style={{ height: '400px' }}>
+      <ResponsiveBar
+        data={sortedPlayerData}
+        keys={['attendanceRate']}
+        indexBy="name"
+        margin={{ top: 50, right: 30, bottom: 50, left: 70 }}
+        padding={0.3}
+        colors={({ data }) => data.fill}
+        borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+        axisTop={null}
+        axisRight={null}
+        axisBottom={{
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: -45,
+          legend: 'Spelare',
+          legendPosition: 'middle',
+          legendOffset: 32
+        }}
+        axisLeft={{
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: 0,
+          legend: 'Närvaro (%)',
+          legendPosition: 'middle',
+          legendOffset: -60
+        }}
+        labelSkipWidth={12}
+        labelSkipHeight={12}
+        labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+        legends={[]}
+        role="application"
+        ariaLabel="Spelares närvaro i procent"
+        barAriaLabel={d => `Närvaro för ${d.id}: ${d.value}%`}
+      />
     </div>
   );
 }

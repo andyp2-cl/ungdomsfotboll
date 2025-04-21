@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Activity, Player, PlayerStats } from '@/types/player';
+import { Activity, PlayerStats } from '@/types/player';
 import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +13,80 @@ interface ResultSaverProps {
   onSaved: () => void;
   onCancel: () => void;
 }
+
+export const useResultSaver = ({ 
+  activity,
+  updateActivity,
+  onMatchResultUpdate
+}: { 
+  activity: Activity, 
+  updateActivity: (updatedActivity: Activity) => void,
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>
+}) => {
+  const { toast } = useToast();
+
+  const saveMatchResult = async (
+    homeScore?: number, 
+    awayScore?: number, 
+    isWin?: boolean
+  ) => {
+    try {
+      // Only continue if both scores are provided
+      if (homeScore === undefined || awayScore === undefined) {
+        toast({
+          title: 'Fel',
+          description: 'Båda hemma- och bortaresultat måste anges',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Format the result string
+      const result = `${homeScore}-${awayScore}`;
+      
+      // Create updated player_stats with type safety
+      const currentPlayerStats = activity.player_stats || {
+        goals: {},
+        assists: {}
+      };
+      
+      // Create the updated activity
+      const updatedActivity: Activity = {
+        ...activity,
+        result,
+        homeScore,
+        awayScore,
+        isWin,
+        player_stats: currentPlayerStats
+      };
+      
+      // Update the local activity in state
+      updateActivity(updatedActivity);
+      
+      // Call the onMatchResultUpdate callback if provided
+      if (onMatchResultUpdate) {
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      }
+      
+      toast({
+        title: 'Resultat sparat',
+        description: 'Matchen har uppdaterats med nytt resultat',
+      });
+      
+      return updatedActivity;
+    } catch (error: any) {
+      toast({
+        title: 'Ett fel inträffade',
+        description: error.message || 'Kunde inte spara resultatet',
+        variant: 'destructive',
+      });
+      console.error('Error saving match result:', error);
+      throw error;
+    }
+  };
+
+  return { saveMatchResult };
+};
 
 export default function ResultSaver({
   activity,
@@ -39,16 +112,13 @@ export default function ResultSaver({
     setIsSaving(true);
 
     try {
-      // Format the result string
       const result = `${homeScore}-${awayScore}`;
 
-      // Create updated player_stats
       const currentPlayerStats = activity.player_stats || { 
         goals: {}, 
         assists: {} 
       };
 
-      // Update the activity in Supabase
       const { error } = await supabase
         .from('activities')
         .update({
@@ -64,7 +134,6 @@ export default function ResultSaver({
         throw error;
       }
 
-      // Update local activity object with new values
       const updatedActivity: Activity = {
         ...activity,
         result,
@@ -74,7 +143,6 @@ export default function ResultSaver({
         player_stats: currentPlayerStats
       };
 
-      // Call the onSaved callback with the updated activity
       onSaved();
 
       toast({

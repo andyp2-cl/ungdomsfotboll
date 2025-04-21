@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 import { getGradeColor } from '@/utils/gradeUtils';
 
@@ -59,7 +58,7 @@ export function calculatePlayerStats(players: Player[], activities: Activity[]):
       name: player.name,
       grade: player.grade,
       position: player.positions?.[0] || 'N/A',
-      jerseyNumber: player.jersey_number || '',
+      jerseyNumber: player.jerseyNumber || '',
       activityCount,
       participationRate,
       goals: totalGoals,

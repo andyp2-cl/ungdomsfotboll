@@ -31,6 +31,14 @@ export interface PlayerStats {
   assists: Record<string, number>;
   isWin?: boolean;
   cup_matches?: string[];
+  matches?: number;
+  wins?: number;
+  draws?: number;
+  losses?: number;
+  scores?: {
+    home: number;
+    away: number;
+  };
   [key: string]: any;
 }
 
