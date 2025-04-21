@@ -39,7 +39,7 @@ export function usePlayerForm({
       // Add TRÄNARE position if it's not already there
       const currentPositions = form.getValues("positions") || [];
       if (!currentPositions.includes("TRÄNARE")) {
-        form.setValue("positions", [...currentPositions, "TRÄNARE"]);
+        form.setValue("positions", [...currentPositions, "TRÄNARE" as PlayerPosition]);
       }
       form.setValue("grade", undefined); // Remove grade for trainers
     } else {

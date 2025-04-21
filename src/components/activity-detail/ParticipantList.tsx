@@ -40,11 +40,11 @@ export function ParticipantList({
   
   // Group players by position first (coaches at the top) then by grade
   const coachPlayers = participants.filter(player => 
-    player.positions?.includes('TRÄNARE')
+    player.position?.includes('TRÄNARE')
   );
   
   const nonCoachPlayers = participants.filter(player => 
-    !player.positions?.includes('TRÄNARE')
+    !player.position?.includes('TRÄNARE')
   );
   
   // Group non-coach players by grade
@@ -127,10 +127,10 @@ export function ParticipantList({
                   </Avatar>
                   <div className="flex flex-col">
                     <span className={isMobile ? "text-sm font-medium" : "font-medium"}>{player.name}</span>
-                    {player.positions && player.positions.length > 0 && (
+                    {player.position && player.position.length > 0 && (
                       <div className="flex space-x-1 mt-1">
-                        {Array.isArray(player.positions) ? (
-                          player.positions
+                        {Array.isArray(player.position) ? (
+                          player.position
                             .filter(pos => pos !== 'TRÄNARE') // Filter out TRÄNARE
                             .slice(0, isMobile ? 1 : 2)
                             .map((position, index) => (
@@ -147,13 +147,13 @@ export function ParticipantList({
                             variant="outline" 
                             className={isMobile ? "text-xs py-0 px-1" : "text-xs"}
                           >
-                            {player.positions}
+                            {player.position}
                           </Badge>
                         )}
-                        {Array.isArray(player.positions) && 
-                         player.positions.filter(pos => pos !== 'TRÄNARE').length > (isMobile ? 1 : 2) && (
+                        {Array.isArray(player.position) && 
+                         player.position.filter(pos => pos !== 'TRÄNARE').length > (isMobile ? 1 : 2) && (
                           <Badge variant="outline" className="text-xs">
-                            +{player.positions.filter(pos => pos !== 'TRÄNARE').length - (isMobile ? 1 : 2)}
+                            +{player.position.filter(pos => pos !== 'TRÄNARE').length - (isMobile ? 1 : 2)}
                           </Badge>
                         )}
                       </div>

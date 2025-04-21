@@ -3,7 +3,7 @@ export interface Player {
   id: string;
   name: string;
   grade?: PlayerGrade;
-  position?: string[];
+  position?: PlayerPosition[];
   jersey_number?: string;
   image?: string;
   activities?: string[];
