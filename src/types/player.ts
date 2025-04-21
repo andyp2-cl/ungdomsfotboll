@@ -1,94 +1,101 @@
 
+// Player-related types
+export type PlayerPosition = "MÅLVAKT" | "FÖRSVAR" | "MITTFÄLT" | "FORWARD" | "TRÄNARE";
+
+export type PlayerGrade = "P9" | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | string;
+
 export interface Player {
   id: string;
   name: string;
-  grade?: PlayerGrade;
-  positions?: PlayerPosition[]; 
-  jersey_number?: string;
-  image?: string;
-  activities?: string[];
-  player_stats?: {
-    goals?: { [activityId: string]: number };
-    assists?: { [activityId: string]: number };
-  };
-  [key: string]: any; // Allow additional properties
-
-  // Compatibility getters
-  position?: PlayerPosition[];
+  grade: PlayerGrade;
+  positions?: PlayerPosition[];
   jerseyNumber?: string;
+  image?: string;
+  stats?: PlayerStats;
 }
 
-export type PlayerGrade =
-  | "A"
-  | "B"
-  | "C"
-  | "D";
+export interface PlayerStats {
+  goals: number;
+  assists: number;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+}
 
-export type PlayerPosition =
-  | "MV"
-  | "BACK"
-  | "MF"
-  | "ANF"
-  | "TRÄNARE";
-
+// Activity-related types
 export type ActivityType = "match" | "cup";
-
-export interface Location {
-  name: string;
-  description?: string;
-  gpsLink?: string;
-}
 
 export interface Activity {
   id: string;
   name: string;
+  type: ActivityType;
   date: string;
   time?: string;
-  type: ActivityType;
-  location?: Location;
+  location?: {
+    name: string;
+    description?: string;
+    gpsLink?: string;
+  };
   participants?: string[];
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
   cupName?: string;
-  matches?: string[];
+  matches?: Activity[];
   homeScore?: number;
   awayScore?: number;
   result?: string;
   isWin?: boolean;
-  player_stats?: PlayerStats;
-  [key: string]: any;
-  league_id?: string;
-  leagueName?: string;  // For UI display purposes
-}
-
-export interface PlayerStats {
-  goals: Record<string, number>;
-  assists: Record<string, number>;
-  scores?: {
-    home?: number;
-    away?: number;
+  player_stats?: {
+    goals: Record<string, number>;
+    assists: Record<string, number>;
+    scores?: {
+      home: number;
+      away: number;
+    };
+    isWin?: boolean;
   };
-  isWin?: boolean;
-  cup_matches?: string[]; // This property is used for storing cup match IDs
-  [key: string]: any; // Adding index signature for Json compatibility
+  league_id?: string;
+  leagueName?: string;
 }
 
+// League-related types
 export interface League {
   id: string;
   name: string;
   year: number;
   division: string;
-  created_at?: string;
+  created_at: string;
 }
 
-export interface CupMatch {
-  id?: string;
+// Form schema types
+export interface ActivityFormSchema {
   name: string;
-  time: string;
-  location?: string;
-  locationDescription?: string;
+  type: ActivityType;
+  date: Date;
+  time?: string;
+  location?: {
+    name?: string;
+    description?: string;
+    gpsLink?: string;
+  };
   homeScore?: number;
   awayScore?: number;
-  result?: string;
+  cupName?: string;
+  isWin?: boolean;
+  league_id?: string;
+}
+
+export interface PlayerFormSchema {
+  name: string;
+  grade: PlayerGrade;
+  positions: PlayerPosition[];
+  jerseyNumber?: string;
+  image?: string;
+}
+
+// Add extensions to Activity type to support form interactions
+export interface ActivityFormValues extends Omit<ActivityFormSchema, "date"> {
+  date: Date;
 }

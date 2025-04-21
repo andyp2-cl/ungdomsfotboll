@@ -29,6 +29,9 @@ export function useActivityForm(
       awayScore: initialActivity?.awayScore,
       cupName: initialActivity?.cupName || "",
       isWin: initialActivity?.isWin,
+      league_id: initialActivity?.league_id && initialActivity.league_id !== "none" 
+        ? initialActivity.league_id 
+        : undefined,
     },
   });
 
@@ -57,7 +60,9 @@ export function useActivityForm(
         cupName: values.type === "match" && values.cupName && values.cupName !== "no-cup" 
           ? values.cupName 
           : undefined,
-        isWin: values.isWin
+        isWin: values.isWin,
+        // Set league_id if it's not "none"
+        league_id: values.league_id && values.league_id !== "none" ? values.league_id : undefined
       };
 
       // Update result string

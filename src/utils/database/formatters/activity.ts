@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 
 /**
@@ -76,7 +77,9 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     // Properly handle is_win with strict type checking
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
     player_stats: { goals: {}, assists: {} },
-    league_id: item.league_id || undefined
+    league_id: item.league_id || undefined,
+    // Add leagueName field to be populated later
+    leagueName: undefined
   };
   
   // For cup type activities, make sure cupId is set properly
