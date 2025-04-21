@@ -10,11 +10,11 @@ export function createPlayerWithCompatibility(player: Player): Player {
     ...player,
     // Ensure positions is always available
     get positions() {
-      return player.position || [];
+      return player.position || player.positions || [];
     },
     // Ensure position is always available
     get position() {
-      return player.positions || [];
+      return player.positions || player.position || [];
     },
     // Ensure jerseyNumber is always available
     get jerseyNumber() {
@@ -22,7 +22,7 @@ export function createPlayerWithCompatibility(player: Player): Player {
     },
     // Ensure jersey_number is always available
     get jersey_number() {
-      return player.jerseyNumber;
+      return player.jerseyNumber || player.jersey_number;
     }
   };
 }

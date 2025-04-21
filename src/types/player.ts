@@ -81,3 +81,14 @@ export interface League {
   division: string;
   created_at?: string;
 }
+
+export interface CupMatch {
+  id?: string;
+  name: string;
+  time: string;
+  location?: string;
+  locationDescription?: string;
+  homeScore?: number;
+  awayScore?: number;
+  result?: string;
+}

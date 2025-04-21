@@ -1,5 +1,5 @@
 
-import { addCupMatches, updateCupMatches } from './cup-matches';
+import { addCupMatchesToActivity as addCupMatches, updateCupMatches } from './cup-matches';
 
 // Re-export the functions from the new location
 // This file is kept for backwards compatibility but should be considered deprecated

@@ -6,7 +6,7 @@ import { Activity, CupMatch } from "@/types/player";
  * @param activity The activity to add matches to
  * @param matches The matches to add
  */
-export async function addCupMatchesToActivity(activity: Activity, matches: CupMatch[]) {
+export async function addCupMatchesToActivity(activity: Activity, matches: CupMatch[]): Promise<Activity> {
   // Get existing matches
   const existingMatches = activity.matches || [];
   
@@ -21,3 +21,9 @@ export async function addCupMatchesToActivity(activity: Activity, matches: CupMa
 
   return updatedActivity;
 }
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use addCupMatchesToActivity instead
+ */
+export const addCupMatches = addCupMatchesToActivity;
