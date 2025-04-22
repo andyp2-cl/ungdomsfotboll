@@ -20,11 +20,15 @@ export const normalizePlayerStats = (playerStatsJson: any): PlayerStats => {
     }
   }
   
+  // Make sure goals and assists are objects, not numbers
+  const goals = typeof playerStatsJson.goals === 'object' ? playerStatsJson.goals || {} : {};
+  const assists = typeof playerStatsJson.assists === 'object' ? playerStatsJson.assists || {} : {};
+  
   // Create a properly formatted object
   return {
     ...playerStatsJson,
-    goals: playerStatsJson.goals || {},
-    assists: playerStatsJson.assists || {}
+    goals,
+    assists
   };
 };
 
@@ -50,9 +54,14 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
   
   if (item.player_stats) {
     try {
-      const stats = typeof item.player_stats === 'string' 
+      let stats = typeof item.player_stats === 'string' 
         ? JSON.parse(item.player_stats) 
         : item.player_stats;
+      
+      // Ensure stats is an object
+      if (typeof stats !== 'object' || stats === null) {
+        stats = {};
+      }
         
       return {
         goals: stats.goals || {},
@@ -62,7 +71,7 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
           away: item.away_score
         },
         isWin: isWinValue,
-        cup_matches: stats.cup_matches || []
+        cup_matches: Array.isArray(stats.cup_matches) ? stats.cup_matches : []
       };
     } catch (e) {
       console.error("Error parsing player_stats JSON:", e);
@@ -80,4 +89,52 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
     isWin: isWinValue,
     cup_matches: []
   };
+};
+
+/**
+ * Merges two player stats objects together, with the second one taking precedence
+ */
+export const mergePlayerStats = (baseStats: Partial<PlayerStats>, newStats: Partial<PlayerStats>): PlayerStats => {
+  // Initialize the result with base structure
+  const result: PlayerStats = {
+    goals: { ...(baseStats.goals || {}) },
+    assists: { ...(baseStats.assists || {}) }
+  };
+  
+  // Merge new stats over base stats
+  if (newStats.goals) {
+    result.goals = { ...result.goals, ...newStats.goals };
+  }
+  
+  if (newStats.assists) {
+    result.assists = { ...result.assists, ...newStats.assists };
+  }
+  
+  // Handle cup_matches separately to ensure arrays are properly merged
+  if (newStats.cup_matches) {
+    result.cup_matches = [
+      ...(baseStats.cup_matches || []),
+      ...newStats.cup_matches
+    ];
+    // Remove duplicates
+    result.cup_matches = [...new Set(result.cup_matches)];
+  } else if (baseStats.cup_matches) {
+    result.cup_matches = [...baseStats.cup_matches];
+  }
+  
+  // Handle isWin
+  if (newStats.isWin !== undefined) {
+    result.isWin = newStats.isWin;
+  } else if (baseStats.isWin !== undefined) {
+    result.isWin = baseStats.isWin;
+  }
+  
+  // Handle scores
+  if (newStats.scores) {
+    result.scores = { ...(baseStats.scores || {}), ...newStats.scores };
+  } else if (baseStats.scores) {
+    result.scores = { ...baseStats.scores };
+  }
+  
+  return result;
 };

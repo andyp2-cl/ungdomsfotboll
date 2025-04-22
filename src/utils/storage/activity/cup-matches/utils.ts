@@ -20,7 +20,7 @@ export function extractCupMatchesFromPlayerStats(playerStats: any): string[] {
   }
   
   // Handle object format
-  if (playerStats && typeof playerStats === 'object' && 'cup_matches' in playerStats) {
+  if (playerStats && typeof playerStats === 'object' && playerStats.cup_matches) {
     return Array.isArray(playerStats.cup_matches) ? playerStats.cup_matches : [];
   }
   

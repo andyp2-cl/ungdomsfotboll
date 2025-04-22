@@ -42,6 +42,11 @@ export const addCupMatches = async (
       updatedCup.player_stats = { goals: {}, assists: {}, cup_matches: [] };
     }
     
+    // Ensure cup_matches property exists
+    if (!updatedCup.player_stats.cup_matches) {
+      updatedCup.player_stats.cup_matches = [];
+    }
+    
     // Add match IDs to cup_matches in player_stats
     updatedCup.player_stats.cup_matches = [
       ...(updatedCup.player_stats.cup_matches || []),

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { Activity } from "@/types/player";
+import { Activity, PlayerStats } from "@/types/player";
 import { extractCupMatchesFromPlayerStats, addMatchToPlayerStats } from "./utils";
 
 /**
@@ -34,8 +34,14 @@ export const updateCupMatches = async (activity: Activity, activities: Activity[
         if (!activity.player_stats) {
           activity.player_stats = {
             goals: {},
-            assists: {}
+            assists: {},
+            cup_matches: []
           };
+        }
+        
+        // Ensure cup_matches exists
+        if (!activity.player_stats.cup_matches) {
+          activity.player_stats.cup_matches = [];
         }
         
         // Update cup_matches in player_stats for persistence

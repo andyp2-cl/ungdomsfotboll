@@ -33,8 +33,12 @@ export interface PlayerStats {
     away?: number;
   };
   isWin?: boolean;
-  cup_matches?: string[]; // This property is used for storing cup match IDs
-  [key: string]: any; // Adding index signature for Json compatibility
+  cup_matches?: string[]; // Adding this property to fix type errors
+  matches?: number;       // Adding these properties to match expected type
+  wins?: number;
+  draws?: number;
+  losses?: number;
+  [key: string]: any;     // Keeping index signature for Json compatibility
 }
 
 export interface Activity {
@@ -52,7 +56,7 @@ export interface Activity {
   scraped?: boolean;
   participants: string[];
   cupId?: string;
-  cupName?: string; // Add proper type definition for cupName
+  cupName?: string;
   matches?: string[];
   result?: string;
   homeScore?: number;

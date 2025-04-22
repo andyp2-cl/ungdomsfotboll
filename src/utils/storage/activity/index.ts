@@ -9,4 +9,5 @@ export * from './delete';
 
 // Re-export the deprecated file for backwards compatibility
 // This should be removed in future versions
-export * from './cupMatches';
+// Fixed export to avoid naming conflict
+export { addCupMatchesToActivity } from './cupMatches';
