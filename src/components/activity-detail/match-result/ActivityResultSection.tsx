@@ -1,7 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { ScoreSection } from "./ScoreSection";
 import { useResultSaver } from "./ResultSaver";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityResultSectionProps {
   activity: Activity;
@@ -22,6 +25,7 @@ export function ActivityResultSection({
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
   const [manualWinStatus, setManualWinStatus] = useState<boolean | undefined>(activity.isWin);
+  const isMobile = useIsMobile();
   
   // Update local state when activity changes
   useEffect(() => {
@@ -64,21 +68,23 @@ export function ActivityResultSection({
   };
 
   return (
-    <div className="border rounded-md p-4">
-      <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
+    <div className={`border rounded-md ${isMobile ? 'p-3' : 'p-4'}`}>
+      <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-3`}>Matchresultat</h3>
       
-      <ScoreSection 
-        activity={activity}
-        homeScore={homeScore}
-        awayScore={awayScore}
-        setHomeScore={setHomeScore}
-        setAwayScore={setAwayScore}
-        manualWinStatus={manualWinStatus}
-        setManualWinStatus={setManualWinStatus}
-        onSave={handleSave}
-        isSaving={isSaving}
-        isHistorical={isHistorical}
-      />
+      <ScrollArea className={isMobile ? "max-h-[60vh]" : ""}>
+        <ScoreSection 
+          activity={activity}
+          homeScore={homeScore}
+          awayScore={awayScore}
+          setHomeScore={setHomeScore}
+          setAwayScore={setAwayScore}
+          manualWinStatus={manualWinStatus}
+          setManualWinStatus={setManualWinStatus}
+          onSave={handleSave}
+          isSaving={isSaving}
+          isHistorical={isHistorical}
+        />
+      </ScrollArea>
     </div>
   );
 }

@@ -89,17 +89,9 @@ export function ScoreForm({
     winStatusValue = "loss";
   }
   // If undefined, it stays as "draw"
-  
-  // Log the current state for debugging
-  console.log("ScoreForm render state:", { 
-    manualWinStatus, 
-    winStatusValue,
-    homeScore, 
-    awayScore 
-  });
 
   return (
-    <div>
+    <div className="pb-6">
       <div className="grid grid-cols-1 gap-4">
         <div className="mb-4">
           <h4 className="text-sm font-medium mb-3">Resultat</h4>

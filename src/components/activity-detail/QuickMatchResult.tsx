@@ -7,6 +7,7 @@ import { Save } from "lucide-react";
 import { extractTeamNames, isHomeMatch } from "./match-result/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -60,64 +61,66 @@ export function QuickMatchResult({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3 items-center">
-        <div className="space-y-1">
-          <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'home' ? "font-semibold" : ""}`}>
-            {homeTeamLabel}
-          </div>
-          {isReadOnly ? (
-            <div className={`text-center text-lg font-bold ${resultColorClass}`}>
-              {homeScore !== undefined ? homeScore : "-"}
+    <ScrollArea className={isMobile ? "max-h-[45vh]" : ""}>
+      <div className="space-y-4 px-1 pb-2">
+        <div className="grid grid-cols-3 gap-3 items-center">
+          <div className="space-y-1">
+            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'home' ? "font-semibold" : ""}`}>
+              {homeTeamLabel}
             </div>
-          ) : (
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={homeScore === undefined ? "" : homeScore}
-              onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-              className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'home' ? "border-blue-200" : ""}`}
-            />
-          )}
+            {isReadOnly ? (
+              <div className={`text-center text-lg font-bold ${resultColorClass}`}>
+                {homeScore !== undefined ? homeScore : "-"}
+              </div>
+            ) : (
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={homeScore === undefined ? "" : homeScore}
+                onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'home' ? "border-blue-200" : ""}`}
+              />
+            )}
+          </div>
+          
+          <div className="flex justify-center items-center">
+            <div className="text-xl font-bold">-</div>
+          </div>
+          
+          <div className="space-y-1">
+            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'away' ? "font-semibold" : ""}`}>
+              {awayTeamLabel}
+            </div>
+            {isReadOnly ? (
+              <div className={`text-center text-lg font-bold ${resultColorClass}`}>
+                {awayScore !== undefined ? awayScore : "-"}
+              </div>
+            ) : (
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={awayScore === undefined ? "" : awayScore}
+                onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
+                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'away' ? "border-blue-200" : ""}`}
+              />
+            )}
+          </div>
         </div>
         
-        <div className="flex justify-center items-center">
-          <div className="text-xl font-bold">-</div>
-        </div>
-        
-        <div className="space-y-1">
-          <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'away' ? "font-semibold" : ""}`}>
-            {awayTeamLabel}
-          </div>
-          {isReadOnly ? (
-            <div className={`text-center text-lg font-bold ${resultColorClass}`}>
-              {awayScore !== undefined ? awayScore : "-"}
-            </div>
-          ) : (
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={awayScore === undefined ? "" : awayScore}
-              onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-              className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'away' ? "border-blue-200" : ""}`}
-            />
-          )}
-        </div>
+        {!isReadOnly && (
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className={`w-full ${isMobile ? 'h-10' : ''}`}
+            size={isMobile ? "sm" : "default"}
+          >
+            <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
+            {isSaving ? "Sparar..." : "Spara resultat"}
+          </Button>
+        )}
       </div>
-      
-      {!isReadOnly && (
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className={`w-full ${isMobile ? 'h-10' : ''}`}
-          size={isMobile ? "sm" : "default"}
-        >
-          <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
-          {isSaving ? "Sparar..." : "Spara resultat"}
-        </Button>
-      )}
-    </div>
+    </ScrollArea>
   );
 }

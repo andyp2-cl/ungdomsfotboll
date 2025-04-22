@@ -120,8 +120,10 @@ export function ActivityDetailView({
           />
         </div>
       </CardHeader>
-      <div className={`flex-grow overflow-y-auto ${isMobile ? 'pb-16' : ''}`}>
-        <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4' : ''}`}>
+      
+      {/* Improved scrolling for mobile */}
+      <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
+        <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
           {isMatch && (
             <MatchResultSection 
               activity={activity}
@@ -165,8 +167,9 @@ export function ActivityDetailView({
           {/* Render extra content (like cup matches) */}
           {extraContent}
         </CardContent>
-      </div>
-      <CardFooter className={`${isMobile ? 'px-3 py-3 border-t bg-background sticky bottom-0' : ''}`}>
+      </ScrollArea>
+      
+      <CardFooter className={`${isMobile ? 'px-3 py-3 border-t bg-background sticky bottom-0 z-10' : ''}`}>
         <Button 
           variant="outline" 
           onClick={handleClose}
