@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { MatchResultSection, StatsSection } from "./sections";
+import { StatsSection } from "./sections";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import { ActivityDetailHeaderContent } from "./ActivityDetailHeaderContent";
 import { HeaderActionButtons } from "./HeaderActionButtons";
@@ -124,12 +124,7 @@ export function ActivityDetailView({
       {/* Improved scrolling for mobile */}
       <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
         <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
-          {isMatch && (
-            <MatchResultSection 
-              activity={activity}
-              onMatchResultUpdate={onMatchResultUpdate}
-            />
-          )}
+          {/* Match result section removed */}
 
           {/* Only show StatsSection if the match is historical */}
           {isMatch && isHistorical && (

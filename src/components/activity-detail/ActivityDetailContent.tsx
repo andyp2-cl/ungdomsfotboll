@@ -5,7 +5,6 @@ import { ActivityDetailHeader } from "./ActivityDetailHeader";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
-import { ActivityResultSection } from "./match-result";
 import { ParticipantsList } from "./ParticipantsList";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -104,21 +103,7 @@ export function ActivityDetailContent({
         </div>
       </div>
       
-      {/* Match result functionality remains but visually hidden as a hidden section */}
-      {activity.type === "match" && (
-        <div className="hidden">
-          <ActivityResultSection 
-            activity={activity} 
-            isHistorical={isHistorical}
-            updateActivity={updateActivity}
-            onMatchResultUpdate={onMatchResultUpdate ? 
-              (activityId, homeScore, awayScore) => onMatchResultUpdate(activityId, homeScore, awayScore) : 
-              undefined
-            }
-            participatingPlayers={participatingPlayers} 
-          />
-        </div>
-      )}
+      {/* Match result section completely removed */}
 
       {/* For cup type, show related matches */}
       {activity.type === "cup" && cupMatches.length > 0 && (
