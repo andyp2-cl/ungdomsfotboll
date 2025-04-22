@@ -7,10 +7,10 @@ import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
 import { ActivityResultSection } from "./match-result";
 import { ParticipantsList } from "./ParticipantsList";
-import { QuickMatchResult } from "./QuickMatchResult";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -104,18 +104,20 @@ export function ActivityDetailContent({
         </div>
       </div>
       
-      {/* Show Match Result for match type activities */}
+      {/* Match result functionality remains but visually hidden as a hidden section */}
       {activity.type === "match" && (
-        <ActivityResultSection 
-          activity={activity} 
-          isHistorical={isHistorical}
-          updateActivity={updateActivity}
-          onMatchResultUpdate={onMatchResultUpdate ? 
-            (activityId, homeScore, awayScore) => onMatchResultUpdate(activityId, homeScore, awayScore) : 
-            undefined
-          }
-          participatingPlayers={participatingPlayers} 
-        />
+        <div className="hidden">
+          <ActivityResultSection 
+            activity={activity} 
+            isHistorical={isHistorical}
+            updateActivity={updateActivity}
+            onMatchResultUpdate={onMatchResultUpdate ? 
+              (activityId, homeScore, awayScore) => onMatchResultUpdate(activityId, homeScore, awayScore) : 
+              undefined
+            }
+            participatingPlayers={participatingPlayers} 
+          />
+        </div>
       )}
 
       {/* For cup type, show related matches */}
@@ -155,18 +157,6 @@ export function ActivityDetailContent({
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/* Match Result Quick View for cup matches */}
-      {activity.type === "match" && (
-        <div className="border rounded-md p-4">
-          <h3 className="text-lg font-semibold mb-3">Snabbresultat</h3>
-          <QuickMatchResult
-            activity={activity}
-            onSave={handleMatchResultUpdate}
-            isReadOnly={false}
-          />
         </div>
       )}
 
