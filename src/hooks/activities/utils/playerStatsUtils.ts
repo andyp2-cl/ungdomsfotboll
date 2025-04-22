@@ -1,5 +1,5 @@
 
-import { normalizePlayerStats } from "@/utils/player-stats";
+import { normalizePlayerStats as normalizePlayerStatsUtil } from "@/utils/player-stats";
 
 /**
  * Utility functions for handling player stats
@@ -11,5 +11,5 @@ import { normalizePlayerStats } from "@/utils/player-stats";
  * @deprecated Use normalizePlayerStats from @/utils/player-stats instead
  */
 export function normalizePlayerStats(playerStats: any) {
-  return normalizePlayerStats(playerStats);
+  return normalizePlayerStatsUtil(playerStats);
 }

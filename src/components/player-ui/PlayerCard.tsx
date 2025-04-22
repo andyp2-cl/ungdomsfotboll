@@ -127,7 +127,10 @@ export function PlayerCard({
             </div>
             <div className="bg-muted rounded-md p-2 text-center">
               <p className="text-xs text-muted-foreground">Matcher</p>
-              <p className="font-medium">{player.matches || 0}</p>
+              <p className="font-medium">
+                {/* Safely access matches property */}
+                {(player as any).matches || 0}
+              </p>
             </div>
           </div>
         </CardContent>

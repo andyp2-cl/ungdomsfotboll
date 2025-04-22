@@ -1,13 +1,17 @@
 
 import { PlayerStats } from "@/types/player";
-import { normalizePlayerStats, mergePlayerStats, formatPlayerStatsFromDatabase as formatStats } from "@/utils/player-stats";
+import { 
+  normalizePlayerStats as normalizePlayerStatsUtil, 
+  mergePlayerStats as mergePlayerStatsUtil, 
+  formatPlayerStatsFromDatabase as formatStats 
+} from "@/utils/player-stats";
 
 /**
  * Helper function to normalize player stats from various formats into a consistent structure
  * @deprecated Use normalizePlayerStats from @/utils/player-stats instead
  */
 export const normalizePlayerStats = (playerStatsJson: any): PlayerStats => {
-  return normalizePlayerStats(playerStatsJson);
+  return normalizePlayerStatsUtil(playerStatsJson);
 };
 
 /**
@@ -23,5 +27,5 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
  * @deprecated Use mergePlayerStats from @/utils/player-stats instead
  */
 export const mergePlayerStats = (baseStats: Partial<PlayerStats>, newStats: Partial<PlayerStats>): PlayerStats => {
-  return mergePlayerStats(baseStats, newStats);
+  return mergePlayerStatsUtil(baseStats, newStats);
 };

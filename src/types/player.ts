@@ -14,6 +14,10 @@ export interface PlayerStats {
   }; // Score information for matches
   isWin?: boolean; // Whether the match was a win for Hässleholms IF
   cup_matches?: string[]; // IDs of cup match activities
+  matches?: number; // Number of matches played
+  wins?: number; // Number of wins
+  draws?: number; // Number of draws
+  losses?: number; // Number of losses
   [key: string]: any; // Allow for additional properties
 }
 
@@ -51,4 +55,5 @@ export interface Player {
   activities?: string[]; // Array of activity IDs this player is participating in
   jerseyNumber?: string; // Optional jersey number for the player
   image?: string; // URL to player's image
+  matches?: number; // Number of matches the player has participated in
 }

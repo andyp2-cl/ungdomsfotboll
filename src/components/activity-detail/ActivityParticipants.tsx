@@ -71,7 +71,7 @@ export function ActivityParticipants({
       
       <ParticipantList 
         participants={participantPlayers}
-        onRemoveParticipant={handleRemoveParticipant}
+        onRemovePlayer={handleRemoveParticipant}
         onPlayerSelect={onPlayerSelect}
         isMobile={isMobile}
       />

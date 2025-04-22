@@ -9,14 +9,14 @@ interface ParticipantListProps {
   participants: Player[];
   onPlayerSelect?: (playerId: string) => void;
   onRemovePlayer: (playerId: string) => void;
-  isMobile: boolean;
+  isMobile?: boolean;
 }
 
 export function ParticipantList({
   participants,
   onPlayerSelect,
   onRemovePlayer,
-  isMobile
+  isMobile = false
 }: ParticipantListProps) {
   if (participants.length === 0) {
     return (

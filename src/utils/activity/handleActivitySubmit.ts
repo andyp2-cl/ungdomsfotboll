@@ -2,7 +2,7 @@
 import { Activity, Location } from "@/types/player";
 import { ActivityFormValues } from "@/components/activity-form/formSchema";
 import { format } from "date-fns";
-import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
+import { normalizePlayerStats } from "@/utils/player-stats";
 import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
 import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 

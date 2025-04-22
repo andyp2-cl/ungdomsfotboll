@@ -96,7 +96,7 @@ export function ActivityParticipantSection({
       <ParticipantList 
         participants={participatingPlayers}
         onPlayerSelect={onPlayerSelect}
-        onRemoveParticipant={handleRemovePlayer}
+        onRemovePlayer={handleRemovePlayer}
       />
 
       <ParticipantActions 
