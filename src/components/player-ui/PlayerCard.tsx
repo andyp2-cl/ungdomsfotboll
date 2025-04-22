@@ -1,165 +1,193 @@
 
 import React from "react";
 import { Player } from "@/types/player";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, User } from "lucide-react";
+import { UserCircle } from "lucide-react";
 
 interface PlayerCardProps {
   player: Player;
-  onSelect?: (player: Player) => void;
-  onEdit?: (player: Player) => void;
+  onSelect?: () => void;
+  onEdit?: () => void;
+  action?: React.ReactNode;
   compact?: boolean;
   showStats?: boolean;
 }
 
-export function PlayerCard({
-  player,
-  onSelect,
-  onEdit,
+export function PlayerCard({ 
+  player, 
+  onSelect, 
+  onEdit, 
+  action, 
   compact = false,
-  showStats = false
+  showStats = false 
 }: PlayerCardProps) {
-  // Get player initials for avatar fallback
-  const getInitials = () => {
-    const nameParts = player.name.split(" ");
-    if (nameParts.length >= 2) {
-      return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
-    }
-    return player.name.substring(0, 2).toUpperCase();
+  // Get real activity count that excludes kiosk duty assignments
+  const getActivityCount = () => {
+    if (!player.activities) return 0;
+    return player.activities.length;
   };
-  
-  // Determine if player is a coach
+
+  const getGradeColor = (grade: string) => {
+    switch (grade) {
+      case 'A':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'B':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'C':
+        return 'bg-orange-500 hover:bg-orange-600';
+      case 'D':
+        return 'bg-purple-500 hover:bg-purple-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const formatPosition = (position: string) => {
+    if (position === 'TRÄNARE') return 'Tränare';
+    
+    let formattedPosition = position
+      .replace('MV', 'Målvakt')
+      .replace('BACK', 'Back')
+      .replace('MF', 'Mittfält')
+      .replace('ANF', 'Anfall');
+    
+    return formattedPosition;
+  };
+
   const isCoach = player.positions?.includes('TRÄNARE');
-  
-  // Get grade color
-  const getGradeColor = () => {
-    switch (player.grade) {
-      case 'A': return "bg-red-500";
-      case 'B': return "bg-blue-500";
-      case 'C': return "bg-green-500";
-      case 'D': return "bg-yellow-500";
-      default: return "bg-gray-500";
-    }
-  };
-  
+
   if (compact) {
     return (
       <div 
-        className="flex items-center p-2 gap-2 hover:bg-accent rounded-md cursor-pointer"
-        onClick={() => onSelect?.(player)}
+        className={`flex justify-between items-center p-2 rounded-md border hover:bg-muted/50 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
+        onClick={onSelect}
       >
-        <Avatar className="h-8 w-8">
+        <div className="flex items-center gap-2">
           {player.image ? (
-            <AvatarImage src={player.image} alt={player.name} />
+            <img 
+              src={player.image} 
+              alt={player.name} 
+              className="h-8 w-8 rounded-full object-cover"
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
           ) : (
-            <AvatarFallback className="text-xs">{getInitials()}</AvatarFallback>
+            <UserCircle className="h-8 w-8 text-muted-foreground" />
           )}
-        </Avatar>
-        <div className="flex-grow">
-          <p className="text-sm font-medium">{player.name}</p>
-          <div className="flex gap-1 items-center">
-            {!isCoach && player.grade && (
-              <span className={`${getGradeColor()} w-3 h-3 rounded-full`} />
+          <div>
+            <div className="font-medium text-sm flex items-center">
+              {player.name}
+              {player.jerseyNumber && !isCoach && (
+                <span className="ml-1 text-xs bg-gray-200 text-gray-800 px-1 py-0.5 rounded-full">
+                  #{player.jerseyNumber}
+                </span>
+              )}
+            </div>
+            {!isCoach && player.positions && (
+              <div className="text-xs text-muted-foreground">
+                {player.positions
+                  .filter(pos => pos !== 'TRÄNARE')
+                  .map(formatPosition)
+                  .join(', ')}
+              </div>
             )}
-            <p className="text-xs text-muted-foreground">
-              {isCoach ? "Tränare" : player.positions?.filter(p => p !== 'TRÄNARE').join(", ")}
-            </p>
           </div>
         </div>
         
-        {onEdit && (
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(player);
-            }}
-          >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isCoach ? (
+            <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+              Tränare
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs">
+              Nivå {player.grade}
+            </Badge>
+          )}
+          
+          {action && (
+            <div onClick={e => e.stopPropagation()}>
+              {action}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
-  
+
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-10 w-10">
-              {player.image ? (
-                <AvatarImage src={player.image} alt={player.name} />
-              ) : (
-                <AvatarFallback>{getInitials()}</AvatarFallback>
-              )}
-            </Avatar>
-            <div>
-              <h3 className="font-medium leading-none">{player.name}</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {isCoach ? "Tränare" : player.positions?.filter(p => p !== 'TRÄNARE').join(", ")}
-              </p>
-            </div>
+    <Card 
+      className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
+      onClick={onSelect}
+    >
+      <div className="aspect-[4/3] bg-muted relative">
+        {player.image ? (
+          <img 
+            src={player.image} 
+            alt={player.name} 
+            className="w-full h-full object-cover"
+            loading="lazy"
+            crossOrigin="anonymous"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
           </div>
-          
-          {!isCoach && player.grade && (
-            <Badge 
-              variant="secondary"
-              className={`${getGradeColor()} text-white`}
-            >
-              {player.grade}
+        )}
+        
+        <div className="absolute top-2 right-2">
+          {isCoach ? (
+            <Badge className="bg-amber-500 hover:bg-amber-600">
+              Tränare
+            </Badge>
+          ) : (
+            <Badge className={getGradeColor(player.grade || '')}>
+              Nivå {player.grade}
             </Badge>
           )}
         </div>
-      </CardHeader>
-      
-      {showStats && (
-        <CardContent className="pb-2">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-muted rounded-md p-2 text-center">
-              <p className="text-xs text-muted-foreground">Aktiviteter</p>
-              <p className="font-medium">{player.activities?.length || 0}</p>
-            </div>
-            <div className="bg-muted rounded-md p-2 text-center">
-              <p className="text-xs text-muted-foreground">Matcher</p>
-              <p className="font-medium">
-                {/* Safely access matches property */}
-                {(player as any).matches || 0}
-              </p>
-            </div>
+        
+        {action && (
+          <div className="absolute top-2 left-2" onClick={e => e.stopPropagation()}>
+            {action}
           </div>
-        </CardContent>
-      )}
+        )}
+      </div>
       
-      <CardFooter className="pt-2">
-        <div className="flex gap-2 w-full">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={() => onSelect?.(player)}
-          >
-            <User className="h-3.5 w-3.5 mr-1.5" />
-            Visa
-          </Button>
-          
-          {onEdit && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex-1"
-              onClick={() => onEdit(player)}
-            >
-              <Edit className="h-3.5 w-3.5 mr-1.5" />
-              Redigera
-            </Button>
+      <CardContent className="p-4">
+        <h3 className="font-semibold truncate">
+          {player.name}
+          {player.jerseyNumber && !isCoach && (
+            <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+              #{player.jerseyNumber}
+            </span>
           )}
-        </div>
+        </h3>
+        {!isCoach && (
+          <p className="text-sm text-muted-foreground">
+            {player.positions && player.positions.length > 0
+              ? player.positions
+                  .filter(pos => pos !== 'TRÄNARE')
+                  .map(formatPosition)
+                  .join(', ')
+              : 'Ingen position definierad'}
+          </p>
+        )}
+      </CardContent>
+      
+      <CardFooter className="p-4 pt-0 flex justify-between">
+        <span className="text-xs text-muted-foreground">
+          {getActivityCount() === 0
+            ? "Inga aktiviteter"
+            : `${getActivityCount()} aktiviteter`}
+        </span>
+        
+        {showStats && player.matches !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            {player.matches} matcher
+          </span>
+        )}
       </CardFooter>
     </Card>
   );

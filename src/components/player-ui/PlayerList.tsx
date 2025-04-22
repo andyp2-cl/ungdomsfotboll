@@ -7,6 +7,7 @@ interface PlayerListProps {
   players: Player[];
   onPlayerSelect?: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
+  onPlayerAction?: (player: Player) => React.ReactNode;
   emptyMessage?: string;
   compact?: boolean;
   showStats?: boolean;
@@ -17,6 +18,7 @@ export function PlayerList({
   players,
   onPlayerSelect,
   onPlayerEdit,
+  onPlayerAction,
   emptyMessage = "Inga spelare att visa",
   compact = false,
   showStats = false,
@@ -37,8 +39,9 @@ export function PlayerList({
           <PlayerCard
             key={player.id}
             player={player}
-            onSelect={onPlayerSelect}
-            onEdit={onPlayerEdit}
+            onSelect={onPlayerSelect ? () => onPlayerSelect(player) : undefined}
+            onEdit={onPlayerEdit ? () => onPlayerEdit(player) : undefined}
+            action={onPlayerAction ? onPlayerAction(player) : undefined}
             compact={true}
             showStats={showStats}
           />
@@ -53,8 +56,9 @@ export function PlayerList({
         <PlayerCard
           key={player.id}
           player={player}
-          onSelect={onPlayerSelect}
-          onEdit={onPlayerEdit}
+          onSelect={onPlayerSelect ? () => onPlayerSelect(player) : undefined}
+          onEdit={onPlayerEdit ? () => onPlayerEdit(player) : undefined}
+          action={onPlayerAction ? onPlayerAction(player) : undefined}
           showStats={showStats}
         />
       ))}
