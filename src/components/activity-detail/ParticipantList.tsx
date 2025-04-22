@@ -33,26 +33,28 @@ export function ParticipantList({
   return (
     <div className="mb-4">
       <ScrollArea className={isMobileDevice ? "max-h-[40vh]" : "max-h-[40vh]"}>
-        <PlayerList
-          players={participants}
-          onPlayerSelect={player => onPlayerSelect?.(player.id)}
-          onPlayerAction={(player) => (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemovePlayer(player.id);
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-          compact={true}
-          emptyMessage="Inga deltagare att visa"
-          className="overflow-y-visible px-1"
-        />
+        <div className="pr-4">
+          <PlayerList
+            players={participants}
+            onPlayerSelect={player => onPlayerSelect?.(player.id)}
+            onPlayerAction={(player) => (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemovePlayer(player.id);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            compact={true}
+            emptyMessage="Inga deltagare att visa"
+            className="overflow-y-visible px-1"
+          />
+        </div>
       </ScrollArea>
     </div>
   );
