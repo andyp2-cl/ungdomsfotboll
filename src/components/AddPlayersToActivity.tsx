@@ -5,6 +5,7 @@ import { CupSelector } from "./add-players/CupSelector";
 import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
+import { AlertCircle, Check } from "lucide-react";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -21,6 +22,7 @@ export function AddPlayersToActivity({
 }: AddPlayersToActivityProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -41,19 +43,31 @@ export function AddPlayersToActivity({
   };
   
   const handleAddPlayers = () => {
-    if (selectedPlayerIds.length === 0) return;
+    if (selectedPlayerIds.length === 0) {
+      toast.error("Välj minst en spelare att lägga till", {
+        icon: <AlertCircle className="h-4 w-4" />
+      });
+      return;
+    }
     
     // Log before saving
-    console.log(`Adding ${selectedPlayerIds.length} players to activity ${activity.id}`);
+    console.log(`Lägger till ${selectedPlayerIds.length} spelare till aktivitet ${activity.id}`);
     
+    setIsProcessing(true);
     try {
       onAddPlayers(selectedPlayerIds);
       setSelectedPlayerIds([]);
       
-      toast.success(`${selectedPlayerIds.length} spelare tillagda`);
+      toast.success(`${selectedPlayerIds.length} spelare tillagda`, {
+        icon: <Check className="h-4 w-4" />
+      });
     } catch (error) {
       console.error("Error adding players to activity:", error);
-      toast.error("Kunde inte lägga till spelare");
+      toast.error("Kunde inte lägga till spelare. Försök igen.", {
+        icon: <AlertCircle className="h-4 w-4" />
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -82,13 +96,27 @@ export function AddPlayersToActivity({
         onPlayerToggle={handlePlayerToggle}
         selectedPlayers={selectedPlayers}
         onAddPlayers={handleAddPlayers}
+        isProcessing={isProcessing}
       />
       
       <PlayerQuickSelect
         availablePlayers={availablePlayers}
         onQuickSelect={(playerId) => {
           console.log("Quick selecting player:", playerId);
-          onAddPlayers([playerId]);
+          setIsProcessing(true);
+          try {
+            onAddPlayers([playerId]);
+            toast.success("Spelare tillagd", {
+              icon: <Check className="h-4 w-4" />
+            });
+          } catch (error) {
+            console.error("Error quick-adding player:", error);
+            toast.error("Kunde inte lägga till spelare", {
+              icon: <AlertCircle className="h-4 w-4" />
+            });
+          } finally {
+            setIsProcessing(false);
+          }
         }}
       />
     </div>

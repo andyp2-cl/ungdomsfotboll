@@ -2,9 +2,8 @@
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
-import { PlayerMultiSelectDropdown } from "@/components/player-selection/PlayerMultiSelectDropdown";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Plus } from "lucide-react";
 
 interface PlayerMultiSelectProps {
   availablePlayers: Player[];
@@ -12,6 +11,7 @@ interface PlayerMultiSelectProps {
   onPlayerToggle: (playerId: string) => void;
   selectedPlayers: Player[];
   onAddPlayers: () => void;
+  isProcessing?: boolean;
 }
 
 export function PlayerMultiSelect({
@@ -19,40 +19,57 @@ export function PlayerMultiSelect({
   selectedPlayerIds,
   onPlayerToggle,
   selectedPlayers,
-  onAddPlayers
+  onAddPlayers,
+  isProcessing = false
 }: PlayerMultiSelectProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Välj flera spelare</label>
-        <PlayerMultiSelectDropdown 
-          availablePlayers={availablePlayers}
-          selectedPlayers={selectedPlayerIds}
-          onPlayerToggle={onPlayerToggle}
-          maxSelections={50}
-        />
-      </div>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>
       
-      {selectedPlayerIds.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/30">
-          {selectedPlayers.map(player => (
-            <div 
-              key={player.id}
-              className="flex items-center gap-1 bg-background border rounded-full px-2 py-1 text-sm"
-            >
-              <PlayerAvatar player={player} size="xs" />
-              <span className="truncate max-w-[100px]">{player.name}</span>
+      <div className="border rounded-md p-2 h-48 overflow-y-auto">
+        <div className="space-y-1">
+          {availablePlayers.map(player => (
+            <div key={player.id} className="flex items-center space-x-2 p-1 hover:bg-accent">
+              <Checkbox 
+                checked={selectedPlayerIds.includes(player.id)} 
+                onCheckedChange={() => onPlayerToggle(player.id)}
+                id={`player-${player.id}`}
+              />
+              <label 
+                htmlFor={`player-${player.id}`} 
+                className="text-sm flex-grow cursor-pointer"
+              >
+                {player.name}
+              </label>
             </div>
           ))}
+        </div>
+      </div>
+      
+      {selectedPlayers.length > 0 && (
+        <div className="p-2 border rounded-md bg-muted/50">
+          <p className="text-sm font-medium">Valda spelare ({selectedPlayers.length}):</p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {selectedPlayers.map(player => (
+              <div key={player.id} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                {player.name}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       
       <Button 
-        onClick={onAddPlayers}
-        disabled={selectedPlayerIds.length === 0}
+        onClick={onAddPlayers} 
+        disabled={selectedPlayerIds.length === 0 || isProcessing}
+        variant="default" 
         className="w-full"
       >
-        <Plus className="h-4 w-4 mr-2" />
+        {isProcessing ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4 mr-2" />
+        )}
         Lägg till {selectedPlayerIds.length} spelare
       </Button>
     </div>

@@ -1,45 +1,66 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { UserPlus, Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface PlayerQuickSelectProps {
   availablePlayers: Player[];
   onQuickSelect: (playerId: string) => void;
 }
 
-export function PlayerQuickSelect({ availablePlayers, onQuickSelect }: PlayerQuickSelectProps) {
-  const isMobile = useIsMobile();
-  
+export function PlayerQuickSelect({
+  availablePlayers,
+  onQuickSelect
+}: PlayerQuickSelectProps) {
+  const [processingPlayer, setProcessingPlayer] = useState<string | null>(null);
+
+  const handleQuickSelect = async (playerId: string) => {
+    setProcessingPlayer(playerId);
+    try {
+      await onQuickSelect(playerId);
+    } finally {
+      setTimeout(() => setProcessingPlayer(null), 500); // Reset after a small delay for UX
+    }
+  };
+
   if (availablePlayers.length === 0) return null;
 
-  // Calculate how many players to show based on screen size
-  const playersToShow = isMobile ? 4 : 8;
-  
-  // Sort by name for easier selection
-  const sortedPlayers = [...availablePlayers]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, playersToShow);
-
   return (
-    <div className="mt-4">
-      <h4 className="text-sm font-medium mb-2">Snabbval:</h4>
-      <div className="flex flex-wrap gap-2">
-        {sortedPlayers.map(player => (
-          <Button 
-            key={player.id}
-            variant="outline" 
-            size="sm"
-            onClick={() => onQuickSelect(player.id)}
-            className="flex items-center gap-2"
-          >
-            <PlayerAvatar player={player} size="xs" />
-            <span className="truncate max-w-[100px]">{player.name}</span>
-          </Button>
-        ))}
-      </div>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Snabbval</h4>
+      <ScrollArea className="h-32 border rounded-md">
+        <div className="p-2 space-y-1">
+          {availablePlayers.slice(0, 5).map(player => (
+            <Button
+              key={player.id}
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => handleQuickSelect(player.id)}
+              disabled={processingPlayer === player.id}
+            >
+              {processingPlayer === player.id ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4 mr-2" />
+              )}
+              {player.name}
+            </Button>
+          ))}
+          
+          {availablePlayers.length > 5 && (
+            <>
+              <Separator className="my-2" />
+              <p className="text-xs text-muted-foreground">
+                +{availablePlayers.length - 5} fler spelare
+              </p>
+            </>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

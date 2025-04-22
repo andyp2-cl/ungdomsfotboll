@@ -1,6 +1,8 @@
 
 import { Activity } from "@/types/player";
 import { v4 as uuidv4 } from 'uuid';
+import { normalizePlayerStats } from "@/utils/player-stats";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Add new matches to a cup
@@ -37,21 +39,16 @@ export const addCupMatches = async (
       ...matchActivities.map(m => m.id)
     ];
     
-    // Ensure player_stats exists and has cup_matches
-    if (!updatedCup.player_stats) {
-      updatedCup.player_stats = { goals: {}, assists: {}, cup_matches: [] };
-    }
-    
-    // Ensure cup_matches property exists
-    if (!updatedCup.player_stats.cup_matches) {
-      updatedCup.player_stats.cup_matches = [];
-    }
+    // Ensure player_stats exists with cup_matches
+    const playerStats = normalizePlayerStats(updatedCup.player_stats);
     
     // Add match IDs to cup_matches in player_stats
-    updatedCup.player_stats.cup_matches = [
-      ...(updatedCup.player_stats.cup_matches || []),
+    playerStats.cup_matches = [
+      ...playerStats.cup_matches,
       ...matchActivities.map(m => m.id)
     ];
+    
+    updatedCup.player_stats = playerStats;
     
     console.log(`Updating cup with match IDs:`, updatedCup.matches);
     

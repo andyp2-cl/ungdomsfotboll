@@ -1,11 +1,11 @@
 
-import { addCupMatches, updateCupMatches } from './cup-matches';
+import { addCupMatches as addMatches, updateCupMatches } from './cup-matches';
 
-// Re-export the functions from the new location with new names to avoid conflicts
-// This file is kept for backwards compatibility but should be considered deprecated
-export { addCupMatches as addCupMatchesToActivity, updateCupMatches };
+// Re-export-funktionerna från den nya platsen med nya namn för att undvika konflikter
+// Denna fil behålls för bakåtkompatibilitet men bör anses som inaktuell
+export { addMatches as addCupMatchesToActivity, updateCupMatches };
 
 /**
- * @deprecated Use functions from cup-matches directory instead
+ * @deprecated Använd funktioner från cup-matches katalogen istället
  */
-console.warn('Warning: Direct imports from cupMatches.ts are deprecated. Import from cup-matches directory instead.');
+console.warn('Varning: Direktimporter från cupMatches.ts är inaktuella. Importera från cup-matches katalogen istället.');
