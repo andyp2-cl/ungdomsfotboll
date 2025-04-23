@@ -12,7 +12,7 @@ import { getGradeColor } from '@/utils/gradeUtils';
 interface OverviewTabContentProps {
   players: Player[];
   activities: Activity[];
-  onPlayerSelect?: (player: Player) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
@@ -42,10 +42,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
   // Handle player click in charts
   const handlePlayerClick = (playerId: string) => {
     if (onPlayerSelect) {
-      const playerStat = playerStats.find(p => p.id === playerId);
-      if (playerStat?.player) {
-        onPlayerSelect(playerStat.player);
-      }
+      onPlayerSelect(playerId);
     }
   };
 

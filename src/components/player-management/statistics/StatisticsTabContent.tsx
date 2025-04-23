@@ -6,7 +6,7 @@ import { StatisticsTabsWrapper } from "./StatisticsTabsWrapper";
 interface StatisticsTabContentProps {
   players: Player[];
   activities: Activity[];
-  onPlayerSelect?: (player: Player) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function StatisticsTabContent({ 
@@ -29,12 +29,19 @@ export function StatisticsTabContent({
     }));
   }, [players]);
 
+  // Handle player selection by ID instead of by player object
+  const handlePlayerIdSelect = (playerId: string) => {
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    }
+  };
+
   return (
     <StatisticsTabsWrapper 
       players={players} 
       activities={activities} 
       gradeData={gradeData}
-      onPlayerSelect={onPlayerSelect}
+      onPlayerSelect={handlePlayerIdSelect}
     />
   );
 }

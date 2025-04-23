@@ -2,9 +2,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipationTabContent } from "./ParticipationTabContent";
 import { FormationTabContent } from "./formation/FormationTabContent";
-import { GoalsTabContent } from "./statistics/goals/GoalsTabContent";
+import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
-import { MatchesTabContent } from "./statistics/matches/MatchesTabContent";
+import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
 import { Activity, Player } from "@/types/player";
 
@@ -38,7 +38,6 @@ export function StatisticsTabsWrapper({
         <OverviewTabContent 
           activities={activities} 
           players={players} 
-          gradeData={gradeData}
         />
       </TabsContent>
       
@@ -50,7 +49,10 @@ export function StatisticsTabsWrapper({
       </TabsContent>
       
       <TabsContent value="formation">
-        <FormationTabContent players={players} />
+        <FormationTabContent 
+          players={players}
+          activities={activities}
+        />
       </TabsContent>
       
       <TabsContent value="goals">
