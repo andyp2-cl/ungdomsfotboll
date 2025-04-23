@@ -2,11 +2,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
-import { Calendar, Clock, Map, Trophy, Users } from "lucide-react";
+import { Calendar, Clock, Map, Trophy, Users, Award } from "lucide-react";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { GradePieChart } from "../activity-detail/match-result/GradePieChart"; 
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -31,6 +33,28 @@ export function ActivityListItem({
   const isMobileView = isMobile !== undefined ? isMobile : mobileFromHook;
   
   const { name, date, time, location, participants = [] } = activity;
+  
+  // Fetch league info if we have a league ID
+  const { data: league } = useQuery({
+    queryKey: ["league", activity.leagueId],
+    queryFn: async () => {
+      if (!activity.leagueId) return null;
+      
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("id", activity.leagueId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching league:", error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!activity.leagueId
+  });
   
   const formattedDate = new Date(date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(date).toLocaleDateString('sv-SE', { weekday: 'long' });
@@ -88,6 +112,12 @@ export function ActivityListItem({
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Trophy className="h-3.5 w-3.5" />
                     Cupmatch
+                  </Badge>
+                )}
+                {league && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Award className="h-3.5 w-3.5" />
+                    {league.name}
                   </Badge>
                 )}
               </h3>

@@ -73,6 +73,14 @@ export async function handleActivitySubmit(
       isWin
     };
     
+    // Handle leagueId (convert "none" to undefined)
+    const leagueId = values.leagueId && values.leagueId !== "none" ? values.leagueId : undefined;
+    
+    console.log("Form submission - leagueId:", {
+      formLeagueId: values.leagueId,
+      finalLeagueId: leagueId
+    });
+    
     // Create updated activity with form values
     const formUpdatedActivity: Activity = {
       ...originalActivity,
@@ -85,6 +93,7 @@ export async function handleActivitySubmit(
       homeScore,
       awayScore,
       isWin,
+      leagueId,
       cupName: values.cupName && values.cupName !== "no-cup" ? values.cupName : undefined,
       player_stats: updatedPlayerStats
     };
@@ -94,6 +103,7 @@ export async function handleActivitySubmit(
     
     console.log("Saving activity with preserved match data and win status:", {
       isWin: updatedActivity.isWin,
+      leagueId: updatedActivity.leagueId,
       playerStats: updatedActivity.player_stats
     });
     

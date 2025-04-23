@@ -1,8 +1,10 @@
 
 import { Activity } from "@/types/player";
-import { MapPin, Calendar, Clock, Trophy } from "lucide-react";
+import { MapPin, Calendar, Clock, Trophy, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CupMatchBadge } from "../activity-list/CupMatchBadge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 interface ActivityDetailHeaderContentProps {
   activity: Activity;
@@ -21,6 +23,28 @@ export function ActivityDetailHeaderContent({
 }: ActivityDetailHeaderContentProps) {
   const result = formatResult();
   const isCupMatch = !!activity.cupId;
+  
+  // Fetch league info if we have a league ID
+  const { data: league } = useQuery({
+    queryKey: ["league", activity.leagueId],
+    queryFn: async () => {
+      if (!activity.leagueId) return null;
+      
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("id", activity.leagueId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching league:", error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!activity.leagueId
+  });
 
   return (
     <div className="space-y-1 flex-1">
@@ -54,6 +78,15 @@ export function ActivityDetailHeaderContent({
               {activity.location.description && (
                 <span className="text-xs opacity-75"> ({activity.location.description})</span>
               )}
+            </span>
+          </div>
+        )}
+        
+        {league && (
+          <div className="flex items-center gap-1 mt-1">
+            <Award className="h-3.5 w-3.5" />
+            <span>
+              {league.name} {league.year} {league.division}
             </span>
           </div>
         )}

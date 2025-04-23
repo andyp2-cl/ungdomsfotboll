@@ -7,6 +7,7 @@ import { LocationFields } from "./activity-form/LocationFields";
 import { ResultFields } from "./activity-form/ResultFields";
 import { FormButtons } from "./activity-form/FormButtons";
 import { toast } from "sonner";
+import { LeagueSelector } from "./activity-form/LeagueSelector";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -15,7 +16,7 @@ interface EditActivityFormProps {
 }
 
 export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFormProps) {
-  console.log("EditActivityForm render with activity:", activity.id, "date:", activity.date);
+  console.log("EditActivityForm render with activity:", activity.id, "date:", activity.date, "leagueId:", activity.leagueId);
   
   // Create a clean copy of the activity with normalized player_stats
   const normalizedActivity = {
@@ -27,7 +28,7 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
   
   const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, async (updatedActivity) => {
     try {
-      console.log("Submitting activity update with date:", updatedActivity.date);
+      console.log("Submitting activity update with date:", updatedActivity.date, "leagueId:", updatedActivity.leagueId);
       await onSave(updatedActivity);
       toast.success("Aktivitet uppdaterad");
     } catch (error) {
@@ -41,6 +42,7 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <BasicInfoFields form={form} />
+        <LeagueSelector form={form} />
         <LocationFields form={form} />
         <ResultFields form={form} activityType={activity.type} />
         <FormButtons onCancel={onCancel} isSubmitting={isSubmitting} />
