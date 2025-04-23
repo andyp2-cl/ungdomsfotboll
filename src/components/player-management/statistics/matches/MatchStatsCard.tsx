@@ -1,23 +1,31 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, ShieldCheck } from "lucide-react";
+import { Activity } from "@/types/player";
 
 interface MatchStatsCardProps {
-  matchStats: {
-    total: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    goalsScored: number;
-    goalsConceded: number;
-    cleanSheets: number;
-  };
+  activities: Activity[];
+  className?: string;
 }
 
-export function MatchStatsCard({ matchStats }: MatchStatsCardProps) {
+export function MatchStatsCard({ activities, className = "" }: MatchStatsCardProps) {
+  // Calculate match statistics from activities
+  const matchStats = useMemo(() => {
+    const stats = {
+      total: activities.length,
+      wins: activities.filter(a => a.isWin === true).length,
+      draws: activities.filter(a => a.homeScore === a.awayScore).length,
+      losses: activities.filter(a => a.isWin === false && a.homeScore !== a.awayScore).length,
+      goalsScored: activities.reduce((sum, a) => sum + (a.homeScore || 0), 0),
+      goalsConceded: activities.reduce((sum, a) => sum + (a.awayScore || 0), 0),
+      cleanSheets: activities.filter(a => (a.awayScore === 0)).length
+    };
+    return stats;
+  }, [activities]);
+
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           <Trophy className="h-5 w-5 mr-2 text-amber-500" />

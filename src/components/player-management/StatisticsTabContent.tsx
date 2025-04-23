@@ -13,7 +13,7 @@ interface StatisticsTabContentProps {
   players: Player[];
   activities: Activity[];
   gradeData: { grade: string; players: number }[];
-  onPlayerSelect?: (player: Player) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function StatisticsTabContent({ 

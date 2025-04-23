@@ -1,5 +1,4 @@
 
-// If this file exists, update it to use string ID for player selection
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card } from "@/components/ui/card";

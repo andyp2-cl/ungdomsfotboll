@@ -1,28 +1,95 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, Player } from "@/types/player";
 
 interface DetailedMatchStatsProps {
-  label: string;
-  value: number | string;
+  activities: Activity[];
+  players: Player[];
   className?: string;
+  onActivitySelect?: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
 }
 
-export function DetailedMatchStats({ label, value, className = "", onPlayerSelect }: DetailedMatchStatsProps) {
-  const handleClick = () => {
-    if (onPlayerSelect) {
-      onPlayerSelect(label);
+export function DetailedMatchStats({ 
+  activities, 
+  players, 
+  className = "", 
+  onActivitySelect,
+  onPlayerSelect 
+}: DetailedMatchStatsProps) {
+  // Calculate player statistics from activities
+  const playerStats = useMemo(() => {
+    const stats = new Map<string, { name: string, matches: number, goals: number }>();
+    
+    // Initialize stats for all players
+    players.forEach(player => {
+      stats.set(player.id, {
+        name: player.name,
+        matches: 0,
+        goals: 0
+      });
+    });
+    
+    // Count matches and goals
+    activities.forEach(activity => {
+      // Count participations as matches
+      activity.participants?.forEach(playerId => {
+        const playerStat = stats.get(playerId);
+        if (playerStat) {
+          playerStat.matches += 1;
+        }
+      });
+      
+      // Count goals if available in player_stats
+      if (activity.player_stats?.goals) {
+        Object.entries(activity.player_stats.goals).forEach(([playerId, goals]) => {
+          const playerStat = stats.get(playerId);
+          if (playerStat) {
+            playerStat.goals += goals;
+          }
+        });
+      }
+    });
+    
+    // Convert to array and sort by goals
+    return Array.from(stats.values())
+      .filter(stat => stat.matches > 0)
+      .sort((a, b) => b.goals - a.goals);
+      
+  }, [activities, players]);
+
+  const handlePlayerClick = (player: { name: string, matches: number, goals: number }) => {
+    const selectedPlayer = players.find(p => p.name === player.name);
+    if (selectedPlayer && onPlayerSelect) {
+      onPlayerSelect(selectedPlayer.id);
     }
   };
 
   return (
-    <div 
-      className={`flex justify-between items-center p-3 rounded-md ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''} ${className}`}
-      onClick={onPlayerSelect ? handleClick : undefined}
-    >
-      <span className="font-medium">{label}</span>
-      <span>{value}</span>
-    </div>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>Spelare med flest mål</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {playerStats.slice(0, 10).map((player, index) => (
+          <div 
+            key={index}
+            className={`flex justify-between items-center p-3 rounded-md ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''}`}
+            onClick={onPlayerSelect ? () => handlePlayerClick(player) : undefined}
+          >
+            <span className="font-medium">{player.name}</span>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{player.goals}</span> mål
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{player.matches}</span> matcher
+              </div>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
