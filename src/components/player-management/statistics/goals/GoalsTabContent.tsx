@@ -8,7 +8,7 @@ import { calculateGoalStats } from "./calculateGoalStats";
 interface GoalsTabContentProps {
   activities: Activity[];
   players: Player[];
-  onPlayerSelect?: (player: Player) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function GoalsTabContent({ activities, players, onPlayerSelect }: GoalsTabContentProps) {
@@ -18,22 +18,12 @@ export function GoalsTabContent({ activities, players, onPlayerSelect }: GoalsTa
     [activities, players]
   );
 
-  // Handle player selection by ID
-  const handlePlayerSelect = (playerId: string) => {
-    if (onPlayerSelect) {
-      const player = players.find(p => p.id === playerId);
-      if (player) {
-        onPlayerSelect(player);
-      }
-    }
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <DetailedGoalStats 
         playerStats={playerStats}
         totalStats={totalStats}
-        onPlayerSelect={handlePlayerSelect}
+        onPlayerSelect={onPlayerSelect}
         className="col-span-full"
       />
       

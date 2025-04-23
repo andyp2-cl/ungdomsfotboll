@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { PlayersTabContent } from "./player-management/PlayersTabContent";
-import { StatisticsTabContent } from "./player-management/StatisticsTabContent";
+import { StatisticsTabContent } from "./player-management/statistics/StatisticsTabContent";
 import { AnalyticsTabContent } from "./player-management/AnalyticsTabContent";
 
 interface PlayerManagementProps {
@@ -60,6 +60,14 @@ export function PlayerManagement({
         ? prev.filter(p => p !== position) 
         : [...prev, position]
     );
+  };
+
+  // Handler for player selection by ID
+  const handlePlayerIdSelect = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      onPlayerSelect(player);
+    }
   };
 
   const activeFiltersCount = selectedPositions.length;
@@ -118,8 +126,7 @@ export function PlayerManagement({
           <StatisticsTabContent 
             players={players} 
             activities={activities}
-            gradeData={gradeData} 
-            onPlayerSelect={onPlayerSelect}
+            onPlayerSelect={handlePlayerIdSelect}
           />
         </TabsContent>
 
