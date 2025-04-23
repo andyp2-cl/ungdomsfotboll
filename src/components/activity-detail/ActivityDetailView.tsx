@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -73,6 +72,7 @@ export function ActivityDetailView({
   });
   
   useEffect(() => {
+    window.scrollTo(0, 0);
     setCurrentActivity(activity);
   }, [activity, setCurrentActivity]);
 
@@ -121,11 +121,8 @@ export function ActivityDetailView({
         </div>
       </CardHeader>
       
-      {/* Improved scrolling for mobile */}
       <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
         <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
-          {/* Match result section removed */}
-
           {/* Only show StatsSection if the match is historical */}
           {isMatch && isHistorical && (
             <StatsSection

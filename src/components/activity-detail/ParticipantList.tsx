@@ -32,8 +32,8 @@ export function ParticipantList({
 
   return (
     <div className="mb-4">
-      <ScrollArea className={isMobileDevice ? "h-[50vh]" : "h-[50vh]"}>
-        <div className="pr-4 py-1">
+      <ScrollArea className={isMobileDevice ? "h-[calc(60vh-100px)]" : "h-[60vh]"}>
+        <div className="pr-4 py-2">
           <PlayerList
             players={participants}
             onPlayerSelect={player => onPlayerSelect?.(player.id)}

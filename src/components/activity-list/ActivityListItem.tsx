@@ -66,11 +66,17 @@ export function ActivityListItem({
     .filter(player => player !== undefined) as Player[];
 
   const showGradeChart = participantPlayers.length > 0;
+  
+  const handleCardClick = () => {
+    // Scroll to the top of the window before selecting the activity
+    window.scrollTo(0, 0);
+    onSelect(activity);
+  };
 
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
-      onClick={() => onSelect(activity)}
+      onClick={handleCardClick}
     >
       <CardContent className={`${isMobileView ? 'p-3' : 'p-4'}`}>
         <div className="flex flex-col md:flex-row gap-3">
