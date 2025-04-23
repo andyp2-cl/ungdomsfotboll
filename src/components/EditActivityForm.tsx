@@ -8,6 +8,7 @@ import { ResultFields } from "./activity-form/ResultFields";
 import { FormButtons } from "./activity-form/FormButtons";
 import { toast } from "sonner";
 import { LeagueSelector } from "./activity-form/LeagueSelector";
+import { handleActivitySubmit } from "@/utils/activity/handleActivitySubmit";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -26,17 +27,20 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
     leagueId: activity.leagueId || activity.league_id
   };
   
-  const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, async (updatedActivity) => {
+  const { form, isSubmitting, setIsSubmitting } = useActivityForm(normalizedActivity);
+  
+  const handleSubmit = async (values: any) => {
+    setIsSubmitting(true);
     try {
-      console.log("Submitting activity update with date:", updatedActivity.date, "leagueId:", updatedActivity.leagueId);
-      await onSave(updatedActivity);
-      toast.success("Aktivitet uppdaterad");
+      console.log("Form submission values:", values);
+      await handleActivitySubmit(values, normalizedActivity, onSave, setIsSubmitting);
+      console.log("Activity updated successfully with leagueId:", values.leagueId);
     } catch (error) {
       console.error("Failed to save activity:", error);
       toast.error("Kunde inte spara aktiviteten");
-      throw error;
+      setIsSubmitting(false);
     }
-  });
+  };
 
   return (
     <Form {...form}>

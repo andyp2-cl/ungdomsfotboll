@@ -36,9 +36,10 @@ export function EditActivityDialog({
     
     try {
       console.log("Handling activity save:", updatedActivity.name);
+      console.log("Activity leagueId:", updatedActivity.leagueId);
       
       // Pass the updated activity to the parent component
-      onActivityUpdate(updatedActivity);
+      await onActivityUpdate(updatedActivity);
       
       // Close the dialog only after successful update
       onOpenChange(false);
@@ -56,14 +57,14 @@ export function EditActivityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`sm:max-w-md ${isMobile ? 'max-h-[95vh] p-4' : ''}`}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Redigera aktivitet</DialogTitle>
         </DialogHeader>
         
         {activityCopy && (
-          <ScrollArea className={isMobile ? "max-h-[calc(95vh-8rem)]" : ""}>
-            <div className={isMobile ? "px-1 pb-4" : ""}>
+          <ScrollArea className="max-h-[calc(90vh-8rem)] pr-2">
+            <div className="pb-4">
               <EditActivityForm 
                 activity={activityCopy} 
                 onSave={handleSave}
