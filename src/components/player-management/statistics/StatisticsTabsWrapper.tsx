@@ -1,63 +1,79 @@
 
-import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, Player } from "@/types/player";
-import { OverviewTabContent } from "./tabs/OverviewTabContent";
-import { MatchesTabContent } from "./matches/MatchesTabContent";
-import { GoalsTabContent } from "./goals/GoalsTabContent";
+import { ParticipationTabContent } from "./ParticipationTabContent";
 import { FormationTabContent } from "./formation/FormationTabContent";
-import { saveActiveTab } from "@/utils/storage/tabs";
+import { GoalsTabContent } from "./statistics/goals/GoalsTabContent";
+import { OverviewTabContent } from "./tabs/OverviewTabContent";
+import { MatchesTabContent } from "./statistics/matches/MatchesTabContent";
+import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
+import { Activity, Player } from "@/types/player";
 
 interface StatisticsTabsWrapperProps {
   players: Player[];
   activities: Activity[];
-  gradeData: { grade: string; players: number }[];
-  onPlayerSelect?: (player: Player) => void;
+  gradeData?: { grade: string; players: number }[];
+  onActivitySelect?: (activity: Activity) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
-export function StatisticsTabsWrapper({ 
-  players, 
+export function StatisticsTabsWrapper({
+  players,
   activities,
   gradeData,
+  onActivitySelect,
   onPlayerSelect
 }: StatisticsTabsWrapperProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "matches" | "goals" | "formation">("overview");
-
-  const handleTabChange = (value: string) => {
-    const tab = value as "overview" | "matches" | "goals" | "formation";
-    setActiveTab(tab);
-    saveActiveTab(`statistics-${tab}`);
-  };
-
   return (
-    <div className="space-y-6">
-      <Tabs 
-        value={activeTab} 
-        onValueChange={handleTabChange}
-      >
-        <TabsList>
-          <TabsTrigger value="overview">Översikt</TabsTrigger>
-          <TabsTrigger value="matches">Matcher</TabsTrigger>
-          <TabsTrigger value="goals">Matchstatistik</TabsTrigger>
-          <TabsTrigger value="formation">Formation</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview">
-          <OverviewTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
-        </TabsContent>
-        
-        <TabsContent value="matches">
-          <MatchesTabContent activities={activities} players={players} onPlayerSelect={onPlayerSelect} />
-        </TabsContent>
-        
-        <TabsContent value="goals">
-          <GoalsTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
-        </TabsContent>
-        
-        <TabsContent value="formation">
-          <FormationTabContent players={players} activities={activities} />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="mb-4 flex flex-wrap gap-1">
+        <TabsTrigger value="overview">Översikt</TabsTrigger>
+        <TabsTrigger value="participation">Deltagande</TabsTrigger>
+        <TabsTrigger value="formation">Formation</TabsTrigger>
+        <TabsTrigger value="goals">Mål</TabsTrigger>
+        <TabsTrigger value="matches">Matcher</TabsTrigger>
+        <TabsTrigger value="leagues">Ligor</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="overview">
+        <OverviewTabContent 
+          activities={activities} 
+          players={players} 
+          gradeData={gradeData}
+        />
+      </TabsContent>
+      
+      <TabsContent value="participation">
+        <ParticipationTabContent 
+          activities={activities} 
+          players={players} 
+        />
+      </TabsContent>
+      
+      <TabsContent value="formation">
+        <FormationTabContent players={players} />
+      </TabsContent>
+      
+      <TabsContent value="goals">
+        <GoalsTabContent activities={activities} players={players} />
+      </TabsContent>
+      
+      <TabsContent value="matches">
+        <MatchesTabContent 
+          activities={activities.filter(a => a.type === "match")} 
+          players={players}
+          onActivitySelect={onActivitySelect}
+          onPlayerSelect={onPlayerSelect}
+        />
+      </TabsContent>
+      
+      <TabsContent value="leagues">
+        <LeaguesTabContent 
+          activities={activities} 
+          players={players}
+          onActivitySelect={onActivitySelect}
+          onPlayerSelect={onPlayerSelect}
+        />
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity, ActivityType } from "@/types/player";
 import { Input } from '@/components/ui/input';
@@ -12,12 +13,21 @@ import { getAllCupNames } from "@/lib/supabase/activities";
 import { useQuery } from "@tanstack/react-query";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase/client";
 
 interface AddActivityFormProps {
   onSave: (activity: Activity) => void;
   onCancel: () => void;
   onTypeChange?: (type: ActivityType) => void;
   onDateChange?: (date: string) => void;
+}
+
+// Define a League type
+interface League {
+  id: string;
+  name: string;
+  division: string;
+  year: number;
 }
 
 export function AddActivityForm({ 
@@ -34,13 +44,33 @@ export function AddActivityForm({
   const [locationGpsLink, setLocationGpsLink] = useState("");
   const [time, setTime] = useState("");
   const [cupName, setCupName] = useState("no-cup");
+  const [leagueId, setLeagueId] = useState("");
   const [cupNames, setCupNames] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
   // Fetch activities to get existing cup names
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading: activitiesLoading } = useQuery({
     queryKey: ["activities"],
     queryFn: getStoredActivities,
+  });
+
+  // Fetch leagues from Supabase
+  const { data: leagues = [], isLoading: leaguesLoading } = useQuery({
+    queryKey: ["leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .order("year", { ascending: false })
+        .order("name");
+        
+      if (error) {
+        console.error("Error fetching leagues:", error);
+        throw error;
+      }
+      
+      return data || [];
+    },
   });
   
   // Extract cup names when activities are loaded
@@ -93,7 +123,8 @@ export function AddActivityForm({
         player_stats: {
           goals: {},
           assists: {}
-        }
+        },
+        leagueId: leagueId || undefined
       };
       
       // Set up cup relationship for cup types or match referencing cups
@@ -170,10 +201,10 @@ export function AddActivityForm({
           <Select 
             onValueChange={setCupName} 
             value={cupName}
-            disabled={isLoading || cupNames.length === 0}
+            disabled={activitiesLoading || cupNames.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoading ? "Laddar cuper..." : "Välj cup eller lämna tom"} />
+              <SelectValue placeholder={activitiesLoading ? "Laddar cuper..." : "Välj cup eller lämna tom"} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="no-cup">Ingen cup</SelectItem>
@@ -184,11 +215,35 @@ export function AddActivityForm({
               ))}
             </SelectContent>
           </Select>
-          {cupNames.length === 0 && !isLoading && (
+          {cupNames.length === 0 && !activitiesLoading && (
             <p className="text-xs text-muted-foreground mt-1">
               Inga cuper hittades. Skapa en cup först.
             </p>
           )}
+        </div>
+      )}
+      
+      {/* League field for match type */}
+      {type === "match" && (
+        <div>
+          <Label htmlFor="leagueId">Liga (valfritt)</Label>
+          <Select 
+            onValueChange={setLeagueId} 
+            value={leagueId}
+            disabled={leaguesLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={leaguesLoading ? "Laddar ligor..." : "Välj liga eller lämna tom"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Ingen liga</SelectItem>
+              {leagues.map((league) => (
+                <SelectItem key={league.id} value={league.id}>
+                  {league.name} {league.year} {league.division}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       

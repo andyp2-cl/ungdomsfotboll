@@ -38,13 +38,15 @@ export interface Activity {
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
   cupId?: string;
-  cupName?: string; // Add cupName field
+  cupName?: string;
   matches?: string[]; // Activity IDs for cup matches
   player_stats?: PlayerStats;
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
   awayScore?: number; // Away team's score
   isWin?: boolean; // Whether the match was a win for Hässleholms IF
+  leagueId?: string; // League ID
+  league_id?: string; // Database format of league ID
 }
 
 export interface Player {

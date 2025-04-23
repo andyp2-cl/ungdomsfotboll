@@ -14,7 +14,8 @@ export const activityFormSchema = z.object({
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
   cupName: z.string().optional(),
-  isWin: z.boolean().optional(), // Add isWin field to the schema
+  isWin: z.boolean().optional(),
+  leagueId: z.string().optional(), // Add leagueId field to the schema
 });
 
 export type ActivityFormValues = z.infer<typeof activityFormSchema>;

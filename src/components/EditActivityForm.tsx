@@ -20,7 +20,9 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
   // Create a clean copy of the activity with normalized player_stats
   const normalizedActivity = {
     ...activity,
-    player_stats: normalizePlayerStats(activity.player_stats)
+    player_stats: normalizePlayerStats(activity.player_stats),
+    // If leagueId is undefined but league_id is defined, use league_id
+    leagueId: activity.leagueId || activity.league_id
   };
   
   const { form, handleSubmit, isSubmitting } = useActivityForm(normalizedActivity, async (updatedActivity) => {

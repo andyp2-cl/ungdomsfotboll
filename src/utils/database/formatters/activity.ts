@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 
 /**
@@ -24,7 +25,8 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     is_win: activity.isWin !== undefined ? activity.isWin : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
-    scraped: activity.scraped || false
+    scraped: activity.scraped || false,
+    league_id: activity.leagueId || null
   };
 
   // Special handling for cup type activities
@@ -34,7 +36,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     console.log(`Cup activity detected: Setting cup_id=${activity.id}`);
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {
@@ -74,7 +76,10 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     awayScore: item.away_score,
     // Properly handle is_win with strict type checking
     isWin: item.is_win === true ? true : item.is_win === false ? false : undefined,
-    player_stats: { goals: {}, assists: {} }
+    player_stats: { goals: {}, assists: {} },
+    // Add league_id from database
+    leagueId: item.league_id || undefined,
+    league_id: item.league_id || undefined
   };
   
   // For cup type activities, make sure cupId is set properly
