@@ -49,7 +49,7 @@ export function LeagueSelector({ form }: LeagueSelectorProps) {
           <FormLabel>Liga (valfritt)</FormLabel>
           <FormControl>
             <Select
-              value={field.value || ""}
+              value={field.value || "none"}
               onValueChange={field.onChange}
               disabled={isLoading}
             >
@@ -57,7 +57,7 @@ export function LeagueSelector({ form }: LeagueSelectorProps) {
                 <SelectValue placeholder={isLoading ? "Laddar ligor..." : "Välj liga"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Ingen liga</SelectItem>
+                <SelectItem value="none">Ingen liga</SelectItem>
                 {leagues.map((league) => (
                   <SelectItem key={league.id} value={league.id}>
                     {league.name} ({league.year} {league.division})

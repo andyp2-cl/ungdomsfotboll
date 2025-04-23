@@ -44,7 +44,7 @@ export function AddActivityForm({
   const [locationGpsLink, setLocationGpsLink] = useState("");
   const [time, setTime] = useState("");
   const [cupName, setCupName] = useState("no-cup");
-  const [leagueId, setLeagueId] = useState("");
+  const [leagueId, setLeagueId] = useState("none");
   const [cupNames, setCupNames] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -124,7 +124,7 @@ export function AddActivityForm({
           goals: {},
           assists: {}
         },
-        leagueId: leagueId || undefined
+        leagueId: leagueId !== "none" ? leagueId : undefined
       };
       
       // Set up cup relationship for cup types or match referencing cups
@@ -236,7 +236,7 @@ export function AddActivityForm({
               <SelectValue placeholder={leaguesLoading ? "Laddar ligor..." : "Välj liga eller lämna tom"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Ingen liga</SelectItem>
+              <SelectItem value="none">Ingen liga</SelectItem>
               {leagues.map((league) => (
                 <SelectItem key={league.id} value={league.id}>
                   {league.name} {league.year} {league.division}
