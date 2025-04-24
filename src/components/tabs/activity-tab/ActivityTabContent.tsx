@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
@@ -50,28 +50,12 @@ export function ActivityTabContent({
 }: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  
-  // Wrap the activity update function with error handling to ensure Promise<void> return type
-  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
-    setError(null);
-    try {
-      await handleActivityUpdate(activity);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Ett okänt fel uppstod';
-      console.error("Error updating activity:", err);
-      setError(errorMessage);
-      toast.error("Kunde inte uppdatera aktivitet", { description: errorMessage });
-      throw err;
-    }
-  };
   
   const { 
     activeView,
     handleViewChange,
     selectedPlayer,
-    setSelectedPlayer,
     handlePlayerSelect,
     renderContent,
     isHistorical,
@@ -91,22 +75,14 @@ export function ActivityTabContent({
     handleMatchResultUpdate
   });
 
-  // Clear error state when switching activities or views
-  useEffect(() => {
-    setError(null);
-  }, [selectedActivity, activeView]);
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    setError(null);
     
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success("Data uppdaterad");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Ett okänt fel uppstod';
-      setError(errorMessage);
-      toast.error("Kunde inte uppdatera data", { description: errorMessage });
+      toast.error("Kunde inte uppdatera data");
       console.error("Error refreshing data:", error);
     } finally {
       setIsRefreshing(false);
@@ -130,16 +106,6 @@ export function ActivityTabContent({
         />
       )}
       
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
         <ActivityTabViewContent 
           activeView={activeView}
@@ -149,7 +115,7 @@ export function ActivityTabContent({
           onActivitySelect={setSelectedActivity}
           onPlayerSelect={handlePlayerSelect}
           onEditActivity={setEditingActivity}
-          onActivityUpdate={handleActivityUpdateWrapper}
+          onActivityUpdate={handleActivityUpdate}
           onDeleteActivity={handleDeleteActivity}
           onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
           onMatchResultUpdate={handleMatchResultUpdate}
