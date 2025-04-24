@@ -62,6 +62,8 @@ export function ActivityTabViewContent({
         players={players}
         activities={activities}
         gradeData={gradeData}
+        onActivitySelect={(activity) => onActivitySelect(activity)}
+        onPlayerSelect={onPlayerSelect}
       />
     );
   }

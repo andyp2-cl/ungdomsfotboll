@@ -56,12 +56,16 @@ export function StatisticsTabsWrapper({
       </TabsContent>
       
       <TabsContent value="goals">
-        <GoalsTabContent activities={activities} players={players} />
+        <GoalsTabContent 
+          activities={activities} 
+          players={players} 
+          onPlayerSelect={onPlayerSelect}
+        />
       </TabsContent>
       
       <TabsContent value="matches">
         <MatchesTabContent 
-          activities={activities.filter(a => a.type === "match")} 
+          activities={activities} 
           players={players}
           onActivitySelect={onActivitySelect}
           onPlayerSelect={onPlayerSelect}

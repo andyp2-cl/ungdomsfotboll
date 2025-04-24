@@ -18,17 +18,26 @@ export function MatchesTabContent({
   onActivitySelect,
   onPlayerSelect 
 }: MatchesTabContentProps) {
-  const matchActivities = activities.filter(activity => activity.type === "match");
+  // Filter match activities to only include historical matches (date is in the past)
+  const historicalMatchActivities = activities.filter(activity => {
+    if (activity.type !== "match") return false;
+    
+    const activityDate = new Date(activity.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of today
+    
+    return activityDate < today;
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MatchStatsCard 
-        activities={matchActivities} 
+        activities={historicalMatchActivities} 
         className="col-span-full md:col-span-1"
       />
       
       <DetailedMatchStats 
-        activities={matchActivities}
+        activities={historicalMatchActivities}
         players={players}
         onActivitySelect={onActivitySelect}
         onPlayerSelect={onPlayerSelect}

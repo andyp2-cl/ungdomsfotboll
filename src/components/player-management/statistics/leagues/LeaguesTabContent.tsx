@@ -87,6 +87,12 @@ export function LeaguesTabContent({
     );
   }
   
+  const handleActivityClick = (activity: Activity) => {
+    if (onActivitySelect) {
+      onActivitySelect(activity);
+    }
+  };
+  
   return (
     <div className="space-y-4">
       <Card>
@@ -119,7 +125,7 @@ export function LeaguesTabContent({
                           <ActivityList
                             activities={league.matches}
                             players={players}
-                            onSelect={activity => onActivitySelect?.(activity)}
+                            onSelect={handleActivityClick}
                             onPlayerSelect={onPlayerSelect}
                             isHistorical={true}
                             isMobile={isMobile}
