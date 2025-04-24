@@ -111,8 +111,8 @@ export function LeaguesTabContent({
   }
   
   const handleActivityClick = (activity: Activity) => {
-    console.log("League match clicked:", activity.id, activity.name);
     if (onActivitySelect) {
+      console.log("League match clicked:", activity.id, activity.name);
       onActivitySelect(activity);
     }
   };
