@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityList } from "@/components/ActivityList";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 interface League {
   id: string;
@@ -18,6 +19,9 @@ interface League {
 
 interface LeagueWithMatches extends League {
   matches: Activity[];
+  wins: number;
+  draws: number;
+  losses: number;
 }
 
 // Function to fetch leagues from Supabase
@@ -36,15 +40,34 @@ const fetchLeaguesWithMatches = async (
     throw error;
   }
   
-  // Group activities by league
+  // Group activities by league and calculate statistics
   return (leagues || []).map(league => {
     const leagueMatches = activities.filter(
       activity => activity.type === "match" && activity.league_id === league.id
     );
     
+    // Calculate match statistics
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+    
+    leagueMatches.forEach(match => {
+      if (match.homeScore !== undefined && match.awayScore !== undefined && 
+          match.homeScore === match.awayScore) {
+        draws++;
+      } else if (match.isWin === true) {
+        wins++;
+      } else if (match.isWin === false) {
+        losses++;
+      }
+    });
+    
     return {
       ...league,
-      matches: leagueMatches
+      matches: leagueMatches,
+      wins,
+      draws,
+      losses
     };
   });
 };
@@ -88,6 +111,7 @@ export function LeaguesTabContent({
   }
   
   const handleActivityClick = (activity: Activity) => {
+    console.log("League match clicked:", activity.id, activity.name);
     if (onActivitySelect) {
       onActivitySelect(activity);
     }
@@ -116,8 +140,19 @@ export function LeaguesTabContent({
                   .map(league => (
                     <Card key={league.id} className="overflow-hidden">
                       <CardHeader className="bg-muted/50 p-4">
-                        <CardTitle className="text-lg">
-                          {league.name} ({league.division})
+                        <CardTitle className="text-lg flex items-center flex-wrap gap-2">
+                          <span>{league.name} ({league.division})</span>
+                          <div className="flex items-center space-x-1 text-sm">
+                            <Badge variant="success" className="text-xs">
+                              {league.wins}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs bg-gray-400 text-white">
+                              {league.draws}
+                            </Badge>
+                            <Badge variant="destructive" className="text-xs">
+                              {league.losses}
+                            </Badge>
+                          </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
