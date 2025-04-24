@@ -114,6 +114,8 @@ export function LeaguesTabContent({
     if (onActivitySelect) {
       console.log("League match clicked:", activity.id, activity.name);
       onActivitySelect(activity);
+    } else {
+      console.error("onActivitySelect is undefined in LeaguesTabContent");
     }
   };
   

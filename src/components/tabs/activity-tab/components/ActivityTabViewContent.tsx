@@ -57,12 +57,17 @@ export function ActivityTabViewContent({
     
     gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
     
+    console.log("Statistics view rendering with onActivitySelect function:", !!onActivitySelect);
+    
     return (
       <StatisticsTabsWrapper 
         players={players}
         activities={activities}
         gradeData={gradeData}
-        onActivitySelect={onActivitySelect}
+        onActivitySelect={(activity) => {
+          console.log("Activity selected from StatisticsTabsWrapper:", activity.id, activity.name);
+          onActivitySelect(activity);
+        }}
         onPlayerSelect={onPlayerSelect}
       />
     );

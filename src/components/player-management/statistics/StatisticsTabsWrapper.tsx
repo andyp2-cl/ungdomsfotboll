@@ -23,6 +23,16 @@ export function StatisticsTabsWrapper({
   onActivitySelect,
   onPlayerSelect
 }: StatisticsTabsWrapperProps) {
+  // Add debug logging
+  const handleActivitySelectWithLogging = (activity: Activity) => {
+    console.log("StatisticsTabsWrapper: Activity selected:", activity.id, activity.name);
+    if (onActivitySelect) {
+      onActivitySelect(activity);
+    } else {
+      console.error("onActivitySelect is undefined in StatisticsTabsWrapper");
+    }
+  };
+
   return (
     <Tabs defaultValue="overview" className="w-full">
       <TabsList className="mb-4 flex flex-wrap gap-1">
@@ -67,7 +77,7 @@ export function StatisticsTabsWrapper({
         <MatchesTabContent 
           activities={activities} 
           players={players}
-          onActivitySelect={onActivitySelect}
+          onActivitySelect={handleActivitySelectWithLogging}
           onPlayerSelect={onPlayerSelect}
         />
       </TabsContent>
@@ -76,7 +86,7 @@ export function StatisticsTabsWrapper({
         <LeaguesTabContent 
           activities={activities} 
           players={players}
-          onActivitySelect={onActivitySelect}
+          onActivitySelect={handleActivitySelectWithLogging}
           onPlayerSelect={onPlayerSelect}
         />
       </TabsContent>

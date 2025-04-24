@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 
 interface UseActivityTabViewsProps {
@@ -101,26 +101,6 @@ export const useActivityTabViews = ({
     return [];
   }, [activities]);
 
-  // Log when selected activity changes to help debug cup matches
-  useEffect(() => {
-    if (selectedActivity && selectedActivity.type === 'cup') {
-      console.log(`Selected cup: ${selectedActivity.name}`);
-      
-      // Log matches array
-      console.log(`Cup matches array:`, selectedActivity.matches || []);
-      
-      // Log matches found by ID reference
-      if (selectedActivity.matches && selectedActivity.matches.length > 0) {
-        const matchesById = activities.filter(a => selectedActivity.matches?.includes(a.id));
-        console.log(`Found ${matchesById.length} matches by ID:`, matchesById.map(m => m.name));
-      }
-      
-      // Log matches by cupId reference
-      const matchesByCupId = activities.filter(a => a.cupId === selectedActivity.id);
-      console.log(`Found ${matchesByCupId.length} matches by cupId:`, matchesByCupId.map(m => m.name));
-    }
-  }, [selectedActivity, activities]);
-
   // Render content based on current view and selection
   const renderContent = useCallback(() => {
     // Handle Statistics view
@@ -138,7 +118,8 @@ export const useActivityTabViews = ({
       return {
         viewType: "player-detail",
         player: selectedPlayer,
-        activities: playerActivities
+        activities: playerActivities,
+        searchQuery
       };
     }
     
@@ -153,14 +134,16 @@ export const useActivityTabViews = ({
         viewType: "activity-detail",
         activity: selectedActivity,
         relatedActivities,
-        cupMatches
+        cupMatches,
+        searchQuery
       };
     }
     
     // Handle Activities list view
     return {
       viewType: "activities-list",
-      activities: filteredBySearchActivities
+      activities: filteredBySearchActivities,
+      searchQuery
     };
   }, [
     activeView, 
@@ -169,7 +152,8 @@ export const useActivityTabViews = ({
     activities, 
     filteredBySearchActivities, 
     getRelatedActivities,
-    getCupMatches
+    getCupMatches,
+    searchQuery
   ]);
 
   return {

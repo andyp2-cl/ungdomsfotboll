@@ -89,6 +89,12 @@ export function ActivityTabContent({
     }
   };
 
+  // Add debug logging
+  const handleActivitySelectWithLogging = (activity: Activity | null) => {
+    console.log("ActivityTabContent: Activity selected:", activity?.id, activity?.name);
+    setSelectedActivity(activity);
+  };
+
   return (
     <div className="space-y-6">
       <ActivityTabHeader 
@@ -112,7 +118,7 @@ export function ActivityTabContent({
           renderContent={renderContent}
           players={players}
           activities={activities}
-          onActivitySelect={setSelectedActivity}
+          onActivitySelect={handleActivitySelectWithLogging}
           onPlayerSelect={handlePlayerSelect}
           onEditActivity={setEditingActivity}
           onActivityUpdate={handleActivityUpdate}
