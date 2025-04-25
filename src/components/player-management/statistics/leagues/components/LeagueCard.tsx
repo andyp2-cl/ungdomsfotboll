@@ -1,10 +1,10 @@
-
 import { Activity, Player } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ActivityList } from "@/components/ActivityList";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface LeagueCardProps {
   league: {
@@ -26,6 +26,12 @@ const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 
 export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }: LeagueCardProps) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleActivityClick = (activity: Activity) => {
+    // Navigate to the activities page with the selected activity
+    navigate('/activities', { state: { selectedActivityId: activity.id } });
+  };
 
   const renderPieChart = () => {
     const data = [
@@ -58,15 +64,6 @@ export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }
         </ResponsiveContainer>
       </div>
     );
-  };
-
-  const handleActivityClick = (activity: Activity) => {
-    if (onActivitySelect) {
-      // Prevent event bubbling and default behavior
-      event?.preventDefault();
-      event?.stopPropagation();
-      onActivitySelect(activity);
-    }
   };
 
   return (
