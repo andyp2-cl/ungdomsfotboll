@@ -9,6 +9,8 @@ import { ActivityList } from "@/components/ActivityList";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 
 interface League {
   id: string;
@@ -24,7 +26,6 @@ interface LeagueWithMatches extends League {
   losses: number;
 }
 
-// Function to fetch leagues from Supabase
 const fetchLeaguesWithMatches = async (
   activities: Activity[], 
   players: Player[]
@@ -79,6 +80,8 @@ interface LeaguesTabContentProps {
   onPlayerSelect?: (playerId: string) => void;
 }
 
+const COLORS = ['#8B5CF6', '#9F9EA1', '#ea384c'];
+
 export function LeaguesTabContent({ 
   activities,
   players,
@@ -86,14 +89,12 @@ export function LeaguesTabContent({
   onPlayerSelect
 }: LeaguesTabContentProps) {
   const isMobile = useIsMobile();
-  const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   
   const { data: leaguesWithMatches = [], isLoading } = useQuery({
     queryKey: ["leagues-with-matches", activities.length],
     queryFn: () => fetchLeaguesWithMatches(activities, players),
   });
   
-  // Get unique years for tabs
   const years = Array.from(new Set(leaguesWithMatches.map(l => l.year))).sort((a, b) => b - a);
   
   if (isLoading) {
@@ -109,7 +110,7 @@ export function LeaguesTabContent({
       </Card>
     );
   }
-  
+
   const handleActivityClick = (activity: Activity) => {
     if (onActivitySelect) {
       console.log("League match clicked:", activity.id, activity.name);
@@ -117,6 +118,36 @@ export function LeaguesTabContent({
     } else {
       console.error("onActivitySelect is undefined in LeaguesTabContent");
     }
+  };
+
+  const renderPieChart = (league: LeagueWithMatches) => {
+    const data = [
+      { name: 'Vinster', value: league.wins },
+      { name: 'Oavgjorda', value: league.draws },
+      { name: 'Förluster', value: league.losses }
+    ];
+
+    return (
+      <div className="w-24 h-24">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={15}
+              outerRadius={30}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    );
   };
   
   return (
@@ -136,46 +167,51 @@ export function LeaguesTabContent({
             </TabsList>
             
             {years.map(year => (
-              <TabsContent key={year} value={year.toString()} className="space-y-4">
-                {leaguesWithMatches
-                  .filter(league => league.year === year)
-                  .map(league => (
-                    <Card key={league.id} className="overflow-hidden">
-                      <CardHeader className="bg-muted/50 p-4">
-                        <CardTitle className="text-lg flex items-center flex-wrap gap-2">
-                          <span>{league.name} ({league.division})</span>
-                          <div className="flex items-center space-x-1 text-sm">
-                            <Badge variant="success" className="text-xs">
-                              {league.wins}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs bg-gray-400 text-white">
-                              {league.draws}
-                            </Badge>
-                            <Badge variant="destructive" className="text-xs">
-                              {league.losses}
-                            </Badge>
+              <TabsContent key={year} value={year.toString()}>
+                <Accordion type="multiple" className="space-y-4">
+                  {leaguesWithMatches
+                    .filter(league => league.year === year)
+                    .map(league => (
+                      <AccordionItem key={league.id} value={league.id} className="border rounded-lg">
+                        <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-4">
+                              <span>{league.name} ({league.division})</span>
+                              <div className="flex items-center space-x-1 text-sm">
+                                <Badge variant="success" className="text-xs">
+                                  {league.wins}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs bg-gray-400 text-white">
+                                  {league.draws}
+                                </Badge>
+                                <Badge variant="destructive" className="text-xs">
+                                  {league.losses}
+                                </Badge>
+                              </div>
+                            </div>
+                            {renderPieChart(league)}
                           </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        {league.matches.length > 0 ? (
-                          <ActivityList
-                            activities={league.matches}
-                            players={players}
-                            onSelect={handleActivityClick}
-                            onPlayerSelect={onPlayerSelect}
-                            isHistorical={true}
-                            isMobile={isMobile}
-                            noResultsMessage="Inga matcher har lagts till i denna liga ännu."
-                          />
-                        ) : (
-                          <p className="text-center text-muted-foreground py-4">
-                            Inga matcher har lagts till i denna liga ännu.
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          {league.matches.length > 0 ? (
+                            <ActivityList
+                              activities={league.matches}
+                              players={players}
+                              onSelect={handleActivityClick}
+                              onPlayerSelect={onPlayerSelect}
+                              isHistorical={true}
+                              isMobile={isMobile}
+                              noResultsMessage="Inga matcher har lagts till i denna liga ännu."
+                            />
+                          ) : (
+                            <p className="text-center text-muted-foreground py-4">
+                              Inga matcher har lagts till i denna liga ännu.
+                            </p>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                </Accordion>
               </TabsContent>
             ))}
           </Tabs>
