@@ -80,7 +80,8 @@ interface LeaguesTabContentProps {
   onPlayerSelect?: (playerId: string) => void;
 }
 
-const COLORS = ['#8B5CF6', '#9F9EA1', '#ea384c'];
+// Updated colors to match badges: green for wins, gray for draws, red for losses
+const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 
 export function LeaguesTabContent({ 
   activities,
@@ -112,9 +113,17 @@ export function LeaguesTabContent({
   }
 
   const handleActivityClick = (activity: Activity) => {
+    console.log("League match clicked:", activity.id, activity.name);
+    
     if (onActivitySelect) {
-      console.log("League match clicked:", activity.id, activity.name);
-      onActivitySelect(activity);
+      // Prevent default behavior to avoid page reload
+      event?.preventDefault();
+      
+      // Set a small timeout to ensure the event completes before changing state
+      setTimeout(() => {
+        onActivitySelect(activity);
+        console.log("onActivitySelect called with:", activity.id);
+      }, 10);
     } else {
       console.error("onActivitySelect is undefined in LeaguesTabContent");
     }
@@ -126,6 +135,12 @@ export function LeaguesTabContent({
       { name: 'Oavgjorda', value: league.draws },
       { name: 'Förluster', value: league.losses }
     ];
+
+    // Only render pie chart if there are matches
+    const totalMatches = league.wins + league.draws + league.losses;
+    if (totalMatches === 0) {
+      return null;
+    }
 
     return (
       <div className="w-24 h-24">
@@ -168,7 +183,7 @@ export function LeaguesTabContent({
             
             {years.map(year => (
               <TabsContent key={year} value={year.toString()}>
-                <Accordion type="multiple" className="space-y-4">
+                <Accordion type="multiple" className="space-y-4" defaultValue={[]}>
                   {leaguesWithMatches
                     .filter(league => league.year === year)
                     .map(league => (
@@ -197,7 +212,10 @@ export function LeaguesTabContent({
                             <ActivityList
                               activities={league.matches}
                               players={players}
-                              onSelect={handleActivityClick}
+                              onSelect={(activity) => {
+                                console.log("ActivityList onSelect called for:", activity.id);
+                                handleActivityClick(activity);
+                              }}
                               onPlayerSelect={onPlayerSelect}
                               isHistorical={true}
                               isMobile={isMobile}
