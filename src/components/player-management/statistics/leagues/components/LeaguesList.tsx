@@ -8,6 +8,7 @@ interface LeagueWithMatches {
   id: string;
   name: string;
   division: string;
+  year: number; // Added the year property
   matches: Activity[];
   wins: number;
   draws: number;
