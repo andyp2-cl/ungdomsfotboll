@@ -1,126 +1,89 @@
 
+import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/page-containers/PageContainer";
-import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
+import { MainTabs } from "@/components/tabs/MainTabs";
+import { usePlayers } from "@/hooks/players";
+import { useActivities } from "@/hooks/activities";
+import { useLocation } from "react-router-dom";
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
-export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
-  const {
-    // Tab state
-    activeTab,
-    setActiveTab,
-    
-    // Player data
-    players,
-    filteredPlayers,
-    selectedPlayer,
-    setSelectedPlayer,
-    editingPlayer,
-    setEditingPlayer,
-    isAddPlayerOpen,
-    setIsAddPlayerOpen,
-    searchQuery,
-    setSearchQuery,
-    selectedGrades,
-    viewMode,
-    setViewMode,
-    handleGradeChange,
-    handlePlayerUpdate,
-    handleBulkPlayerUpdate,
-    handleAddPlayer,
-    
-    // Activity data
-    activities,
-    filteredActivities,
-    filteredHistoricalActivities,
-    selectedActivity,
-    setSelectedActivity,
-    editingActivity,
-    setEditingActivity,
-    isAddActivityOpen,
-    setIsAddActivityOpen,
-    selectedActivityTypes,
-    handleActivityTypeChange,
-    handleActivityUpdate,
-    handleKioskUpdate,
-    handleDelete,
-    handleImportActivities,
-    handleClearHistorical,
-    handleAddActivity,
-    handlePlayerActivitySelect,
-    
-    // Loading state
-    isLoading
-  } = usePlayers(initialTab);
+export default function PlayersPage({ initialTab = "players" }: PlayersPageProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const location = useLocation();
+  const { state } = location;
 
-  // Converting Promise<boolean> to Promise<void> for player update functions
-  const handlePlayerUpdateWrapper = async (player: any) => {
-    await handlePlayerUpdate(player);
-  };
-  
-  const handleBulkPlayerUpdateWrapper = async (players: any[]) => {
-    await handleBulkPlayerUpdate(players);
-  };
-  
-  const handleAddPlayerWrapper = async (player: any) => {
-    await handleAddPlayer(player);
-  };
+  const playersHook = usePlayers();
+  const activitiesHook = useActivities();
 
-  // Create a wrapper for setViewMode to match expected (mode: string) => void signature
-  const setViewModeWrapper = (mode: string) => {
-    if (mode === "grid" || mode === "list" || mode === "stats") {
-      setViewMode(mode);
+  // Handle activity selection from state (e.g., coming from leagues section)
+  useEffect(() => {
+    if (state?.selectedActivityId) {
+      console.log("Received selectedActivityId in state:", state.selectedActivityId);
+      const activity = activitiesHook.activities.find(a => a.id === state.selectedActivityId);
+      
+      if (activity) {
+        console.log("Found activity to select:", activity.name);
+        activitiesHook.setSelectedActivity(activity);
+        
+        // Set active tab if provided in state
+        if (state.activeTab) {
+          setActiveTab(state.activeTab);
+        } else {
+          setActiveTab("activities");
+        }
+      }
     }
-  };
+  }, [state, activitiesHook.activities]);
 
   return (
-    <PageContainer isLoading={isLoading}>
-      <PlayersPageContent 
-        // Tab state
+    <PageContainer>
+      <MainTabs
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        
-        // Player data
-        players={players}
-        activities={activities}
-        filteredPlayers={filteredPlayers}
-        selectedPlayer={selectedPlayer}
-        setSelectedPlayer={setSelectedPlayer}
-        editingPlayer={editingPlayer}
-        setEditingPlayer={setEditingPlayer}
-        isAddPlayerOpen={isAddPlayerOpen}
-        setIsAddPlayerOpen={setIsAddPlayerOpen}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedGrades={selectedGrades}
-        viewMode={viewMode}
-        setViewMode={setViewModeWrapper}
-        handleGradeChange={handleGradeChange}
-        handlePlayerUpdate={handlePlayerUpdateWrapper}
-        handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
-        handleAddPlayer={handleAddPlayerWrapper}
-        
-        // Activity data
-        filteredActivities={filteredActivities}
-        filteredHistoricalActivities={filteredHistoricalActivities}
-        selectedActivity={selectedActivity}
-        setSelectedActivity={setSelectedActivity}
-        editingActivity={editingActivity}
-        setEditingActivity={setEditingActivity}
-        isAddActivityOpen={isAddActivityOpen}
-        setIsAddActivityOpen={setIsAddActivityOpen}
-        selectedActivityTypes={selectedActivityTypes}
-        handleActivityTypeChange={handleActivityTypeChange}
-        handleActivityUpdate={handleActivityUpdate}
-        handleKioskUpdate={handleKioskUpdate}
-        handleDelete={handleDelete}
-        handleImportActivities={handleImportActivities}
-        handleClearHistorical={handleClearHistorical}
-        handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelect}
+        playersContent={
+          <PlayersPageContent
+            players={playersHook.players}
+            filteredPlayers={playersHook.filteredPlayers}
+            selectedPlayerTypes={playersHook.selectedPlayerTypes}
+            handlePlayerTypeChange={playersHook.handlePlayerTypeChange}
+            isAddPlayerOpen={playersHook.isAddPlayerOpen}
+            setIsAddPlayerOpen={playersHook.setIsAddPlayerOpen}
+            selectedPlayer={playersHook.selectedPlayer}
+            setSelectedPlayer={playersHook.setSelectedPlayer}
+            handleAddPlayer={playersHook.handleAddPlayer}
+            handleUpdatePlayer={playersHook.handleUpdatePlayer}
+            handleDeletePlayer={playersHook.handleDeletePlayer}
+            editingPlayer={playersHook.editingPlayer}
+            setEditingPlayer={playersHook.setEditingPlayer}
+          />
+        }
+        activitiesContent={
+          <PlayersPageContent
+            activities={activitiesHook.activities}
+            filteredActivities={activitiesHook.filteredActivities}
+            filteredHistoricalActivities={activitiesHook.filteredHistoricalActivities}
+            selectedActivityTypes={activitiesHook.selectedActivityTypes}
+            handleActivityTypeChange={activitiesHook.handleActivityTypeChange}
+            isAddActivityOpen={activitiesHook.isAddActivityOpen}
+            setIsAddActivityOpen={activitiesHook.setIsAddActivityOpen}
+            selectedActivity={activitiesHook.selectedActivity}
+            setSelectedActivity={activitiesHook.setSelectedActivity}
+            handleAddActivity={activitiesHook.handleAddActivity}
+            handleActivityUpdate={activitiesHook.handleActivityUpdate}
+            handleDeleteActivity={activitiesHook.handleDeleteActivity}
+            editingActivity={activitiesHook.editingActivity}
+            setEditingActivity={activitiesHook.setEditingActivity}
+            handleKioskAssignmentUpdate={activitiesHook.handleKioskAssignmentUpdate}
+            handleImportedActivities={activitiesHook.handleImportedActivities}
+            handleClearHistoricalActivities={activitiesHook.handleClearHistoricalActivities}
+            handleMatchResultUpdate={activitiesHook.handleMatchResultUpdate}
+            players={playersHook.players}
+          />
+        }
       />
     </PageContainer>
   );

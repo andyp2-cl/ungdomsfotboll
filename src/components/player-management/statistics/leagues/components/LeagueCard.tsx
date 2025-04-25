@@ -1,10 +1,11 @@
+
 import { Activity, Player } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ActivityList } from "@/components/ActivityList";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface LeagueCardProps {
   league: {
@@ -27,10 +28,25 @@ const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }: LeagueCardProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleActivityClick = (activity: Activity) => {
-    // Navigate to the activities page with the selected activity
-    navigate('/activities', { state: { selectedActivityId: activity.id } });
+    console.log("Activity clicked in LeagueCard:", activity.id, activity.name);
+    
+    if (location.pathname === "/activities") {
+      // If we're already on the activities page, use the onActivitySelect prop directly
+      if (onActivitySelect) {
+        onActivitySelect(activity);
+      }
+    } else {
+      // If we're on another page, navigate to activities with state to select the activity
+      navigate('/activities', { 
+        state: { 
+          selectedActivityId: activity.id,
+          activeTab: "activities"  // Ensure activities tab is active
+        } 
+      });
+    }
   };
 
   const renderPieChart = () => {
