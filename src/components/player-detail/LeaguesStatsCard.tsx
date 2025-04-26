@@ -86,7 +86,14 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value, name, props) => [`${value} matcher (${(props.percent * 100).toFixed(0)}%)`, props.payload.leagueName]} 
+                formatter={(value, name, props) => {
+                  // Access percentage from payload instead of props.percent
+                  const item = props && props.payload ? props.payload : null;
+                  const percentage = item && item.payload && item.payload.percent ? 
+                    (item.payload.percent * 100).toFixed(0) : 0;
+                  
+                  return [`${value} matcher (${percentage}%)`, item?.payload?.leagueName || ''];
+                }}
                 labelFormatter={() => ''} 
               />
             </PieChart>
