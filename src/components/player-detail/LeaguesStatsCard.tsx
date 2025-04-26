@@ -10,7 +10,7 @@ interface LeaguesStatsCardProps {
 }
 
 export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) {
-  // Filter matches for this player and count by league
+  // Filter matches for this player and count by league level
   const leagueStats = React.useMemo(() => {
     const playerMatches = activities.filter(
       activity => 
@@ -19,29 +19,32 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
         activity.league_id // Only include matches with a league
     );
 
-    // Count matches by league ID
-    const leagueCounts: { [key: string]: number } = {};
+    // Count matches by league level
+    const leagueLevelCounts: { [key: string]: number } = {};
     
     playerMatches.forEach(match => {
       if (match.league_id) {
-        leagueCounts[match.league_id] = (leagueCounts[match.league_id] || 0) + 1;
+        // Extract league level from match name (e.g., "2014 A1" from "Series 2014 A1 HomeTeam - AwayTeam")
+        const nameParts = match.name.split(' ');
+        if (nameParts.length >= 2) {
+          const leagueLevel = `${nameParts[1]} ${nameParts[2]}`;
+          leagueLevelCounts[leagueLevel] = (leagueLevelCounts[leagueLevel] || 0) + 1;
+        }
       }
     });
 
     // Transform to array for recharts
-    const data = Object.entries(leagueCounts).map(([leagueId, count]) => {
-      // Find a match with this league to get the league name
-      const match = activities.find(a => a.league_id === leagueId);
-      return {
-        name: match?.name || 'Unknown League',
-        value: count,
-        // Extract the league name from the match name if possible
-        // Most league matches have format like "Series [League] HomeTeam - AwayTeam"
-        leagueName: match?.name?.split(' ').slice(0, 2).join(' ') || 'Unknown'
-      };
-    });
+    const data = Object.entries(leagueLevelCounts).map(([level, count]) => ({
+      name: level,
+      value: count
+    }));
 
-    return data;
+    // Calculate percentages
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    return data.map(item => ({
+      ...item,
+      percent: item.value / total
+    }));
   }, [player.id, activities]);
 
   if (leagueStats.length === 0) {
@@ -76,7 +79,6 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 outerRadius={50}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ leagueName, value, percent }) => `${leagueName}: ${(percent * 100).toFixed(0)}%`}
               >
                 {leagueStats.map((entry, index) => (
                   <Cell 
@@ -87,12 +89,11 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
               </Pie>
               <Tooltip 
                 formatter={(value, name, props) => {
-                  // Access percentage from payload instead of props.percent
                   const item = props && props.payload ? props.payload : null;
-                  const percentage = item && item.payload && item.payload.percent ? 
+                  const percentage = item?.payload?.percent ? 
                     (item.payload.percent * 100).toFixed(0) : 0;
                   
-                  return [`${value} matcher (${percentage}%)`, item?.payload?.leagueName || ''];
+                  return [`${name}: ${value} matcher (${percentage}%)`, ''];
                 }}
                 labelFormatter={() => ''} 
               />
@@ -103,3 +104,4 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
     </Card>
   );
 }
+
