@@ -1,4 +1,3 @@
-
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -68,10 +67,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       if (activity) {
         console.log("Setting selected activity:", activity.name);
         setSelectedActivity(activity);
-        setActiveTab("activities");
       }
     }
-  }, [location.state, activities, setSelectedActivity, setActiveTab]);
+  }, [location.state, activities, setSelectedActivity]);
 
   // Converting Promise<boolean> to Promise<void> for player update functions
   const handlePlayerUpdateWrapper = async (player: any) => {

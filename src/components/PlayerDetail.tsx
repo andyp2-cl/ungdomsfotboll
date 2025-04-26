@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { PlayerHeader } from "@/components/PlayerHeader";
 import { PlayerMatchHistory } from "@/components/player-match-history";
 import { X, Edit } from "lucide-react";
 import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
+import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
 
 interface PlayerDetailProps {
   player: Player;
@@ -31,12 +31,10 @@ export function PlayerDetail({
 }: PlayerDetailProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Find activities this player is participating in
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
   );
   
-  // Count matches specifically
   const playerMatches = playerActivities.filter(activity => 
     activity.type === "match"
   );
@@ -87,7 +85,6 @@ export function PlayerDetail({
       </CardHeader>
       
       <CardContent>
-        {/* Player image display (if available) */}
         {player.image && (
           <div className="flex justify-center mb-4">
             <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-primary/20">
@@ -100,7 +97,6 @@ export function PlayerDetail({
           </div>
         )}
         
-        {/* Basic player information cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <Card>
             <CardHeader className="py-3">
@@ -161,9 +157,13 @@ export function PlayerDetail({
               </div>
             </CardContent>
           </Card>
+          
+          <LeaguesStatsCard 
+            player={player}
+            activities={activities}
+          />
         </div>
         
-        {/* Player match history component */}
         <PlayerMatchHistory 
           player={player} 
           activities={activities}
@@ -171,7 +171,6 @@ export function PlayerDetail({
         />
       </CardContent>
       
-      {/* Edit player dialog */}
       <EditPlayerDialog 
         player={player}
         open={isEditDialogOpen}
