@@ -19,6 +19,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
         activity.league_id // Only include matches with a league
     );
 
+    // Count matches by league ID
     const leagueCounts: { [key: string]: number } = {};
     
     playerMatches.forEach(match => {
@@ -27,11 +28,16 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       }
     });
 
+    // Transform to array for recharts
     const data = Object.entries(leagueCounts).map(([leagueId, count]) => {
+      // Find a match with this league to get the league name
       const match = activities.find(a => a.league_id === leagueId);
       return {
         name: match?.name || 'Unknown League',
-        value: count
+        value: count,
+        // Extract the league name from the match name if possible
+        // Most league matches have format like "Series [League] HomeTeam - AwayTeam"
+        leagueName: match?.name?.split(' ').slice(0, 2).join(' ') || 'Unknown'
       };
     });
 
@@ -51,7 +57,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
     );
   }
 
-  const COLORS = ['#16a34a', '#2563eb', '#dc2626', '#9F9EA1', '#f59e0b'];
+  const COLORS = ['#16a34a', '#2563eb', '#dc2626', '#9F9EA1', '#f59e0b', '#8b5cf6', '#ec4899'];
 
   return (
     <Card>
@@ -70,7 +76,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 outerRadius={50}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ name, value }) => `${name}: ${value}`}
+                label={({ leagueName, value, percent }) => `${leagueName}: ${(percent * 100).toFixed(0)}%`}
               >
                 {leagueStats.map((entry, index) => (
                   <Cell 
@@ -79,7 +85,10 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value, name, props) => [`${value} matcher (${(props.percent * 100).toFixed(0)}%)`, props.payload.leagueName]} 
+                labelFormatter={() => ''} 
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

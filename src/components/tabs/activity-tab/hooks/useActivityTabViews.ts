@@ -33,6 +33,7 @@ export const useActivityTabViews = ({
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
@@ -46,11 +47,13 @@ export const useActivityTabViews = ({
   // Handle view change
   const handleViewChange = useCallback((value: string) => {
     if (value === "upcoming" || value === "historical" || value === "statistics") {
+      // Store the previous view before changing
+      setPreviousView(activeView);
       setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
       setSelectedPlayer(null);
     }
-  }, [setSelectedActivity]);
+  }, [setSelectedActivity, activeView]);
 
   // Determine if current view is historical
   const isHistorical = activeView === "historical";
@@ -141,6 +144,7 @@ export const useActivityTabViews = ({
     handlePlayerSelect,
     renderContent,
     isHistorical,
-    filteredBySearchActivities
+    filteredBySearchActivities,
+    previousView
   };
 };

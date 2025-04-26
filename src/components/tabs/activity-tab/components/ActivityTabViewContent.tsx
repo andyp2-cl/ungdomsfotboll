@@ -18,6 +18,7 @@ interface ActivityTabViewContentProps {
   onDeleteActivity: (activityId: string) => Promise<boolean>;
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  previousView?: "upcoming" | "historical" | "statistics";
 }
 
 export function ActivityTabViewContent({
@@ -31,7 +32,8 @@ export function ActivityTabViewContent({
   onActivityUpdate,
   onDeleteActivity,
   onKioskAssignmentUpdate,
-  onMatchResultUpdate
+  onMatchResultUpdate,
+  previousView
 }: ActivityTabViewContentProps) {
   const isMobile = useIsMobile();
   
