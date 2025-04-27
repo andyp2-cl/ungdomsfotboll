@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,8 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       const { data, error } = await supabase
         .from("leagues")
         .select("*")
-        .order('year', { ascending: false });
+        .order('year', { ascending: false })
+        .order('division', { ascending: true });
         
       if (error) throw error;
       return data as League[];
@@ -59,14 +59,19 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       }
     });
 
-    // Transform to array for recharts
+    // Transform to array for recharts and sort by the new order
     const data = Object.entries(leagueCounts)
-      .filter(([_, { league }]) => league) // Only include matches with valid league data
+      .filter(([_, { league }]) => league)
       .map(([id, { count, league }]) => ({
         id,
-        name: `${league?.year} ${league?.division}`,
+        name: league?.name || '',
         value: count
-      }));
+      }))
+      .sort((a, b) => {
+        const orderA = getLeagueOrder(a.name);
+        const orderB = getLeagueOrder(b.name);
+        return orderA - orderB;
+      });
 
     // Calculate percentages
     const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -75,6 +80,17 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       percent: item.value / total
     }));
   }, [player.id, activities, leagues]);
+
+  // Helper function to determine league order
+  const getLeagueOrder = (name: string): number => {
+    const orderMap: { [key: string]: number } = {
+      '2013 A': 1,
+      '2014 A2': 2,
+      '2014 A1': 3,
+      '2014 B1': 4
+    };
+    return orderMap[name] || 999;
+  };
 
   if (leagueStats.length === 0) {
     return (
