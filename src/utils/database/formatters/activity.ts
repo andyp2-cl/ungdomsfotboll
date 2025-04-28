@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 
 /**
@@ -33,10 +32,9 @@ export const formatActivityForDatabase = (activity: Activity): any => {
   if (activity.type === 'cup') {
     // For cup activities, ensure the cup_id is set to the activity's own ID
     formattedActivity.cup_id = activity.id;
-    console.log(`Cup activity detected: Setting cup_id=${activity.id}`);
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with home_score: ${formattedActivity.home_score}, away_score: ${formattedActivity.away_score}, is_win: ${formattedActivity.is_win}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {

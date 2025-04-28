@@ -9,7 +9,7 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
   try {
     // Use a simple query that doesn't require permissions to test the connection
     const { data, error } = await supabase
-      .from('leagues')  // Changed to leagues since everyone can view leagues
+      .from('leagues')  // Using leagues table which should be accessible without RLS restrictions
       .select('id')
       .limit(1);
     

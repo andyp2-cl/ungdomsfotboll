@@ -1,8 +1,8 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { supabase } from "@/integrations/supabase/client"; 
+import { supabase } from "@/lib/supabase/client";
+import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 
 /**
  * Updates match result (score) for an existing activity
@@ -17,18 +17,6 @@ export const handleMatchResultUpdate = async (
 ): Promise<void> => {
   try {
     console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
-    
-    // First check if Supabase is configured
-    const isConnected = await isSupabaseConfigured();
-    if (!isConnected) {
-      console.error("Supabase connection is not properly configured");
-      toast({
-        title: "Databasfel",
-        description: "Kunde inte ansluta till databasen. Kontrollera internetanslutningen.",
-        variant: "destructive"
-      });
-      return;
-    }
     
     // Find the existing activity
     const activity = activities.find(a => a.id === activityId);
@@ -79,7 +67,13 @@ export const handleMatchResultUpdate = async (
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
       
-      // Try direct database update first to bypass RLS issues
+      // Format the activity for database storage
+      const formattedActivity = formatActivityForDatabase(updatedActivity);
+      console.log("Formatted activity for database:", formattedActivity);
+      
+      // Use multiple approaches to ensure the data gets saved
+      
+      // Approach 1: Direct update to the activities table
       const { error: directUpdateError } = await supabase
         .from('activities')
         .update({
@@ -92,15 +86,25 @@ export const handleMatchResultUpdate = async (
         .eq('id', activityId);
         
       if (directUpdateError) {
-        console.error("Direct update failed, trying saveActivities:", directUpdateError);
-        // Fall back to saveActivities if direct update fails
-        const activityToSave = JSON.parse(JSON.stringify(updatedActivity));
-        await saveActivities([activityToSave]);
+        console.error("Direct update failed:", directUpdateError);
+        
+        // Approach 2: Try using upsert if direct update fails
+        const { error: upsertError } = await supabase
+          .from('activities')
+          .upsert(formattedActivity);
+          
+        if (upsertError) {
+          console.error("Upsert approach failed too:", upsertError);
+          
+          // Approach 3: Fall back to saveActivities if database operations fail
+          console.log("Falling back to saveActivities helper function");
+          await saveActivities([updatedActivity]);
+        }
       }
       
       console.log("Match result saved successfully to database");
       
-      // Only update local state AFTER successful database save
+      // Update local state
       const updatedActivities = activities.map(a => 
         a.id === activityId ? updatedActivity : a
       );
@@ -116,7 +120,6 @@ export const handleMatchResultUpdate = async (
       console.error("Error saving match result to database:", saveError);
       
       // Still update local state to show the change to the user
-      // even if database save failed
       const updatedActivities = activities.map(a => 
         a.id === activityId ? updatedActivity : a
       );
@@ -127,6 +130,8 @@ export const handleMatchResultUpdate = async (
         description: `Resultatet sparades lokalt, men kunde inte sparas i databasen: ${saveError?.message || "Okänt fel"}`,
         variant: "warning"
       });
+      
+      throw saveError;  // Propagate the error for additional handling if needed
     }
   } catch (error: any) {
     console.error("Error in handleMatchResultUpdate:", error);
@@ -135,5 +140,6 @@ export const handleMatchResultUpdate = async (
       description: `Kunde inte uppdatera matchresultatet: ${error?.message || "Okänt fel"}`,
       variant: "destructive"
     });
+    throw error;  // Propagate the error
   }
 };

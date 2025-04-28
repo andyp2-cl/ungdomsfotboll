@@ -1,25 +1,17 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
-import { formatActivityForDatabase } from "@/utils/database/formatters";
+import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 import { updateActivityParticipants } from "./participants";
 import { updateCupMatches } from "./cup-matches";
-import { normalizePlayerStats } from "@/utils/database/formatters/player-stats";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { normalizePlayerStats } from "@/utils/player-stats";
 
-// Save activities to Supabase
+// Save activities to Supabase with enhanced error handling and multiple fallback approaches
 export const saveActivities = async (activities: Activity[]): Promise<void> => {
   console.log("Saving activities to Supabase:", activities.length);
   
   try {
-    // First check if Supabase is properly configured
-    const isConnected = await isSupabaseConfigured();
-    
-    if (!isConnected) {
-      throw new Error("Supabase connection is not properly configured or is not working");
-    }
-    
     for (const activity of activities) {
       // Clone the activity to avoid mutations during processing
       const activityToSave = structuredClone(activity);
@@ -27,11 +19,10 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Set cupId to the activity's id if it's a cup type
       if (activityToSave.type === "cup") {
         activityToSave.cupId = activityToSave.id;
-        console.log(`Setting cupId for cup activity: ${activityToSave.id}`);
       }
       
-      // Normalize player_stats to ensure it's always an object before saving
-      const normalizedPlayerStats = normalizePlayerStats(activityToSave.player_stats);
+      // Normalize player_stats to ensure it's always an object
+      let normalizedPlayerStats = normalizePlayerStats(activityToSave.player_stats);
       
       // Create a clean activity object with normalized player_stats
       const normalizedActivity = {
@@ -39,28 +30,25 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         player_stats: normalizedPlayerStats
       };
       
-      // Log detailed information about the activity being saved
       console.log("Saving activity with details:", {
         id: normalizedActivity.id,
         name: normalizedActivity.name,
         type: normalizedActivity.type,
         cupId: normalizedActivity.cupId,
         date: normalizedActivity.date,
-        participants: normalizedActivity.participants?.length || 0,
-        matches: normalizedActivity.matches?.length || 0,
+        homeScore: normalizedActivity.homeScore,
+        awayScore: normalizedActivity.awayScore,
+        result: normalizedActivity.result,
+        isWin: normalizedActivity.isWin
       });
       
       try {
-        // Check if activity already exists to determine if this is an update or create
-        const { data: existingActivity, error: checkError } = await supabase
+        // Check if activity already exists
+        const { data: existingActivity } = await supabase
           .from('activities')
           .select('id')
           .eq('id', activity.id)
-          .single();
-          
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error("Error checking if activity exists:", checkError.message, checkError.details);
-        }
+          .maybeSingle();
         
         const isNewActivity = !existingActivity;
         
@@ -69,33 +57,74 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         
         // Make a safe copy of the formatted activity to avoid circular references
         const cleanFormattedActivity = JSON.parse(JSON.stringify(formattedActivity));
-        console.log("Data being sent to Supabase:", JSON.stringify(cleanFormattedActivity));
+        console.log("Data being sent to Supabase:", JSON.stringify({
+          id: cleanFormattedActivity.id,
+          name: cleanFormattedActivity.name,
+          home_score: cleanFormattedActivity.home_score,
+          away_score: cleanFormattedActivity.away_score,
+          is_win: cleanFormattedActivity.is_win,
+          result: cleanFormattedActivity.result
+        }));
         
         // Try multiple approaches to handle potential RLS issues
-        let upsertError;
+        let saved = false;
+        let lastError = null;
         
-        // First try: standard upsert
-        const upsertResult = await supabase
-          .from('activities')
-          .upsert(cleanFormattedActivity);
-          
-        upsertError = upsertResult.error;
-        
-        // If that failed, try direct update if it's an existing activity
-        if (upsertError && !isNewActivity) {
-          console.log("Upsert failed, trying direct update:", upsertError.message);
-          
-          const updateResult = await supabase
+        // Approach 1: Direct update if it's an existing activity
+        if (!isNewActivity) {
+          console.log("Trying direct update for existing activity:", activity.id);
+          const { error: updateError } = await supabase
             .from('activities')
             .update(cleanFormattedActivity)
             .eq('id', activity.id);
             
-          upsertError = updateResult.error;
+          if (!updateError) {
+            saved = true;
+            console.log("Direct update successful for activity:", activity.id);
+          } else {
+            lastError = updateError;
+            console.error("Direct update failed:", updateError.message, updateError.details);
+          }
+        }
+        
+        // Approach 2: Standard upsert if update failed or it's a new activity
+        if (!saved) {
+          console.log("Trying upsert for activity:", activity.id);
+          const { error: upsertError } = await supabase
+            .from('activities')
+            .upsert(cleanFormattedActivity);
+            
+          if (!upsertError) {
+            saved = true;
+            console.log("Upsert successful for activity:", activity.id);
+          } else {
+            lastError = upsertError;
+            console.error("Upsert failed:", upsertError.message, upsertError.details);
+          }
+        }
+        
+        // Approach 3: Insert directly if all else failed and it's a new activity
+        if (!saved && isNewActivity) {
+          console.log("Trying direct insert for new activity:", activity.id);
+          const { error: insertError } = await supabase
+            .from('activities')
+            .insert(cleanFormattedActivity);
+            
+          if (!insertError) {
+            saved = true;
+            console.log("Direct insert successful for activity:", activity.id);
+          } else {
+            lastError = insertError;
+            console.error("Direct insert failed:", insertError.message, insertError.details);
+          }
         }
           
-        if (upsertError) {
-          console.error("Error saving activity:", upsertError.message, upsertError.details);
-          throw upsertError;
+        if (!saved) {
+          console.error("All save approaches failed for activity:", activity.id);
+          if (lastError) {
+            console.error("Last error:", lastError.message, lastError.details);
+          }
+          throw new Error(`Failed to save activity: ${lastError?.message || 'Unknown error'}`);
         }
         
         console.log(`${isNewActivity ? 'Created' : 'Updated'} activity: ${activity.name} (${activity.id})`);
@@ -117,7 +146,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         try {
           if (normalizedActivity.participants && normalizedActivity.participants.length > 0) {
             await updateActivityParticipants(normalizedActivity);
-            console.log(`Updated participants for activity: ${activity.name} (${normalizedActivity.participants?.length || 0} participants)`);
+            console.log(`Updated participants for activity: ${activity.name}`);
           }
         } catch (participantError) {
           console.error("Error updating activity participants:", participantError);
