@@ -21,7 +21,7 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
     console.log("Supabase connection test successful");
     return true;
   } catch (err) {
-    console.error("Supabase connection test error:", err);
+    console.error("Supabase connection error:", err);
     return false;
   }
 };

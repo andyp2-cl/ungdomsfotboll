@@ -75,7 +75,6 @@ export const handleMatchResultUpdate = async (
       isWin: updatedActivity.isWin
     };
     
-    // Save to database FIRST, before updating the local state
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
       

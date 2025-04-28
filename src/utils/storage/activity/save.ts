@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
@@ -26,7 +27,6 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Set cupId to the activity's id if it's a cup type
       if (activityToSave.type === "cup") {
         activityToSave.cupId = activityToSave.id;
-        // We'll keep cupName in the local model but handle it differently for database storage
         console.log(`Setting cupId for cup activity: ${activityToSave.id}`);
       }
       
@@ -67,7 +67,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
       // Format the activity for database storage
       const formattedActivity = formatActivityForDatabase(normalizedActivity);
       
-      // CRITICAL FIX: Make a safe copy of the formatted activity to avoid circular references
+      // Make a safe copy of the formatted activity to avoid circular references
       const cleanFormattedActivity = JSON.parse(JSON.stringify(formattedActivity));
       console.log("Data being sent to Supabase:", JSON.stringify(cleanFormattedActivity));
       
@@ -101,8 +101,6 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         if (normalizedActivity.participants && normalizedActivity.participants.length > 0) {
           await updateActivityParticipants(normalizedActivity);
           console.log(`Updated participants for activity: ${activity.name} (${normalizedActivity.participants?.length || 0} participants)`);
-        } else {
-          console.log(`No participants to update for activity: ${activity.name}`);
         }
       } catch (participantError) {
         console.error("Error updating activity participants:", participantError);
