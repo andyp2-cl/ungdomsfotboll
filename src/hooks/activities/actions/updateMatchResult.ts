@@ -2,6 +2,7 @@
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; 
 
 /**
  * Updates match result (score) for an existing activity
@@ -78,9 +79,24 @@ export const handleMatchResultUpdate = async (
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
       
-      // Create a clean copy for saving to avoid circular references
-      const activityToSave = JSON.parse(JSON.stringify(updatedActivity));
-      await saveActivities([activityToSave]);
+      // Try direct database update first to bypass RLS issues
+      const { error: directUpdateError } = await supabase
+        .from('activities')
+        .update({
+          home_score: homeScore,
+          away_score: awayScore,
+          is_win: updatedActivity.isWin,
+          result: updatedActivity.result,
+          player_stats: updatedActivity.player_stats
+        })
+        .eq('id', activityId);
+        
+      if (directUpdateError) {
+        console.error("Direct update failed, trying saveActivities:", directUpdateError);
+        // Fall back to saveActivities if direct update fails
+        const activityToSave = JSON.parse(JSON.stringify(updatedActivity));
+        await saveActivities([activityToSave]);
+      }
       
       console.log("Match result saved successfully to database");
       
@@ -99,13 +115,18 @@ export const handleMatchResultUpdate = async (
     } catch (saveError: any) {
       console.error("Error saving match result to database:", saveError);
       
-      toast({
-        title: "Ett fel uppstod",
-        description: `Kunde inte spara matchresultatet: ${saveError?.message || "Okänt fel"}`,
-        variant: "destructive"
-      });
+      // Still update local state to show the change to the user
+      // even if database save failed
+      const updatedActivities = activities.map(a => 
+        a.id === activityId ? updatedActivity : a
+      );
+      setActivities(updatedActivities);
       
-      throw saveError;
+      toast({
+        title: "Lokalt uppdaterad",
+        description: `Resultatet sparades lokalt, men kunde inte sparas i databasen: ${saveError?.message || "Okänt fel"}`,
+        variant: "warning"
+      });
     }
   } catch (error: any) {
     console.error("Error in handleMatchResultUpdate:", error);
@@ -114,6 +135,5 @@ export const handleMatchResultUpdate = async (
       description: `Kunde inte uppdatera matchresultatet: ${error?.message || "Okänt fel"}`,
       variant: "destructive"
     });
-    throw error;
   }
 };

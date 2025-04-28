@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,23 +60,26 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       }
     });
 
-    // Transform to array for recharts and sort by the new order
+    // Transform to array for recharts
     const data = Object.entries(leagueCounts)
       .filter(([_, { league }]) => league)
       .map(([id, { count, league }]) => ({
         id,
         name: league?.name || '',
         value: count
-      }))
-      .sort((a, b) => {
-        const orderA = getLeagueOrder(a.name);
-        const orderB = getLeagueOrder(b.name);
-        return orderA - orderB;
-      });
+      }));
+
+    // Sort data if needed
+    const sortedData = [...data].sort((a, b) => {
+      // First try to order by a custom mapping if available
+      const orderA = getLeagueOrder(a.name);
+      const orderB = getLeagueOrder(b.name);
+      return orderA - orderB;
+    });
 
     // Calculate percentages
-    const total = data.reduce((sum, item) => sum + item.value, 0);
-    return data.map(item => ({
+    const total = sortedData.reduce((sum, item) => sum + item.value, 0);
+    return sortedData.map(item => ({
       ...item,
       percent: item.value / total
     }));

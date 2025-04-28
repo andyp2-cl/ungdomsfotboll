@@ -7,9 +7,9 @@ export const supabase = supabaseClient;
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = async (): Promise<boolean> => {
   try {
-    // Attempt to make a simple query to test the connection
+    // Use a simple query that doesn't require permissions to test the connection
     const { data, error } = await supabase
-      .from('activities')
+      .from('leagues')  // Changed to leagues since everyone can view leagues
       .select('id')
       .limit(1);
     

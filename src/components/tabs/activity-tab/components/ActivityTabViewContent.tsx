@@ -40,6 +40,8 @@ export function ActivityTabViewContent({
   // Get content from renderContent
   const content = renderContent();
   
+  console.log("ActivityTabViewContent render with content:", content?.viewType);
+  
   // If activeView is statistics, render the statistics wrapper
   if (activeView === "statistics") {
     const gradeData = players.reduce((acc, player) => {
@@ -78,14 +80,28 @@ export function ActivityTabViewContent({
   // Handle view rendering based on content type
   if (content) {
     if (content.viewType === "player-detail" && content.player) {
+      // Ensure the player object is valid
+      const player = content.player;
+      const playerActivities = content.activities || 
+        activities.filter(act => act.participants?.includes(player.id));
+      
+      console.log("Rendering player detail:", player.name, player.id);
+      
       return (
         <PlayerDetail 
-          player={content.player} 
-          activities={content.activities || activities} 
-          onClose={() => onPlayerSelect("")}
-          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
-          onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
+          player={player} 
+          activities={playerActivities} 
+          onClose={() => {
+            console.log("Closing player detail");
+            onPlayerSelect("");
+          }}
+          onEdit={(player) => console.log("Edit player triggered:", player.id)}
+          onPlayerUpdate={(player) => {
+            console.log("Player update triggered:", player.id);
+            return Promise.resolve();
+          }}
           allPlayers={players}
+          onActivitySelect={onActivitySelect}
         />
       );
     }
@@ -106,7 +122,10 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          onPlayerSelect={onPlayerSelect}
+          onPlayerSelect={(playerId) => {
+            console.log("Player selected from activity detail:", playerId);
+            onPlayerSelect(playerId);
+          }}
         />
       );
     }
@@ -114,10 +133,16 @@ export function ActivityTabViewContent({
     if (content.viewType === "activities-list") {
       return (
         <ActivityList 
-          activities={content.activities}
+          activities={content.activities || []}
           players={players}
-          onSelect={onActivitySelect}
-          onPlayerSelect={onPlayerSelect}
+          onSelect={(activity) => {
+            console.log("Activity selected from list:", activity?.id);
+            onActivitySelect(activity);
+          }}
+          onPlayerSelect={(playerId) => {
+            console.log("Player selected from activity list:", playerId);
+            onPlayerSelect(playerId);
+          }}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
