@@ -1,7 +1,7 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, updateActivityWithRLSHandling } from "@/lib/supabase/client";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 
 /**
@@ -67,42 +67,25 @@ export const handleMatchResultUpdate = async (
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
       
-      // Format the activity for database storage
-      const formattedActivity = formatActivityForDatabase(updatedActivity);
-      console.log("Formatted activity for database:", formattedActivity);
+      // Create focused update object containing only score-related fields
+      const scoreUpdates = {
+        home_score: homeScore,
+        away_score: awayScore,
+        is_win: updatedActivity.isWin,
+        result: updatedActivity.result,
+        player_stats: updatedActivity.player_stats
+      };
       
-      // Use multiple approaches to ensure the data gets saved
+      // Try our new RLS-aware update function first
+      const { success, error } = await updateActivityWithRLSHandling(activityId, scoreUpdates);
       
-      // Approach 1: Direct update to the activities table
-      const { error: directUpdateError } = await supabase
-        .from('activities')
-        .update({
-          home_score: homeScore,
-          away_score: awayScore,
-          is_win: updatedActivity.isWin,
-          result: updatedActivity.result,
-          player_stats: updatedActivity.player_stats
-        })
-        .eq('id', activityId);
-        
-      if (directUpdateError) {
-        console.error("Direct update failed:", directUpdateError);
-        
-        // Approach 2: Try using upsert if direct update fails
-        const { error: upsertError } = await supabase
-          .from('activities')
-          .upsert(formattedActivity);
-          
-        if (upsertError) {
-          console.error("Upsert approach failed too:", upsertError);
-          
-          // Approach 3: Fall back to saveActivities if database operations fail
-          console.log("Falling back to saveActivities helper function");
-          await saveActivities([updatedActivity]);
-        }
+      if (!success) {
+        console.warn("RLS-aware update failed, falling back to saveActivities helper:", error);
+        // Fall back to saveActivities if direct database update fails
+        await saveActivities([updatedActivity]);
       }
       
-      console.log("Match result saved successfully to database");
+      console.log("Match result saved successfully");
       
       // Update local state
       const updatedActivities = activities.map(a => 

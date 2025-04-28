@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 
 /**
@@ -5,7 +6,9 @@ import { Activity } from "@/types/player";
  * - Converts nested objects into flat structure
  */
 export const formatActivityForDatabase = (activity: Activity): any => {
-  const { location, player_stats, ...rest } = activity;
+  // Create a base object to avoid mutations
+  const baseActivity = { ...activity };
+  const { location, player_stats, ...rest } = baseActivity;
   
   // Create the base formatted activity object
   const formattedActivity = {

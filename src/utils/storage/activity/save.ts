@@ -66,12 +66,40 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           result: cleanFormattedActivity.result
         }));
         
-        // Try multiple approaches to handle potential RLS issues
+        // CRITICAL FIX: First try updating only specific fields that need to change
         let saved = false;
         let lastError = null;
         
-        // Approach 1: Direct update if it's an existing activity
-        if (!isNewActivity) {
+        // Approach 1: Score-only update if we're just changing scores
+        if (!isNewActivity && 
+            (normalizedActivity.homeScore !== undefined || normalizedActivity.awayScore !== undefined)) {
+          console.log("Trying score-only update for activity:", activity.id);
+          
+          // Create a minimal update payload with just the score-related fields
+          const scoreUpdatePayload = {
+            home_score: cleanFormattedActivity.home_score,
+            away_score: cleanFormattedActivity.away_score,
+            is_win: cleanFormattedActivity.is_win,
+            result: cleanFormattedActivity.result,
+            player_stats: cleanFormattedActivity.player_stats
+          };
+          
+          const { error: scoreUpdateError } = await supabase
+            .from('activities')
+            .update(scoreUpdatePayload)
+            .eq('id', activity.id);
+            
+          if (!scoreUpdateError) {
+            saved = true;
+            console.log("Score-only update successful for activity:", activity.id);
+          } else {
+            lastError = scoreUpdateError;
+            console.error("Score-only update failed:", scoreUpdateError.message, scoreUpdateError.details);
+          }
+        }
+            
+        // Approach 2: Direct update if it's an existing activity
+        if (!saved && !isNewActivity) {
           console.log("Trying direct update for existing activity:", activity.id);
           const { error: updateError } = await supabase
             .from('activities')
@@ -87,7 +115,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           }
         }
         
-        // Approach 2: Standard upsert if update failed or it's a new activity
+        // Approach 3: Standard upsert if update failed or it's a new activity
         if (!saved) {
           console.log("Trying upsert for activity:", activity.id);
           const { error: upsertError } = await supabase
@@ -103,7 +131,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           }
         }
         
-        // Approach 3: Insert directly if all else failed and it's a new activity
+        // Approach 4: Insert directly if all else failed and it's a new activity
         if (!saved && isNewActivity) {
           console.log("Trying direct insert for new activity:", activity.id);
           const { error: insertError } = await supabase
