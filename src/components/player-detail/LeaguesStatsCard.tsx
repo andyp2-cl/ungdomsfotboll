@@ -18,6 +18,17 @@ interface LeaguesStatsCardProps {
   activities: Activity[];
 }
 
+// Helper function to determine league order - moved to the top before it's used
+const getLeagueOrder = (name: string): number => {
+  const orderMap: { [key: string]: number } = {
+    '2013 A': 1,
+    '2014 A2': 2,
+    '2014 A1': 3,
+    '2014 B1': 4
+  };
+  return orderMap[name] || 999;
+};
+
 export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) {
   // Fetch leagues data
   const { data: leagues = [] } = useQuery({
@@ -84,17 +95,6 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       percent: item.value / total
     }));
   }, [player.id, activities, leagues]);
-
-  // Helper function to determine league order
-  const getLeagueOrder = (name: string): number => {
-    const orderMap: { [key: string]: number } = {
-      '2013 A': 1,
-      '2014 A2': 2,
-      '2014 A1': 3,
-      '2014 B1': 4
-    };
-    return orderMap[name] || 999;
-  };
 
   if (leagueStats.length === 0) {
     return (
