@@ -14,6 +14,7 @@ export function AnonymousAuth() {
     isRLSEnabled,
     pendingUpdatesCount,
     connectionChecked,
+    isConnecting,
     handleLogin,
     handleSyncPendingUpdates
   } = useAnonymousAuth();
@@ -37,6 +38,18 @@ export function AnonymousAuth() {
         <OfflineIndicator 
           handleSyncPendingUpdates={handleSyncPendingUpdates} 
           pendingUpdates={pendingUpdatesCount}
+        />
+      </div>
+    );
+  }
+  
+  // If we're connecting to the database, show connecting state
+  if (isConnecting) {
+    return (
+      <div className="flex items-center gap-2">
+        <OfflineIndicator 
+          handleSyncPendingUpdates={handleSyncPendingUpdates}
+          isConnecting={true}
         />
       </div>
     );

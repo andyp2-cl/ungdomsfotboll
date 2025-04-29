@@ -49,7 +49,10 @@ export function LoadingState({
   }
   
   // Check if we already know that we're connected to the database
-  const isDbConnected = localStorage.getItem('sb-connection-test') === 'true';
+  // Use timestamp to ensure we don't use very old cached connections
+  const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
+  const isRecent = cachedTimestamp ? (Date.now() - parseInt(cachedTimestamp)) < (6 * 60 * 60 * 1000) : false;
+  const isDbConnected = localStorage.getItem('sb-connection-test') === 'true' && isRecent;
   
   // Show loading state
   return (
@@ -73,7 +76,7 @@ export function LoadingState({
           )}
         </div>
         
-        {loadTime > 5 && (
+        {loadTime > 3 && !isDbConnected && (
           <p className="text-sm text-amber-600 mt-2">
             {isDbConnected 
               ? "Hämtar data från databasen..." 
@@ -81,14 +84,14 @@ export function LoadingState({
           </p>
         )}
         
-        {loadTime > 10 && (
+        {loadTime > 8 && (
           <p className="text-sm text-gray-500 mt-2">
             Om detta tar lång tid, kontrollera nätverksanslutningen
           </p>
         )}
         
         {/* Alternative action if loading takes too long */}
-        {loadTime > 15 && retry && (
+        {loadTime > 12 && retry && (
           <button 
             onClick={retry} 
             className="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mx-auto"

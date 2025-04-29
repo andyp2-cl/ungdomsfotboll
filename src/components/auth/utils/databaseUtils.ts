@@ -5,10 +5,14 @@ import { toast } from "sonner";
 // Test if we can access the database - with retry mechanism
 export const testDatabaseAccess = async (): Promise<boolean> => {
   try {
-    // First check if we have a cached successful test
+    // First check if we have a cached successful test that's less than 6 hours old
     const cachedTest = localStorage.getItem('sb-connection-test');
-    if (cachedTest === 'true') {
-      console.log("Using cached database connection test result");
+    const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
+    const currentTime = Date.now();
+    const sixHoursAgo = currentTime - (6 * 60 * 60 * 1000);
+    
+    if (cachedTest === 'true' && cachedTimestamp && parseInt(cachedTimestamp) > sixHoursAgo) {
+      console.log("Using cached database connection test result (less than 6 hours old)");
       return true;
     }
     
@@ -31,11 +35,8 @@ export const testDatabaseAccess = async (): Promise<boolean> => {
         console.log("Database access test passed:", data);
         success = true;
         
-        // Cache successful connection test
-        localStorage.setItem('sb-connection-test', 'true');
-        
-        // Set a timestamp for the last successful test
-        localStorage.setItem('sb-connection-test-time', Date.now().toString());
+        // Cache successful connection with current timestamp
+        cacheSuccessfulConnection();
         
         return true;
       }
@@ -63,7 +64,7 @@ export const setExtendedSessionPersistence = () => {
     (Date.now() + thirtyDaysInMs).toString());
 };
 
-// Cache a successful connection
+// Cache a successful connection with timestamp
 export const cacheSuccessfulConnection = () => {
   localStorage.setItem('sb-connection-test', 'true');
   localStorage.setItem('sb-connection-test-time', Date.now().toString());

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkPendingUpdates } from "../utils/databaseUtils";
+import { checkPendingUpdates, cacheSuccessfulConnection } from "../utils/databaseUtils";
 
 export function useAnonymousAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,6 +11,7 @@ export function useAnonymousAuth() {
   const [isRLSEnabled, setIsRLSEnabled] = useState(false);
   const [pendingUpdatesCount, setPendingUpdatesCount] = useState(0);
   const [connectionChecked, setConnectionChecked] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
   
   // Check for pending updates periodically
   useEffect(() => {
@@ -41,14 +42,30 @@ export function useAnonymousAuth() {
     };
   }, []);
   
-  // Check for existing session
+  // Check for existing session with improved persistence
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Set initial connecting state
+        setIsConnecting(true);
+        
         // First check if we have cached connection status from a previous visit
         const cachedConnection = localStorage.getItem('sb-connection-test');
-        if (cachedConnection === 'true') {
+        const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
+        const currentTime = Date.now();
+        const sixHoursAgo = currentTime - (6 * 60 * 60 * 1000);
+        
+        // If we have a cached connection that's less than 6 hours old, consider it valid
+        if (
+          cachedConnection === 'true' && 
+          cachedTimestamp && 
+          parseInt(cachedTimestamp) > sixHoursAgo
+        ) {
+          console.log("Using cached connection status (less than 6 hours old)");
           setConnectionChecked(true);
+          setIsRLSEnabled(true);
+          setIsConnecting(false);
+          return;
         }
         
         // Then check current session
@@ -56,22 +73,29 @@ export function useAnonymousAuth() {
         setIsAuthenticated(!!session);
         
         if (session) {
-          await testDatabaseAccess(session.access_token);
+          const connected = await testDatabaseAccess(session.access_token);
           setConnectionChecked(true);
-        } else {
-          // Authentication will now be manual only
-          console.log("No session found, user will need to authenticate manually");
+          setIsConnecting(false);
           
-          // Only perform an anonymous check if the cache doesn't exist
-          if (cachedConnection !== 'true' && isOnline) {
-            testDatabaseAccess();
+          if (connected) {
+            // Force cache the successful connection with timestamp
+            cacheSuccessfulConnection();
+          }
+        } else {
+          // No session, try anonymous access
+          const connected = await testDatabaseAccess();
+          setConnectionChecked(true);
+          setIsConnecting(false);
+          
+          if (connected) {
+            // Force cache the successful connection with timestamp
+            cacheSuccessfulConnection();
           }
         }
       } catch (error) {
         console.error("Error checking session:", error);
-        
-        // Even if there's an error, consider connection checked to avoid loading indicator
-        setTimeout(() => setConnectionChecked(true), 1000);
+        setConnectionChecked(true);
+        setIsConnecting(false);
       }
     };
     
@@ -80,11 +104,12 @@ export function useAnonymousAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setIsAuthenticated(!!session);
-      console.log("Auth state changed:", event, !!session);
       
       // Test database access whenever auth state changes
       if (session) {
+        setIsConnecting(true);
         await testDatabaseAccess(session.access_token);
+        setIsConnecting(false);
       }
     });
     
@@ -93,12 +118,13 @@ export function useAnonymousAuth() {
     };
   }, [isOnline]);
   
-  // Test if we can access the database
+  // Test if we can access the database with improved caching
   const testDatabaseAccess = async (token?: string) => {
     try {
       // Skip test if offline
       if (!isOnline) {
         setConnectionChecked(true);
+        setIsConnecting(false);
         return false;
       }
       
@@ -125,8 +151,8 @@ export function useAnonymousAuth() {
       setIsRLSEnabled(true);
       setConnectionChecked(true);
       
-      // Cache successful connection
-      localStorage.setItem('sb-connection-test', 'true');
+      // Cache successful connection with timestamp
+      cacheSuccessfulConnection();
       return true;
     } catch (error) {
       console.error("Error testing database access:", error);
@@ -211,6 +237,7 @@ export function useAnonymousAuth() {
     isRLSEnabled,
     pendingUpdatesCount,
     connectionChecked,
+    isConnecting,
     handleLogin,
     handleSyncPendingUpdates
   };
