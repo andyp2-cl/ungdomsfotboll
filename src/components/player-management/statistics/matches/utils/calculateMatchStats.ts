@@ -1,5 +1,6 @@
 
 import { Activity } from "@/types/player";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 export interface MatchStats {
   totalMatches: number;
@@ -38,8 +39,11 @@ export function calculateMatchStats(matches: Activity[]): MatchStats {
         losses++;
       }
       
+      // Use the utility function to determine if this is a home match
+      const isHome = isHomeMatch(match);
+      
       // Count goals - depending on who is home/away
-      if (match.isHomeTeam === false) {
+      if (!isHome) {
         // If we're the away team, reverse the scores
         goalsScored += match.awayScore;
         goalsConceded += match.homeScore;
@@ -50,8 +54,8 @@ export function calculateMatchStats(matches: Activity[]): MatchStats {
       }
       
       // Count clean sheets - also adjust based on home/away
-      if ((match.isHomeTeam === false && match.homeScore === 0) || 
-          (match.isHomeTeam !== false && match.awayScore === 0)) {
+      if ((!isHome && match.homeScore === 0) || 
+          (isHome && match.awayScore === 0)) {
         cleanSheets++;
       }
     }
