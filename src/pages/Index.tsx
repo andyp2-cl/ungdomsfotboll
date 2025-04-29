@@ -3,29 +3,66 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Users, Calendar, Database, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { BackupRestoreActions } from "@/components/backup-restore";
+import { toast } from "sonner";
 
 const Index = () => {
   const [syncStatus, setSyncStatus] = useState<"connected" | "connecting" | "disconnected" | "not-configured">(
-    isSupabaseConfigured() ? "connecting" : "not-configured"
+    "connecting"
   );
   
   useEffect(() => {
-    // Skip connection check if not configured
-    if (!isSupabaseConfigured()) {
+    // Check if already connected using localStorage
+    const connectionTest = localStorage.getItem('sb-connection-test');
+    if (connectionTest === 'true') {
+      setSyncStatus("connected");
       return;
     }
     
-    // Check Supabase connection
-    const checkConnection = async () => {
+    // Check Supabase connection - with retry mechanism
+    const checkConnection = async (retryCount = 0) => {
       try {
-        const { data, error } = await supabase.from('players').select('count');
-        if (error) {
-          console.error("Supabase connection error:", error);
-          setSyncStatus("disconnected");
+        // First check if we have an active session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // Try to access data with the session
+          const { data, error } = await supabase.from('leagues').select('count');
+          
+          if (error) {
+            console.error("Supabase connection error with session:", error);
+            
+            // If we have a session but can't access data, try to refresh the session
+            if (retryCount < 2) {
+              console.log(`Refreshing session and retrying (attempt ${retryCount + 1})...`);
+              await supabase.auth.refreshSession();
+              setTimeout(() => checkConnection(retryCount + 1), 1000);
+              return;
+            }
+            
+            setSyncStatus("disconnected");
+            toast.error("Kunde inte ansluta till databasen. Försök logga in igen.");
+          } else {
+            setSyncStatus("connected");
+            localStorage.setItem('sb-connection-test', 'true');
+            toast.success("Databasanslutning upprättad");
+          }
+        } else if (retryCount < 1) {
+          // No session found, but try to check public tables anyway
+          const { data, error } = await supabase.from('leagues').select('count');
+          
+          if (error) {
+            // Can't access even public data
+            console.error("No session and can't access public data:", error);
+            setSyncStatus("disconnected");
+          } else {
+            // Public data is accessible
+            setSyncStatus("connected");
+            localStorage.setItem('sb-connection-test', 'true');
+          }
         } else {
-          setSyncStatus("connected");
+          setSyncStatus("disconnected");
         }
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
@@ -34,7 +71,16 @@ const Index = () => {
     };
     
     checkConnection();
-  }, []);
+    
+    // Set up periodic connection checking
+    const intervalId = setInterval(() => {
+      if (syncStatus !== "connected") {
+        checkConnection();
+      }
+    }, 30000); // Check every 30 seconds if not connected
+    
+    return () => clearInterval(intervalId);
+  }, [syncStatus]);
   
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">

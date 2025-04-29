@@ -30,39 +30,38 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
   }
 };
 
-// Clear session storage and force refresh session at startup
+// Force refresh session at startup and configure session persistence
 (() => {
   try {
-    // This self-invoking function runs once when the file is imported
+    // Get session from storage
+    const sessionString = localStorage.getItem('sb-zkrruihxszziifyogzko-auth-token');
     
-    // Get the timestamp when we last refreshed the session
-    const lastSessionRefresh = localStorage.getItem('sb-last-refresh');
-    const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
-    
-    // If session hasn't been refreshed in the last 30 minutes or never refreshed
-    if (!lastSessionRefresh || parseInt(lastSessionRefresh) < thirtyMinutesAgo) {
-      console.log("Refreshing Supabase session...");
+    if (sessionString) {
+      console.log("Found existing session in storage");
       
-      // Store current refresh time
-      localStorage.setItem('sb-last-refresh', Date.now().toString());
+      // Get the timestamp when we last refreshed the session
+      const lastSessionRefresh = localStorage.getItem('sb-last-refresh');
+      const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
       
-      // Force refresh of auth session
-      supabase.auth.refreshSession();
+      // If session hasn't been refreshed in the last 30 minutes or never refreshed
+      if (!lastSessionRefresh || parseInt(lastSessionRefresh) < thirtyMinutesAgo) {
+        console.log("Refreshing Supabase session...");
+        
+        // Store current refresh time
+        localStorage.setItem('sb-last-refresh', Date.now().toString());
+        
+        // Force refresh of auth session
+        supabase.auth.refreshSession();
+      }
+      
+      // Configure session persistence in localStorage
+      localStorage.setItem('sb-session-persistence', 'true');
+      
+      // Set session expiry to 30 days
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('supabase.auth.token.expiry', 
+        (Date.now() + thirtyDaysInMs).toString());
     }
-    
-    // Configure session persistence in localStorage
-    const persistSession = localStorage.getItem('persistSession') !== 'false';
-    const sessionExpiryDays = 30; // Keep session for 30 days
-    
-    // Set session expiry to a long period
-    localStorage.setItem('supabase.auth.token.expiry', 
-      (Date.now() + (sessionExpiryDays * 24 * 60 * 60 * 1000)).toString());
-    
-    if (persistSession) {
-      localStorage.setItem('persistSession', 'true');
-    }
-    
-    console.log("Session persistence configured for", sessionExpiryDays, "days");
   } catch (e) {
     console.error("Error configuring session persistence:", e);
   }

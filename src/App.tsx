@@ -53,6 +53,34 @@ function App() {
     };
   }, [manualSync]);
   
+  // Initialize session on startup
+  useEffect(() => {
+    // Force-refresh the session on app start to ensure we have the latest data
+    const initializeSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.log("Found existing session, refreshing...");
+          await supabase.auth.refreshSession();
+          
+          // Test database connection
+          const { error } = await supabase.from('leagues').select('count');
+          if (error) {
+            console.error("Initial database connection test failed:", error);
+            toast.warning("Kontrollerar databasanslutning...");
+          } else {
+            console.log("Initial database connection test passed");
+          }
+        }
+      } catch (err) {
+        console.error("Error initializing session:", err);
+      }
+    };
+    
+    initializeSession();
+  }, []);
+  
   // Show toast if offline at startup
   useEffect(() => {
     if (!isOnline) {

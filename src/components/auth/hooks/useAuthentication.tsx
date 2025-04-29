@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,11 +41,12 @@ export function useAuthentication() {
         if (session) {
           await testDatabaseAccess();
           
-          // Update session expiry to keep user logged in longer
+          // Explicitly set session persistence and extended expiry
+          localStorage.setItem('sb-session-persistence', 'true');
           localStorage.setItem('supabase.auth.token.expiry', 
             (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
         } else {
-          // If no session, try to refresh it
+          // If no session found, try to refresh it
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           
           if (!refreshError && refreshData.session) {
@@ -53,8 +55,19 @@ export function useAuthentication() {
             setUser(refreshData.session.user || null);
             await testDatabaseAccess();
             console.log("Session refreshed successfully");
+            
+            // Set extended session expiry after successful refresh
+            localStorage.setItem('supabase.auth.token.expiry', 
+              (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
           } else {
-            console.log("No valid session found and refresh failed:", refreshError?.message);
+            console.log("No valid session found or refresh failed:", refreshError?.message);
+            
+            // Check if we have a remembered login
+            const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
+            if (rememberedLogin) {
+              // Show a notification that re-login might be needed
+              toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
+            }
           }
         }
       } catch (error) {
@@ -79,7 +92,7 @@ export function useAuthentication() {
         if (rememberLogin) {
           // Set a persistent flag to remember this login
           localStorage.setItem('rememberLogin', 'true');
-          // Extended session
+          // Extended session - 30 days
           localStorage.setItem('supabase.auth.token.expiry', 
             (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
         }
@@ -107,19 +120,33 @@ export function useAuthentication() {
   // Test if we can access the database
   const testDatabaseAccess = async () => {
     try {
-      // Try a simple read operation
-      const { data, error } = await supabase
-        .from('leagues')
-        .select('id')
-        .limit(1);
+      // Try a simple read operation with retry logic
+      let attempts = 0;
+      let success = false;
       
-      if (error) {
-        console.error("Database access test failed:", error);
+      while (attempts < 3 && !success) {
+        const { data, error } = await supabase
+          .from('leagues')
+          .select('id')
+          .limit(1);
+        
+        if (error) {
+          console.error(`Database access test failed (attempt ${attempts + 1}):`, error);
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          attempts++;
+        } else {
+          console.log("Database access test passed:", data);
+          success = true;
+          return true;
+        }
+      }
+      
+      if (!success) {
         toast.warning("Begränsad databastillgång. Logga in för full funktionalitet.");
         return false;
       }
       
-      console.log("Database access test passed:", data);
       return true;
     } catch (error) {
       console.error("Error testing database access:", error);
