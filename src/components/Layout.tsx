@@ -112,6 +112,9 @@ export function Layout({ activeTab = "players", defaultContent, children }: Layo
                   filteredActivities: [],
                   filteredHistoricalActivities: [],
                   isAddActivityOpen: false,
+                  isLoading: false,  // Add the missing isLoading property
+                  loadError: null,  // Add loadError with default null value
+                  retryLoading: () => {},  // Add retryLoading function with empty implementation
                   handleActivityTypeChange: () => {},
                   setSelectedActivity: () => {},
                   handleActivityUpdate: async () => {},

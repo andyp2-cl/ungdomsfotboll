@@ -1,8 +1,8 @@
 
 import React from "react";
 import { Activity, Player } from "@/types/player";
-import { ActivityList } from "@/components/activity-list/ActivityList";
-import { PlayerDetail } from "@/components/player-detail/PlayerDetail";
+import { ActivityList } from "@/components/activity-list";
+import { PlayerDetail } from "@/components/PlayerDetail";
 import { ActivityDetail } from "@/components/activity-detail";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { LoadingState } from "@/components/LoadingState";
