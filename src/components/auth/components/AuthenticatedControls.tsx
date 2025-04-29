@@ -13,7 +13,17 @@ type AuthenticatedControlsProps = {
 export function AuthenticatedControls({ user, triggerSync, handleLogout }: AuthenticatedControlsProps) {
   const onLogout = async () => {
     console.log("Logout button clicked");
-    await handleLogout();
+    const success = await handleLogout();
+    
+    // If logout failed and we're still here, give another option
+    if (!success) {
+      setTimeout(() => {
+        // Add a fallback to try reloading
+        if (confirm("Utloggningen fungerade inte korrekt. Vill du ladda om sidan?")) {
+          window.location.reload();
+        }
+      }, 3000);
+    }
   };
 
   return (
@@ -43,7 +53,7 @@ export function AuthenticatedControls({ user, triggerSync, handleLogout }: Authe
       <Button
         variant="ghost"
         size="sm"
-        className="flex gap-1.5 items-center"
+        className="flex gap-1.5 items-center text-red-600 hover:bg-red-50"
         onClick={onLogout}
       >
         <LogOut className="h-4 w-4" />

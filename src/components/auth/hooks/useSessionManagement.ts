@@ -31,7 +31,13 @@ export function useSessionManagement() {
           setExtendedSessionPersistence();
           
           // Test database access with the current session
-          await testDatabaseAccess();
+          const { success } = await testDatabaseAccess();
+          
+          // Clear connection test flag if access test fails
+          if (!success) {
+            console.log("Database access test failed during session init, clearing connection cache");
+            localStorage.removeItem('sb-connection-test');
+          }
         } else {
           console.log("No session found during initialization, trying refresh");
           // If no session found, try to refresh it with retry logic
@@ -67,6 +73,10 @@ export function useSessionManagement() {
           // After all refresh attempts
           if (!refreshSuccess) {
             console.log("All session refresh attempts failed");
+            setIsAuthenticated(false);
+            setSession(null);
+            setUser(null);
+            
             // Check if we have a remembered login
             const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
             if (rememberedLogin) {
@@ -77,6 +87,9 @@ export function useSessionManagement() {
         }
       } catch (error) {
         console.error("Error checking session:", error);
+        setIsAuthenticated(false);
+        setSession(null);
+        setUser(null);
       } finally {
         setIsInitializing(false);
       }
@@ -97,7 +110,9 @@ export function useSessionManagement() {
         
         // Clear connection test cache on logout
         localStorage.removeItem('sb-connection-test');
+        localStorage.removeItem('sb-connection-test-time');
         localStorage.removeItem('rememberLogin');
+        localStorage.removeItem('sb-connection-error');
       } else if (session) {
         console.log("User signed in or session refreshed");
         setIsAuthenticated(true);
@@ -107,16 +122,20 @@ export function useSessionManagement() {
         if (event === 'SIGNED_IN') {
           toast.success("Inloggad som " + (session.user.email || "användare"));
         
-          await testDatabaseAccess();
+          const { success } = await testDatabaseAccess();
           
-          if (rememberLogin) {
-            // Set a persistent flag to remember this login
-            localStorage.setItem('rememberLogin', 'true');
-            // Extended session - 30 days
-            setExtendedSessionPersistence();
-            
-            // Force cache the connection state
-            cacheSuccessfulConnection();
+          if (success) {
+            if (rememberLogin) {
+              // Set a persistent flag to remember this login
+              localStorage.setItem('rememberLogin', 'true');
+              // Extended session - 30 days
+              setExtendedSessionPersistence();
+              
+              // Force cache the connection state
+              cacheSuccessfulConnection();
+            }
+          } else {
+            toast.warning("Inloggad men kan inte ansluta till databasen. Försök att ladda om sidan.");
           }
         }
       }

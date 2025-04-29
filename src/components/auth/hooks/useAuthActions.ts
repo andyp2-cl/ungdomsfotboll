@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { checkPendingUpdates } from "../utils/databaseUtils";
+import { checkPendingUpdates, clearAuthAndReconnect } from "../utils/databaseUtils";
 
 export function useAuthActions(isOnline: boolean) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -53,31 +53,28 @@ export function useAuthActions(isOnline: boolean) {
 
   const handleLogout = async () => {
     try {
-      console.log("Executing logout...");
+      console.log("Executing logout process...");
+      toast.loading("Loggar ut...");
       
-      // Clear connection status cache before logout
-      localStorage.removeItem('sb-connection-test');
-      localStorage.removeItem('sb-connection-test-time');
+      // Use the enhanced clearAuthAndReconnect function
+      const success = await clearAuthAndReconnect();
       
-      // Execute the signOut - make sure we're using the correct scope
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      
-      if (error) {
-        console.error("Error during sign out:", error);
-        toast.error("Utloggningsfel: " + error.message);
+      if (success) {
+        // Clear any remembered login
+        localStorage.removeItem('rememberLogin');
+        
+        // Force page reload to ensure all state is reset
+        console.log("Logout successful, reloading page...");
+        window.location.reload();
+        
+        return true;
+      } else {
+        console.error("Logout process did not complete successfully");
+        toast.error("Utloggningen misslyckades - vänligen ladda om sidan manuellt");
         return false;
       }
-      
-      // Clear any remembered login
-      localStorage.removeItem('rememberLogin');
-      
-      // Notify user
-      toast.info("Du har loggat ut");
-      
-      // Return success
-      return true;
     } catch (error) {
-      console.error("Exception during sign out:", error);
+      console.error("Exception during logout process:", error);
       toast.error("Kunde inte logga ut - oväntat fel");
       return false;
     }

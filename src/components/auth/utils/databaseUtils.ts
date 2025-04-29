@@ -18,20 +18,24 @@ export const testDatabaseAccess = async () => {
     
     if (error) {
       console.error("Database access test failed:", error);
+      setConnectionError(error.message);
       return { success: false, error: error.message };
     }
     
     // Cache successful connection
     localStorage.setItem('sb-connection-test', 'true');
     localStorage.setItem('sb-connection-test-time', Date.now().toString());
+    setConnectionError(null);
     
     console.log("Database access test succeeded:", data);
     return { success: true, data };
   } catch (err) {
     console.error("Error during database access test:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown error during database test";
+    setConnectionError(errorMessage);
     return { 
       success: false, 
-      error: err instanceof Error ? err.message : "Unknown error during database test" 
+      error: errorMessage
     };
   }
 };
@@ -152,6 +156,7 @@ export const forceReconnect = async (): Promise<boolean> => {
     // 1. Clear connection cache
     localStorage.removeItem('sb-connection-test');
     localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
     
     // 2. Get current session
     const { data: { session } } = await supabase.auth.getSession();
@@ -164,13 +169,13 @@ export const forceReconnect = async (): Promise<boolean> => {
         
         if (error) {
           console.error("Error refreshing session:", error);
-          // Continue with reconnect attempts even if refresh fails
+          // Try to sign out and back in
+          await supabase.auth.signOut({ scope: 'global' });
         } else {
           console.log("Session refreshed successfully");
         }
       } catch (refreshErr) {
         console.error("Exception during session refresh:", refreshErr);
-        // Continue with reconnect attempts even if refresh throws
       }
     } else {
       console.log("No active session found during reconnect");
@@ -206,9 +211,13 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
     
     // 2. Force signOut with global scope
     try {
+      console.log("Executing global sign out...");
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) {
         console.error("Error during sign out:", error);
+        toast.error("Utloggningsfel: " + error.message);
+      } else {
+        toast.success("Utloggad framgångsrikt");
       }
     } catch (signOutErr) {
       console.error("Exception during sign out:", signOutErr);
