@@ -4,7 +4,7 @@ import { useAnonymousAuth } from './hooks/useAnonymousAuth';
 import { AuthenticationState } from './components/AuthenticationState';
 import { LoginPrompt } from './components/LoginPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 export function AnonymousAuth() {
   const {
@@ -40,6 +40,12 @@ export function AnonymousAuth() {
           handleSyncPendingUpdates={handleSyncPendingUpdates} 
           pendingUpdates={pendingUpdatesCount}
         />
+        {connectionError && (
+          <div className="text-xs text-red-500 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            <span title={connectionError}>Databasfel</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -53,6 +59,11 @@ export function AnonymousAuth() {
           isConnecting={isConnecting}
           connectionError={connectionError}
         />
+        {connectionError && (
+          <div className="text-xs text-red-500 ml-2">
+            {connectionError.substring(0, 40)}{connectionError.length > 40 ? '...' : ''}
+          </div>
+        )}
       </div>
     );
   }

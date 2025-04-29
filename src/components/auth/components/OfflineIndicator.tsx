@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { CloudOff, Database, Loader2, AlertCircle } from "lucide-react";
+import { CloudOff, Database, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 interface OfflineIndicatorProps {
   handleSyncPendingUpdates: () => void;
@@ -16,7 +16,7 @@ export function OfflineIndicator({
   isConnecting = false,
   connectionError = null
 }: OfflineIndicatorProps) {
-  // If there's a connection error, display it
+  // If there's a connection error, display it with more details
   if (connectionError) {
     return (
       <Button 
@@ -24,14 +24,16 @@ export function OfflineIndicator({
         size="sm" 
         className="text-red-600 flex gap-1.5 items-center"
         onClick={handleSyncPendingUpdates}
+        title={connectionError}
       >
         <AlertCircle className="h-4 w-4" />
         <span className="text-xs">Anslutningsfel</span>
+        <RefreshCw className="h-3 w-3 ml-1" />
       </Button>
     );
   }
   
-  // If connecting, display connecting state
+  // If connecting, display connecting state with animated loader
   if (isConnecting) {
     return (
       <Button 
@@ -46,7 +48,7 @@ export function OfflineIndicator({
     );
   }
 
-  // Default offline state
+  // Default offline state with cloud icon
   return (
     <Button 
       variant="outline" 
