@@ -91,18 +91,19 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
     
     console.warn("Focused update failed:", updateError.message);
 
-    // APPROACH 3: Try RPC call to bypass RLS
-    // Note: This would require a database function to be created
-    console.log("APPROACH 3: Trying other database approaches");
+    // APPROACH 3: Try direct REST API approach as last resort
+    console.log("APPROACH 3: Trying direct REST API approach");
     try {
-      // Use the raw REST API directly as last resort
-      const apiUrl = `${supabase.supabaseUrl}/rest/v1/activities?id=eq.${activityId}`;
+      // Instead of accessing protected properties, use the values from the environment
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/activities?id=eq.${activityId}`;
+      
+      // Make sure we have the correct headers for authentication
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           'Prefer': 'return=representation'
         },
         body: JSON.stringify(focusedUpdates)
