@@ -12,7 +12,7 @@ interface UseActivityTabViewsProps {
   filteredHistoricalActivities: Activity[];
   setEditingActivity: (activity: Activity | null) => void;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
@@ -37,21 +37,15 @@ export const useActivityTabViews = ({
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    console.log("handlePlayerSelect called with playerId:", playerId);
-    
     if (!playerId) {
-      console.log("Empty playerId, clearing selected player");
       setSelectedPlayer(null);
       return;
     }
     
     const player = players.find(p => p.id === playerId);
     if (player) {
-      console.log("Found player:", player.name);
       setSelectedPlayer(player);
       setSelectedActivity(null);
-    } else {
-      console.warn("Player not found for ID:", playerId);
     }
   }, [players, setSelectedActivity]);
 
@@ -100,20 +94,17 @@ export const useActivityTabViews = ({
 
   // Render content based on current view and selection
   const renderContent = useCallback(() => {
-    console.log("renderContent called, selectedPlayer:", selectedPlayer?.name, "selectedActivity:", selectedActivity?.name);
-    
     // Handle Player detail view
     if (selectedPlayer) {
       const playerActivities = activities.filter(activity => 
         activity.participants?.includes(selectedPlayer.id)
       );
       
-      console.log(`Rendering player detail for ${selectedPlayer.name} with ${playerActivities.length} activities`);
-      
       return {
         viewType: "player-detail",
         player: selectedPlayer,
-        activities: playerActivities
+        activities: playerActivities,
+        searchQuery
       };
     }
     
@@ -122,27 +113,24 @@ export const useActivityTabViews = ({
       const relatedActivities = getRelatedActivities(selectedActivity);
       const cupMatches = getCupMatches(selectedActivity);
       
-      console.log(`Rendering activity detail for ${selectedActivity.name}`);
-      
       return {
         viewType: "activity-detail",
         activity: selectedActivity,
         relatedActivities,
-        cupMatches
+        cupMatches,
+        searchQuery
       };
     }
     
     // Handle Statistics view
     if (activeView === "statistics") {
-      console.log("Rendering statistics view");
       return {
-        viewType: "statistics"
+        viewType: "statistics",
+        searchQuery
       };
     }
     
     // Handle Activities list view
-    console.log(`Rendering activities list with ${filteredBySearchActivities.length} items`);
-    
     return {
       viewType: "activities-list",
       activities: filteredBySearchActivities,
@@ -153,7 +141,7 @@ export const useActivityTabViews = ({
     selectedPlayer, 
     selectedActivity, 
     activities, 
-    filteredBySearchActivities,
+    filteredBySearchActivities, 
     getRelatedActivities,
     getCupMatches,
     searchQuery

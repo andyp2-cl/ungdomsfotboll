@@ -18,7 +18,6 @@ interface ActivityTabViewContentProps {
   onDeleteActivity: (activityId: string) => Promise<boolean>;
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  previousView?: "upcoming" | "historical" | "statistics";
 }
 
 export function ActivityTabViewContent({
@@ -32,15 +31,12 @@ export function ActivityTabViewContent({
   onActivityUpdate,
   onDeleteActivity,
   onKioskAssignmentUpdate,
-  onMatchResultUpdate,
-  previousView
+  onMatchResultUpdate
 }: ActivityTabViewContentProps) {
   const isMobile = useIsMobile();
   
   // Get content from renderContent
   const content = renderContent();
-  
-  console.log("ActivityTabViewContent render with content:", content?.viewType);
   
   // If activeView is statistics, render the statistics wrapper
   if (activeView === "statistics") {
@@ -61,17 +57,12 @@ export function ActivityTabViewContent({
     
     gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
     
-    console.log("Statistics view rendering with onActivitySelect function:", !!onActivitySelect);
-    
     return (
       <StatisticsTabsWrapper 
         players={players}
         activities={activities}
         gradeData={gradeData}
-        onActivitySelect={(activity) => {
-          console.log("Activity selected from StatisticsTabsWrapper:", activity.id, activity.name);
-          onActivitySelect(activity);
-        }}
+        onActivitySelect={onActivitySelect}
         onPlayerSelect={onPlayerSelect}
       />
     );
@@ -85,21 +76,13 @@ export function ActivityTabViewContent({
       const playerActivities = content.activities || 
         activities.filter(act => act.participants?.includes(player.id));
       
-      console.log("Rendering player detail:", player.name, player.id);
-      
       return (
         <PlayerDetail 
           player={player} 
           activities={playerActivities} 
-          onClose={() => {
-            console.log("Closing player detail");
-            onPlayerSelect("");
-          }}
+          onClose={() => onPlayerSelect("")}
           onEdit={(player) => console.log("Edit player triggered:", player.id)}
-          onPlayerUpdate={(player) => {
-            console.log("Player update triggered:", player.id);
-            return Promise.resolve();
-          }}
+          onPlayerUpdate={(player) => Promise.resolve()}
           allPlayers={players}
           onActivitySelect={onActivitySelect}
         />
@@ -122,10 +105,7 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          onPlayerSelect={(playerId) => {
-            console.log("Player selected from activity detail:", playerId);
-            onPlayerSelect(playerId);
-          }}
+          onPlayerSelect={onPlayerSelect}
         />
       );
     }
@@ -135,14 +115,8 @@ export function ActivityTabViewContent({
         <ActivityList 
           activities={content.activities || []}
           players={players}
-          onSelect={(activity) => {
-            console.log("Activity selected from list:", activity?.id);
-            onActivitySelect(activity);
-          }}
-          onPlayerSelect={(playerId) => {
-            console.log("Player selected from activity list:", playerId);
-            onPlayerSelect(playerId);
-          }}
+          onSelect={onActivitySelect}
+          onPlayerSelect={onPlayerSelect}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
