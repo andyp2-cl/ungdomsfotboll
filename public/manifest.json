@@ -9,20 +9,16 @@
   "theme_color": "#006633",
   "icons": [
     {
-      "src": "https://sportcdns.live/team/c41bfff200f51235691218223df0f53c2797ff6633edbe46ac724d237f3ab649.png",
+      "src": "/lovable-uploads/e96aa9c0-4c16-4980-bc3d-b953c75cf136.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/hassleholmsif-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "/hassleholmsif-apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/lovable-uploads/e96aa9c0-4c16-4980-bc3d-b953c75cf136.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
