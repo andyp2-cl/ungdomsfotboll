@@ -91,6 +91,9 @@ export function AddPlayersToActivity({
           onAddPlayers([playerId]);
           // Clear search query but don't close the component
           setSearchQuery("");
+          // Refocus the input for next search
+          e.currentTarget.focus();
+          
           toast.success("Spelare tillagd", {
             icon: <Check className="h-4 w-4" />
           });
@@ -127,6 +130,7 @@ export function AddPlayersToActivity({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           className="pl-9"
+          autoFocus
         />
       </div>
 

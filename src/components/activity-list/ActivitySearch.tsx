@@ -1,7 +1,6 @@
-
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { KeyboardEvent, useState } from "react";
+import { KeyboardEvent, useState, useRef, useEffect } from "react";
 
 interface ActivitySearchProps {
   searchQuery: string;
@@ -16,10 +15,23 @@ export function ActivitySearch({
   placeholder = "Sök matcher...",
   onSearch
 }: ActivitySearchProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    // Focus input on component mount
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+  
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && onSearch) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      onSearch(searchQuery);
+      if (onSearch) {
+        onSearch(searchQuery);
+      }
+      // Keep focus on the input field after search
+      inputRef.current?.focus();
     }
   };
 
@@ -27,6 +39,7 @@ export function ActivitySearch({
     <div className="relative w-full">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
+        ref={inputRef}
         type="text"
         placeholder={placeholder}
         value={searchQuery}

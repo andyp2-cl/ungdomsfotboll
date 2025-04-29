@@ -49,24 +49,16 @@ export function PlayerSearchPopover({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery && filteredPlayers.length > 0) {
+    if (e.key === 'Enter' && filteredPlayers.length > 0) {
       e.preventDefault(); // Prevent form submission
       
       // If we have a highlighted player, select that player
-      if (highlightedPlayerId) {
+      if (highlightedPlayerId && filteredPlayers.some(p => p.id === highlightedPlayerId)) {
         handlePlayerSelect(highlightedPlayerId, true);
       } else if (filteredPlayers.length > 0) {
         // Otherwise select the first player in the filtered list
         handlePlayerSelect(filteredPlayers[0].id, true);
       }
-      
-      // Clear search query but keep popover open
-      setSearchQuery("");
-      
-      // Refocus the input field for the next search
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
     }
   };
 
@@ -82,6 +74,13 @@ export function PlayerSearchPopover({
     if (!keepOpen) {
       setOpen(false);
       setSearchQuery("");
+    } else {
+      // Clear search query but keep popover open
+      setSearchQuery("");
+      // Refocus the input field for the next search
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   };
 
