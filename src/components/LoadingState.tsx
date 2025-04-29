@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
-import { AlertCircle, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, RefreshCw, Wifi, WifiOff, Database } from "lucide-react";
+import { testDatabaseAccess } from "@/components/auth/utils/databaseUtils";
 
 interface LoadingStateProps {
   message?: string;
@@ -15,6 +16,32 @@ export function LoadingState({
 }: LoadingStateProps) {
   const isOnline = navigator.onLine;
   const [loadTime, setLoadTime] = useState(0);
+  const [dbStatus, setDbStatus] = useState<'unknown' | 'connecting' | 'connected' | 'error'>('unknown');
+  const [dbError, setDbError] = useState<string | null>(null);
+  
+  // Check database connection on load
+  useEffect(() => {
+    const checkDbConnection = async () => {
+      try {
+        setDbStatus('connecting');
+        const { success, error } = await testDatabaseAccess();
+        if (success) {
+          setDbStatus('connected');
+          setDbError(null);
+        } else {
+          setDbStatus('error');
+          setDbError(error || "Okänt databasfel");
+        }
+      } catch (err) {
+        setDbStatus('error');
+        setDbError(err instanceof Error ? err.message : "Okänt fel");
+      }
+    };
+    
+    if (isOnline && !error) {
+      checkDbConnection();
+    }
+  }, [isOnline, error]);
   
   // Track loading time
   useEffect(() => {
@@ -48,12 +75,6 @@ export function LoadingState({
     );
   }
   
-  // Check if we already know that we're connected to the database
-  // Use timestamp to ensure we don't use very old cached connections
-  const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
-  const isRecent = cachedTimestamp ? (Date.now() - parseInt(cachedTimestamp)) < (6 * 60 * 60 * 1000) : false;
-  const isDbConnected = localStorage.getItem('sb-connection-test') === 'true' && isRecent;
-  
   // Show loading state
   return (
     <div className="flex justify-center items-center h-64">
@@ -76,12 +97,30 @@ export function LoadingState({
           )}
         </div>
         
-        {loadTime > 3 && !isDbConnected && (
-          <p className="text-sm text-amber-600 mt-2">
-            {isDbConnected 
-              ? "Hämtar data från databasen..." 
-              : "Ansluter till databasen..."}
-          </p>
+        {/* Database connection status */}
+        {isOnline && (
+          <div className="flex items-center justify-center mt-2 text-sm gap-1.5">
+            {dbStatus === 'connecting' && (
+              <div className="text-amber-600 flex items-center gap-1.5">
+                <Database className="h-4 w-4 animate-pulse" />
+                <span>Ansluter till databasen...</span>
+              </div>
+            )}
+            
+            {dbStatus === 'connected' && (
+              <div className="text-green-600 flex items-center gap-1.5">
+                <Database className="h-4 w-4" />
+                <span>Ansluten till databasen</span>
+              </div>
+            )}
+            
+            {dbStatus === 'error' && (
+              <div className="text-red-600 flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4" />
+                <span>{dbError || "Databasfel"}</span>
+              </div>
+            )}
+          </div>
         )}
         
         {loadTime > 8 && (

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkPendingUpdates, cacheSuccessfulConnection } from "../utils/databaseUtils";
+import { checkPendingUpdates, testDatabaseAccess, cacheSuccessfulConnection, getConnectionError, clearConnectionCache } from "../utils/databaseUtils";
 
 export function useAnonymousAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,6 +11,15 @@ export function useAnonymousAuth() {
   const [pendingUpdatesCount, setPendingUpdatesCount] = useState(0);
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  // Check for connection error from local storage on mount
+  useEffect(() => {
+    const storedError = getConnectionError();
+    if (storedError) {
+      setConnectionError(storedError);
+    }
+  }, []);
   
   // Check for pending updates periodically
   useEffect(() => {
@@ -30,8 +38,20 @@ export function useAnonymousAuth() {
   
   // Monitor online/offline status
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      console.log("Device went online at", new Date().toISOString());
+      setIsOnline(true);
+      // Force reconnection when device goes online
+      setIsConnecting(true);
+      checkDatabaseConnection();
+    };
+    
+    const handleOffline = () => {
+      console.log("Device went offline at", new Date().toISOString());
+      setIsOnline(false);
+      setIsConnecting(false);
+      setConnectionChecked(true);
+    };
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -42,125 +62,74 @@ export function useAnonymousAuth() {
     };
   }, []);
   
+  // Check database connection
+  const checkDatabaseConnection = async () => {
+    if (!isOnline) {
+      setConnectionChecked(true);
+      setIsConnecting(false);
+      return;
+    }
+    
+    try {
+      setIsConnecting(true);
+      setConnectionError(null);
+      
+      console.log("Checking database connection at", new Date().toISOString());
+      
+      // Check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      
+      // Test database access
+      const { success, error } = await testDatabaseAccess();
+      
+      if (success) {
+        setIsRLSEnabled(true);
+        setConnectionError(null);
+      } else {
+        setIsRLSEnabled(false);
+        setConnectionError(error || "Kunde inte ansluta till databasen");
+        console.error("Database connection error:", error);
+      }
+    } catch (error) {
+      console.error("Error checking database connection:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown connection error";
+      setConnectionError(errorMessage);
+      setIsRLSEnabled(false);
+    } finally {
+      setConnectionChecked(true);
+      setIsConnecting(false);
+    }
+  };
+  
   // Check for existing session with improved persistence
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // Set initial connecting state
-        setIsConnecting(true);
-        
-        // First check if we have cached connection status from a previous visit
-        const cachedConnection = localStorage.getItem('sb-connection-test');
-        const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
-        const currentTime = Date.now();
-        const sixHoursAgo = currentTime - (6 * 60 * 60 * 1000);
-        
-        // If we have a cached connection that's less than 6 hours old, consider it valid
-        if (
-          cachedConnection === 'true' && 
-          cachedTimestamp && 
-          parseInt(cachedTimestamp) > sixHoursAgo
-        ) {
-          console.log("Using cached connection status (less than 6 hours old)");
-          setConnectionChecked(true);
-          setIsRLSEnabled(true);
-          setIsConnecting(false);
-          return;
-        }
-        
-        // Then check current session
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
-        
-        if (session) {
-          const connected = await testDatabaseAccess(session.access_token);
-          setConnectionChecked(true);
-          setIsConnecting(false);
-          
-          if (connected) {
-            // Force cache the successful connection with timestamp
-            cacheSuccessfulConnection();
-          }
-        } else {
-          // No session, try anonymous access
-          const connected = await testDatabaseAccess();
-          setConnectionChecked(true);
-          setIsConnecting(false);
-          
-          if (connected) {
-            // Force cache the successful connection with timestamp
-            cacheSuccessfulConnection();
-          }
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        setConnectionChecked(true);
-        setIsConnecting(false);
-      }
-    };
-    
-    checkSession();
+    // Initial connection check
+    checkDatabaseConnection();
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, "Has session:", !!session);
       setIsAuthenticated(!!session);
       
       // Test database access whenever auth state changes
       if (session) {
         setIsConnecting(true);
-        await testDatabaseAccess(session.access_token);
-        setIsConnecting(false);
+        await checkDatabaseConnection();
       }
     });
     
+    // Set up periodic connection check (every 5 minutes)
+    const intervalId = setInterval(() => {
+      console.log("Performing periodic connection check");
+      checkDatabaseConnection();
+    }, 5 * 60 * 1000); // 5 minutes
+    
     return () => {
       subscription.unsubscribe();
+      clearInterval(intervalId);
     };
   }, [isOnline]);
-  
-  // Test if we can access the database with improved caching
-  const testDatabaseAccess = async (token?: string) => {
-    try {
-      // Skip test if offline
-      if (!isOnline) {
-        setConnectionChecked(true);
-        setIsConnecting(false);
-        return false;
-      }
-      
-      // Try a simple read operation to test database access
-      const { data, error } = await supabase
-        .from('leagues')
-        .select('id')
-        .limit(1);
-      
-      if (error) {
-        console.error("Database access test failed:", error);
-        setIsRLSEnabled(false);
-        setConnectionChecked(true);
-        
-        // Only show toast if we haven't shown it already
-        if (!localStorage.getItem('db-warning-shown')) {
-          toast.warning("Begränsad databastillgång. Vissa funktioner kan vara otillgängliga.");
-          localStorage.setItem('db-warning-shown', 'true');
-        }
-        return false;
-      }
-      
-      console.log("Database access test passed:", data);
-      setIsRLSEnabled(true);
-      setConnectionChecked(true);
-      
-      // Cache successful connection with timestamp
-      cacheSuccessfulConnection();
-      return true;
-    } catch (error) {
-      console.error("Error testing database access:", error);
-      setIsRLSEnabled(false);
-      setConnectionChecked(true);
-      return false;
-    }
-  };
   
   const handleLogin = async () => {
     if (!isOnline) {
@@ -191,11 +160,14 @@ export function useAnonymousAuth() {
       if (error) {
         console.error("Authentication error:", error);
         toast.error("Kunde inte skicka inloggningslänk: " + error.message);
+        setConnectionError(error.message);
       } else {
         toast.success("En inloggningslänk har skickats till din e-post");
       }
     } catch (error) {
       console.error("Error during authentication:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown authentication error";
+      setConnectionError(errorMessage);
       toast.error("Ett fel uppstod vid aktivering av databasåtkomst");
     } finally {
       setIsAuthenticating(false);
@@ -204,6 +176,16 @@ export function useAnonymousAuth() {
   
   // Trigger manual sync from pending updates in localStorage
   const handleSyncPendingUpdates = () => {
+    // If we have a connection error, try to reconnect
+    if (connectionError) {
+      clearConnectionCache();
+      setIsConnecting(true);
+      setConnectionError(null);
+      checkDatabaseConnection();
+      return;
+    }
+    
+    // Otherwise handle syncing pending updates
     const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
     if (!pendingUpdatesJson) {
       toast.info("Inga ändringar att synkronisera");
@@ -238,7 +220,9 @@ export function useAnonymousAuth() {
     pendingUpdatesCount,
     connectionChecked,
     isConnecting,
+    connectionError,
     handleLogin,
-    handleSyncPendingUpdates
+    handleSyncPendingUpdates,
+    checkDatabaseConnection
   };
 }

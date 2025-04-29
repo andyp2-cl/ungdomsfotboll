@@ -7,6 +7,8 @@ export const supabase = supabaseClient;
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = async (): Promise<boolean> => {
   try {
+    console.log("Testing Supabase configuration...");
+    
     // Clear any potential cached session state first to ensure a fresh check
     localStorage.removeItem('sb-connection-test');
     
@@ -18,14 +20,19 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
     
     if (error) {
       console.error("Supabase connection test failed:", error.message);
+      localStorage.setItem('sb-connection-error', error.message);
       return false;
     }
     
-    console.log("Supabase connection test successful");
+    console.log("Supabase connection test successful, data:", data);
     localStorage.setItem('sb-connection-test', 'true');
+    localStorage.setItem('sb-connection-test-time', Date.now().toString());
+    localStorage.removeItem('sb-connection-error');
     return true;
   } catch (err) {
     console.error("Supabase connection error:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown connection error";
+    localStorage.setItem('sb-connection-error', errorMessage);
     return false;
   }
 };
@@ -33,8 +40,16 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
 // Enhanced session initialization and management
 export const initializeSupabaseSession = async (): Promise<boolean> => {
   try {
+    console.log("Initializing Supabase session...");
+    
     // Get current session state
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("Error getting session:", sessionError);
+      localStorage.setItem('sb-connection-error', sessionError.message);
+      return false;
+    }
     
     if (session) {
       console.log("Found existing session, refreshing...");
@@ -44,17 +59,23 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
       
       if (refreshError) {
         console.error("Session refresh failed:", refreshError.message);
+        localStorage.setItem('sb-connection-error', refreshError.message);
         return false;
       }
+      
+      console.log("Session refreshed successfully");
       
       // Test database connection after session refresh
       return await isSupabaseConfigured();
     } else {
+      console.log("No existing session, trying anonymous access");
       // Try anonymous access for public tables
       return await isSupabaseConfigured();
     }
   } catch (err) {
     console.error("Error initializing Supabase session:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown initialization error";
+    localStorage.setItem('sb-connection-error', errorMessage);
     return false;
   }
 };
@@ -62,6 +83,8 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
 // Force refresh session at startup and configure session persistence
 (() => {
   try {
+    console.log("Checking for existing session in storage...");
+    
     // Get session from storage
     const sessionString = localStorage.getItem('sb-zkrruihxszziifyogzko-auth-token');
     
@@ -80,7 +103,15 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
         localStorage.setItem('sb-last-refresh', Date.now().toString());
         
         // Force refresh of auth session
-        supabase.auth.refreshSession();
+        supabase.auth.refreshSession().then(({ data, error }) => {
+          if (error) {
+            console.error("Error refreshing session:", error);
+            localStorage.setItem('sb-connection-error', error.message);
+          } else {
+            console.log("Session refreshed successfully");
+            localStorage.removeItem('sb-connection-error');
+          }
+        });
       }
       
       // Configure session persistence in localStorage
@@ -93,10 +124,16 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
       
       // Trigger immediate connection test
       setTimeout(() => {
-        isSupabaseConfigured();
+        isSupabaseConfigured().then(success => {
+          console.log("Initial connection test result:", success ? "Connected" : "Failed");
+        });
       }, 100);
+    } else {
+      console.log("No existing session found in storage");
     }
   } catch (e) {
     console.error("Error configuring session persistence:", e);
+    const errorMessage = e instanceof Error ? e.message : "Unknown session configuration error";
+    localStorage.setItem('sb-connection-error', errorMessage);
   }
 })();

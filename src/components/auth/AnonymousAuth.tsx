@@ -15,6 +15,7 @@ export function AnonymousAuth() {
     pendingUpdatesCount,
     connectionChecked,
     isConnecting,
+    connectionError,
     handleLogin,
     handleSyncPendingUpdates
   } = useAnonymousAuth();
@@ -25,7 +26,7 @@ export function AnonymousAuth() {
       <div className="flex items-center gap-2">
         <div className="text-xs flex items-center gap-1.5 text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Ansluter...</span>
+          <span>Kontrollerar anslutning...</span>
         </div>
       </div>
     );
@@ -43,13 +44,14 @@ export function AnonymousAuth() {
     );
   }
   
-  // If we're connecting to the database, show connecting state
-  if (isConnecting) {
+  // If we're connecting to the database or have a connection error, show appropriate state
+  if (isConnecting || connectionError) {
     return (
       <div className="flex items-center gap-2">
         <OfflineIndicator 
           handleSyncPendingUpdates={handleSyncPendingUpdates}
-          isConnecting={true}
+          isConnecting={isConnecting}
+          connectionError={connectionError}
         />
       </div>
     );
