@@ -7,7 +7,8 @@ export function useAuthenticationState() {
     isAuthenticating: isAuthLoading,
     user: authUser,
     handleLogin: loginWithMagicLink,
-    handleLogout: logout
+    handleLogout: logout,
+    triggerSync // Make sure triggerSync is exposed
   } = useAuthentication();
   
   return { 
@@ -15,6 +16,7 @@ export function useAuthenticationState() {
     isAuthLoading,
     authUser,
     loginWithMagicLink,
-    logout
+    logout,
+    triggerSync
   };
 }
