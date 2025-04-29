@@ -7,7 +7,6 @@ import {
   getConnectionError, 
   forceReconnect
 } from "../utils/databaseUtils";
-import { forceResetConnection } from "@/lib/supabase/client";
 
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
@@ -70,11 +69,6 @@ export function useConnectionManagement(isOnline: boolean) {
     try {
       // First try our regular reconnect
       await forceReconnect();
-      
-      // If that doesn't work, try an even more aggressive reset
-      if (connectionError) {
-        await forceResetConnection();
-      }
       
       // Check connection again
       await checkDatabaseConnection();

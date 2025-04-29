@@ -59,6 +59,29 @@ export const cacheSuccessfulConnection = () => {
   }
 };
 
+// Function to get connection error from localStorage
+export const getConnectionError = (): string | null => {
+  try {
+    return localStorage.getItem('sb-connection-error');
+  } catch (err) {
+    console.error("Error getting connection error from storage:", err);
+    return null;
+  }
+};
+
+// Function to set connection error in localStorage
+export const setConnectionError = (error: string | null): void => {
+  try {
+    if (error) {
+      localStorage.setItem('sb-connection-error', error);
+    } else {
+      localStorage.removeItem('sb-connection-error');
+    }
+  } catch (err) {
+    console.error("Error setting connection error in storage:", err);
+  }
+};
+
 // Function to check for pending updates
 export const checkPendingUpdates = (): number => {
   try {
@@ -73,6 +96,51 @@ export const checkPendingUpdates = (): number => {
   } catch (err) {
     console.error("Error checking pending updates:", err);
     return 0;
+  }
+};
+
+// Function to check connection with session - comprehensive test
+export const checkConnectionWithSession = async (): Promise<boolean> => {
+  try {
+    console.log("Checking connection with session...");
+    
+    // 1. First check if we have a session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // 2. If we have a session, try to refresh it
+    if (session) {
+      console.log("Found existing session, attempting to refresh...");
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.error("Error refreshing session:", error);
+        } else {
+          console.log("Session refreshed successfully");
+        }
+      } catch (refreshErr) {
+        console.error("Exception during session refresh:", refreshErr);
+      }
+    } else {
+      console.log("No active session found");
+    }
+    
+    // 3. Test database access
+    const testResult = await testDatabaseAccess();
+    
+    // 4. Return success state and cache the result
+    if (testResult.success) {
+      cacheSuccessfulConnection();
+      setConnectionError(null);
+      return true;
+    } else {
+      setConnectionError(testResult.error || "Unknown database connection error");
+      return false;
+    }
+  } catch (err) {
+    console.error("Error during connection check with session:", err);
+    setConnectionError(err instanceof Error ? err.message : "Unexpected error during connection check");
+    return false;
   }
 };
 
