@@ -22,7 +22,7 @@ export function LoadingState({
   retry 
 }: LoadingStateProps) {
   const isOnline = navigator.onLine;
-  const { dbStatus, dbError, isCheckingDb, setIsCheckingDb } = useDatabaseCheck(isOnline, error);
+  const { dbStatus, dbError, isCheckingDb, setIsCheckingDb, setDbStatus } = useDatabaseCheck(isOnline, error);
 
   // Function to manually check database connection
   const checkDatabaseManually = async () => {

@@ -35,6 +35,7 @@ export function useDatabaseCheck(isOnline: boolean, error?: string) {
     dbStatus,
     dbError,
     isCheckingDb,
-    setIsCheckingDb
+    setIsCheckingDb,
+    setDbStatus // Export the setter function
   };
 }
