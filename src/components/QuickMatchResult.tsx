@@ -28,8 +28,25 @@ export function QuickMatchResult({
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
   
   // Monitor online/offline state for component
   useEffect(() => {
@@ -106,7 +123,7 @@ export function QuickMatchResult({
         }
       }
 
-      // ALWAYS save to localStorage first regardless of authentication or online status
+      // ALWAYS save to localStorage first
       const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
       pendingUpdates[activity.id] = {
         homeScore: finalHomeScore,
@@ -120,31 +137,24 @@ export function QuickMatchResult({
       // Save to localStorage immediately
       localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
       
-      // Check if we're online and authenticated before trying to save to database
-      if (isOnline) {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          // We're authenticated, try to save to database
-          try {
-            await onSave(finalHomeScore, finalAwayScore);
-            sonnerToast.success("Resultat sparat och synkroniserat med databasen");
-            
-            // If save was successful, remove from pending updates
-            const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
-            delete updatedPendingUpdates[activity.id];
-            localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
-          } catch (error) {
-            console.error("Error saving to database, but saved locally:", error);
-            sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
-          }
-        } else {
-          // Not authenticated, show info message
-          sonnerToast.info("Resultat sparat lokalt. Logga in för att synka med databasen.");
+      // Try to save to database if we're online and authenticated
+      if (isOnline && isAuthenticated) {
+        try {
+          await onSave(finalHomeScore, finalAwayScore);
+          sonnerToast.success("Resultat sparat och synkroniserat med databasen");
+          
+          // If database save was successful, remove from pending updates
+          const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
+          delete updatedPendingUpdates[activity.id];
+          localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
+        } catch (error) {
+          console.error("Error saving to database, saved locally:", error);
+          sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
         }
-      } else {
-        // We're offline
+      } else if (!isOnline) {
         sonnerToast.info("Offline. Resultat sparat lokalt och synkas när du är online igen.");
+      } else {
+        sonnerToast.info("Resultat sparat lokalt. Logga in för att synka med databasen.");
       }
     } catch (error) {
       console.error("Error saving match result:", error);
@@ -226,7 +236,7 @@ export function QuickMatchResult({
             size={isMobile ? "sm" : "default"}
           >
             <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
-            {isSaving ? "Sparar..." : isOnline ? "Spara resultat" : "Spara lokalt"}
+            {isSaving ? "Sparar..." : isOnline ? (isAuthenticated ? "Spara resultat" : "Spara lokalt") : "Spara lokalt"}
           </Button>
         )}
       </div>

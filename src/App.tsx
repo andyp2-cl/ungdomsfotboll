@@ -13,6 +13,7 @@ import { useSyncEngine } from "./hooks/useSyncEngine";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "./integrations/supabase/client";
+import { LoginStatus } from "./components/auth/LoginStatus";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,56 +27,6 @@ const queryClient = new QueryClient({
 function App() {
   const { manualSync } = useSyncEngine();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
-  // Check for existing session but don't try anonymous auth anymore
-  useEffect(() => {
-    const initializeAuth = async () => {
-      // Check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        console.log("Existing session found");
-        // If we have a session, check if there are pending syncs that need to be processed
-        const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
-        if (pendingUpdatesJson) {
-          const pendingCount = Object.keys(JSON.parse(pendingUpdatesJson)).length;
-          if (pendingCount > 0) {
-            console.log(`Found ${pendingCount} pending updates to sync`);
-            toast.info(`${pendingCount} ändringar att synkronisera`);
-            setTimeout(() => manualSync(), 1000);
-          }
-        }
-      } else {
-        console.log("No session found, user will need to log in manually if needed");
-      }
-    };
-    
-    initializeAuth();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, !!session);
-      
-      // When a user signs in, try to sync any pending changes
-      if (event === 'SIGNED_IN' && session) {
-        toast.success("Inloggning lyckades");
-        
-        // Check for pending updates and sync them
-        const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
-        if (pendingUpdatesJson) {
-          const pendingCount = Object.keys(JSON.parse(pendingUpdatesJson)).length;
-          if (pendingCount > 0) {
-            toast.info(`Synkroniserar ${pendingCount} matchresultat...`);
-            setTimeout(() => manualSync(), 1000);
-          }
-        }
-      }
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [manualSync]);
   
   // Monitor online/offline status
   useEffect(() => {
@@ -107,7 +58,20 @@ function App() {
     if (!isOnline) {
       toast.warning("Du är offline. Ändringar sparas lokalt och synkas när du är online igen.");
     }
-  }, []);
+    
+    // Process any pending local updates on app start
+    const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
+    if (pendingUpdatesJson) {
+      const pendingCount = Object.keys(JSON.parse(pendingUpdatesJson)).length;
+      if (pendingCount > 0) {
+        if (isOnline) {
+          toast.info(`${pendingCount} matchresultat väntar på synkronisering`);
+        } else {
+          toast.warning(`${pendingCount} matchresultat sparade lokalt`);
+        }
+      }
+    }
+  }, [isOnline]);
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -116,6 +80,9 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <PasswordProtection>
+            <div className="fixed top-0 right-0 p-2 z-50">
+              <LoginStatus />
+            </div>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/players" element={<PlayersPage initialTab="players" />} />
