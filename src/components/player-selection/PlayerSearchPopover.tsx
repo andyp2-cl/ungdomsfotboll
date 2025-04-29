@@ -34,7 +34,7 @@ export function PlayerSearchPopover({
     return player.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Reset search when popover closes
+  // Reset search when popover closes or opens
   useEffect(() => {
     if (!open) {
       setSearchQuery("");
@@ -42,8 +42,10 @@ export function PlayerSearchPopover({
     } else {
       // Focus the input when the popover opens
       setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 10);
     }
   }, [open]);
 
@@ -62,7 +64,7 @@ export function PlayerSearchPopover({
     }
   };
 
-  const handlePlayerSelect = (playerId: string, keepOpen = false) => {
+  const handlePlayerSelect = (playerId: string, keepOpen = true) => {
     if (selectedPlayers.includes(playerId)) {
       onPlayerSelect(playerId);
     } else {
@@ -70,18 +72,15 @@ export function PlayerSearchPopover({
       onPlayerSelect(playerId);
     }
     
-    // Only close the popover if not keeping open
-    if (!keepOpen) {
-      setOpen(false);
-      setSearchQuery("");
-    } else {
-      // Clear search query but keep popover open
-      setSearchQuery("");
-      // Refocus the input field for the next search
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    }
+    // Always clear search query and keep popover open
+    setSearchQuery("");
+    
+    // Refocus the input field for the next search
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 10);
   };
 
   return (

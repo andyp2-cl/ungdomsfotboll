@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Player, Activity } from "@/types/player";
 import { CupSelector } from "./add-players/CupSelector";
 import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
@@ -25,6 +25,7 @@ export function AddPlayersToActivity({
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -78,13 +79,13 @@ export function AddPlayersToActivity({
     }
   };
   
-  // Handle keyboard search
+  // Handle keyboard search - more aggressive player adding on enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && availablePlayers.length > 0) {
       e.preventDefault();
       
       // Quick add the first player in the filtered list if there's a search query
-      if (searchQuery && availablePlayers.length > 0) {
+      if (availablePlayers.length > 0) {
         const playerId = availablePlayers[0].id;
         setIsProcessing(true);
         try {
@@ -92,7 +93,11 @@ export function AddPlayersToActivity({
           // Clear search query but don't close the component
           setSearchQuery("");
           // Refocus the input for next search
-          e.currentTarget.focus();
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 10);
           
           toast.success("Spelare tillagd", {
             icon: <Check className="h-4 w-4" />
@@ -124,6 +129,7 @@ export function AddPlayersToActivity({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          ref={inputRef}
           type="text"
           placeholder="Sök spelare..."
           value={searchQuery}

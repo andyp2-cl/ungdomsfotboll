@@ -31,7 +31,9 @@ export function ActivitySearch({
         onSearch(searchQuery);
       }
       // Keep focus on the input field after search
-      inputRef.current?.focus();
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
 
