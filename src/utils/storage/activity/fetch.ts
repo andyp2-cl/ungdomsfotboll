@@ -13,48 +13,41 @@ const cacheActivities = (activities: Activity[]) => {
   }
 };
 
-// Get activities from Supabase
+// Get activities from Supabase with fallback to cached data
 export const getStoredActivities = async (): Promise<Activity[]> => {
+  // First check if we're online
+  if (!navigator.onLine) {
+    console.log("Device is offline, using cached activities");
+    try {
+      const cachedData = localStorage.getItem('cachedActivities');
+      return cachedData ? JSON.parse(cachedData) : [];
+    } catch (error) {
+      console.error("Error reading cached activities:", error);
+      return [];
+    }
+  }
+  
   try {
     // Mark successful connection test early to avoid connection status issues
     localStorage.setItem('sb-connection-test', 'true');
     
-    // First, get all activities
-    let { data: activitiesData, error: activitiesError } = await supabase
-      .from('activities')
-      .select('*');
-      
+    // First, get all activities with timeout protection
+    const fetchPromise = supabase.from('activities').select('*');
+    
+    // Set up a timeout for the fetch
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Fetch activities timeout")), 5000);
+    });
+    
+    // Race the fetch against the timeout
+    const { data: activitiesData, error: activitiesError } = await Promise.race([
+      fetchPromise,
+      timeoutPromise.then(() => { throw new Error("Fetch activities timeout"); })
+    ]) as any;
+    
     if (activitiesError) {
       console.error("Error fetching activities:", activitiesError);
-      
-      // If we have a 401 error, try to refresh session and retry
-      if (activitiesError.code === '401' || activitiesError.message.includes('JWT')) {
-        try {
-          console.log("Attempting to refresh session after 401...");
-          await supabase.auth.refreshSession();
-          
-          // Retry after session refresh
-          const { data: retryData, error: retryError } = await supabase
-            .from('activities')
-            .select('*');
-            
-          if (retryError) {
-            console.error("Retry after refresh still failed:", retryError);
-            throw retryError;
-          }
-          
-          // Use retry data if successful
-          console.log("Session refresh and retry succeeded");
-          if (retryData) {
-            activitiesData = retryData;
-          }
-        } catch (refreshError) {
-          console.error("Failed to refresh session after 401:", refreshError);
-          throw activitiesError; // Re-throw original error if refresh fails
-        }
-      } else {
-        throw activitiesError;
-      }
+      throw activitiesError;
     }
     
     // Ensure we have data before proceeding
@@ -68,21 +61,23 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     console.log(`Fetched ${activities.length} activities from database`);
     
-    // Then, get player-activity relationships and populate the participants array
-    const { data: playerActivitiesData, error: relationshipError } = await supabase
-      .from('player_activities')
-      .select('*');
+    // Then, get player-activity relationships
+    try {
+      const { data: playerActivitiesData } = await supabase
+        .from('player_activities')
+        .select('*');
       
-    if (relationshipError) {
-      console.error("Error fetching player-activity relationships:", relationshipError);
-      // Continue processing even if we can't get relationships
+      // Populate participants for each activity
+      if (playerActivitiesData) {
+        activities.forEach(activity => {
+          const activityPlayerRelations = playerActivitiesData.filter(pa => pa.activity_id === activity.id) || [];
+          activity.participants = activityPlayerRelations.map(relation => relation.player_id);
+        });
+      }
+    } catch (relError) {
+      console.error("Error fetching player-activity relationships:", relError);
+      // Continue with activities without participants
     }
-    
-    // Populate participants for each activity
-    activities.forEach(activity => {
-      const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
-      activity.participants = activityPlayerRelations.map(relation => relation.player_id);
-    });
     
     // Cache activities for offline use
     cacheActivities(activities);
@@ -94,7 +89,8 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     return activities;
   } catch (error) {
     console.error("Error fetching activities:", error);
-    // Check if there's a cached version we can use as fallback
+    
+    // Check if there's a cached version
     try {
       const cachedActivities = localStorage.getItem('cachedActivities');
       if (cachedActivities) {
@@ -104,6 +100,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     } catch (cacheError) {
       console.error("Error using cached activities:", cacheError);
     }
+    
     return [];
   }
 };
