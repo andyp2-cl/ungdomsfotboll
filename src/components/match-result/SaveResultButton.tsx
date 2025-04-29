@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Wifi, WifiOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SaveResultButtonProps {
@@ -16,7 +16,7 @@ interface SaveResultButtonProps {
 export function SaveResultButton({
   onClick,
   isSaving,
-  isOnline = true,
+  isOnline = navigator.onLine,
   isAuthenticated = false,
   isAuthLoading = false,
   className = ""
@@ -30,14 +30,25 @@ export function SaveResultButton({
     return isAuthenticated ? "Spara resultat" : "Spara lokalt";
   };
   
+  const getIcon = () => {
+    if (!isOnline) {
+      return <WifiOff className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />;
+    }
+    if (isAuthenticated) {
+      return <Wifi className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />;
+    }
+    return <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />;
+  };
+  
   return (
     <Button 
       onClick={onClick} 
       disabled={isSaving || isAuthLoading}
       className={`w-full ${isMobile ? 'h-10' : ''} ${className}`}
       size={isMobile ? "sm" : "default"}
+      variant={!isOnline ? "outline" : "default"}
     >
-      <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
+      {getIcon()}
       {getButtonText()}
     </Button>
   );

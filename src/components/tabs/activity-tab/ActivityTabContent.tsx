@@ -20,6 +20,9 @@ interface ActivityTabContentProps {
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
   isAddActivityOpen: boolean;
+  isLoading: boolean;
+  loadError?: string | null;
+  retryLoading?: () => void;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>;
@@ -65,8 +68,13 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     setIsRefreshing(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Data uppdaterad");
+      if (props.retryLoading) {
+        await props.retryLoading();
+        toast.success("Data uppdaterad");
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success("Data uppdaterad");
+      }
     } catch (error) {
       toast.error("Kunde inte uppdatera data");
       console.error("Error refreshing data:", error);
@@ -94,7 +102,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
         </div>
       </div>
       
-      {activeView !== "statistics" && (
+      {activeView !== "statistics" && !props.isLoading && !props.loadError && (
         <ActivityTabSearch
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -102,12 +110,15 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
         />
       )}
       
-      <PullToRefresh onRefresh={handleRefresh} disabled={!!props.selectedActivity || !!selectedPlayer}>
+      <PullToRefresh onRefresh={handleRefresh} disabled={!!props.selectedActivity || !!selectedPlayer || props.isLoading}>
         <ActivityTabViewContent
           activeView={activeView}
           renderContent={renderContent}
           players={props.players}
           activities={props.activities}
+          isLoading={props.isLoading}
+          loadError={props.loadError}
+          retryLoading={props.retryLoading}
           onActivitySelect={props.setSelectedActivity}
           onPlayerSelect={handlePlayerSelect}
           onEditActivity={props.setEditingActivity}

@@ -1,16 +1,20 @@
 
+import React from "react";
 import { Activity, Player } from "@/types/player";
-import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
-import { ActivityList } from "@/components/ActivityList";
+import { ActivityList } from "@/components/activity-list/ActivityList";
+import { PlayerDetail } from "@/components/player-detail/PlayerDetail";
 import { ActivityDetail } from "@/components/activity-detail";
-import { PlayerDetail } from "@/components/PlayerDetail";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
+import { LoadingState } from "@/components/LoadingState";
 
 interface ActivityTabViewContentProps {
-  activeView: "upcoming" | "historical" | "statistics";
+  activeView: string;
   renderContent: () => any;
   players: Player[];
   activities: Activity[];
+  isLoading?: boolean;
+  loadError?: string | null;
+  retryLoading?: () => void;
   onActivitySelect: (activity: Activity | null) => void;
   onPlayerSelect: (playerId: string) => void;
   onEditActivity: (activity: Activity) => void;
@@ -25,6 +29,9 @@ export function ActivityTabViewContent({
   renderContent,
   players,
   activities,
+  isLoading = false,
+  loadError = null,
+  retryLoading,
   onActivitySelect,
   onPlayerSelect,
   onEditActivity,
@@ -33,97 +40,88 @@ export function ActivityTabViewContent({
   onKioskAssignmentUpdate,
   onMatchResultUpdate
 }: ActivityTabViewContentProps) {
-  const isMobile = useIsMobile();
-  
-  // Get content from renderContent
-  const content = renderContent();
-  
-  // If activeView is statistics, render the statistics wrapper
-  if (activeView === "statistics") {
-    const gradeData = players.reduce((acc, player) => {
-      if (player.positions?.includes("TRÄNARE")) return acc;
-      
-      const grade = player.grade;
-      const existingGrade = acc.find(item => item.grade === grade);
-      
-      if (existingGrade) {
-        existingGrade.players++;
-      } else {
-        acc.push({ grade, players: 1 });
-      }
-      
-      return acc;
-    }, [] as { grade: string, players: number }[]);
-    
-    gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
-    
-    return (
-      <StatisticsTabsWrapper 
-        players={players}
-        activities={activities}
-        gradeData={gradeData}
-        onActivitySelect={onActivitySelect}
-        onPlayerSelect={onPlayerSelect}
-      />
-    );
+  // Show loading state while data is loading
+  if (isLoading) {
+    return <LoadingState message="Laddar aktiviteter från databasen..." />;
   }
   
-  // Handle view rendering based on content type
-  if (content) {
-    if (content.viewType === "player-detail" && content.player) {
-      // Ensure the player object is valid
-      const player = content.player;
-      const playerActivities = content.activities || 
-        activities.filter(act => act.participants?.includes(player.id));
-      
+  // Show error state if there's an error
+  if (loadError) {
+    return <LoadingState error={loadError} retry={retryLoading} />;
+  }
+  
+  // Render content based on the return value from renderContent
+  const content = renderContent();
+  
+  if (!content) {
+    return null;
+  }
+  
+  switch (content.viewType) {
+    case 'player-detail':
       return (
         <PlayerDetail 
-          player={player} 
-          activities={playerActivities} 
-          onClose={() => onPlayerSelect("")}
-          onEdit={(player) => console.log("Edit player triggered:", player.id)}
-          onPlayerUpdate={(player) => Promise.resolve()}
+          player={content.player}
+          activities={activities}
           allPlayers={players}
-          onActivitySelect={onActivitySelect}
+          onClose={() => onPlayerSelect('')}
+          onPlayerUpdate={() => {}} // Not implemented in this context
         />
       );
-    }
-    
-    if (content.viewType === "activity-detail" && content.activity) {
+      
+    case 'activity-detail':
       return (
         <ActivityDetail 
           activity={content.activity}
           players={players}
+          relatedActivities={content.relatedActivities}
+          cupMatches={content.cupMatches}
+          allActivities={activities}
           onBack={() => onActivitySelect(null)}
           onEdit={onEditActivity}
-          onDeleteActivity={onDeleteActivity}
           onActivityUpdate={onActivityUpdate}
+          onDeleteActivity={onDeleteActivity}
           onKioskAssignmentUpdate={onKioskAssignmentUpdate}
-          onActivitySelect={onActivitySelect}
-          relatedActivities={content.relatedActivities || []}
-          cupMatches={content.cupMatches || []}
-          allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
           onPlayerSelect={onPlayerSelect}
+          onActivitySelect={onActivitySelect}
         />
       );
-    }
-    
-    if (content.viewType === "activities-list") {
+      
+    case 'statistics':
+      return (
+        <StatisticsTabsWrapper 
+          players={players}
+          activities={activities}
+          gradeData={players.reduce((acc, player) => {
+            if (player.positions?.includes("TRÄNARE")) return acc;
+            
+            const grade = player.grade;
+            const existingGrade = acc.find(item => item.grade === grade);
+            
+            if (existingGrade) {
+              existingGrade.players++;
+            } else {
+              acc.push({ grade, players: 1 });
+            }
+            
+            return acc;
+          }, [] as { grade: string, players: number }[]).sort((a, b) => a.grade.localeCompare(b.grade))}
+        />
+      );
+      
+    case 'activities-list':
+    default:
       return (
         <ActivityList 
-          activities={content.activities || []}
+          activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
           onPlayerSelect={onPlayerSelect}
-          isHistorical={activeView === "historical"}
-          isMobile={isMobile}
+          isHistorical={activeView === 'historical'}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
         />
       );
-    }
   }
-  
-  return null;
 }
