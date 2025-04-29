@@ -1,0 +1,124 @@
+
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Session, User } from '@supabase/supabase-js';
+import { testDatabaseAccess, setExtendedSessionPersistence, cacheSuccessfulConnection } from "../utils/databaseUtils";
+
+export function useSessionManagement() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [rememberLogin, setRememberLogin] = useState(true);
+  
+  // Check for existing session with improved error handling and retry logic
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        setIsInitializing(true);
+        
+        // First try to get session from storage
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session);
+        setSession(session);
+        setUser(session?.user || null);
+        
+        if (session) {
+          // Set extended session persistence immediately
+          setExtendedSessionPersistence();
+          
+          // Test database access with the current session
+          await testDatabaseAccess();
+        } else {
+          // If no session found, try to refresh it with retry logic
+          let refreshAttempts = 0;
+          let refreshSuccess = false;
+          
+          while (refreshAttempts < 2 && !refreshSuccess) {
+            try {
+              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+              
+              if (!refreshError && refreshData.session) {
+                setIsAuthenticated(true);
+                setSession(refreshData.session);
+                setUser(refreshData.session.user || null);
+                refreshSuccess = true;
+                await testDatabaseAccess();
+                console.log("Session refreshed successfully (attempt", refreshAttempts + 1, ")");
+                
+                // Set extended session expiry after successful refresh
+                setExtendedSessionPersistence();
+              } else {
+                console.log("Session refresh failed, attempt", refreshAttempts + 1, refreshError?.message);
+                refreshAttempts++;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            } catch (err) {
+              console.error("Error during session refresh attempt", refreshAttempts + 1, ":", err);
+              refreshAttempts++;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          
+          // After all refresh attempts
+          if (!refreshSuccess) {
+            // Check if we have a remembered login
+            const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
+            if (rememberedLogin) {
+              // Prompt user to re-login if they had a remembered session
+              toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    
+    checkSession();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
+      setIsAuthenticated(!!session);
+      setSession(session);
+      setUser(session?.user || null);
+      
+      if (session) {
+        toast.success("Inloggad som " + (session.user.email || "användare"));
+        
+        await testDatabaseAccess();
+        
+        if (rememberLogin) {
+          // Set a persistent flag to remember this login
+          localStorage.setItem('rememberLogin', 'true');
+          // Extended session - 30 days
+          setExtendedSessionPersistence();
+          
+          // Force cache the connection state
+          cacheSuccessfulConnection();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        toast.info("Du har loggat ut");
+        // Clear connection test cache on logout
+        localStorage.removeItem('sb-connection-test');
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [rememberLogin]);
+  
+  return {
+    isAuthenticated,
+    isInitializing,
+    session,
+    user,
+    rememberLogin,
+    setRememberLogin
+  };
+}

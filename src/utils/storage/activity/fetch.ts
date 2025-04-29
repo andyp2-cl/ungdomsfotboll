@@ -24,7 +24,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     }
     
     // First, get all activities
-    const { data: activitiesData, error: activitiesError } = await supabase
+    let { data: activitiesData, error: activitiesError } = await supabase
       .from('activities')
       .select('*');
       
