@@ -4,18 +4,34 @@ import { supabase } from "@/lib/supabase/client";
 /**
  * Test database access
  */
-export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabled: boolean; error?: string }> => {
+export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabled: boolean; error?: string; details?: Record<string, any> }> => {
   try {
+    console.log("Testing database access...");
+    
     // Simple query to verify access
+    const startTime = performance.now();
     const { data, error } = await supabase
       .from('leagues')
       .select('id')
       .limit(1);
+    const endTime = performance.now();
     
     if (error) {
       console.error("Database access test failed:", error);
-      return { success: false, rlsEnabled: false, error: error.message };
+      return { 
+        success: false, 
+        rlsEnabled: false, 
+        error: error.message,
+        details: {
+          code: error.code,
+          hint: error.hint || 'Ingen ytterligare information',
+          queryTime: `${(endTime - startTime).toFixed(2)}ms`,
+          statusCode: error.status || 'Okänd statuskod'
+        }
+      };
     }
+    
+    console.log(`Database query successful in ${(endTime - startTime).toFixed(2)}ms`);
     
     // Check if RLS is enabled by attempting an insert that should be blocked
     try {
@@ -26,19 +42,50 @@ export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabl
       // If the error contains "new row violates row-level security policy", RLS is enabled
       if (rlsError.message && rlsError.message.includes('new row violates row-level security policy')) {
         console.log("Row Level Security (RLS) is enabled");
-        return { success: true, rlsEnabled: true };
+        return { 
+          success: true, 
+          rlsEnabled: true,
+          details: {
+            queryTime: `${(endTime - startTime).toFixed(2)}ms`,
+            dataCount: data?.length || 0
+          }
+        };
       } else {
         console.warn("Insert test failed but RLS may not be enabled:", rlsError);
-        return { success: true, rlsEnabled: false };
+        return { 
+          success: true, 
+          rlsEnabled: false,
+          details: {
+            warning: "RLS-test gav oväntad feltyp",
+            queryTime: `${(endTime - startTime).toFixed(2)}ms`,
+            errorMessage: rlsError instanceof Error ? rlsError.message : 'Okänt fel'
+          }
+        };
       }
     }
     
     // If we reach here, the insert succeeded, which means RLS is NOT enabled
     console.warn("Row Level Security (RLS) is NOT enabled");
-    return { success: true, rlsEnabled: false };
+    return { 
+      success: true, 
+      rlsEnabled: false,
+      details: {
+        warning: "RLS är inte aktiverat på servern",
+        queryTime: `${(endTime - startTime).toFixed(2)}ms`,
+        dataCount: data?.length || 0
+      }
+    };
   } catch (err) {
     console.error("Error testing database access:", err);
-    return { success: false, rlsEnabled: false, error: err instanceof Error ? err.message : "Okänt fel" };
+    return { 
+      success: false, 
+      rlsEnabled: false, 
+      error: err instanceof Error ? err.message : "Okänt fel",
+      details: {
+        errorType: err instanceof Error ? err.constructor.name : 'Unknown',
+        stack: err instanceof Error ? err.stack : undefined
+      }
+    };
   }
 };
 
@@ -58,11 +105,40 @@ export const setExtendedSessionPersistence = async (): Promise<void> => {
 };
 
 /**
- * Cache successful connection
+ * Cache successful connection with timestamp and performance metrics
  */
 export const cacheSuccessfulConnection = (): void => {
-  localStorage.setItem('sb-connection-test', 'true');
-  localStorage.setItem('sb-connection-test-time', Date.now().toString());
+  try {
+    const timestamp = Date.now();
+    localStorage.setItem('sb-connection-test', 'true');
+    localStorage.setItem('sb-connection-test-time', timestamp.toString());
+    localStorage.setItem('sb-connection-latency', performance.now().toString());
+    localStorage.setItem('sb-connection-metrics', JSON.stringify({
+      lastSuccess: timestamp,
+      successCount: Number(localStorage.getItem('sb-success-count') || '0') + 1,
+      userAgent: navigator.userAgent,
+      connectionType: (navigator as any).connection ? (navigator as any).connection.effectiveType : 'unknown'
+    }));
+  } catch (error) {
+    console.error("Failed to cache connection status:", error);
+  }
+};
+
+/**
+ * Get connection cache age in minutes
+ */
+export const getConnectionCacheAge = (): number | null => {
+  try {
+    const cacheTimeStr = localStorage.getItem('sb-connection-test-time');
+    if (!cacheTimeStr) return null;
+    
+    const cacheTime = parseInt(cacheTimeStr);
+    const now = Date.now();
+    return Math.floor((now - cacheTime) / (1000 * 60)); // Age in minutes
+  } catch (error) {
+    console.error("Error calculating cache age:", error);
+    return null;
+  }
 };
 
 /**
@@ -71,6 +147,13 @@ export const cacheSuccessfulConnection = (): void => {
 export const checkConnectionWithSession = async (): Promise<boolean> => {
   try {
     console.log("Checking database connection with session...");
+    
+    // First check if we have recent cached result (less than 5 minutes old)
+    const cacheAge = getConnectionCacheAge();
+    if (cacheAge !== null && cacheAge < 5) {
+      console.log(`Using cached connection result (${cacheAge} minutes old)`);
+      return localStorage.getItem('sb-connection-test') === 'true';
+    }
     
     // First check if we have a session
     const { data: { session } } = await supabase.auth.getSession();
@@ -89,19 +172,49 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
     // Test database access with retry logic
     let attempts = 0;
     let success = false;
+    let lastError = null;
+    let connectionMetrics = {
+      attempts: 0,
+      totalTime: 0,
+      successTime: 0,
+      errors: [] as string[]
+    };
+    
+    const startTime = performance.now();
     
     while (attempts < 3 && !success) {
       try {
+        const attemptStart = performance.now();
+        connectionMetrics.attempts++;
+        
         const result = await testDatabaseAccess();
+        const attemptTime = performance.now() - attemptStart;
+        connectionMetrics.totalTime += attemptTime;
+        
         if (result.success) {
-          console.log(`Database connection successful on attempt ${attempts + 1}`);
+          console.log(`Database connection successful on attempt ${attempts + 1} in ${attemptTime.toFixed(2)}ms`);
+          connectionMetrics.successTime = attemptTime;
           success = true;
+          
+          // Cache detailed metrics
+          localStorage.setItem('sb-connection-metrics', JSON.stringify({
+            ...JSON.parse(localStorage.getItem('sb-connection-metrics') || '{}'),
+            lastAttemptTime: attemptTime,
+            successAttempt: attempts + 1,
+            timestamp: new Date().toISOString(),
+            details: result.details || {}
+          }));
+          
           break;
         } else {
-          console.log(`Database connection failed on attempt ${attempts + 1}:`, result.error);
+          console.log(`Database connection failed on attempt ${attempts + 1} in ${attemptTime.toFixed(2)}ms:`, result.error);
+          lastError = result.error;
+          connectionMetrics.errors.push(result.error || 'Okänt fel');
         }
       } catch (err) {
         console.error(`Database connection error on attempt ${attempts + 1}:`, err);
+        lastError = err instanceof Error ? err.message : "Okänt fel";
+        connectionMetrics.errors.push(lastError);
       }
       
       attempts++;
@@ -112,9 +225,28 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
       }
     }
     
+    // Save connection metrics
+    localStorage.setItem('sb-connection-performance', JSON.stringify(connectionMetrics));
+    
+    if (!success && lastError) {
+      localStorage.setItem('sb-connection-error', lastError);
+      localStorage.setItem('sb-connection-error-time', Date.now().toString());
+    }
+    
     return success;
   } catch (err) {
     console.error("Unexpected error during database connection check:", err);
+    
+    // Save error information
+    const errorDetails = {
+      message: err instanceof Error ? err.message : "Okänt fel",
+      type: err instanceof Error ? err.constructor.name : "Unknown",
+      timestamp: new Date().toISOString(),
+      stack: err instanceof Error ? err.stack : undefined
+    };
+    
+    localStorage.setItem('sb-connection-error-details', JSON.stringify(errorDetails));
+    
     return false;
   }
 };
@@ -126,6 +258,13 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
 export const connectAnonymously = async (): Promise<boolean> => {
   try {
     console.log("Attempting anonymous database connection");
+    
+    // Check if we have a recent cached result (less than 1 minute old)
+    const cacheAge = getConnectionCacheAge();
+    if (cacheAge !== null && cacheAge < 1) {
+      console.log(`Using cached connection result (${cacheAge} minutes old)`);
+      return localStorage.getItem('sb-connection-test') === 'true';
+    }
     
     // First try to get an existing session
     const { data: { session } } = await supabase.auth.getSession();
