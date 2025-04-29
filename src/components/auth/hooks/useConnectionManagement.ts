@@ -5,20 +5,21 @@ import { toast } from "sonner";
 import { 
   testDatabaseAccess, 
   getConnectionError, 
-  forceReconnect
+  forceReconnect,
+  setConnectionError
 } from "../utils/databaseUtils";
 
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionError, setConnectionErrorState] = useState<string | null>(null);
   const [isRLSEnabled, setIsRLSEnabled] = useState(false);
   
   // Check for connection error from local storage on mount
   useEffect(() => {
     const storedError = getConnectionError();
     if (storedError) {
-      setConnectionError(storedError);
+      setConnectionErrorState(storedError);
     }
   }, []);
   
@@ -33,6 +34,7 @@ export function useConnectionManagement(isOnline: boolean) {
     try {
       setIsConnecting(true);
       setConnectionError(null);
+      setConnectionErrorState(null);
       
       console.log("Checking database connection at", new Date().toISOString());
       
@@ -44,15 +46,16 @@ export function useConnectionManagement(isOnline: boolean) {
       
       if (success) {
         setIsRLSEnabled(true);
-        setConnectionError(null);
+        setConnectionErrorState(null);
       } else {
         setIsRLSEnabled(false);
-        setConnectionError(error || "Kunde inte ansluta till databasen");
+        setConnectionErrorState(error || "Kunde inte ansluta till databasen");
         console.error("Database connection error:", error);
       }
     } catch (error) {
       console.error("Error checking database connection:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown connection error";
+      setConnectionErrorState(errorMessage);
       setConnectionError(errorMessage);
       setIsRLSEnabled(false);
     } finally {
@@ -65,6 +68,7 @@ export function useConnectionManagement(isOnline: boolean) {
   const handleForceReconnect = useCallback(async () => {
     setIsConnecting(true);
     setConnectionError(null);
+    setConnectionErrorState(null);
     
     try {
       // First try our regular reconnect
@@ -74,11 +78,13 @@ export function useConnectionManagement(isOnline: boolean) {
       await checkDatabaseConnection();
     } catch (error) {
       console.error("Error during forced reconnection:", error);
-      setConnectionError(error instanceof Error ? error.message : "Unknown reconnection error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown reconnection error";
+      setConnectionErrorState(errorMessage);
+      setConnectionError(errorMessage);
     } finally {
       setIsConnecting(false);
     }
-  }, [connectionError, checkDatabaseConnection]);
+  }, [checkDatabaseConnection]);
   
   // Check for existing session with improved persistence
   useEffect(() => {
@@ -99,7 +105,7 @@ export function useConnectionManagement(isOnline: boolean) {
   return {
     connectionChecked,
     isConnecting,
-    connectionError,
+    connectionError: connectionErrorState,
     isRLSEnabled,
     checkDatabaseConnection,
     handleForceReconnect

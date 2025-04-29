@@ -25,6 +25,8 @@ export function useAuthActions(isOnline: boolean) {
     try {
       setIsAuthenticating(true);
       
+      console.log("Sending login link to:", email, "with remember option:", rememberLogin);
+      
       // Send a magic link to the user with extended session options
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -56,23 +58,39 @@ export function useAuthActions(isOnline: boolean) {
       console.log("Executing logout process...");
       toast.loading("Loggar ut...");
       
-      // Use the enhanced clearAuthAndReconnect function
-      const success = await clearAuthAndReconnect();
+      // Clear any remembered login first
+      localStorage.removeItem('rememberLogin');
       
-      if (success) {
-        // Clear any remembered login
-        localStorage.removeItem('rememberLogin');
-        
-        // Force page reload to ensure all state is reset
-        console.log("Logout successful, reloading page...");
-        window.location.reload();
-        
-        return true;
-      } else {
-        console.error("Logout process did not complete successfully");
-        toast.error("Utloggningen misslyckades - vänligen ladda om sidan manuellt");
+      // Use the enhanced clearAuthAndReconnect function with explicit global scope
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Error during sign out:", error);
+        toast.error("Utloggningsfel: " + error.message);
         return false;
       }
+      
+      // Clear all Supabase-related localStorage items
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth'))) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      console.log(`Clearing ${keysToRemove.length} Supabase-related localStorage items`);
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Force page reload to ensure all state is reset
+      console.log("Logout successful, reloading page...");
+      toast.success("Utloggning lyckades");
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+      return true;
     } catch (error) {
       console.error("Exception during logout process:", error);
       toast.error("Kunde inte logga ut - oväntat fel");

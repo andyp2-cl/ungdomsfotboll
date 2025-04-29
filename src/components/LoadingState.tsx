@@ -6,7 +6,7 @@ import {
   ErrorState, 
   NetworkStatus, 
   DatabaseStatus, 
-  LoadingSpinner, 
+  LoadingSpinner,
   useDatabaseCheck 
 } from "./loading";
 import { toast } from "sonner";
@@ -132,6 +132,11 @@ export function LoadingState({
         console.log("Force reconnect successful!");
         setDbStatus('connected');
         toast.success("Databasanslutning återupprättad!");
+        
+        // Force reload page to ensure clean state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         console.error("Force reconnect failed");
         setDbStatus('error');

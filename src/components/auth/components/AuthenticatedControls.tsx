@@ -11,19 +11,12 @@ type AuthenticatedControlsProps = {
 };
 
 export function AuthenticatedControls({ user, triggerSync, handleLogout }: AuthenticatedControlsProps) {
-  const onLogout = async () => {
-    console.log("Logout button clicked");
-    const success = await handleLogout();
+  const onLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // If logout failed and we're still here, give another option
-    if (!success) {
-      setTimeout(() => {
-        // Add a fallback to try reloading
-        if (confirm("Utloggningen fungerade inte korrekt. Vill du ladda om sidan?")) {
-          window.location.reload();
-        }
-      }, 3000);
-    }
+    console.log("Logout button clicked");
+    await handleLogout();
   };
 
   return (

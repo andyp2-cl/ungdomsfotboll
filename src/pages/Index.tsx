@@ -1,28 +1,43 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Users, Calendar, Database, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import { Users, Calendar, Database, AlertTriangle, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { BackupRestoreActions } from "@/components/backup-restore";
 import { toast } from "sonner";
-import { forceReconnect } from "@/components/auth/utils/databaseUtils";
+import { forceReconnect, clearAuthAndReconnect } from "@/components/auth/utils/databaseUtils";
 
 const Index = () => {
   const [syncStatus, setSyncStatus] = useState<"connected" | "connecting" | "disconnected" | "not-configured">(
     "connecting"
   );
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
-  // Force reconnect function
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  // Force reconnect function with complete reset
   const handleForceReconnect = async () => {
     try {
       setIsReconnecting(true);
       setSyncStatus("connecting");
       toast.loading("Återställer databasanslutning...");
       
-      // Try reconnecting with our utility function
-      const success = await forceReconnect();
+      // Complete logout and reconnect
+      const success = await clearAuthAndReconnect();
       
       // Check connection status again
       if (success) {
@@ -32,6 +47,11 @@ const Index = () => {
         setSyncStatus("disconnected");
         toast.error("Kunde inte återupprätta databasanslutning");
       }
+      
+      // Force reload after connection reset to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (error) {
       console.error("Error during forced reconnection:", error);
       setSyncStatus("disconnected");
@@ -52,6 +72,11 @@ const Index = () => {
     // Check Supabase connection - with aggressive retry mechanism
     const checkConnection = async (retryCount = 0) => {
       try {
+        if (!isOnline) {
+          setSyncStatus("disconnected");
+          return;
+        }
+        
         // First check if we have a session
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Connection check: Session exists?", !!session);
@@ -66,7 +91,7 @@ const Index = () => {
           console.log(`Database connection successful on attempt ${retryCount + 1}`);
           setSyncStatus("connected");
           localStorage.setItem('sb-connection-test', 'true');
-          toast.success("Databasanslutning upprättad");
+          localStorage.setItem('sb-connection-test-time', Date.now().toString());
           return;
         }
         
@@ -92,9 +117,6 @@ const Index = () => {
         
         // After multiple failed attempts
         setSyncStatus("disconnected");
-        if (retryCount >= 2) {
-          toast.error("Kunde inte ansluta till databasen. Använd återanslutningsknappen.");
-        }
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         
@@ -112,14 +134,14 @@ const Index = () => {
     
     // Set up periodic connection checking for reconnection attempts
     const intervalId = setInterval(() => {
-      if (syncStatus !== "connected") {
-        // Only recheck if not already connected
+      if (syncStatus !== "connected" && isOnline) {
+        // Only recheck if not already connected and we're online
         checkConnection();
       }
     }, 30000); // Check every 30 seconds if not connected
     
     return () => clearInterval(intervalId);
-  }, [syncStatus]);
+  }, [syncStatus, isOnline]);
   
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
@@ -145,19 +167,28 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-2 text-sm mt-6">
-            {syncStatus === "connected" && (
+            {!isOnline && (
+              <span className="flex items-center gap-1 text-orange-600">
+                <AlertTriangle className="h-4 w-4" />
+                Offline-läge
+              </span>
+            )}
+            
+            {isOnline && syncStatus === "connected" && (
               <span className="flex items-center gap-1 text-green-600">
-                <Database className="h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4" />
                 Databas ansluten
               </span>
             )}
-            {syncStatus === "connecting" && (
+            
+            {isOnline && syncStatus === "connecting" && (
               <span className="flex items-center gap-1 text-amber-600">
                 <Database className="h-4 w-4" />
                 Ansluter till databas...
               </span>
             )}
-            {(syncStatus === "disconnected" || syncStatus === "not-configured") && (
+            
+            {isOnline && (syncStatus === "disconnected" || syncStatus === "not-configured") && (
               <div className="flex flex-col items-center gap-1">
                 <span className="flex items-center gap-1 text-red-600">
                   <Database className="h-4 w-4" />

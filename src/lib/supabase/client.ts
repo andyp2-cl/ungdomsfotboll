@@ -7,7 +7,7 @@ const SUPABASE_URL = "https://zkrruihxszziifyogzko.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U";
 
 // Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// import { supabase } from "@/lib/supabase/client";
 
 // Create client with explicit configuration to ensure consistent behavior
 export const supabase = createClient<Database>(
@@ -17,7 +17,8 @@ export const supabase = createClient<Database>(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      storage: localStorage
     },
     realtime: {
       params: {
@@ -112,7 +113,7 @@ export const forceResetConnection = async (): Promise<boolean> => {
   }
 };
 
-// Force refresh session at app startup
+// Initialize session immediately when this module is imported
 (() => {
   try {
     console.log('Initializing Supabase connection...');
@@ -130,6 +131,8 @@ export const forceResetConnection = async (): Promise<boolean> => {
               console.error('Error refreshing session:', error);
             } else {
               console.log('Session refreshed successfully');
+              // Cache successful connection after refresh
+              localStorage.setItem('sb-connection-test', 'true');
             }
           });
         } else {
