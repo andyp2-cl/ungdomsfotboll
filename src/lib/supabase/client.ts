@@ -30,6 +30,35 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
   }
 };
 
+// Enhanced session initialization and management
+export const initializeSupabaseSession = async (): Promise<boolean> => {
+  try {
+    // Get current session state
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      console.log("Found existing session, refreshing...");
+      
+      // Explicitly refresh session to ensure it's valid
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error("Session refresh failed:", refreshError.message);
+        return false;
+      }
+      
+      // Test database connection after session refresh
+      return await isSupabaseConfigured();
+    } else {
+      // Try anonymous access for public tables
+      return await isSupabaseConfigured();
+    }
+  } catch (err) {
+    console.error("Error initializing Supabase session:", err);
+    return false;
+  }
+};
+
 // Force refresh session at startup and configure session persistence
 (() => {
   try {
@@ -61,6 +90,11 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
       const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
       localStorage.setItem('supabase.auth.token.expiry', 
         (Date.now() + thirtyDaysInMs).toString());
+      
+      // Trigger immediate connection test
+      setTimeout(() => {
+        isSupabaseConfigured();
+      }, 100);
     }
   } catch (e) {
     console.error("Error configuring session persistence:", e);

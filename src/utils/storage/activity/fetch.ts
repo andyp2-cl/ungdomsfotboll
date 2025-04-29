@@ -1,17 +1,63 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
 
 // Get activities from Supabase
 export const getStoredActivities = async (): Promise<Activity[]> => {
   try {
+    // First, check database connection
+    const { data: testData, error: testError } = await supabase
+      .from('leagues')
+      .select('count')
+      .limit(1);
+      
+    if (testError) {
+      console.error("Database connection test failed before fetching activities:", testError);
+      // Try to refresh session and try again
+      try {
+        await supabase.auth.refreshSession();
+        console.log("Session refreshed, retrying activities fetch");
+      } catch (refreshError) {
+        console.error("Failed to refresh session:", refreshError);
+      }
+    }
+    
     // First, get all activities
     const { data: activitiesData, error: activitiesError } = await supabase
       .from('activities')
       .select('*');
       
-    if (activitiesError) throw activitiesError;
+    if (activitiesError) {
+      console.error("Error fetching activities:", activitiesError);
+      
+      // If we have a 401 error, try to refresh session and retry
+      if (activitiesError.code === '401' || activitiesError.message.includes('JWT')) {
+        try {
+          await supabase.auth.refreshSession();
+          console.log("Session refreshed after 401, retrying activities fetch");
+          
+          // Retry after session refresh
+          const { data: retryData, error: retryError } = await supabase
+            .from('activities')
+            .select('*');
+            
+          if (retryError) {
+            throw retryError;
+          }
+          
+          // Use retry data if successful
+          if (retryData) {
+            activitiesData = retryData;
+          }
+        } catch (refreshError) {
+          console.error("Failed to refresh session after 401:", refreshError);
+          throw activitiesError; // Re-throw original error if refresh fails
+        }
+      } else {
+        throw activitiesError;
+      }
+    }
     
     // Ensure we have data before proceeding
     if (!activitiesData) {
@@ -39,7 +85,10 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       .from('player_activities')
       .select('*');
       
-    if (relationshipError) throw relationshipError;
+    if (relationshipError) {
+      console.error("Error fetching player-activity relationships:", relationshipError);
+      // Continue processing even if we can't get relationships
+    }
     
     // Populate participants for each activity
     activities.forEach(activity => {
@@ -86,9 +135,23 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     });
     
     console.log("Retrieved and linked activities from Supabase:", activities.length);
+    
+    // Store a successful DB connection flag
+    localStorage.setItem('sb-connection-test', 'true');
+    
     return activities;
   } catch (error) {
     console.error("Error fetching activities:", error);
+    // Check if there's a cached version we can use as fallback
+    try {
+      const cachedActivities = localStorage.getItem('cachedActivities');
+      if (cachedActivities) {
+        console.log("Using cached activities as fallback");
+        return JSON.parse(cachedActivities);
+      }
+    } catch (cacheError) {
+      console.error("Error using cached activities:", cacheError);
+    }
     return [];
   }
 };

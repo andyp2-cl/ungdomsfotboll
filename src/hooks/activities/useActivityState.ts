@@ -4,6 +4,7 @@ import { Activity } from "@/types/player";
 import { getStoredActivities } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
+import { supabase } from "@/lib/supabase/client";
 
 export function useActivityState() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -17,7 +18,11 @@ export function useActivityState() {
 
   // Network status monitoring
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Reload activities when back online
+      loadActivities(true);
+    };
     const handleOffline = () => setIsOffline(true);
     
     window.addEventListener('online', handleOnline);
@@ -34,6 +39,9 @@ export function useActivityState() {
       setIsLoading(true);
       setLoadError(null);
       
+      // Check if we're authenticated first
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // Set a timeout to detect slow connections
       const timeoutId = setTimeout(() => {
         if (isOffline) {
@@ -42,6 +50,12 @@ export function useActivityState() {
           sonnerToast.warning("Databasanslutningen verkar långsam. Försöker fortsätta...");
         }
       }, 3000);
+      
+      // If we are authenticated and connection was previously tested, set 
+      // the connection test flag to true to avoid showing "connecting" status
+      if (session) {
+        localStorage.setItem('sb-connection-test', 'true');
+      }
       
       const storedActivities = await getStoredActivities();
       clearTimeout(timeoutId);
@@ -66,6 +80,23 @@ export function useActivityState() {
       }
     } catch (error) {
       console.error("Error loading activities:", error);
+      
+      // Retry once if possible
+      try {
+        // Force session refresh first
+        await supabase.auth.refreshSession();
+        
+        // Then try to fetch activities again
+        const retryActivities = await getStoredActivities();
+        if (retryActivities.length > 0) {
+          setActivities(retryActivities);
+          console.log("Activities successfully loaded after retry");
+          return;
+        }
+      } catch (retryError) {
+        console.error("Retry also failed:", retryError);
+      }
+      
       setLoadError(isOffline 
         ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
         : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."

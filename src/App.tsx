@@ -12,7 +12,7 @@ import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useSyncEngine } from "./hooks/useSyncEngine";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "./integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "./lib/supabase/client";
 import { LoginStatus } from "./components/auth/LoginStatus";
 
 const queryClient = new QueryClient({
@@ -27,6 +27,7 @@ const queryClient = new QueryClient({
 function App() {
   const { manualSync } = useSyncEngine();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [dbConnectionAttempts, setDbConnectionAttempts] = useState(0);
   
   // Monitor online/offline status
   useEffect(() => {
@@ -36,6 +37,8 @@ function App() {
       // Trigger sync when we're back online
       setTimeout(() => {
         manualSync();
+        // Also recheck database connection
+        checkDatabaseConnection();
       }, 1000);
     };
     
@@ -53,24 +56,79 @@ function App() {
     };
   }, [manualSync]);
   
-  // Initialize session on startup
+  // Function to check database connection with retries
+  const checkDatabaseConnection = async (attempt = 0) => {
+    try {
+      setDbConnectionAttempts(prev => prev + 1);
+      
+      // First check if we have a cached successful connection
+      const cachedConnection = localStorage.getItem('sb-connection-test');
+      if (cachedConnection === 'true' && attempt === 0) {
+        console.log("Found cached successful connection");
+        return true;
+      }
+      
+      const isConnected = await isSupabaseConfigured();
+      
+      if (isConnected) {
+        console.log(`Database connection verified on attempt ${attempt + 1}`);
+        toast.success("Databasanslutning upprättad");
+        return true;
+      }
+      
+      // If not connected and we haven't exceeded max retries
+      if (attempt < 2) {
+        console.log(`Database connection failed, retrying (${attempt + 1}/3)...`);
+        
+        // Attempt to refresh the session before retrying
+        try {
+          await supabase.auth.refreshSession();
+        } catch (err) {
+          console.error("Error refreshing session during connection retry:", err);
+        }
+        
+        // Wait and try again
+        setTimeout(() => checkDatabaseConnection(attempt + 1), 2000);
+        return false;
+      } else {
+        console.log("Maximum database connection attempts reached");
+        // Only show warning if we've truly failed after retries
+        if (attempt >= 2) {
+          toast.warning("Problem med databasanslutningen. Du kanske behöver logga in på nytt.");
+        }
+        return false;
+      }
+    } catch (err) {
+      console.error("Error checking database connection:", err);
+      return false;
+    }
+  };
+  
+  // Initialize session on startup with multiple retries
   useEffect(() => {
+    // Don't run this effect if we're offline
+    if (!isOnline) return;
+    
     // Force-refresh the session on app start to ensure we have the latest data
     const initializeSession = async () => {
       try {
+        // Check if we already confirmed connection
+        const hasConfirmedConnection = localStorage.getItem('sb-connection-test') === 'true';
+        
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           console.log("Found existing session, refreshing...");
           await supabase.auth.refreshSession();
           
-          // Test database connection
-          const { error } = await supabase.from('leagues').select('count');
-          if (error) {
-            console.error("Initial database connection test failed:", error);
-            toast.warning("Kontrollerar databasanslutning...");
-          } else {
-            console.log("Initial database connection test passed");
+          // After refresh, test database connection
+          if (!hasConfirmedConnection) {
+            await checkDatabaseConnection();
+          }
+        } else {
+          // No session, but still check if we can access public data
+          if (!hasConfirmedConnection) {
+            await checkDatabaseConnection();
           }
         }
       } catch (err) {
@@ -79,7 +137,20 @@ function App() {
     };
     
     initializeSession();
-  }, []);
+    
+    // Set up periodic connection check (every 30 seconds if we haven't confirmed connection)
+    const intervalId = setInterval(() => {
+      const hasConfirmedConnection = localStorage.getItem('sb-connection-test') === 'true';
+      if (!hasConfirmedConnection && dbConnectionAttempts < 5) {
+        checkDatabaseConnection();
+      } else {
+        // Clear interval once we have confirmed connection or tried enough times
+        clearInterval(intervalId);
+      }
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [isOnline, dbConnectionAttempts]);
   
   // Show toast if offline at startup
   useEffect(() => {

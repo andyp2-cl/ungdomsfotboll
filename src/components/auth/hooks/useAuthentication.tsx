@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Session, User } from '@supabase/supabase-js';
@@ -8,6 +7,7 @@ export function useAuthentication() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [email, setEmail] = useState('');
   const [showLogin, setShowLogin] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -28,10 +28,52 @@ export function useAuthentication() {
     };
   }, []);
   
-  // Check for existing session
+  // Test if we can access the database - with retry mechanism
+  const testDatabaseAccess = useCallback(async () => {
+    try {
+      // Try a simple read operation with retry logic
+      let attempts = 0;
+      let success = false;
+      
+      while (attempts < 3 && !success) {
+        const { data, error } = await supabase
+          .from('leagues')
+          .select('id')
+          .limit(1);
+        
+        if (error) {
+          console.error(`Database access test failed (attempt ${attempts + 1}):`, error);
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          attempts++;
+        } else {
+          console.log("Database access test passed:", data);
+          success = true;
+          
+          // Cache successful connection test
+          localStorage.setItem('sb-connection-test', 'true');
+          return true;
+        }
+      }
+      
+      if (!success) {
+        toast.warning("Begränsad databastillgång. Logga in för full funktionalitet.");
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error testing database access:", error);
+      return false;
+    }
+  }, []);
+  
+  // Check for existing session with improved error handling and retry logic
   useEffect(() => {
     const checkSession = async () => {
       try {
+        setIsInitializing(true);
+        
         // First try to get session from storage
         const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session);
@@ -39,39 +81,59 @@ export function useAuthentication() {
         setUser(session?.user || null);
         
         if (session) {
-          await testDatabaseAccess();
-          
-          // Explicitly set session persistence and extended expiry
+          // Set extended session persistence immediately
           localStorage.setItem('sb-session-persistence', 'true');
           localStorage.setItem('supabase.auth.token.expiry', 
             (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
-        } else {
-          // If no session found, try to refresh it
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           
-          if (!refreshError && refreshData.session) {
-            setIsAuthenticated(true);
-            setSession(refreshData.session);
-            setUser(refreshData.session.user || null);
-            await testDatabaseAccess();
-            console.log("Session refreshed successfully");
-            
-            // Set extended session expiry after successful refresh
-            localStorage.setItem('supabase.auth.token.expiry', 
-              (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
-          } else {
-            console.log("No valid session found or refresh failed:", refreshError?.message);
-            
+          // Test database access with the current session
+          await testDatabaseAccess();
+        } else {
+          // If no session found, try to refresh it with retry logic
+          let refreshAttempts = 0;
+          let refreshSuccess = false;
+          
+          while (refreshAttempts < 2 && !refreshSuccess) {
+            try {
+              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+              
+              if (!refreshError && refreshData.session) {
+                setIsAuthenticated(true);
+                setSession(refreshData.session);
+                setUser(refreshData.session.user || null);
+                refreshSuccess = true;
+                await testDatabaseAccess();
+                console.log("Session refreshed successfully (attempt", refreshAttempts + 1, ")");
+                
+                // Set extended session expiry after successful refresh
+                localStorage.setItem('supabase.auth.token.expiry', 
+                  (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
+              } else {
+                console.log("Session refresh failed, attempt", refreshAttempts + 1, refreshError?.message);
+                refreshAttempts++;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            } catch (err) {
+              console.error("Error during session refresh attempt", refreshAttempts + 1, ":", err);
+              refreshAttempts++;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          
+          // After all refresh attempts
+          if (!refreshSuccess) {
             // Check if we have a remembered login
             const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
             if (rememberedLogin) {
-              // Show a notification that re-login might be needed
+              // Prompt user to re-login if they had a remembered session
               toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
             }
           }
         }
       } catch (error) {
         console.error("Error checking session:", error);
+      } finally {
+        setIsInitializing(false);
       }
     };
     
@@ -95,6 +157,9 @@ export function useAuthentication() {
           // Extended session - 30 days
           localStorage.setItem('supabase.auth.token.expiry', 
             (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
+          
+          // Force cache the connection state
+          localStorage.setItem('sb-connection-test', 'true');
         }
         
         // Try to sync any pending changes when user logs in
@@ -109,13 +174,15 @@ export function useAuthentication() {
         }
       } else if (event === 'SIGNED_OUT') {
         toast.info("Du har loggat ut");
+        // Clear connection test cache on logout
+        localStorage.removeItem('sb-connection-test');
       }
     });
     
     return () => {
       subscription.unsubscribe();
     };
-  }, [rememberLogin]);
+  }, [rememberLogin, testDatabaseAccess]);
 
   // Test if we can access the database
   const testDatabaseAccess = async () => {
@@ -198,6 +265,9 @@ export function useAuthentication() {
 
   const handleLogout = async () => {
     try {
+      // Clear connection status cache before logout
+      localStorage.removeItem('sb-connection-test');
+      
       await supabase.auth.signOut();
       setSession(null);
       setUser(null);
@@ -243,6 +313,7 @@ export function useAuthentication() {
     isAuthenticated,
     isAuthenticating,
     isOnline,
+    isInitializing,
     email,
     setEmail,
     showLogin,
@@ -253,6 +324,7 @@ export function useAuthentication() {
     setRememberLogin,
     handleLogin,
     handleLogout,
-    triggerSync
+    triggerSync,
+    testDatabaseAccess
   };
 }

@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Users, Calendar, Database, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { supabase, isSupabaseConfigured, initializeSupabaseSession } from "@/lib/supabase/client";
 import { BackupRestoreActions } from "@/components/backup-restore";
 import { toast } from "sonner";
 
@@ -20,64 +19,61 @@ const Index = () => {
       return;
     }
     
-    // Check Supabase connection - with retry mechanism
+    // Check Supabase connection - with aggressive retry mechanism
     const checkConnection = async (retryCount = 0) => {
       try {
-        // First check if we have an active session
-        const { data: { session } } = await supabase.auth.getSession();
+        // First attempt to initialize the session
+        const sessionInitialized = await initializeSupabaseSession();
         
-        if (session) {
-          // Try to access data with the session
-          const { data, error } = await supabase.from('leagues').select('count');
+        if (sessionInitialized) {
+          setSyncStatus("connected");
+          localStorage.setItem('sb-connection-test', 'true');
+          toast.success("Databasanslutning upprättad");
+          return;
+        }
+        
+        // If we have a session but can't access data, try to refresh the session
+        if (retryCount < 3) {
+          console.log(`Connection attempt failed. Retrying (attempt ${retryCount + 1})...`);
           
-          if (error) {
-            console.error("Supabase connection error with session:", error);
-            
-            // If we have a session but can't access data, try to refresh the session
-            if (retryCount < 2) {
-              console.log(`Refreshing session and retrying (attempt ${retryCount + 1})...`);
-              await supabase.auth.refreshSession();
-              setTimeout(() => checkConnection(retryCount + 1), 1000);
-              return;
-            }
-            
-            setSyncStatus("disconnected");
-            toast.error("Kunde inte ansluta till databasen. Försök logga in igen.");
-          } else {
-            setSyncStatus("connected");
-            localStorage.setItem('sb-connection-test', 'true');
-            toast.success("Databasanslutning upprättad");
+          // Force refresh auth session before retrying
+          try {
+            await supabase.auth.refreshSession();
+            console.log("Session refreshed, retrying connection...");
+          } catch (refreshError) {
+            console.error("Error refreshing session:", refreshError);
           }
-        } else if (retryCount < 1) {
-          // No session found, but try to check public tables anyway
-          const { data, error } = await supabase.from('leagues').select('count');
           
-          if (error) {
-            // Can't access even public data
-            console.error("No session and can't access public data:", error);
-            setSyncStatus("disconnected");
-          } else {
-            // Public data is accessible
-            setSyncStatus("connected");
-            localStorage.setItem('sb-connection-test', 'true');
-          }
+          // Add slight delay before retry
+          setTimeout(() => checkConnection(retryCount + 1), 1000);
+          return;
+        }
+        
+        // After multiple failed attempts
+        setSyncStatus("disconnected");
+        toast.error("Kunde inte ansluta till databasen. Försök logga in igen.");
+      } catch (err) {
+        console.error("Failed to connect to Supabase:", err);
+        
+        // Still retry if within retry count
+        if (retryCount < 3) {
+          setTimeout(() => checkConnection(retryCount + 1), 1000);
         } else {
           setSyncStatus("disconnected");
         }
-      } catch (err) {
-        console.error("Failed to connect to Supabase:", err);
-        setSyncStatus("disconnected");
       }
     };
     
+    // Start connection process
     checkConnection();
     
-    // Set up periodic connection checking
+    // Set up periodic connection checking for reconnection attempts
     const intervalId = setInterval(() => {
       if (syncStatus !== "connected") {
+        // Only recheck if not already connected
         checkConnection();
       }
-    }, 30000); // Check every 30 seconds if not connected
+    }, 15000); // Check every 15 seconds if not connected
     
     return () => clearInterval(intervalId);
   }, [syncStatus]);
