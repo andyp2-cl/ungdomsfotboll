@@ -6,8 +6,10 @@ import { Session, User } from '@supabase/supabase-js';
 import { 
   testDatabaseAccess, 
   setExtendedSessionPersistence, 
-  cacheSuccessfulConnection 
+  cacheSuccessfulConnection,
+  connectAnonymously
 } from "../utils/databaseUtils";
+import { shouldAutoConnectDatabase } from "@/utils/environment";
 
 export function useSessionManagement() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +18,27 @@ export function useSessionManagement() {
   const [user, setUser] = useState<User | null>(null);
   const [rememberLogin, setRememberLogin] = useState(true);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [autoConnectActive, setAutoConnectActive] = useState(shouldAutoConnectDatabase());
+  
+  // Automatic database connection in development environment
+  useEffect(() => {
+    const attemptAutoConnect = async () => {
+      if (!autoConnectActive || isAuthenticated) {
+        return;
+      }
+      
+      try {
+        console.log("Auto-connecting to database...");
+        await connectAnonymously();
+      } catch (error) {
+        console.error("Auto-connect failed:", error);
+      }
+    };
+    
+    if (autoConnectActive && !isAuthenticated && !isInitializing) {
+      attemptAutoConnect();
+    }
+  }, [autoConnectActive, isAuthenticated, isInitializing]);
   
   // Check for existing session with improved error handling and retry logic
   useEffect(() => {
@@ -57,12 +80,23 @@ export function useSessionManagement() {
           setSession(null);
           setUser(null);
           
-          // Check if we have a remembered login
-          const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
-          if (rememberedLogin) {
-            setLoginAttempted(true);
-            // Prompt user to re-login if they had a remembered session
-            toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
+          // Check if auto-connect is enabled
+          if (shouldAutoConnectDatabase()) {
+            try {
+              console.log("Auto-connect enabled, attempting anonymous sign-in");
+              await connectAnonymously();
+              setLoginAttempted(true);
+            } catch (err) {
+              console.error("Auto-connect failed:", err);
+            }
+          } else {
+            // Check if we have a remembered login
+            const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
+            if (rememberedLogin) {
+              setLoginAttempted(true);
+              // Prompt user to re-login if they had a remembered session
+              toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
+            }
           }
         }
       } catch (error) {
@@ -126,6 +160,18 @@ export function useSessionManagement() {
     };
   }, [rememberLogin]);
   
+  // Function to toggle auto-connect preference
+  const toggleAutoConnect = useCallback((enabled?: boolean) => {
+    const newValue = enabled !== undefined ? enabled : !autoConnectActive;
+    setAutoConnectActive(newValue);
+    setAutoConnectDatabase(newValue);
+    
+    if (newValue && !isAuthenticated) {
+      // Attempt to connect immediately if enabled
+      connectAnonymously().catch(err => console.error("Auto-connect failed:", err));
+    }
+  }, [autoConnectActive, isAuthenticated]);
+  
   return {
     isAuthenticated,
     isInitializing,
@@ -133,6 +179,8 @@ export function useSessionManagement() {
     user,
     rememberLogin,
     setRememberLogin,
-    loginAttempted
+    loginAttempted,
+    autoConnectActive,
+    toggleAutoConnect
   };
 }

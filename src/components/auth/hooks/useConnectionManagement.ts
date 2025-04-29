@@ -1,111 +1,145 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { 
-  testDatabaseAccess, 
-  getConnectionError, 
-  forceReconnect,
-  setConnectionError
-} from "../utils/databaseUtils";
+import { supabase, isSupabaseConfigured, forceResetConnection } from '@/integrations/supabase/client';
+import { testDatabaseAccess, connectAnonymously } from '../utils/databaseUtils';
+import { toast } from 'sonner';
+import { shouldAutoConnectDatabase } from '@/utils/environment';
 
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
-  const [connectionErrorState, setConnectionErrorState] = useState<string | null>(null);
-  const [isRLSEnabled, setIsRLSEnabled] = useState(false);
-  
-  // Check for connection error from local storage on mount
-  useEffect(() => {
-    const storedError = getConnectionError();
-    if (storedError) {
-      setConnectionErrorState(storedError);
-    }
-  }, []);
-  
-  // Check database connection with memoized callback to prevent recreating on each render
-  const checkDatabaseConnection = useCallback(async () => {
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isRLSEnabled, setIsRLSEnabled] = useState(true);
+
+  // Check database connection with automatic reconnect if configured
+  const checkDatabaseConnection = useCallback(async (forceCheck = false) => {
     if (!isOnline) {
+      console.log("Skip connection check - device is offline");
       setConnectionChecked(true);
-      setIsConnecting(false);
       return;
     }
-    
+
     try {
       setIsConnecting(true);
-      setConnectionError(null);
-      setConnectionErrorState(null);
       
-      console.log("Checking database connection at", new Date().toISOString());
+      // First check cached connection status to avoid unnecessary checks
+      const cachedStatus = localStorage.getItem('sb-connection-test');
+      const cachedTime = localStorage.getItem('sb-connection-test-time');
+      const cacheIsValid = cachedStatus === 'true' && cachedTime && 
+                         (Date.now() - parseInt(cachedTime, 10)) < 1000 * 60 * 5; // 5 minutes
       
-      // Check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Test database access
-      const { success, error } = await testDatabaseAccess();
-      
-      if (success) {
-        setIsRLSEnabled(true);
-        setConnectionErrorState(null);
-      } else {
-        setIsRLSEnabled(false);
-        setConnectionErrorState(error || "Kunde inte ansluta till databasen");
-        console.error("Database connection error:", error);
+      if (cacheIsValid && !forceCheck) {
+        console.log("Using cached connection status");
+        setConnectionChecked(true);
+        setIsConnecting(false);
+        setConnectionError(null);
+        return;
       }
-    } catch (error) {
-      console.error("Error checking database connection:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown connection error";
-      setConnectionErrorState(errorMessage);
-      setConnectionError(errorMessage);
-      setIsRLSEnabled(false);
+      
+      console.log("Testing database connection...");
+      
+      // Test if we already have a working connection
+      const isConfigured = await isSupabaseConfigured();
+      
+      if (isConfigured) {
+        console.log("Database connection is configured");
+        setConnectionChecked(true);
+        setConnectionError(null);
+        
+        // Try to test with actual database access
+        const { success, rlsEnabled } = await testDatabaseAccess();
+        
+        if (success) {
+          console.log("Database test successful, RLS enabled:", rlsEnabled);
+          setIsRLSEnabled(rlsEnabled);
+          setConnectionError(null);
+        } else {
+          console.log("Database configuration exists but test failed");
+          
+          // If auto-connect is enabled, try that
+          if (shouldAutoConnectDatabase()) {
+            console.log("Auto-connect enabled, attempting anonymous sign-in");
+            const anonymousSuccess = await connectAnonymously();
+            
+            if (anonymousSuccess) {
+              setConnectionError(null);
+            } else {
+              setConnectionError("Databasanslutning misslyckades");
+            }
+          } else {
+            setConnectionError("Databasanslutningen kräver åtkomst");
+          }
+        }
+      } else {
+        // If auto-connect is enabled and we're not configured, try anonymous sign-in
+        if (shouldAutoConnectDatabase()) {
+          console.log("Auto-connect enabled, attempting anonymous sign-in");
+          const anonymousSuccess = await connectAnonymously();
+          
+          if (anonymousSuccess) {
+            setConnectionChecked(true);
+            setConnectionError(null);
+            return;
+          }
+        }
+        
+        console.log("Database connection is not configured");
+        setConnectionError("Aktivera DB-åtkomst för databasefunktioner");
+      }
+    } catch (err) {
+      console.error("Error checking database connection:", err);
+      setConnectionError("Anslutningsfel: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setConnectionChecked(true);
       setIsConnecting(false);
     }
   }, [isOnline]);
-  
-  // Force a fresh connection with cleared cache
+
+  // Function to force a reconnection to the database
   const handleForceReconnect = useCallback(async () => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    setConnectionErrorState(null);
-    
     try {
-      // First try our regular reconnect
-      await forceReconnect();
+      setIsConnecting(true);
+      toast.loading("Återansluter till databasen...");
+
+      // Clear connection cache
+      localStorage.removeItem('sb-connection-test');
+      localStorage.removeItem('sb-connection-test-time');
       
-      // Check connection again
-      await checkDatabaseConnection();
+      // Force reset Supabase connection
+      await forceResetConnection();
+      
+      // Try to connect anonymously if auto-connect is enabled
+      if (shouldAutoConnectDatabase()) {
+        const success = await connectAnonymously();
+        if (success) {
+          toast.success("Återansluten till databasen");
+          setConnectionError(null);
+          return;
+        }
+      }
+
+      // Fall back to normal connection check
+      await checkDatabaseConnection(true);
+      
+      toast.success("Återanslutning slutförd");
     } catch (error) {
-      console.error("Error during forced reconnection:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown reconnection error";
-      setConnectionErrorState(errorMessage);
-      setConnectionError(errorMessage);
+      console.error("Error during force reconnect:", error);
+      setConnectionError("Återanslutning misslyckades");
+      toast.error("Kunde inte återansluta till databasen");
     } finally {
       setIsConnecting(false);
     }
   }, [checkDatabaseConnection]);
-  
-  // Check for existing session with improved persistence
+
+  // Check connection on mount and when online status changes
   useEffect(() => {
-    // Initial connection check
     checkDatabaseConnection();
-    
-    // Set up periodic connection check (every 5 minutes)
-    const intervalId = setInterval(() => {
-      console.log("Performing periodic connection check");
-      checkDatabaseConnection();
-    }, 5 * 60 * 1000); // 5 minutes
-    
-    return () => {
-      clearInterval(intervalId);
-    };
   }, [isOnline, checkDatabaseConnection]);
-  
+
   return {
     connectionChecked,
-    isConnecting,
-    connectionError: connectionErrorState,
+    isConnecting, 
+    connectionError,
     isRLSEnabled,
     checkDatabaseConnection,
     handleForceReconnect

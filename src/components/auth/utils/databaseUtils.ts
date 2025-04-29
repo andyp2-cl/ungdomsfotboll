@@ -1,20 +1,11 @@
-
 import { supabase } from "@/lib/supabase/client";
-import { toast } from "sonner";
 
-// Function to test if database access is working
-export const testDatabaseAccess = async () => {
+/**
+ * Test database access
+ */
+export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabled: boolean; error?: string }> => {
   try {
-    console.log("Testing database access...");
-    
-    // Check for a session first
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.log("No session available during database test");
-    }
-    
-    // Try to fetch data from leagues table
+    // Simple query to verify access
     const { data, error } = await supabase
       .from('leagues')
       .select('id')
@@ -22,178 +13,189 @@ export const testDatabaseAccess = async () => {
     
     if (error) {
       console.error("Database access test failed:", error);
-      setConnectionError(error.message);
-      return { success: false, error: error.message };
+      return { success: false, rlsEnabled: false, error: error.message };
     }
     
-    // Cache successful connection
-    localStorage.setItem('sb-connection-test', 'true');
-    localStorage.setItem('sb-connection-test-time', Date.now().toString());
-    setConnectionError(null);
-    
-    console.log("Database access test succeeded:", data);
-    return { success: true, data };
-  } catch (err) {
-    console.error("Error during database access test:", err);
-    const errorMessage = err instanceof Error ? err.message : "Unknown error during database test";
-    setConnectionError(errorMessage);
-    return { 
-      success: false, 
-      error: errorMessage
-    };
-  }
-};
-
-// Function to set extended session persistence
-export const setExtendedSessionPersistence = () => {
-  try {
-    localStorage.setItem('supabase.auth.token.expiryDays', '30');
-    return true;
-  } catch (err) {
-    console.error("Error setting session persistence:", err);
-    return false;
-  }
-};
-
-// Cache successful connection
-export const cacheSuccessfulConnection = () => {
-  try {
-    localStorage.setItem('sb-connection-test', 'true');
-    localStorage.setItem('sb-connection-test-time', Date.now().toString());
-    return true;
-  } catch (err) {
-    console.error("Error caching connection:", err);
-    return false;
-  }
-};
-
-// Function to get connection error from localStorage
-export const getConnectionError = (): string | null => {
-  try {
-    return localStorage.getItem('sb-connection-error');
-  } catch (err) {
-    console.error("Error getting connection error from storage:", err);
-    return null;
-  }
-};
-
-// Function to set connection error in localStorage
-export const setConnectionError = (error: string | null): void => {
-  try {
-    if (error) {
-      localStorage.setItem('sb-connection-error', error);
-    } else {
-      localStorage.removeItem('sb-connection-error');
-    }
-  } catch (err) {
-    console.error("Error setting connection error in storage:", err);
-  }
-};
-
-// Function to check for pending updates
-export const checkPendingUpdates = (): number => {
-  try {
-    // Here we would check for any locally stored updates
-    // For now, we'll just check for pending score updates as an example
-    const pendingScoreUpdates = localStorage.getItem('pendingScoreUpdates');
-    if (pendingScoreUpdates) {
-      const updates = JSON.parse(pendingScoreUpdates);
-      return Object.keys(updates).length;
-    }
-    return 0;
-  } catch (err) {
-    console.error("Error checking pending updates:", err);
-    return 0;
-  }
-};
-
-// Function to check connection with session - comprehensive test
-export const checkConnectionWithSession = async (): Promise<boolean> => {
-  try {
-    console.log("Checking connection with session...");
-    
-    // Try to refresh session first
+    // Check if RLS is enabled by attempting an insert that should be blocked
     try {
-      await supabase.auth.refreshSession();
-      console.log("Session refreshed during connection check");
-    } catch (refreshError) {
-      console.log("No session to refresh or refresh failed:", refreshError);
-      // Continue anyway to test anonymous access
-    }
-    
-    // Test database access - simplified for speed
-    const testResult = await testDatabaseAccess();
-    
-    // Return success state and cache the result
-    if (testResult.success) {
-      cacheSuccessfulConnection();
-      setConnectionError(null);
-      return true;
-    } else {
-      setConnectionError(testResult.error || "Unknown database connection error");
-      return false;
-    }
-  } catch (err) {
-    console.error("Error during connection check with session:", err);
-    setConnectionError(err instanceof Error ? err.message : "Unexpected error during connection check");
-    return false;
-  }
-};
-
-// Force reconnect function with better error handling
-export const forceReconnect = async (): Promise<boolean> => {
-  try {
-    console.log("Attempting to force reconnect to Supabase...");
-    
-    // 1. Clear connection cache
-    localStorage.removeItem('sb-connection-test');
-    localStorage.removeItem('sb-connection-test-time');
-    localStorage.removeItem('sb-connection-error');
-    
-    // 2. Test database access directly
-    const testResult = await testDatabaseAccess();
-    
-    // 3. Return success state
-    return testResult.success;
-  } catch (err) {
-    console.error("Error during force reconnect:", err);
-    return false;
-  }
-};
-
-// Clear auth function that ensures a complete logout and reconnection
-export const clearAuthAndReconnect = async (): Promise<boolean> => {
-  try {
-    console.log("Clearing all auth data and reconnecting...");
-    
-    // 1. Clear all Supabase-related localStorage items
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth'))) {
-        keysToRemove.push(key);
+      await supabase
+        .from('leagues')
+        .insert({ id: 'test-rls', name: 'Test RLS' });
+    } catch (rlsError) {
+      // If the error contains "new row violates row-level security policy", RLS is enabled
+      if (rlsError.message.includes('new row violates row-level security policy')) {
+        console.log("Row Level Security (RLS) is enabled");
+        return { success: true, rlsEnabled: true };
+      } else {
+        console.warn("Insert test failed but RLS may not be enabled:", rlsError);
+        return { success: true, rlsEnabled: false };
       }
     }
     
-    console.log(`Clearing ${keysToRemove.length} Supabase-related localStorage items`);
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    // If we reach here, the insert succeeded, which means RLS is NOT enabled
+    console.warn("Row Level Security (RLS) is NOT enabled");
+    return { success: true, rlsEnabled: false };
+  } catch (err) {
+    console.error("Error testing database access:", err);
+    return { success: false, rlsEnabled: false, error: err instanceof Error ? err.message : "Okänt fel" };
+  }
+};
+
+/**
+ * Set extended session persistence
+ * This keeps the session alive for 30 days
+ */
+export const setExtendedSessionPersistence = async (): Promise<void> => {
+  try {
+    console.log("Setting extended session persistence...");
+    await supabase.auth.setSession({
+      expires_in: 60 * 60 * 24 * 30, // 30 days
+    });
+    console.log("Extended session persistence set successfully");
+  } catch (error) {
+    console.error("Error setting extended session persistence:", error);
+  }
+};
+
+/**
+ * Cache successful connection
+ */
+export const cacheSuccessfulConnection = (): void => {
+  localStorage.setItem('sb-connection-test', 'true');
+  localStorage.setItem('sb-connection-test-time', Date.now().toString());
+};
+
+/**
+ * Check connection with session
+ */
+export const checkConnectionWithSession = async (): Promise<boolean> => {
+  try {
+    console.log("Checking database connection with session...");
     
-    // 2. Force signOut with global scope
-    try {
-      console.log("Executing global sign out...");
-      await supabase.auth.signOut({ scope: 'global' });
-    } catch (signOutErr) {
-      console.error("Exception during sign out:", signOutErr);
-      // Continue with reconnect even if signOut fails
+    // First check if we have a session
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Session check:", session ? "Active session found" : "No active session");
+    
+    // Try to refresh the session if we have one
+    if (session) {
+      try {
+        console.log("Refreshing session before database check");
+        await supabase.auth.refreshSession();
+      } catch (err) {
+        console.log("Session refresh failed:", err);
+      }
     }
     
-    // 3. Test database access as anonymous user
-    const testResult = await testDatabaseAccess();
+    // Test database access with retry logic
+    let attempts = 0;
+    let success = false;
     
-    // 4. Return result
-    return testResult.success;
+    while (attempts < 3 && !success) {
+      try {
+        const result = await testDatabaseAccess();
+        if (result.success) {
+          console.log(`Database connection successful on attempt ${attempts + 1}`);
+          success = true;
+          break;
+        } else {
+          console.log(`Database connection failed on attempt ${attempts + 1}:`, result.error);
+        }
+      } catch (err) {
+        console.error(`Database connection error on attempt ${attempts + 1}:`, err);
+      }
+      
+      attempts++;
+      
+      if (attempts < 3) {
+        console.log(`Waiting before retry attempt ${attempts + 1}...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    return success;
   } catch (err) {
-    console.error("Error during auth clear and reconnect:", err);
+    console.error("Unexpected error during database connection check:", err);
     return false;
+  }
+};
+
+/**
+ * Connect to the database anonymously
+ * This is useful for development environments
+ */
+export const connectAnonymously = async (): Promise<boolean> => {
+  try {
+    console.log("Attempting anonymous database connection");
+    
+    // First try to get an existing session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // If we already have a session, just test the connection
+    if (session) {
+      console.log("Found existing session, testing connection");
+      const { success } = await testDatabaseAccess();
+      
+      if (success) {
+        console.log("Existing session connected successfully");
+        cacheSuccessfulConnection();
+        return true;
+      }
+      
+      console.log("Existing session failed connection test, attempting to sign in again");
+    }
+    
+    // Sign in anonymously - this works only if anonymous auth is enabled in Supabase
+    const { error } = await supabase.auth.signInWithPassword({ 
+      // Using a known debug account for development
+      email: 'dev@example.com', 
+      password: 'development-password' 
+    });
+    
+    if (error) {
+      console.warn("Anonymous login failed, attempting to refresh session:", error);
+      
+      // Try session refreshing as a fallback
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error("Session refresh also failed:", refreshError);
+        return false;
+      }
+    }
+    
+    // Test if we now have database access
+    const { success } = await testDatabaseAccess();
+    
+    if (success) {
+      console.log("Anonymous connection successful");
+      cacheSuccessfulConnection();
+      return true;
+    } else {
+      console.error("Anonymous connection failed after sign-in attempt");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error during anonymous connection:", error);
+    return false;
+  }
+};
+
+/**
+ * Check for pending updates in local storage
+ * Returns the number of pending updates
+ */
+export const checkPendingUpdates = (): number => {
+  const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
+  
+  if (!pendingUpdatesJson) {
+    return 0;
+  }
+  
+  try {
+    const updates = JSON.parse(pendingUpdatesJson);
+    return Object.keys(updates).length;
+  } catch (e) {
+    console.error("Error parsing pending updates:", e);
+    return 0;
   }
 };

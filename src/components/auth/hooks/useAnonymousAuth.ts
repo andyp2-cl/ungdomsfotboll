@@ -4,7 +4,8 @@ import { useSessionState } from './useSessionState';
 import { useConnectionManagement } from './useConnectionManagement';
 import { useAuthenticationActions } from './useAuthenticationActions';
 import { useOfflineManagement } from './useOfflineManagement';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { shouldAutoConnectDatabase, setAutoConnectDatabase } from '@/utils/environment';
 
 export function useAnonymousAuth() {
   // Get online status
@@ -12,6 +13,9 @@ export function useAnonymousAuth() {
   
   // Get session state
   const { isAuthenticated } = useSessionState();
+  
+  // Auto-connect state
+  const [autoConnectActive, setAutoConnectActive] = useState(shouldAutoConnectDatabase());
   
   // Get connection management
   const { 
@@ -28,6 +32,18 @@ export function useAnonymousAuth() {
   
   // Get offline management
   const { pendingUpdatesCount, handleSyncPendingUpdates } = useOfflineManagement(isOnline);
+
+  // Toggle auto-connect setting
+  const toggleAutoConnect = useCallback((enabled?: boolean) => {
+    const newValue = enabled !== undefined ? enabled : !autoConnectActive;
+    setAutoConnectActive(newValue);
+    setAutoConnectDatabase(newValue);
+    
+    if (newValue && !isAuthenticated && isOnline) {
+      // If enabling, try to connect immediately
+      checkDatabaseConnection(true);
+    }
+  }, [autoConnectActive, isAuthenticated, isOnline, checkDatabaseConnection]);
   
   // Add automatic reconnection attempt when connection error is detected
   useEffect(() => {
@@ -54,6 +70,8 @@ export function useAnonymousAuth() {
     handleLogin,
     handleSyncPendingUpdates,
     checkDatabaseConnection,
-    handleForceReconnect
+    handleForceReconnect,
+    autoConnectActive,
+    toggleAutoConnect
   };
 }
