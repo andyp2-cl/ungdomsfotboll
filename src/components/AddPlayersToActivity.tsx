@@ -89,6 +89,7 @@ export function AddPlayersToActivity({
         setIsProcessing(true);
         try {
           onAddPlayers([playerId]);
+          // Clear search query but don't close the component
           setSearchQuery("");
           toast.success("Spelare tillagd", {
             icon: <Check className="h-4 w-4" />

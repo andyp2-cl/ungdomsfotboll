@@ -92,15 +92,25 @@ export function ParticipantActions({
   });
   
   // Handle the participant selection
-  const handleSelectParticipant = (playerId: string) => {
+  const handleSelectParticipant = (playerId: string, keepOpen = false) => {
     if (onAddParticipant) {
       onAddParticipant(playerId);
     } else if (onAddPlayers) {
       // If we have onAddPlayers, use it with a single-item array
       onAddPlayers([playerId]);
     }
-    setOpen(false);
-    setSearchQuery("");
+    
+    if (!keepOpen) {
+      setOpen(false);
+      setSearchQuery("");
+    } else {
+      // Clear search query but keep popover open
+      setSearchQuery("");
+      // Refocus the input field
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
   };
   
   // Handle keyboard events
@@ -110,10 +120,10 @@ export function ParticipantActions({
       
       // If we have a highlighted player, select that player
       if (highlightedPlayerId && filteredPlayers.some(p => p.id === highlightedPlayerId)) {
-        handleSelectParticipant(highlightedPlayerId);
+        handleSelectParticipant(highlightedPlayerId, true);
       } else if (filteredPlayers.length > 0) {
         // Otherwise select the first player in the filtered list
-        handleSelectParticipant(filteredPlayers[0].id);
+        handleSelectParticipant(filteredPlayers[0].id, true);
       }
     }
   };

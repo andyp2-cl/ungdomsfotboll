@@ -54,24 +54,35 @@ export function PlayerSearchPopover({
       
       // If we have a highlighted player, select that player
       if (highlightedPlayerId) {
-        handlePlayerSelect(highlightedPlayerId);
+        handlePlayerSelect(highlightedPlayerId, true);
       } else if (filteredPlayers.length > 0) {
         // Otherwise select the first player in the filtered list
-        handlePlayerSelect(filteredPlayers[0].id);
+        handlePlayerSelect(filteredPlayers[0].id, true);
       }
+      
+      // Clear search query but keep popover open
+      setSearchQuery("");
+      
+      // Refocus the input field for the next search
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   };
 
-  const handlePlayerSelect = (playerId: string) => {
+  const handlePlayerSelect = (playerId: string, keepOpen = false) => {
     if (selectedPlayers.includes(playerId)) {
       onPlayerSelect(playerId);
     } else {
       // No player limit check anymore
       onPlayerSelect(playerId);
     }
-    // Close the popover and reset search after selection
-    setOpen(false);
-    setSearchQuery("");
+    
+    // Only close the popover if not keeping open
+    if (!keepOpen) {
+      setOpen(false);
+      setSearchQuery("");
+    }
   };
 
   return (
