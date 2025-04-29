@@ -1,2 +1,2 @@
 
-export * from './PlayerTabContent';
+export * from '../PlayerTabContent';
