@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Session, User } from '@supabase/supabase-js';
 import { testDatabaseAccess, setExtendedSessionPersistence, cacheSuccessfulConnection } from "../utils/databaseUtils";
@@ -20,17 +20,20 @@ export function useSessionManagement() {
         
         // First try to get session from storage
         const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
-        setSession(session);
-        setUser(session?.user || null);
         
         if (session) {
+          console.log("Found existing session during initialization");
+          setIsAuthenticated(true);
+          setSession(session);
+          setUser(session?.user || null);
+          
           // Set extended session persistence immediately
           setExtendedSessionPersistence();
           
           // Test database access with the current session
           await testDatabaseAccess();
         } else {
+          console.log("No session found during initialization, trying refresh");
           // If no session found, try to refresh it with retry logic
           let refreshAttempts = 0;
           let refreshSuccess = false;
@@ -40,12 +43,12 @@ export function useSessionManagement() {
               const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
               
               if (!refreshError && refreshData.session) {
+                console.log("Session refreshed successfully (attempt", refreshAttempts + 1, ")");
                 setIsAuthenticated(true);
                 setSession(refreshData.session);
                 setUser(refreshData.session.user || null);
                 refreshSuccess = true;
                 await testDatabaseAccess();
-                console.log("Session refreshed successfully (attempt", refreshAttempts + 1, ")");
                 
                 // Set extended session expiry after successful refresh
                 setExtendedSessionPersistence();
@@ -63,6 +66,7 @@ export function useSessionManagement() {
           
           // After all refresh attempts
           if (!refreshSuccess) {
+            console.log("All session refresh attempts failed");
             // Check if we have a remembered login
             const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
             if (rememberedLogin) {
@@ -82,29 +86,39 @@ export function useSessionManagement() {
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
-      setIsAuthenticated(!!session);
-      setSession(session);
-      setUser(session?.user || null);
+      console.log("Auth state changed:", event, "Has session:", !!session);
       
-      if (session) {
-        toast.success("Inloggad som " + (session.user.email || "användare"));
-        
-        await testDatabaseAccess();
-        
-        if (rememberLogin) {
-          // Set a persistent flag to remember this login
-          localStorage.setItem('rememberLogin', 'true');
-          // Extended session - 30 days
-          setExtendedSessionPersistence();
-          
-          // Force cache the connection state
-          cacheSuccessfulConnection();
-        }
-      } else if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
+        console.log("User signed out, updating state");
+        setIsAuthenticated(false);
+        setSession(null);
+        setUser(null);
         toast.info("Du har loggat ut");
+        
         // Clear connection test cache on logout
         localStorage.removeItem('sb-connection-test');
+        localStorage.removeItem('rememberLogin');
+      } else if (session) {
+        console.log("User signed in or session refreshed");
+        setIsAuthenticated(true);
+        setSession(session);
+        setUser(session.user || null);
+        
+        if (event === 'SIGNED_IN') {
+          toast.success("Inloggad som " + (session.user.email || "användare"));
+        
+          await testDatabaseAccess();
+          
+          if (rememberLogin) {
+            // Set a persistent flag to remember this login
+            localStorage.setItem('rememberLogin', 'true');
+            // Extended session - 30 days
+            setExtendedSessionPersistence();
+            
+            // Force cache the connection state
+            cacheSuccessfulConnection();
+          }
+        }
       }
     });
     

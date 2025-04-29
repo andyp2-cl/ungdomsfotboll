@@ -7,10 +7,15 @@ import { User } from '@supabase/supabase-js';
 type AuthenticatedControlsProps = {
   user: User | null;
   triggerSync: () => void;
-  handleLogout: () => Promise<void>;
+  handleLogout: () => Promise<boolean>;
 };
 
 export function AuthenticatedControls({ user, triggerSync, handleLogout }: AuthenticatedControlsProps) {
+  const onLogout = async () => {
+    console.log("Logout button clicked");
+    await handleLogout();
+  };
+
   return (
     <div className="flex items-center gap-2">
       <Button 
@@ -39,7 +44,7 @@ export function AuthenticatedControls({ user, triggerSync, handleLogout }: Authe
         variant="ghost"
         size="sm"
         className="flex gap-1.5 items-center"
-        onClick={handleLogout}
+        onClick={onLogout}
       >
         <LogOut className="h-4 w-4" />
         <span className="text-xs">Logga ut</span>

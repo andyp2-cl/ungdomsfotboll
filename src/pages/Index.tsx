@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Users, Calendar, Database, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase, isSupabaseConfigured, initializeSupabaseSession, forceResetConnection } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { BackupRestoreActions } from "@/components/backup-restore";
 import { toast } from "sonner";
 import { forceReconnect } from "@/components/auth/utils/databaseUtils";
@@ -21,21 +20,15 @@ const Index = () => {
       setSyncStatus("connecting");
       toast.loading("Återställer databasanslutning...");
       
-      // Try both reconnect methods
+      // Try reconnecting with our utility function
       const success = await forceReconnect();
       
-      if (!success) {
-        // Try the more aggressive method
-        await forceResetConnection();
-      }
-      
       // Check connection status again
-      const connected = await initializeSupabaseSession();
-      setSyncStatus(connected ? "connected" : "disconnected");
-      
-      if (connected) {
+      if (success) {
+        setSyncStatus("connected");
         toast.success("Databasanslutning återupprättad");
       } else {
+        setSyncStatus("disconnected");
         toast.error("Kunde inte återupprätta databasanslutning");
       }
     } catch (error) {
@@ -58,10 +51,18 @@ const Index = () => {
     // Check Supabase connection - with aggressive retry mechanism
     const checkConnection = async (retryCount = 0) => {
       try {
-        // First attempt to initialize the session
-        const sessionInitialized = await initializeSupabaseSession();
+        // First check if we have a session
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Connection check: Session exists?", !!session);
         
-        if (sessionInitialized) {
+        // Try a simple query to verify connection
+        const { error } = await supabase
+          .from('leagues')
+          .select('id')
+          .limit(1);
+        
+        if (!error) {
+          console.log(`Database connection successful on attempt ${retryCount + 1}`);
           setSyncStatus("connected");
           localStorage.setItem('sb-connection-test', 'true');
           toast.success("Databasanslutning upprättad");
@@ -69,15 +70,18 @@ const Index = () => {
         }
         
         // If we have a session but can't access data, try to refresh the session
-        if (retryCount < 3) {
-          console.log(`Connection attempt failed. Retrying (attempt ${retryCount + 1})...`);
+        if (retryCount < 3 && session) {
+          console.log(`Connection attempt failed. Retrying with session refresh (attempt ${retryCount + 1})...`);
           
-          // Force refresh auth session before retrying
           try {
-            await supabase.auth.refreshSession();
-            console.log("Session refreshed, retrying connection...");
+            const { data, error } = await supabase.auth.refreshSession();
+            if (error) {
+              console.error("Error refreshing session during connection check:", error);
+            } else {
+              console.log("Session refreshed during connection check");
+            }
           } catch (refreshError) {
-            console.error("Error refreshing session:", refreshError);
+            console.error("Exception refreshing session:", refreshError);
           }
           
           // Add slight delay before retry
@@ -87,7 +91,9 @@ const Index = () => {
         
         // After multiple failed attempts
         setSyncStatus("disconnected");
-        toast.error("Kunde inte ansluta till databasen. Använd återanslutningsknappen.");
+        if (retryCount >= 2) {
+          toast.error("Kunde inte ansluta till databasen. Använd återanslutningsknappen.");
+        }
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         

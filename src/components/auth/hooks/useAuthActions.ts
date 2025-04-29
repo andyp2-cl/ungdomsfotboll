@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { checkPendingUpdates } from "../utils/databaseUtils";
 
@@ -53,15 +53,33 @@ export function useAuthActions(isOnline: boolean) {
 
   const handleLogout = async () => {
     try {
+      console.log("Executing logout...");
+      
       // Clear connection status cache before logout
       localStorage.removeItem('sb-connection-test');
+      localStorage.removeItem('sb-connection-test-time');
       
-      await supabase.auth.signOut();
+      // Execute the signOut - make sure we're using the correct scope
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Error during sign out:", error);
+        toast.error("Utloggningsfel: " + error.message);
+        return false;
+      }
+      
+      // Clear any remembered login
       localStorage.removeItem('rememberLogin');
+      
+      // Notify user
       toast.info("Du har loggat ut");
+      
+      // Return success
+      return true;
     } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Kunde inte logga ut");
+      console.error("Exception during sign out:", error);
+      toast.error("Kunde inte logga ut - oväntat fel");
+      return false;
     }
   };
   
