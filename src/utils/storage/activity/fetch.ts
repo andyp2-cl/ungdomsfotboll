@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase/client";
 import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
