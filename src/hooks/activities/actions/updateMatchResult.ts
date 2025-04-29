@@ -71,92 +71,130 @@ export const handleMatchResultUpdate = async (
     );
     setActivities(updatedActivities);
     
-    // DIRECT DATABASE UPDATE APPROACH:
-    // Format activity data for database
+    // Format activity data for database to ensure consistent types
     const formattedData = formatActivityForDatabase(updatedActivity);
     
-    // Create a minimal update payload with just score fields
-    const scoreUpdate = {
-      home_score: formattedData.home_score,
-      away_score: formattedData.away_score,
-      is_win: formattedData.is_win,
-      result: formattedData.result,
-      player_stats: formattedData.player_stats
-    };
+    // MULTIPLE APPROACHES TO SAVE DATA
+    let saveSuccess = false;
+    let lastError = null;
     
-    console.log("Attempting direct database update with:", JSON.stringify(scoreUpdate));
-    
-    // Try direct database update first - multiple approaches
     try {
-      // APPROACH 1: Try minimal update first
-      const { data, error } = await supabase
-        .from('activities')
-        .update(scoreUpdate)
-        .eq('id', activityId);
-      
-      if (!error) {
-        console.log("Match result updated successfully via direct update");
-        toast({
-          title: "Resultat uppdaterat",
-          description: homeScore !== undefined && awayScore !== undefined ? 
-            `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-            "Resultat borttaget",
-        });
-        return;
-      }
-
-      console.error("Direct database update failed, trying alternative approaches:", error);
-
-      // APPROACH 2: Try upsert with onConflict
-      // Fix: We need to include all required fields from the activity
-      const completeUpsertData = {
-        // Include all required fields for the activity
-        id: activityId,
-        name: updatedActivity.name,
-        date: updatedActivity.date,
-        type: updatedActivity.type,
-        // And the score fields we want to update
-        home_score: formattedData.home_score,
-        away_score: formattedData.away_score,
-        is_win: formattedData.is_win,
-        result: formattedData.result,
-        player_stats: formattedData.player_stats
-      };
-      
-      const { error: upsertError } = await supabase
-        .from('activities')
-        .upsert(completeUpsertData, { onConflict: 'id' });
-      
-      if (!upsertError) {
-        console.log("Match result updated successfully via upsert");
-        toast({
-          title: "Resultat uppdaterat",
-          description: homeScore !== undefined && awayScore !== undefined ? 
-            `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-            "Resultat borttaget",
-        });
-        return;
-      }
-
-      console.error("Upsert also failed, using saveActivities helper:", upsertError);
-
-      // APPROACH 3: Use saveActivities helper
+      // APPROACH 1: Try standard saveActivities helper first
+      console.log("APPROACH 1: Using saveActivities helper");
       await saveActivities([updatedActivity]);
-      console.log("Match result saved via saveActivities helper");
+      console.log("Match result saved successfully via saveActivities");
+      saveSuccess = true;
+    } catch (error1) {
+      console.error("saveActivities approach failed:", error1);
+      lastError = error1;
+      
+      try {
+        // APPROACH 2: Try minimal direct update with only score fields
+        console.log("APPROACH 2: Trying minimal direct update with score fields only");
+        const scoreUpdate = {
+          home_score: formattedData.home_score,
+          away_score: formattedData.away_score,
+          is_win: formattedData.is_win,
+          result: formattedData.result
+        };
+        
+        const { error } = await supabase
+          .from('activities')
+          .update(scoreUpdate)
+          .eq('id', activityId);
+        
+        if (!error) {
+          console.log("Match result updated successfully via direct update");
+          saveSuccess = true;
+        } else {
+          console.error("Direct update failed:", error.message);
+          lastError = error;
+          
+          // APPROACH 3: Try complete upsert
+          console.log("APPROACH 3: Trying complete upsert");
+          const completeUpsertData = {
+            // Include all required fields for the activity
+            id: activityId,
+            name: formattedData.name,
+            date: formattedData.date,
+            type: formattedData.type,
+            // Score fields
+            home_score: formattedData.home_score,
+            away_score: formattedData.away_score,
+            is_win: formattedData.is_win,
+            result: formattedData.result,
+            player_stats: formattedData.player_stats
+          };
+          
+          console.log("Upsert data:", JSON.stringify(completeUpsertData));
+          
+          const { error: upsertError } = await supabase
+            .from('activities')
+            .upsert(completeUpsertData, { onConflict: 'id' });
+          
+          if (!upsertError) {
+            console.log("Match result updated successfully via upsert");
+            saveSuccess = true;
+          } else {
+            console.error("Upsert failed:", upsertError.message);
+            lastError = upsertError;
+            
+            // APPROACH 4: Try REST API approach
+            try {
+              console.log("APPROACH 4: Trying REST API approach");
+              
+              const apiUrl = `${supabase.supabaseUrl}/rest/v1/activities?id=eq.${activityId}`;
+              const response = await fetch(apiUrl, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': supabase.supabaseKey,
+                  'Authorization': `Bearer ${supabase.supabaseKey}`,
+                  'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(scoreUpdate)
+              });
+              
+              if (response.ok) {
+                console.log("Match result updated successfully via REST API");
+                saveSuccess = true;
+              } else {
+                const errorText = await response.text();
+                console.error("REST API update failed:", errorText);
+                lastError = new Error(errorText);
+              }
+            } catch (restError) {
+              console.error("REST API approach failed:", restError);
+              lastError = restError;
+            }
+          }
+        }
+      } catch (error2) {
+        console.error("All database update approaches failed:", error2);
+        lastError = error2;
+      }
+    }
+    
+    if (saveSuccess) {
       toast({
         title: "Resultat uppdaterat",
         description: homeScore !== undefined && awayScore !== undefined ? 
           `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
           "Resultat borttaget",
       });
-      
-    } catch (dbError) {
-      console.error("All database save approaches failed:", dbError);
+    } else {
+      console.error("Failed to save match result after trying all approaches");
       toast({
         title: "Lokalt uppdaterad",
         description: "Resultatet har sparats lokalt, men kunde inte sparas i databasen. Försök igen senare.",
         variant: "warning"
       });
+      
+      // Throw the last error to propagate it for debugging
+      if (lastError) {
+        console.error("Final error:", lastError);
+        throw lastError;
+      }
     }
     
   } catch (error: any) {
