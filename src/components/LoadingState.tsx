@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { testDatabaseAccess } from "@/components/auth/utils/databaseUtils";
+import { testDatabaseAccess, checkConnectionWithSession } from "@/components/auth/utils/databaseUtils";
 import { 
   ErrorState, 
   NetworkStatus, 
@@ -9,6 +9,7 @@ import {
   LoadingSpinner, 
   useDatabaseCheck 
 } from "./loading";
+import { toast } from "sonner";
 
 interface LoadingStateProps {
   message?: string;
@@ -22,12 +23,32 @@ export function LoadingState({
   retry 
 }: LoadingStateProps) {
   const isOnline = navigator.onLine;
-  const { dbStatus, dbError, isCheckingDb, setIsCheckingDb, setDbStatus } = useDatabaseCheck(isOnline, error);
+  const { 
+    dbStatus, 
+    dbError, 
+    isCheckingDb, 
+    setIsCheckingDb, 
+    setDbStatus, 
+    connectionAttempts,
+    checkDbConnection
+  } = useDatabaseCheck(isOnline, error);
+
+  // Track if we're forcing reconnection
+  const [isForceReconnecting, setIsForceReconnecting] = useState(false);
+  
+  // Check if connection is taking too long
+  useEffect(() => {
+    if (dbStatus === 'connecting' && connectionAttempts > 2 && !isCheckingDb) {
+      console.log("Connection appears to be stuck, forcing reconnection...");
+      handleForceReconnect();
+    }
+  }, [dbStatus, connectionAttempts, isCheckingDb]);
 
   // Function to manually check database connection
   const checkDatabaseManually = async () => {
     try {
       setIsCheckingDb(true);
+      toast.loading("Kör diagnostik på databasanslutning...");
       
       // First clear any cached connection results
       localStorage.removeItem('sb-connection-test');
@@ -52,12 +73,12 @@ export function LoadingState({
         const data = await directResponse.json();
         console.log("API data:", data);
         setDbStatus('connected');
-        setIsCheckingDb(false);
+        toast.success("Direkt API-anslutning fungerar!");
       } else {
         console.error("Direct API test failed:", directResponse.status, directResponse.statusText);
         const errorText = await directResponse.text();
         setDbStatus('error');
-        setIsCheckingDb(false);
+        toast.error("Direkt API-anslutning misslyckades");
       }
       
       // Then test with the client
@@ -66,23 +87,74 @@ export function LoadingState({
       
       if (success) {
         setDbStatus('connected');
-        setIsCheckingDb(false);
+        toast.success("Databasanslutning fungerar!");
         console.log("Database connection test successful");
       } else {
         setDbStatus('error');
-        setIsCheckingDb(false);
+        toast.error(`Databasanslutning fungerar inte: ${error}`);
         console.error("Database connection test failed:", error);
       }
     } catch (err) {
       console.error("Error in manual database check:", err);
+      toast.error("Ett fel uppstod vid diagnostik");
       setDbStatus('error');
+    } finally {
       setIsCheckingDb(false);
+    }
+  };
+  
+  // Function to force reconnect database
+  const handleForceReconnect = async () => {
+    try {
+      setIsForceReconnecting(true);
+      toast.loading("Försöker återansluta till databasen...");
+      
+      console.log("Force reconnecting to database...");
+      
+      // Clear all connection cache
+      localStorage.removeItem('sb-connection-test');
+      localStorage.removeItem('sb-connection-test-time');
+      localStorage.removeItem('sb-connection-error');
+      
+      // Sign out and sign back in anonymously
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Reset database status
+      setDbStatus('connecting');
+      
+      // Wait a moment
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force a complete connection check
+      const isConnected = await checkConnectionWithSession();
+      
+      if (isConnected) {
+        console.log("Force reconnect successful!");
+        setDbStatus('connected');
+        toast.success("Databasanslutning återupprättad!");
+      } else {
+        console.error("Force reconnect failed");
+        setDbStatus('error');
+        toast.error("Kunde inte återupprätta databasanslutning");
+      }
+    } catch (err) {
+      console.error("Error during force reconnect:", err);
+      setDbStatus('error');
+      toast.error("Ett fel uppstod vid återanslutning");
+    } finally {
+      setIsForceReconnecting(false);
     }
   };
 
   // Show error state if there's an error message
   if (error) {
-    return <ErrorState error={error} retry={retry} />;
+    return <ErrorState 
+      error={error} 
+      retry={retry} 
+      onDiagnostic={checkDatabaseManually} 
+      onForceReconnect={handleForceReconnect}
+      isCheckingDb={isCheckingDb || isForceReconnecting}
+    />;
   }
   
   // Show loading state
@@ -101,7 +173,10 @@ export function LoadingState({
           errorMessage={dbError} 
           isOnline={isOnline}
           onDiagnostic={checkDatabaseManually}
+          onForceReconnect={handleForceReconnect}
           isCheckingDb={isCheckingDb}
+          isForceReconnecting={isForceReconnecting}
+          connectionAttempts={connectionAttempts}
         />
       </div>
     </div>

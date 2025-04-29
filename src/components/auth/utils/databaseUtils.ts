@@ -7,15 +7,14 @@ export const testDatabaseAccess = async (): Promise<{success: boolean; error?: s
   try {
     console.log("Testing database access...");
     
-    // First check if we have a cached successful test that's less than 1 hour old
-    // (reduced from 6 hours to troubleshoot the connection issue)
+    // First check if we have a cached successful test that's less than 30 minutes old
     const cachedTest = localStorage.getItem('sb-connection-test');
     const cachedTimestamp = localStorage.getItem('sb-connection-test-time');
     const currentTime = Date.now();
-    const oneHourAgo = currentTime - (60 * 60 * 1000);
+    const thirtyMinutesAgo = currentTime - (30 * 60 * 1000); // Reduced from 1 hour
     
-    if (cachedTest === 'true' && cachedTimestamp && parseInt(cachedTimestamp) > oneHourAgo) {
-      console.log("Using cached database connection test result (less than 1 hour old)");
+    if (cachedTest === 'true' && cachedTimestamp && parseInt(cachedTimestamp) > thirtyMinutesAgo) {
+      console.log("Using cached database connection test result (less than 30 minutes old)");
       return { success: true };
     }
     
@@ -27,15 +26,52 @@ export const testDatabaseAccess = async (): Promise<{success: boolean; error?: s
       console.log(`Database access test attempt ${attempts + 1}...`);
       
       try {
+        // First try to get the session and refresh if needed
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("Found session, refreshing before testing database access");
+          await supabase.auth.refreshSession();
+        } else {
+          console.log("No session found, continuing with anonymous access");
+        }
+        
+        // Test accessing leagues table (public data)
         const { data, error } = await supabase
           .from('leagues')
           .select('id')
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
         
         if (error) {
           console.error(`Database access test failed (attempt ${attempts + 1}):`, error);
           lastError = error;
-          // Wait a bit before retrying
+          
+          // Try direct API call as a fallback
+          try {
+            console.log("Trying direct API call as fallback...");
+            const response = await fetch("https://zkrruihxszziifyogzko.supabase.co/rest/v1/leagues?select=id&limit=1", {
+              headers: {
+                "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U",
+                "Content-Type": "application/json"
+              }
+            });
+            
+            if (response.ok) {
+              console.log("Direct API test successful");
+              
+              // Cache successful connection with current timestamp
+              cacheSuccessfulConnection();
+              
+              return { success: true };
+            } else {
+              const errorText = await response.text();
+              console.error("Direct API test failed:", response.status, errorText);
+            }
+          } catch (apiErr) {
+            console.error("Direct API call failed:", apiErr);
+          }
+          
+          // Wait before retrying
           await new Promise(resolve => setTimeout(resolve, 1000));
           attempts++;
         } else {
@@ -50,7 +86,7 @@ export const testDatabaseAccess = async (): Promise<{success: boolean; error?: s
         console.error(`Unexpected error in database access test (attempt ${attempts + 1}):`, err);
         lastError = err;
         attempts++;
-        // Wait a bit before retrying
+        // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -61,7 +97,6 @@ export const testDatabaseAccess = async (): Promise<{success: boolean; error?: s
       : lastError ? JSON.stringify(lastError) : 'Unknown database error';
     
     console.error("All database connection attempts failed:", errorMessage);
-    toast.warning("Begränsad databastillgång. Logga in för full funktionalitet.");
     
     // Store the error so we can display it in the UI
     localStorage.setItem('sb-connection-error', errorMessage);
@@ -166,6 +201,52 @@ export const forceReconnect = async (): Promise<boolean> => {
   } catch (err) {
     console.error("Error during forced reconnection:", err);
     toast.error("Ett fel uppstod vid återanslutning");
+    return false;
+  }
+};
+
+// Check database connection status and session validity
+export const checkConnectionWithSession = async (): Promise<boolean> => {
+  try {
+    console.log("Performing complete connection check with session validation");
+    
+    // First check session status
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Session check:", session ? "Active session found" : "No active session");
+    
+    // Try database access
+    const { success, error } = await testDatabaseAccess();
+    
+    if (success) {
+      console.log("Database connection check succeeded");
+      return true;
+    }
+    
+    console.error("Database connection check failed:", error);
+    
+    // If we have a session, try refreshing it and test again
+    if (session) {
+      try {
+        console.log("Refreshing session and retrying");
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.error("Session refresh failed:", error);
+          return false;
+        }
+        
+        // Try database access again after refresh
+        const secondTry = await testDatabaseAccess();
+        return secondTry.success;
+      } catch (err) {
+        console.error("Error during session refresh:", err);
+        return false;
+      }
+    }
+    
+    return false;
+  } catch (err) {
+    console.error("Error checking connection with session:", err);
     return false;
   }
 };
