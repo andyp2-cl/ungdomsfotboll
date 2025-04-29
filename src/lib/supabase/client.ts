@@ -111,9 +111,38 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
 
       if (response.ok) {
         console.log("Activity updated successfully via direct REST API");
-        return { success: true, data: await response.json() };
+        const jsonResponse = await response.json();
+        return { success: true, data: jsonResponse };
       } else {
-        console.warn("Direct REST API update failed:", await response.text());
+        const errorText = await response.text();
+        console.warn("Direct REST API update failed:", errorText);
+        
+        // Try one more approach - if this is a score update, try with minimal fields
+        if (updates.home_score !== undefined || updates.away_score !== undefined) {
+          const minimalUpdates = {
+            home_score: updates.home_score,
+            away_score: updates.away_score
+          };
+          
+          const minimalResponse = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(minimalUpdates)
+          });
+          
+          if (minimalResponse.ok) {
+            console.log("Activity updated successfully with minimal score update");
+            const minimalJsonResponse = await minimalResponse.json();
+            return { success: true, data: minimalJsonResponse };
+          } else {
+            console.warn("Even minimal score update failed");
+          }
+        }
       }
     } catch (restError) {
       console.error("Error with REST approach:", restError);
