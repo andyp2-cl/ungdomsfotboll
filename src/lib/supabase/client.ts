@@ -26,6 +26,28 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
   }
 };
 
+// Configure session persistence in localStorage
+(() => {
+  try {
+    // This self-invoking function runs once when the file is imported
+    // to ensure auth persistence is configured
+    const persistSession = localStorage.getItem('persistSession') !== 'false';
+    const sessionExpiryDays = 30; // Keep session for 30 days
+    
+    // Set session expiry to a long period
+    localStorage.setItem('supabase.auth.token.expiry', 
+      (Date.now() + (sessionExpiryDays * 24 * 60 * 60 * 1000)).toString());
+    
+    if (persistSession) {
+      localStorage.setItem('persistSession', 'true');
+    }
+    
+    console.log("Session persistence configured for", sessionExpiryDays, "days");
+  } catch (e) {
+    console.error("Error configuring session persistence:", e);
+  }
+})();
+
 // Enhanced helper function to handle RLS policy errors with activities table
 // This will use multiple approaches (upsert, update, direct methods) to ensure data is saved
 export const updateActivityWithRLSHandling = async (activityId: string, updates: any): Promise<{success: boolean, error?: any, data?: any}> => {

@@ -21,6 +21,15 @@ export function useAuthenticationState() {
         
         if (session) {
           console.log("User is authenticated:", session.user.email);
+        } else {
+          // If no session, try to refresh it
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (!refreshError && refreshData.session) {
+            setIsAuthenticated(true);
+            setAuthUser(refreshData.session.user || null);
+            console.log("Session refreshed:", refreshData.session.user.email);
+          }
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
@@ -32,7 +41,7 @@ export function useAuthenticationState() {
     
     checkAuth();
     
-    // Listen for auth changes
+    // Listen for auth changes with improved persistence
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
       setIsAuthenticated(!!session);
@@ -41,13 +50,18 @@ export function useAuthenticationState() {
       // Show appropriate toast notifications
       if (event === 'SIGNED_IN') {
         toast.success("Inloggad som " + (session?.user?.email || "användare"));
+        
+        // Store login timestamp to help with session persistence
+        localStorage.setItem('auth_timestamp', Date.now().toString());
       } else if (event === 'SIGNED_OUT') {
         toast.info("Du har loggat ut");
+        localStorage.removeItem('auth_timestamp');
       } else if (event === 'USER_UPDATED') {
         toast.info("Användarinformation uppdaterad");
       } else if (event === 'PASSWORD_RECOVERY') {
         toast.info("Lösenordsåterställning påbörjad");
       } else if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
         // Silent refresh, don't show notification
       }
     });
@@ -55,7 +69,7 @@ export function useAuthenticationState() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Handle login with magic link
+  // Handle login with magic link with extended session settings
   const loginWithMagicLink = async (email: string) => {
     try {
       // Get the current URL for redirect
@@ -65,6 +79,10 @@ export function useAuthenticationState() {
         email,
         options: {
           emailRedirectTo: currentURL, // Redirect to current page after login
+          shouldCreateUser: true,
+          data: {
+            login_timestamp: Date.now()
+          }
         }
       });
       
@@ -94,6 +112,7 @@ export function useAuthenticationState() {
         return false;
       }
       
+      localStorage.removeItem('auth_timestamp');
       return true;
     } catch (error) {
       console.error("Error during logout:", error);

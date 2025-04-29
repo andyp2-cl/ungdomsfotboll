@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ export function LoginStatus() {
   const [showLogin, setShowLogin] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [rememberLogin, setRememberLogin] = useState(true);
   
   // Monitor online/offline status
   useEffect(() => {
@@ -35,6 +35,7 @@ export function LoginStatus() {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // First try to get session from storage
         const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session);
         setSession(session);
@@ -42,6 +43,23 @@ export function LoginStatus() {
         
         if (session) {
           await testDatabaseAccess();
+          
+          // Update session expiry to keep user logged in longer
+          localStorage.setItem('supabase.auth.token.expiry', 
+            (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
+        } else {
+          // If no session, try to refresh it
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (!refreshError && refreshData.session) {
+            setIsAuthenticated(true);
+            setSession(refreshData.session);
+            setUser(refreshData.session.user || null);
+            await testDatabaseAccess();
+            console.log("Session refreshed successfully");
+          } else {
+            console.log("No valid session found and refresh failed:", refreshError?.message);
+          }
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -62,6 +80,14 @@ export function LoginStatus() {
         setShowLogin(false);
         await testDatabaseAccess();
         
+        if (rememberLogin) {
+          // Set a persistent flag to remember this login
+          localStorage.setItem('rememberLogin', 'true');
+          // Extended session
+          localStorage.setItem('supabase.auth.token.expiry', 
+            (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
+        }
+        
         // Try to sync any pending changes when user logs in
         const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
         if (pendingUpdatesJson) {
@@ -80,7 +106,7 @@ export function LoginStatus() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [rememberLogin]);
 
   // Test if we can access the database
   const testDatabaseAccess = async () => {
@@ -121,11 +147,15 @@ export function LoginStatus() {
     try {
       setIsAuthenticating(true);
       
-      // Send a magic link to the user
+      // Send a magic link to the user with extended session options
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: window.location.origin,
+          shouldCreateUser: true,
+          data: {
+            remember_me: rememberLogin
+          }
         }
       });
       
@@ -149,6 +179,7 @@ export function LoginStatus() {
       setSession(null);
       setUser(null);
       setIsAuthenticated(false);
+      localStorage.removeItem('rememberLogin');
       toast.info("Du har loggat ut");
     } catch (error) {
       console.error("Error signing out:", error);
@@ -221,6 +252,18 @@ export function LoginStatus() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="rememberLogin"
+                checked={rememberLogin}
+                onChange={(e) => setRememberLogin(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="rememberLogin" className="text-sm text-muted-foreground">
+                Håll mig inloggad (30 dagar)
+              </label>
             </div>
           </form>
         </CardContent>
