@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
-import { extractTeamNames, isHomeMatch } from "./activity-detail/match-result/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast as sonnerToast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { extractTeamNames, isHomeMatch } from "./activity-detail/match-result/utils";
+import { ScoreInputDisplay } from "./match-result/ScoreInputDisplay";
+import { SaveResultButton } from "./match-result/SaveResultButton";
+import { useLocalStorage } from "./match-result/useLocalStorage";
+import { useAuthenticationState } from "./match-result/useAuthenticationState";
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -27,40 +26,10 @@ export function QuickMatchResult({
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const isMobile = useIsMobile();
-  const { toast } = useToast();
   
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
-    
-    checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
-  
-  // Monitor online/offline state for component
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const { isAuthenticated } = useAuthenticationState();
+  const { isOnline, saveToLocalStorage, notifyUser } = useLocalStorage(activity);
   
   // Update local state when activity props change
   useEffect(() => {
@@ -78,15 +47,21 @@ export function QuickMatchResult({
   const homeTeamLabel = isHome ? "HIF" : teamNames.homeTeam.substring(0, isMobile ? 8 : 15);
   const awayTeamLabel = !isHome ? "HIF" : teamNames.awayTeam.substring(0, isMobile ? 8 : 15);
   
+  // Handle input changes with proper type conversion
+  const handleHomeScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setHomeScore(value === "" ? undefined : Number(value));
+  };
+
+  const handleAwayScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAwayScore(value === "" ? undefined : Number(value));
+  };
+  
   const handleSave = async () => {
     if (isReadOnly) return;
     
     setIsSaving(true);
-    console.log("QuickMatchResult - Saving match result:", { 
-      activityId: activity.id, 
-      homeScore, 
-      awayScore 
-    });
     
     try {
       // Convert to proper number values or undefined
@@ -123,121 +98,63 @@ export function QuickMatchResult({
         }
       }
 
-      // ALWAYS save to localStorage first
-      const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
-      pendingUpdates[activity.id] = {
+      // Always save to localStorage first
+      saveToLocalStorage(activity.id, {
         homeScore: finalHomeScore,
         awayScore: finalAwayScore,
         isWin: isWin,
         result: finalHomeScore !== undefined && finalAwayScore !== undefined ? 
-          `${finalHomeScore}-${finalAwayScore}` : undefined,
-        timestamp: new Date().toISOString()
-      };
-      
-      // Save to localStorage immediately
-      localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
+          `${finalHomeScore}-${finalAwayScore}` : undefined
+      });
       
       // Try to save to database if we're online and authenticated
       if (isOnline && isAuthenticated) {
         try {
           await onSave(finalHomeScore, finalAwayScore);
-          sonnerToast.success("Resultat sparat och synkroniserat med databasen");
           
           // If database save was successful, remove from pending updates
           const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
           delete updatedPendingUpdates[activity.id];
           localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
+          
+          notifyUser(isOnline, isAuthenticated);
         } catch (error) {
           console.error("Error saving to database, saved locally:", error);
-          sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
+          toast.info("Resultat sparat lokalt och kommer att synkas senare");
         }
-      } else if (!isOnline) {
-        sonnerToast.info("Offline. Resultat sparat lokalt och synkas när du är online igen.");
       } else {
-        sonnerToast.info("Resultat sparat lokalt. Logga in för att synka med databasen.");
+        notifyUser(isOnline, isAuthenticated);
       }
     } catch (error) {
       console.error("Error saving match result:", error);
-      toast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte spara resultat. Försök igen.",
-        variant: "destructive"
-      });
+      toast.error("Ett fel uppstod vid sparande av resultat");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Handle input changes with proper type conversion
-  const handleHomeScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setHomeScore(value === "" ? undefined : Number(value));
-  };
-
-  const handleAwayScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setAwayScore(value === "" ? undefined : Number(value));
-  };
-
   return (
     <ScrollArea className={isMobile ? "max-h-[45vh]" : ""}>
       <div className="space-y-4 px-1 pb-2">
-        <div className="grid grid-cols-3 gap-3 items-center">
-          <div className="space-y-1">
-            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'home' ? "font-semibold" : ""}`}>
-              {homeTeamLabel}
-            </div>
-            {isReadOnly ? (
-              <div className={`text-center text-lg font-bold ${resultColorClass}`}>
-                {homeScore !== undefined ? homeScore : "-"}
-              </div>
-            ) : (
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={homeScore === undefined ? "" : homeScore}
-                onChange={handleHomeScoreChange}
-                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'home' ? "border-blue-200" : ""}`}
-              />
-            )}
-          </div>
-          
-          <div className="flex justify-center items-center">
-            <div className="text-xl font-bold">-</div>
-          </div>
-          
-          <div className="space-y-1">
-            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'away' ? "font-semibold" : ""}`}>
-              {awayTeamLabel}
-            </div>
-            {isReadOnly ? (
-              <div className={`text-center text-lg font-bold ${resultColorClass}`}>
-                {awayScore !== undefined ? awayScore : "-"}
-              </div>
-            ) : (
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={awayScore === undefined ? "" : awayScore}
-                onChange={handleAwayScoreChange}
-                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'away' ? "border-blue-200" : ""}`}
-              />
-            )}
-          </div>
-        </div>
+        <ScoreInputDisplay
+          homeTeamLabel={homeTeamLabel}
+          awayTeamLabel={awayTeamLabel}
+          homeScore={homeScore}
+          awayScore={awayScore}
+          handleHomeScoreChange={handleHomeScoreChange}
+          handleAwayScoreChange={handleAwayScoreChange}
+          isReadOnly={isReadOnly}
+          isHassleholm={isHassleholm}
+          resultColorClass={resultColorClass}
+        />
         
         {!isReadOnly && (
-          <Button 
+          <SaveResultButton 
             onClick={handleSave} 
-            disabled={isSaving}
-            className={`w-full ${isMobile ? 'h-10' : ''}`}
-            size={isMobile ? "sm" : "default"}
-          >
-            <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
-            {isSaving ? "Sparar..." : isOnline ? (isAuthenticated ? "Spara resultat" : "Spara lokalt") : "Spara lokalt"}
-          </Button>
+            isSaving={isSaving}
+            isOnline={isOnline}
+            isAuthenticated={isAuthenticated}
+          />
         )}
       </div>
     </ScrollArea>
