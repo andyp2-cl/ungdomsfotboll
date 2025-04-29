@@ -1,7 +1,6 @@
-
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { updateActivityWithRLSHandling } from "@/lib/supabase/client";
+import { updateActivityWithRLSHandling } from "@/lib/supabase";
 
 /**
  * Updates match result (score) for an existing activity
