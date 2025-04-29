@@ -108,12 +108,24 @@ export const handleMatchResultUpdate = async (
       console.error("Direct database update failed, trying alternative approaches:", error);
 
       // APPROACH 2: Try upsert with onConflict
+      // Fix: We need to include all required fields from the activity
+      const completeUpsertData = {
+        // Include all required fields for the activity
+        id: activityId,
+        name: updatedActivity.name,
+        date: updatedActivity.date,
+        type: updatedActivity.type,
+        // And the score fields we want to update
+        home_score: formattedData.home_score,
+        away_score: formattedData.away_score,
+        is_win: formattedData.is_win,
+        result: formattedData.result,
+        player_stats: formattedData.player_stats
+      };
+      
       const { error: upsertError } = await supabase
         .from('activities')
-        .upsert({
-          id: activityId,
-          ...scoreUpdate
-        }, { onConflict: 'id' });
+        .upsert(completeUpsertData, { onConflict: 'id' });
       
       if (!upsertError) {
         console.log("Match result updated successfully via upsert");
