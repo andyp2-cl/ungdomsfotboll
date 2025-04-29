@@ -11,12 +11,22 @@ type AuthenticatedControlsProps = {
 };
 
 export function AuthenticatedControls({ user, triggerSync, handleLogout }: AuthenticatedControlsProps) {
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  
   const onLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("Logout button clicked");
-    await handleLogout();
+    if (isLoggingOut) return; // Prevent multiple clicks
+    
+    try {
+      setIsLoggingOut(true);
+      console.log("Logout button clicked");
+      await handleLogout();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -48,9 +58,10 @@ export function AuthenticatedControls({ user, triggerSync, handleLogout }: Authe
         size="sm"
         className="flex gap-1.5 items-center text-red-600 hover:bg-red-50"
         onClick={onLogout}
+        disabled={isLoggingOut}
       >
         <LogOut className="h-4 w-4" />
-        <span className="text-xs">Logga ut</span>
+        <span className="text-xs">{isLoggingOut ? 'Loggar ut...' : 'Logga ut'}</span>
       </Button>
     </div>
   );

@@ -9,4 +9,45 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create client with explicit configuration to ensure consistent behavior
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storage: localStorage
+  },
+  global: {
+    headers: { 
+      'x-application-name': 'hassleholmsif-p2014'
+    },
+  }
+});
+
+// Initialize session and test connection
+(() => {
+  try {
+    console.log('Initializing Supabase connection...');
+    
+    // Test connection with a simple query
+    supabase
+      .from('leagues')
+      .select('id')
+      .limit(1)
+      .then(({ data, error }) => {
+        if (!error) {
+          console.log('Database connection test successful');
+          // Cache successful connection
+          localStorage.setItem('sb-connection-test', 'true');
+          localStorage.setItem('sb-connection-test-time', Date.now().toString());
+        } else {
+          console.error('Database connection test failed:', error);
+        }
+      })
+      .catch((err) => {
+        console.error('Error during database connection test:', err);
+      });
+  } catch (e) {
+    console.error('Error during Supabase initialization:', e);
+  }
+})();

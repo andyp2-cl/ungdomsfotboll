@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Function to test if database access is working
@@ -108,31 +108,10 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
   try {
     console.log("Checking connection with session...");
     
-    // 1. First check if we have a session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // 2. If we have a session, try to refresh it
-    if (session) {
-      console.log("Found existing session, attempting to refresh...");
-      try {
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.error("Error refreshing session:", error);
-        } else {
-          console.log("Session refreshed successfully");
-        }
-      } catch (refreshErr) {
-        console.error("Exception during session refresh:", refreshErr);
-      }
-    } else {
-      console.log("No active session found");
-    }
-    
-    // 3. Test database access
+    // Test database access - simplified for speed
     const testResult = await testDatabaseAccess();
     
-    // 4. Return success state and cache the result
+    // Return success state and cache the result
     if (testResult.success) {
       cacheSuccessfulConnection();
       setConnectionError(null);
@@ -158,33 +137,10 @@ export const forceReconnect = async (): Promise<boolean> => {
     localStorage.removeItem('sb-connection-test-time');
     localStorage.removeItem('sb-connection-error');
     
-    // 2. Get current session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // 3. If we have a session, try to refresh it
-    if (session) {
-      console.log("Found existing session, attempting to refresh...");
-      try {
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.error("Error refreshing session:", error);
-          // Try to sign out and back in
-          await supabase.auth.signOut({ scope: 'global' });
-        } else {
-          console.log("Session refreshed successfully");
-        }
-      } catch (refreshErr) {
-        console.error("Exception during session refresh:", refreshErr);
-      }
-    } else {
-      console.log("No active session found during reconnect");
-    }
-    
-    // 4. Test database access
+    // 2. Test database access directly
     const testResult = await testDatabaseAccess();
     
-    // 5. Return success state
+    // 3. Return success state
     return testResult.success;
   } catch (err) {
     console.error("Error during force reconnect:", err);
@@ -212,25 +168,16 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
     // 2. Force signOut with global scope
     try {
       console.log("Executing global sign out...");
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      if (error) {
-        console.error("Error during sign out:", error);
-        toast.error("Utloggningsfel: " + error.message);
-      } else {
-        toast.success("Utloggad framgångsrikt");
-      }
+      await supabase.auth.signOut({ scope: 'global' });
     } catch (signOutErr) {
       console.error("Exception during sign out:", signOutErr);
       // Continue with reconnect even if signOut fails
     }
     
-    // 3. Small delay to allow auth changes to propagate
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // 4. Test database access
+    // 3. Test database access as anonymous user
     const testResult = await testDatabaseAccess();
     
-    // 5. Return result
+    // 4. Return result
     return testResult.success;
   } catch (err) {
     console.error("Error during auth clear and reconnect:", err);

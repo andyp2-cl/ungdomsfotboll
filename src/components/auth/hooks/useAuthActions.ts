@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkPendingUpdates, clearAuthAndReconnect } from "../utils/databaseUtils";
+import { checkPendingUpdates } from "../utils/databaseUtils";
 
 export function useAuthActions(isOnline: boolean) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -61,16 +61,12 @@ export function useAuthActions(isOnline: boolean) {
       // Clear any remembered login first
       localStorage.removeItem('rememberLogin');
       
-      // Use the enhanced clearAuthAndReconnect function with explicit global scope
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      // Clear all connection test flags
+      localStorage.removeItem('sb-connection-test');
+      localStorage.removeItem('sb-connection-test-time');
+      localStorage.removeItem('sb-connection-error');
       
-      if (error) {
-        console.error("Error during sign out:", error);
-        toast.error("Utloggningsfel: " + error.message);
-        return false;
-      }
-      
-      // Clear all Supabase-related localStorage items
+      // Clean up all Supabase-related localStorage items before signing out
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -82,12 +78,22 @@ export function useAuthActions(isOnline: boolean) {
       console.log(`Clearing ${keysToRemove.length} Supabase-related localStorage items`);
       keysToRemove.forEach(key => localStorage.removeItem(key));
       
+      // Now sign out with global scope
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Error during sign out:", error);
+        toast.error("Utloggningsfel: " + error.message);
+        return false;
+      }
+      
       // Force page reload to ensure all state is reset
       console.log("Logout successful, reloading page...");
       toast.success("Utloggning lyckades");
       
+      // Force reload after a short delay
       setTimeout(() => {
-        window.location.reload();
+        window.location.href = '/';
       }, 1000);
       
       return true;

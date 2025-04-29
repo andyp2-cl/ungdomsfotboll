@@ -39,8 +39,20 @@ export function useActivityState() {
       setIsLoading(true);
       setLoadError(null);
       
-      // Check if we're authenticated first
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check if we're authenticated first - use getSession directly with destructuring
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      
+      // Skip database call and use cache if offline
+      if (isOffline) {
+        const storedActivities = await getStoredActivities();
+        setActivities(storedActivities);
+        if (storedActivities.length === 0) {
+          setLoadError("Du är offline och inga lokalt sparade aktiviteter hittades");
+        }
+        setIsLoading(false);
+        return;
+      }
       
       // Set a timeout to detect slow connections
       const timeoutId = setTimeout(() => {
@@ -51,9 +63,9 @@ export function useActivityState() {
         }
       }, 3000);
       
-      // If we are authenticated and connection was previously tested, set 
-      // the connection test flag to true to avoid showing "connecting" status
-      if (session) {
+      // Use cached flag if available to avoid showing connecting status
+      const hasConfirmedConnection = localStorage.getItem('sb-connection-test') === 'true';
+      if (session || hasConfirmedConnection) {
         localStorage.setItem('sb-connection-test', 'true');
       }
       
@@ -61,9 +73,7 @@ export function useActivityState() {
       clearTimeout(timeoutId);
       
       if (storedActivities.length > 0) {
-        // Log some activities to check if they have match results
-        console.log("Aktiviteter hämtade från databasen:", storedActivities.length);
-        
+        console.log("Aktiviteter hämtade:", storedActivities.length);
         setActivities(storedActivities);
         if (showToast) {
           sonnerToast.success(`${storedActivities.length} aktiviteter hämtade`);
@@ -81,31 +91,23 @@ export function useActivityState() {
     } catch (error) {
       console.error("Error loading activities:", error);
       
-      // Retry once if possible
+      // Fallback to cached data
       try {
-        // Force session refresh first
-        await supabase.auth.refreshSession();
-        
-        // Then try to fetch activities again
-        const retryActivities = await getStoredActivities();
-        if (retryActivities.length > 0) {
-          setActivities(retryActivities);
-          console.log("Activities successfully loaded after retry");
-          return;
+        const cachedActivities = localStorage.getItem('cachedActivities');
+        if (cachedActivities) {
+          const parsedActivities = JSON.parse(cachedActivities);
+          setActivities(parsedActivities);
+          setLoadError("Anslutningsfel. Visar cachade aktiviteter.");
+          console.log("Using cached activities due to error");
+        } else {
+          setLoadError(isOffline 
+            ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
+            : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."
+          );
         }
-      } catch (retryError) {
-        console.error("Retry also failed:", retryError);
+      } catch (cacheError) {
+        setLoadError("Kunde inte ladda aktiviteter. Försök igen senare.");
       }
-      
-      setLoadError(isOffline 
-        ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
-        : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."
-      );
-      toast({
-        title: "Kunde inte ladda aktiviteter",
-        description: "Ett fel uppstod när aktiviteter skulle hämtas från databasen.",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }

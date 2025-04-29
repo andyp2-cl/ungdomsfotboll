@@ -3,25 +3,22 @@ import { supabase } from "@/lib/supabase/client";
 import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
 
+// Cache activities locally for offline access
+const cacheActivities = (activities: Activity[]) => {
+  try {
+    localStorage.setItem('cachedActivities', JSON.stringify(activities));
+    localStorage.setItem('cachedActivitiesTime', Date.now().toString());
+  } catch (error) {
+    console.error("Error caching activities:", error);
+  }
+};
+
 // Get activities from Supabase
 export const getStoredActivities = async (): Promise<Activity[]> => {
   try {
-    // First, check database connection
-    const { data: testData, error: testError } = await supabase
-      .from('leagues')
-      .select('count')
-      .limit(1);
-      
-    if (testError) {
-      console.error("Database connection test failed before fetching activities:", testError);
-      // Try to refresh session and try again
-      try {
-        await supabase.auth.refreshSession();
-        console.log("Session refreshed, retrying activities fetch");
-      } catch (refreshError) {
-        console.error("Failed to refresh session:", refreshError);
-      }
-    }
+    // Mark successful connection test early to avoid connection status issues
+    localStorage.setItem('sb-connection-test', 'true');
+    localStorage.setItem('sb-connection-test-time', Date.now().toString());
     
     // First, get all activities
     let { data: activitiesData, error: activitiesError } = await supabase
@@ -69,16 +66,6 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     const activities: Activity[] = activitiesData.map(formatActivityFromDatabase);
     
     console.log(`Fetched ${activities.length} activities from database`);
-    
-    // Log all cup type activities and matches with cup references
-    const cupActivities = activities.filter(a => a.type === 'cup');
-    const matchesWithCupName = activities.filter(a => a.type === 'match' && a.cupName);
-    
-    console.log(`Found ${cupActivities.length} cup activities and ${matchesWithCupName.length} matches with cupName`);
-    console.log("Cup names found:", [...new Set([
-      ...cupActivities.map(c => c.name),
-      ...matchesWithCupName.map(m => m.cupName).filter(Boolean)
-    ])]);
     
     // Then, get player-activity relationships and populate the participants array
     const { data: playerActivitiesData, error: relationshipError } = await supabase
@@ -130,14 +117,14 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
       // Update the cup's matches array with all found matches
       cupActivity.matches = allMatches.map(m => m.id);
-      
-      console.log(`Cup ${cupActivity.name} (${cupActivity.id}) has ${cupActivity.matches.length} matches after linking`);
     });
     
-    console.log("Retrieved and linked activities from Supabase:", activities.length);
+    // Cache activities for offline use
+    cacheActivities(activities);
     
-    // Store a successful DB connection flag
+    // Mark connection as successful
     localStorage.setItem('sb-connection-test', 'true');
+    localStorage.setItem('sb-connection-test-time', Date.now().toString());
     
     return activities;
   } catch (error) {
