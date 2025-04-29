@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 // Function to test if database access is working
@@ -9,6 +9,10 @@ export const testDatabaseAccess = async () => {
     
     // Check for a session first
     const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log("No session available during database test");
+    }
     
     // Try to fetch data from leagues table
     const { data, error } = await supabase
@@ -107,6 +111,15 @@ export const checkPendingUpdates = (): number => {
 export const checkConnectionWithSession = async (): Promise<boolean> => {
   try {
     console.log("Checking connection with session...");
+    
+    // Try to refresh session first
+    try {
+      await supabase.auth.refreshSession();
+      console.log("Session refreshed during connection check");
+    } catch (refreshError) {
+      console.log("No session to refresh or refresh failed:", refreshError);
+      // Continue anyway to test anonymous access
+    }
     
     // Test database access - simplified for speed
     const testResult = await testDatabaseAccess();

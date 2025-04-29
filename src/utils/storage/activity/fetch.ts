@@ -18,7 +18,6 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
   try {
     // Mark successful connection test early to avoid connection status issues
     localStorage.setItem('sb-connection-test', 'true');
-    localStorage.setItem('sb-connection-test-time', Date.now().toString());
     
     // First, get all activities
     let { data: activitiesData, error: activitiesError } = await supabase
@@ -31,8 +30,8 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       // If we have a 401 error, try to refresh session and retry
       if (activitiesError.code === '401' || activitiesError.message.includes('JWT')) {
         try {
+          console.log("Attempting to refresh session after 401...");
           await supabase.auth.refreshSession();
-          console.log("Session refreshed after 401, retrying activities fetch");
           
           // Retry after session refresh
           const { data: retryData, error: retryError } = await supabase
@@ -40,10 +39,12 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
             .select('*');
             
           if (retryError) {
+            console.error("Retry after refresh still failed:", retryError);
             throw retryError;
           }
           
           // Use retry data if successful
+          console.log("Session refresh and retry succeeded");
           if (retryData) {
             activitiesData = retryData;
           }
@@ -81,42 +82,6 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     activities.forEach(activity => {
       const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
       activity.participants = activityPlayerRelations.map(relation => relation.player_id);
-    });
-    
-    // For cup activities, find matches that have this cup as parent
-    const cupActivitiesArray = activities.filter(a => a.type === 'cup');
-    
-    // First pass: ensure all cup activities have a matches array
-    cupActivitiesArray.forEach(cupActivity => {
-      if (!cupActivity.matches) {
-        cupActivity.matches = [];
-      }
-    });
-    
-    // Second pass: Process cup-match relationships
-    cupActivitiesArray.forEach(cupActivity => {
-      // Look for matches that reference this cup via cupId
-      const matchesByCupId = activities.filter(a => 
-        a.cupId === cupActivity.id && a.type === 'match'
-      );
-      
-      // Look for matches that reference this cup via cupName
-      const matchesByCupName = activities.filter(a => 
-        a.type === 'match' && a.cupName === cupActivity.name
-      );
-      
-      // Combine both sets of matches, removing duplicates
-      const allMatches = [...matchesByCupId];
-      
-      // Add matches by name if they aren't already included by ID
-      matchesByCupName.forEach(match => {
-        if (!allMatches.some(m => m.id === match.id)) {
-          allMatches.push(match);
-        }
-      });
-      
-      // Update the cup's matches array with all found matches
-      cupActivity.matches = allMatches.map(m => m.id);
     });
     
     // Cache activities for offline use

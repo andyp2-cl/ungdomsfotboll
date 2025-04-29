@@ -22,7 +22,6 @@ export function useSessionManagement() {
     const checkSession = async () => {
       try {
         setIsInitializing(true);
-        
         console.log("Checking for existing auth session...");
         
         // First try to get session from storage
@@ -53,35 +52,17 @@ export function useSessionManagement() {
             cacheSuccessfulConnection();
           }
         } else {
-          console.log("No session found during initialization, will try refresh");
-          // If no session found, try to refresh it
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          console.log("No session found during initialization");
+          setIsAuthenticated(false);
+          setSession(null);
+          setUser(null);
           
-          if (!refreshError && refreshData.session) {
-            console.log("Session refreshed successfully during initialization");
-            setIsAuthenticated(true);
-            setSession(refreshData.session);
-            setUser(refreshData.session.user || null);
+          // Check if we have a remembered login
+          const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
+          if (rememberedLogin) {
             setLoginAttempted(true);
-            
-            // Test database access
-            await testDatabaseAccess();
-            
-            // Set extended session expiry after successful refresh
-            setExtendedSessionPersistence();
-          } else {
-            console.log("No active session after refresh attempt");
-            setIsAuthenticated(false);
-            setSession(null);
-            setUser(null);
-            
-            // Check if we have a remembered login
-            const rememberedLogin = localStorage.getItem('rememberLogin') === 'true';
-            if (rememberedLogin) {
-              setLoginAttempted(true);
-              // Prompt user to re-login if they had a remembered session
-              toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
-            }
+            // Prompt user to re-login if they had a remembered session
+            toast.warning("Sessionen har upphört. Logga in på nytt för att återansluta till databasen.");
           }
         }
       } catch (error) {
@@ -111,12 +92,6 @@ export function useSessionManagement() {
         localStorage.removeItem('sb-connection-test');
         localStorage.removeItem('sb-connection-test-time');
         localStorage.removeItem('rememberLogin');
-        localStorage.removeItem('sb-connection-error');
-        
-        // Reload the page after logout to completely reset the state
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       } else if (currentSession) {
         console.log("User signed in or session refreshed");
         setIsAuthenticated(true);

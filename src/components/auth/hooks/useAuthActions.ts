@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { checkPendingUpdates } from "../utils/databaseUtils";
 
@@ -25,17 +25,15 @@ export function useAuthActions(isOnline: boolean) {
     try {
       setIsAuthenticating(true);
       
-      console.log("Sending login link to:", email, "with remember option:", rememberLogin);
+      console.log("Sending login link to:", email);
+      toast.loading("Skickar inloggningslänk...");
       
       // Send a magic link to the user with extended session options
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.origin,
-          shouldCreateUser: true,
-          data: {
-            remember_me: rememberLogin
-          }
+          shouldCreateUser: true
         }
       });
       
@@ -44,6 +42,10 @@ export function useAuthActions(isOnline: boolean) {
         toast.error("Kunde inte skicka inloggningslänk: " + error.message);
       } else {
         toast.success("En inloggningslänk har skickats till din e-post");
+        // Remember login preference
+        if (rememberLogin) {
+          localStorage.setItem('rememberLogin', 'true');
+        }
       }
     } catch (error) {
       console.error("Error during authentication:", error);
@@ -91,10 +93,10 @@ export function useAuthActions(isOnline: boolean) {
       console.log("Logout successful, reloading page...");
       toast.success("Utloggning lyckades");
       
-      // Force reload after a short delay
+      // Force reload after a short delay to ensure toast is visible
       setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+        window.location.reload();
+      }, 1500);
       
       return true;
     } catch (error) {

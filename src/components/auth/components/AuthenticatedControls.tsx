@@ -23,7 +23,7 @@ export function AuthenticatedControls({ user, triggerSync, handleLogout }: Authe
       setIsLoggingOut(true);
       console.log("Logout button clicked");
       await handleLogout();
-      // Note: The page will be reloaded by handleLogout on success
+      // No need to reset isLoggingOut as page will reload
     } catch (error) {
       console.error("Error during logout:", error);
       setIsLoggingOut(false);

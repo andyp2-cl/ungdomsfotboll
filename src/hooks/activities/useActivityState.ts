@@ -62,7 +62,6 @@ export function useActivityState() {
       // Check if we have a session first - use getSession directly with destructuring
       try {
         const { data } = await supabase.auth.getSession();
-        const session = data.session;
         
         // Mark connection as tested regardless of session
         localStorage.setItem('sb-connection-test', 'true');
