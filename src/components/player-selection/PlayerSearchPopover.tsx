@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Player } from "@/types/player";
 import { Check, ChevronsUpDown, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,9 @@ export function PlayerSearchPopover({
 }: PlayerSearchPopoverProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedPlayerId, setHighlightedPlayerId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Filter available players based on search query
   const filteredPlayers = availablePlayers.filter(player => {
@@ -37,8 +38,28 @@ export function PlayerSearchPopover({
   useEffect(() => {
     if (!open) {
       setSearchQuery("");
+      setHighlightedPlayerId(null);
+    } else {
+      // Focus the input when the popover opens
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   }, [open]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery && filteredPlayers.length > 0) {
+      // If we have a highlighted player, select that player
+      if (highlightedPlayerId) {
+        handlePlayerSelect(highlightedPlayerId);
+      } else {
+        // Otherwise select the first player in the filtered list
+        handlePlayerSelect(filteredPlayers[0].id);
+      }
+      e.preventDefault();
+    }
+  };
 
   const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
@@ -47,6 +68,9 @@ export function PlayerSearchPopover({
       // No player limit check anymore
       onPlayerSelect(playerId);
     }
+    // Close the popover and reset search after selection
+    setOpen(false);
+    setSearchQuery("");
   };
 
   return (
@@ -67,11 +91,13 @@ export function PlayerSearchPopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-[250px]'} p-0`} align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Sök spelare..." 
             value={searchQuery}
             onValueChange={setSearchQuery}
+            onKeyDown={handleKeyDown}
+            ref={inputRef}
             className="h-9"
           />
           <CommandList className="max-h-[300px] overflow-auto">
@@ -82,6 +108,7 @@ export function PlayerSearchPopover({
                   key={player.id}
                   value={player.id}
                   onSelect={() => handlePlayerSelect(player.id)}
+                  onMouseEnter={() => setHighlightedPlayerId(player.id)}
                   className="flex items-center justify-between cursor-pointer"
                 >
                   <div className="flex items-center">

@@ -1,8 +1,8 @@
 
-import React, { useState, Dispatch, SetStateAction } from "react";
+import React, { useState, Dispatch, SetStateAction, useRef } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Trash } from "lucide-react";
+import { UserPlus, Trash, Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +41,8 @@ export function ParticipantActions({
   isMobile = false
 }: ParticipantActionsProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // If we're in the alternative usage mode (with participantCount)
   if (participantCount !== undefined && setIsAddingPlayers) {
@@ -71,6 +73,12 @@ export function ParticipantActions({
     );
   }
   
+  // Filter players based on search query
+  const filteredPlayers = nonParticipantPlayers.filter(player => {
+    if (!searchQuery.trim()) return true;
+    return player.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+  
   // Handle the participant selection
   const handleSelectParticipant = (playerId: string) => {
     if (onAddParticipant) {
@@ -80,7 +88,28 @@ export function ParticipantActions({
       onAddPlayers([playerId]);
     }
     setOpen(false);
+    setSearchQuery("");
   };
+  
+  // Handle keyboard events
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery && filteredPlayers.length > 0) {
+      // Select the first player in the filtered list
+      handleSelectParticipant(filteredPlayers[0].id);
+      e.preventDefault();
+    }
+  };
+
+  // Focus input when popover opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    } else {
+      setSearchQuery("");
+    }
+  }, [open]);
   
   // Original implementation with popup
   return (
@@ -92,11 +121,17 @@ export function ParticipantActions({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" side="bottom" align="end">
-        <Command>
-          <CommandInput placeholder="Sök spelare..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Sök spelare..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            onKeyDown={handleKeyDown}
+            ref={inputRef}
+          />
           <CommandEmpty>Inga spelare hittades</CommandEmpty>
           <CommandGroup className="max-h-60 overflow-auto">
-            {nonParticipantPlayers.map(player => (
+            {filteredPlayers.map(player => (
               <CommandItem
                 key={player.id}
                 onSelect={() => handleSelectParticipant(player.id)}
@@ -117,3 +152,6 @@ export function ParticipantActions({
     </Popover>
   );
 }
+
+// Add missing useEffect import
+import { useEffect } from "react";
