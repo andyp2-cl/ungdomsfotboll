@@ -31,17 +31,8 @@ export function useSyncEngine() {
         // Check for active user session before proceeding
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          console.log("No active session, attempting anonymous login");
-          try {
-            const { error } = await supabase.auth.signInAnonymously();
-            if (error) {
-              console.error("Error signing in anonymously:", error);
-              return;
-            }
-          } catch (authError) {
-            console.error("Auth error:", authError);
-            return;
-          }
+          console.log("No active session, sync will be performed when user logs in");
+          return;
         }
         
         // Process each pending update
@@ -52,8 +43,8 @@ export function useSyncEngine() {
           const pendingUpdate = pendingUpdates[activityId];
           
           try {
-            // Try multiple approaches to ensure sync works
-
+            // Try different approaches for maximum reliability
+            
             // APPROACH 1: USE SUPABASE CLIENT
             console.log(`Syncing activity ${activityId} via Supabase client`);
             try {
@@ -82,7 +73,6 @@ export function useSyncEngine() {
             // APPROACH 2: DIRECT REST API APPROACH
             console.log(`Syncing activity ${activityId} via direct REST API`);
             
-            const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
             
             const apiUrl = `https://zkrruihxszziifyogzko.supabase.co/rest/v1/activities?id=eq.${activityId}`;
@@ -158,20 +148,35 @@ export function useSyncEngine() {
         if (successCount > 0) {
           sonnerToast.success(`${successCount} matchresultat synkroniserade till databasen`);
         }
+        
+        if (failureCount > 0) {
+          sonnerToast.warning(`Kunde inte synka ${failureCount} ändringar. Försöker igen senare.`);
+        }
       } catch (error) {
         console.error("Error syncing pending updates:", error);
       }
     };
     
-    // Run sync on startup and every minute
-    syncPendingUpdates();
-    const intervalId = setInterval(syncPendingUpdates, 60 * 1000);
+    // Check if we have a session before trying to sync
+    const checkSessionAndSync = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log("Active session found, initiating sync");
+        syncPendingUpdates();
+      } else {
+        console.log("No active session, skipping automatic sync");
+      }
+    };
+    
+    // Run sync check on startup and every minute
+    checkSessionAndSync();
+    const intervalId = setInterval(checkSessionAndSync, 60 * 1000);
     
     // Listen for online events to trigger sync
     const handleOnline = () => {
-      console.log("Network connection restored, syncing pending updates...");
-      sonnerToast.info("Nätverk återansluten, synkroniserar ändringar...");
-      syncPendingUpdates();
+      console.log("Network connection restored, checking for sync");
+      sonnerToast.info("Nätverk återansluten, försöker synkronisera ändringar...");
+      checkSessionAndSync();
     };
     
     window.addEventListener('online', handleOnline);
@@ -183,8 +188,14 @@ export function useSyncEngine() {
   }, [toast]);
   
   // Expose a function that can be called to manually trigger sync
-  const manualSync = () => {
-    sonnerToast.loading("Synkroniserar ändringar till databasen...");
+  const manualSync = async () => {
+    // Check if we have a session first
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      sonnerToast.warning("Du måste logga in för att synkronisera ändringar");
+      return;
+    }
     
     // Get pending updates from localStorage
     const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
@@ -195,7 +206,17 @@ export function useSyncEngine() {
     
     const pendingUpdates = JSON.parse(pendingUpdatesJson);
     const count = Object.keys(pendingUpdates).length;
-    sonnerToast.info(`Synkroniserar ${count} matchresultat...`);
+    
+    if (count > 0) {
+      sonnerToast.loading(`Synkroniserar ${count} matchresultat...`);
+      
+      // Try to sync by forcing a page reload to trigger sync engine
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      sonnerToast.info("Inga ändringar att synkronisera");
+    }
   };
   
   return { manualSync };

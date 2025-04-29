@@ -27,41 +27,55 @@ function App() {
   const { manualSync } = useSyncEngine();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
-  // Ensure Supabase auth is properly initialized
+  // Check for existing session but don't try anonymous auth anymore
   useEffect(() => {
     const initializeAuth = async () => {
       // Check for existing session
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If no session exists, try anonymous authentication
-      if (!session) {
-        try {
-          console.log("No session found, attempting anonymous sign-in");
-          const { error } = await supabase.auth.signInAnonymously();
-          if (error) {
-            console.error("Error signing in anonymously:", error);
-          } else {
-            console.log("Anonymous authentication successful");
+      if (session) {
+        console.log("Existing session found");
+        // If we have a session, check if there are pending syncs that need to be processed
+        const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
+        if (pendingUpdatesJson) {
+          const pendingCount = Object.keys(JSON.parse(pendingUpdatesJson)).length;
+          if (pendingCount > 0) {
+            console.log(`Found ${pendingCount} pending updates to sync`);
+            toast.info(`${pendingCount} ändringar att synkronisera`);
+            setTimeout(() => manualSync(), 1000);
           }
-        } catch (error) {
-          console.error("Error during authentication:", error);
         }
       } else {
-        console.log("Existing session found");
+        console.log("No session found, user will need to log in manually if needed");
       }
     };
     
     initializeAuth();
     
-    // Also set up auth state change listener
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, !!session);
+      
+      // When a user signs in, try to sync any pending changes
+      if (event === 'SIGNED_IN' && session) {
+        toast.success("Inloggning lyckades");
+        
+        // Check for pending updates and sync them
+        const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
+        if (pendingUpdatesJson) {
+          const pendingCount = Object.keys(JSON.parse(pendingUpdatesJson)).length;
+          if (pendingCount > 0) {
+            toast.info(`Synkroniserar ${pendingCount} matchresultat...`);
+            setTimeout(() => manualSync(), 1000);
+          }
+        }
+      }
     });
     
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [manualSync]);
   
   // Monitor online/offline status
   useEffect(() => {

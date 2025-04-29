@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Shield, ShieldCheck, CloudOff, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { Shield, CloudOff, RefreshCw, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function AnonymousAuth() {
@@ -25,19 +25,18 @@ export function AnonymousAuth() {
     };
   }, []);
   
-  // Check for existing session and test RLS
+  // Check for existing session
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session);
         
-        // Test if we can write to the database with the current session
         if (session) {
-          await testDatabaseWrite(session.access_token);
+          await testDatabaseAccess(session.access_token);
         } else {
-          // Try to authenticate automatically if no session exists
-          await handleLogin(true);
+          // Authentication will now be manual only, as anonymous auth is disabled
+          console.log("No session found, user will need to authenticate manually");
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -53,7 +52,7 @@ export function AnonymousAuth() {
       
       // Test database access whenever auth state changes
       if (session) {
-        await testDatabaseWrite(session.access_token);
+        await testDatabaseAccess(session.access_token);
       }
     });
     
@@ -62,83 +61,69 @@ export function AnonymousAuth() {
     };
   }, []);
   
-  // Test if we can write to the database
-  const testDatabaseWrite = async (token: string) => {
+  // Test if we can access the database
+  const testDatabaseAccess = async (token: string) => {
     try {
-      // Try a direct API call to test RLS permissions
-      const response = await fetch('https://zkrruihxszziifyogzko.supabase.co/rest/v1/activities?id=eq.test_rls', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          name: 'RLS Test ' + new Date().toISOString()
-        })
-      });
+      // Try a simple read operation to test database access
+      const { data, error } = await supabase
+        .from('leagues')
+        .select('id')
+        .limit(1);
       
-      setIsRLSEnabled(response.status !== 403);
-      console.log("RLS test result:", response.status, response.statusText);
-      
-      if (response.status === 403) {
-        toast.warning("RLS-problem: Databasåtgärder kan vara begränsade");
-      } else {
-        console.log("RLS test passed or record not found");
+      if (error) {
+        console.error("Database access test failed:", error);
+        setIsRLSEnabled(false);
+        toast.warning("Begränsad databastillgång. Vissa funktioner kan vara otillgängliga.");
+        return;
       }
+      
+      console.log("Database access test passed:", data);
+      setIsRLSEnabled(true);
     } catch (error) {
-      console.error("Error testing RLS:", error);
+      console.error("Error testing database access:", error);
+      setIsRLSEnabled(false);
     }
   };
   
-  const handleLogin = async (silent: boolean = false) => {
+  const handleLogin = async () => {
     if (!isOnline) {
-      if (!silent) toast.error("Ingen internetanslutning. Databasåtkomst kräver uppkoppling.");
+      toast.error("Ingen internetanslutning. Databasåtkomst kräver uppkoppling.");
       return;
     }
     
     try {
-      if (!silent) setIsAuthenticating(true);
+      setIsAuthenticating(true);
       
-      // Create an anonymous session for database access
-      const { error, data } = await supabase.auth.signInAnonymously();
+      // Since anonymous auth is disabled, switch to magic link option
+      // or email/password login is the preferred solution long-term
+      const email = prompt("Ange din e-postadress för att aktivera databasåtkomst:");
+      
+      if (!email) {
+        toast.error("Ingen e-postadress angiven");
+        return;
+      }
+      
+      // Send a magic link to the user
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
       
       if (error) {
         console.error("Authentication error:", error);
-        if (!silent) toast.error("Kunde inte aktivera databasåtkomst: " + error.message);
+        toast.error("Kunde inte skicka inloggningslänk: " + error.message);
       } else {
-        console.log("Anonymous authentication successful", data);
-        if (!silent) toast.success("Databasåtkomst aktiverad");
-        
-        // Test RLS after successful login
-        if (data.session) {
-          await testDatabaseWrite(data.session.access_token);
-        }
+        toast.success("En inloggningslänk har skickats till din e-post");
       }
     } catch (error) {
-      console.error("Error during anonymous authentication:", error);
-      if (!silent) toast.error("Ett fel uppstod vid aktivering av databasåtkomst");
+      console.error("Error during authentication:", error);
+      toast.error("Ett fel uppstod vid aktivering av databasåtkomst");
     } finally {
-      if (!silent) setIsAuthenticating(false);
+      setIsAuthenticating(false);
     }
   };
-  
-  // If we're offline, show a different button
-  if (!isOnline) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-amber-600 flex gap-1.5 items-center"
-        >
-          <CloudOff className="h-4 w-4" />
-          <span className="text-xs">Offline</span>
-        </Button>
-      </div>
-    );
-  }
   
   // Trigger manual sync from pending updates in localStorage
   const handleSyncPendingUpdates = () => {
@@ -152,13 +137,37 @@ export function AnonymousAuth() {
     const count = Object.keys(pendingUpdates).length;
     
     if (count > 0) {
-      toast.loading(`Synkroniserar ${count} ändringar till databasen...`);
+      // In offline mode, we can still show this information
+      toast.loading(`${count} ändringar sparade lokalt och väntar på synkronisering`);
       
-      // Force reload page to trigger sync
-      window.location.reload();
+      // Only force reload if we're online
+      if (isOnline) {
+        toast.loading(`Synkroniserar ${count} ändringar till databasen...`);
+        // Force reload page to trigger sync
+        window.location.reload();
+      } else {
+        toast.info("Ändringar synkas automatiskt när du är online igen");
+      }
     } else {
       toast.info("Inga ändringar att synkronisera");
     }
+  }
+  
+  // If we're offline, show offline mode button
+  if (!isOnline) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="text-amber-600 flex gap-1.5 items-center"
+          onClick={handleSyncPendingUpdates}
+        >
+          <CloudOff className="h-4 w-4" />
+          <span className="text-xs">Offline</span>
+        </Button>
+      </div>
+    );
   }
   
   return (
@@ -196,12 +205,12 @@ export function AnonymousAuth() {
           variant="outline"
           size="sm"
           className="flex gap-1.5 items-center"
-          onClick={() => handleLogin()}
+          onClick={handleLogin}
           disabled={isAuthenticating}
         >
-          <Shield className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4" />
           <span className="text-xs">
-            {isAuthenticating ? "Aktiverar åtkomst..." : "Aktivera databasåtkomst"}
+            {isAuthenticating ? "Aktiverar åtkomst..." : "Logga in för databasåtkomst"}
           </span>
         </Button>
       )}

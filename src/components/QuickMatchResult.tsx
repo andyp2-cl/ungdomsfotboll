@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast as sonnerToast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -26,8 +27,23 @@ export function QuickMatchResult({
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  // Monitor online/offline state for component
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   // Update local state when activity props change
   useEffect(() => {
@@ -90,7 +106,7 @@ export function QuickMatchResult({
         }
       }
 
-      // First save locally regardless of online status
+      // ALWAYS save to localStorage first regardless of authentication or online status
       const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
       pendingUpdates[activity.id] = {
         homeScore: finalHomeScore,
@@ -104,18 +120,31 @@ export function QuickMatchResult({
       // Save to localStorage immediately
       localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
       
-      // Try to save to database if online
-      try {
-        await onSave(finalHomeScore, finalAwayScore);
-        sonnerToast.success("Resultat sparat och synkroniserat med databasen");
+      // Check if we're online and authenticated before trying to save to database
+      if (isOnline) {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        // If save was successful, remove from pending updates
-        const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
-        delete updatedPendingUpdates[activity.id];
-        localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
-      } catch (error) {
-        console.error("Error saving to database, but saved locally:", error);
-        sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
+        if (session) {
+          // We're authenticated, try to save to database
+          try {
+            await onSave(finalHomeScore, finalAwayScore);
+            sonnerToast.success("Resultat sparat och synkroniserat med databasen");
+            
+            // If save was successful, remove from pending updates
+            const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
+            delete updatedPendingUpdates[activity.id];
+            localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
+          } catch (error) {
+            console.error("Error saving to database, but saved locally:", error);
+            sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
+          }
+        } else {
+          // Not authenticated, show info message
+          sonnerToast.info("Resultat sparat lokalt. Logga in för att synka med databasen.");
+        }
+      } else {
+        // We're offline
+        sonnerToast.info("Offline. Resultat sparat lokalt och synkas när du är online igen.");
       }
     } catch (error) {
       console.error("Error saving match result:", error);
@@ -197,7 +226,7 @@ export function QuickMatchResult({
             size={isMobile ? "sm" : "default"}
           >
             <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
-            {isSaving ? "Sparar..." : "Spara resultat"}
+            {isSaving ? "Sparar..." : isOnline ? "Spara resultat" : "Spara lokalt"}
           </Button>
         )}
       </div>
