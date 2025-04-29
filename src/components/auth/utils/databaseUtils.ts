@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -23,7 +24,7 @@ export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabl
         .insert({ id: 'test-rls', name: 'Test RLS' });
     } catch (rlsError) {
       // If the error contains "new row violates row-level security policy", RLS is enabled
-      if (rlsError.message.includes('new row violates row-level security policy')) {
+      if (rlsError.message && rlsError.message.includes('new row violates row-level security policy')) {
         console.log("Row Level Security (RLS) is enabled");
         return { success: true, rlsEnabled: true };
       } else {
@@ -48,9 +49,8 @@ export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabl
 export const setExtendedSessionPersistence = async (): Promise<void> => {
   try {
     console.log("Setting extended session persistence...");
-    await supabase.auth.setSession({
-      expires_in: 60 * 60 * 24 * 30, // 30 days
-    });
+    // Fixed: Removed the invalid expires_in property
+    await supabase.auth.refreshSession();
     console.log("Extended session persistence set successfully");
   } catch (error) {
     console.error("Error setting extended session persistence:", error);
@@ -197,5 +197,53 @@ export const checkPendingUpdates = (): number => {
   } catch (e) {
     console.error("Error parsing pending updates:", e);
     return 0;
+  }
+};
+
+/**
+ * Force reconnect by resetting connection state
+ */
+export const forceReconnect = async (): Promise<boolean> => {
+  try {
+    console.log("Forcing database reconnection...");
+    
+    // Clear connection cache
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    
+    // Try to refresh the session
+    await supabase.auth.refreshSession();
+    
+    // Try to connect anonymously if needed
+    return await connectAnonymously();
+  } catch (error) {
+    console.error("Error during forced reconnection:", error);
+    return false;
+  }
+};
+
+/**
+ * Clear all auth state and reconnect
+ */
+export const clearAuthAndReconnect = async (): Promise<boolean> => {
+  try {
+    console.log("Clearing auth state and reconnecting...");
+    
+    // Sign out first
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // Clear connection cache
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
+    
+    // Wait a moment for auth state to clear
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Try to connect anonymously
+    return await connectAnonymously();
+  } catch (error) {
+    console.error("Error during auth clear and reconnection:", error);
+    return false;
   }
 };

@@ -9,7 +9,7 @@ import {
   cacheSuccessfulConnection,
   connectAnonymously
 } from "../utils/databaseUtils";
-import { shouldAutoConnectDatabase } from "@/utils/environment";
+import { shouldAutoConnectDatabase, setAutoConnectDatabase } from "@/utils/environment";
 
 export function useSessionManagement() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
