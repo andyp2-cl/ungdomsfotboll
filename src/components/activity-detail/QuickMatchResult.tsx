@@ -50,8 +50,19 @@ export function QuickMatchResult({
     
     try {
       // Convert string values to numbers if needed
-      const processedHomeScore = typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore;
-      const processedAwayScore = typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore;
+      const processedHomeScore = homeScore !== undefined && homeScore !== null ? 
+        (typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore) : 
+        undefined;
+        
+      const processedAwayScore = awayScore !== undefined && awayScore !== null ? 
+        (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore) : 
+        undefined;
+      
+      // Debug data conversion
+      console.log("Processed score values:", {
+        original: { homeScore, awayScore },
+        processed: { processedHomeScore, processedAwayScore }
+      });
       
       await onSave(processedHomeScore, processedAwayScore);
       toast({

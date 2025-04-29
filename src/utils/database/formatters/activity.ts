@@ -21,11 +21,14 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     location_name: location?.name || null,
     location_description: location?.description || null,
     location_gps_link: location?.gpsLink || null,
+    // Ensure player_stats is passed as a JSON object, not undefined
     player_stats: player_stats || {},
     cup_id: activity.cupId || null,
-    home_score: typeof activity.homeScore !== 'undefined' ? activity.homeScore : null,
-    away_score: typeof activity.awayScore !== 'undefined' ? activity.awayScore : null,
-    is_win: typeof activity.isWin !== 'undefined' ? activity.isWin : null,
+    // Convert undefined scores to explicit null values for database
+    home_score: activity.homeScore !== undefined ? activity.homeScore : null,
+    away_score: activity.awayScore !== undefined ? activity.awayScore : null,
+    // Ensure boolean values are explicitly true/false/null, not undefined
+    is_win: activity.isWin === true ? true : activity.isWin === false ? false : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false,
@@ -40,9 +43,10 @@ export const formatActivityForDatabase = (activity: Activity): any => {
 
   console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with home_score: ${formattedActivity.home_score}, away_score: ${formattedActivity.away_score}, is_win: ${formattedActivity.is_win}`);
   
-  // Ensure no undefined values are passed to the database
+  // Final check for any undefined values
   Object.keys(formattedActivity).forEach(key => {
     if (formattedActivity[key] === undefined) {
+      console.warn(`Converting undefined value to null for field: ${key}`);
       formattedActivity[key] = null;
     }
   });
