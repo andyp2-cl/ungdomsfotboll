@@ -22,7 +22,6 @@ export function QuickMatchResult({
   isReadOnly = false,
   resultColorClass = ""
 }: QuickMatchResultProps) {
-  // Use proper typing from the beginning
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,29 +49,19 @@ export function QuickMatchResult({
     });
     
     try {
-      // Ensure we're passing numeric values
-      let processedHomeScore: number | undefined = undefined;
-      let processedAwayScore: number | undefined = undefined;
+      // Convert to proper number values or undefined
+      let finalHomeScore: number | undefined = undefined;
+      let finalAwayScore: number | undefined = undefined;
       
       if (homeScore !== undefined && homeScore !== null) {
-        processedHomeScore = typeof homeScore === 'string' 
-          ? parseInt(homeScore as string, 10) 
-          : homeScore as number;
+        finalHomeScore = Number(homeScore);
       }
       
       if (awayScore !== undefined && awayScore !== null) {
-        processedAwayScore = typeof awayScore === 'string'
-          ? parseInt(awayScore as string, 10) 
-          : awayScore as number;
+        finalAwayScore = Number(awayScore);
       }
       
-      // Debug data conversion
-      console.log("Processed score values:", {
-        original: { homeScore, awayScore },
-        processed: { processedHomeScore, processedAwayScore }
-      });
-      
-      await onSave(processedHomeScore, processedAwayScore);
+      await onSave(finalHomeScore, finalAwayScore);
     } catch (error) {
       console.error("Error saving match result:", error);
       toast({
@@ -85,7 +74,7 @@ export function QuickMatchResult({
     }
   };
 
-  // Input change handler to ensure types are correct
+  // Handle input changes with proper type conversion
   const handleHomeScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setHomeScore(value === "" ? undefined : Number(value));

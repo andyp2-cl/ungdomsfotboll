@@ -1,12 +1,10 @@
 
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
-import { supabase } from "@/integrations/supabase/client";
-import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 
 /**
  * Updates match result (score) for an existing activity
- * Uses simple but reliable methods to ensure successful saving
+ * Uses a simplified approach focused on reliability
  */
 export const handleMatchResultUpdate = async (
   activities: Activity[],
@@ -32,8 +30,8 @@ export const handleMatchResultUpdate = async (
       return;
     }
     
-    // Create the updated activity object
-    const updatedActivity = { 
+    // Create a copy of the activity to avoid mutations
+    const updatedActivity: Activity = { 
       ...activity,
       homeScore, 
       awayScore
@@ -43,15 +41,22 @@ export const handleMatchResultUpdate = async (
     if (homeScore !== undefined && awayScore !== undefined) {
       updatedActivity.result = `${homeScore}-${awayScore}`;
       
-      // Set isWin based on scores
-      updatedActivity.isWin = homeScore > awayScore;
+      // Set isWin based on scores (win = true, loss = false, draw = undefined)
+      if (homeScore > awayScore) {
+        updatedActivity.isWin = true;
+      } else if (homeScore < awayScore) {
+        updatedActivity.isWin = false;
+      } else {
+        // For a draw, set isWin to undefined (not false)
+        updatedActivity.isWin = undefined;
+      }
     } else {
       // Clear result if scores aren't defined
       updatedActivity.result = undefined;
       updatedActivity.isWin = undefined;
     }
     
-    // Update the player stats scores
+    // Update player stats
     if (!updatedActivity.player_stats) {
       updatedActivity.player_stats = { goals: {}, assists: {} };
     }
@@ -65,15 +70,15 @@ export const handleMatchResultUpdate = async (
       isWin: updatedActivity.isWin
     };
     
-    // Always update local state first to give immediate feedback
+    // Update local state first to give immediate feedback
     const updatedActivities = activities.map(a => 
       a.id === activityId ? updatedActivity : a
     );
     setActivities(updatedActivities);
     
     try {
-      // Use the standard saveActivities helper - the most reliable approach
-      console.log("Using saveActivities helper to save match result");
+      // Use the standard saveActivities helper 
+      console.log("Saving match result to database...");
       await saveActivities([updatedActivity]);
       console.log("Match result saved successfully");
       
@@ -86,8 +91,6 @@ export const handleMatchResultUpdate = async (
     } catch (error) {
       console.error("Error saving match result:", error);
       
-      // Show an error message but don't revert local state
-      // This way the user sees their changes even if the database save failed
       toast({
         title: "Lokalt uppdaterad",
         description: "Resultatet har sparats lokalt, men kunde inte sparas i databasen. Försök igen senare.",
