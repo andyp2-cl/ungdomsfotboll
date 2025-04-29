@@ -16,7 +16,7 @@ export function useConnectionCheck(
   setDbError: (error: string | null) => void,
   updateConnectionStats: (success: boolean, timeTaken: number) => void,
   connectionAttempts: number,
-  setConnectionAttempts: (count: number) => void
+  setConnectionAttempts: React.Dispatch<React.SetStateAction<number>>
 ) {
   const [isCheckingDb, setIsCheckingDb] = useState(false);
   
