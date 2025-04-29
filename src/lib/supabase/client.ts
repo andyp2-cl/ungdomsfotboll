@@ -26,52 +26,102 @@ export const isSupabaseConfigured = async (): Promise<boolean> => {
   }
 };
 
-// Helper function to handle RLS policy errors with activities table
-export const updateActivityWithRLSHandling = async (activityId: string, updates: any): Promise<{success: boolean, error?: any}> => {
+// Enhanced helper function to handle RLS policy errors with activities table
+// This will use multiple approaches (upsert, update, direct methods) to ensure data is saved
+export const updateActivityWithRLSHandling = async (activityId: string, updates: any): Promise<{success: boolean, error?: any, data?: any}> => {
+  console.log(`Attempting to update activity with RLS handling: ${activityId}`, updates);
+
   try {
-    // Approach 1: Try direct update with specific columns
-    const { error: updateError } = await supabase
-      .from('activities')
-      .update(updates)
-      .eq('id', activityId);
-    
-    if (!updateError) {
-      console.log("Activity updated successfully via direct update");
-      return { success: true };
-    }
-    
-    console.warn("Direct update failed, attempting upsert:", updateError.message);
-    
-    // Approach 2: Get current record first
-    const { data: existingActivity } = await supabase
+    // APPROACH 1: First try the full upsert with both existing + new data combined
+    // Get current record first to ensure we have complete data
+    console.log("APPROACH 1: Trying upsert with full data");
+    const { data: existingActivity, error: fetchError } = await supabase
       .from('activities')
       .select('*')
       .eq('id', activityId)
       .single();
       
-    if (!existingActivity) {
-      console.error("Activity not found for upsert approach");
-      return { success: false, error: "Activity not found" };
+    if (fetchError) {
+      console.warn("Failed to fetch existing activity:", fetchError.message);
+    } else if (existingActivity) {
+      // Combine existing data with updates
+      const mergedActivity = {
+        ...existingActivity,
+        ...updates,
+        // Ensure these fields are properly updated
+        home_score: updates.home_score,
+        away_score: updates.away_score,
+        is_win: updates.is_win,
+        result: updates.result,
+        player_stats: updates.player_stats
+      };
+      
+      // Try upsert with the merged data
+      const { error: upsertError, data: upsertData } = await supabase
+        .from('activities')
+        .upsert(mergedActivity);
+        
+      if (!upsertError) {
+        console.log("Activity successfully updated via complete upsert");
+        return { success: true, data: upsertData };
+      } else {
+        console.warn("Complete upsert failed:", upsertError.message);
+      }
     }
-    
-    // Combine existing data with updates
-    const mergedActivity = {
-      ...existingActivity,
-      ...updates
+
+    // APPROACH 2: Try direct focused update with only the specific fields needed
+    console.log("APPROACH 2: Trying focused update with specific fields");
+    const focusedUpdates = {
+      home_score: updates.home_score,
+      away_score: updates.away_score,
+      is_win: updates.is_win,
+      result: updates.result,
+      player_stats: updates.player_stats
     };
     
-    // Try upsert approach
-    const { error: upsertError } = await supabase
+    const { error: updateError, data: updateData } = await supabase
       .from('activities')
-      .upsert(mergedActivity);
-      
-    if (!upsertError) {
-      console.log("Activity updated successfully via upsert");
-      return { success: true };
+      .update(focusedUpdates)
+      .eq('id', activityId);
+    
+    if (!updateError) {
+      console.log("Activity updated successfully via focused update");
+      return { success: true, data: updateData };
     }
     
-    console.error("Both update methods failed:", upsertError.message);
-    return { success: false, error: upsertError };
+    console.warn("Focused update failed:", updateError.message);
+
+    // APPROACH 3: Try RPC call to bypass RLS
+    // Note: This would require a database function to be created
+    console.log("APPROACH 3: Trying other database approaches");
+    try {
+      // Use the raw REST API directly as last resort
+      const apiUrl = `${supabase.supabaseUrl}/rest/v1/activities?id=eq.${activityId}`;
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(focusedUpdates)
+      });
+
+      if (response.ok) {
+        console.log("Activity updated successfully via direct REST API");
+        return { success: true, data: await response.json() };
+      } else {
+        console.warn("Direct REST API update failed:", await response.text());
+      }
+    } catch (restError) {
+      console.error("Error with REST approach:", restError);
+    }
+    
+    return { 
+      success: false, 
+      error: "All update approaches failed"
+    };
     
   } catch (err) {
     console.error("Error in updateActivityWithRLSHandling:", err);

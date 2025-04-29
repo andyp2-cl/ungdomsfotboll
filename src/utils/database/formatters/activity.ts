@@ -4,6 +4,7 @@ import { Activity } from "@/types/player";
 /**
  * Format Activity object for database storage
  * - Converts nested objects into flat structure
+ * - Ensures no undefined values are passed to database
  */
 export const formatActivityForDatabase = (activity: Activity): any => {
   // Create a base object to avoid mutations
@@ -54,6 +55,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
  * - Converts flat database structure to nested object structure
  */
 export const formatActivityFromDatabase = (item: any): Activity => {
+  // First create a normalized version of the activity
   const activity: Activity = {
     id: item.id,
     name: item.name,
