@@ -12,8 +12,10 @@ type ConnectionStats = {
   totalAttempts: number;
 };
 
+type DatabaseStatus = 'unknown' | 'connecting' | 'connected' | 'error';
+
 export function useDatabaseCheck(isOnline: boolean, error?: string) {
-  const [dbStatus, setDbStatus] = useState<'unknown' | 'connecting' | 'connected' | 'error'>('unknown');
+  const [dbStatus, setDbStatus] = useState<DatabaseStatus>('unknown');
   const [dbError, setDbError] = useState<string | null>(null);
   const [isCheckingDb, setIsCheckingDb] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);

@@ -1,12 +1,9 @@
 
 import React from "react";
 import Header from "./Header";
-
-// Import the PerformanceMonitor component
 import { PerformanceMonitor } from "./loading/PerformanceMonitor";
 
 export default function LayoutMain({ children }: { children: React.ReactNode }) {
-  
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -21,7 +18,6 @@ export default function LayoutMain({ children }: { children: React.ReactNode }) 
         </div>
       </footer>
       
-      {/* Add the performance monitor component */}
       <PerformanceMonitor />
     </div>
   );

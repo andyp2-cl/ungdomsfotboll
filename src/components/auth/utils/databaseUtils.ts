@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -26,7 +25,7 @@ export const testDatabaseAccess = async (): Promise<{ success: boolean; rlsEnabl
           code: error.code,
           hint: error.hint || 'Ingen ytterligare information',
           queryTime: `${(endTime - startTime).toFixed(2)}ms`,
-          statusCode: error.status || 'Okänd statuskod'
+          statusCode: error.code || 'Okänd statuskod'
         }
       };
     }

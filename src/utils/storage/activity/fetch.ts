@@ -25,11 +25,23 @@ const cacheActivities = (activities: Activity[]) => {
 };
 
 // Get activities from Supabase with improved caching and error handling
-export const getStoredActivities = async (options: { 
-  forceRefresh?: boolean,
-  showToast?: boolean
-} = {}): Promise<Activity[]> => {
-  const { forceRefresh = false, showToast = false } = options;
+export const getStoredActivities = async (context?: any): Promise<Activity[]> => {
+  // Handle both TanStack Query context and our custom options format
+  let forceRefresh = false;
+  let showToast = false;
+  
+  if (context && typeof context === 'object') {
+    // If it's a TanStack Query context, check meta
+    if (context.meta) {
+      forceRefresh = !!context.meta.forceRefresh;
+      showToast = !!context.meta.showToast;
+    } 
+    // If it's our custom options object
+    else if ('forceRefresh' in context || 'showToast' in context) {
+      forceRefresh = !!context.forceRefresh;
+      showToast = !!context.showToast;
+    }
+  }
   
   // Start timing for performance measurement
   const startTime = performance.now();
