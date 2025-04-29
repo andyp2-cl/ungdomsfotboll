@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,12 @@ export function QuickMatchResult({
   const [isSaving, setIsSaving] = useState(false);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  // Update local state when activity props change
+  useEffect(() => {
+    setHomeScore(activity.homeScore);
+    setAwayScore(activity.awayScore);
+  }, [activity.homeScore, activity.awayScore]);
   
   const teamNames = extractTeamNames(activity);
   const isHome = isHomeMatch(activity);
