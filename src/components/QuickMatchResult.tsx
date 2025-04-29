@@ -8,6 +8,7 @@ import { extractTeamNames, isHomeMatch } from "./activity-detail/match-result/ut
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast as sonnerToast } from "sonner";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -67,7 +68,39 @@ export function QuickMatchResult({
         finalAwayScore = Number(awayScore);
       }
       
-      await onSave(finalHomeScore, finalAwayScore);
+      // Calculate isWin value
+      let isWin: boolean | undefined = undefined;
+      if (finalHomeScore !== undefined && finalAwayScore !== undefined) {
+        if (finalHomeScore > finalAwayScore) {
+          isWin = true;
+        } else if (finalHomeScore < finalAwayScore) {
+          isWin = false;
+        }
+        // if scores are equal, isWin remains undefined (for draw)
+      }
+
+      // First save locally regardless of online status
+      const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
+      pendingUpdates[activity.id] = {
+        homeScore: finalHomeScore,
+        awayScore: finalAwayScore,
+        isWin: isWin,
+        result: finalHomeScore !== undefined && finalAwayScore !== undefined ? 
+          `${finalHomeScore}-${finalAwayScore}` : undefined,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Save to localStorage immediately
+      localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
+      
+      // Try to save to database if online
+      try {
+        await onSave(finalHomeScore, finalAwayScore);
+        sonnerToast.success("Resultat sparat och synkroniserat med databasen");
+      } catch (error) {
+        console.error("Error saving to database, but saved locally:", error);
+        sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");
+      }
     } catch (error) {
       console.error("Error saving match result:", error);
       toast({

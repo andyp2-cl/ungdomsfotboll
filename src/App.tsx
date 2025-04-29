@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,8 @@ import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useSyncEngine } from "./hooks/useSyncEngine";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +23,40 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  useSyncEngine();
+  const { manualSync } = useSyncEngine();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Internetanslutning återupprättad");
+      // Trigger sync when we're back online
+      setTimeout(() => {
+        manualSync();
+      }, 1000);
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning("Offline-läge aktivt. Ändringar sparas lokalt och synkas när du är online igen.");
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [manualSync]);
+  
+  // Show toast if offline at startup
+  useEffect(() => {
+    if (!isOnline) {
+      toast.warning("Du är offline. Ändringar sparas lokalt och synkas när du är online igen.");
+    }
+  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
