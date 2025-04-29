@@ -1,7 +1,6 @@
 
 /**
- * Legacy file maintained for backward compatibility
- * Use imports from src/utils/cache/index.ts for new code
+ * Simple cache system for API responses to minimize network requests
  */
 
 // Re-export everything from the modular cache system

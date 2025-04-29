@@ -83,8 +83,6 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
     // Mark connection as successful
     localStorage.setItem('sb-connection-test', 'true');
     localStorage.setItem('sb-connection-test-time', Date.now().toString());
-    localStorage.setItem('sb-activities-fetch-time', endTime.toString());
-    localStorage.setItem('sb-activities-fetch-duration', (endTime - startTime).toString());
     
     return activities;
   } catch (error) {
