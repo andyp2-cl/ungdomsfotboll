@@ -5,9 +5,10 @@ import { CloudOff } from "lucide-react";
 
 interface OfflineIndicatorProps {
   handleSyncPendingUpdates: () => void;
+  pendingUpdates?: number;
 }
 
-export function OfflineIndicator({ handleSyncPendingUpdates }: OfflineIndicatorProps) {
+export function OfflineIndicator({ handleSyncPendingUpdates, pendingUpdates = 0 }: OfflineIndicatorProps) {
   return (
     <Button 
       variant="outline" 
@@ -16,7 +17,9 @@ export function OfflineIndicator({ handleSyncPendingUpdates }: OfflineIndicatorP
       onClick={handleSyncPendingUpdates}
     >
       <CloudOff className="h-4 w-4" />
-      <span className="text-xs">Offline</span>
+      <span className="text-xs">
+        {pendingUpdates > 0 ? `Offline (${pendingUpdates} ändringar)` : "Offline"}
+      </span>
     </Button>
   );
 }

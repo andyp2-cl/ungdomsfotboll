@@ -5,6 +5,13 @@ import { toast } from "sonner";
 // Test if we can access the database - with retry mechanism
 export const testDatabaseAccess = async (): Promise<boolean> => {
   try {
+    // First check if we have a cached successful test
+    const cachedTest = localStorage.getItem('sb-connection-test');
+    if (cachedTest === 'true') {
+      console.log("Using cached database connection test result");
+      return true;
+    }
+    
     // Try a simple read operation with retry logic
     let attempts = 0;
     let success = false;
@@ -26,6 +33,10 @@ export const testDatabaseAccess = async (): Promise<boolean> => {
         
         // Cache successful connection test
         localStorage.setItem('sb-connection-test', 'true');
+        
+        // Set a timestamp for the last successful test
+        localStorage.setItem('sb-connection-test-time', Date.now().toString());
+        
         return true;
       }
     }
@@ -55,6 +66,7 @@ export const setExtendedSessionPersistence = () => {
 // Cache a successful connection
 export const cacheSuccessfulConnection = () => {
   localStorage.setItem('sb-connection-test', 'true');
+  localStorage.setItem('sb-connection-test-time', Date.now().toString());
 };
 
 // Check for pending updates
@@ -62,6 +74,17 @@ export const checkPendingUpdates = () => {
   const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
   if (!pendingUpdatesJson) return 0;
   
-  const pendingUpdates = JSON.parse(pendingUpdatesJson);
-  return Object.keys(pendingUpdates).length;
+  try {
+    const pendingUpdates = JSON.parse(pendingUpdatesJson);
+    return Object.keys(pendingUpdates).length;
+  } catch (error) {
+    console.error("Error parsing pending updates:", error);
+    return 0;
+  }
+};
+
+// Clear the connection test cache
+export const clearConnectionCache = () => {
+  localStorage.removeItem('sb-connection-test');
+  localStorage.removeItem('sb-connection-test-time');
 };

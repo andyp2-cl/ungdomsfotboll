@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AlertCircle, RefreshCw, Wifi, WifiOff } from "lucide-react";
 
 interface LoadingStateProps {
@@ -14,7 +14,19 @@ export function LoadingState({
   retry 
 }: LoadingStateProps) {
   const isOnline = navigator.onLine;
+  const [loadTime, setLoadTime] = useState(0);
   
+  // Track loading time
+  useEffect(() => {
+    if (error) return;
+    
+    const interval = setInterval(() => {
+      setLoadTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [error]);
+
   // Show error state if there's an error message
   if (error) {
     return (
@@ -35,6 +47,9 @@ export function LoadingState({
       </div>
     );
   }
+  
+  // Check if we already know that we're connected to the database
+  const isDbConnected = localStorage.getItem('sb-connection-test') === 'true';
   
   // Show loading state
   return (
@@ -58,12 +73,22 @@ export function LoadingState({
           )}
         </div>
         
-        <p className="text-sm text-gray-500 mt-2">
-          Om detta tar lång tid, kontrollera nätverksanslutningen
-        </p>
+        {loadTime > 5 && (
+          <p className="text-sm text-amber-600 mt-2">
+            {isDbConnected 
+              ? "Hämtar data från databasen..." 
+              : "Ansluter till databasen..."}
+          </p>
+        )}
+        
+        {loadTime > 10 && (
+          <p className="text-sm text-gray-500 mt-2">
+            Om detta tar lång tid, kontrollera nätverksanslutningen
+          </p>
+        )}
         
         {/* Alternative action if loading takes too long */}
-        {retry && (
+        {loadTime > 15 && retry && (
           <button 
             onClick={retry} 
             className="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mx-auto"
