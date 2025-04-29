@@ -1,10 +1,11 @@
+
 import React from "react";
 import Header from "./Header";
 
-// Import the new PerformanceMonitor component
+// Import the PerformanceMonitor component
 import { PerformanceMonitor } from "./loading/PerformanceMonitor";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function LayoutMain({ children }: { children: React.ReactNode }) {
   
   return (
     <div className="flex min-h-screen flex-col">

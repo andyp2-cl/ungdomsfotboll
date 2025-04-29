@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import { useSyncEngine } from "./hooks/useSyncEngine";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { LoginStatus } from "./components/auth/LoginStatus";
+import LayoutMain from "./components/LayoutMain";
 
 // Create a QueryClient with basic configuration
 const queryClient = new QueryClient({
