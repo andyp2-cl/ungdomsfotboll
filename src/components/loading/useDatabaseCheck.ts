@@ -233,6 +233,7 @@ export function useDatabaseCheck(isOnline: boolean, error?: string) {
           }
         }, interval);
       }
+      return undefined;
     };
     
     const intervalId = retryChecks();
