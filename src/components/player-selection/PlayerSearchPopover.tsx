@@ -50,14 +50,15 @@ export function PlayerSearchPopover({
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchQuery && filteredPlayers.length > 0) {
+      e.preventDefault(); // Prevent form submission
+      
       // If we have a highlighted player, select that player
       if (highlightedPlayerId) {
         handlePlayerSelect(highlightedPlayerId);
-      } else {
+      } else if (filteredPlayers.length > 0) {
         // Otherwise select the first player in the filtered list
         handlePlayerSelect(filteredPlayers[0].id);
       }
-      e.preventDefault();
     }
   };
 

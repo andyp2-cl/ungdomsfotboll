@@ -18,8 +18,8 @@ export function ActivitySearch({
 }: ActivitySearchProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && onSearch) {
-      onSearch(searchQuery);
       e.preventDefault();
+      onSearch(searchQuery);
     }
   };
 

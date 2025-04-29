@@ -1,5 +1,4 @@
-
-import React, { useState, Dispatch, SetStateAction, useRef } from "react";
+import React, { useState, Dispatch, SetStateAction, useRef, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Trash, Search } from "lucide-react";
@@ -42,7 +41,20 @@ export function ParticipantActions({
 }: ParticipantActionsProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedPlayerId, setHighlightedPlayerId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Focus input when popover opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    } else {
+      setSearchQuery("");
+      setHighlightedPlayerId(null);
+    }
+  }, [open]);
   
   // If we're in the alternative usage mode (with participantCount)
   if (participantCount !== undefined && setIsAddingPlayers) {
@@ -93,23 +105,18 @@ export function ParticipantActions({
   
   // Handle keyboard events
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery && filteredPlayers.length > 0) {
-      // Select the first player in the filtered list
-      handleSelectParticipant(filteredPlayers[0].id);
+    if (e.key === 'Enter' && filteredPlayers.length > 0) {
       e.preventDefault();
+      
+      // If we have a highlighted player, select that player
+      if (highlightedPlayerId && filteredPlayers.some(p => p.id === highlightedPlayerId)) {
+        handleSelectParticipant(highlightedPlayerId);
+      } else if (filteredPlayers.length > 0) {
+        // Otherwise select the first player in the filtered list
+        handleSelectParticipant(filteredPlayers[0].id);
+      }
     }
   };
-
-  // Focus input when popover opens
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    } else {
-      setSearchQuery("");
-    }
-  }, [open]);
   
   // Original implementation with popup
   return (
@@ -135,6 +142,7 @@ export function ParticipantActions({
               <CommandItem
                 key={player.id}
                 onSelect={() => handleSelectParticipant(player.id)}
+                onMouseEnter={() => setHighlightedPlayerId(player.id)}
                 className="cursor-pointer"
               >
                 <Avatar className="h-6 w-6 mr-2">
@@ -152,6 +160,3 @@ export function ParticipantActions({
     </Popover>
   );
 }
-
-// Add missing useEffect import
-import { useEffect } from "react";

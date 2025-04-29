@@ -78,6 +78,33 @@ export function AddPlayersToActivity({
     }
   };
   
+  // Handle keyboard search
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && availablePlayers.length > 0) {
+      e.preventDefault();
+      
+      // Quick add the first player in the filtered list if there's a search query
+      if (searchQuery && availablePlayers.length > 0) {
+        const playerId = availablePlayers[0].id;
+        setIsProcessing(true);
+        try {
+          onAddPlayers([playerId]);
+          setSearchQuery("");
+          toast.success("Spelare tillagd", {
+            icon: <Check className="h-4 w-4" />
+          });
+        } catch (error) {
+          console.error("Error quick-adding player:", error);
+          toast.error("Kunde inte lägga till spelare", {
+            icon: <AlertCircle className="h-4 w-4" />
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    }
+  };
+  
   // If no available players, show a message
   if (availablePlayers.length === 0 && searchQuery === "") {
     return (
@@ -97,6 +124,7 @@ export function AddPlayersToActivity({
           placeholder="Sök spelare..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="pl-9"
         />
       </div>
