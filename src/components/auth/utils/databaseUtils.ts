@@ -126,3 +126,46 @@ export const clearConnectionCache = () => {
 export const getConnectionError = (): string | null => {
   return localStorage.getItem('sb-connection-error');
 };
+
+// Force a complete authentication reset and new connection
+export const forceReconnect = async (): Promise<boolean> => {
+  console.log("===== FORCING COMPLETE DATABASE RECONNECTION =====");
+  
+  try {
+    // 1. Clear all Supabase-related localStorage items to ensure a fresh state
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth'))) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    console.log(`Clearing ${keysToRemove.length} Supabase-related localStorage items:`, keysToRemove);
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // 2. Sign out from Supabase to clear any session state
+    console.log("Signing out from Supabase...");
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // 3. Force refresh client
+    console.log("Refreshing Supabase client session...");
+    await supabase.auth.refreshSession();
+    
+    // 4. Try to establish a new connection
+    console.log("Testing fresh database connection...");
+    const { success, error } = await testDatabaseAccess();
+    
+    if (success) {
+      toast.success("Databasanslutning återupprättad");
+      return true;
+    } else {
+      toast.error(`Kunde inte återupprätta anslutningen: ${error}`);
+      return false;
+    }
+  } catch (err) {
+    console.error("Error during forced reconnection:", err);
+    toast.error("Ett fel uppstod vid återanslutning");
+    return false;
+  }
+};

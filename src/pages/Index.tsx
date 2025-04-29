@@ -1,15 +1,51 @@
+
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Users, Calendar, Database, AlertTriangle } from "lucide-react";
+import { Users, Calendar, Database, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase, isSupabaseConfigured, initializeSupabaseSession } from "@/lib/supabase/client";
+import { supabase, isSupabaseConfigured, initializeSupabaseSession, forceResetConnection } from "@/lib/supabase/client";
 import { BackupRestoreActions } from "@/components/backup-restore";
 import { toast } from "sonner";
+import { forceReconnect } from "@/components/auth/utils/databaseUtils";
 
 const Index = () => {
   const [syncStatus, setSyncStatus] = useState<"connected" | "connecting" | "disconnected" | "not-configured">(
     "connecting"
   );
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  
+  // Force reconnect function
+  const handleForceReconnect = async () => {
+    try {
+      setIsReconnecting(true);
+      setSyncStatus("connecting");
+      toast.loading("Återställer databasanslutning...");
+      
+      // Try both reconnect methods
+      const success = await forceReconnect();
+      
+      if (!success) {
+        // Try the more aggressive method
+        await forceResetConnection();
+      }
+      
+      // Check connection status again
+      const connected = await initializeSupabaseSession();
+      setSyncStatus(connected ? "connected" : "disconnected");
+      
+      if (connected) {
+        toast.success("Databasanslutning återupprättad");
+      } else {
+        toast.error("Kunde inte återupprätta databasanslutning");
+      }
+    } catch (error) {
+      console.error("Error during forced reconnection:", error);
+      setSyncStatus("disconnected");
+      toast.error("Ett fel uppstod vid återanslutning");
+    } finally {
+      setIsReconnecting(false);
+    }
+  };
   
   useEffect(() => {
     // Check if already connected using localStorage
@@ -51,7 +87,7 @@ const Index = () => {
         
         // After multiple failed attempts
         setSyncStatus("disconnected");
-        toast.error("Kunde inte ansluta till databasen. Försök logga in igen.");
+        toast.error("Kunde inte ansluta till databasen. Använd återanslutningsknappen.");
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         
@@ -73,7 +109,7 @@ const Index = () => {
         // Only recheck if not already connected
         checkConnection();
       }
-    }, 15000); // Check every 15 seconds if not connected
+    }, 30000); // Check every 30 seconds if not connected
     
     return () => clearInterval(intervalId);
   }, [syncStatus]);
@@ -114,21 +150,24 @@ const Index = () => {
                 Ansluter till databas...
               </span>
             )}
-            {syncStatus === "disconnected" && (
-              <span className="flex items-center gap-1 text-red-600">
-                <Database className="h-4 w-4" />
-                Ingen anslutning till databas
-              </span>
-            )}
-            {syncStatus === "not-configured" && (
-              <div className="flex flex-col items-center">
-                <span className="flex items-center gap-1 text-red-600 mb-1">
-                  <AlertTriangle className="h-4 w-4" />
-                  Supabase konfiguration saknas
+            {(syncStatus === "disconnected" || syncStatus === "not-configured") && (
+              <div className="flex flex-col items-center gap-1">
+                <span className="flex items-center gap-1 text-red-600">
+                  <Database className="h-4 w-4" />
+                  Ingen anslutning till databas
                 </span>
-                <span className="text-xs text-gray-600 max-w-xs">
-                  Du behöver konfigurera Supabase URL och anonym nyckel i dina miljövariabler.
-                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-1 flex items-center gap-1.5"
+                  onClick={handleForceReconnect}
+                  disabled={isReconnecting}
+                >
+                  {isReconnecting ? 
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 
+                    <RefreshCw className="h-3.5 w-3.5" />}
+                  Återställ anslutning
+                </Button>
               </div>
             )}
           </div>

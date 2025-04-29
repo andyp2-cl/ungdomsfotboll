@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkPendingUpdates, testDatabaseAccess, cacheSuccessfulConnection, getConnectionError, clearConnectionCache } from "../utils/databaseUtils";
+import { 
+  checkPendingUpdates, 
+  testDatabaseAccess, 
+  cacheSuccessfulConnection, 
+  getConnectionError, 
+  clearConnectionCache,
+  forceReconnect
+} from "../utils/databaseUtils";
+import { forceResetConnection } from "@/lib/supabase/client";
 
 export function useAnonymousAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,8 +70,8 @@ export function useAnonymousAuth() {
     };
   }, []);
   
-  // Check database connection
-  const checkDatabaseConnection = async () => {
+  // Check database connection with memoized callback to prevent recreating on each render
+  const checkDatabaseConnection = useCallback(async () => {
     if (!isOnline) {
       setConnectionChecked(true);
       setIsConnecting(false);
@@ -100,7 +108,31 @@ export function useAnonymousAuth() {
       setConnectionChecked(true);
       setIsConnecting(false);
     }
-  };
+  }, [isOnline]);
+  
+  // Force a fresh connection with cleared cache
+  const handleForceReconnect = useCallback(async () => {
+    setIsConnecting(true);
+    setConnectionError(null);
+    
+    try {
+      // First try our regular reconnect
+      await forceReconnect();
+      
+      // If that doesn't work, try an even more aggressive reset
+      if (connectionError) {
+        await forceResetConnection();
+      }
+      
+      // Check connection again
+      await checkDatabaseConnection();
+    } catch (error) {
+      console.error("Error during forced reconnection:", error);
+      setConnectionError(error instanceof Error ? error.message : "Unknown reconnection error");
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [connectionError, checkDatabaseConnection]);
   
   // Check for existing session with improved persistence
   useEffect(() => {
@@ -129,7 +161,7 @@ export function useAnonymousAuth() {
       subscription.unsubscribe();
       clearInterval(intervalId);
     };
-  }, [isOnline]);
+  }, [isOnline, checkDatabaseConnection]);
   
   const handleLogin = async () => {
     if (!isOnline) {
@@ -178,10 +210,7 @@ export function useAnonymousAuth() {
   const handleSyncPendingUpdates = () => {
     // If we have a connection error, try to reconnect
     if (connectionError) {
-      clearConnectionCache();
-      setIsConnecting(true);
-      setConnectionError(null);
-      checkDatabaseConnection();
+      handleForceReconnect();
       return;
     }
     
@@ -223,6 +252,7 @@ export function useAnonymousAuth() {
     connectionError,
     handleLogin,
     handleSyncPendingUpdates,
-    checkDatabaseConnection
+    checkDatabaseConnection,
+    handleForceReconnect
   };
 }

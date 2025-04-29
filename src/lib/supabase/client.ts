@@ -80,6 +80,36 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
   }
 };
 
+// Force reset and refresh all connection states
+export const forceResetConnection = async (): Promise<boolean> => {
+  console.log("Force resetting Supabase connection...");
+  
+  try {
+    // Clear all potentially cached session data
+    const supabaseKeys = Object.keys(localStorage)
+      .filter(key => key.startsWith('sb-') || key.startsWith('supabase'));
+    
+    console.log(`Clearing ${supabaseKeys.length} cached Supabase items:`, supabaseKeys);
+    supabaseKeys.forEach(key => localStorage.removeItem(key));
+    
+    // Try to sign out if there was a session
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (e) {
+      console.log("No active session to sign out from");
+    }
+    
+    // Wait a moment
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Test a fresh connection
+    return await initializeSupabaseSession();
+  } catch (err) {
+    console.error("Error resetting connection:", err);
+    return false;
+  }
+};
+
 // Force refresh session at startup and configure session persistence
 (() => {
   try {
@@ -137,3 +167,4 @@ export const initializeSupabaseSession = async (): Promise<boolean> => {
     localStorage.setItem('sb-connection-error', errorMessage);
   }
 })();
+

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAnonymousAuth } from './hooks/useAnonymousAuth';
 import { AuthenticationState } from './components/AuthenticationState';
 import { LoginPrompt } from './components/LoginPrompt';
@@ -17,8 +17,22 @@ export function AnonymousAuth() {
     isConnecting,
     connectionError,
     handleLogin,
-    handleSyncPendingUpdates
+    handleSyncPendingUpdates,
+    checkDatabaseConnection
   } = useAnonymousAuth();
+  
+  // Add automatic reconnection attempt when connection error is detected
+  useEffect(() => {
+    if (connectionError && isOnline) {
+      // Wait a moment and try one automatic reconnection
+      const timer = setTimeout(() => {
+        console.log("Automatic reconnection attempt after detecting connection error");
+        checkDatabaseConnection();
+      }, 5000); // 5 second delay
+      
+      return () => clearTimeout(timer);
+    }
+  }, [connectionError, isOnline, checkDatabaseConnection]);
   
   // Show loading indicator while checking connection
   if (!connectionChecked) {
@@ -59,11 +73,6 @@ export function AnonymousAuth() {
           isConnecting={isConnecting}
           connectionError={connectionError}
         />
-        {connectionError && (
-          <div className="text-xs text-red-500 ml-2">
-            {connectionError.substring(0, 40)}{connectionError.length > 40 ? '...' : ''}
-          </div>
-        )}
       </div>
     );
   }
