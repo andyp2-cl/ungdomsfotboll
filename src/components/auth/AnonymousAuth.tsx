@@ -18,21 +18,9 @@ export function AnonymousAuth() {
     connectionError,
     handleLogin,
     handleSyncPendingUpdates,
-    checkDatabaseConnection
+    checkDatabaseConnection,
+    handleForceReconnect
   } = useAnonymousAuth();
-  
-  // Add automatic reconnection attempt when connection error is detected
-  useEffect(() => {
-    if (connectionError && isOnline) {
-      // Wait a moment and try one automatic reconnection
-      const timer = setTimeout(() => {
-        console.log("Automatic reconnection attempt after detecting connection error");
-        checkDatabaseConnection();
-      }, 5000); // 5 second delay
-      
-      return () => clearTimeout(timer);
-    }
-  }, [connectionError, isOnline, checkDatabaseConnection]);
   
   // Show loading indicator while checking connection
   if (!connectionChecked) {
