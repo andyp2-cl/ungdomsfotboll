@@ -42,8 +42,18 @@ export function QuickMatchResult({
     if (isReadOnly) return;
     
     setIsSaving(true);
+    console.log("QuickMatchResult - Saving match result:", { 
+      activityId: activity.id, 
+      homeScore, 
+      awayScore 
+    });
+    
     try {
-      await onSave(homeScore, awayScore);
+      // Convert string values to numbers if needed
+      const processedHomeScore = typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore;
+      const processedAwayScore = typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore;
+      
+      await onSave(processedHomeScore, processedAwayScore);
       toast({
         title: "Resultat sparat",
         description: "Matchresultatet har sparats framgångsrikt.",

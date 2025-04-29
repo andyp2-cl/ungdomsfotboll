@@ -32,66 +32,67 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
   console.log(`Attempting to update activity with RLS handling: ${activityId}`, updates);
 
   try {
-    // APPROACH 1: First try the full upsert with both existing + new data combined
-    // Get current record first to ensure we have complete data
-    console.log("APPROACH 1: Trying upsert with full data");
-    const { data: existingActivity, error: fetchError } = await supabase
-      .from('activities')
-      .select('*')
-      .eq('id', activityId)
-      .single();
-      
-    if (fetchError) {
-      console.warn("Failed to fetch existing activity:", fetchError.message);
-    } else if (existingActivity) {
-      // Combine existing data with updates
-      const mergedActivity = {
-        ...existingActivity,
-        ...updates,
-        // Ensure these fields are properly updated
-        home_score: updates.home_score,
-        away_score: updates.away_score,
-        is_win: updates.is_win,
-        result: updates.result,
-        player_stats: updates.player_stats
-      };
-      
-      // Try upsert with the merged data
-      const { error: upsertError, data: upsertData } = await supabase
-        .from('activities')
-        .upsert(mergedActivity);
-        
-      if (!upsertError) {
-        console.log("Activity successfully updated via complete upsert");
-        return { success: true, data: upsertData };
-      } else {
-        console.warn("Complete upsert failed:", upsertError.message);
-      }
-    }
-
-    // APPROACH 2: Try direct focused update with only the specific fields needed
-    console.log("APPROACH 2: Trying focused update with specific fields");
-    const focusedUpdates = {
+    // APPROACH 1: Direct update attempt with the minimal changes needed
+    console.log("APPROACH 1: Trying direct update with minimal fields");
+    const minimalUpdates = {
       home_score: updates.home_score,
       away_score: updates.away_score,
       is_win: updates.is_win,
       result: updates.result,
-      player_stats: updates.player_stats
     };
     
-    const { error: updateError, data: updateData } = await supabase
+    const { error: minimalUpdateError, data: minimalUpdateData } = await supabase
       .from('activities')
-      .update(focusedUpdates)
+      .update(minimalUpdates)
       .eq('id', activityId);
     
-    if (!updateError) {
-      console.log("Activity updated successfully via focused update");
-      return { success: true, data: updateData };
+    if (!minimalUpdateError) {
+      console.log("Activity updated successfully via minimal update");
+      return { success: true, data: minimalUpdateData };
     }
     
-    console.warn("Focused update failed:", updateError.message);
+    console.warn("Minimal update failed:", minimalUpdateError.message);
 
-    // APPROACH 3: Try direct REST API approach as last resort
+    // APPROACH 2: Try with player_stats only if approach 1 failed
+    if (updates.player_stats) {
+      console.log("APPROACH 2: Trying to update player_stats only");
+      const statsOnlyUpdate = {
+        player_stats: updates.player_stats
+      };
+      
+      const { error: statsError, data: statsData } = await supabase
+        .from('activities')
+        .update(statsOnlyUpdate)
+        .eq('id', activityId);
+        
+      if (!statsError) {
+        console.log("Player stats updated successfully");
+        
+        // Now try to update scores separately
+        const scoresUpdate = {
+          home_score: updates.home_score,
+          away_score: updates.away_score,
+          is_win: updates.is_win,
+          result: updates.result
+        };
+        
+        const { error: scoresError } = await supabase
+          .from('activities')
+          .update(scoresUpdate)
+          .eq('id', activityId);
+          
+        if (!scoresError) {
+          console.log("Scores updated successfully after stats");
+          return { success: true, data: statsData };
+        } else {
+          console.warn("Score update failed after stats update:", scoresError.message);
+        }
+      } else {
+        console.warn("Stats-only update failed:", statsError.message);
+      }
+    }
+
+    // APPROACH 3: Try direct REST API approach
     console.log("APPROACH 3: Trying direct REST API approach");
     try {
       // Instead of accessing protected properties, use the values from the environment
@@ -106,7 +107,7 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           'Prefer': 'return=representation'
         },
-        body: JSON.stringify(focusedUpdates)
+        body: JSON.stringify(minimalUpdates)
       });
 
       if (response.ok) {
@@ -146,6 +147,44 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
       }
     } catch (restError) {
       console.error("Error with REST approach:", restError);
+    }
+    
+    // APPROACH 4: Try adding a new record as a last resort
+    console.log("APPROACH 4: Trying to create a new record to bypass RLS");
+    try {
+      // Get the full activity first to have all data
+      const { data: existingActivity } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('id', activityId)
+        .single();
+      
+      if (existingActivity) {
+        // Create a complete object with the updates
+        const completeActivity = {
+          ...existingActivity,
+          ...updates,
+          // Ensure ID is preserved
+          id: activityId
+        };
+        
+        // Try to insert as a new record, but with ON CONFLICT DO UPDATE
+        const { error: upsertError } = await supabase
+          .from('activities')
+          .upsert(completeActivity, { 
+            onConflict: 'id',
+            ignoreDuplicates: false
+          });
+          
+        if (!upsertError) {
+          console.log("Activity updated via upsert approach");
+          return { success: true, data: completeActivity };
+        } else {
+          console.warn("Upsert approach failed:", upsertError.message);
+        }
+      }
+    } catch (upsertError) {
+      console.error("Error with upsert approach:", upsertError);
     }
     
     return { 

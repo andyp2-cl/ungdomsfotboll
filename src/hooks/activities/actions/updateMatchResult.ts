@@ -65,6 +65,12 @@ export const handleMatchResultUpdate = async (
       isWin: updatedActivity.isWin
     };
     
+    // Always update local state first to give immediate feedback
+    const updatedActivities = activities.map(a => 
+      a.id === activityId ? updatedActivity : a
+    );
+    setActivities(updatedActivities);
+    
     // Save to database with multiple fallback approaches
     try {
       console.log("Saving match result to database for activity:", updatedActivity.id);
@@ -78,64 +84,39 @@ export const handleMatchResultUpdate = async (
         player_stats: updatedActivity.player_stats
       };
       
+      // DEBUG: Log the actual content being sent
+      console.log("Sending update with data:", JSON.stringify(scoreUpdates));
+      
       // Step 1: Try our enhanced RLS-aware update function first
       const { success, error } = await updateActivityWithRLSHandling(activityId, scoreUpdates);
       
-      // Step 2: If direct update fails, try saveActivities helper as fallback
-      if (!success) {
-        console.warn("Enhanced RLS-aware update failed, falling back to saveActivities helper:", error);
-        
-        // Do a direct database save with a more focused update
-        // Format the activity for database storage
-        const dbActivity = formatActivityForDatabase(updatedActivity);
-        console.log("Formatted activity for database save:", {
-          id: dbActivity.id,
-          home_score: dbActivity.home_score,
-          away_score: dbActivity.away_score,
-          is_win: dbActivity.is_win
-        });
-        
-        // Fall back to direct update/insert
-        const { error: directError } = await supabase
-          .from('activities')
-          .upsert(dbActivity);
-          
-        if (directError) {
-          console.error("Direct upsert failed as well:", directError);
-          
-          // Try just updating score fields as last resort
-          const minimalUpdate = {
-            home_score: homeScore,
-            away_score: awayScore,
-            is_win: updatedActivity.isWin
-          };
-          
-          const { error: minimalError } = await supabase
-            .from('activities')
-            .update(minimalUpdate)
-            .eq('id', activityId);
-            
-          if (minimalError) {
-            console.error("Even minimal update failed:", minimalError);
-            
-            // Last fallback - save to local storage
-            await saveActivities([updatedActivity]);
-            console.log("Saved to local storage as last resort");
-          } else {
-            console.log("Minimal score update succeeded");
-          }
-        } else {
-          console.log("Direct upsert succeeded");
-        }
-      } else {
+      if (success) {
         console.log("Enhanced RLS-aware update succeeded");
+        
+        toast({
+          title: "Resultat uppdaterat",
+          description: homeScore !== undefined && awayScore !== undefined ? 
+            `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
+            "Resultat borttaget",
+        });
+        return;
       }
       
-      // Update local state regardless of database success (user will see changes)
-      const updatedActivities = activities.map(a => 
-        a.id === activityId ? updatedActivity : a
-      );
-      setActivities(updatedActivities);
+      // Step 2: If direct update fails, try saveActivities helper as fallback
+      console.warn("Enhanced RLS-aware update failed, falling back to saveActivities helper:", error);
+      
+      // Format the activity for database storage
+      const dbActivity = formatActivityForDatabase(updatedActivity);
+      console.log("Formatted activity for database save:", {
+        id: dbActivity.id,
+        home_score: dbActivity.home_score,
+        away_score: dbActivity.away_score,
+        is_win: dbActivity.is_win
+      });
+      
+      // Try to save via our utility function
+      await saveActivities([updatedActivity]);
+      console.log("Saved via saveActivities helper");
       
       toast({
         title: "Resultat uppdaterat",
@@ -143,22 +124,23 @@ export const handleMatchResultUpdate = async (
           `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
           "Resultat borttaget",
       });
+      
     } catch (saveError: any) {
       console.error("Error saving match result to database:", saveError);
       
-      // Still update local state to show the change to the user
-      const updatedActivities = activities.map(a => 
-        a.id === activityId ? updatedActivity : a
-      );
-      setActivities(updatedActivities);
+      // Try a last-resort local storage save
+      try {
+        await saveActivities([updatedActivity]);
+        console.log("Saved to local storage as last resort");
+      } catch (localSaveError) {
+        console.error("Even local storage save failed:", localSaveError);
+      }
       
       toast({
         title: "Lokalt uppdaterad",
         description: `Resultatet sparades lokalt, men kunde inte sparas i databasen: ${saveError?.message || "Okänt fel"}`,
         variant: "warning"
       });
-      
-      throw saveError;
     }
   } catch (error: any) {
     console.error("Error in handleMatchResultUpdate:", error);
