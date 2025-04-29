@@ -92,19 +92,22 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
       }
     }
 
-    // APPROACH 3: Try direct REST API approach
+    // APPROACH 3: Try direct REST API approach with auth token
     console.log("APPROACH 3: Trying direct REST API approach");
     try {
-      // Instead of accessing protected properties, use the values from the environment
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/activities?id=eq.${activityId}`;
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const apiUrl = `https://zkrruihxszziifyogzko.supabase.co/rest/v1/activities?id=eq.${activityId}`;
       
       // Make sure we have the correct headers for authentication
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
+          'Authorization': token ? `Bearer ${token}` : '',
           'Prefer': 'return=representation'
         },
         body: JSON.stringify(minimalUpdates)
@@ -129,8 +132,8 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
+              'Authorization': token ? `Bearer ${token}` : '',
               'Prefer': 'return=representation'
             },
             body: JSON.stringify(minimalUpdates)

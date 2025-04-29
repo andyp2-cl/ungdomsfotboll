@@ -12,6 +12,7 @@ import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useSyncEngine } from "./hooks/useSyncEngine";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,42 @@ const queryClient = new QueryClient({
 function App() {
   const { manualSync } = useSyncEngine();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Ensure Supabase auth is properly initialized
+  useEffect(() => {
+    const initializeAuth = async () => {
+      // Check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If no session exists, try anonymous authentication
+      if (!session) {
+        try {
+          console.log("No session found, attempting anonymous sign-in");
+          const { error } = await supabase.auth.signInAnonymously();
+          if (error) {
+            console.error("Error signing in anonymously:", error);
+          } else {
+            console.log("Anonymous authentication successful");
+          }
+        } catch (error) {
+          console.error("Error during authentication:", error);
+        }
+      } else {
+        console.log("Existing session found");
+      }
+    };
+    
+    initializeAuth();
+    
+    // Also set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, !!session);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
   // Monitor online/offline status
   useEffect(() => {

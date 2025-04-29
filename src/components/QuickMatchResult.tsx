@@ -71,12 +71,23 @@ export function QuickMatchResult({
       // Calculate isWin value
       let isWin: boolean | undefined = undefined;
       if (finalHomeScore !== undefined && finalAwayScore !== undefined) {
-        if (finalHomeScore > finalAwayScore) {
-          isWin = true;
-        } else if (finalHomeScore < finalAwayScore) {
-          isWin = false;
+        if (isHome) {
+          // We are the home team
+          if (finalHomeScore > finalAwayScore) {
+            isWin = true;
+          } else if (finalHomeScore < finalAwayScore) {
+            isWin = false;
+          }
+          // if scores are equal, isWin remains undefined (for draw)
+        } else {
+          // We are the away team
+          if (finalHomeScore < finalAwayScore) {
+            isWin = true;
+          } else if (finalHomeScore > finalAwayScore) {
+            isWin = false;
+          }
+          // if scores are equal, isWin remains undefined (for draw)
         }
-        // if scores are equal, isWin remains undefined (for draw)
       }
 
       // First save locally regardless of online status
@@ -97,6 +108,11 @@ export function QuickMatchResult({
       try {
         await onSave(finalHomeScore, finalAwayScore);
         sonnerToast.success("Resultat sparat och synkroniserat med databasen");
+        
+        // If save was successful, remove from pending updates
+        const updatedPendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
+        delete updatedPendingUpdates[activity.id];
+        localStorage.setItem('pendingScoreUpdates', JSON.stringify(updatedPendingUpdates));
       } catch (error) {
         console.error("Error saving to database, but saved locally:", error);
         sonnerToast.info("Resultat sparat lokalt och kommer att synkas senare");

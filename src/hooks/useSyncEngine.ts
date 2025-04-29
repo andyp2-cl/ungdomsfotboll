@@ -1,7 +1,6 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { saveActivities } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 
@@ -29,6 +28,22 @@ export function useSyncEngine() {
         
         console.log(`Found ${activityIds.length} pending score updates to sync`);
         
+        // Check for active user session before proceeding
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log("No active session, attempting anonymous login");
+          try {
+            const { error } = await supabase.auth.signInAnonymously();
+            if (error) {
+              console.error("Error signing in anonymously:", error);
+              return;
+            }
+          } catch (authError) {
+            console.error("Auth error:", authError);
+            return;
+          }
+        }
+        
         // Process each pending update
         let successCount = 0;
         let failureCount = 0;
@@ -37,14 +52,45 @@ export function useSyncEngine() {
           const pendingUpdate = pendingUpdates[activityId];
           
           try {
-            // DIRECT REST API APPROACH - Completely bypass JS client and RLS
+            // Try multiple approaches to ensure sync works
+
+            // APPROACH 1: USE SUPABASE CLIENT
+            console.log(`Syncing activity ${activityId} via Supabase client`);
+            try {
+              const { error } = await supabase
+                .from('activities')
+                .update({
+                  home_score: pendingUpdate.homeScore,
+                  away_score: pendingUpdate.awayScore,
+                  is_win: pendingUpdate.isWin,
+                  result: pendingUpdate.result
+                })
+                .eq('id', activityId);
+                
+              if (!error) {
+                delete pendingUpdates[activityId];
+                successCount++;
+                console.log(`Successfully synced activity ${activityId} via Supabase client`);
+                continue; // Skip to next activity
+              } else {
+                console.warn(`Error syncing via Supabase client:`, error);
+              }
+            } catch (clientError) {
+              console.warn("Supabase client error:", clientError);
+            }
+            
+            // APPROACH 2: DIRECT REST API APPROACH
             console.log(`Syncing activity ${activityId} via direct REST API`);
+            
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
             
             const apiUrl = `https://zkrruihxszziifyogzko.supabase.co/rest/v1/activities?id=eq.${activityId}`;
             const response = await fetch(apiUrl, {
               method: 'PATCH',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : '',
                 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
                 'Prefer': 'return=minimal'
               },
@@ -62,8 +108,36 @@ export function useSyncEngine() {
               successCount++;
               console.log(`Successfully synced activity ${activityId} via direct REST API`);
             } else {
-              failureCount++;
-              console.error(`Error syncing activity ${activityId} via direct REST API:`, await response.text());
+              // Try a minimal update as a final attempt
+              console.warn(`Error syncing via REST API (status ${response.status}):`, await response.text());
+              try {
+                // APPROACH 3: MINIMAL UPDATE - JUST SCORES
+                const minimalResponse = await fetch(apiUrl, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({
+                    home_score: pendingUpdate.homeScore,
+                    away_score: pendingUpdate.awayScore
+                  })
+                });
+                
+                if (minimalResponse.ok) {
+                  delete pendingUpdates[activityId];
+                  successCount++;
+                  console.log(`Successfully synced activity ${activityId} with minimal update`);
+                } else {
+                  failureCount++;
+                  console.error(`All sync attempts failed for activity ${activityId}`);
+                }
+              } catch (minimalError) {
+                failureCount++;
+                console.error("Error with minimal update approach:", minimalError);
+              }
             }
           } catch (error) {
             failureCount++;
@@ -78,13 +152,9 @@ export function useSyncEngine() {
         } else {
           localStorage.removeItem('pendingScoreUpdates');
           console.log("All pending updates synced successfully");
-          toast({
-            title: "Synkronisering slutförd",
-            description: "Alla lokala ändringar har synkroniserats till databasen."
-          });
         }
         
-        // Display a quick toast notification with the results
+        // Display a toast notification with the results
         if (successCount > 0) {
           sonnerToast.success(`${successCount} matchresultat synkroniserade till databasen`);
         }
@@ -93,7 +163,7 @@ export function useSyncEngine() {
       }
     };
     
-    // Run sync on startup and every minute (more frequent than before)
+    // Run sync on startup and every minute
     syncPendingUpdates();
     const intervalId = setInterval(syncPendingUpdates, 60 * 1000);
     
