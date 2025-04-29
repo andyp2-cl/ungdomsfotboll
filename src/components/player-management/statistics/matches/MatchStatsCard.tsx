@@ -1,8 +1,8 @@
 
-import React, { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, ShieldCheck } from "lucide-react";
+import React from "react";
 import { Activity } from "@/types/player";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { calculateMatchStats } from "./utils/calculateMatchStats";
 
 interface MatchStatsCardProps {
   activities: Activity[];
@@ -10,68 +10,73 @@ interface MatchStatsCardProps {
 }
 
 export function MatchStatsCard({ activities, className = "" }: MatchStatsCardProps) {
-  // Calculate match statistics from activities
-  const matchStats = useMemo(() => {
-    const stats = {
-      total: activities.length,
-      wins: activities.filter(a => a.isWin === true).length,
-      draws: activities.filter(a => a.homeScore === a.awayScore).length,
-      losses: activities.filter(a => a.isWin === false && a.homeScore !== a.awayScore).length,
-      goalsScored: activities.reduce((sum, a) => sum + (a.homeScore || 0), 0),
-      goalsConceded: activities.reduce((sum, a) => sum + (a.awayScore || 0), 0),
-      cleanSheets: activities.filter(a => (a.awayScore === 0)).length
-    };
-    return stats;
-  }, [activities]);
+  // Only consider match type activities
+  const matches = activities.filter(activity => activity.type === "match");
+  
+  // Calculate the match statistics
+  const {
+    totalMatches,
+    wins,
+    draws,
+    losses,
+    goalsScored,
+    goalsConceded,
+    cleanSheets
+  } = calculateMatchStats(matches);
+  
+  // Calculate percentages
+  const winPercentage = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+  const drawPercentage = totalMatches > 0 ? Math.round((draws / totalMatches) * 100) : 0;
+  const lossPercentage = totalMatches > 0 ? Math.round((losses / totalMatches) * 100) : 0;
+  const cleanSheetPercentage = totalMatches > 0 ? Math.round((cleanSheets / totalMatches) * 100) : 0;
 
   return (
     <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <Trophy className="h-5 w-5 mr-2 text-amber-500" />
-          Matchstatistik
-        </CardTitle>
+      <CardHeader>
+        <CardTitle>Matchstatistik</CardTitle>
       </CardHeader>
       <CardContent>
-        <dl className="grid grid-cols-2 gap-2">
-          <div className="p-2 rounded-md bg-muted/50">
-            <dt className="text-sm font-medium">Matcher</dt>
-            <dd className="text-2xl font-bold">{matchStats.total}</dd>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Matcher</p>
+            <p className="text-2xl font-bold">{totalMatches}</p>
           </div>
           
-          <div className="p-2 rounded-md bg-green-50">
-            <dt className="text-sm font-medium text-green-700">Vinster</dt>
-            <dd className="text-2xl font-bold text-green-700">{matchStats.wins}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-green-600">Vinster</p>
+            <p className="text-2xl font-bold">{wins} <span className="text-sm text-muted-foreground">({winPercentage}%)</span></p>
           </div>
           
-          <div className="p-2 rounded-md bg-amber-50">
-            <dt className="text-sm font-medium text-amber-700">Oavgjorda</dt>
-            <dd className="text-2xl font-bold text-amber-700">{matchStats.draws}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-amber-600">Oavgjorda</p>
+            <p className="text-2xl font-bold">{draws} <span className="text-sm text-muted-foreground">({drawPercentage}%)</span></p>
           </div>
           
-          <div className="p-2 rounded-md bg-red-50">
-            <dt className="text-sm font-medium text-red-700">Förluster</dt>
-            <dd className="text-2xl font-bold text-red-700">{matchStats.losses}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-red-600">Förluster</p>
+            <p className="text-2xl font-bold">{losses} <span className="text-sm text-muted-foreground">({lossPercentage}%)</span></p>
           </div>
           
-          <div className="p-2 rounded-md bg-blue-50">
-            <dt className="text-sm font-medium text-blue-700">Gjorda mål</dt>
-            <dd className="text-2xl font-bold text-blue-700">{matchStats.goalsScored}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Gjorda mål</p>
+            <p className="text-2xl font-bold">{goalsScored}</p>
           </div>
           
-          <div className="p-2 rounded-md bg-rose-50">
-            <dt className="text-sm font-medium text-rose-700">Insläppta mål</dt>
-            <dd className="text-2xl font-bold text-rose-700">{matchStats.goalsConceded}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Insläppta mål</p>
+            <p className="text-2xl font-bold">{goalsConceded}</p>
           </div>
           
-          <div className="col-span-2 p-2 rounded-md bg-emerald-50">
-            <dt className="text-sm font-medium text-emerald-700 flex items-center">
-              <ShieldCheck className="h-4 w-4 mr-1" />
-              Nollor
-            </dt>
-            <dd className="text-2xl font-bold text-emerald-700">{matchStats.cleanSheets}</dd>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Hållna nollor</p>
+            <p className="text-2xl font-bold">{cleanSheets} <span className="text-sm text-muted-foreground">({cleanSheetPercentage}%)</span></p>
           </div>
-        </dl>
+          
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Mål per match</p>
+            <p className="text-2xl font-bold">{totalMatches > 0 ? (goalsScored / totalMatches).toFixed(1) : "0"}</p>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
