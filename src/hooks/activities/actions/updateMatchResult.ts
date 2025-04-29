@@ -143,13 +143,14 @@ export const handleMatchResultUpdate = async (
             try {
               console.log("APPROACH 4: Trying REST API approach");
               
-              const apiUrl = `${supabase.supabaseUrl}/rest/v1/activities?id=eq.${activityId}`;
+              // Use environment variables instead of protected properties
+              const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/activities?id=eq.${activityId}`;
               const response = await fetch(apiUrl, {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
-                  'apikey': supabase.supabaseKey,
-                  'Authorization': `Bearer ${supabase.supabaseKey}`,
+                  'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
                   'Prefer': 'return=minimal'
                 },
                 body: JSON.stringify(scoreUpdate)
