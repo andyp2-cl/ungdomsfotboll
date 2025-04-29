@@ -12,7 +12,7 @@ import {
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [connectionError, setConnectionErrorState] = useState<string | null>(null);
+  const [connectionErrorState, setConnectionErrorState] = useState<string | null>(null);
   const [isRLSEnabled, setIsRLSEnabled] = useState(false);
   
   // Check for connection error from local storage on mount
