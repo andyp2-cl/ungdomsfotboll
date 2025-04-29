@@ -39,10 +39,6 @@ export function useActivityState() {
       setIsLoading(true);
       setLoadError(null);
       
-      // Check if we're authenticated first - use getSession directly with destructuring
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      
       // Skip database call and use cache if offline
       if (isOffline) {
         const storedActivities = await getStoredActivities();
@@ -63,10 +59,16 @@ export function useActivityState() {
         }
       }, 3000);
       
-      // Use cached flag if available to avoid showing connecting status
-      const hasConfirmedConnection = localStorage.getItem('sb-connection-test') === 'true';
-      if (session || hasConfirmedConnection) {
+      // Check if we have a session first - use getSession directly with destructuring
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
+        
+        // Mark connection as tested regardless of session
         localStorage.setItem('sb-connection-test', 'true');
+        localStorage.setItem('sb-connection-test-time', Date.now().toString());
+      } catch (sessionError) {
+        console.error("Error checking session:", sessionError);
       }
       
       const storedActivities = await getStoredActivities();
