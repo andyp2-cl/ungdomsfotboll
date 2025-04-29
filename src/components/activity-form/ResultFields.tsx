@@ -55,7 +55,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
         // Critical fix: For draw, set to undefined instead of false
         form.setValue("isWin", undefined);
         
-        // If we have scores and they're not equal, make them equal
+        // Only suggest equalizing scores if both scores are defined
         const currentHomeScore = form.getValues("homeScore");
         const currentAwayScore = form.getValues("awayScore");
         
@@ -83,7 +83,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Matchresultat</h3>
+      <h3 className="text-lg font-medium">Matchresultat (valfritt)</h3>
       
       <div className="grid grid-cols-2 gap-4">
         <FormField
@@ -136,7 +136,7 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
       </div>
       
       <div>
-        <FormLabel className="block mb-2">Matchresultat</FormLabel>
+        <FormLabel className="block mb-2">Matchresultat (valfritt)</FormLabel>
         <RadioGroup 
           value={winStatusValue} 
           onValueChange={handleWinStatusChange}

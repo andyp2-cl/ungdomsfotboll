@@ -35,6 +35,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         name: normalizedActivity.name,
         type: normalizedActivity.type,
         cupId: normalizedActivity.cupId,
+        leagueId: normalizedActivity.leagueId,
         date: normalizedActivity.date,
         homeScore: normalizedActivity.homeScore,
         awayScore: normalizedActivity.awayScore,
@@ -60,6 +61,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         console.log("Data being sent to Supabase:", JSON.stringify({
           id: cleanFormattedActivity.id,
           name: cleanFormattedActivity.name,
+          league_id: cleanFormattedActivity.league_id,
           home_score: cleanFormattedActivity.home_score,
           away_score: cleanFormattedActivity.away_score,
           is_win: cleanFormattedActivity.is_win,
@@ -70,8 +72,31 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         let saved = false;
         let lastError = null;
         
-        // Approach 1: Score-only update if we're just changing scores
-        if (!isNewActivity && 
+        // Approach 1: League-only update if we're just changing league
+        if (!isNewActivity && normalizedActivity.leagueId !== undefined) {
+          console.log("Trying league-only update for activity:", activity.id);
+          
+          // Create a minimal update payload with just the league field
+          const leagueUpdatePayload = {
+            league_id: cleanFormattedActivity.league_id,
+          };
+          
+          const { error: leagueUpdateError } = await supabase
+            .from('activities')
+            .update(leagueUpdatePayload)
+            .eq('id', activity.id);
+            
+          if (!leagueUpdateError) {
+            saved = true;
+            console.log("League-only update successful for activity:", activity.id);
+          } else {
+            lastError = leagueUpdateError;
+            console.error("League-only update failed:", leagueUpdateError.message, leagueUpdateError.details);
+          }
+        }
+        
+        // Approach 2: Score-only update if we're just changing scores
+        if (!saved && !isNewActivity && 
             (normalizedActivity.homeScore !== undefined || normalizedActivity.awayScore !== undefined)) {
           console.log("Trying score-only update for activity:", activity.id);
           
@@ -98,7 +123,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           }
         }
             
-        // Approach 2: Direct update if it's an existing activity
+        // Approach 3: Direct update if it's an existing activity
         if (!saved && !isNewActivity) {
           console.log("Trying direct update for existing activity:", activity.id);
           const { error: updateError } = await supabase
@@ -115,7 +140,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           }
         }
         
-        // Approach 3: Standard upsert if update failed or it's a new activity
+        // Approach 4: Standard upsert if update failed or it's a new activity
         if (!saved) {
           console.log("Trying upsert for activity:", activity.id);
           const { error: upsertError } = await supabase
@@ -131,7 +156,7 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
           }
         }
         
-        // Approach 4: Insert directly if all else failed and it's a new activity
+        // Approach 5: Insert directly if all else failed and it's a new activity
         if (!saved && isNewActivity) {
           console.log("Trying direct insert for new activity:", activity.id);
           const { error: insertError } = await supabase

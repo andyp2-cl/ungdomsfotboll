@@ -41,7 +41,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     formattedActivity.cup_id = activity.id;
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with home_score: ${formattedActivity.home_score}, away_score: ${formattedActivity.away_score}, is_win: ${formattedActivity.is_win}`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with league_id: ${formattedActivity.league_id}, home_score: ${formattedActivity.home_score}, away_score: ${formattedActivity.away_score}, is_win: ${formattedActivity.is_win}`);
   
   // Final check for any undefined values
   Object.keys(formattedActivity).forEach(key => {
