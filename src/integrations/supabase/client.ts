@@ -44,9 +44,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
           console.error('Database connection test failed:', error);
         }
       })
-      .catch((err) => {
-        console.error('Error during database connection test:', err);
-      });
+      // Fix: Remove the .catch() call as it's not needed with the error handling in .then()
   } catch (e) {
     console.error('Error during Supabase initialization:', e);
   }
