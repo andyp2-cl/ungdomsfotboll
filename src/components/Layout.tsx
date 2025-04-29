@@ -1,10 +1,10 @@
 
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlayerTab } from "@/components/tabs/PlayerTab";
-import { ActivityTab } from "@/components/tabs/ActivityTab";
+import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
+import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { Button } from "@/components/ui/button";
-import { FontBold, UserCog } from "lucide-react";
+import { Bold, UserCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { LoginStatus } from "@/components/auth/LoginStatus";
@@ -41,7 +41,7 @@ export function Layout({ activeTab = "players", defaultContent, children }: Layo
               onClick={toggleFontSize}
               className="flex gap-1.5 items-center"
             >
-              <FontBold className="h-4 w-4" />
+              <Bold className="h-4 w-4" />
               <span className="text-xs">Större text</span>
             </Button>
             
@@ -80,10 +80,14 @@ export function Layout({ activeTab = "players", defaultContent, children }: Layo
               </TabsList>
             </div>
             <TabsContent value="players" className="p-0 border-0">
-              <PlayerTab />
+              <div className="p-6">
+                <PlayerTabContent />
+              </div>
             </TabsContent>
             <TabsContent value="activities" className="p-0 border-0">
-              <ActivityTab />
+              <div className="p-6">
+                <ActivityTabContent />
+              </div>
             </TabsContent>
             <TabsContent value="statistics" className="p-0 border-0">
               <div className="p-6">
