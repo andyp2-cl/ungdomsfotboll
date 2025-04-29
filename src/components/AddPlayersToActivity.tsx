@@ -5,7 +5,8 @@ import { CupSelector } from "./add-players/CupSelector";
 import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -23,10 +24,16 @@ export function AddPlayersToActivity({
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
     .filter(player => !currentParticipantIds.includes(player.id))
+    .filter(player => 
+      searchQuery 
+        ? player.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+        : true
+    )
     .sort((a, b) => a.name.localeCompare(b.name));
   
   // Get selected players data
@@ -72,7 +79,7 @@ export function AddPlayersToActivity({
   };
   
   // If no available players, show a message
-  if (availablePlayers.length === 0) {
+  if (availablePlayers.length === 0 && searchQuery === "") {
     return (
       <div className="text-muted-foreground text-sm mt-4">
         Alla spelare är redan tillagda i denna aktivitet.
@@ -82,6 +89,18 @@ export function AddPlayersToActivity({
 
   return (
     <div className="mt-4 space-y-4">
+      {/* Sökfält för att hitta spelare */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Sök spelare..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {/* Cup Selector - show for both match and cup types */}
       <CupSelector
         selectedCup={selectedCup}
