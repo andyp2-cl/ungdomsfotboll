@@ -1,28 +1,16 @@
 
 import React, { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle, RefreshCw, Database } from "lucide-react";
 import { testDatabaseAccess } from "@/components/auth/utils/databaseUtils";
-import { 
-  ErrorState, 
-  NetworkStatus, 
-  DatabaseStatus, 
-  LoadingSpinner, 
-  useDatabaseCheck 
-} from "./loading";
+import { supabase } from "@/integrations/supabase/client";
 
-interface LoadingStateProps {
-  message?: string;
-  error?: string;
+interface ErrorStateProps {
+  error: string;
   retry?: () => void;
 }
 
-export function LoadingState({ 
-  message = "Laddar data från databasen...", 
-  error,
-  retry 
-}: LoadingStateProps) {
-  const isOnline = navigator.onLine;
-  const { dbStatus, dbError, isCheckingDb, setIsCheckingDb } = useDatabaseCheck(isOnline, error);
+export function ErrorState({ error, retry }: ErrorStateProps) {
+  const [isCheckingDb, setIsCheckingDb] = useState(false);
 
   // Function to manually check database connection
   const checkDatabaseManually = async () => {
@@ -51,13 +39,10 @@ export function LoadingState({
         console.log("Direct API test successful");
         const data = await directResponse.json();
         console.log("API data:", data);
-        setDbStatus('connected');
-        setIsCheckingDb(false);
       } else {
         console.error("Direct API test failed:", directResponse.status, directResponse.statusText);
         const errorText = await directResponse.text();
-        setDbStatus('error');
-        setIsCheckingDb(false);
+        console.error("API Error details:", errorText);
       }
       
       // Then test with the client
@@ -65,44 +50,42 @@ export function LoadingState({
       const { success, error } = await testDatabaseAccess();
       
       if (success) {
-        setDbStatus('connected');
-        setIsCheckingDb(false);
         console.log("Database connection test successful");
       } else {
-        setDbStatus('error');
-        setIsCheckingDb(false);
         console.error("Database connection test failed:", error);
       }
     } catch (err) {
       console.error("Error in manual database check:", err);
-      setDbStatus('error');
+    } finally {
       setIsCheckingDb(false);
     }
   };
 
-  // Show error state if there's an error message
-  if (error) {
-    return <ErrorState error={error} retry={retry} />;
-  }
-  
-  // Show loading state
   return (
     <div className="flex justify-center items-center h-64">
       <div className="text-center">
-        <LoadingSpinner retry={retry} />
-        <p>{message}</p>
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <p className="mb-4">{error}</p>
         
-        {/* Network status indicator */}
-        <NetworkStatus isOnline={isOnline} />
+        {retry && (
+          <button 
+            onClick={retry} 
+            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm flex items-center gap-2 mx-auto"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Försök igen
+          </button>
+        )}
         
-        {/* Database connection status */}
-        <DatabaseStatus 
-          status={dbStatus} 
-          errorMessage={dbError} 
-          isOnline={isOnline}
-          onDiagnostic={checkDatabaseManually}
-          isCheckingDb={isCheckingDb}
-        />
+        {/* Add database diagnostic button */}
+        <button
+          onClick={checkDatabaseManually}
+          disabled={isCheckingDb}
+          className="mt-4 bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded text-sm flex items-center gap-2 mx-auto"
+        >
+          <Database className="h-4 w-4" />
+          {isCheckingDb ? "Kontrollerar databas..." : "Diagnostisera databasanslutning"}
+        </button>
       </div>
     </div>
   );
