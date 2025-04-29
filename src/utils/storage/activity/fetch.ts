@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase/client";
 import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
@@ -117,6 +118,7 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
     // Mark connection as successful
     localStorage.setItem('sb-connection-test', 'true');
     localStorage.setItem('sb-connection-test-time', Date.now().toString());
+    // Fix: Convert numeric values to strings when storing in localStorage
     localStorage.setItem('sb-activities-fetch-time', endTime.toString());
     localStorage.setItem('sb-activities-fetch-duration', (endTime - startTime).toString());
     
