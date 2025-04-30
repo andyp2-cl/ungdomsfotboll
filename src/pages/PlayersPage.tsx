@@ -35,7 +35,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer,
+    handleDeletePlayer, // Make sure this is included here
     
     // Activity data
     activities,
@@ -86,6 +86,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleAddPlayer(player);
   };
   
+  // Create a wrapper for handleDeletePlayer to match expected signature
   const handleDeletePlayerWrapper = async (playerId: string): Promise<boolean> => {
     return await handleDeletePlayer(playerId);
   };

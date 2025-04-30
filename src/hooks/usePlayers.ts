@@ -33,7 +33,8 @@ export function usePlayers(initialTab?: string) {
     handleGradeChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer
+    handleAddPlayer,
+    handleDeletePlayer  // Added this line to extract the function
   } = usePlayersData();
 
   // Get activity state and actions
@@ -150,6 +151,7 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    handleDeletePlayer, // Add the handleDeletePlayer function to the return object
     
     // Activity data
     activities,

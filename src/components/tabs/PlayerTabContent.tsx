@@ -24,6 +24,7 @@ interface PlayerTabContentProps {
   setViewMode: (mode: "list" | "grid" | "stats") => void;
   handlePlayerUpdate: (player: Player) => void;
   handleBulkPlayerUpdate: (players: Player[]) => void;
+  handleDeletePlayer?: (playerId: string) => Promise<boolean | undefined>;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   setEditingPlayer: (player: Player | null) => void;
   onActivitySelect?: (activity: Activity) => void;
@@ -44,10 +45,18 @@ export function PlayerTabContent({
   setViewMode,
   handlePlayerUpdate,
   handleBulkPlayerUpdate,
+  handleDeletePlayer,
   setIsAddPlayerOpen,
   setEditingPlayer,
   onActivitySelect
 }: PlayerTabContentProps) {
+  // Create a wrapper for the handleDeletePlayer function that returns a Promise<void>
+  const handleDeletePlayerWrapper = async (playerId: string): Promise<void> => {
+    if (handleDeletePlayer) {
+      await handleDeletePlayer(playerId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -79,6 +88,7 @@ export function PlayerTabContent({
           onClose={() => setSelectedPlayer(null)}
           onEdit={setEditingPlayer}
           onPlayerUpdate={handlePlayerUpdate}
+          onDeletePlayer={handleDeletePlayerWrapper}
           onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
           allPlayers={players}
           onActivitySelect={onActivitySelect}

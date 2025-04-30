@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { PlayerHeader } from "./PlayerHeader";
@@ -45,8 +46,8 @@ export function PlayerDetail({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        {/* Assuming PlayerHeader is the existing header component */}
-        <PlayerHeader player={player} onClose={onClose} onEdit={() => onEdit(player)} />
+        {/* PlayerHeader doesn't accept onClose prop, so we need to remove it */}
+        <PlayerHeader player={player} onEdit={() => onEdit(player)} />
         
         {/* Add delete button */}
         {onDeletePlayer && (
@@ -83,10 +84,11 @@ export function PlayerDetail({
         <div>
           <h3 className="text-lg font-semibold">Aktiviteter</h3>
           <ScrollArea className="h-[200px] w-full rounded-md border">
+            {/* ActivityList expects 'players' array, not a single 'player' */}
             <ActivityList 
               activities={activities} 
-              player={player} 
-              onActivitySelect={onActivitySelect}
+              players={[player]} 
+              onSelect={onActivitySelect}
             />
           </ScrollArea>
         </div>

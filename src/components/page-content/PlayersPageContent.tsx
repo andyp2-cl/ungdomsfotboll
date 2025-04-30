@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -60,14 +61,6 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
 
   const isMobile = useIsMobile();
   
-  // Create a wrapper for handleDeletePlayer that returns a Promise<void>
-  const handleDeletePlayerWrapper = async (playerId: string): Promise<boolean | undefined> => {
-    if (props.handleDeletePlayer) {
-      return await props.handleDeletePlayer(playerId);
-    }
-    return undefined;
-  };
-
   return (
     <>
       <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
@@ -90,7 +83,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               setViewMode={props.setViewMode}
               handlePlayerUpdate={props.handlePlayerUpdate}
               handleBulkPlayerUpdate={props.handleBulkPlayerUpdate}
-              handleDeletePlayer={handleDeletePlayerWrapper}
+              handleDeletePlayer={props.handleDeletePlayer}
               setIsAddPlayerOpen={props.setIsAddPlayerOpen}
               setEditingPlayer={props.setEditingPlayer}
               onActivitySelect={props.onPlayerActivitySelect}
