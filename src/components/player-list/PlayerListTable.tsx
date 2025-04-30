@@ -4,6 +4,7 @@ import { Player } from "@/types/player";
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from "@/components/ui/table";
 import { SortIcon, SortField } from "./PlayerListSorting";
 import { Badge } from "@/components/ui/badge";
+import { getGradeColor } from "@/utils/gradeUtils";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -92,7 +93,13 @@ export function PlayerListTable({
                     Tränare
                   </Badge>
                 ) : (
-                  <Badge variant="outline">
+                  <Badge 
+                    variant="outline" 
+                    style={{ 
+                      borderColor: getGradeColor(player.grade || ''), 
+                      color: getGradeColor(player.grade || '') 
+                    }}
+                  >
                     Nivå {player.grade || "-"}
                   </Badge>
                 )}
