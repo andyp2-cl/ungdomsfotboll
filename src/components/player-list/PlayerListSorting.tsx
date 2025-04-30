@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { Player } from "@/types/player";
 
-// Make sure to modify the SortField type to remove 'activities'
-export type SortField = 'name' | 'position' | 'grade';
+// Make sure to modify the SortField type to include 'activities'
+export type SortField = 'name' | 'position' | 'grade' | 'activities';
 
 export function usePlayerSorting() {
   const [sortField, setSortField] = useState<SortField>('name');
@@ -30,6 +31,10 @@ export function usePlayerSorting() {
           return posA.localeCompare(posB) * dirMod;
         case 'grade':
           return a.grade.localeCompare(b.grade) * dirMod;
+        case 'activities':
+          const actCountA = a.activities?.length || 0;
+          const actCountB = b.activities?.length || 0;
+          return (actCountA - actCountB) * dirMod;
         default:
           return 0;
       }
