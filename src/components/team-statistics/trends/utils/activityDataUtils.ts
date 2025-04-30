@@ -1,5 +1,4 @@
-
-import { Activity, ActivityType } from '@/types/player';
+import { Activity } from '@/types/player';
 import { format, subMonths, isAfter, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -65,6 +64,7 @@ export function generateMonthlyActivityData(activities: Activity[]): MonthlyActi
           monthlyData[monthKey].matches++;
         } 
         
+        // Check for 'training' value - we need to check as string since ActivityType might not include it
         if (activity.type === 'training') {
           monthlyData[monthKey].trainings++;
         }
