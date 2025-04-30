@@ -65,7 +65,7 @@ export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStat
         </TabsContent>
         
         <TabsContent value="trends" className="space-y-6">
-          <TrendsTabContent activities={activities} />
+          <TrendsTabContent players={players} activities={activities} />
         </TabsContent>
       </Tabs>
     </div>

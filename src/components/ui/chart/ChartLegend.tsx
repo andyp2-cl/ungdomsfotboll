@@ -43,7 +43,7 @@ export const ChartLegendContent = React.forwardRef<
               )}
             >
               {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
+                React.createElement(itemConfig.icon)
               ) : (
                 <div
                   className="h-2 w-2 shrink-0 rounded-[2px]"
@@ -52,7 +52,7 @@ export const ChartLegendContent = React.forwardRef<
                   }}
                 />
               )}
-              {itemConfig?.label}
+              {itemConfig?.label || item.value}
             </div>
           )
         })}

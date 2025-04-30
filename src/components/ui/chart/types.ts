@@ -9,7 +9,7 @@ export interface ChartConfig {
   [key: string]: {
     label?: string;
     color?: string;
-    icon?: React.ReactNode;
+    icon?: React.ElementType; // Change to ElementType instead of ReactNode
   } | undefined;
 }
 
@@ -34,7 +34,7 @@ export interface ChartTooltipContentProps {
   indicator?: React.ReactNode;
   hideLabel?: boolean;
   hideIndicator?: boolean;
-  labelFormatter?: (label: any) => string;
+  labelFormatter?: (label: any) => React.ReactNode;
   labelClassName?: string;
   color?: string;
   nameKey?: string;
