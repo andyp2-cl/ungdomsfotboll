@@ -140,7 +140,7 @@ export function TrendsTabContent({ activities, players }: TrendsTabContentProps)
     // Calculate win rate
     Object.values(monthlyData).forEach(monthData => {
       const totalMatches = monthData.wins + monthData.losses + monthData.draws;
-      monthData.winRate = totalMatches > 0 ? Math.round(monthData.wins / totalMatches * 100) : 0;
+      monthData.winRate = totalMatches > 0 ? Math.round((monthData.wins / totalMatches) * 100) : 0;
     });
     
     // Convert to array sorted by date
