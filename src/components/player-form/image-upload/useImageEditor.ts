@@ -104,6 +104,7 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
     if (!canvasRef.current || !state.originalImage) return;
   
     try {
+      console.log("Processing image with zoom:", state.zoom, "and position:", state.position);
       const dataUrl = await processImage(
         state.originalImage, 
         canvasRef.current, 
@@ -114,6 +115,8 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
       if (dataUrl) {
         setImagePreview(dataUrl);
         setIsEditing(false);
+      } else {
+        console.error("Failed to process image");
       }
     } catch (error) {
       console.error("Error processing image:", error);

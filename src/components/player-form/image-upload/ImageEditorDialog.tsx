@@ -92,6 +92,7 @@ export function ImageEditorDialog({
             onMouseMove={dragStart ? handleMouseMove : undefined}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            style={{ cursor: dragStart ? 'grabbing' : 'grab' }}
           >
             {originalImage && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -102,7 +103,6 @@ export function ImageEditorDialog({
                     transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
                     transformOrigin: 'center',
                     maxWidth: 'none',
-                    cursor: dragStart ? 'grabbing' : 'grab'
                   }}
                   onLoad={handleImageLoad}
                   draggable="false"
@@ -142,10 +142,15 @@ export function ImageEditorDialog({
             </Button>
           </div>
           
-          <Button className="w-full" onClick={onSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Spara bild
-          </Button>
+          <div className="w-full flex flex-col gap-2">
+            <Button className="w-full" onClick={onSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Spara bild
+            </Button>
+            <div className="text-xs text-center text-muted-foreground">
+              Zoom: {zoom.toFixed(1)}x | Dra för att placera bilden
+            </div>
+          </div>
         </div>
 
         <canvas ref={canvasRef} className="hidden" width="300" height="300" />

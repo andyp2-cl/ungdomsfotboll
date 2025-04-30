@@ -12,7 +12,7 @@ export function processImage(
 
   const img = new Image();
   
-  return new Promise<string>((resolve) => {
+  return new Promise<string | undefined>((resolve) => {
     img.onload = () => {
       // Set canvas dimensions to be square (for profile image)
       canvas.width = 300;
@@ -20,31 +20,26 @@ export function processImage(
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Calculate the center of the image and canvas
-      const canvasCenter = canvas.width / 2;
       
-      // Calculate the source area based on zoom and position
-      const sourceSize = Math.min(img.width, img.height) / zoom;
-      const centerX = img.width / 2;
-      const centerY = img.height / 2;
+      // Calculate the scaled dimensions based on zoom
+      const scaledWidth = img.width * zoom;
+      const scaledHeight = img.height * zoom;
       
-      // Adjust source position based on user's position offset
-      const sourceX = centerX - (sourceSize / 2) + (position.x / zoom);
-      const sourceY = centerY - (sourceSize / 2) + (position.y / zoom);
+      // Calculate center offsets
+      const centerOffsetX = (scaledWidth - canvas.width) / 2;
+      const centerOffsetY = (scaledHeight - canvas.height) / 2;
       
-      // Make sure we don't try to draw outside the source image
-      const clampedSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
-      const clampedSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
-
-      // Draw the image with the current zoom and position
+      // Apply user position adjustments (inverted because we're moving the image under a fixed viewport)
+      const drawX = -centerOffsetX - position.x * zoom;
+      const drawY = -centerOffsetY - position.y * zoom;
+      
+      // Draw the image with appropriate scaling and positioning
       ctx.drawImage(
         img,
-        clampedSourceX,
-        clampedSourceY,
-        sourceSize,
-        sourceSize,
-        0, 0, canvas.width, canvas.height
+        drawX,
+        drawY,
+        scaledWidth,
+        scaledHeight
       );
 
       // Convert canvas to data URL
