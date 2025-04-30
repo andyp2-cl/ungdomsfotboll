@@ -63,7 +63,7 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
         const result = reader.result as string;
         setOriginalImage(result);
         setImagePreview(result);
-        // Reset zoom and position when a new image is loaded
+        // Start with minimal zoom for new images
         setZoom(1);
         setPosition({ x: 0, y: 0 });
         // Open the editor
@@ -79,6 +79,9 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
       fileInputRef.current?.click();
     } else {
       setOriginalImage(imagePreview);
+      // Reset zoom and position when opening editor for existing image
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
       setIsEditing(true);
     }
   };
@@ -87,6 +90,9 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setOriginalImage(imagePreview);
+    // Reset zoom and position when editing
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
     setIsEditing(true);
   };
 

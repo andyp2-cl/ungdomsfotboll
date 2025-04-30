@@ -21,25 +21,29 @@ export function processImage(
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Calculate the scaled dimensions based on zoom
-      const scaledWidth = img.width * zoom;
-      const scaledHeight = img.height * zoom;
+      // Calculate dimensions for centering the image
+      const size = Math.min(img.width, img.height);
+      const sourceX = (img.width - size) / 2;
+      const sourceY = (img.height - size) / 2;
       
-      // Calculate center offsets
-      const centerOffsetX = (scaledWidth - canvas.width) / 2;
-      const centerOffsetY = (scaledHeight - canvas.height) / 2;
+      // Calculate the area to draw based on zoom
+      const zoomedSize = size / zoom;
+      const offsetX = sourceX - (position.x * (size / zoom));
+      const offsetY = sourceY - (position.y * (size / zoom));
       
-      // Apply user position adjustments (inverted because we're moving the image under a fixed viewport)
-      const drawX = -centerOffsetX - position.x * zoom;
-      const drawY = -centerOffsetY - position.y * zoom;
-      
-      // Draw the image with appropriate scaling and positioning
+      // Ensure we don't draw outside the image boundaries
+      const safeOffsetX = Math.max(0, Math.min(img.width - zoomedSize, offsetX));
+      const safeOffsetY = Math.max(0, Math.min(img.height - zoomedSize, offsetY));
+
+      // Draw the image with zoom and position applied
       ctx.drawImage(
         img,
-        drawX,
-        drawY,
-        scaledWidth,
-        scaledHeight
+        safeOffsetX,
+        safeOffsetY,
+        zoomedSize,
+        zoomedSize,
+        0, 0,
+        canvas.width, canvas.height
       );
 
       // Convert canvas to data URL
