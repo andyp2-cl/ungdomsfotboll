@@ -54,24 +54,24 @@ export function generateMonthlyActivityData(activities: Activity[]): MonthlyActi
     };
   }
   
-  // Count activities by type - using a different approach to avoid TypeScript comparison errors
+  // Count activities by type - Fixed the type comparison by converting to string
   recentActivities.forEach(activity => {
     try {
       const monthKey = format(parseISO(activity.date), 'yyyy-MM');
       
       if (monthlyData[monthKey]) {
-        const activityType = String(activity.type); // Convert to string explicitly
+        const activityTypeString = String(activity.type); // Convert to string explicitly
         
-        // Count by string comparison instead
-        if (activityType === 'match') {
+        // Compare using string equality
+        if (activityTypeString === 'match') {
           monthlyData[monthKey].matches++;
         } 
         
-        if (activityType === 'training') {
+        if (activityTypeString === 'training') {
           monthlyData[monthKey].trainings++;
         }
         
-        if (activityType === 'cup') {
+        if (activityTypeString === 'cup') {
           monthlyData[monthKey].cups++;
         }
         

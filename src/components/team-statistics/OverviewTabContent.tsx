@@ -4,7 +4,7 @@ import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Trophy, Target, Award, ShieldCheck, Clock, Calendar, Percent } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { calculateMatchStats } from "@/components/player-management/statistics/matches/utils/calculateMatchStats";
 import { LeaguesList } from "@/components/player-management/statistics/leagues/components/LeaguesList";
 
@@ -30,7 +30,7 @@ interface LeagueWithMatches extends League {
 
 export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
   // Filter match activities
-  const matches = activities.filter(activity => activity.type === "match");
+  const matches = activities.filter(activity => String(activity.type) === "match");
   
   // Calculate overall match statistics
   const matchStats = calculateMatchStats(matches);
@@ -52,7 +52,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       
       return (leagues || []).map((league: League) => {
         const leagueMatches = activities.filter(
-          activity => activity.type === "match" && activity.league_id === league.id
+          activity => String(activity.type) === "match" && activity.league_id === league.id
         );
         
         let wins = 0;
