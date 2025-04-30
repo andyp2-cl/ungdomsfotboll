@@ -1,63 +1,38 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { Activity, Player } from "@/types/player";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Trophy } from "lucide-react";
 import { ChartContainer } from "@/components/ui/chart";
 
-interface LeagueData {
+interface League {
   id: string;
   name: string;
+  division: string;
+  year: number;
+}
+
+interface LeagueWithMatches extends League {
+  matches: Activity[];
   wins: number;
   draws: number;
   losses: number;
 }
 
 interface LeaguePieChartsProps {
-  leagues: LeagueData[];
-  isLoading: boolean;
+  activities: Activity[];
+  players: Player[];
+  onPlayerClick?: (playerId: string) => void;
 }
 
-export function LeaguePieCharts({ leagues, isLoading }: LeaguePieChartsProps) {
-  // Skip rendering if loading or no leagues
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            Ligastatistik
-          </CardTitle>
-          <CardDescription>Fördelning av resultat per liga</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center h-[280px]">
-          <div className="text-center text-muted-foreground">Laddar ligastatistik...</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (leagues.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            Ligastatistik
-          </CardTitle>
-          <CardDescription>Fördelning av resultat per liga</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center h-[280px]">
-          <div className="text-center text-muted-foreground">Inga ligor hittades</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Define colors for the pie slices
+export function LeaguePieCharts({ activities, players, onPlayerClick }: LeaguePieChartsProps) {
+  // Colors matching badges: green for wins, amber for draws, red for losses
   const COLORS = ['#16a34a', '#f59e0b', '#dc2626'];
   
-  // Define chart configuration
+  // Chart configuration
   const chartConfig = {
     wins: {
       label: "Vinster",
@@ -73,67 +48,129 @@ export function LeaguePieCharts({ leagues, isLoading }: LeaguePieChartsProps) {
     }
   };
 
-  // Get data for active leagues with recent matches
-  const activeLeagues = leagues
-    .filter(league => (league.wins + league.draws + league.losses) > 0)
-    .slice(0, 4); // Limit to 4 leagues for better display
+  // Fetch leagues data
+  const { data: leaguesWithMatches = [], isLoading } = useQuery({
+    queryKey: ["leagues-with-matches-piechart", activities.length],
+    queryFn: async () => {
+      const { data: leagues, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .order("year", { ascending: false })
+        .order("name");
+        
+      if (error) {
+        console.error("Error fetching leagues:", error);
+        throw error;
+      }
+      
+      return (leagues || []).map((league: League) => {
+        const leagueMatches = activities.filter(
+          activity => String(activity.type) === "match" && activity.league_id === league.id
+        );
+        
+        let wins = 0;
+        let draws = 0;
+        let losses = 0;
+        
+        leagueMatches.forEach(match => {
+          if (match.homeScore !== undefined && match.awayScore !== undefined && 
+              match.homeScore === match.awayScore) {
+            draws++;
+          } else if (match.isWin === true) {
+            wins++;
+          } else if (match.isWin === false) {
+            losses++;
+          }
+        });
+        
+        return {
+          ...league,
+          matches: leagueMatches,
+          wins,
+          draws,
+          losses
+        };
+      }).filter((league: LeagueWithMatches) => {
+        // Only include leagues that have matches
+        return league.matches.length > 0;
+      }).slice(0, 4); // Limit to top 4 leagues for the overview display
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p>Laddar ligastatistik...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!leaguesWithMatches.length) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p>Inga ligor med matcher hittades</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-amber-500" />
-          Ligastatistik
+          Ligafördelning
         </CardTitle>
-        <CardDescription>Fördelning av resultat per liga</CardDescription>
+        <CardDescription>Resultat i ligor</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[280px]">
-          {activeLeagues.map(league => (
-            <div key={league.id} className="flex flex-col items-center">
-              <h4 className="font-semibold text-center mb-1">{league.name}</h4>
-              
-              <div className="text-xs text-muted-foreground mb-2 flex gap-2 items-center">
-                <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-800">V: {league.wins}</span>
-                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">O: {league.draws}</span>
-                <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-800">F: {league.losses}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {leaguesWithMatches.map((league) => {
+            const totalMatches = league.wins + league.draws + league.losses;
+            
+            // Skip leagues without matches
+            if (totalMatches === 0) return null;
+            
+            const data = [
+              { name: 'Vinster', value: league.wins },
+              { name: 'Oavgjorda', value: league.draws },
+              { name: 'Förluster', value: league.losses }
+            ].filter(item => item.value > 0); // Only show segments with values > 0
+            
+            return (
+              <div key={league.id} className="flex flex-col items-center">
+                <p className="font-medium text-sm mb-2">{league.name}</p>
+                <div className="h-[120px] w-full">
+                  <ChartContainer config={chartConfig} className="h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={50}
+                          paddingAngle={4}
+                          dataKey="value"
+                        >
+                          {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value} matcher`, '']}
+                        />
+                        <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
               </div>
-              
-              <div className="h-24 w-full">
-                <ChartContainer config={chartConfig}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Vinster", value: league.wins, color: "#16a34a" },
-                          { name: "Oavgjorda", value: league.draws, color: "#f59e0b" },
-                          { name: "Förluster", value: league.losses, color: "#dc2626" }
-                        ].filter(item => item.value > 0)}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={20}
-                        outerRadius={40}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {[
-                          { name: "Vinster", value: league.wins, color: "#16a34a" },
-                          { name: "Oavgjorda", value: league.draws, color: "#f59e0b" },
-                          { name: "Förluster", value: league.losses, color: "#dc2626" }
-                        ].filter(item => item.value > 0).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [`${value} matcher`, name]}
-                        contentStyle={{ borderRadius: "0.375rem" }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

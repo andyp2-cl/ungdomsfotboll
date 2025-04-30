@@ -2,8 +2,8 @@
 import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { MatchStatisticsOverview } from './components/MatchStatisticsOverview';
-import { TopGoalScorers } from './components/TopGoalScorers';
 import { LeagueStatistics } from './components/LeagueStatistics';
+import { LeaguePieCharts } from './components/LeaguePieCharts';
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -24,16 +24,6 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
     const matchDate = new Date(match.date);
     return matchDate <= today;
   });
-  
-  // Handle player click
-  const handlePlayerClick = (playerId: string) => {
-    if (onPlayerSelect) {
-      const player = players.find(p => p.id === playerId);
-      if (player) {
-        onPlayerSelect(player);
-      }
-    }
-  };
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -43,18 +33,32 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top Goal Scorers */}
-        <TopGoalScorers 
-          matches={historicalMatches} 
-          players={players} 
-          onPlayerClick={handlePlayerClick} 
+        {/* League Pie Charts */}
+        <LeaguePieCharts
+          activities={activities}
+          players={players}
+          onPlayerClick={playerId => {
+            if (onPlayerSelect) {
+              const player = players.find(p => p.id === playerId);
+              if (player) {
+                onPlayerSelect(player);
+              }
+            }
+          }}
         />
 
         {/* Leagues statistics */}
         <LeagueStatistics 
           activities={activities}
           players={players} 
-          onPlayerClick={handlePlayerClick} 
+          onPlayerClick={playerId => {
+            if (onPlayerSelect) {
+              const player = players.find(p => p.id === playerId);
+              if (player) {
+                onPlayerSelect(player);
+              }
+            }
+          }} 
         />
       </div>
     </div>
