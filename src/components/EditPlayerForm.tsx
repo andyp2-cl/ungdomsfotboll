@@ -3,16 +3,13 @@ import React, { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Player } from "@/types/player";
+import { Form } from "@/components/ui/form";
 import { Save, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ImageUploadField } from "./player-form/ImageUploadField";
+import { PlayerFormFields } from "./player-form/PlayerFormFields";
+import { TrainerCheckbox } from "./player-form/TrainerCheckbox";
 
 interface EditPlayerFormProps {
   player: Player;
@@ -56,15 +53,6 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
     onSave(updatedPlayer);
   };
 
-  // Available player positions
-  const positions: { label: string; value: PlayerPosition }[] = [
-    { label: "Målvakt", value: "MV" },
-    { label: "Back", value: "BACK" },
-    { label: "Mittfältare", value: "MF" },
-    { label: "Anfallare", value: "ANF" },
-    { label: "Tränare", value: "TRÄNARE" },
-  ];
-
   const handleTrainerChange = (checked: boolean) => {
     setIsTrainer(checked);
     
@@ -91,149 +79,14 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
           setImagePreview={setImagePreview} 
         />
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Namn</FormLabel>
-              <FormControl>
-                <Input placeholder="Spelarens namn" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <TrainerCheckbox 
+          isTrainer={isTrainer} 
+          onChange={handleTrainerChange} 
         />
 
-        <div className="border-t pt-4">
-          <div className="flex items-center mb-4">
-            <Checkbox 
-              id="is-trainer" 
-              checked={isTrainer}
-              onCheckedChange={handleTrainerChange}
-              className="mr-2"
-            />
-            <Label htmlFor="is-trainer">Detta är en tränare</Label>
-          </div>
-        </div>
-
-        {!isTrainer && (
-          <FormField
-            control={form.control}
-            name="grade"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Nivå</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex space-x-2"
-                  >
-                    {["A", "B", "C", "D"].map((grade) => (
-                      <FormItem
-                        key={grade}
-                        className="flex items-center space-x-1 space-y-0"
-                      >
-                        <FormControl>
-                          <RadioGroupItem value={grade} id={`grade-${grade}`} />
-                        </FormControl>
-                        <Label
-                          htmlFor={`grade-${grade}`}
-                          className="font-normal cursor-pointer"
-                        >
-                          {grade}
-                        </Label>
-                      </FormItem>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <FormField
-          control={form.control}
-          name="positions"
-          render={() => (
-            <FormItem>
-              <div className="mb-2">
-                <FormLabel>Position</FormLabel>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {positions.filter(pos => isTrainer ? pos.value === "TRÄNARE" : true).map((position) => (
-                  <FormField
-                    key={position.value}
-                    control={form.control}
-                    name="positions"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={position.value}
-                          className="flex items-center space-x-1 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(position.value)}
-                              onCheckedChange={(checked) => {
-                                const currentPositions = field.value || [];
-                                if (checked) {
-                                  field.onChange([...currentPositions, position.value]);
-                                } else {
-                                  field.onChange(
-                                    currentPositions.filter((val) => val !== position.value)
-                                  );
-                                }
-                              }}
-                              id={`position-${position.value}`}
-                              className="hidden"
-                            />
-                          </FormControl>
-                          <Badge
-                            variant={
-                              field.value?.includes(position.value)
-                                ? "default"
-                                : "outline"
-                            }
-                            className="px-3 py-1 cursor-pointer select-none"
-                            onClick={() => {
-                              const currentPositions = field.value || [];
-                              if (currentPositions.includes(position.value)) {
-                                field.onChange(
-                                  currentPositions.filter((val) => val !== position.value)
-                                );
-                              } else {
-                                field.onChange([...currentPositions, position.value]);
-                              }
-                            }}
-                          >
-                            {position.label}
-                          </Badge>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="jerseyNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tröjnummer</FormLabel>
-              <FormControl>
-                <Input placeholder="t.ex. 10" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <PlayerFormFields 
+          form={form} 
+          isTrainer={isTrainer} 
         />
 
         <div className="flex justify-end space-x-2 pt-4">
