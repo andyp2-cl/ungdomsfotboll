@@ -1,36 +1,15 @@
 
-import * as React from "react"
-import * as RechartsPrimitive from "recharts"
+/**
+ * Types for chart components
+ */
 
-// Format: { THEME_NAME: CSS_SELECTOR }
-export const THEMES = { light: "", dark: ".dark" } as const
-
-export type ChartConfig = {
-  [k in string]: {
-    label?: React.ReactNode
-    icon?: React.ComponentType
-  } & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
-  )
+export interface ChartConfig {
+  [key: string]: {
+    label?: string;
+    color?: string;
+  } | undefined;
 }
 
-export type ChartContextProps = {
-  config: ChartConfig
-}
-
-// Omit the conflicting 'content' property from Recharts' Tooltip props
-export interface ChartTooltipContentProps extends 
-  Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, 'content'>, 
-  React.ComponentProps<"div"> {
-  hideLabel?: boolean
-  hideIndicator?: boolean
-  indicator?: "line" | "dot" | "dashed"
-  nameKey?: string
-  labelKey?: string
-}
-
-export interface ChartLegendContentProps extends React.ComponentProps<"div">, Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> {
-  hideIcon?: boolean
-  nameKey?: string
+export interface ChartContextProps {
+  config: ChartConfig;
 }

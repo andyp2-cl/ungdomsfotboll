@@ -1,67 +1,25 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { toast as sonnerToast } from "sonner";
-
 /**
- * Module for tracking sync state and UI interactions
+ * Interface representing the current state of synchronization
  */
-
-/**
- * Check if there are pending updates that need to be synced
- */
-export const checkPendingUpdates = (): number => {
-  try {
-    const pendingUpdatesJson = localStorage.getItem('pendingScoreUpdates');
-    if (!pendingUpdatesJson) {
-      return 0;
-    }
-    
-    const pendingUpdates = JSON.parse(pendingUpdatesJson);
-    return Object.keys(pendingUpdates).length;
-  } catch (error) {
-    console.error("Error checking pending updates:", error);
-    return 0;
-  }
-};
-
-/**
- * Handle displaying notifications based on sync results
- */
-export const handleSyncNotifications = (
-  successCount: number,
-  failureCount: number
-): void => {
-  if (successCount > 0) {
-    sonnerToast.success(`${successCount} matchresultat synkroniserade till databasen`);
-  }
+export interface SyncState {
+  /**
+   * ISO timestamp of when the last sync occurred, or null if never synced
+   */
+  lastSynced: string | null;
   
-  if (failureCount > 0) {
-    sonnerToast.warning(`Kunde inte synka ${failureCount} ändringar. Försöker igen senare.`);
-  }
-};
-
-/**
- * Trigger a manual sync by reloading the page
- */
-export const triggerManualSync = async (isOnline: boolean): Promise<void> => {
-  // Check if there are pending updates
-  const pendingUpdatesCount = checkPendingUpdates();
+  /**
+   * Whether a sync operation is currently in progress
+   */
+  syncing: boolean;
   
-  if (pendingUpdatesCount === 0) {
-    sonnerToast.info("Inga ändringar att synkronisera");
-    return;
-  }
+  /**
+   * Any error that occurred during the last sync attempt, or null if no error
+   */
+  error: Error | null;
   
-  // In online mode, trigger sync by reload
-  if (isOnline) {
-    sonnerToast.loading(`Synkroniserar ${pendingUpdatesCount} matchresultat...`);
-    
-    // Force reload page to trigger sync engine
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  } else {
-    // In offline mode, just show notification
-    sonnerToast.info("Ändringar synkas automatiskt när du är online igen");
-  }
-};
+  /**
+   * Number of changes waiting to be synced
+   */
+  pendingChanges: number;
+}

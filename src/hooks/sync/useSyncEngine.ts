@@ -1,67 +1,109 @@
 
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { syncPendingUpdates } from "./syncOperations";
-import { handleSyncNotifications, triggerManualSync } from "./syncState";
+import { useState, useEffect, useCallback } from 'react';
+import { fetchSyncState, updateSyncState } from './syncOperations';
+import { SyncState } from './syncState';
 
-/**
- * Hook for synchronizing local data with remote database
- */
-export function useSyncEngine() {
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    // Function to check session and run sync
-    const checkSessionAndSync = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log("Active session found, initiating sync");
-        const { successCount, failureCount } = await syncPendingUpdates();
-        handleSyncNotifications(successCount, failureCount);
-      } else {
-        console.log("No active session, skipping automatic sync");
-      }
-    };
-    
-    // Run sync check on startup and every minute
-    checkSessionAndSync();
-    const intervalId = setInterval(checkSessionAndSync, 60 * 1000);
-    
-    // Listen for online events to trigger sync
-    const handleOnline = () => {
-      console.log("Network connection restored, checking for sync");
-      sonnerToast.info("Nätverk återansluten, försöker synkronisera ändringar...");
-      checkSessionAndSync();
-    };
-    
-    window.addEventListener('online', handleOnline);
-    
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [toast]);
-  
-  // Expose a function that can be called to manually trigger sync
-  const manualSync = async () => {
-    // Check if we have a session first
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      sonnerToast.warning("Du måste logga in för att synkronisera ändringar");
-      return;
-    }
-    
-    // Get network status
-    const isOnline = navigator.onLine;
-    
-    // Trigger the manual sync
-    await triggerManualSync(isOnline);
-  };
-  
-  return { manualSync };
+interface UseSyncEngineOptions {
+  autoSync?: boolean;
+  syncInterval?: number;
+  onSyncComplete?: (state: SyncState) => void;
+  onSyncError?: (error: Error) => void;
 }
 
-// Import the sonnerToast for the component
-import { toast as sonnerToast } from "sonner";
+/**
+ * Custom hook for synchronizing data between client and server
+ */
+export function useSyncEngine(options: UseSyncEngineOptions = {}) {
+  const {
+    autoSync = true,
+    syncInterval = 300000, // 5 minutes
+    onSyncComplete,
+    onSyncError
+  } = options;
+
+  const [syncState, setSyncState] = useState<SyncState>({
+    lastSynced: null,
+    syncing: false,
+    error: null,
+    pendingChanges: 0
+  });
+
+  // Function to initiate sync
+  const sync = useCallback(async () => {
+    if (syncState.syncing) return;
+
+    setSyncState(prev => ({ ...prev, syncing: true, error: null }));
+
+    try {
+      // First fetch the current sync state
+      const currentState = await fetchSyncState();
+
+      // Update our local state
+      setSyncState(prev => ({ 
+        ...prev, 
+        lastSynced: currentState.lastSynced,
+        pendingChanges: currentState.pendingChanges 
+      }));
+
+      // If there are pending changes, sync them
+      if (currentState.pendingChanges > 0) {
+        await updateSyncState();
+        
+        // Update our local state again after sync
+        setSyncState(prev => ({
+          ...prev,
+          syncing: false,
+          lastSynced: new Date().toISOString(),
+          pendingChanges: 0
+        }));
+        
+        // Notify if callback provided
+        if (onSyncComplete) {
+          onSyncComplete({
+            lastSynced: new Date().toISOString(),
+            syncing: false,
+            error: null,
+            pendingChanges: 0
+          });
+        }
+      } else {
+        // No changes to sync
+        setSyncState(prev => ({ ...prev, syncing: false }));
+      }
+    } catch (error) {
+      console.error('Error during sync operation:', error);
+      setSyncState(prev => ({ 
+        ...prev, 
+        syncing: false, 
+        error: error instanceof Error ? error : new Error('Unknown sync error') 
+      }));
+
+      // Notify if callback provided
+      if (onSyncError && error instanceof Error) {
+        onSyncError(error);
+      }
+    }
+  }, [syncState.syncing, onSyncComplete, onSyncError]);
+
+  // Auto-sync effect
+  useEffect(() => {
+    if (!autoSync) return;
+
+    // Initial sync
+    sync();
+
+    // Setup interval for periodic sync
+    const intervalId = setInterval(sync, syncInterval);
+
+    // Clean up on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [autoSync, sync, syncInterval]);
+
+  return {
+    syncState,
+    sync,
+    resetError: () => setSyncState(prev => ({ ...prev, error: null }))
+  };
+}
