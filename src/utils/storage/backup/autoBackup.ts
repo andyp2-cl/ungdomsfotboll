@@ -1,8 +1,8 @@
 
 import { toast } from "sonner";
 import { useBackupRestore } from "../backup";
-import { getStoredPlayers } from "../players";
-import { getStoredActivities } from "../activity";
+import { getStoredPlayers } from "../playerStorage";
+import { getStoredActivities } from "../activityStorage";
 
 // How often to perform backups (15 minutes)
 const BACKUP_INTERVAL = 15 * 60 * 1000;

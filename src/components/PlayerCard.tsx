@@ -1,128 +1,88 @@
 
-import { Player } from "@/types/player";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { UserCircle } from "lucide-react";
+import React from 'react';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Pencil, Plus, Trash } from 'lucide-react';
+
+// Define the Player interface if it's not already defined elsewhere
+interface Player {
+  id: string;
+  name: string;
+  image?: string;
+  grade?: string;
+  position?: string;
+  trainer?: boolean;
+}
 
 interface PlayerCardProps {
   player: Player;
-  onClick: () => void;
-  onEdit?: (player: Player) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onClick?: () => void;
+  isSelected?: boolean;
 }
 
-export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
-  // Get real activity count that excludes kiosk duty assignments
-  const getActivityCount = () => {
-    if (!player.activities) return 0;
-    return player.activities.length;
+export function PlayerCard({ player, onEdit, onDelete, onClick, isSelected }: PlayerCardProps) {
+  const handleClick = () => {
+    if (onClick) onClick();
   };
 
-  const getGradeColor = (grade: string) => {
-    switch (grade) {
-      case 'A':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'B':
-        return 'bg-blue-500 hover:bg-blue-600';
-      case 'C':
-        return 'bg-orange-500 hover:bg-orange-600';
-      case 'D':
-        return 'bg-purple-500 hover:bg-purple-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) onEdit();
   };
 
-  const formatPosition = (position: string) => {
-    if (position === 'TRÄNARE') return 'Tränare';
-    
-    let formattedPosition = position
-      .replace('MV', 'Målvakt')
-      .replace('BACK', 'Back')
-      .replace('MF', 'Mittfält')
-      .replace('ANF', 'Anfall');
-    
-    return formattedPosition;
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) onDelete();
   };
-
-  const isCoach = player.positions?.includes('TRÄNARE');
   
-  // Handle image loading errors
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.warn(`Failed to load image for player: ${player.name}`);
-    e.currentTarget.src = ''; // Clear src to show fallback
-    e.currentTarget.style.display = 'none'; // Hide the img element
-    e.currentTarget.parentElement!.querySelector('.fallback-icon')!.style.display = 'flex';
-  };
-
-  // Check if image exists and is valid
-  const hasValidImage = player.image && typeof player.image === 'string' && player.image.length > 10;
-
+  const backgroundStyle = player.image 
+    ? { backgroundImage: `url(${player.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : undefined;
+  
   return (
     <Card 
-      className={`overflow-hidden cursor-pointer hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
-      onClick={onClick}
+      className={`relative cursor-pointer overflow-hidden transition-all ${
+        isSelected ? 'border-primary ring-2 ring-primary' : ''
+      }`} 
+      onClick={handleClick}
     >
-      <div className="aspect-[4/3] bg-muted relative">
-        {hasValidImage ? (
-          <div className="relative w-full h-full">
-            <img 
-              src={player.image} 
-              alt={player.name} 
-              className="w-full h-full object-cover"
-              loading="lazy" 
-              onError={handleImageError}
-            />
-            <div className="fallback-icon hidden absolute inset-0 w-full h-full items-center justify-center bg-muted">
-              <UserCircle className="h-20 w-20 text-muted-foreground/50" />
-            </div>
-          </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
-          </div>
-        )}
-        
-        <div className="absolute top-2 right-2">
-          {isCoach ? (
-            <Badge className="bg-amber-500 hover:bg-amber-600">
-              Tränare
-            </Badge>
-          ) : (
-            <Badge className={getGradeColor(player.grade)}>
-              Nivå {player.grade}
-            </Badge>
+      <div 
+        className="h-36 bg-gray-200 flex items-center justify-center"
+        style={backgroundStyle}
+      >
+        {!player.image && <Plus className="h-8 w-8 text-gray-400" />}
+      </div>
+      
+      <div className="p-3">
+        <h3 className="font-medium truncate">{player.name}</h3>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {player.grade && <span>{player.grade}</span>}
+          {player.position && (
+            <>
+              {player.grade && <span>•</span>}
+              <span>{player.position}</span>
+            </>
           )}
+          {player.trainer && <span className="ml-1 text-blue-500">(Tränare)</span>}
         </div>
       </div>
       
-      <CardContent className="p-4">
-        <h3 className="font-semibold truncate">
-          {player.name}
-          {player.jerseyNumber && !isCoach && (
-            <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-              #{player.jerseyNumber}
-            </span>
+      {(onEdit || onDelete) && (
+        <div className="absolute top-2 right-2 flex gap-2">
+          {onEdit && (
+            <Button size="icon" variant="ghost" onClick={handleEdit}>
+              <Pencil className="h-4 w-4" />
+            </Button>
           )}
-        </h3>
-        {!isCoach && (
-          <p className="text-sm text-muted-foreground">
-            {player.positions && player.positions.length > 0
-              ? player.positions
-                  .filter(pos => pos !== 'TRÄNARE')
-                  .map(formatPosition)
-                  .join(', ')
-              : 'Ingen position definierad'}
-          </p>
-        )}
-      </CardContent>
-      
-      <CardFooter className="p-4 pt-0 flex justify-between">
-        <span className="text-xs text-muted-foreground">
-          {getActivityCount() === 0
-            ? "Inga aktiviteter"
-            : `${getActivityCount()} aktiviteter`}
-        </span>
-      </CardFooter>
+          {onDelete && (
+            <Button size="icon" variant="ghost" onClick={handleDelete}>
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
