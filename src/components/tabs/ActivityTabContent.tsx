@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { AnonymousAuth } from "@/components/auth/AnonymousAuth";
 import { ActivityTabHeader } from "./activity-tab/components/ActivityTabHeader";
 import { ActivityTabSearch } from "./activity-tab/components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./activity-tab/components/ActivityTabViewContent";
@@ -93,8 +91,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           isMobile={isMobile}
         />
         
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <AnonymousAuth />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button onClick={() => props.setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
