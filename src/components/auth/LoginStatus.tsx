@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { useAuthentication } from './hooks/useAuthentication';
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, RefreshCw, LogOut, Wifi, WifiOff, Database, ToggleLeft, ToggleRight } from "lucide-react";
-import { shouldAutoConnectDatabase, setAutoConnectDatabase } from '@/utils/environment';
+import { CheckCircle2, RefreshCw, LogOut, WifiOff } from "lucide-react";
 import { toast } from 'sonner';
 
 export function LoginStatus() {
@@ -22,18 +21,6 @@ export function LoginStatus() {
     handleLogout,
     triggerSync
   } = useAuthentication();
-  
-  const [autoConnect, setAutoConnect] = useState(shouldAutoConnectDatabase());
-  
-  const toggleAutoConnect = () => {
-    const newValue = !autoConnect;
-    setAutoConnect(newValue);
-    setAutoConnectDatabase(newValue);
-    toast.success(newValue 
-      ? "Automatisk DB-åtkomst aktiverad" 
-      : "Automatisk DB-åtkomst inaktiverad"
-    );
-  };
 
   // If offline, show offline mode indicator
   if (!isOnline) {
@@ -98,37 +85,9 @@ export function LoginStatus() {
     );
   }
   
-  // Auto-connect toggle button
-  const AutoConnectToggle = () => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="flex items-center gap-1.5 text-xs"
-      onClick={toggleAutoConnect}
-      title={autoConnect 
-        ? "Klicka för att inaktivera automatisk DB-åtkomst" 
-        : "Klicka för att aktivera automatisk DB-åtkomst"
-      }
-    >
-      {autoConnect ? (
-        <>
-          <ToggleRight className="h-4 w-4 text-green-500" />
-          <span>Auto DB</span>
-        </>
-      ) : (
-        <>
-          <ToggleLeft className="h-4 w-4 text-gray-500" />
-          <span>Auto DB</span>
-        </>
-      )}
-    </Button>
-  );
-  
   // Default state - either logged in or login button
   return (
     <div className="flex items-center gap-2">
-      <AutoConnectToggle />
-      
       {isAuthenticated ? (
         <div className="flex items-center gap-2">
           <Button 
@@ -170,8 +129,7 @@ export function LoginStatus() {
           className="flex gap-1.5 items-center"
           onClick={() => setShowLogin(true)}
         >
-          <Database className="h-4 w-4" />
-          <span className="text-xs">Aktivera DB-åtkomst</span>
+          <span className="text-xs">Logga in för databasåtkomst</span>
         </Button>
       )}
     </div>
