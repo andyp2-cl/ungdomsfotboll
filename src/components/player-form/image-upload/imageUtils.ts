@@ -15,61 +15,42 @@ export function processImage(
   return new Promise<string>((resolve) => {
     img.onload = () => {
       // Set canvas dimensions to be square (for profile image)
-      const canvasSize = 300;
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
+      canvas.width = 300;
+      canvas.height = 300;
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Log image and zoom info for debugging
-      console.log(`Processing image: ${img.width}x${img.height}, zoom: ${zoom}, position: ${JSON.stringify(position)}`);
+      // Calculate the center of the image and canvas
+      const canvasCenter = canvas.width / 2;
       
-      // Calculate the size of the area we want to use from the source image
-      // The higher the zoom, the smaller the area we take from the source
+      // Calculate the source area based on zoom and position
       const sourceSize = Math.min(img.width, img.height) / zoom;
+      const centerX = img.width / 2;
+      const centerY = img.height / 2;
       
-      // Find the center of the image
-      const sourceCenterX = img.width / 2;
-      const sourceCenterY = img.height / 2;
+      // Adjust source position based on user's position offset
+      const sourceX = centerX - (sourceSize / 2) + (position.x / zoom);
+      const sourceY = centerY - (sourceSize / 2) + (position.y / zoom);
       
-      // Calculate source position adjusted by user's position offset
-      // Divide position offset by zoom factor to get correct movement amount
-      const sourceX = sourceCenterX - (sourceSize / 2) + position.x;
-      const sourceY = sourceCenterY - (sourceSize / 2) + position.y;
-      
-      // Make sure we don't try to access pixels outside the source image
-      const safeSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
-      const safeSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
+      // Make sure we don't try to draw outside the source image
+      const clampedSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
+      const clampedSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
 
-      console.log(`Drawing from source: x=${safeSourceX}, y=${safeSourceY}, size=${sourceSize}`);
-      
-      // Draw the image to the canvas with the zoomed area
+      // Draw the image with the current zoom and position
       ctx.drawImage(
         img,
-        safeSourceX,
-        safeSourceY,
+        clampedSourceX,
+        clampedSourceY,
         sourceSize,
         sourceSize,
-        0, // destination x - always 0 for full canvas
-        0, // destination y - always 0 for full canvas
-        canvasSize, // destination width - full canvas width
-        canvasSize  // destination height - full canvas height
+        0, 0, canvas.width, canvas.height
       );
 
-      // Convert canvas to data URL with high quality
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      console.log(`Image processed. Output size: ${dataUrl.length} chars`);
+      // Convert canvas to data URL
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       resolve(dataUrl);
     };
-    
-    // Set the source image
     img.src = originalImage;
-    
-    // Handle load errors
-    img.onerror = () => {
-      console.error("Failed to load image for processing");
-      resolve(undefined);
-    };
   });
 }
