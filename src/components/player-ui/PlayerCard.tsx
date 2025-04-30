@@ -70,7 +70,6 @@ export function PlayerCard({
               alt={player.name} 
               className="h-8 w-8 rounded-full object-cover"
               loading="lazy"
-              crossOrigin="anonymous"
             />
           ) : (
             <UserCircle className="h-8 w-8 text-muted-foreground" />
@@ -128,7 +127,6 @@ export function PlayerCard({
             alt={player.name} 
             className="w-full h-full object-cover"
             loading="lazy"
-            crossOrigin="anonymous"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">

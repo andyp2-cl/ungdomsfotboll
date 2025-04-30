@@ -58,7 +58,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             alt={player.name} 
             className="w-full h-full object-cover"
             loading="lazy"
-            crossOrigin="anonymous"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
