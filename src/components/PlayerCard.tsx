@@ -45,6 +45,17 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
   };
 
   const isCoach = player.positions?.includes('TRÄNARE');
+  
+  // Handle image loading errors
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.warn(`Failed to load image for player: ${player.name}`);
+    e.currentTarget.src = ''; // Clear src to show fallback
+    e.currentTarget.style.display = 'none'; // Hide the img element
+    e.currentTarget.parentElement!.querySelector('.fallback-icon')!.style.display = 'flex';
+  };
+
+  // Check if image exists and is valid
+  const hasValidImage = player.image && typeof player.image === 'string' && player.image.length > 10;
 
   return (
     <Card 
@@ -52,13 +63,19 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
       onClick={onClick}
     >
       <div className="aspect-[4/3] bg-muted relative">
-        {player.image ? (
-          <img 
-            src={player.image} 
-            alt={player.name} 
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+        {hasValidImage ? (
+          <div className="relative w-full h-full">
+            <img 
+              src={player.image} 
+              alt={player.name} 
+              className="w-full h-full object-cover"
+              loading="lazy" 
+              onError={handleImageError}
+            />
+            <div className="fallback-icon hidden absolute inset-0 w-full h-full items-center justify-center bg-muted">
+              <UserCircle className="h-20 w-20 text-muted-foreground/50" />
+            </div>
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <UserCircle className="h-20 w-20 text-muted-foreground/50" />

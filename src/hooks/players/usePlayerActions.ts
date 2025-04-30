@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
+import { triggerBackupIfNeeded } from "@/utils/storage/backup/autoBackup";
 
 export function usePlayerActions(
   players: Player[],
@@ -29,8 +30,24 @@ export function usePlayerActions(
         } else {
           console.warn("Alvin not found in loaded players!");
         }
+
+        // Check for Herman Lavin specifically
+        const herman = storedPlayers.find(p => p.name.includes("Herman Lavin"));
+        if (herman) {
+          console.log("Herman Lavin found in loaded players:", herman);
+          if (herman.image) {
+            console.log("Herman Lavin has an image:", typeof herman.image, herman.image.substring(0, 50) + "...");
+          } else {
+            console.warn("Herman Lavin has no image!");
+          }
+        }
         
         setPlayers(storedPlayers);
+
+        // If we have players data, create an automatic backup
+        if (storedPlayers.length > 0) {
+          triggerBackupIfNeeded();
+        }
       } catch (error) {
         console.error("Error loading players:", error);
         toast({
@@ -50,6 +67,17 @@ export function usePlayerActions(
     try {
       console.log("Updating player:", updatedPlayer.name);
       
+      // Validate image if present
+      if (updatedPlayer.image) {
+        console.log("Player has an image, validating...");
+        if (typeof updatedPlayer.image !== 'string' || updatedPlayer.image.length < 10) {
+          console.warn("Invalid image format detected, clearing image");
+          updatedPlayer.image = undefined;
+        } else {
+          console.log("Image passed validation, length:", updatedPlayer.image.length);
+        }
+      }
+      
       const updatedPlayers = players.map(player => 
         player.id === updatedPlayer.id ? updatedPlayer : player
       );
@@ -61,6 +89,9 @@ export function usePlayerActions(
       try {
         await savePlayers(updatedPlayers);
         console.log("Players saved successfully after update");
+        
+        // Trigger backup after successful save
+        triggerBackupIfNeeded();
       } catch (saveError) {
         console.error("Failed to save updated players to database:", saveError);
         toast({

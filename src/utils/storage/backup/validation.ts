@@ -1,76 +1,111 @@
 
-import { Activity } from "@/types/player";
-import { validateBackupData } from "./utils";
+import { Player, Activity } from "@/types/player";
 
 /**
- * Validates the backup data and ensures it's in the correct format
+ * Validates backup format and integrity
  */
-export const validateBackup = (): { 
-  backupData: any;
-  isValid: boolean;
-  error?: string;
-} => {
+export const validateBackup = () => {
   try {
-    console.log("Validating backup data...");
+    // Get backup data from localStorage
     const backupData = localStorage.getItem('hassleholmsif_backup');
     
     if (!backupData) {
-      console.error("No backup found");
-      return { 
-        backupData: null, 
-        isValid: false, 
-        error: "No backup found" 
-      };
-    }
-    
-    let backup;
-    try {
-      backup = JSON.parse(backupData);
-      console.log("Loaded backup data:", {
-        timestamp: backup.timestamp,
-        players: backup.players?.length || 0,
-        activities: backup.activities?.length || 0
-      });
-    } catch (error) {
-      console.error("Error parsing backup data:", error);
-      return { 
-        backupData: null, 
+      return {
         isValid: false,
-        error: "Invalid backup format" 
+        error: "No backup data found",
+        backupData: null
       };
     }
     
-    if (!backup.players || !backup.activities) {
-      console.error("Invalid backup format. Missing players or activities:", backup);
-      return { 
-        backupData: backup, 
+    // Parse backup data
+    const parsed = JSON.parse(backupData);
+    
+    // Check required data structure
+    if (!parsed.players || !Array.isArray(parsed.players)) {
+      return {
         isValid: false,
-        error: "Invalid backup format. Missing players or activities" 
+        error: "Invalid backup: players data missing or not an array",
+        backupData: null
       };
     }
     
-    if (backup.players.length === 0 && backup.activities.length === 0) {
-      console.error("Backup contains no data (empty players and activities arrays)");
-      return { 
-        backupData: backup, 
+    if (!parsed.activities || !Array.isArray(parsed.activities)) {
+      return {
         isValid: false,
-        error: "Backup contains no data" 
+        error: "Invalid backup: activities data missing or not an array",
+        backupData: null
       };
     }
     
-    // Use the existing validation function
-    const isValid = validateBackupData(backup);
+    // Check if we have any data
+    if (parsed.players.length === 0 && parsed.activities.length === 0) {
+      return {
+        isValid: true,
+        error: "Warning: Backup contains no players or activities",
+        backupData: parsed
+      };
+    }
     
-    return { 
-      backupData: backup, 
-      isValid 
+    // Validate individual player entries
+    for (const player of parsed.players) {
+      if (!player.id || !player.name) {
+        return {
+          isValid: false,
+          error: `Invalid player data: missing required fields`,
+          backupData: null
+        };
+      }
+    }
+    
+    // Validate individual activity entries
+    for (const activity of parsed.activities) {
+      if (!activity.id || !activity.name || !activity.date || !activity.type) {
+        return {
+          isValid: false,
+          error: `Invalid activity data: missing required fields`,
+          backupData: null
+        };
+      }
+    }
+    
+    return {
+      isValid: true,
+      error: null,
+      backupData: parsed
     };
   } catch (error) {
-    console.error("Error validating backup:", error);
-    return { 
-      backupData: null, 
+    return {
       isValid: false,
-      error: "Error validating backup" 
+      error: `Error validating backup: ${error instanceof Error ? error.message : String(error)}`,
+      backupData: null
     };
+  }
+};
+
+/**
+ * Validates backup data structure
+ */
+export const validateBackupData = (data: any): boolean => {
+  try {
+    // Check basic structure
+    if (!data || typeof data !== 'object') return false;
+    if (!Array.isArray(data.players) || !Array.isArray(data.activities)) return false;
+    
+    // Check players format if there are any players
+    if (data.players.length > 0) {
+      const samplePlayer = data.players[0];
+      if (!samplePlayer.id || !samplePlayer.name) return false;
+    }
+    
+    // Check activities format if there are any activities
+    if (data.activities.length > 0) {
+      const sampleActivity = data.activities[0];
+      if (!sampleActivity.id || !sampleActivity.name || !sampleActivity.type) return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error validating backup data:", error);
+    return false;
   }
 };
