@@ -1,5 +1,5 @@
 
-import { Activity } from '@/types/player';
+import { Activity, ActivityType } from '@/types/player';
 import { format, subMonths, isAfter, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
