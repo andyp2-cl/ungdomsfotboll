@@ -61,6 +61,7 @@ export function TrendsTabContent({ activities, players }: TrendsTabContentProps)
             monthlyData[monthKey].matches++;
           } else if (activity.type === 'training') {
             monthlyData[monthKey].trainings++;
+          // Fix the type comparison by using separate conditions
           } else if (activity.type === 'cup') {
             monthlyData[monthKey].cups++;
           }
