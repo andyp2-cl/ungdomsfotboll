@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface PlayerActivityChartProps {
   data: any[];
   config: {
-    gradeColors?: Record<string, string>; // Make gradeColors optional
+    gradeColors?: Record<string, string>;
   };
   onBarClick?: (playerId: string) => void;
 }
@@ -25,15 +25,33 @@ export function PlayerActivityChart({ data, config, onBarClick }: PlayerActivity
       <BarChart
         data={topPlayers}
         layout="vertical"
-        margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+        margin={{ top: 5, right: 30, left: 90, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis type="number" />
         <YAxis 
           type="category" 
           dataKey="name" 
-          width={100}
-          tickFormatter={(value) => value.length > 12 ? `${value.substring(0, 12)}...` : value}
+          width={85}
+          tick={(props) => {
+            const { x, y, payload } = props;
+            const name = payload.value;
+            // Split name into first name and last name
+            const nameParts = name.split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
+            
+            return (
+              <g transform={`translate(${x},${y})`}>
+                <text x={-5} y={0} dy={4} textAnchor="end" fill="#666" fontSize={12}>
+                  {firstName}
+                </text>
+                <text x={-5} y={16} dy={4} textAnchor="end" fill="#666" fontSize={12} fontWeight="bold">
+                  {lastName}
+                </text>
+              </g>
+            );
+          }}
         />
         <Tooltip
           formatter={(value, name) => [value, 'Aktiviteter']}

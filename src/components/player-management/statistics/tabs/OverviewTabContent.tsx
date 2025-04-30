@@ -19,10 +19,27 @@ interface OverviewTabContentProps {
 }
 
 export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
-  // Calculate player participation statistics
+  // Calculate player participation statistics - now with more reliable activity counting
   const playerStats = useMemo(() => {
+    // Log for debugging
+    console.log(`Calculating stats for ${players.length} players and ${activities.length} activities`);
+    
     return players.map(player => {
-      const activityCount = player.activities?.length || 0;
+      // Ensure we're properly counting activities for each player
+      const playerActivities = player.activities || [];
+      const activityCount = playerActivities.length;
+      
+      // Log for any player with 0 activities to help debug
+      if (activityCount === 0) {
+        console.log(`Player ${player.name} has 0 activities`);
+      }
+      
+      // Skip coaches in the attendance chart
+      const isCoach = player.positions?.includes('TRÄNARE');
+      if (isCoach) {
+        return null; // We'll filter these out later
+      }
+      
       const participationRate = activities.length > 0
         ? Math.round((activityCount / activities.length) * 100)
         : 0;
@@ -39,7 +56,8 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         activities: activityCount,
         player // Include the original player object for selection
       };
-    }).sort((a, b) => b.activityCount - a.activityCount);
+    }).filter(Boolean) // Remove null entries (coaches)
+     .sort((a, b) => b.activityCount - a.activityCount);
   }, [players, activities]);
 
   // Handle player click in charts
@@ -72,6 +90,9 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
     
     // Count players and activities by grade
     players.forEach(player => {
+      // Skip coaches
+      if (player.positions?.includes('TRÄNARE')) return;
+      
       if (!gradeMap.has(player.grade)) return;
       
       const gradeData = gradeMap.get(player.grade)!;
