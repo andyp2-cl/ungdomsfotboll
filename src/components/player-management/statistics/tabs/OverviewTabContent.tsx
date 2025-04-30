@@ -10,7 +10,6 @@ import { getGradeChartConfig } from "@/utils/gradeUtils";
 import { getGradeColor } from '@/utils/gradeUtils';
 import { MatchStatsCard } from '../matches/MatchStatsCard';
 import { MatchResultChart } from '../matches/MatchResultChart';
-import { DetailedMatchStats } from '../matches/DetailedMatchStats';
 import { calculateMatchStats } from '../matches/utils/calculateMatchStats';
 
 interface OverviewTabContentProps {
@@ -105,14 +104,6 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
           </CardContent>
         </Card>
       </div>
-      
-      {/* Top goal scorers */}
-      <DetailedMatchStats 
-        activities={matches} 
-        players={players} 
-        onPlayerSelect={handlePlayerClick}
-        className="col-span-2"
-      />
       
       {/* Player and Grade Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
