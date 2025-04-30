@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,6 +57,7 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <PasswordProtection>
+            {/* Only have the login button here, removed from Layout.tsx */}
             <div className="fixed top-0 right-0 p-2 z-50">
               <LoginStatus />
             </div>

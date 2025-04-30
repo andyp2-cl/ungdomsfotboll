@@ -25,51 +25,8 @@ export function AnonymousAuth() {
     autoConnectActive,
     toggleAutoConnect
   } = useAnonymousAuth();
-  
-  // Show loading indicator while checking connection
-  if (!connectionChecked) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="text-xs flex items-center gap-1.5 text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Kontrollerar anslutning...</span>
-        </div>
-      </div>
-    );
-  }
-  
-  // If we're offline, show offline mode button
-  if (!isOnline) {
-    return (
-      <div className="flex items-center gap-2">
-        <OfflineIndicator 
-          handleSyncPendingUpdates={handleSyncPendingUpdates} 
-          pendingUpdates={pendingUpdatesCount}
-        />
-        {connectionError && (
-          <div className="text-xs text-red-500 flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            <span title={connectionError}>Databasfel</span>
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-  // If we're connecting to the database or have a connection error, show appropriate state
-  if (isConnecting || connectionError) {
-    return (
-      <div className="flex items-center gap-2">
-        <OfflineIndicator 
-          handleSyncPendingUpdates={handleSyncPendingUpdates}
-          isConnecting={isConnecting}
-          connectionError={connectionError}
-        />
-      </div>
-    );
-  }
 
-  // Auto-connect toggle button  
+  // Auto-connect toggle button moved to the top
   const AutoConnectToggle = () => (
     <Button
       variant="ghost"
@@ -101,6 +58,51 @@ export function AnonymousAuth() {
     </Button>
   );
   
+  // Show loading indicator while checking connection
+  if (!connectionChecked) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-xs flex items-center gap-1.5 text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Kontrollerar anslutning...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  // If we're offline, show offline mode button
+  if (!isOnline) {
+    return (
+      <div className="flex items-center gap-2">
+        <AutoConnectToggle />
+        <OfflineIndicator 
+          handleSyncPendingUpdates={handleSyncPendingUpdates} 
+          pendingUpdates={pendingUpdatesCount}
+        />
+        {connectionError && (
+          <div className="text-xs text-red-500 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            <span title={connectionError}>Databasfel</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // If we're connecting to the database or have a connection error, show appropriate state
+  if (isConnecting || connectionError) {
+    return (
+      <div className="flex items-center gap-2">
+        <AutoConnectToggle />
+        <OfflineIndicator 
+          handleSyncPendingUpdates={handleSyncPendingUpdates}
+          isConnecting={isConnecting}
+          connectionError={connectionError}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       <AutoConnectToggle />

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Bold, UserCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { LoginStatus } from "@/components/auth/LoginStatus";
 
 interface LayoutProps {
   activeTab?: string;
@@ -33,7 +32,7 @@ export function Layout({ activeTab = "players", defaultContent, children }: Layo
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Hässleholms IF</h1>
           <div className="flex items-center gap-2">
-            <LoginStatus />
+            {/* LoginStatus removed from here */}
             
             <Button
               variant="outline"
@@ -112,9 +111,9 @@ export function Layout({ activeTab = "players", defaultContent, children }: Layo
                   filteredActivities: [],
                   filteredHistoricalActivities: [],
                   isAddActivityOpen: false,
-                  isLoading: false,  // Add the missing isLoading property
-                  loadError: null,  // Add loadError with default null value
-                  retryLoading: () => {},  // Add retryLoading function with empty implementation
+                  isLoading: false,
+                  loadError: null,
+                  retryLoading: () => {},
                   handleActivityTypeChange: () => {},
                   setSelectedActivity: () => {},
                   handleActivityUpdate: async () => {},
