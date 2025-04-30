@@ -4,11 +4,11 @@ export function processImage(
   canvas: HTMLCanvasElement,
   zoom: number,
   position: { x: number; y: number }
-): string | undefined {
-  if (!canvas || !originalImage) return undefined;
+): Promise<string | undefined> {
+  if (!canvas || !originalImage) return Promise.resolve(undefined);
   
   const ctx = canvas.getContext('2d');
-  if (!ctx) return undefined;
+  if (!ctx) return Promise.resolve(undefined);
 
   const img = new Image();
   
