@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -34,7 +33,7 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer  // Added this line to extract the function
+    handleDeletePlayer  // Make sure this is correctly extracted from usePlayersData
   } = usePlayersData();
 
   // Get activity state and actions
@@ -151,7 +150,7 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer, // Add the handleDeletePlayer function to the return object
+    handleDeletePlayer, // Make sure to include handleDeletePlayer in the returned object
     
     // Activity data
     activities,
@@ -165,7 +164,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
+    handleActivityUpdate: handleActivityUpdateWrapper,
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,

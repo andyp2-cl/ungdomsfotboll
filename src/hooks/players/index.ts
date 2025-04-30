@@ -34,7 +34,7 @@ export function usePlayers() {
     selectedPositions
   });
 
-  const { handlePlayerUpdate, handleBulkPlayerUpdate, handleAddPlayer } = usePlayerActions(
+  const { handlePlayerUpdate, handleBulkPlayerUpdate, handleAddPlayer, handleDeletePlayer } = usePlayerActions(
     players,
     setPlayers,
     setIsLoading,
@@ -43,11 +43,6 @@ export function usePlayers() {
   );
 
   const isMobile = useIsMobile();
-
-  // Update view mode if device type changes
-  // useEffect(() => {
-  //   setViewMode("list"); // Always use list view regardless of device
-  // }, [isMobile, setViewMode]);
 
   return {
     players,
@@ -67,10 +62,8 @@ export function usePlayers() {
     viewMode,
     setViewMode,
     filteredPlayers,
-    // Fix these two lines by providing wrapper functions that handle the state updates
     handleGradeChange: (grade: any) => {
       const isSelected = handleGradeChange(grade);
-      // Toggle the grade selection
       setSelectedGrades(prev => 
         isSelected 
           ? prev.filter(g => g !== grade)
@@ -79,7 +72,6 @@ export function usePlayers() {
     },
     handlePositionChange: (position: any) => {
       const isSelected = handlePositionChange(position);
-      // Toggle the position selection
       setSelectedPositions(prev => 
         isSelected 
           ? prev.filter(p => p !== position)
@@ -89,6 +81,7 @@ export function usePlayers() {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    handleDeletePlayer, // Make sure handleDeletePlayer is included in the returned object
     isMobile
   };
 }
