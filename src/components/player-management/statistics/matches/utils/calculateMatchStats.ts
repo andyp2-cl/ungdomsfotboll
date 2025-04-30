@@ -41,8 +41,19 @@ export function calculateMatchStats(matches: Activity[]): MatchStats {
     let goalsConceded = 0;
     let cleanSheets = 0;
     
+    // Filter out future matches
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
+    
+    const historicalMatches = matches.filter(match => {
+      const matchDate = new Date(match.date);
+      return matchDate <= today;
+    });
+    
+    console.log(`Filtered ${matches.length - historicalMatches.length} future matches, processing ${historicalMatches.length} historical matches`);
+    
     // Process each match
-    matches.forEach(match => {
+    historicalMatches.forEach(match => {
       // Skip matches without scores
       if (match.homeScore === undefined || match.awayScore === undefined) {
         return;

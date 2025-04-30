@@ -12,8 +12,18 @@ interface OverviewTabContentProps {
 }
 
 export function OverviewTabContent({ players, activities, onPlayerSelect }: OverviewTabContentProps) {
-  // Filter match activities
-  const matches = activities.filter(activity => String(activity.type) === "match");
+  // Filter match activities - exclude future matches for statistics
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of day
+  
+  // All matches (including future ones)
+  const allMatches = activities.filter(activity => String(activity.type) === "match");
+  
+  // Historical matches only (for statistics)
+  const historicalMatches = allMatches.filter(match => {
+    const matchDate = new Date(match.date);
+    return matchDate <= today;
+  });
   
   // Handle player click
   const handlePlayerClick = (playerId: string) => {
@@ -26,26 +36,27 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {/* Overall Match Statistics */}
       <MatchStatisticsOverview 
-        activities={matches} 
-        className="md:col-span-2" 
+        activities={historicalMatches} 
       />
 
-      {/* Top Goal Scorers */}
-      <TopGoalScorers 
-        matches={matches} 
-        players={players} 
-        onPlayerClick={handlePlayerClick} 
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Top Goal Scorers */}
+        <TopGoalScorers 
+          matches={historicalMatches} 
+          players={players} 
+          onPlayerClick={handlePlayerClick} 
+        />
 
-      {/* Leagues statistics */}
-      <LeagueStatistics 
-        activities={activities}
-        players={players} 
-        onPlayerClick={handlePlayerClick} 
-      />
+        {/* Leagues statistics */}
+        <LeagueStatistics 
+          activities={activities}
+          players={players} 
+          onPlayerClick={handlePlayerClick} 
+        />
+      </div>
     </div>
   );
 }

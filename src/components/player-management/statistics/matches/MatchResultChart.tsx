@@ -40,49 +40,37 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
   // Skip rendering if no data or if all values are 0
   if (data.length === 0 || matchStats.totalMatches === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Matchresultat</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[250px] flex items-center justify-center text-muted-foreground">
-          Inte tillräckligt med data för att visa diagram
-        </CardContent>
-      </Card>
+      <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+        Inte tillräckligt med data för att visa diagram
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Matchresultat</CardTitle>
-      </CardHeader>
-      <CardContent className="h-[250px]">
-        <ChartContainer config={chartConfig}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={4}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value) => [`${value} matcher`, '']}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <ChartContainer config={chartConfig} className="h-[250px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            paddingAngle={4}
+            dataKey="value"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            labelLine={false}
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value) => [`${value} matcher`, '']}
+          />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </ChartContainer>
   );
 }
