@@ -21,25 +21,33 @@ export function processImage(
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Calculate dimensions for centering the image
+      // Calculate dimensions for centering and cropping
       const size = Math.min(img.width, img.height);
       const sourceX = (img.width - size) / 2;
       const sourceY = (img.height - size) / 2;
       
-      // Calculate the area to draw based on zoom
-      const zoomedSize = size / zoom;
-      const offsetX = sourceX - (position.x * (size / zoom));
-      const offsetY = sourceY - (position.y * (size / zoom));
+      // Calculate position based on zoom factor
+      // When zoom is higher, we're looking at a smaller portion of the original image
+      const scaleFactor = 1 / zoom;
+      const zoomedSize = size * scaleFactor;
+      
+      // Center the zoomed area by default
+      const centeredOffsetX = sourceX + (size - zoomedSize) / 2;
+      const centeredOffsetY = sourceY + (size - zoomedSize) / 2;
+      
+      // Apply user position adjustments - position is scaled relative to the view size
+      const adjustedX = centeredOffsetX - position.x * scaleFactor * size / canvas.width;
+      const adjustedY = centeredOffsetY - position.y * scaleFactor * size / canvas.height;
       
       // Ensure we don't draw outside the image boundaries
-      const safeOffsetX = Math.max(0, Math.min(img.width - zoomedSize, offsetX));
-      const safeOffsetY = Math.max(0, Math.min(img.height - zoomedSize, offsetY));
-
+      const finalX = Math.max(0, Math.min(img.width - zoomedSize, adjustedX));
+      const finalY = Math.max(0, Math.min(img.height - zoomedSize, adjustedY));
+      
       // Draw the image with zoom and position applied
       ctx.drawImage(
         img,
-        safeOffsetX,
-        safeOffsetY,
+        finalX,
+        finalY,
         zoomedSize,
         zoomedSize,
         0, 0,

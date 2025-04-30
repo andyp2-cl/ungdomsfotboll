@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -36,6 +36,13 @@ export function ImageEditorDialog({
   setImageSize,
   canvasRef,
 }: ImageEditorDialogProps) {
+  // Set initial zoom when dialog opens
+  useEffect(() => {
+    if (open) {
+      console.log("Dialog opened with zoom:", zoom);
+    }
+  }, [open, zoom]);
+  
   // Handle zoom change
   const handleZoomChange = (value: number[]) => {
     setZoom(value[0]);
@@ -78,6 +85,10 @@ export function ImageEditorDialog({
     setZoom(Math.max(zoom - 0.1, 1));
   };
 
+  // Calculate the crop indicator size based on zoom
+  // Higher zoom means smaller indicator (inverse relationship)
+  const cropIndicatorSize = `${Math.min(90, 100 / zoom)}%`;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -103,13 +114,23 @@ export function ImageEditorDialog({
                     transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
                     transformOrigin: 'center',
                     maxWidth: 'none',
+                    transition: dragStart ? 'none' : 'transform 0.1s ease-out'
                   }}
                   onLoad={handleImageLoad}
                   draggable="false"
                 />
               </div>
             )}
-            <div className="absolute inset-0 pointer-events-none border-2 border-white rounded-full m-4"></div>
+            <div 
+              className="absolute pointer-events-none border-2 border-white rounded-full"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: cropIndicatorSize,
+                height: cropIndicatorSize,
+              }}
+            />
           </div>
           
           <div className="flex items-center justify-between w-full px-1">

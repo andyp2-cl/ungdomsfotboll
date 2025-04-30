@@ -18,7 +18,7 @@ interface UseImageEditorProps {
 
 export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditorProps) {
   const [state, setState] = useState<ImageEditorState>({
-    zoom: 1,
+    zoom: 1.5, // Default zoom level is 1.5 instead of 1
     position: { x: 0, y: 0 },
     dragStart: null,
     imageSize: { width: 0, height: 0 },
@@ -63,8 +63,8 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
         const result = reader.result as string;
         setOriginalImage(result);
         setImagePreview(result);
-        // Start with minimal zoom for new images
-        setZoom(1);
+        // Set a default zoom level that's slightly zoomed in
+        setZoom(1.5);
         setPosition({ x: 0, y: 0 });
         // Open the editor
         setIsEditing(true);
@@ -79,8 +79,8 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
       fileInputRef.current?.click();
     } else {
       setOriginalImage(imagePreview);
-      // Reset zoom and position when opening editor for existing image
-      setZoom(1);
+      // Set default zoom when opening editor for existing image
+      setZoom(1.5);
       setPosition({ x: 0, y: 0 });
       setIsEditing(true);
     }
@@ -90,8 +90,8 @@ export function useImageEditor({ imagePreview, setImagePreview }: UseImageEditor
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setOriginalImage(imagePreview);
-    // Reset zoom and position when editing
-    setZoom(1);
+    // Set default zoom when editing
+    setZoom(1.5);
     setPosition({ x: 0, y: 0 });
     setIsEditing(true);
   };
