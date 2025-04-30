@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -148,7 +148,7 @@ export function ImageEditorDialog({
           </Button>
         </div>
 
-        <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={canvasRef} className="hidden" width="300" height="300" />
       </DialogContent>
     </Dialog>
   );

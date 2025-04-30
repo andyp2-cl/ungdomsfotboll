@@ -15,24 +15,33 @@ export function processImage(
   return new Promise<string>((resolve) => {
     img.onload = () => {
       // Set canvas dimensions to be square (for profile image)
-      const size = Math.min(img.width, img.height);
       canvas.width = 300;
       canvas.height = 300;
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Calculate the source area (what part of the image to draw)
-      const scale = size / (zoom * 300);
-      const sourceX = (img.width / 2) - (position.x * scale) - (size / 2);
-      const sourceY = (img.height / 2) - (position.y * scale) - (size / 2);
-      const sourceSize = size;
+      // Calculate the center of the image and canvas
+      const canvasCenter = canvas.width / 2;
+      
+      // Calculate the source area based on zoom and position
+      const sourceSize = Math.min(img.width, img.height) / zoom;
+      const centerX = img.width / 2;
+      const centerY = img.height / 2;
+      
+      // Adjust source position based on user's position offset
+      const sourceX = centerX - (sourceSize / 2) + (position.x / zoom);
+      const sourceY = centerY - (sourceSize / 2) + (position.y / zoom);
+      
+      // Make sure we don't try to draw outside the source image
+      const clampedSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
+      const clampedSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
 
       // Draw the image with the current zoom and position
       ctx.drawImage(
         img,
-        Math.max(0, Math.min(img.width - sourceSize, sourceX)),
-        Math.max(0, Math.min(img.height - sourceSize, sourceY)),
+        clampedSourceX,
+        clampedSourceY,
         sourceSize,
         sourceSize,
         0, 0, canvas.width, canvas.height
