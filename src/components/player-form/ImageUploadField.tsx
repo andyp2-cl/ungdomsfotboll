@@ -1,5 +1,4 @@
 
-import { useState, useRef } from "react";
 import { ZoomableImageUpload } from "./ZoomableImageUpload";
 
 interface ImageUploadFieldProps {
