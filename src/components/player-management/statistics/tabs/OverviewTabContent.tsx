@@ -8,6 +8,10 @@ import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
 import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
 import { getGradeChartConfig } from "@/utils/gradeUtils";
 import { getGradeColor } from '@/utils/gradeUtils';
+import { MatchStatsCard } from '../matches/MatchStatsCard';
+import { MatchResultChart } from '../matches/MatchResultChart';
+import { DetailedMatchStats } from '../matches/DetailedMatchStats';
+import { calculateMatchStats } from '../matches/utils/calculateMatchStats';
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -46,6 +50,12 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
     }
   };
 
+  // Filter match activities
+  const matches = activities.filter(activity => String(activity.type) === "match");
+  
+  // Calculate match statistics
+  const matchStats = calculateMatchStats(matches);
+
   // Chart config
   const chartConfig = {
     ...getGradeChartConfig(),
@@ -80,42 +90,66 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
   }, [players]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Player activity participation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Spelarnärvaro</CardTitle>
-          <CardDescription>Antal aktiviteter per spelare</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <PlayerActivityChart 
-              data={playerStats} 
-              config={chartConfig} 
-              onBarClick={handlePlayerClick}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Activity by grade */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Närvaro per nivå</CardTitle>
-          <CardDescription>Genomsnittligt antal aktiviteter per spelarnivå</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <GradeStatisticsChart data={gradeStats} config={chartConfig} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Player Count Card */}
-      <PlayerSummaryCard data={gradeStats} />
+    <div className="space-y-6">
+      {/* Match Statistics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MatchStatsCard activities={matches} />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Matchresultat</CardTitle>
+            <CardDescription>Fördelning av vinster, oavgjorda och förluster</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px]">
+            <MatchResultChart matchStats={matchStats} />
+          </CardContent>
+        </Card>
+      </div>
       
-      {/* Monthly Activity Trends */}
-      <MonthlyActivityChart activities={activities} />
+      {/* Top goal scorers */}
+      <DetailedMatchStats 
+        activities={matches} 
+        players={players} 
+        onPlayerSelect={handlePlayerClick}
+        className="col-span-2"
+      />
+      
+      {/* Player and Grade Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Spelarnärvaro</CardTitle>
+            <CardDescription>Antal aktiviteter per spelare</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <PlayerActivityChart 
+                data={playerStats} 
+                config={chartConfig} 
+                onBarClick={handlePlayerClick}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Närvaro per nivå</CardTitle>
+            <CardDescription>Genomsnittligt antal aktiviteter per spelarnivå</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <GradeStatisticsChart data={gradeStats} config={chartConfig} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Player Count Card */}
+        <PlayerSummaryCard data={gradeStats} />
+        
+        {/* Monthly Activity Trends */}
+        <MonthlyActivityChart activities={activities} />
+      </div>
     </div>
   );
 }
