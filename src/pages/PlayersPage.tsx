@@ -1,3 +1,4 @@
+
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -34,6 +35,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    handleDeletePlayer,
     
     // Activity data
     activities,
@@ -82,6 +84,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   
   const handleAddPlayerWrapper = async (player: any) => {
     await handleAddPlayer(player);
+  };
+  
+  const handleDeletePlayerWrapper = async (playerId: string): Promise<boolean> => {
+    return await handleDeletePlayer(playerId);
   };
 
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
@@ -135,6 +141,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handlePlayerUpdate={handlePlayerUpdateWrapper}
         handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
         handleAddPlayer={handleAddPlayerWrapper}
+        handleDeletePlayer={handleDeletePlayerWrapper}
         
         // Activity data
         filteredActivities={filteredActivities}

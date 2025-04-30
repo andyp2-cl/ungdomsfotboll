@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
@@ -152,9 +151,53 @@ export function usePlayerActions(
     }
   };
 
+  const handleDeletePlayer = async (playerId: string) => {
+    try {
+      console.log("Deleting player with ID:", playerId);
+      
+      // Remove the player from the state
+      const updatedPlayers = players.filter(player => player.id !== playerId);
+      
+      // First update local state
+      setPlayers(updatedPlayers);
+      
+      // If player was selected, clear selection
+      setSelectedPlayer(null);
+      
+      // Then save to database
+      try {
+        await savePlayers(updatedPlayers);
+        console.log("Players saved successfully after deletion");
+      } catch (saveError) {
+        console.error("Failed to save players after deletion:", saveError);
+        toast({
+          title: "Databas-synkroniseringsfel",
+          description: "Ändringar gjordes lokalt men kunde inte sparas i databasen. Försök igen senare.",
+          variant: "destructive"
+        });
+      }
+      
+      toast({
+        title: "Spelare raderad",
+        description: "Spelaren har raderats från systemet.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      toast({
+        title: "Kunde inte ta bort spelaren",
+        description: "Ett fel uppstod när spelaren skulle tas bort.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer
+    handleAddPlayer,
+    handleDeletePlayer
   };
 }

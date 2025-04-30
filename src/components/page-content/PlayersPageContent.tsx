@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -25,13 +24,14 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: PlayerGrade[];  // Changed from string[] to PlayerGrade[]
-  viewMode: "list" | "grid" | "stats";  // Explicit union type
+  selectedGrades: PlayerGrade[];
+  viewMode: "list" | "grid" | "stats";
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
   handleBulkPlayerUpdate: (players: Player[]) => Promise<void>;
   handleAddPlayer: (player: Player) => Promise<void>;
+  handleDeletePlayer?: (playerId: string) => Promise<boolean>;
   
   // Activity data
   filteredActivities: Activity[];
@@ -60,6 +60,14 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
 
   const isMobile = useIsMobile();
   
+  // Create a wrapper for handleDeletePlayer that returns a Promise<void>
+  const handleDeletePlayerWrapper = async (playerId: string): Promise<boolean | undefined> => {
+    if (props.handleDeletePlayer) {
+      return await props.handleDeletePlayer(playerId);
+    }
+    return undefined;
+  };
+
   return (
     <>
       <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
@@ -82,6 +90,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               setViewMode={props.setViewMode}
               handlePlayerUpdate={props.handlePlayerUpdate}
               handleBulkPlayerUpdate={props.handleBulkPlayerUpdate}
+              handleDeletePlayer={handleDeletePlayerWrapper}
               setIsAddPlayerOpen={props.setIsAddPlayerOpen}
               setEditingPlayer={props.setEditingPlayer}
               onActivitySelect={props.onPlayerActivitySelect}

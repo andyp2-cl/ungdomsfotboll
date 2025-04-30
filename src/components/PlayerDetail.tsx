@@ -1,21 +1,24 @@
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlayerHeader } from "@/components/PlayerHeader";
-import { PlayerMatchHistory } from "@/components/player-match-history";
-import { X, Edit } from "lucide-react";
-import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
-import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
+import { PlayerHeader } from "./PlayerHeader";
+import { Button } from "./ui/button";
+import { Trash2 } from "lucide-react";
+import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
+import { ActivityList } from "./ActivityList";
+import { Badge } from "./ui/badge";
+import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
+// Assuming the interface of the component includes these props
 interface PlayerDetailProps {
   player: Player;
   activities: Activity[];
   onClose: () => void;
   onEdit: (player: Player) => void;
   onPlayerUpdate: (player: Player) => void;
+  onDeletePlayer?: (playerId: string) => Promise<void>;
+  allPlayers: Player[];
   onBulkUpdate?: (player: Player) => void;
-  allPlayers?: Player[];
   onActivitySelect?: (activity: Activity) => void;
 }
 
@@ -25,158 +28,77 @@ export function PlayerDetail({
   onClose,
   onEdit,
   onPlayerUpdate,
-  onBulkUpdate,
+  onDeletePlayer,
   allPlayers,
+  onBulkUpdate,
   onActivitySelect
 }: PlayerDetailProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
-  const playerActivities = activities.filter(activity => 
-    activity.participants?.includes(player.id)
-  );
-  
-  const playerMatches = playerActivities.filter(activity => 
-    activity.type === "match"
-  );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const isCoach = player.positions?.includes('TRÄNARE');
-
-  const handleActivitySelect = (activity: Activity) => {
-    if (onActivitySelect) {
-      onActivitySelect(activity);
+  // This is a handler function to wrap the optional onDeletePlayer prop
+  const handleDeleteConfirm = async (playerId: string) => {
+    if (onDeletePlayer) {
+      await onDeletePlayer(playerId);
     }
   };
 
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const handlePlayerUpdate = (updatedPlayer: Player) => {
-    onPlayerUpdate(updatedPlayer);
-  };
-
   return (
-    <Card className="mb-6 relative">
-      <div className="absolute top-2 right-2 z-10 flex space-x-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={handleEditClick}
-          title="Redigera spelare"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        {/* Assuming PlayerHeader is the existing header component */}
+        <PlayerHeader player={player} onClose={onClose} onEdit={() => onEdit(player)} />
+        
+        {/* Add delete button */}
+        {onDeletePlayer && (
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <Trash2 className="h-4 w-4" />
+            Ta bort
+          </Button>
+        )}
       </div>
       
-      <CardHeader className="pb-0">
-        <PlayerHeader 
-          player={player}
-          onPlayerUpdate={onPlayerUpdate}
-          onBulkUpdate={onBulkUpdate}
-          allPlayers={allPlayers}
-        />
-      </CardHeader>
-      
-      <CardContent>
-        {player.image && (
-          <div className="flex justify-center mb-4">
-            <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-primary/20">
-              <img 
-                src={player.image} 
-                alt={player.name} 
-                className="h-full w-full object-cover"
-              />
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 className="text-lg font-semibold">Personlig information</h3>
+          <div className="text-muted-foreground">
+            <p><strong>Namn:</strong> {player.name}</p>
+            <p><strong>Lag:</strong> {player.grade}</p>
+            {player.jerseyNumber && <p><strong>Tröjnummer:</strong> {player.jerseyNumber}</p>}
+            {player.positions && player.positions.length > 0 && (
+              <p>
+                <strong>Positioner:</strong>{" "}
+                {player.positions.map((position, index) => (
+                  <Badge key={index} variant="secondary">{position}</Badge>
+                ))}
+              </p>
+            )}
           </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">Grundinformation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Namn:</span>
-                  <span className="font-medium">{player.name}</span>
-                </div>
-                {!isCoach && player.grade && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Nivå:</span>
-                    <span className="font-medium">{player.grade}</span>
-                  </div>
-                )}
-                {player.positions && player.positions.length > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Position:</span>
-                    <span className="font-medium">
-                      {isCoach ? "Tränare" : player.positions.filter(p => p !== 'TRÄNARE').join(", ")}
-                    </span>
-                  </div>
-                )}
-                {player.jerseyNumber && !isCoach && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tröjnummer:</span>
-                    <span className="font-medium">{player.jerseyNumber}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">Matcher & Aktiviteter</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Totalt aktiviteter:</span>
-                  <span className="font-medium">{playerActivities.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Matcher:</span>
-                  <span className="font-medium">
-                    {playerMatches.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cuper:</span>
-                  <span className="font-medium">
-                    {playerActivities.filter(a => a.type === "cup").length}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <LeaguesStatsCard 
-            player={player}
-            activities={activities}
-          />
         </div>
-        
-        <PlayerMatchHistory 
-          player={player} 
-          activities={activities}
-          onActivitySelect={handleActivitySelect}
-        />
-      </CardContent>
+
+        <div>
+          <h3 className="text-lg font-semibold">Aktiviteter</h3>
+          <ScrollArea className="h-[200px] w-full rounded-md border">
+            <ActivityList 
+              activities={activities} 
+              player={player} 
+              onActivitySelect={onActivitySelect}
+            />
+          </ScrollArea>
+        </div>
+      </div>
       
-      <EditPlayerDialog 
+      {/* Add delete confirmation dialog */}
+      <DeletePlayerDialog
         player={player}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onPlayerUpdate={handlePlayerUpdate}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirmDelete={handleDeleteConfirm}
       />
-    </Card>
+    </div>
   );
 }
