@@ -66,7 +66,7 @@ export function ActivityTabViewContent({
           allPlayers={players}
           onClose={() => onPlayerSelect('')}
           onPlayerUpdate={() => {}} // Not implemented in this context
-          onEdit={() => {}} // Add the missing onEdit prop with an empty function implementation
+          onEdit={() => {}} // Not implemented in this context
         />
       );
       

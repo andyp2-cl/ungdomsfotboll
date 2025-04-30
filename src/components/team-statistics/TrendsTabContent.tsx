@@ -57,7 +57,7 @@ export function TrendsTabContent({ activities, players }: TrendsTabContentProps)
         const monthKey = format(parseISO(activity.date), 'yyyy-MM');
         
         if (monthlyData[monthKey]) {
-          // Fixed type comparison to use === instead of the type comparison that was causing the error
+          // Use strict equality check for string comparison
           if (activity.type === 'match') {
             monthlyData[monthKey].matches++;
           } else if (activity.type === 'training') {

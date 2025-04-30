@@ -20,7 +20,7 @@ interface ActivityTabContentProps {
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
   isAddActivityOpen: boolean;
-  isLoading: boolean;
+  isLoading?: boolean;
   loadError?: string | null;
   retryLoading?: () => void;
   handleActivityTypeChange: (type: string) => void;

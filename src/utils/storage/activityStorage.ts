@@ -36,3 +36,6 @@ export async function saveActivities(activities: Activity[]): Promise<void> {
   
   console.log("All activities saved successfully");
 }
+
+// Export saveActivities to fix the import error
+export { saveActivities };

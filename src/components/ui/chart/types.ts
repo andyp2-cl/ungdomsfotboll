@@ -3,11 +3,13 @@
  * Types for chart components
  */
 
+import React from 'react';
+
 export interface ChartConfig {
   [key: string]: {
     label?: string;
     color?: string;
-    icon?: React.ReactNode;  // Add icon property that was missing
+    icon?: React.ReactNode;
   } | undefined;
 }
 
@@ -15,9 +17,12 @@ export interface ChartContextProps {
   config: ChartConfig;
 }
 
-// Add the missing types that were referenced
 export interface ChartLegendContentProps {
   className?: string;
+  payload?: any[];
+  verticalAlign?: string;
+  hideIcon?: boolean;
+  nameKey?: string;
 }
 
 export interface ChartTooltipContentProps {
@@ -25,4 +30,13 @@ export interface ChartTooltipContentProps {
   payload?: any[];
   label?: string;
   formatter?: (value: any, name: string) => string;
+  className?: string;
+  indicator?: React.ReactNode;
+  hideLabel?: boolean;
+  hideIndicator?: boolean;
+  labelFormatter?: (label: any) => string;
+  labelClassName?: string;
+  color?: string;
+  nameKey?: string;
+  labelKey?: string;
 }
