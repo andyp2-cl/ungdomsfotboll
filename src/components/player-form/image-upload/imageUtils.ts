@@ -51,6 +51,12 @@ export function processImage(
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       resolve(dataUrl);
     };
+    
+    img.onerror = () => {
+      console.error("Failed to load image");
+      resolve(undefined);
+    };
+    
     img.src = originalImage;
   });
 }

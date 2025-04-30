@@ -5,6 +5,8 @@ import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from "@
 import { SortIcon, SortField } from "./PlayerListSorting";
 import { Badge } from "@/components/ui/badge";
 import { getGradeColor } from "@/utils/gradeUtils";
+import { UserCircle } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -82,10 +84,28 @@ export function PlayerListTable({
           {players.map(player => (
             <TableRow 
               key={player.id}
-              className="cursor-pointer hover:bg-muted/50"
+              className="cursor-pointer hover:bg-muted/50 h-16" // Increased row height
               onClick={() => onPlayerSelect(player)}
             >
-              <TableCell className="font-medium">{player.name}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border">
+                    {player.image ? (
+                      <AvatarImage 
+                        src={player.image} 
+                        alt={player.name} 
+                        className="object-cover"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <AvatarFallback>
+                        <UserCircle className="h-6 w-6 text-muted-foreground" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span>{player.name}</span>
+                </div>
+              </TableCell>
               <TableCell>{formatPositions(player.positions)}</TableCell>
               <TableCell>
                 {player.positions?.includes("TRÄNARE") ? (
