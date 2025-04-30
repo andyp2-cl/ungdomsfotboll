@@ -35,14 +35,14 @@ export function useReconnectEffects(
     const retryIntervals = [30000, 60000, 120000]; // 30s, 1min, 2min
     
     const retryChecks = () => {
-      // Fix comparison to properly use string comparison with the exact type
-      if (dbStatus !== 'connected' && isOnline && !error) {
+      // Fix comparison to properly use strict equality instead of string comparison
+      if (dbStatus !== "connected" && isOnline && !error) {
         const interval = retryIntervals[Math.min(connectionAttempts, retryIntervals.length - 1)];
         console.log(`Scheduling automatic retry of database connection in ${interval/1000}s...`);
         
         return setTimeout(() => {
-          // Fix comparison to properly use string comparison with the exact type
-          if (dbStatus !== 'connected' && isOnline && !error) {
+          // Fix comparison to properly use strict equality instead of string comparison
+          if (dbStatus !== "connected" && isOnline && !error) {
             console.log("Automatic retry of database connection...");
             checkDbConnection(true);
           }
