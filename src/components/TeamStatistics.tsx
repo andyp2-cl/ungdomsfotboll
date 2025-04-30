@@ -5,7 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Import our components
-import { OverviewTabContent } from "@/components/team-statistics/OverviewTabContent";
+import { OverviewTabContent } from "@/components/team-statistics/overview";
 import { AttendanceTabContent } from "@/components/team-statistics/AttendanceTabContent";
 import { PerformanceTabContent } from "@/components/team-statistics/PerformanceTabContent";
 import { TrendsTabContent } from "@/components/team-statistics/TrendsTabContent";

@@ -2,11 +2,11 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { ChartContainer } from "@/components/ui/chart/ChartContainer";
+import { ChartContainer } from "@/components/ui/chart";
 
 interface MatchResultChartProps {
   matchStats: {
-    total: number;
+    totalMatches: number; // Update to use totalMatches instead of total
     wins: number;
     draws: number;
     losses: number;
@@ -38,7 +38,7 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
   };
   
   // Skip rendering if no data or if all values are 0
-  if (data.length === 0 || matchStats.total === 0) {
+  if (data.length === 0 || matchStats.totalMatches === 0) {
     return (
       <Card>
         <CardHeader>
