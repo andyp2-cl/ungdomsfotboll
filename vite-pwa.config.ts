@@ -2,10 +2,6 @@
 import { VitePWAOptions } from 'vite-plugin-pwa';
 
 const pwaOptions: VitePWAOptions = {
-  // Increase the maximum file size that can be precached
-  // Default is 2MB (2097152 bytes)
-  maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-  
   // Base configuration for PWA
   registerType: 'autoUpdate',
   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -34,7 +30,9 @@ const pwaOptions: VitePWAOptions = {
     ]
   },
   workbox: {
-    // Configure Workbox to handle larger files
+    // Configure Workbox options
+    globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
+    // We'll use the standard maximumFileSizeToCacheInBytes option that exists in Workbox
     maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
   }
 };
