@@ -1,4 +1,5 @@
 
+// This empty line with the comment below is required for Workbox
 // @ts-ignore
 self.__WB_MANIFEST;
 
