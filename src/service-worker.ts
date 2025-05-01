@@ -1,6 +1,6 @@
-
-// This code runs in the service worker global scope
-// The line below is needed for Workbox to work correctly:
+// This service worker is processed by workbox-inject-manifest
+// The next line allows Workbox to inject the precache manifest
+// It MUST be written exactly as is (no comments before it and keep the ts-ignore):
 // @ts-ignore
 self.__WB_MANIFEST;
 
