@@ -70,7 +70,7 @@ export function getCacheStats(): CacheStats {
     totalEntries,
     totalSaves: cacheSaves,
     totalHits: cacheHits,
-    hitRate: totalSaves > 0 ? cacheHits / totalSaves : 0
+    hitRate: cacheSaves > 0 ? cacheHits / cacheSaves : 0
   };
 }
 

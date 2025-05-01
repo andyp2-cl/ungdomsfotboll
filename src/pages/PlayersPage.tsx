@@ -77,10 +77,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     try {
       // Reload data (typically would call API endpoints here)
       console.log("Refreshing data...");
-      // Don't pass empty objects that cause TypeScript errors
+      // Pass an empty object to these functions since they expect parameters
       await Promise.all([
-        handlePlayerUpdate(), 
-        handleActivityUpdate()
+        handlePlayerUpdate({}), 
+        handleActivityUpdate({})
       ]);
       return Promise.resolve();
     } catch (error) {

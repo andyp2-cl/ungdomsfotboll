@@ -1,6 +1,6 @@
 
 import { Activity } from "@/types/player";
-import { cacheApiResponse, getCachedApiResponse } from "@/utils/cache/apiCache";
+import { saveToCache, getFromCache } from "@/utils/cache";
 
 /**
  * Cache activities locally for offline access and performance
@@ -12,7 +12,7 @@ export const cacheActivities = (activities: Activity[]): void => {
     localStorage.setItem('cachedActivitiesTime', Date.now().toString());
     
     // Also store in the API cache system with a 15-minute TTL
-    cacheApiResponse('activities', activities, { 
+    saveToCache('activities', activities, { 
       ttl: 15 * 60, // 15 minutes
       tag: 'activities' 
     });
@@ -28,7 +28,7 @@ export const cacheActivities = (activities: Activity[]): void => {
  */
 export const getActivitiesFromCache = (showToast: boolean = false): Activity[] | null => {
   try {
-    const cachedData = getCachedApiResponse<Activity[]>('activities');
+    const cachedData = getFromCache<Activity[]>('activities');
     
     if (cachedData && cachedData.length > 0) {
       return cachedData;
