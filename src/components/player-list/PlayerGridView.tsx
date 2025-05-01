@@ -2,10 +2,11 @@
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, UserCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getPositionsString } from "./PlayerFormatting";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface PlayerGridViewProps {
   players: Player[];
@@ -34,31 +35,41 @@ export function PlayerGridView({ players, onPlayerSelect, onPlayerEdit }: Player
             key={player.id} 
             className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
           >
-            <div 
-              onClick={() => onPlayerSelect(player)} 
-              className="cursor-pointer p-4"
-              // Increased touch target size for better mobile tapping
-              style={{ minHeight: isMobile ? '88px' : 'auto' }}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">{playerName}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getPositionsString(player.positions)}
-                  </p>
-                </div>
-                {player.grade && (
-                  <Badge 
-                    className={`px-2.5 py-1 ${
-                      player.grade === 'A' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                      player.grade === 'B' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                      player.grade === 'C' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' :
-                      'bg-red-100 text-red-800 hover:bg-red-200'
-                    }`}
-                  >
-                    {player.grade}
-                  </Badge>
+            <div className="flex items-center p-4">
+              <Avatar className="h-12 w-12 mr-3">
+                {player.image ? (
+                  <AvatarImage src={player.image} alt={playerName} />
+                ) : (
+                  <AvatarFallback>
+                    <UserCircle className="h-6 w-6 text-muted-foreground" />
+                  </AvatarFallback>
                 )}
+              </Avatar>
+              
+              <div 
+                onClick={() => onPlayerSelect(player)} 
+                className="flex-1 cursor-pointer"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium">{playerName}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {getPositionsString(player.positions)}
+                    </p>
+                  </div>
+                  {player.grade && (
+                    <Badge 
+                      className={`px-2.5 py-1 ${
+                        player.grade === 'A' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                        player.grade === 'B' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                        player.grade === 'C' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' :
+                        'bg-red-100 text-red-800 hover:bg-red-200'
+                      }`}
+                    >
+                      {player.grade}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             {onPlayerEdit && (

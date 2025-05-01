@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -33,7 +32,8 @@ export function usePlayers(initialTab?: string) {
     handleGradeChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer
+    handleAddPlayer,
+    isMobile
   } = usePlayersData();
 
   // Get activity state and actions
@@ -150,6 +150,7 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    isMobile,
     
     // Activity data
     activities,
