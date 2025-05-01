@@ -27,11 +27,11 @@ export async function handleActivitySubmit(
     const formattedDate = format(values.date, 'yyyy-MM-dd');
     
     // Make sure score values are converted to numbers or remain undefined
-    const homeScore = values.homeScore === undefined || values.homeScore === "" ? 
+    const homeScore = values.homeScore === undefined || values.homeScore === null || values.homeScore === "" ? 
       undefined : 
       (typeof values.homeScore === 'string' ? parseInt(values.homeScore, 10) : values.homeScore);
       
-    const awayScore = values.awayScore === undefined || values.awayScore === "" ? 
+    const awayScore = values.awayScore === undefined || values.awayScore === null || values.awayScore === "" ? 
       undefined : 
       (typeof values.awayScore === 'string' ? parseInt(values.awayScore, 10) : values.awayScore);
       
