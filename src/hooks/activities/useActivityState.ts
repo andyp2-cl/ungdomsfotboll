@@ -190,7 +190,7 @@ export function useActivityState() {
           } else if (retryCount >= maxAttempts - 1 && showToast) {
             // After maximum retries, suggest a solution
             sonnerToast.error("Kunde inte hämta aktiviteter efter flera försök", {
-              description: "Prova att logga ut och in igen, eller be en administratör kontrollera databasen",
+              description: "Prova att uppdatera sidan eller tryck på Uppdatera data knappen igen.",
               duration: 8000
             });
             

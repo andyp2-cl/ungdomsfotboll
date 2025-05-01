@@ -1,7 +1,10 @@
 
-import { VitePWAOptions } from 'vite-plugin-pwa';
-
-const pwaOptions: VitePWAOptions = {
+/** @type {import('vite-plugin-pwa').VitePWAOptions} */
+const pwaOptions = {
+  // Increase the maximum file size that can be precached
+  // Default is 2MB (2097152 bytes)
+  maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+  
   // Base configuration for PWA
   registerType: 'autoUpdate',
   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -30,7 +33,8 @@ const pwaOptions: VitePWAOptions = {
     ]
   },
   workbox: {
-    // Configure Workbox options
+    // Configure Workbox to handle larger files
+    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB,
     globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
     runtimeCaching: [
       {
@@ -49,10 +53,10 @@ const pwaOptions: VitePWAOptions = {
       }
     ]
   },
-  // Add the missing required properties with correct types
   injectRegister: 'auto',
   minify: true,
-  injectManifest: undefined, // Fix: undefined instead of null
+  // Fix this value to undefined instead of null
+  injectManifest: undefined,
   includeManifestIcons: true,
   disable: false
 };

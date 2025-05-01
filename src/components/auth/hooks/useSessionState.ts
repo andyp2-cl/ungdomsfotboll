@@ -13,6 +13,12 @@ export function useSessionState() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, "Has session:", !!session);
       setIsAuthenticated(!!session);
+      
+      // Auto connect anonymously when session is lost or changed
+      if (!session) {
+        console.log("Session lost or changed, attempting anonymous connection");
+        await connectAnonymously();
+      }
     });
     
     // Check for existing session
@@ -34,5 +40,18 @@ export function useSessionState() {
     };
   }, []);
   
+  // Always try to reconnect when component mounts
+  useEffect(() => {
+    const attemptAutoConnect = async () => {
+      try {
+        await connectAnonymously();
+      } catch (err) {
+        console.error("Initial auto-connect failed:", err);
+      }
+    };
+    
+    attemptAutoConnect();
+  }, []);
+
   return { isAuthenticated };
 }

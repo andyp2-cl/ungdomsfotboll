@@ -1,59 +1,26 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BarChart2, RefreshCw, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, BarChart2 } from "lucide-react";
 
 interface ActivityTabHeaderProps {
   activeView: string;
   handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh?: () => void; // Refresh callback
   isMobile?: boolean;
-  isRefreshing?: boolean;
 }
 
 export function ActivityTabHeader({
   activeView,
   handleViewChange,
   setIsAddActivityOpen,
-  onRefresh,
-  isMobile = false,
-  isRefreshing = false
+  isMobile = false
 }: ActivityTabHeaderProps) {
-  const handleRefresh = () => {
-    if (onRefresh) {
-      toast.info("Uppdaterar data från servern...", {
-        id: "refresh-data",
-        duration: isRefreshing ? Infinity : 3000
-      });
-      onRefresh();
-    }
-  };
-
   return (
     <div className="flex flex-col gap-2 w-full sm:w-auto">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Aktiviteter</h2>
         <div className="flex items-center gap-2">
-          {onRefresh && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="Uppdatera data från servern"
-              aria-label="Uppdatera data från servern"
-              className="flex items-center gap-1"
-            >
-              {isRefreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              {!isMobile && (isRefreshing ? "Uppdaterar..." : "Uppdatera data")}
-            </Button>
-          )}
           <Button 
             size="sm" 
             onClick={() => setIsAddActivityOpen(true)}

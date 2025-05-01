@@ -36,14 +36,12 @@ export const fetchActivitiesFromDB = async (options: {
     
     // Always force a fresh network request by adding a timestamp
     console.log("Forcing fresh data fetch with bypass cache technique");
-    const cacheBuster = `?_cb=${Date.now()}`;
     
     // Create the actual fetch promise with stronger cache control
     const fetchPromise = supabase
       .from('activities')
       .select('*', { 
-        head: false, 
-        count: 'exact'
+        head: false
       })
       .order('date', { ascending: true });
     
@@ -53,11 +51,11 @@ export const fetchActivitiesFromDB = async (options: {
     );
     
     // Race the fetch against the timeout
-    const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
-    localStorage.setItem('sb-activities-fetch-count', String(count || 0));
+    localStorage.setItem('sb-activities-fetch-count', String(data?.length || 0));
     
     // Handle potential errors
     if (error) {
