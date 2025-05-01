@@ -53,9 +53,8 @@ const pwaOptions = {
       }
     ]
   },
-  injectRegister: 'auto',
+  injectRegister: "auto",
   minify: true,
-  // Fix this value to undefined instead of null
   injectManifest: undefined,
   includeManifestIcons: true,
   disable: false

@@ -1,12 +1,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BarChart2 } from "lucide-react";
+import { Plus, BarChart2, RefreshCw, Loader2 } from "lucide-react";
 
 interface ActivityTabHeaderProps {
   activeView: string;
   handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
+  onRefresh?: () => Promise<void>;
+  isRefreshing?: boolean;
   isMobile?: boolean;
 }
 
@@ -14,6 +16,8 @@ export function ActivityTabHeader({
   activeView,
   handleViewChange,
   setIsAddActivityOpen,
+  onRefresh,
+  isRefreshing = false,
   isMobile = false
 }: ActivityTabHeaderProps) {
   return (
@@ -21,6 +25,23 @@ export function ActivityTabHeader({
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Aktiviteter</h2>
         <div className="flex items-center gap-2">
+          {onRefresh && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              aria-label="Uppdatera data"
+              className="mr-2"
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-1" />
+              )}
+              {!isMobile && "Uppdatera"}
+            </Button>
+          )}
           <Button 
             size="sm" 
             onClick={() => setIsAddActivityOpen(true)}
