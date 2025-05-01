@@ -108,6 +108,7 @@ export function useAuthActions(isOnline: boolean) {
   
   // Trigger sync process
   const triggerSync = () => {
+    // Fix the Promise<boolean> vs number comparison error
     const count = checkPendingUpdates();
     
     if (count > 0) {

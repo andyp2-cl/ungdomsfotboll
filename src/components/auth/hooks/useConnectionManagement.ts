@@ -1,147 +1,172 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured, forceResetConnection } from '@/integrations/supabase/client';
-import { testDatabaseAccess, connectAnonymously } from '../utils/databaseUtils';
+import { testDatabaseAccess, forceReconnect, clearAuthAndReconnect } from '../utils/databaseUtils';
 import { toast } from 'sonner';
-import { shouldAutoConnectDatabase } from '@/utils/environment';
 
-export function useConnectionManagement(isOnline: boolean) {
-  const [connectionChecked, setConnectionChecked] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [isRLSEnabled, setIsRLSEnabled] = useState(true);
+export function useConnectionManagement() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [dbStatus, setDbStatus] = useState('unknown');
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [connectionStats, setConnectionStats] = useState({
+    attempts: 0,
+    successes: 0,
+    failures: 0,
+    lastAttempt: null as number | null,
+    lastSuccess: null as number | null,
+    avgResponseTime: 0
+  });
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [isCheckingDb, setIsCheckingDb] = useState(false);
 
-  // Check database connection with automatic reconnect if configured
-  const checkDatabaseConnection = useCallback(async (forceCheck = false) => {
+  // Track online status
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("Device is online");
+      setIsOnline(true);
+    };
+    
+    const handleOffline = () => {
+      console.log("Device is offline");
+      setIsOnline(false);
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Update connection statistics
+  const updateConnectionStats = useCallback((success: boolean, timeTaken: number) => {
+    setConnectionStats(prev => {
+      const newStats = {
+        attempts: prev.attempts + 1,
+        successes: success ? prev.successes + 1 : prev.successes,
+        failures: !success ? prev.failures + 1 : prev.failures,
+        lastAttempt: Date.now(),
+        lastSuccess: success ? Date.now() : prev.lastSuccess,
+        avgResponseTime: prev.attempts === 0 
+          ? timeTaken 
+          : (prev.avgResponseTime * prev.attempts + timeTaken) / (prev.attempts + 1)
+      };
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('db-connection-stats', JSON.stringify(newStats));
+      
+      return newStats;
+    });
+  }, []);
+
+  // Check database connection
+  const checkDbConnection = useCallback(async (force = false) => {
     if (!isOnline) {
-      console.log("Skip connection check - device is offline");
-      setConnectionChecked(true);
+      console.log("Skip database check - device is offline");
       return;
     }
-
+    
+    if (dbStatus === 'connected' && !force) {
+      return;
+    }
+    
     try {
-      setIsConnecting(true);
+      console.log("Checking database connection...");
+      setDbStatus('connecting');
+      setIsCheckingDb(true);
+      const startTime = performance.now();
       
-      // First check cached connection status to avoid unnecessary checks
-      const cachedStatus = localStorage.getItem('sb-connection-test');
-      const cachedTime = localStorage.getItem('sb-connection-test-time');
-      const cacheIsValid = cachedStatus === 'true' && cachedTime && 
-                         (Date.now() - parseInt(cachedTime, 10)) < 1000 * 60 * 5; // 5 minutes
+      // Test database access
+      const result = await testDatabaseAccess();
+      const timeTaken = performance.now() - startTime;
       
-      if (cacheIsValid && !forceCheck) {
-        console.log("Using cached connection status");
-        setConnectionChecked(true);
-        setIsConnecting(false);
-        setConnectionError(null);
-        return;
-      }
+      // Update connection stats
+      updateConnectionStats(result.success, timeTaken);
       
-      console.log("Testing database connection...");
-      
-      // Test if we already have a working connection
-      const isConfigured = await isSupabaseConfigured();
-      
-      if (isConfigured) {
-        console.log("Database connection is configured");
-        setConnectionChecked(true);
-        setConnectionError(null);
-        
-        // Try to test with actual database access
-        const { success, rlsEnabled } = await testDatabaseAccess();
-        
-        if (success) {
-          console.log("Database test successful, RLS enabled:", rlsEnabled);
-          setIsRLSEnabled(rlsEnabled);
-          setConnectionError(null);
-        } else {
-          console.log("Database configuration exists but test failed");
-          
-          // If auto-connect is enabled, try that
-          if (shouldAutoConnectDatabase()) {
-            console.log("Auto-connect enabled, attempting anonymous sign-in");
-            const anonymousSuccess = await connectAnonymously();
-            
-            if (anonymousSuccess) {
-              setConnectionError(null);
-            } else {
-              setConnectionError("Databasanslutning misslyckades");
-            }
-          } else {
-            setConnectionError("Databasanslutningen kräver åtkomst");
-          }
-        }
+      if (result.success) {
+        console.log(`Database connection successful in ${timeTaken.toFixed(2)}ms`);
+        setDbStatus('connected');
+        setDbError(null);
       } else {
-        // If auto-connect is enabled and we're not configured, try anonymous sign-in
-        if (shouldAutoConnectDatabase()) {
-          console.log("Auto-connect enabled, attempting anonymous sign-in");
-          const anonymousSuccess = await connectAnonymously();
-          
-          if (anonymousSuccess) {
-            setConnectionChecked(true);
-            setConnectionError(null);
-            return;
-          }
-        }
-        
-        console.log("Database connection is not configured");
-        setConnectionError("Aktivera DB-åtkomst för databasefunktioner");
+        console.log(`Database connection failed: ${result.error}`);
+        setDbStatus('error');
+        setDbError(result.error || "Unknown database error");
+        setConnectionAttempts(prev => prev + 1);
       }
     } catch (err) {
       console.error("Error checking database connection:", err);
-      setConnectionError("Anslutningsfel: " + (err instanceof Error ? err.message : String(err)));
+      setDbStatus('error');
+      setDbError(err instanceof Error ? err.message : "Unknown error");
+      setConnectionAttempts(prev => prev + 1);
+      
+      // Update stats for failed connection
+      updateConnectionStats(false, 0);
     } finally {
-      setConnectionChecked(true);
-      setIsConnecting(false);
+      setIsCheckingDb(false);
     }
-  }, [isOnline]);
+  }, [isOnline, dbStatus, updateConnectionStats]);
 
-  // Function to force a reconnection to the database
+  // Force reconnect to database
   const handleForceReconnect = useCallback(async () => {
     try {
-      setIsConnecting(true);
-      toast.loading("Återansluter till databasen...");
-
-      // Clear connection cache
-      localStorage.removeItem('sb-connection-test');
-      localStorage.removeItem('sb-connection-test-time');
+      setIsCheckingDb(true);
+      toast.loading("Försöker återansluta till databasen...");
       
-      // Force reset Supabase connection
-      await forceResetConnection();
+      const success = await forceReconnect();
       
-      // Try to connect anonymously if auto-connect is enabled
-      if (shouldAutoConnectDatabase()) {
-        const success = await connectAnonymously();
-        if (success) {
-          toast.success("Återansluten till databasen");
-          setConnectionError(null);
-          return;
-        }
+      if (success) {
+        toast.success("Återanslutning lyckades!");
+        setDbStatus('connected');
+        setDbError(null);
+      } else {
+        toast.error("Återanslutning misslyckades");
+        setDbStatus('error');
       }
-
-      // Fall back to normal connection check
-      await checkDatabaseConnection(true);
-      
-      toast.success("Återanslutning slutförd");
     } catch (error) {
       console.error("Error during force reconnect:", error);
-      setConnectionError("Återanslutning misslyckades");
-      toast.error("Kunde inte återansluta till databasen");
+      toast.error("Ett fel uppstod vid återanslutning");
     } finally {
-      setIsConnecting(false);
+      setIsCheckingDb(false);
     }
-  }, [checkDatabaseConnection]);
+  }, []);
 
-  // Check connection on mount and when online status changes
-  useEffect(() => {
-    checkDatabaseConnection();
-  }, [isOnline, checkDatabaseConnection]);
+  // Clear all auth data and reconnect
+  const handleClearAndReconnect = useCallback(async () => {
+    try {
+      setIsCheckingDb(true);
+      toast.loading("Rensar autentiseringsdata och återansluter...");
+      
+      const success = await clearAuthAndReconnect();
+      
+      if (success) {
+        toast.success("Återanslutning lyckades!");
+        setDbStatus('connected');
+        setDbError(null);
+      } else {
+        toast.error("Återanslutning misslyckades");
+        setDbStatus('error');
+      }
+    } catch (error) {
+      console.error("Error during clear and reconnect:", error);
+      toast.error("Ett fel uppstod vid återanslutning");
+    } finally {
+      setIsCheckingDb(false);
+    }
+  }, []);
 
   return {
-    connectionChecked,
-    isConnecting, 
-    connectionError,
-    isRLSEnabled,
-    checkDatabaseConnection,
-    handleForceReconnect
+    isOnline,
+    dbStatus,
+    dbError,
+    connectionStats,
+    connectionAttempts,
+    isCheckingDb,
+    setDbStatus,
+    setDbError,
+    checkDbConnection,
+    updateConnectionStats,
+    setConnectionAttempts,
+    handleForceReconnect,
+    handleClearAndReconnect
   };
 }

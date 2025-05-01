@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Activity } from "@/types/player";
 import { getStoredActivities } from "@/utils/storage";
-import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 
 export function useActivityState() {
@@ -15,7 +14,9 @@ export function useActivityState() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [retryCount, setRetryCount] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
-  const { toast } = useToast();
+  
+  // Remove the useToast import and usage
+  // const { toast } = useToast(); - REMOVED
 
   // Network status monitoring
   useEffect(() => {

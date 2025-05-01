@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import PlayersPage from "./pages/PlayersPage";
-import Layout from "./components/Layout";
+import { Layout } from "./components/Layout";
 import { Toaster } from "./components/ui/toaster";
 import { connectAnonymously } from "./components/auth/utils/databaseUtils";
 import { Toaster as SonnerToaster } from "sonner";

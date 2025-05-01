@@ -57,6 +57,7 @@ export const fetchActivitiesFromDB = async (options: {
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     
     if (data) {
+      // Fix: Use data.length instead of data.count
       localStorage.setItem('sb-activities-fetch-count', String(data.length || 0));
     }
     

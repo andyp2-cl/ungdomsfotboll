@@ -117,11 +117,11 @@ export const setExtendedSessionPersistence = async () => {
     // Store a flag in localStorage to remember this login
     localStorage.setItem('session-persistence', 'extended');
     
-    // Configure extended session persistence (30 days)
+    // Fix: Remove expires_in property which doesn't exist in the type
     await supabase.auth.setSession({
       refresh_token: '',
-      access_token: '',
-      expires_in: 30 * 24 * 60 * 60 // 30 days in seconds
+      access_token: ''
+      // expires_in property removed
     });
     
     console.log("Extended session persistence set");
@@ -195,21 +195,21 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
 };
 
 /**
- * Check for pending database updates
+ * Check for pending database updates - Fixed to return number instead of Promise<boolean>
  */
-export const checkPendingUpdates = async (): Promise<boolean> => {
+export const checkPendingUpdates = (): number => {
   try {
     // Check if we have pending updates in local storage
     const pendingUpdatesJson = localStorage.getItem('pending-updates');
     if (!pendingUpdatesJson) {
-      return false;
+      return 0;
     }
     
     const pendingUpdates = JSON.parse(pendingUpdatesJson);
-    return Array.isArray(pendingUpdates) && pendingUpdates.length > 0;
+    return Array.isArray(pendingUpdates) ? pendingUpdates.length : 0;
   } catch (error) {
     console.error("Error checking pending updates:", error);
-    return false;
+    return 0;
   }
 };
 

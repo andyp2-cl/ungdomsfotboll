@@ -11,6 +11,16 @@ import { ActivityTabViewContent } from "./activity-tab/components/ActivityTabVie
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./activity-tab/hooks/useActivityTabViews";
 
+// Update the ActivityTabHeaderProps interface to include onRefresh prop
+interface ActivityTabHeaderProps {
+  activeView: string;
+  handleViewChange: (value: string) => void;
+  setIsAddActivityOpen: (isOpen: boolean) => void;
+  onRefresh: () => Promise<void>;
+  isRefreshing: boolean;
+  isMobile: boolean;
+}
+
 interface ActivityTabContentProps {
   activities: Activity[];
   players: Player[];
