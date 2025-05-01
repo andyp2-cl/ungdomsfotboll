@@ -26,16 +26,16 @@ export async function handleActivitySubmit(
     // Format date to ISO string
     const formattedDate = format(values.date, 'yyyy-MM-dd');
     
-    // Make sure score values are converted to numbers
-    const homeScore = typeof values.homeScore === 'string' 
-      ? parseInt(values.homeScore, 10) 
-      : values.homeScore;
+    // Make sure score values are converted to numbers or remain undefined
+    const homeScore = values.homeScore === undefined || values.homeScore === "" ? 
+      undefined : 
+      (typeof values.homeScore === 'string' ? parseInt(values.homeScore, 10) : values.homeScore);
       
-    const awayScore = typeof values.awayScore === 'string' 
-      ? parseInt(values.awayScore, 10) 
-      : values.awayScore;
+    const awayScore = values.awayScore === undefined || values.awayScore === "" ? 
+      undefined : 
+      (typeof values.awayScore === 'string' ? parseInt(values.awayScore, 10) : values.awayScore);
       
-    // Create result string if both scores exist
+    // Create result string ONLY if both scores exist
     const result = (homeScore !== undefined && awayScore !== undefined)
       ? `${homeScore}-${awayScore}`
       : undefined;

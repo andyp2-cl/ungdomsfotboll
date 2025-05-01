@@ -1,69 +1,77 @@
-// This service worker is processed by workbox-inject-manifest
-// The next line allows Workbox to inject the precache manifest
-// It MUST be written exactly as is (no comments before it and keep the ts-ignore):
+
+/// <reference lib="webworker" />
+
+/**
+ * Service worker for PWA functionality
+ */
+
+// This is required for the workbox injectManifest to work
 // @ts-ignore
-self.__WB_MANIFEST;
+self.__WB_MANIFEST
 
-// Service worker code
-const cacheName = 'hassleholmsif-cache-v1';
+declare const self: ServiceWorkerGlobalScope
 
-// Cache all the app's essential assets during install
+// Cache names
+const CACHE_NAME = 'hif-team-app-v1';
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+];
+
+// Install event - precache resources
 self.addEventListener('install', (event) => {
-  console.log('Service worker installing...');
-  // @ts-ignore
   event.waitUntil(
-    caches.open(cacheName).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        // Add other essential assets here
-      ]);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
 });
 
-// Activate and clean up old caches
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service worker activating...');
-  // @ts-ignore
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== cacheName) {
-          console.log('Removing old cache', key);
-          return caches.delete(key);
-        }
-      }));
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+          return Promise.resolve();
+        })
+      );
     })
   );
 });
 
-// Network-first strategy for fetch requests
-// Use FetchEvent type instead of generic Event
-self.addEventListener('fetch', (event: FetchEvent) => {
+// Fetch event - serve from cache if available
+self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response as it can only be consumed once
-        const responseClone = response.clone();
-        
-        // Open the cache and store the new response
-        caches.open(cacheName).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
-        
+    caches.match(event.request).then((response) => {
+      if (response) {
         return response;
-      })
-      .catch(() => {
-        // If network fetch fails, try to return the cached response
-        return caches.match(event.request);
-      })
+      }
+      return fetch(event.request).then((fetchResponse) => {
+        // Don't cache API requests or non-GET requests
+        if (!event.request.url.includes('/api/') && event.request.method === 'GET') {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, fetchResponse.clone());
+            return fetchResponse;
+          });
+        }
+        return fetchResponse;
+      }).catch(() => {
+        // Offline fallback
+        // You could return a custom offline page here
+        return new Response('Du är offline. Kontrollera din internetanslutning.');
+      });
+    })
   );
 });
 
-// Define FetchEvent interface to fix TypeScript errors
-interface FetchEvent extends Event {
-  request: Request;
-  respondWith(response: Promise<Response> | Response): void;
-}
+// Handle messages from the main thread
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
