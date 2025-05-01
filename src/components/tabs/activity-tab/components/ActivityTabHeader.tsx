@@ -2,12 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, BarChart2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 interface ActivityTabHeaderProps {
   activeView: string;
   handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh?: () => void; // Add refresh callback
+  onRefresh?: () => void; // Refresh callback
   isMobile?: boolean;
   isRefreshing?: boolean;
 }
@@ -20,22 +21,40 @@ export function ActivityTabHeader({
   isMobile = false,
   isRefreshing = false
 }: ActivityTabHeaderProps) {
+  const handleRefresh = () => {
+    if (onRefresh) {
+      toast.info("Uppdaterar data från servern...");
+      onRefresh();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2 w-full sm:w-auto">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Aktiviteter</h2>
-        {onRefresh && (
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Uppdatera data från servern"
+              aria-label="Uppdatera data från servern"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {!isMobile && "Uppdatera"}
+            </Button>
+          )}
           <Button 
-            variant="ghost" 
             size="sm" 
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="ml-2"
-            title="Uppdatera data från servern"
+            onClick={() => setIsAddActivityOpen(true)}
+            aria-label="Lägg till aktivitet"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <Plus className="h-4 w-4 mr-1" />
+            {!isMobile && "Ny aktivitet"}
           </Button>
-        )}
+        </div>
       </div>
       <Tabs
         value={activeView}

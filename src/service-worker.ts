@@ -5,9 +5,10 @@
  * Service worker for PWA functionality
  */
 
-// This is required for the workbox injectManifest to work
+// This placeholder will be replaced during the build process with
+// the precache manifest - DO NOT REMOVE THIS COMMENT/LINE
 // @ts-ignore
-const manifestPlaceholder = self.__WB_MANIFEST;
+self.__WB_MANIFEST;
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -56,9 +57,9 @@ self.addEventListener('fetch', (event) => {
         // Don't cache API requests or non-GET requests
         if (!event.request.url.includes('/api/') && event.request.method === 'GET') {
           return caches.open(CACHE_NAME).then((cache) => {
-            // Only cache responses smaller than 2MB to avoid the file size issues
+            // Only cache responses smaller than 5MB to avoid the file size issues
             if (fetchResponse.headers.get('content-length') && 
-                parseInt(fetchResponse.headers.get('content-length') || '0', 10) < 2000000) {
+                parseInt(fetchResponse.headers.get('content-length') || '0', 10) < 5000000) {
               cache.put(event.request, fetchResponse.clone());
             }
             return fetchResponse;
@@ -67,7 +68,6 @@ self.addEventListener('fetch', (event) => {
         return fetchResponse;
       }).catch(() => {
         // Offline fallback
-        // You could return a custom offline page here
         return new Response('Du är offline. Kontrollera din internetanslutning.');
       });
     })

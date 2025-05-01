@@ -1,6 +1,6 @@
 
-// PWA configuration options
-export default {
+/** @type {import('vite-plugin-pwa').VitePWAOptions} */
+const pwaOptions = {
   // Increase the maximum file size that can be precached
   // Default is 2MB (2097152 bytes)
   maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
@@ -31,5 +31,11 @@ export default {
         purpose: 'maskable'
       }
     ]
+  },
+  workbox: {
+    // Configure Workbox to handle larger files
+    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
   }
 };
+
+export default pwaOptions;
