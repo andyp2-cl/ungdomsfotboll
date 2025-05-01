@@ -29,20 +29,23 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
   // Start timing for performance measurement
   const startTime = performance.now();
   
-  if (showToast) {
-    toast.loading("Hämtar aktiviteter från servern...");
-  }
+  console.log(`Getting activities with forceRefresh=${forceRefresh}, showToast=${showToast}`);
   
   // ALWAYS try to fetch from database when online, regardless of forceRefresh
   if (navigator.onLine) {
     try {
       // Reset cached connection test to ensure we're actually trying to connect
-      localStorage.removeItem('sb-connection-test');
+      if (forceRefresh) {
+        localStorage.removeItem('sb-connection-test');
+        localStorage.removeItem('sb-activities-fetch-time');
+        console.log("Force refresh - cleared connection test cache");
+      }
       
       // Fetch fresh data from database - always try when online
       const activities = await fetchActivitiesFromDB({ 
         showToast,
-        silent: !showToast
+        silent: !showToast,
+        forceRefresh
       });
       
       // Calculate and log performance
@@ -51,14 +54,18 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       
       // Cache the results every time we get fresh data
       if (activities && activities.length > 0) {
-        cacheActivities(activities);
-        if (showToast) {
-          toast.dismiss();
-          toast.success(`${activities.length} aktiviteter hämtade`);
-        }
+        await cacheActivities(activities);
+        
+        // Log match data specifically
+        const matchActivities = activities.filter(a => a.type === 'match');
+        console.log(`Cached ${matchActivities.length} match activities`);
+        
+        // Show matches with scores for debugging
+        const matchesWithScores = matchActivities.filter(m => 
+          m.homeScore !== undefined && m.awayScore !== undefined);
+        console.log(`Found ${matchesWithScores.length} matches with scores`);
       } else {
         if (showToast) {
-          toast.dismiss();
           toast.warning("Inga aktiviteter hämtades, försöker med lokal cache");
         }
         
@@ -69,6 +76,7 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
         // Try to use cache as fallback if we got empty data but no error
         const cachedActivities = getActivitiesFromCache();
         if (cachedActivities && cachedActivities.length > 0) {
+          console.log(`Using ${cachedActivities.length} cached activities as fallback`);
           return cachedActivities;
         }
       }
@@ -84,6 +92,13 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
         if (showToast) {
           toast.warning("Kunde inte ansluta till databasen. Visar cachad data.");
         }
+        
+        console.log(`Using ${cachedActivities.length} cached activities due to fetch error`);
+        
+        // Log cache diagnostics
+        const matchActivities = cachedActivities.filter(a => a.type === 'match');
+        console.log(`Found ${matchActivities.length} cached match activities`);
+        
         return cachedActivities;
       }
       

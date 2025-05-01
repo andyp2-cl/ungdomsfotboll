@@ -52,7 +52,7 @@ const pwaOptions: VitePWAOptions = {
   // Add the missing required properties with correct types
   injectRegister: 'auto',
   minify: true,
-  injectManifest: null, // Fixing the TypeScript error by using null instead of undefined
+  injectManifest: undefined, // Fix: undefined instead of null
   includeManifestIcons: true,
   disable: false
 };
