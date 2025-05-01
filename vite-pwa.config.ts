@@ -34,7 +34,13 @@ const pwaOptions: VitePWAOptions = {
     globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
     // We'll use the standard maximumFileSizeToCacheInBytes option that exists in Workbox
     maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-  }
+  },
+  // Add the missing required properties
+  injectRegister: 'auto',
+  minify: true,
+  injectManifest: undefined, // Default as undefined
+  includeManifestIcons: true,
+  disable: false
 };
 
 export default pwaOptions;
