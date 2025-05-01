@@ -32,13 +32,27 @@ const pwaOptions: VitePWAOptions = {
   workbox: {
     // Configure Workbox options
     globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
-    // We'll use the standard maximumFileSizeToCacheInBytes option that exists in Workbox
-    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/zkrruihxszziifyogzko\.supabase\.co\/.*$/i,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'supabase-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
+          },
+          cacheableResponse: {
+            statuses: [0, 200]
+          }
+        }
+      }
+    ]
   },
-  // Add the missing required properties
+  // Add the missing required properties with correct types
   injectRegister: 'auto',
   minify: true,
-  injectManifest: undefined, // Default as undefined
+  injectManifest: null, // Fixing the TypeScript error by using null instead of undefined
   includeManifestIcons: true,
   disable: false
 };
