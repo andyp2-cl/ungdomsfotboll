@@ -1,5 +1,6 @@
 
-// This empty line with the comment below is required for Workbox
+// This code runs in the service worker global scope
+// The line below is needed for Workbox to work correctly:
 // @ts-ignore
 self.__WB_MANIFEST;
 
