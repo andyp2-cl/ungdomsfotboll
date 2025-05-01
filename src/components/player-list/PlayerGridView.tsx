@@ -38,7 +38,12 @@ export function PlayerGridView({ players, onPlayerSelect, onPlayerEdit }: Player
             <div className="flex items-center p-4">
               <Avatar className="h-12 w-12 mr-3">
                 {player.image ? (
-                  <AvatarImage src={player.image} alt={playerName} />
+                  <AvatarImage 
+                    src={player.image} 
+                    alt={playerName}
+                    crossOrigin="anonymous"
+                    loading="lazy"
+                  />
                 ) : (
                   <AvatarFallback>
                     <UserCircle className="h-6 w-6 text-muted-foreground" />

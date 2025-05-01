@@ -1,4 +1,4 @@
-import { PageContainer } from "@/components/page-containers/PageContainer";
+import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 import { useLocation } from "react-router-dom";
@@ -71,6 +71,22 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     }
   }, [location.state, activities, setSelectedActivity]);
 
+  // Handle refresh - force reload of players and activities data
+  const handleRefresh = async () => {
+    try {
+      // Reload data (typically would call API endpoints here)
+      console.log("Refreshing data...");
+      await Promise.all([
+        handlePlayerUpdate({}), // Trigger a data refresh
+        handleActivityUpdate({}) // Trigger a data refresh
+      ]);
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      return Promise.reject(error);
+    }
+  };
+
   // Converting Promise<boolean> to Promise<void> for player update functions
   const handlePlayerUpdateWrapper = async (player: any) => {
     await handlePlayerUpdate(player);
@@ -110,7 +126,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   return (
-    <PageContainer isLoading={isLoading}>
+    <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
       <PlayersPageContent 
         // Tab state
         activeTab={activeTab}
@@ -155,6 +171,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
       />
-    </PageContainer>
+    </RefreshablePageContainer>
   );
 }
