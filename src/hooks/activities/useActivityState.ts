@@ -44,25 +44,23 @@ export function useActivityState() {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       console.log("Sending CLEAR_API_CACHE message to service worker");
       
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CLEAR_API_CACHE',
-        timestamp: Date.now()
-      });
-      
       return new Promise<void>((resolve) => {
-        const handleMessage = (event: MessageEvent) => {
+        const messageChannel = new MessageChannel();
+        
+        messageChannel.port1.onmessage = (event) => {
           if (event.data && event.data.type === 'CACHE_CLEARED') {
             console.log("Received CACHE_CLEARED confirmation from service worker");
-            navigator.serviceWorker.removeEventListener('message', handleMessage);
             resolve();
           }
         };
         
-        navigator.serviceWorker.addEventListener('message', handleMessage);
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_API_CACHE',
+          timestamp: Date.now()
+        }, [messageChannel.port2]);
         
         // Add timeout in case service worker doesn't respond
         setTimeout(() => {
-          navigator.serviceWorker.removeEventListener('message', handleMessage);
           console.log("No response from service worker, continuing anyway");
           resolve();
         }, 3000);
@@ -101,23 +99,48 @@ export function useActivityState() {
         }
       }, 3000);
       
-      // Try to load activities with forceRefresh to ensure we get fresh data
       try {
-        // Attempt to load activities with increased retry count
+        // Log attempt
         console.log(`Loading activities with forceRefresh=${forceRefresh}, retryCount=${retryCount}`);
         
+        // Try with increased priority for data freshness
         const storedActivities = await getStoredActivities({
           forceRefresh: forceRefresh || retryCount > 0,
-          showToast: showToast
+          showToast: showToast,
+          meta: { 
+            priority: 'high',
+            freshness: 'required'
+          }
         });
+        
         clearTimeout(timeoutId);
         
-        if (storedActivities.length > 0) {
+        if (storedActivities && storedActivities.length > 0) {
           console.log(`Successfully loaded ${storedActivities.length} activities`);
           
           // Look specifically for match data
           const matches = storedActivities.filter(a => a.type === 'match');
           console.log(`Loaded ${matches.length} matches`);
+          
+          if (matches.length > 0) {
+            // Log a sample to debug
+            console.log("Sample match data:", matches[0]);
+          } else {
+            console.warn("No matches found in loaded activities");
+            
+            if (forceRefresh && retryCount < maxAttempts - 1) {
+              // Try again with force refresh and incremented retry count
+              setRetryCount(prev => prev + 1);
+              setTimeout(() => {
+                sonnerToast.info(`Inga matcher hittades. Försöker igen (${retryCount + 1}/${maxAttempts})...`);
+                loadActivities({
+                  forceRefresh: true,
+                  showToast: true,
+                  maxAttempts
+                });
+              }, 2000);
+            }
+          }
           
           setActivities(storedActivities);
           setRetryCount(0); // Reset retry count on success
@@ -132,15 +155,19 @@ export function useActivityState() {
           // Try to get cached activities
           const cachedActivitiesJson = localStorage.getItem('cachedActivities');
           if (cachedActivitiesJson) {
-            const cachedActivities = JSON.parse(cachedActivitiesJson);
-            console.log(`Using ${cachedActivities.length} cached activities`);
-            setActivities(cachedActivities);
-            
-            if (showToast) {
-              sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
+            try {
+              const cachedActivities = JSON.parse(cachedActivitiesJson);
+              console.log(`Using ${cachedActivities.length} cached activities`);
+              setActivities(cachedActivities);
+              
+              if (showToast) {
+                sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
+              }
+              
+              setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
+            } catch (e) {
+              console.error("Failed to parse cached activities:", e);
             }
-            
-            setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
             
             // If we're below max attempts, increment retry counter and try again
             if (retryCount < maxAttempts - 1) {
@@ -180,13 +207,35 @@ export function useActivityState() {
         // Fallback to cached data
         const cachedActivities = localStorage.getItem('cachedActivities');
         if (cachedActivities) {
-          setActivities(JSON.parse(cachedActivities));
-          setLoadError("Anslutningsfel. Visar cachade aktiviteter.");
+          try {
+            const parsedActivities = JSON.parse(cachedActivities);
+            setActivities(parsedActivities);
+            setLoadError("Anslutningsfel. Visar cachade aktiviteter.");
+            
+            // Check specifically for matches in cache
+            const cachedMatches = parsedActivities.filter(a => a.type === 'match');
+            console.log(`Found ${cachedMatches.length} matches in cache`);
+          } catch (e) {
+            console.error("Failed to parse cached activities:", e);
+          }
         } else {
           setLoadError(isOffline 
             ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
             : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."
           );
+        }
+        
+        // Try again if retry count not exceeded
+        if (retryCount < maxAttempts - 1) {
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            sonnerToast.info(`Felhämtning: Försöker igen (${retryCount + 1}/${maxAttempts})...`);
+            loadActivities({
+              forceRefresh: true,
+              showToast: true,
+              maxAttempts
+            });
+          }, 3000 * Math.pow(2, retryCount));
         }
       }
     } finally {

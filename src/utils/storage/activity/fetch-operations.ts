@@ -36,7 +36,7 @@ export const fetchActivitiesFromDB = async (options: {
     
     // Add a timeout to detect very slow connections
     const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
-      setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 20000)
+      setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 30000)
     );
     
     // Create the actual fetch promise with cache control headers
@@ -45,9 +45,14 @@ export const fetchActivitiesFromDB = async (options: {
     if (forceRefresh) {
       // Add cache-busting query parameter for forced refresh
       const cacheBuster = `?_cb=${Date.now()}`;
+      console.log("Forcing fresh data fetch with cache-buster");
+      
       fetchPromise = supabase
         .from('activities')
-        .select('*', { head: false, count: 'exact' })
+        .select('*', { 
+          head: false, 
+          count: 'exact'
+        })
         .order('date', { ascending: true });
     } else {
       // Regular fetch
@@ -86,7 +91,7 @@ export const fetchActivitiesFromDB = async (options: {
           showToast,
           silent,
           retryCount: retryCount + 1,
-          forceRefresh
+          forceRefresh: true // Always force refresh on retry attempts
         });
       }
       
@@ -131,6 +136,8 @@ export const fetchActivitiesFromDB = async (options: {
           away_score: m.away_score,
           cup_id: m.cup_id
         })));
+      } else {
+        console.warn("No match activities found in the fetched data");
       }
     }
     

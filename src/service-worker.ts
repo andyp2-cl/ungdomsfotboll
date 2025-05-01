@@ -29,6 +29,9 @@ self.addEventListener('install', (event) => {
       console.log('Service Worker: Precaching essential files');
       // Don't try to cache large files - just cache the essential files
       return cache.addAll(PRECACHE_ASSETS);
+    }).then(() => {
+      console.log('Service Worker installation complete');
+      return self.skipWaiting(); // Take control immediately
     })
   );
 });
@@ -61,8 +64,16 @@ self.addEventListener('fetch', (event) => {
   // Special handling for Supabase API requests
   if (url.hostname.includes('supabase')) {
     if (event.request.method === 'GET') {
+      // Network first strategy for API requests to ensure fresh data
       event.respondWith(
-        fetch(event.request)
+        fetch(event.request.clone(), {
+          // Try to bypass any browser cache for API requests
+          cache: 'no-store',
+          headers: new Headers({
+            'X-Custom-Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          })
+        })
           .then(response => {
             // Clone the response for caching
             const responseToCache = response.clone();
@@ -81,6 +92,7 @@ self.addEventListener('fetch', (event) => {
             console.log('Service Worker: Offline, trying cached API response for', url.pathname);
             return caches.match(event.request).then(cachedResponse => {
               if (cachedResponse) {
+                console.log('Service Worker: Returning cached response for', url.pathname);
                 return cachedResponse;
               }
               
@@ -95,9 +107,11 @@ self.addEventListener('fetch', (event) => {
                   });
                   
                   if (similarRequest) {
+                    console.log('Service Worker: Found similar cached response for', url.pathname);
                     return cache.match(similarRequest);
                   }
                   
+                  console.log('Service Worker: No cached data available for', url.pathname);
                   return new Response(JSON.stringify({
                     data: [],
                     error: { message: 'Offline and no cached data available' }
@@ -112,7 +126,7 @@ self.addEventListener('fetch', (event) => {
     } else {
       // For non-GET requests, try network first, then handle offline case
       event.respondWith(
-        fetch(event.request)
+        fetch(event.request.clone())
           .catch(() => {
             console.log('Service Worker: Offline, cannot perform API operation', url.pathname);
             return new Response(JSON.stringify({
@@ -180,14 +194,32 @@ self.addEventListener('message', (event) => {
   
   // Handle refresh cache command
   if (event.data && event.data.type === 'CLEAR_API_CACHE') {
+    console.log('Service Worker: Received request to clear API cache');
+    
     event.waitUntil(
       caches.delete(API_CACHE_NAME).then(() => {
         console.log('Service Worker: API cache cleared');
         
         // Send confirmation back to the client
-        if (event.source && 'postMessage' in event.source) {
-          event.source.postMessage({
+        if (event.ports && event.ports.length > 0) {
+          event.ports[0].postMessage({
             type: 'CACHE_CLEARED',
+            timestamp: Date.now()
+          });
+        } else if (event.source && 'postMessage' in event.source) {
+          // Legacy method
+          (event.source as Client).postMessage({
+            type: 'CACHE_CLEARED',
+            timestamp: Date.now()
+          });
+        }
+      }).catch(error => {
+        console.error('Service Worker: Error clearing API cache:', error);
+        // Still try to notify the client
+        if (event.ports && event.ports.length > 0) {
+          event.ports[0].postMessage({
+            type: 'CACHE_CLEAR_ERROR',
+            error: error.message,
             timestamp: Date.now()
           });
         }
