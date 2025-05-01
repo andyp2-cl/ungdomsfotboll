@@ -38,8 +38,8 @@ self.addEventListener('activate', (event) => {
 });
 
 // Network-first strategy for fetch requests
-self.addEventListener('fetch', (event) => {
-  // @ts-ignore
+// Use FetchEvent type instead of generic Event
+self.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -59,3 +59,9 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Define FetchEvent interface to fix TypeScript errors
+interface FetchEvent extends Event {
+  request: Request;
+  respondWith(response: Promise<Response> | Response): void;
+}
