@@ -27,11 +27,13 @@ export async function handleActivitySubmit(
     const formattedDate = format(values.date, 'yyyy-MM-dd');
     
     // Make sure score values are converted to numbers or remain undefined
-    const homeScore = values.homeScore === undefined || values.homeScore === null || values.homeScore === "" ? 
+    const homeScore = values.homeScore === undefined || values.homeScore === null || 
+      (typeof values.homeScore === 'string' && values.homeScore === "") ? 
       undefined : 
       (typeof values.homeScore === 'string' ? parseInt(values.homeScore, 10) : values.homeScore);
       
-    const awayScore = values.awayScore === undefined || values.awayScore === null || values.awayScore === "" ? 
+    const awayScore = values.awayScore === undefined || values.awayScore === null || 
+      (typeof values.awayScore === 'string' && values.awayScore === "") ? 
       undefined : 
       (typeof values.awayScore === 'string' ? parseInt(values.awayScore, 10) : values.awayScore);
       
@@ -49,7 +51,7 @@ export async function handleActivitySubmit(
       isWin = calculateWinStatus(homeScore, awayScore, isHomeTeam);
     }
     
-    console.log("Form submission - win status:", {
+    console.log("Form submission - win status:", { 
       explicitIsWin: values.isWin,
       calculatedIsWin: isWin,
       homeScore,
