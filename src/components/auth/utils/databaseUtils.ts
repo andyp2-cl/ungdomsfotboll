@@ -252,18 +252,11 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
 
 /**
  * Connect to the database anonymously
- * This is useful for development environments
+ * Critical function to provide automatic database access
  */
 export const connectAnonymously = async (): Promise<boolean> => {
   try {
-    console.log("Attempting anonymous database connection");
-    
-    // Check if we have a recent cached result (less than 1 minute old)
-    const cacheAge = getConnectionCacheAge();
-    if (cacheAge !== null && cacheAge < 1) {
-      console.log(`Using cached connection result (${cacheAge} minutes old)`);
-      return localStorage.getItem('sb-connection-test') === 'true';
-    }
+    console.log("Attempting automatic database connection");
     
     // First try to get an existing session
     const { data: { session } } = await supabase.auth.getSession();
@@ -282,38 +275,62 @@ export const connectAnonymously = async (): Promise<boolean> => {
       console.log("Existing session failed connection test, attempting to sign in again");
     }
     
-    // Sign in anonymously - this works only if anonymous auth is enabled in Supabase
-    const { error } = await supabase.auth.signInWithPassword({ 
-      // Using a known debug account for development
-      email: 'dev@example.com', 
-      password: 'development-password' 
-    });
-    
-    if (error) {
-      console.warn("Anonymous login failed, attempting to refresh session:", error);
+    // Try automatic email login with development credentials
+    try {
+      console.log("Attempting automatic login");
       
-      // Try session refreshing as a fallback
-      const { error: refreshError } = await supabase.auth.refreshSession();
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email: 'dev@example.com', 
+        password: 'development-password' 
+      });
       
-      if (refreshError) {
-        console.error("Session refresh also failed:", refreshError);
-        return false;
+      if (error) {
+        console.log("Automatic login with credentials failed, trying anonymous auth");
+      } else if (data.session) {
+        console.log("Automatic login successful");
+        cacheSuccessfulConnection();
+        return true;
       }
+    } catch (err) {
+      console.log("Error during automatic login attempt:", err);
     }
     
-    // Test if we now have database access
-    const { success } = await testDatabaseAccess();
-    
-    if (success) {
-      console.log("Anonymous connection successful");
-      cacheSuccessfulConnection();
-      return true;
-    } else {
-      console.error("Anonymous connection failed after sign-in attempt");
-      return false;
+    // Try anonymous sign in as fallback
+    try {
+      console.log("Attempting anonymous sign in");
+      
+      // Try using anon key directly
+      const { data, error } = await supabase.auth.signInAnonymously();
+      
+      if (error) {
+        console.error("Anonymous sign-in failed:", error);
+      } else if (data.session) {
+        console.log("Anonymous sign-in successful");
+        cacheSuccessfulConnection();
+        return true;
+      }
+    } catch (err) {
+      console.error("Error during anonymous sign-in:", err);
     }
+    
+    // As a last resort, try direct API access without authentication
+    try {
+      console.log("Testing direct API access without authentication");
+      const { success } = await testDatabaseAccess();
+      
+      if (success) {
+        console.log("Direct API access successful");
+        cacheSuccessfulConnection();
+        return true;
+      }
+    } catch (err) {
+      console.error("Error testing direct API access:", err);
+    }
+    
+    console.error("All authentication methods failed");
+    return false;
   } catch (error) {
-    console.error("Error during anonymous connection:", error);
+    console.error("Error during connection attempts:", error);
     return false;
   }
 };

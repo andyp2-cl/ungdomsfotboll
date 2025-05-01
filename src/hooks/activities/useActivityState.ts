@@ -84,10 +84,28 @@ export function useActivityState() {
       setIsLoading(true);
       setLoadError(null);
       
-      // Clear API cache if forcing refresh
-      if (forceRefresh) {
+      // Extra check to make sure we're connected before attempting to refresh
+      if (forceRefresh && !navigator.onLine) {
+        sonnerToast.warning("Du är offline. Kan inte hämta färsk data just nu.");
+        setLoadError("Du är offline. Kan inte hämta färsk data just nu. Visar cachad data.");
+      }
+      
+      // Clear API cache if forcing refresh and we're online
+      if (forceRefresh && navigator.onLine) {
         await clearApiCache();
+        localStorage.removeItem('cachedActivities');
+        localStorage.removeItem('cachedActivitiesTime');
+        localStorage.removeItem('sb-activities-fetch-time');
         setLastRefreshTime(Date.now());
+        
+        // Display toast that we're refreshing data
+        sonnerToast.loading("Rensar cache och hämtar färsk data...", {
+          id: "clear-cache",
+          duration: 2000
+        });
+        
+        // Brief delay to allow cache clearing to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Set a timeout to detect slow connections
@@ -139,6 +157,8 @@ export function useActivityState() {
                   maxAttempts
                 });
               }, 2000);
+            } else {
+              sonnerToast.error("Kunde inte hitta några matcher efter flera försök.");
             }
           }
           
@@ -152,52 +172,45 @@ export function useActivityState() {
         } else {
           console.warn("No activities loaded from database");
           
-          // Try to get cached activities
-          const cachedActivitiesJson = localStorage.getItem('cachedActivities');
-          if (cachedActivitiesJson) {
-            try {
-              const cachedActivities = JSON.parse(cachedActivitiesJson);
-              console.log(`Using ${cachedActivities.length} cached activities`);
-              setActivities(cachedActivities);
-              
-              if (showToast) {
-                sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
-              }
-              
-              setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
-            } catch (e) {
-              console.error("Failed to parse cached activities:", e);
-            }
+          // If we're below max attempts, increment retry counter and try again
+          if (retryCount < maxAttempts - 1) {
+            setRetryCount(prev => prev + 1);
             
-            // If we're below max attempts, increment retry counter and try again
-            if (retryCount < maxAttempts - 1) {
-              setRetryCount(prev => prev + 1);
-              
-              // Try again after a delay with exponential backoff
-              setTimeout(() => {
-                if (showToast) {
-                  sonnerToast.info(`Försöker hämta data igen (försök ${retryCount + 1}/${maxAttempts})...`);
-                }
-                loadActivities({
-                  forceRefresh: true,
-                  showToast: showToast,
-                  maxAttempts
-                });
-              }, 2000 * Math.pow(2, retryCount));
-            } else if (retryCount >= maxAttempts - 1 && showToast) {
-              // After maximum retries, suggest a solution
-              sonnerToast.error("Kunde inte hämta nya aktiviteter efter flera försök", {
-                description: "Prova att logga ut och in igen, eller be en administratör kontrollera databasen",
-                duration: 8000
+            // Try again after a delay with exponential backoff
+            setTimeout(() => {
+              if (showToast) {
+                sonnerToast.info(`Försöker hämta data igen (försök ${retryCount + 1}/${maxAttempts})...`);
+              }
+              loadActivities({
+                forceRefresh: true,
+                showToast: showToast,
+                maxAttempts
               });
-            }
-          } else if (isOffline) {
-            setLoadError("Du är offline och inga lokalt sparade aktiviteter hittades");
-          } else {
-            toast({
-              title: "Inga aktiviteter hittades",
-              description: "Inga aktiviteter hittades i databasen.",
+            }, 2000 * Math.pow(2, retryCount));
+          } else if (retryCount >= maxAttempts - 1 && showToast) {
+            // After maximum retries, suggest a solution
+            sonnerToast.error("Kunde inte hämta aktiviteter efter flera försök", {
+              description: "Prova att logga ut och in igen, eller be en administratör kontrollera databasen",
+              duration: 8000
             });
+            
+            // Try to use cached activities as last resort
+            const cachedActivitiesJson = localStorage.getItem('cachedActivities');
+            if (cachedActivitiesJson) {
+              try {
+                const cachedActivities = JSON.parse(cachedActivitiesJson);
+                console.log(`Using ${cachedActivities.length} cached activities as last resort`);
+                setActivities(cachedActivities);
+                
+                if (showToast) {
+                  sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
+                }
+                
+                setLoadError("Kunde inte hämta färsk data. Visar cachad data.");
+              } catch (e) {
+                console.error("Failed to parse cached activities:", e);
+              }
+            }
           }
         }
       } catch (error) {
@@ -215,6 +228,11 @@ export function useActivityState() {
             // Check specifically for matches in cache
             const cachedMatches = parsedActivities.filter(a => a.type === 'match');
             console.log(`Found ${cachedMatches.length} matches in cache`);
+            
+            if (cachedMatches.length === 0) {
+              console.warn("No matches in cached data");
+              sonnerToast.warning("Inga matcher hittades i cachad data");
+            }
           } catch (e) {
             console.error("Failed to parse cached activities:", e);
           }
@@ -245,7 +263,7 @@ export function useActivityState() {
 
   // Initial load
   useEffect(() => {
-    loadActivities({ forceRefresh: false, showToast: false });
+    loadActivities({ forceRefresh: true, showToast: true });
   }, [loadActivities]);
 
   // Update selected activity when activities change
@@ -265,6 +283,8 @@ export function useActivityState() {
     
     if (matchActivities.length > 0) {
       console.log("Sample match:", matchActivities[0]);
+    } else {
+      console.warn("No matches in current activity state");
     }
   }, [activities]);
 

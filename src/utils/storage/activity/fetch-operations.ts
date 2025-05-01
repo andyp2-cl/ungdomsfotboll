@@ -34,33 +34,23 @@ export const fetchActivitiesFromDB = async (options: {
       });
     }
     
-    // Add a timeout to detect very slow connections
+    // Always force a fresh network request by adding a timestamp
+    console.log("Forcing fresh data fetch with bypass cache technique");
+    const cacheBuster = `?_cb=${Date.now()}`;
+    
+    // Create the actual fetch promise with stronger cache control
+    const fetchPromise = supabase
+      .from('activities')
+      .select('*', { 
+        head: false, 
+        count: 'exact'
+      })
+      .order('date', { ascending: true });
+    
+    // Add fetch timeout for very slow connections
     const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
       setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 30000)
     );
-    
-    // Create the actual fetch promise with cache control headers
-    let fetchPromise;
-    
-    if (forceRefresh) {
-      // Add cache-busting query parameter for forced refresh
-      const cacheBuster = `?_cb=${Date.now()}`;
-      console.log("Forcing fresh data fetch with cache-buster");
-      
-      fetchPromise = supabase
-        .from('activities')
-        .select('*', { 
-          head: false, 
-          count: 'exact'
-        })
-        .order('date', { ascending: true });
-    } else {
-      // Regular fetch
-      fetchPromise = supabase
-        .from('activities')
-        .select('*')
-        .order('date', { ascending: true });
-    }
     
     // Race the fetch against the timeout
     const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
@@ -120,28 +110,32 @@ export const fetchActivitiesFromDB = async (options: {
       }
     }
     
-    // Validate and log the returned data
+    // Deep debug logging for match data
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
       const matchActivities = data.filter(item => item.type === 'match');
       console.log(`Found ${matchActivities.length} match activities`);
       
-      // Log some samples to debug
       if (matchActivities.length > 0) {
-        console.log("Sample matches:", matchActivities.slice(0, 3).map(m => ({
+        console.log("Sample matches:", matchActivities.slice(0, 5).map(m => ({
           id: m.id,
           name: m.name,
           type: m.type,
           home_score: m.home_score,
           away_score: m.away_score,
-          cup_id: m.cup_id
+          cup_id: m.cup_id,
+          date: m.date
         })));
       } else {
         console.warn("No match activities found in the fetched data");
       }
     }
     
-    // If we get here with no data, just return an empty array instead of null
+    // If we get here with no data, log warning and return empty array
+    if (!data || data.length === 0) {
+      console.warn("Supabase returned empty data but no error");
+    }
+    
     return data || [];
   } catch (error) {
     console.error("Error fetching from database:", error);

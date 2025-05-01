@@ -13,7 +13,7 @@ self.__WB_MANIFEST;
 declare const self: ServiceWorkerGlobalScope
 
 // Cache names
-const CACHE_NAME = 'hif-team-app-v1';
+const CACHE_NAME = 'hif-team-app-v2';
 const API_CACHE_NAME = 'hif-api-cache';
 const PRECACHE_ASSETS = [
   '/',
@@ -24,6 +24,10 @@ const PRECACHE_ASSETS = [
 // Install event - precache resources
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
+  
+  // Force taking over the page to ensure the new service worker activates immediately
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Service Worker: Precaching essential files');
@@ -31,98 +35,132 @@ self.addEventListener('install', (event) => {
       return cache.addAll(PRECACHE_ASSETS);
     }).then(() => {
       console.log('Service Worker installation complete');
-      return self.skipWaiting(); // Take control immediately
     })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
+  
+  // Clear old API cache on activation to ensure fresh data
+  const clearOldAPICaches = caches.delete(API_CACHE_NAME)
+    .then(() => console.log('Cleared old API cache for fresh data'));
+  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
-          return Promise.resolve();
-        })
-      );
-    }).then(() => {
+    Promise.all([
+      clearOldAPICaches,
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+              console.log('Service Worker: Deleting old cache', cacheName);
+              return caches.delete(cacheName);
+            }
+            return Promise.resolve();
+          })
+        );
+      })
+    ]).then(() => {
       console.log('Service Worker: Successfully activated and controlling');
       return self.clients.claim(); // Take control immediately
     })
   );
 });
 
+// Helper function to determine if a request is for the Supabase API
+const isSupabaseAPIRequest = (url) => {
+  return url.hostname.includes('supabase');
+};
+
+// Helper function to determine if a request is for activities
+const isActivitiesRequest = (url) => {
+  return url.pathname.includes('activities');
+};
+
 // Fetch event - serve from cache if available, with special handling for API requests
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
   // Special handling for Supabase API requests
-  if (url.hostname.includes('supabase')) {
+  if (isSupabaseAPIRequest(url)) {
     if (event.request.method === 'GET') {
-      // Network first strategy for API requests to ensure fresh data
-      event.respondWith(
-        fetch(event.request.clone(), {
-          // Try to bypass any browser cache for API requests
-          cache: 'no-store',
-          headers: new Headers({
-            'X-Custom-Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+      // For activity endpoints, use NetworkFirst with aggressive caching
+      if (isActivitiesRequest(url)) {
+        event.respondWith(
+          fetch(event.request.clone(), {
+            // Try to always get fresh data for activities
+            cache: 'no-store',
+            headers: new Headers({
+              'X-Custom-Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            })
           })
-        })
-          .then(response => {
-            // Clone the response for caching
-            const responseToCache = response.clone();
-            
-            // Only cache valid responses
-            if (response.ok) {
-              caches.open(API_CACHE_NAME).then(cache => {
-                cache.put(event.request, responseToCache);
-                console.log('Service Worker: Cached API response for', url.pathname);
-              });
-            }
-            
-            return response;
-          })
-          .catch(() => {
-            console.log('Service Worker: Offline, trying cached API response for', url.pathname);
-            return caches.match(event.request).then(cachedResponse => {
-              if (cachedResponse) {
-                console.log('Service Worker: Returning cached response for', url.pathname);
-                return cachedResponse;
+            .then(response => {
+              // Clone the response for caching
+              const responseToCache = response.clone();
+              
+              // Only cache valid responses
+              if (response.ok) {
+                caches.open(API_CACHE_NAME).then(cache => {
+                  cache.put(event.request, responseToCache);
+                  console.log('Service Worker: Cached API response for activities data');
+                });
               }
               
-              // If we have no cached response for this specific API call,
-              // see if we have a cached response for a similar endpoint
-              return caches.open(API_CACHE_NAME).then(cache => 
-                cache.keys().then(keys => {
-                  // Try to find a similar request (same path but different query params)
-                  const similarRequest = keys.find(req => {
-                    const reqUrl = new URL(req.url);
-                    return reqUrl.pathname === url.pathname;
-                  });
-                  
-                  if (similarRequest) {
-                    console.log('Service Worker: Found similar cached response for', url.pathname);
-                    return cache.match(similarRequest);
-                  }
-                  
-                  console.log('Service Worker: No cached data available for', url.pathname);
-                  return new Response(JSON.stringify({
-                    data: [],
-                    error: { message: 'Offline and no cached data available' }
-                  }), { 
-                    headers: { 'Content-Type': 'application/json' }
-                  });
-                })
-              );
-            });
-          })
-      );
+              return response;
+            })
+            .catch(() => {
+              console.log('Service Worker: Offline, trying cached API response for activities');
+              return caches.match(event.request).then(cachedResponse => {
+                if (cachedResponse) {
+                  console.log('Service Worker: Returning cached response for activities');
+                  return cachedResponse;
+                }
+                
+                // If we have no cached response, return empty but valid data
+                return new Response(JSON.stringify({
+                  data: [],
+                  error: { message: 'Offline and no cached data available' }
+                }), { 
+                  headers: { 'Content-Type': 'application/json' }
+                });
+              });
+            })
+        );
+      } else {
+        // For other API calls, use NetworkFirst strategy
+        event.respondWith(
+          fetch(event.request.clone())
+            .then(response => {
+              // Clone the response for caching
+              const responseToCache = response.clone();
+              
+              // Only cache valid responses
+              if (response.ok) {
+                caches.open(API_CACHE_NAME).then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+              }
+              
+              return response;
+            })
+            .catch(() => {
+              return caches.match(event.request).then(cachedResponse => {
+                if (cachedResponse) {
+                  return cachedResponse;
+                }
+                
+                return new Response(JSON.stringify({
+                  data: null,
+                  error: { message: 'Offline and no cached data available' }
+                }), { 
+                  headers: { 'Content-Type': 'application/json' }
+                });
+              });
+            })
+        );
+      }
     } else {
       // For non-GET requests, try network first, then handle offline case
       event.respondWith(
@@ -148,7 +186,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
         return fetch(event.request).then((fetchResponse) => {
-          // Don't cache non-GET requests or API requests
+          // Don't cache non-GET requests
           if (event.request.method !== 'GET') {
             return fetchResponse;
           }
@@ -178,21 +216,8 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Handle background sync for saved offline changes
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-activities') {
-    console.log('Service Worker: Attempting to sync stored activities');
-    event.waitUntil(syncPendingActivities());
-  }
-});
-
-// Handle messages from the main thread
+// Handle clear API cache message
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  // Handle refresh cache command
   if (event.data && event.data.type === 'CLEAR_API_CACHE') {
     console.log('Service Worker: Received request to clear API cache');
     
@@ -215,6 +240,7 @@ self.addEventListener('message', (event) => {
         }
       }).catch(error => {
         console.error('Service Worker: Error clearing API cache:', error);
+        
         // Still try to notify the client
         if (event.ports && event.ports.length > 0) {
           event.ports[0].postMessage({
@@ -225,6 +251,8 @@ self.addEventListener('message', (event) => {
         }
       })
     );
+  } else if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
 
