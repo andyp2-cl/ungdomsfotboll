@@ -47,9 +47,12 @@ export function useActivityState() {
         }
       }, 3000);
       
-      // Try to load activities
+      // Try to load activities with forceRefresh to ensure we get fresh data
       try {
-        const storedActivities = await getStoredActivities();
+        const storedActivities = await getStoredActivities({
+          forceRefresh: true,  // Force refresh from database
+          showToast: showToast
+        });
         clearTimeout(timeoutId);
         
         if (storedActivities.length > 0) {
@@ -57,6 +60,9 @@ export function useActivityState() {
           if (showToast) {
             sonnerToast.success(`${storedActivities.length} aktiviteter hämtade`);
           }
+          // Cache the activities again to ensure we have the latest data
+          localStorage.setItem('cachedActivities', JSON.stringify(storedActivities));
+          localStorage.setItem('cachedActivitiesTime', Date.now().toString());
         } else {
           // Try to get cached activities
           const cachedActivitiesJson = localStorage.getItem('cachedActivities');

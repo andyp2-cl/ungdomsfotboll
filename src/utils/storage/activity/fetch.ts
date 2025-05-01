@@ -39,17 +39,20 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
   }
   
   // If online and not forcing a refresh, try to use the cache first
+  // But only if the cache is fresh (less than 1 minute old)
   if (!forceRefresh) {
     const cachedActivities = getActivitiesFromCache();
+    const cacheTime = Number(localStorage.getItem('cachedActivitiesTime') || '0');
+    const cacheAge = (Date.now() - cacheTime) / 1000; // in seconds
     
-    if (cachedActivities && cachedActivities.length > 0) {
+    if (cachedActivities && cachedActivities.length > 0 && cacheAge < 60) { // 1 minute cache lifetime
       console.log(`Using ${cachedActivities.length} cached activities, age: ${
-        ((Date.now() - Number(localStorage.getItem('cachedActivitiesTime') || 0)) / 1000).toFixed(0)
+        cacheAge.toFixed(0)
       }s`);
       
-      // In background, refresh the cache if it's older than 5 minutes
-      if (shouldRefreshCache()) {
-        console.log("Cache is older than 5 minutes, refreshing in background");
+      // In background, refresh the cache if it's getting old
+      if (cacheAge > 30) { // refresh after 30 seconds
+        console.log("Cache is getting older, refreshing in background");
         
         // Background refresh without waiting for result
         setTimeout(() => {

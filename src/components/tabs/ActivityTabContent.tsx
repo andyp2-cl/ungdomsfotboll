@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { ActivityTabHeader } from "./activity-tab/components/ActivityTabHeader";
@@ -68,7 +69,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     try {
       if (props.retryLoading) {
         await props.retryLoading();
-        toast.success("Data uppdaterad");
+        toast.success("Data uppdaterad från servern");
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success("Data uppdaterad");
@@ -88,6 +89,8 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           activeView={activeView}
           handleViewChange={handleViewChange}
           setIsAddActivityOpen={props.setIsAddActivityOpen}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
           isMobile={isMobile}
         />
         

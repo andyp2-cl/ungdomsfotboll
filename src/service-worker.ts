@@ -23,7 +23,8 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([...PRECACHE_ASSETS, ...(manifestPlaceholder || [])]);
+      // Don't try to cache large files - just cache the essential files
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
 });
@@ -55,7 +56,11 @@ self.addEventListener('fetch', (event) => {
         // Don't cache API requests or non-GET requests
         if (!event.request.url.includes('/api/') && event.request.method === 'GET') {
           return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, fetchResponse.clone());
+            // Only cache responses smaller than 2MB to avoid the file size issues
+            if (fetchResponse.headers.get('content-length') && 
+                parseInt(fetchResponse.headers.get('content-length') || '0', 10) < 2000000) {
+              cache.put(event.request, fetchResponse.clone());
+            }
             return fetchResponse;
           });
         }
