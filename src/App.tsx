@@ -1,77 +1,41 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import PasswordProtection from "./components/PasswordProtection";
+import { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
-import PlayerManagementPage from "./pages/PlayerManagementPage";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { LoginStatus } from "./components/auth/LoginStatus";
-import LayoutMain from "./components/LayoutMain";
-
-// Create a QueryClient with basic configuration
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    },
-  },
-});
+import Layout from "./components/Layout";
+import { Toaster } from "./components/ui/toaster";
+import { connectAnonymously } from "./components/auth/utils/databaseUtils";
+import { Toaster as SonnerToaster } from "sonner";
 
 function App() {
-  // Basic online status tracking
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
+  // Attempt to connect automatically when the app starts
   useEffect(() => {
-    // Set up event listeners for online/offline status
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+    const connectToDatabase = async () => {
+      try {
+        console.log("Attempting automatic database connection");
+        await connectAnonymously();
+        console.log("Automatic database connection successful");
+      } catch (error) {
+        console.error("Error connecting to database:", error);
+      }
     };
-  }, []);
-  
-  // Show offline toast once on startup if needed
-  useEffect(() => {
-    if (!isOnline) {
-      toast.warning("Du är offline. Ändringar sparas lokalt och synkas när du är online igen.");
-    }
+    
+    connectToDatabase();
   }, []);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <PasswordProtection>
-            {/* Only have the login button here, removed from Layout.tsx */}
-            <div className="fixed top-0 right-0 p-2 z-50">
-              <LoginStatus />
-            </div>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/players" element={<PlayersPage initialTab="players" />} />
-              <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
-              <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
-              <Route path="/player-management" element={<PlayerManagementPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </PasswordProtection>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/players" element={<PlayersPage initialTab="players" />} />
+          <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+        </Routes>
+      </Layout>
+      <Toaster />
+      <SonnerToaster position="top-right" expand={true} richColors />
+    </Router>
   );
 }
 

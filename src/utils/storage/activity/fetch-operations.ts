@@ -55,7 +55,10 @@ export const fetchActivitiesFromDB = async (options: {
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
-    localStorage.setItem('sb-activities-fetch-count', String(data?.length || 0));
+    
+    if (data) {
+      localStorage.setItem('sb-activities-fetch-count', String(data.length || 0));
+    }
     
     // Handle potential errors
     if (error) {
