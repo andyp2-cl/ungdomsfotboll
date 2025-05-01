@@ -35,10 +35,10 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       // Mark connection test early to avoid status issues
       localStorage.setItem('sb-connection-test', 'true');
       
-      // Fetch from database
+      // Fetch from database - ALWAYS try to fetch fresh data when online
       const activities = await fetchActivitiesFromDB({ 
         showToast,
-        silent: !showToast && !forceRefresh
+        silent: !showToast
       });
       
       // Calculate and log performance
@@ -67,6 +67,11 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
     // When offline, use the cache if available
     console.log("Device is offline, using cached activities");
     const cachedData = getActivitiesFromCache(showToast);
+    
+    if (!cachedData || cachedData.length === 0) {
+      toast.warning("Ingen data tillgänglig offline. Anslut till internet för att ladda data.");
+    }
+    
     return cachedData || [];
   }
 };

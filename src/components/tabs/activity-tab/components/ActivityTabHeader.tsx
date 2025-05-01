@@ -35,15 +35,16 @@ export function ActivityTabHeader({
         <div className="flex items-center gap-2">
           {onRefresh && (
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm" 
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Uppdatera data från servern"
               aria-label="Uppdatera data från servern"
+              className="flex items-center gap-1"
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {!isMobile && "Uppdatera"}
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {!isMobile && "Uppdatera data"}
             </Button>
           )}
           <Button 
