@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -8,8 +8,8 @@ interface ActivityParticipantsProps {
   participants?: Player[];
   onPlayerSelect?: (playerId: string) => void;
   isMobile?: boolean;
-  totalCount?: number;  // Added to display the total count of participants
-  players?: Player[];   // Added to support both direct participants and looking up players
+  totalCount?: number;
+  players?: Player[];
 }
 
 export function ActivityParticipants({ 
@@ -20,15 +20,39 @@ export function ActivityParticipants({
   totalCount,
   players = []
 }: ActivityParticipantsProps) {
-  // Make sure participants is an array before using slice
+  // Make sure participants is an array before processing
   const safeParticipants = Array.isArray(participants) ? participants : [];
   
-  // Split participants into two rows for better visibility
-  const participantsPerRow = isMobile ? 3 : 5;
-  const firstRowParticipants = safeParticipants.slice(0, participantsPerRow);
-  const secondRowParticipants = safeParticipants.slice(participantsPerRow, participantsPerRow * 2);
-  const remainingCount = (totalCount !== undefined ? totalCount : safeParticipants.length) - (participantsPerRow * 2);
-
+  // Group players by grade
+  const participantsByGrade = useMemo(() => {
+    const groups: Record<string, Player[]> = {
+      A: [],
+      B: [],
+      C: [],
+      D: []
+    };
+    
+    safeParticipants.forEach(player => {
+      if (player.grade && groups[player.grade]) {
+        groups[player.grade].push(player);
+      } else {
+        // If grade is undefined or not A/B/C/D, add to the end
+        if (!groups.other) {
+          groups.other = [];
+        }
+        groups.other.push(player);
+      }
+    });
+    
+    // Filter out empty grade groups
+    return Object.fromEntries(
+      Object.entries(groups).filter(([_, players]) => players.length > 0)
+    );
+  }, [safeParticipants]);
+  
+  // Get all grade keys that have players
+  const activeGrades = Object.keys(participantsByGrade);
+  
   if (safeParticipants.length === 0) {
     return (
       <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
@@ -37,39 +61,40 @@ export function ActivityParticipants({
     );
   }
 
+  const totalShown = Object.values(participantsByGrade)
+    .flat()
+    .length;
+  
+  const remainingCount = (totalCount !== undefined ? totalCount : safeParticipants.length) - totalShown;
+
   return (
     <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
       <p className="text-xs text-muted-foreground font-medium mb-1">Deltagare:</p>
       
-      {/* First row of participants */}
-      <div className="flex flex-wrap items-center gap-1 mb-1">
-        {firstRowParticipants.map((player, index) => (
-          <ParticipantBadge 
-            key={player.id} 
-            player={player} 
-            onPlayerSelect={onPlayerSelect} 
-            showComma={index < firstRowParticipants.length - 1} 
-          />
-        ))}
-      </div>
-      
-      {/* Second row of participants */}
-      {secondRowParticipants.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1">
-          {secondRowParticipants.map((player, index) => (
+      {/* Render players grouped by grade */}
+      {activeGrades.map((grade) => (
+        <div key={grade} className="flex flex-wrap items-center gap-1 mb-1">
+          {grade !== "other" && (
+            <span className="text-xs font-medium bg-gray-100 px-1 py-0.5 rounded">
+              {grade}:
+            </span>
+          )}
+          
+          {participantsByGrade[grade].map((player, index) => (
             <ParticipantBadge 
               key={player.id} 
               player={player} 
               onPlayerSelect={onPlayerSelect} 
-              showComma={index < secondRowParticipants.length - 1} 
+              showComma={index < participantsByGrade[grade].length - 1} 
             />
           ))}
-          {remainingCount > 0 && (
-            <span className="text-xs text-muted-foreground ml-1">
-              +{remainingCount} fler
-            </span>
-          )}
         </div>
+      ))}
+      
+      {remainingCount > 0 && (
+        <span className="text-xs text-muted-foreground ml-1">
+          +{remainingCount} fler
+        </span>
       )}
     </div>
   );

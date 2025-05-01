@@ -7,7 +7,7 @@
 
 // This is required for the workbox injectManifest to work
 // @ts-ignore
-self.__WB_MANIFEST
+self.__WB_MANIFEST;
 
 declare const self: ServiceWorkerGlobalScope
 
