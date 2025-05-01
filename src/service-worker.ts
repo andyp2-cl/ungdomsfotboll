@@ -6,7 +6,8 @@
  */
 
 // This is required for the workbox injectManifest to work
-self.__WB_MANIFEST;
+// @ts-ignore
+const manifestPlaceholder = self.__WB_MANIFEST;
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -22,7 +23,7 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+      return cache.addAll([...PRECACHE_ASSETS, ...(manifestPlaceholder || [])]);
     })
   );
 });

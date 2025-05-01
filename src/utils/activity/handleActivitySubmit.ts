@@ -27,15 +27,31 @@ export async function handleActivitySubmit(
     const formattedDate = format(values.date, 'yyyy-MM-dd');
     
     // Make sure score values are converted to numbers or remain undefined
-    const homeScore = values.homeScore === undefined || values.homeScore === null || 
-      (typeof values.homeScore === 'string' && values.homeScore === "") ? 
-      undefined : 
-      (typeof values.homeScore === 'string' ? parseInt(values.homeScore, 10) : values.homeScore);
-      
-    const awayScore = values.awayScore === undefined || values.awayScore === null || 
-      (typeof values.awayScore === 'string' && values.awayScore === "") ? 
-      undefined : 
-      (typeof values.awayScore === 'string' ? parseInt(values.awayScore, 10) : values.awayScore);
+    // Safely handle homeScore conversion
+    let homeScore: number | undefined = undefined;
+    if (values.homeScore !== undefined && values.homeScore !== null) {
+      if (typeof values.homeScore === 'string') {
+        // Only parse if the string is not empty
+        if (values.homeScore !== "") {
+          homeScore = parseInt(values.homeScore, 10);
+        }
+      } else {
+        homeScore = values.homeScore;
+      }
+    }
+    
+    // Safely handle awayScore conversion
+    let awayScore: number | undefined = undefined;
+    if (values.awayScore !== undefined && values.awayScore !== null) {
+      if (typeof values.awayScore === 'string') {
+        // Only parse if the string is not empty
+        if (values.awayScore !== "") {
+          awayScore = parseInt(values.awayScore, 10);
+        }
+      } else {
+        awayScore = values.awayScore;
+      }
+    }
       
     // Create result string ONLY if both scores exist
     const result = (homeScore !== undefined && awayScore !== undefined)
