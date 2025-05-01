@@ -13,11 +13,13 @@ interface RestoreDialogProps {
   backupInfo: {timestamp: string, playerCount: number, activityCount: number} | null;
   isRestoring: boolean;
   setIsRestoring: (value: boolean) => void;
+  isOpen: boolean;
+  setIsOpen: (value: boolean) => void;
 }
 
 const PASSWORD = "tommieannatedandreas"; // The password for restore functionality
 
-export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring }: RestoreDialogProps) {
+export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen, setIsOpen }: RestoreDialogProps) {
   const { toast } = useToast();
   const { restoreBackup, getLastBackupInfo } = useBackupRestore();
   const [password, setPassword] = useState("");
@@ -112,12 +114,13 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring }: Resto
       setIsRestoring(false);
       // Reset password field after restore attempt
       setPassword("");
+      // Close the dialog
+      setIsOpen(false);
     }
   };
   
   return (
-    <AlertDialog>
-      <AlertDialogTrigger></AlertDialogTrigger>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Återställ data</AlertDialogTitle>
