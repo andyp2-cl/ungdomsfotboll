@@ -1,133 +1,61 @@
 
-/// <reference lib="webworker" />
-
-// This service worker can be customized!
-// See https://developers.google.com/web/tools/workbox/modules
-// for the list of available Workbox modules, or add any other
-// code you'd like.
-
-declare const self: ServiceWorkerGlobalScope;
-
-// Add this line for Workbox to inject the precache manifest
 // @ts-ignore
 self.__WB_MANIFEST;
 
-// Cache names
-const CACHE_NAME = 'hif-p2014-cache-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/lovable-uploads/283f2e70-ce59-494a-b7c5-17020cba7215.png',
-];
+// Service worker code
+const cacheName = 'hassleholmsif-cache-v1';
 
-// Install event
+// Cache all the app's essential assets during install
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  
-  // Precache static assets
+  console.log('Service worker installing...');
+  // @ts-ignore
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Service Worker: Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
+    caches.open(cacheName).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/manifest.json',
+        // Add other essential assets here
+      ]);
     })
   );
-  
-  // Activate immediately
-  self.skipWaiting();
 });
 
-// Activate event
+// Activate and clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-  
-  // Clean up old caches
+  console.log('Service worker activating...');
+  // @ts-ignore
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => {
-            console.log('Service Worker: Deleting old cache', name);
-            return caches.delete(name);
-          })
-      );
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        if (key !== cacheName) {
+          console.log('Removing old cache', key);
+          return caches.delete(key);
+        }
+      }));
     })
   );
-  
-  // Take control of all clients
-  self.clients.claim();
 });
 
-// Fetch event
+// Network-first strategy for fetch requests
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-
-  // Skip Supabase API requests
-  if (event.request.url.includes('supabase.co')) {
-    return;
-  }
-  
-  // Network-first strategy for HTML documents
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache a copy of the response
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try to serve from cache
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
-  
-  // Cache-first strategy for assets
-  if (event.request.destination === 'image' || 
-      event.request.destination === 'style' ||
-      event.request.destination === 'script' ||
-      event.request.destination === 'font') {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        // Return from cache if found
-        if (response) {
-          return response;
-        }
+  // @ts-ignore
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Clone the response as it can only be consumed once
+        const responseClone = response.clone();
         
-        // Otherwise fetch from network and cache
-        return fetch(event.request).then((networkResponse) => {
-          // Check if we received a valid response
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          
-          // Clone the response for caching
-          const responseToCache = networkResponse.clone();
-          
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          
-          return networkResponse;
+        // Open the cache and store the new response
+        caches.open(cacheName).then((cache) => {
+          cache.put(event.request, responseClone);
         });
+        
+        return response;
       })
-    );
-    return;
-  }
-});
-
-// Listen for messages from the client
-self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+      .catch(() => {
+        // If network fetch fails, try to return the cached response
+        return caches.match(event.request);
+      })
+  );
 });

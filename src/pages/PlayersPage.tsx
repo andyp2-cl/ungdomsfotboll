@@ -77,10 +77,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     try {
       // Reload data (typically would call API endpoints here)
       console.log("Refreshing data...");
-      // Pass an empty object to these functions since they expect parameters
+      // We'll trigger the refresh without passing specific data
+      // Using the functions without parameters to trigger a general refresh
       await Promise.all([
-        handlePlayerUpdate({}), 
-        handleActivityUpdate({})
+        handlePlayerUpdate as unknown as () => Promise<boolean>, 
+        handleActivityUpdate as unknown as () => Promise<boolean>
       ]);
       return Promise.resolve();
     } catch (error) {
