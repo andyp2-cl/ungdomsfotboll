@@ -1,3 +1,4 @@
+
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -76,9 +77,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     try {
       // Reload data (typically would call API endpoints here)
       console.log("Refreshing data...");
+      // Don't pass empty objects that cause TypeScript errors
       await Promise.all([
-        handlePlayerUpdate({}), // Trigger a data refresh
-        handleActivityUpdate({}) // Trigger a data refresh
+        handlePlayerUpdate(), 
+        handleActivityUpdate()
       ]);
       return Promise.resolve();
     } catch (error) {

@@ -1,3 +1,4 @@
+
 /// <reference lib="webworker" />
 
 // This service worker can be customized!
@@ -6,6 +7,10 @@
 // code you'd like.
 
 declare const self: ServiceWorkerGlobalScope;
+
+// Add this line for Workbox to inject the precache manifest
+// @ts-ignore
+self.__WB_MANIFEST;
 
 // Cache names
 const CACHE_NAME = 'hif-p2014-cache-v1';
