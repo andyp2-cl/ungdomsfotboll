@@ -27,6 +27,16 @@ export function useActivities() {
           const matches = fetchedActivities.filter(a => a.type === 'match');
           console.log(`Loaded ${matches.length} matches of ${fetchedActivities.length} total activities`);
           
+          // Log match scores for debugging
+          if (matches.length > 0) {
+            console.log("Match scores sample:", matches.slice(0, 3).map(m => ({
+              id: m.id, 
+              name: m.name,
+              home_score: m.homeScore || m.home_score, 
+              away_score: m.awayScore || m.away_score
+            })));
+          }
+          
           // Verkställ uppdateringen
           setActivities(fetchedActivities);
           setLoadError(null);

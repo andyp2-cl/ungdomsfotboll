@@ -2,6 +2,7 @@
 import { Activity } from "@/types/player";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
+import { PostgrestResponse } from "@supabase/supabase-js";
 
 /**
  * Fetches activities from the database with improved error handling and retry logic
@@ -52,16 +53,22 @@ export const fetchActivitiesFromDB = async (options: {
     );
     
     // Race the fetch against the timeout
-    const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     
+    // Safely access count property with type checking
+    const count = (response as PostgrestResponse<any>).count;
+    
     if (count !== undefined) {
       localStorage.setItem('sb-activities-fetch-count', String(count));
-    } else if (data) {
-      localStorage.setItem('sb-activities-fetch-count', String(data.length || 0));
+    } else if (response.data) {
+      localStorage.setItem('sb-activities-fetch-count', String(response.data.length || 0));
     }
+    
+    // Destructure response after type checking
+    const { data, error } = response;
     
     // Handle potential errors
     if (error) {
