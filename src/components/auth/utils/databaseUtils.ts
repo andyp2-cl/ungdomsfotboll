@@ -228,11 +228,12 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
  */
 export const setExtendedSessionPersistence = async (): Promise<void> => {
   try {
+    // Instead of using expires_in which is not supported in the type definition,
+    // we'll use the available properties only
     await supabase.auth.setSession({
       access_token: "",
-      refresh_token: "",
-      // Set session to expire after 30 days (in seconds)
-      expires_in: 30 * 24 * 60 * 60
+      refresh_token: ""
+      // Removed expires_in property as it's not in the type definition
     });
   } catch (error) {
     console.error("Error setting extended session persistence:", error);

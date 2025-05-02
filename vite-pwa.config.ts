@@ -39,7 +39,7 @@ const pwaOptions = {
     runtimeCaching: [
       {
         urlPattern: /^https:\/\/zkrruihxszziifyogzko\.supabase\.co\/.*$/i,
-        handler: 'NetworkFirst',
+        handler: 'NetworkFirst' as const, // Fixed: Use 'as const' to specify exact string literal type
         options: {
           cacheName: 'supabase-cache',
           expiration: {
