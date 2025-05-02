@@ -54,23 +54,11 @@ function App() {
             const resetResult = await clearAuthAndReconnect();
             setIsAuthenticated(resetResult);
             
-            // If we still can't connect, show a message to the user
-            if (!resetResult) {
-              toast.error("Kunde inte ansluta till databasen. Du behöver logga in.", {
-                duration: 5000,
-                action: {
-                  label: "Logga in",
-                  onClick: () => {
-                    // Here you would normally open a login modal
-                    toast.info("Inloggningsfunktion kommer snart");
-                  }
-                }
-              });
-            }
+            // Removed error toast about database connection
           }
         } catch (error) {
           console.error("Error connecting to database:", error);
-          toast.error("Ett fel uppstod vid anslutning till databasen");
+          // Removed error toast
           setIsAuthenticated(false);
         }
       } catch (error) {
@@ -85,7 +73,7 @@ function App() {
     // Listen for online/offline events to reconnect when coming back online
     const handleOnline = () => {
       console.log("Device is back online, attempting to reconnect to database");
-      toast.info("Internet-anslutning återupprättad, återansluter till databasen...");
+      // Removed info toast about reconnecting
       connectToDatabase();
     };
     

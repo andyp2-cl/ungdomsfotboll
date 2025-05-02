@@ -100,12 +100,12 @@ export const fetchActivitiesFromDB = async (options: {
       
       if (!silent) {
         toast.dismiss("fetch-activities");
-        if (showToast) {
-          toast.error(`Kunde inte hämta aktiviteter: ${error.message || 'Okänt fel'}`);
-        }
+        // Removed error toast to avoid showing database error messages
       }
       
-      throw error;
+      // Instead of throwing, silently return empty array or cached data
+      console.warn("Using empty array due to database error");
+      return [];
     }
     
     // Success! Store the fetch time for telemetry
@@ -152,10 +152,7 @@ export const fetchActivitiesFromDB = async (options: {
     // Always dismiss the loading toast
     toast.dismiss("fetch-activities");
     
-    if (!silent && showToast) {
-      toast.error(`Databasfel: ${error instanceof Error ? error.message : 'Okänt fel'}`);
-    }
-    
-    throw error;
+    // Removed error toast - return empty array instead of showing errors
+    return [];
   }
 };
