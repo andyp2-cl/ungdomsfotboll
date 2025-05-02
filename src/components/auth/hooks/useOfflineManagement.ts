@@ -9,7 +9,6 @@ export function useOfflineManagement(isOnline: boolean) {
   // Check for pending updates periodically
   useEffect(() => {
     const updatePendingCount = () => {
-      // Fix: Ensure checkPendingUpdates returns a number, not a Promise<boolean>
       const count = checkPendingUpdates();
       setPendingUpdatesCount(count);
     };

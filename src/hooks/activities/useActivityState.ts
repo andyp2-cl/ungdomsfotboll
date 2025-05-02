@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Activity } from "@/types/player";
 import { getStoredActivities } from "@/utils/storage";
+import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 
 export function useActivityState() {
@@ -14,6 +15,7 @@ export function useActivityState() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [retryCount, setRetryCount] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
+  const { toast } = useToast();
 
   // Network status monitoring
   useEffect(() => {
@@ -35,18 +37,6 @@ export function useActivityState() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  // Force initial data reload when component mounts
-  useEffect(() => {
-    // Clear any cached data indicators
-    localStorage.removeItem('sb-activities-fetch-time');
-    localStorage.removeItem('sb-activities-last-update');
-    localStorage.removeItem('cachedActivities');
-    localStorage.removeItem('cachedActivitiesTime');
-    
-    // Force a fresh data load
-    loadActivities({ forceRefresh: true, showToast: true });
   }, []);
 
   // Clear API cache when needed via Service Worker
@@ -94,28 +84,10 @@ export function useActivityState() {
       setIsLoading(true);
       setLoadError(null);
       
-      // Extra check to make sure we're connected before attempting to refresh
-      if (forceRefresh && !navigator.onLine) {
-        sonnerToast.warning("Du är offline. Kan inte hämta färsk data just nu.");
-        setLoadError("Du är offline. Kan inte hämta färsk data just nu. Visar cachad data.");
-      }
-      
-      // Clear API cache if forcing refresh and we're online
-      if (forceRefresh && navigator.onLine) {
+      // Clear API cache if forcing refresh
+      if (forceRefresh) {
         await clearApiCache();
-        localStorage.removeItem('cachedActivities');
-        localStorage.removeItem('cachedActivitiesTime');
-        localStorage.removeItem('sb-activities-fetch-time');
         setLastRefreshTime(Date.now());
-        
-        // Display toast that we're refreshing data
-        sonnerToast.loading("Rensar cache och hämtar färsk data...", {
-          id: "clear-cache",
-          duration: 2000
-        });
-        
-        // Brief delay to allow cache clearing to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Set a timeout to detect slow connections
@@ -144,92 +116,172 @@ export function useActivityState() {
         clearTimeout(timeoutId);
         
         if (storedActivities && storedActivities.length > 0) {
-          console.log(`Loaded ${storedActivities.length} activities`);
+          console.log(`Successfully loaded ${storedActivities.length} activities`);
           
-          // Log match data specifically
-          const matchActivities = storedActivities.filter(a => a.type === 'match');
-          console.log(`Found ${matchActivities.length} match activities in loaded data`);
+          // Look specifically for match data
+          const matches = storedActivities.filter(a => a.type === 'match');
+          console.log(`Loaded ${matches.length} matches`);
+          
+          if (matches.length > 0) {
+            // Log a sample to debug
+            console.log("Sample match data:", matches[0]);
+          } else {
+            console.warn("No matches found in loaded activities");
+            
+            if (forceRefresh && retryCount < maxAttempts - 1) {
+              // Try again with force refresh and incremented retry count
+              setRetryCount(prev => prev + 1);
+              setTimeout(() => {
+                sonnerToast.info(`Inga matcher hittades. Försöker igen (${retryCount + 1}/${maxAttempts})...`);
+                loadActivities({
+                  forceRefresh: true,
+                  showToast: true,
+                  maxAttempts
+                });
+              }, 2000);
+            }
+          }
           
           setActivities(storedActivities);
-          setIsLoading(false);
           setRetryCount(0); // Reset retry count on success
-        } else {
-          console.warn("No activities found in storage");
           
-          if (retryCount < maxAttempts) {
-            // Retry with incremented count
-            setRetryCount(prev => prev + 1);
-            sonnerToast.loading(`Inga aktiviteter hittades. Försöker igen (${retryCount + 1}/${maxAttempts})...`, {
-              id: "loading-retry",
-              duration: 2000
+          // Cache the activities again to ensure we have the latest data
+          localStorage.setItem('cachedActivities', JSON.stringify(storedActivities));
+          localStorage.setItem('cachedActivitiesTime', Date.now().toString());
+          localStorage.setItem('cachedActivitiesCount', storedActivities.length.toString());
+        } else {
+          console.warn("No activities loaded from database");
+          
+          // Try to get cached activities
+          const cachedActivitiesJson = localStorage.getItem('cachedActivities');
+          if (cachedActivitiesJson) {
+            try {
+              const cachedActivities = JSON.parse(cachedActivitiesJson);
+              console.log(`Using ${cachedActivities.length} cached activities`);
+              setActivities(cachedActivities);
+              
+              if (showToast) {
+                sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
+              }
+              
+              setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
+            } catch (e) {
+              console.error("Failed to parse cached activities:", e);
+            }
+            
+            // If we're below max attempts, increment retry counter and try again
+            if (retryCount < maxAttempts - 1) {
+              setRetryCount(prev => prev + 1);
+              
+              // Try again after a delay with exponential backoff
+              setTimeout(() => {
+                if (showToast) {
+                  sonnerToast.info(`Försöker hämta data igen (försök ${retryCount + 1}/${maxAttempts})...`);
+                }
+                loadActivities({
+                  forceRefresh: true,
+                  showToast: showToast,
+                  maxAttempts
+                });
+              }, 2000 * Math.pow(2, retryCount));
+            } else if (retryCount >= maxAttempts - 1 && showToast) {
+              // After maximum retries, suggest a solution
+              sonnerToast.error("Kunde inte hämta nya aktiviteter efter flera försök", {
+                description: "Prova att logga ut och in igen, eller be en administratör kontrollera databasen",
+                duration: 8000
+              });
+            }
+          } else if (isOffline) {
+            setLoadError("Du är offline och inga lokalt sparade aktiviteter hittades");
+          } else {
+            toast({
+              title: "Inga aktiviteter hittades",
+              description: "Inga aktiviteter hittades i databasen.",
             });
+          }
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error("Error loading activities:", error);
+        
+        // Fallback to cached data
+        const cachedActivities = localStorage.getItem('cachedActivities');
+        if (cachedActivities) {
+          try {
+            const parsedActivities = JSON.parse(cachedActivities);
+            setActivities(parsedActivities);
+            setLoadError("Anslutningsfel. Visar cachade aktiviteter.");
             
-            // Wait with exponential backoff before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-            
-            // Recursive retry with force refresh
-            return loadActivities({
+            // Check specifically for matches in cache
+            const cachedMatches = parsedActivities.filter(a => a.type === 'match');
+            console.log(`Found ${cachedMatches.length} matches in cache`);
+          } catch (e) {
+            console.error("Failed to parse cached activities:", e);
+          }
+        } else {
+          setLoadError(isOffline 
+            ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
+            : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."
+          );
+        }
+        
+        // Try again if retry count not exceeded
+        if (retryCount < maxAttempts - 1) {
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            sonnerToast.info(`Felhämtning: Försöker igen (${retryCount + 1}/${maxAttempts})...`);
+            loadActivities({
               forceRefresh: true,
               showToast: true,
               maxAttempts
             });
-          } else {
-            setActivities([]);
-            setLoadError(`Kunde inte hitta några aktiviteter efter ${maxAttempts} försök.`);
-            sonnerToast.error(`Kunde inte hitta några aktiviteter efter ${maxAttempts} försök.`);
-          }
+          }, 3000 * Math.pow(2, retryCount));
         }
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        console.error("Error loading activities:", fetchError);
-        
-        if (retryCount < maxAttempts) {
-          // Retry with incremented count
-          setRetryCount(prev => prev + 1);
-          sonnerToast.loading(`Ett fel uppstod. Försöker igen (${retryCount + 1}/${maxAttempts})...`, {
-            id: "loading-retry",
-            duration: 2000
-          });
-          
-          // Wait with exponential backoff before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-          
-          // Recursive retry with force refresh
-          return loadActivities({
-            forceRefresh: true,
-            showToast: true,
-            maxAttempts
-          });
-        } else {
-          setLoadError(fetchError instanceof Error ? fetchError.message : "Okänt fel vid hämtning av data");
-          sonnerToast.error(`Misslyckades efter ${maxAttempts} försök: ${fetchError instanceof Error ? fetchError.message : "Okänt fel"}`);
-        }
-      } finally {
-        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Unexpected error in loadActivities:", error);
+    } finally {
       setIsLoading(false);
-      setLoadError(error instanceof Error ? error.message : "Ett oväntat fel uppstod");
-      sonnerToast.error("Ett oväntat fel uppstod vid laddning av aktiviteter");
     }
-  }, [clearApiCache, isOffline, isLoading, retryCount]);
-  
+  }, [toast, isOffline, retryCount, clearApiCache]);
+
+  // Initial load
+  useEffect(() => {
+    loadActivities({ forceRefresh: false, showToast: false });
+  }, [loadActivities]);
+
+  // Update selected activity when activities change
+  useEffect(() => {
+    if (selectedActivity && activities.length > 0) {
+      const updatedActivity = activities.find(a => a.id === selectedActivity.id);
+      if (updatedActivity) {
+        setSelectedActivity(updatedActivity);
+      }
+    }
+  }, [activities, selectedActivity]);
+
+  // Debug diagnostics for match data
+  useEffect(() => {
+    const matchActivities = activities.filter(a => a.type === 'match');
+    console.log(`Current state has ${activities.length} activities, including ${matchActivities.length} matches`);
+    
+    if (matchActivities.length > 0) {
+      console.log("Sample match:", matchActivities[0]);
+    }
+  }, [activities]);
+
   return {
     activities,
     setActivities,
     isLoading,
-    setIsLoading,
     loadError,
-    setLoadError,
     selectedActivity,
     setSelectedActivity,
     editingActivity,
     setEditingActivity,
     isAddActivityOpen,
     setIsAddActivityOpen,
-    loadActivities,
     isOffline,
-    lastRefreshTime
+    lastRefreshTime,
+    retryLoading: (showToast = true) => loadActivities({ forceRefresh: true, showToast }),
+    toast
   };
 }

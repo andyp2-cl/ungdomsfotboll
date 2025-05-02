@@ -1,51 +1,140 @@
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { MenuIcon, X } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlayerTabContent } from "@/components/tabs/player-tab";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LoginStatus } from "@/components/auth/LoginStatus";
-import { toast } from "sonner";
+import { Bold, UserCog } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useState } from "react";
 
-export function Layout({ 
-  children,
-  isCheckingAuth = false,
-  isAuthenticated = false
-}: { 
-  children: React.ReactNode,
-  isCheckingAuth?: boolean,
-  isAuthenticated?: boolean
-}) {
-  const [open, setOpen] = React.useState(false);
+interface LayoutProps {
+  activeTab?: string;
+  defaultContent?: React.ReactNode;
+  children?: React.ReactNode;
+}
+
+export function Layout({ activeTab = "players", defaultContent, children }: LayoutProps) {
+  const [fontSize, setFontSize] = useState(() => {
+    return localStorage.getItem('fontSize') || 'default';
+  });
+  
+  const toggleFontSize = () => {
+    const newSize = fontSize === 'default' ? 'large' : 'default';
+    setFontSize(newSize);
+    localStorage.setItem('fontSize', newSize);
+    document.documentElement.classList.toggle('text-large');
+  };
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-10">
-        <div className="flex items-center gap-2 font-semibold">
-          <img
-            src="/lovable-uploads/283f2e70-ce59-494a-b7c5-17020cba7215.png"
-            alt="HIF Logo"
-            width={40}
-            height={40}
-          />
-          <span className="text-lg">Hässleholms IF P2014</span>
+    <div className={`min-h-screen bg-gray-50 p-4 ${fontSize === 'large' ? 'text-large' : ''}`}>
+      <div className="max-w-[1200px] mx-auto mb-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">Hässleholms IF</h1>
+          <div className="flex items-center gap-2">
+            {/* LoginStatus removed from here */}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleFontSize}
+              className="flex gap-1.5 items-center"
+            >
+              <Bold className="h-4 w-4" />
+              <span className="text-xs">Större text</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+            >
+              <Link to="/player-management" className="flex gap-1.5 items-center">
+                <UserCog className="h-4 w-4" />
+                <span className="text-xs">Hantera</span>
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-1 items-center justify-end gap-4">
-          {isCheckingAuth ? (
-            <p className="text-sm text-muted-foreground">Kontrollerar anslutning...</p>
-          ) : isAuthenticated ? (
-            <LoginStatus />
-          ) : null}
-        </div>
-      </header>
-      <main className="flex-1 px-4 py-6 md:px-6 relative">
-        {children}
-      </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground sm:text-center">
-          &copy; Hässleholms IF P2014. Alla rättigheter förbehållna.
-        </p>
-      </footer>
+      </div>
+      <Card className="mx-auto max-w-[1200px] shadow-sm">
+        {children ? (
+          <div className="p-4">{children}</div>
+        ) : (
+          <Tabs 
+            defaultValue={activeTab}
+            className="w-full"
+          >
+            <div className="border-b px-4">
+              <TabsList className="h-12">
+                <TabsTrigger value="players" className="data-[state=active]:bg-primary/10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  Spelare
+                </TabsTrigger>
+                <TabsTrigger value="activities" className="data-[state=active]:bg-primary/10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  Aktiviteter
+                </TabsTrigger>
+                <TabsTrigger value="statistics" className="data-[state=active]:bg-primary/10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  Statistik
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="players" className="p-0 border-0">
+              <div className="p-6">
+                {/* Pass an empty object to avoid type errors */}
+                <PlayerTabContent {...{
+                  players: [],
+                  activities: [],
+                  searchQuery: '',
+                  selectedGrades: [],
+                  selectedPlayer: null,
+                  viewMode: "list",
+                  filteredPlayers: [],
+                  isAddPlayerOpen: false,
+                  setSearchQuery: () => {},
+                  handleGradeChange: () => {},
+                  setSelectedPlayer: () => {},
+                  setViewMode: () => {},
+                  handlePlayerUpdate: () => {},
+                  handleBulkPlayerUpdate: () => {},
+                  setIsAddPlayerOpen: () => {},
+                  setEditingPlayer: () => {},
+                }} />
+              </div>
+            </TabsContent>
+            <TabsContent value="activities" className="p-0 border-0">
+              <div className="p-6">
+                <ActivityTabContent {...{
+                  activities: [],
+                  players: [],
+                  selectedActivity: null,
+                  selectedActivityTypes: [],
+                  filteredActivities: [],
+                  filteredHistoricalActivities: [],
+                  isAddActivityOpen: false,
+                  isLoading: false,
+                  loadError: null,
+                  retryLoading: () => {},
+                  handleActivityTypeChange: () => {},
+                  setSelectedActivity: () => {},
+                  handleActivityUpdate: async () => {},
+                  setIsAddActivityOpen: () => {},
+                  setEditingActivity: () => {},
+                  handleKioskAssignmentUpdate: async () => true,
+                  handleDeleteActivity: async () => true,
+                  handleImportedActivities: async () => true,
+                  handleClearHistoricalActivities: async () => true,
+                }} />
+              </div>
+            </TabsContent>
+            <TabsContent value="statistics" className="p-0 border-0">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Statistik</h2>
+                {defaultContent}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+      </Card>
     </div>
   );
 }

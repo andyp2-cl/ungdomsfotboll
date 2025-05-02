@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { ActivityTabHeader } from "./activity-tab/components/ActivityTabHeader";
@@ -10,16 +10,6 @@ import { ActivityTabSearch } from "./activity-tab/components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./activity-tab/components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./activity-tab/hooks/useActivityTabViews";
-
-// Update the ActivityTabHeaderProps interface to include onRefresh prop
-interface ActivityTabHeaderProps {
-  activeView: string;
-  handleViewChange: (value: string) => void;
-  setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh: () => Promise<void>;
-  isRefreshing: boolean;
-  isMobile: boolean;
-}
 
 interface ActivityTabContentProps {
   activities: Activity[];

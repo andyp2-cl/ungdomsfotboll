@@ -2,7 +2,6 @@
 import { Activity } from "@/types/player";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
-import { PostgrestResponse } from "@supabase/supabase-js";
 
 /**
  * Fetches activities from the database with improved error handling and retry logic
@@ -15,12 +14,10 @@ export const fetchActivitiesFromDB = async (options: {
 } = {}): Promise<Activity[]> => {
   const { 
     showToast = false, 
-    silent = true, // Default to silent to avoid error messages
+    silent = false,
     retryCount = 0,
     forceRefresh = false
   } = options;
-  
-  console.log("fetchActivitiesFromDB called with options:", options);
   
   try {
     // Mark connection test time in localStorage
@@ -37,38 +34,40 @@ export const fetchActivitiesFromDB = async (options: {
       });
     }
     
-    // Force fresh network request by using cache: 'no-store'
-    console.log("Attempting to fetch data from database");
-    
-    // Create the fetch promise
-    const fetchPromise = supabase
-      .from('activities')
-      .select('*')
-      .order('date', { ascending: true });
-    
-    // Add fetch timeout for very slow connections
+    // Add a timeout to detect very slow connections
     const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
       setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 30000)
     );
     
+    // Create the actual fetch promise with cache control headers
+    let fetchPromise;
+    
+    if (forceRefresh) {
+      // Add cache-busting query parameter for forced refresh
+      const cacheBuster = `?_cb=${Date.now()}`;
+      console.log("Forcing fresh data fetch with cache-buster");
+      
+      fetchPromise = supabase
+        .from('activities')
+        .select('*', { 
+          head: false, 
+          count: 'exact'
+        })
+        .order('date', { ascending: true });
+    } else {
+      // Regular fetch
+      fetchPromise = supabase
+        .from('activities')
+        .select('*')
+        .order('date', { ascending: true });
+    }
+    
     // Race the fetch against the timeout
-    console.log("Starting fetch request");
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
-    console.log("Fetch completed, processing response");
+    const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
-    
-    // Check if the response has a count property before accessing it
-    if (response && 'count' in response) {
-      const countValue = response.count;
-      localStorage.setItem('sb-activities-fetch-count', String(countValue || 0));
-    } else if (response && response.data) {
-      localStorage.setItem('sb-activities-fetch-count', String(response.data.length || 0));
-    }
-    
-    // Destructure response after type checking
-    const { data, error } = response;
+    localStorage.setItem('sb-activities-fetch-count', String(count || 0));
     
     // Handle potential errors
     if (error) {
@@ -90,20 +89,20 @@ export const fetchActivitiesFromDB = async (options: {
         // Recursive retry with incremented count
         return fetchActivitiesFromDB({
           showToast,
-          silent: true, // Always silent on retry to avoid multiple error messages
+          silent,
           retryCount: retryCount + 1,
-          forceRefresh: true 
+          forceRefresh: true // Always force refresh on retry attempts
         });
       }
       
-      // Silently handle errors without showing toasts
-      if (showToast) {
+      if (!silent) {
         toast.dismiss("fetch-activities");
+        if (showToast) {
+          toast.error(`Kunde inte hämta aktiviteter: ${error.message || 'Okänt fel'}`);
+        }
       }
       
-      // Return empty array instead of showing errors
-      console.log("Using empty array due to database error");
-      return [];
+      throw error;
     }
     
     // Success! Store the fetch time for telemetry
@@ -121,28 +120,28 @@ export const fetchActivitiesFromDB = async (options: {
       }
     }
     
-    // Deeper logging for match data
+    // Validate and log the returned data
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
       const matchActivities = data.filter(item => item.type === 'match');
       console.log(`Found ${matchActivities.length} match activities`);
       
-      // Debug log a few matches to verify their data
+      // Log some samples to debug
       if (matchActivities.length > 0) {
-        console.log("Sample matches:", matchActivities.slice(0, 5).map(m => ({
+        console.log("Sample matches:", matchActivities.slice(0, 3).map(m => ({
           id: m.id,
           name: m.name,
           type: m.type,
-          homeScore: m.home_score,
-          awayScore: m.away_score,
-          cupId: m.cup_id,
-          date: m.date
+          home_score: m.home_score,
+          away_score: m.away_score,
+          cup_id: m.cup_id
         })));
       } else {
         console.warn("No match activities found in the fetched data");
       }
     }
     
+    // If we get here with no data, just return an empty array instead of null
     return data || [];
   } catch (error) {
     console.error("Error fetching from database:", error);
@@ -150,7 +149,10 @@ export const fetchActivitiesFromDB = async (options: {
     // Always dismiss the loading toast
     toast.dismiss("fetch-activities");
     
-    // Return empty array instead of showing errors
-    return [];
+    if (!silent && showToast) {
+      toast.error(`Databasfel: ${error instanceof Error ? error.message : 'Okänt fel'}`);
+    }
+    
+    throw error;
   }
 };

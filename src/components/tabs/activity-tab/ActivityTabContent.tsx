@@ -90,8 +90,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           activeView={activeView}
           handleViewChange={handleViewChange}
           setIsAddActivityOpen={props.setIsAddActivityOpen}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
           isMobile={isMobile}
         />
         

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { shouldAutoConnectDatabase, isDevelopmentEnvironment } from '@/utils/environment';
 import { connectAnonymously } from '../utils/databaseUtils';
 
@@ -13,12 +13,6 @@ export function useSessionState() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, "Has session:", !!session);
       setIsAuthenticated(!!session);
-      
-      // Auto connect anonymously when session is lost or changed
-      if (!session) {
-        console.log("Session lost or changed, attempting anonymous connection");
-        await connectAnonymously();
-      }
     });
     
     // Check for existing session
@@ -26,9 +20,9 @@ export function useSessionState() {
       const hasSession = !!session;
       setIsAuthenticated(hasSession);
       
-      // Always try to connect anonymously if no session
-      if (!hasSession) {
-        console.log("No session found, attempting anonymous connection");
+      // If no session and auto-connect is enabled, try to connect
+      if (!hasSession && shouldAutoConnectDatabase() && isDevelopmentEnvironment()) {
+        console.log("No session found but auto-connect is enabled, attempting anonymous connection");
         connectAnonymously().catch(err => {
           console.error("Auto-connect failed:", err);
         });
@@ -40,18 +34,5 @@ export function useSessionState() {
     };
   }, []);
   
-  // Always try to reconnect when component mounts
-  useEffect(() => {
-    const attemptAutoConnect = async () => {
-      try {
-        await connectAnonymously();
-      } catch (err) {
-        console.error("Initial auto-connect failed:", err);
-      }
-    };
-    
-    attemptAutoConnect();
-  }, []);
-
   return { isAuthenticated };
 }

@@ -2,14 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, BarChart2, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ActivityTabHeaderProps {
   activeView: string;
   handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh?: () => Promise<void>;
-  isRefreshing?: boolean;
+  onRefresh?: () => void; // Refresh callback
   isMobile?: boolean;
+  isRefreshing?: boolean;
 }
 
 export function ActivityTabHeader({
@@ -17,9 +18,19 @@ export function ActivityTabHeader({
   handleViewChange,
   setIsAddActivityOpen,
   onRefresh,
-  isRefreshing = false,
-  isMobile = false
+  isMobile = false,
+  isRefreshing = false
 }: ActivityTabHeaderProps) {
+  const handleRefresh = () => {
+    if (onRefresh) {
+      toast.info("Uppdaterar data från servern...", {
+        id: "refresh-data",
+        duration: isRefreshing ? Infinity : 3000
+      });
+      onRefresh();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2 w-full sm:w-auto">
       <div className="flex items-center justify-between">
@@ -29,17 +40,18 @@ export function ActivityTabHeader({
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={onRefresh}
+              onClick={handleRefresh}
               disabled={isRefreshing}
-              aria-label="Uppdatera data"
-              className="mr-2"
+              title="Uppdatera data från servern"
+              aria-label="Uppdatera data från servern"
+              className="flex items-center gap-1"
             >
               {isRefreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-1" />
+                <RefreshCw className="h-4 w-4" />
               )}
-              {!isMobile && "Uppdatera"}
+              {!isMobile && (isRefreshing ? "Uppdaterar..." : "Uppdatera data")}
             </Button>
           )}
           <Button 

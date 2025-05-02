@@ -1,12 +1,9 @@
 
-/** @type {import('vite-plugin-pwa').VitePWAOptions} */
-const pwaOptions = {
-  // Increase the maximum file size that can be precached
-  // Default is 2MB (2097152 bytes)
-  maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-  
+import { VitePWAOptions } from 'vite-plugin-pwa';
+
+const pwaOptions: VitePWAOptions = {
   // Base configuration for PWA
-  registerType: "autoUpdate" as const,
+  registerType: 'autoUpdate',
   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
   manifest: {
     name: 'Hässleholms IF P2014',
@@ -33,13 +30,12 @@ const pwaOptions = {
     ]
   },
   workbox: {
-    // Configure Workbox to handle larger files
-    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB,
+    // Configure Workbox options
     globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
     runtimeCaching: [
       {
         urlPattern: /^https:\/\/zkrruihxszziifyogzko\.supabase\.co\/.*$/i,
-        handler: 'NetworkFirst' as const, 
+        handler: 'NetworkFirst',
         options: {
           cacheName: 'supabase-cache',
           expiration: {
@@ -53,9 +49,10 @@ const pwaOptions = {
       }
     ]
   },
-  injectRegister: "auto" as const,
+  // Add the missing required properties with correct types
+  injectRegister: 'auto',
   minify: true,
-  injectManifest: undefined,
+  injectManifest: undefined, // Fix: undefined instead of null
   includeManifestIcons: true,
   disable: false
 };

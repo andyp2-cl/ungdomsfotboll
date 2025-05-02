@@ -34,31 +34,8 @@ const pwaOptions = {
   },
   workbox: {
     // Configure Workbox to handle larger files
-    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB,
-    globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
-    runtimeCaching: [
-      {
-        urlPattern: /^https:\/\/zkrruihxszziifyogzko\.supabase\.co\/.*$/i,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'supabase-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
-          },
-          cacheableResponse: {
-            statuses: [0, 200]
-          }
-        }
-      }
-    ]
-  },
-  injectRegister: 'auto',
-  minify: true,
-  // Fix this value to undefined instead of null
-  injectManifest: undefined,
-  includeManifestIcons: true,
-  disable: false
+    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+  }
 };
 
 export default pwaOptions;
