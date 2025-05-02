@@ -12,6 +12,8 @@ export const connectAnonymously = async (): Promise<boolean> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       console.log("Already have an existing session");
+      localStorage.setItem('sb-connection-test', 'true');
+      localStorage.setItem('sb-connection-test-time', Date.now().toString());
       return true;
     }
     
@@ -21,19 +23,28 @@ export const connectAnonymously = async (): Promise<boolean> => {
       const { data, error } = await supabase.auth.signInAnonymously();
       
       if (error) {
-        // Note: Anonymous sign-in might be disabled
-        console.error("Anonymous sign-in failed:", error);
+        // Handle case where anonymous sign-in is disabled
+        if (error.message.includes('anonymous') || error.message.includes('Anonymous')) {
+          console.log("Anonymous sign-in is disabled. Need user authentication.");
+          toast.warning("Databasåtkomst kräver inloggning. Använd inloggningsformuläret.", {
+            duration: 5000,
+            action: {
+              label: "OK",
+              onClick: () => {}
+            }
+          });
+          return false;
+        }
         
-        // Show info toast after a delay
-        setTimeout(() => {
-          toast.info("Databasåtkomst kräver inloggning. Använd knappen i menyn för att logga in.");
-        }, 2000);
-        
+        console.error("Sign-in error:", error);
+        toast.error(`Anslutningsfel: ${error.message}`);
         return false;
       }
       
       if (data.session) {
         console.log("Anonymous sign-in successful");
+        localStorage.setItem('sb-connection-test', 'true');
+        localStorage.setItem('sb-connection-test-time', Date.now().toString());
         return true;
       }
       
@@ -44,7 +55,9 @@ export const connectAnonymously = async (): Promise<boolean> => {
       // If anonymous auth is disabled, display info message
       if (error?.code === "anonymous_provider_disabled") {
         console.warn("Anonymous sign-in is disabled");
-        toast.info("Databasåtkomst kräver inloggning. Använd knappen i menyn för att logga in.");
+        toast.info("Du behöver logga in för att ansluta till databasen", {
+          duration: 10000
+        });
         return false;
       }
       
@@ -180,6 +193,7 @@ export const checkConnectionWithSession = async (): Promise<boolean> => {
 export const forceReconnect = async (): Promise<boolean> => {
   try {
     console.log("Force reconnecting to database...");
+    toast.loading("Försöker återansluta till databasen...");
     
     // Sign out completely
     await supabase.auth.signOut({ scope: 'global' });
@@ -192,9 +206,18 @@ export const forceReconnect = async (): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Try to connect again
-    return await connectAnonymously();
+    const connected = await connectAnonymously();
+    
+    if (connected) {
+      toast.success("Återansluten till databasen!");
+    } else {
+      toast.error("Kunde inte återansluta. Du behöver logga in.");
+    }
+    
+    return connected;
   } catch (error) {
     console.error("Force reconnect failed:", error);
+    toast.error("Återanslutning misslyckades");
     return false;
   }
 };
@@ -205,6 +228,7 @@ export const forceReconnect = async (): Promise<boolean> => {
 export const clearAuthAndReconnect = async (): Promise<boolean> => {
   try {
     console.log("Clearing auth data and reconnecting...");
+    toast.loading("Rensar autentiseringsdata och återansluter...");
     
     // Sign out completely
     await supabase.auth.signOut({ scope: 'global' });
@@ -227,9 +251,18 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Try to connect again
-    return await connectAnonymously();
+    const connected = await connectAnonymously();
+    
+    if (connected) {
+      toast.success("Återansluten till databasen!");
+    } else {
+      toast.warning("Anonym inloggning är inaktiverad. Du behöver logga in.");
+    }
+    
+    return connected;
   } catch (error) {
     console.error("Clear auth and reconnect failed:", error);
+    toast.error("Återanslutning misslyckades");
     return false;
   }
 };

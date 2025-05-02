@@ -11,19 +11,19 @@ export function useActivities() {
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
   
-  // Använd React Query med förbättrad cachningsstrategi
+  // Use React Query with improved caching strategy and error handling
   const { refetch, isRefetching } = useQuery({
     queryKey: ['activities', lastRefreshTime],
     queryFn: async () => {
       try {
-        // Försök hämta med forcerad uppdatering om det är första gången eller explicit refresh
+        // Attempt to fetch with forced update if it's first time or explicit refresh
         const fetchedActivities = await fetchActivitiesFromDB({ 
           silent: true,
           forceRefresh: true // Always force a fresh load from database
         });
         
         if (fetchedActivities && fetchedActivities.length > 0) {
-          // Särskild logg för matchdata
+          // Special log for match data
           const matches = fetchedActivities.filter(a => a.type === 'match');
           console.log(`Loaded ${matches.length} matches of ${fetchedActivities.length} total activities`);
           
@@ -37,7 +37,7 @@ export function useActivities() {
             })));
           }
           
-          // Verkställ uppdateringen
+          // Update state
           setActivities(fetchedActivities);
           setLoadError(null);
           return fetchedActivities;
@@ -56,11 +56,11 @@ export function useActivities() {
       }
     },
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minuter
+    staleTime: 5 * 60 * 1000, // 5 minutes
     retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000)
   });
 
-  // Funktion för att manuellt uppdatera aktiviteter
+  // Function to manually refresh activities
   const refreshActivities = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -75,12 +75,12 @@ export function useActivities() {
     }
   }, [refetch]);
 
-  // Initial hämtning
+  // Initial fetch
   useEffect(() => {
-    // Detta triggar den första sökningen
+    // This triggers the first query
     setLastRefreshTime(Date.now());
     
-    // Hämta aktiviteter igen om användaren kommer tillbaka online
+    // Fetch activities again if user comes back online
     const handleOnline = () => {
       toast.info("Du är online igen! Uppdaterar aktiviteter...");
       refreshActivities();

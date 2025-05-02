@@ -41,10 +41,7 @@ export const fetchActivitiesFromDB = async (options: {
     // Create the fetch promise with stronger cache control
     const fetchPromise = supabase
       .from('activities')
-      .select('*', { 
-        head: false,
-        count: 'exact' // Get exact count of results
-      })
+      .select('*')
       .order('date', { ascending: true });
     
     // Add fetch timeout for very slow connections
@@ -59,10 +56,10 @@ export const fetchActivitiesFromDB = async (options: {
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     
     // Safely access count property with type checking
-    const count = (response as PostgrestResponse<any>).count;
+    const countValue = 'count' in response ? response.count : undefined;
     
-    if (count !== undefined) {
-      localStorage.setItem('sb-activities-fetch-count', String(count));
+    if (countValue !== undefined) {
+      localStorage.setItem('sb-activities-fetch-count', String(countValue));
     } else if (response.data) {
       localStorage.setItem('sb-activities-fetch-count', String(response.data.length || 0));
     }
@@ -121,7 +118,7 @@ export const fetchActivitiesFromDB = async (options: {
       }
     }
     
-    // Djupare loggning för matchdata
+    // Deeper logging for match data
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
       const matchActivities = data.filter(item => item.type === 'match');
@@ -133,9 +130,9 @@ export const fetchActivitiesFromDB = async (options: {
           id: m.id,
           name: m.name,
           type: m.type,
-          home_score: m.home_score,
-          away_score: m.away_score,
-          cup_id: m.cup_id,
+          homeScore: m.home_score,
+          awayScore: m.away_score,
+          cupId: m.cup_id,
           date: m.date
         })));
       } else {
