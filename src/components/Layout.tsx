@@ -21,33 +21,6 @@ export function Layout({
   return (
     <div className="relative flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-10">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="md:hidden shrink-0">
-              <MenuIcon className="h-5 w-5" />
-              <span className="sr-only">Öppna meny</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-80">
-            <div className="grid gap-2 py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-semibold">
-                  <img
-                    src="/lovable-uploads/283f2e70-ce59-494a-b7c5-17020cba7215.png"
-                    alt="HIF Logo"
-                    width={40}
-                    height={40}
-                  />
-                  <span className="text-lg">Hässleholms IF P2014</span>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Stäng meny</span>
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
         <div className="flex items-center gap-2 font-semibold">
           <img
             src="/lovable-uploads/283f2e70-ce59-494a-b7c5-17020cba7215.png"

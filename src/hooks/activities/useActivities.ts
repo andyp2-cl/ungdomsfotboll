@@ -16,9 +16,9 @@ export function useActivities() {
     queryKey: ['activities', lastRefreshTime],
     queryFn: async () => {
       try {
-        // Attempt to fetch with forced update if it's first time or explicit refresh
+        // Attempt to fetch with forced update
         const fetchedActivities = await fetchActivitiesFromDB({ 
-          silent: true,
+          silent: true, // Avoid showing error messages
           forceRefresh: true // Always force a fresh load from database
         });
         
@@ -43,19 +43,19 @@ export function useActivities() {
           return fetchedActivities;
         } else {
           console.warn("No activities loaded or empty result");
-          // Om ingen data returnerades, behåll nuvarande data
-          return activities;
+          // Continue with current data if no new data received
+          return activities.length > 0 ? activities : [];
         }
       } catch (error) {
         console.error("Error fetching activities:", error);
         setLoadError(error instanceof Error ? error : new Error("Unknown error"));
-        toast.error("Kunde inte hämta aktiviteter");
-        throw error;
+        // Don't show error toast
+        return activities.length > 0 ? activities : []; // Return current activities if we have them
       } finally {
         setIsLoading(false);
       }
     },
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Always try to refresh data when window gets focus
     staleTime: 5 * 60 * 1000, // 5 minutes
     retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000)
   });
@@ -69,6 +69,7 @@ export function useActivities() {
       toast.success("Aktiviteter uppdaterade");
     } catch (error) {
       console.error("Error refreshing activities:", error);
+      // Only show error if explicitly refreshing
       toast.error("Kunde inte uppdatera aktiviteter");
     } finally {
       setIsLoading(false);

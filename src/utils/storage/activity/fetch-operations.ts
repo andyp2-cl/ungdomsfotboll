@@ -15,7 +15,7 @@ export const fetchActivitiesFromDB = async (options: {
 } = {}): Promise<Activity[]> => {
   const { 
     showToast = false, 
-    silent = false,
+    silent = true, // Default to silent to avoid error messages
     retryCount = 0,
     forceRefresh = false
   } = options;
@@ -38,15 +38,13 @@ export const fetchActivitiesFromDB = async (options: {
     }
     
     // Force fresh network request by using cache: 'no-store'
-    console.log("Forcing fresh data fetch with bypass cache technique");
+    console.log("Attempting to fetch data from database");
     
-    // Create the fetch promise with stronger cache control
+    // Create the fetch promise
     const fetchPromise = supabase
       .from('activities')
       .select('*')
       .order('date', { ascending: true });
-    
-    console.log("Fetch promise created for supabase query");
     
     // Add fetch timeout for very slow connections
     const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
@@ -54,7 +52,7 @@ export const fetchActivitiesFromDB = async (options: {
     );
     
     // Race the fetch against the timeout
-    console.log("Starting race between fetch and timeout");
+    console.log("Starting fetch request");
     const response = await Promise.race([fetchPromise, timeoutPromise]);
     console.log("Fetch completed, processing response");
     
@@ -92,19 +90,19 @@ export const fetchActivitiesFromDB = async (options: {
         // Recursive retry with incremented count
         return fetchActivitiesFromDB({
           showToast,
-          silent,
+          silent: true, // Always silent on retry to avoid multiple error messages
           retryCount: retryCount + 1,
-          forceRefresh: true // Always force refresh on retry attempts
+          forceRefresh: true 
         });
       }
       
-      if (!silent) {
+      // Silently handle errors without showing toasts
+      if (showToast) {
         toast.dismiss("fetch-activities");
-        // Removed error toast to avoid showing database error messages
       }
       
-      // Instead of throwing, silently return empty array or cached data
-      console.warn("Using empty array due to database error");
+      // Return empty array instead of showing errors
+      console.log("Using empty array due to database error");
       return [];
     }
     
@@ -152,7 +150,7 @@ export const fetchActivitiesFromDB = async (options: {
     // Always dismiss the loading toast
     toast.dismiss("fetch-activities");
     
-    // Removed error toast - return empty array instead of showing errors
+    // Return empty array instead of showing errors
     return [];
   }
 };

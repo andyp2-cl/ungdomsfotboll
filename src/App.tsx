@@ -33,7 +33,7 @@ function App() {
         console.log("Attempting automatic database connection");
         setIsCheckingAuth(true);
         
-        // First check if there's an existing connection
+        // First check if there's an existing connection (cached)
         const existingConnection = localStorage.getItem('sb-connection-test');
         if (existingConnection === 'true') {
           console.log("Using existing database connection from cache");
@@ -41,7 +41,7 @@ function App() {
           return;
         }
         
-        // Try to connect, and if it fails, try a full reset
+        // Try to connect, and if it fails, use cached data silently
         try {
           console.log("Attempting to connect to database...");
           const connected = await connectAnonymously();
@@ -50,15 +50,13 @@ function App() {
             console.log("Successfully connected to database");
             setIsAuthenticated(true);
           } else {
-            console.log("Initial connection failed, trying a full reset...");
-            const resetResult = await clearAuthAndReconnect();
-            setIsAuthenticated(resetResult);
-            
-            // Removed error toast about database connection
+            console.log("Connection failed, using cached data if available");
+            // Continue without showing errors
+            setIsAuthenticated(false);
           }
         } catch (error) {
           console.error("Error connecting to database:", error);
-          // Removed error toast
+          // Continue without showing errors
           setIsAuthenticated(false);
         }
       } catch (error) {
@@ -73,7 +71,6 @@ function App() {
     // Listen for online/offline events to reconnect when coming back online
     const handleOnline = () => {
       console.log("Device is back online, attempting to reconnect to database");
-      // Removed info toast about reconnecting
       connectToDatabase();
     };
     
