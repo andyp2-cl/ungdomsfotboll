@@ -18,22 +18,34 @@ export const connectAnonymously = async (): Promise<boolean> => {
     
     // No session, try to sign in anonymously
     try {
-      // Note: Anonymous sign-in is disabled in this app based on server error
-      // Instead, we'll display an info message
-      console.log("Anonymous sign-in is disabled, showing info message");
+      console.log("No session found, attempting anonymous sign-in");
+      const { data, error } = await supabase.auth.signInAnonymously();
       
-      // Show info toast after a delay
-      setTimeout(() => {
-        toast.info("Databasåtkomst kräver inloggning. Använd knappen i menyn för att logga in.");
-      }, 2000);
+      if (error) {
+        // Note: Anonymous sign-in might be disabled
+        console.error("Anonymous sign-in failed:", error);
+        
+        // Show info toast after a delay
+        setTimeout(() => {
+          toast.info("Databasåtkomst kräver inloggning. Använd knappen i menyn för att logga in.");
+        }, 2000);
+        
+        return false;
+      }
+      
+      if (data.session) {
+        console.log("Anonymous sign-in successful");
+        return true;
+      }
       
       return false;
     } catch (error: any) {
       console.error("Error connecting anonymously:", error);
       
-      // If anonymous auth is disabled, let's try again with a delay
+      // If anonymous auth is disabled, display info message
       if (error?.code === "anonymous_provider_disabled") {
         console.warn("Anonymous sign-in is disabled");
+        toast.info("Databasåtkomst kräver inloggning. Använd knappen i menyn för att logga in.");
         return false;
       }
       
