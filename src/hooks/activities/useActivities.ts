@@ -11,43 +11,74 @@ export function useActivities() {
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
   
-  // Use React Query to fetch activities
+  // Använd React Query med förbättrad cachningsstrategi
   const { refetch, isRefetching } = useQuery({
     queryKey: ['activities', lastRefreshTime],
     queryFn: async () => {
       try {
-        const fetchedActivities = await fetchActivitiesFromDB({ silent: true });
-        setActivities(fetchedActivities);
-        setLoadError(null);
-        return fetchedActivities;
+        // Försök hämta med forcerad uppdatering om det är första gången eller explicit refresh
+        const fetchedActivities = await fetchActivitiesFromDB({ 
+          silent: true,
+          forceRefresh: true // Always force a fresh load from database
+        });
+        
+        if (fetchedActivities && fetchedActivities.length > 0) {
+          // Särskild logg för matchdata
+          const matches = fetchedActivities.filter(a => a.type === 'match');
+          console.log(`Loaded ${matches.length} matches of ${fetchedActivities.length} total activities`);
+          
+          // Verkställ uppdateringen
+          setActivities(fetchedActivities);
+          setLoadError(null);
+          return fetchedActivities;
+        } else {
+          console.warn("No activities loaded or empty result");
+          // Om ingen data returnerades, behåll nuvarande data
+          return activities;
+        }
       } catch (error) {
         console.error("Error fetching activities:", error);
         setLoadError(error instanceof Error ? error : new Error("Unknown error"));
-        // Use toast directly from sonner
         toast.error("Kunde inte hämta aktiviteter");
         throw error;
       } finally {
         setIsLoading(false);
       }
     },
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minuter
+    retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000)
   });
 
-  // Function to manually refresh activities
+  // Funktion för att manuellt uppdatera aktiviteter
   const refreshActivities = useCallback(async () => {
     try {
+      setIsLoading(true);
       setLastRefreshTime(Date.now());
       await refetch();
+      toast.success("Aktiviteter uppdaterade");
     } catch (error) {
       console.error("Error refreshing activities:", error);
+      toast.error("Kunde inte uppdatera aktiviteter");
+    } finally {
+      setIsLoading(false);
     }
   }, [refetch]);
 
-  // Initial fetch effect
+  // Initial hämtning
   useEffect(() => {
-    // This will trigger the initial query
+    // Detta triggar den första sökningen
     setLastRefreshTime(Date.now());
-  }, []);
+    
+    // Hämta aktiviteter igen om användaren kommer tillbaka online
+    const handleOnline = () => {
+      toast.info("Du är online igen! Uppdaterar aktiviteter...");
+      refreshActivities();
+    };
+    
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [refreshActivities]);
   
   return {
     activities,

@@ -34,14 +34,15 @@ export const fetchActivitiesFromDB = async (options: {
       });
     }
     
-    // Always force a fresh network request by adding a timestamp
+    // Force fresh network request by using cache: 'no-store'
     console.log("Forcing fresh data fetch with bypass cache technique");
     
-    // Create the actual fetch promise with stronger cache control
+    // Create the fetch promise with stronger cache control
     const fetchPromise = supabase
       .from('activities')
       .select('*', { 
-        head: false
+        head: false,
+        count: 'exact' // Get exact count of results
       })
       .order('date', { ascending: true });
     
@@ -51,13 +52,14 @@ export const fetchActivitiesFromDB = async (options: {
     );
     
     // Race the fetch against the timeout
-    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+    const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     
-    if (data) {
-      // Fix: Use data.length instead of data.count
+    if (count !== undefined) {
+      localStorage.setItem('sb-activities-fetch-count', String(count));
+    } else if (data) {
       localStorage.setItem('sb-activities-fetch-count', String(data.length || 0));
     }
     
@@ -112,12 +114,13 @@ export const fetchActivitiesFromDB = async (options: {
       }
     }
     
-    // Deep debug logging for match data
+    // Djupare loggning för matchdata
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
       const matchActivities = data.filter(item => item.type === 'match');
       console.log(`Found ${matchActivities.length} match activities`);
       
+      // Debug log a few matches to verify their data
       if (matchActivities.length > 0) {
         console.log("Sample matches:", matchActivities.slice(0, 5).map(m => ({
           id: m.id,
@@ -131,11 +134,6 @@ export const fetchActivitiesFromDB = async (options: {
       } else {
         console.warn("No match activities found in the fetched data");
       }
-    }
-    
-    // If we get here with no data, log warning and return empty array
-    if (!data || data.length === 0) {
-      console.warn("Supabase returned empty data but no error");
     }
     
     return data || [];

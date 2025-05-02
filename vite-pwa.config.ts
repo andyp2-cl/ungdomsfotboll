@@ -39,7 +39,7 @@ const pwaOptions = {
     runtimeCaching: [
       {
         urlPattern: /^https:\/\/zkrruihxszziifyogzko\.supabase\.co\/.*$/i,
-        handler: 'NetworkFirst' as const, // Fixed: Use 'as const' to specify exact string literal type
+        handler: 'NetworkFirst' as const, 
         options: {
           cacheName: 'supabase-cache',
           expiration: {
@@ -53,7 +53,6 @@ const pwaOptions = {
       }
     ]
   },
-  // Fix: Use the enum value auto instead of a string
   injectRegister: "auto" as const,
   minify: true,
   injectManifest: undefined,

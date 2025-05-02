@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -240,12 +239,10 @@ export const clearAuthAndReconnect = async (): Promise<boolean> => {
  */
 export const setExtendedSessionPersistence = async (): Promise<void> => {
   try {
-    // Instead of using expires_in which is not supported in the type definition,
-    // we'll use the available properties only
+    // Using only available properties in the type definition
     await supabase.auth.setSession({
       access_token: "",
       refresh_token: ""
-      // Removed expires_in property as it's not in the type definition
     });
   } catch (error) {
     console.error("Error setting extended session persistence:", error);
