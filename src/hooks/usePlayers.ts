@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Player, Activity, PlayerGrade } from "@/types/player";
+import { Player, Activity } from "@/types/player";
 import { getActiveTab } from "@/utils/storage";
 import { usePlayers as usePlayersData } from "@/hooks/players";
-import { useActivities } from "@/hooks/activities";
+import { useActivitiesManager } from "@/hooks/activities/useActivitiesManager";
 
 export function usePlayers(initialTab?: string) {
   // Get tab from location or storage
@@ -51,13 +52,13 @@ export function usePlayers(initialTab?: string) {
     filteredHistoricalActivities,
     handleActivityTypeChange,
     handleActivityUpdate,
-    handleDeleteActivity,
     handleKioskAssignmentUpdate,
+    handleDeleteActivity,
     handleAddActivity,
     handleImportedActivities,
     handleClearHistoricalActivities,
     handleMatchResultUpdate
-  } = useActivities(players, setPlayers);
+  } = useActivitiesManager();
 
   // Wrapper for activity update
   const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
@@ -164,7 +165,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
+    handleActivityUpdate: handleActivityUpdateWrapper,
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,

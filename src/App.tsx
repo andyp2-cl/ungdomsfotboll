@@ -7,6 +7,18 @@ import { Layout } from "./components/Layout";
 import { Toaster } from "./components/ui/toaster";
 import { connectAnonymously } from "./components/auth/utils/databaseUtils";
 import { Toaster as SonnerToaster } from "sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   // Attempt to connect automatically when the app starts
@@ -25,17 +37,19 @@ function App() {
   }, []);
   
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/players" element={<PlayersPage initialTab="players" />} />
-          <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
-        </Routes>
-      </Layout>
-      <Toaster />
-      <SonnerToaster position="top-right" expand={true} richColors />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/players" element={<PlayersPage initialTab="players" />} />
+            <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+          </Routes>
+        </Layout>
+        <Toaster />
+        <SonnerToaster position="top-right" expand={true} richColors />
+      </Router>
+    </QueryClientProvider>
   );
 }
 

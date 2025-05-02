@@ -23,7 +23,7 @@ export function useActivities() {
       } catch (error) {
         console.error("Error fetching activities:", error);
         setLoadError(error instanceof Error ? error : new Error("Unknown error"));
-        // Fix: Use import directly to avoid using the non-existent property
+        // Use toast directly from sonner
         toast.error("Kunde inte hämta aktiviteter");
         throw error;
       } finally {
