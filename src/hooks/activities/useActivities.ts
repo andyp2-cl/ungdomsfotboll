@@ -32,8 +32,8 @@ export function useActivities() {
             console.log("Match scores sample:", matches.slice(0, 3).map(m => ({
               id: m.id, 
               name: m.name,
-              home_score: m.homeScore || m.home_score, 
-              away_score: m.awayScore || m.away_score
+              homeScore: m.homeScore, 
+              awayScore: m.awayScore
             })));
           }
           
