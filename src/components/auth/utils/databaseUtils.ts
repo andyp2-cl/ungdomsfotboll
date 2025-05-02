@@ -90,3 +90,174 @@ export const hasDatabaseAccess = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Test database access with current session
+ * @returns Object with success status and error message if any
+ */
+export const testDatabaseAccess = async (): Promise<{ success: boolean; error: string; details?: any }> => {
+  try {
+    // Check if we have a session first
+    const session = await getSession();
+    
+    if (!session) {
+      return { 
+        success: false, 
+        error: "No active session" 
+      };
+    }
+    
+    // Try a simple query to verify connection
+    const { data, error } = await supabase
+      .from('leagues')
+      .select('id')
+      .limit(1);
+      
+    if (error) {
+      console.error("Database access test failed:", error);
+      return { 
+        success: false, 
+        error: error.message,
+        details: {
+          code: error.code,
+          hint: error.hint,
+          details: error.details
+        }
+      };
+    }
+    
+    // Query successful
+    return { success: true, error: "" };
+  } catch (error) {
+    console.error("Unexpected error testing database access:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error",
+      details: error
+    };
+  }
+};
+
+/**
+ * Check database connection with active session
+ */
+export const checkConnectionWithSession = async (): Promise<boolean> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log("No active session for connection check");
+      return false;
+    }
+    
+    // Try a simple query
+    const { error } = await supabase
+      .from('leagues')
+      .select('id')
+      .limit(1);
+      
+    return !error;
+  } catch (error) {
+    console.error("Error checking connection with session:", error);
+    return false;
+  }
+};
+
+/**
+ * Force reconnection to the database
+ */
+export const forceReconnect = async (): Promise<boolean> => {
+  try {
+    console.log("Force reconnecting to database...");
+    
+    // Sign out completely
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // Clear any cached connection data
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    
+    // Wait a moment before trying to reconnect
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Try to connect again
+    return await connectAnonymously();
+  } catch (error) {
+    console.error("Force reconnect failed:", error);
+    return false;
+  }
+};
+
+/**
+ * Clear all auth data and reconnect
+ */
+export const clearAuthAndReconnect = async (): Promise<boolean> => {
+  try {
+    console.log("Clearing auth data and reconnecting...");
+    
+    // Sign out completely
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // Clear all auth-related data from localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+        localStorage.removeItem(key);
+      }
+    }
+    
+    // Clear any connection test data
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
+    localStorage.removeItem('db-connection-stats');
+    
+    // Wait a moment before trying to reconnect
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Try to connect again
+    return await connectAnonymously();
+  } catch (error) {
+    console.error("Clear auth and reconnect failed:", error);
+    return false;
+  }
+};
+
+/**
+ * Set extended session persistence (30 days)
+ */
+export const setExtendedSessionPersistence = async (): Promise<void> => {
+  try {
+    await supabase.auth.setSession({
+      access_token: "",
+      refresh_token: "",
+      // Set session to expire after 30 days (in seconds)
+      expires_in: 30 * 24 * 60 * 60
+    });
+  } catch (error) {
+    console.error("Error setting extended session persistence:", error);
+  }
+};
+
+/**
+ * Cache successful connection to prevent excessive checks
+ */
+export const cacheSuccessfulConnection = (): void => {
+  localStorage.setItem('sb-connection-test', 'true');
+  localStorage.setItem('sb-connection-test-time', Date.now().toString());
+};
+
+/**
+ * Get cache age in minutes of last successful connection
+ * @returns Number of minutes since last successful connection or null if no cache
+ */
+export const getConnectionCacheAge = (): number | null => {
+  const cacheTimeStr = localStorage.getItem('sb-connection-test-time');
+  if (!cacheTimeStr) return null;
+  
+  const cacheTime = parseInt(cacheTimeStr);
+  const ageMs = Date.now() - cacheTime;
+  
+  // Return age in minutes
+  return Math.floor(ageMs / (1000 * 60));
+};

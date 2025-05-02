@@ -6,7 +6,7 @@ const pwaOptions = {
   maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
   
   // Base configuration for PWA
-  registerType: 'autoUpdate',
+  registerType: "autoUpdate" as const,
   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
   manifest: {
     name: 'Hässleholms IF P2014',
