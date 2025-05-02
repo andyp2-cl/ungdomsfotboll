@@ -1,79 +1,63 @@
 
-import { Player } from "@/types/player";
-import { useActivityState } from './useActivityState';
-import { useActivityFilters } from './useActivityFilters';
-import { useActivityActions } from './useActivityActions';
+import { useState, useEffect, useCallback } from "react";
+import { Activity } from "@/types/player";
+import { useQuery } from "@tanstack/react-query";
+import { fetchActivitiesFromDB } from "@/utils/storage/activity/fetch-operations";
+import { toast } from "sonner";
 
-export function useActivities(players: Player[], setPlayers: (players: Player[]) => void) {
-  // Get basic activity state
-  const { 
-    activities, 
+export function useActivities() {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
+  
+  // Use React Query to fetch activities
+  const { refetch, isRefetching } = useQuery({
+    queryKey: ['activities', lastRefreshTime],
+    queryFn: async () => {
+      try {
+        const fetchedActivities = await fetchActivitiesFromDB({ silent: true });
+        setActivities(fetchedActivities);
+        setLoadError(null);
+        return fetchedActivities;
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+        setLoadError(error instanceof Error ? error : new Error("Unknown error"));
+        // Fix: Use import directly to avoid using the non-existent property
+        toast.error("Kunde inte hämta aktiviteter");
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    refetchOnWindowFocus: false
+  });
+
+  // Function to manually refresh activities
+  const refreshActivities = useCallback(async () => {
+    try {
+      setLastRefreshTime(Date.now());
+      await refetch();
+    } catch (error) {
+      console.error("Error refreshing activities:", error);
+    }
+  }, [refetch]);
+
+  // Initial fetch effect
+  useEffect(() => {
+    // This will trigger the initial query
+    setLastRefreshTime(Date.now());
+  }, []);
+  
+  return {
+    activities,
     setActivities,
     isLoading,
-    selectedActivity,
-    setSelectedActivity,
-    editingActivity,
-    setEditingActivity,
-    isAddActivityOpen,
-    setIsAddActivityOpen,
-    toast
-  } = useActivityState();
-  
-  // Get filtering functionality
-  const {
-    selectedActivityTypes,
-    filteredCurrentActivities,
-    filteredHistoricalActivities,
-    currentActivities,
-    historicalActivities,
-    handleActivityTypeChange
-  } = useActivityFilters(activities);
-  
-  // Get activity actions
-  const {
-    handleActivityUpdate,
-    handleDeleteActivity,
-    handleKioskAssignmentUpdate,
-    handleAddActivity,
-    handleImportedActivities,
-    handleScrapedMatches,
-    handleClearHistoricalActivities,
-    handleMatchResultUpdate
-  } = useActivityActions(
-    activities, 
-    setActivities, 
-    players, 
-    setPlayers, 
-    toast,
-    currentActivities,
-    historicalActivities
-  );
-
-  return {
-    // State
-    activities,
-    isLoading,
-    selectedActivity,
-    setSelectedActivity,
-    editingActivity,
-    setEditingActivity,
-    isAddActivityOpen,
-    setIsAddActivityOpen,
-    
-    // Filters
-    selectedActivityTypes,
-    filteredActivities: filteredCurrentActivities,
-    filteredHistoricalActivities,
-    handleActivityTypeChange,
-    
-    // Actions
-    handleActivityUpdate,
-    handleDeleteActivity,
-    handleKioskAssignmentUpdate,
-    handleAddActivity,
-    handleImportedActivities,
-    handleScrapedMatches,
-    handleClearHistoricalActivities,
-    handleMatchResultUpdate
+    setIsLoading,
+    loadError,
+    setLoadError,
+    isRefreshing: isRefetching,
+    refreshActivities,
+    lastRefreshTime
   };
 }

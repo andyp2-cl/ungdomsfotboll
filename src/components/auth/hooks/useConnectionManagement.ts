@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { testDatabaseAccess, forceReconnect, clearAuthAndReconnect } from '../utils/databaseUtils';
 import { toast } from 'sonner';
@@ -163,7 +164,7 @@ export function useConnectionManagement() {
     isCheckingDb,
     setDbStatus,
     setDbError,
-    checkDbConnection,
+    checkDbConnection: checkDbConnection,
     updateConnectionStats,
     setConnectionAttempts,
     handleForceReconnect,

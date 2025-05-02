@@ -53,7 +53,7 @@ const pwaOptions = {
       }
     ]
   },
-  // Fix: Change 'auto' to "auto" (string to enum value)
+  // Fix: Use the enum value "auto" instead of a string
   injectRegister: "auto",
   minify: true,
   injectManifest: undefined,

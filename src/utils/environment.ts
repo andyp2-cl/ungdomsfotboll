@@ -1,44 +1,38 @@
+
 /**
- * Helper functions for environment detection
+ * Environment utility functions for the application
  */
+
+// Local storage key for auto-connect database setting
+const AUTO_CONNECT_KEY = 'auto-connect-database';
 
 /**
  * Check if the application is running in development mode
- * Uses URL to determine environment since process.env is not available in browser
  */
-export function isDevelopmentEnvironment(): boolean {
-  // Check if running locally (localhost) or on a Lovable development domain
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isLovableDev = window.location.hostname.includes('lovable.app');
-  
-  // For more reliability, we can also check for specific development URLs
-  const isDevelopmentUrl = 
-    window.location.hostname.includes('.lovable.app') || 
-    isLocalhost || 
-    window.location.hostname.includes('.vercel.app');
-    
-  return isDevelopmentUrl;
-}
+export const isDevelopmentEnvironment = (): boolean => {
+  return import.meta.env.MODE === 'development' || 
+         import.meta.env.DEV === true ||
+         window.location.hostname === 'localhost';
+};
 
 /**
- * Check if automatic database connection should be enabled
+ * Check if automatic database connection should be attempted
  */
-export function shouldAutoConnectDatabase(): boolean {
-  // Read from localStorage to allow user override
-  const userPreference = localStorage.getItem('autoConnectDatabase');
+export const shouldAutoConnectDatabase = (): boolean => {
+  // Check local storage first
+  const storedPref = localStorage.getItem(AUTO_CONNECT_KEY);
   
-  // If user has explicitly set a preference, use that
-  if (userPreference !== null) {
-    return userPreference === 'true';
+  if (storedPref !== null) {
+    return storedPref === 'true';
   }
   
-  // Otherwise, auto-connect in development by default
+  // Default to true in development, false in production
   return isDevelopmentEnvironment();
-}
+};
 
 /**
- * Set auto-connect database preference
+ * Set automatic database connection preference
  */
-export function setAutoConnectDatabase(enabled: boolean): void {
-  localStorage.setItem('autoConnectDatabase', enabled ? 'true' : 'false');
-}
+export const setAutoConnectDatabase = (enabled: boolean): void => {
+  localStorage.setItem(AUTO_CONNECT_KEY, enabled ? 'true' : 'false');
+};

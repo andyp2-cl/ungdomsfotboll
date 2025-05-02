@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -117,11 +116,10 @@ export const setExtendedSessionPersistence = async () => {
     // Store a flag in localStorage to remember this login
     localStorage.setItem('session-persistence', 'extended');
     
-    // Fix: Remove expires_in property which doesn't exist in the type
+    // Fix: Remove expires_in property that doesn't exist in the type
     await supabase.auth.setSession({
       refresh_token: '',
       access_token: ''
-      // expires_in property removed
     });
     
     console.log("Extended session persistence set");

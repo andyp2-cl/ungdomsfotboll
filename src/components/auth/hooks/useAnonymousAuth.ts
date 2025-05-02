@@ -19,19 +19,24 @@ export function useAnonymousAuth() {
   
   // Get connection management
   const { 
-    connectionChecked, 
-    isConnecting, 
-    connectionError, 
-    isRLSEnabled, 
-    checkDatabaseConnection,
-    handleForceReconnect
-  } = useConnectionManagement(isOnline);
+    dbStatus, 
+    isCheckingDb, 
+    dbError, 
+    handleForceReconnect,
+    checkDbConnection
+  } = useConnectionManagement();
   
   // Get authentication actions
   const { isAuthenticating, handleLogin } = useAuthenticationActions(isOnline);
   
   // Get offline management
   const { pendingUpdatesCount, handleSyncPendingUpdates } = useOfflineManagement(isOnline);
+
+  // Map the properties to new names to maintain compatibility
+  const connectionChecked = dbStatus !== 'unknown';
+  const isConnecting = isCheckingDb;
+  const connectionError = dbError;
+  const isRLSEnabled = dbStatus === 'connected';
 
   // Toggle auto-connect setting
   const toggleAutoConnect = useCallback((enabled?: boolean) => {
@@ -41,22 +46,22 @@ export function useAnonymousAuth() {
     
     if (newValue && !isAuthenticated && isOnline) {
       // If enabling, try to connect immediately
-      checkDatabaseConnection(true);
+      checkDbConnection(true);
     }
-  }, [autoConnectActive, isAuthenticated, isOnline, checkDatabaseConnection]);
+  }, [autoConnectActive, isAuthenticated, isOnline, checkDbConnection]);
   
   // Add automatic reconnection attempt when connection error is detected
   useEffect(() => {
-    if (connectionError && isOnline) {
+    if (dbError && isOnline) {
       // Wait a moment and try one automatic reconnection
       const timer = setTimeout(() => {
         console.log("Automatic reconnection attempt after detecting connection error");
-        checkDatabaseConnection();
+        checkDbConnection();
       }, 5000); // 5 second delay
       
       return () => clearTimeout(timer);
     }
-  }, [connectionError, isOnline, checkDatabaseConnection]);
+  }, [dbError, isOnline, checkDbConnection]);
   
   return {
     isAuthenticated,
@@ -69,7 +74,7 @@ export function useAnonymousAuth() {
     connectionError,
     handleLogin,
     handleSyncPendingUpdates,
-    checkDatabaseConnection,
+    checkDatabaseConnection: checkDbConnection,
     handleForceReconnect,
     autoConnectActive,
     toggleAutoConnect
