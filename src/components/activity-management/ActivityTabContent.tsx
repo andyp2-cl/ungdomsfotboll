@@ -45,6 +45,8 @@ export function ActivityTabContent({
 }: ActivityTabContentProps) {
   const isMobile = useIsMobile();
 
+  console.log("ActivityTabContent rendering with activities:", filteredActivities.length);
+
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">

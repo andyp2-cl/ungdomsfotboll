@@ -14,9 +14,6 @@ export function useActivityState() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [retryCount, setRetryCount] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
-  
-  // Remove the useToast import and usage
-  // const { toast } = useToast(); - REMOVED
 
   // Network status monitoring
   useEffect(() => {

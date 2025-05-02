@@ -20,6 +20,8 @@ export const fetchActivitiesFromDB = async (options: {
     forceRefresh = false
   } = options;
   
+  console.log("fetchActivitiesFromDB called with options:", options);
+  
   try {
     // Mark connection test time in localStorage
     localStorage.setItem('sb-connection-test-time', Date.now().toString());
@@ -44,23 +46,26 @@ export const fetchActivitiesFromDB = async (options: {
       .select('*')
       .order('date', { ascending: true });
     
+    console.log("Fetch promise created for supabase query");
+    
     // Add fetch timeout for very slow connections
     const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
       setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 30000)
     );
     
     // Race the fetch against the timeout
+    console.log("Starting race between fetch and timeout");
     const response = await Promise.race([fetchPromise, timeoutPromise]);
+    console.log("Fetch completed, processing response");
     
     // Log diagnostic info
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     
-    // Safely access count property with type checking
-    const countValue = 'count' in response ? response.count : undefined;
-    
-    if (countValue !== undefined) {
-      localStorage.setItem('sb-activities-fetch-count', String(countValue));
-    } else if (response.data) {
+    // Check if the response has a count property before accessing it
+    if (response && 'count' in response) {
+      const countValue = response.count;
+      localStorage.setItem('sb-activities-fetch-count', String(countValue || 0));
+    } else if (response && response.data) {
       localStorage.setItem('sb-activities-fetch-count', String(response.data.length || 0));
     }
     
