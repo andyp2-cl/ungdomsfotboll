@@ -9,10 +9,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, Circle, XCircle } from "lucide-react";
 
 interface QuickMatchResultProps {
   activity: Activity;
-  onSave: (homeScore?: number, awayScore?: number) => Promise<void>;
+  onSave: (homeScore?: number, awayScore?: number, isWin?: boolean) => Promise<void>;
   isReadOnly?: boolean;
   resultColorClass?: string;
 }
@@ -25,6 +28,7 @@ export function QuickMatchResult({
 }: QuickMatchResultProps) {
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
+  const [manualWinStatus, setManualWinStatus] = useState<boolean | undefined>(activity.isWin);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -36,10 +40,11 @@ export function QuickMatchResult({
     // Update local state when activity props change
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
+    setManualWinStatus(activity.isWin);
     
     // Reset error state
     setHasError(false);
-  }, [activity.homeScore, activity.awayScore]);
+  }, [activity.homeScore, activity.awayScore, activity.isWin]);
   
   // Reset success message after 3 seconds
   useEffect(() => {
@@ -54,6 +59,29 @@ export function QuickMatchResult({
     };
   }, [showSuccess]);
   
+  // Handle auto win/loss status when scores change
+  useEffect(() => {
+    // Only auto-calculate if both scores exist and they are different (not a draw)
+    // And no manual override exists
+    if (homeScore !== undefined && 
+        awayScore !== undefined && 
+        homeScore !== awayScore && 
+        manualWinStatus === undefined) {
+      
+      const isHome = isHomeMatch(activity);
+      const calculatedStatus = calculateWinStatus(homeScore, awayScore, isHome);
+      setManualWinStatus(calculatedStatus);
+      
+      console.log(`Auto-calculated win status: ${calculatedStatus} based on scores ${homeScore}-${awayScore}, isHome=${isHome}`);
+    }
+    
+    // For equal scores, set to draw (undefined) unless manually overridden
+    if (homeScore !== undefined && awayScore !== undefined && homeScore === awayScore) {
+      console.log("Scores are equal, setting to draw");
+      setManualWinStatus(undefined); // Draw
+    }
+  }, [homeScore, awayScore, activity]);
+  
   const teamNames = extractTeamNames(activity);
   const isHome = isHomeMatch(activity);
   
@@ -64,6 +92,40 @@ export function QuickMatchResult({
   const homeTeamLabel = isHome ? "HIF" : teamNames.homeTeam.substring(0, isMobile ? 8 : 15);
   const awayTeamLabel = !isHome ? "HIF" : teamNames.awayTeam.substring(0, isMobile ? 8 : 15);
   
+  // Handle radio button change
+  const handleWinStatusChange = (value: string) => {
+    console.log("Win status radio changed to:", value);
+    
+    switch (value) {
+      case "win":
+        setManualWinStatus(true);
+        break;
+      case "loss":
+        setManualWinStatus(false);
+        break;
+      case "draw":
+        setManualWinStatus(undefined);
+        
+        // For draw, ensure scores are equal if they exist
+        if (homeScore !== undefined && awayScore !== undefined && homeScore !== awayScore) {
+          // Optional: Suggest equalizing the scores
+          if (window.confirm("Vill du göra målen lika för oavgjort?")) {
+            // Set both to the home score value
+            setHomeScore(homeScore);
+            setAwayScore(homeScore);
+          }
+        }
+        break;
+    }
+  };
+  
+  // Determine current radio value based on isWin
+  const getWinStatusValue = () => {
+    if (manualWinStatus === true) return "win";
+    if (manualWinStatus === false) return "loss";
+    return "draw";
+  };
+  
   const handleSave = async () => {
     if (isReadOnly) return;
     
@@ -71,15 +133,12 @@ export function QuickMatchResult({
     setHasError(false);
     setShowSuccess(false);
     
-    // Calculate win status based on scores and home/away status
-    const isWin = calculateWinStatus(homeScore, awayScore, isHome);
-    
     console.log("QuickMatchResult - Saving match result:", { 
       activityId: activity.id, 
       homeScore, 
       awayScore,
+      manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus,
       isHome,
-      isWin,
       retryCount
     });
     
@@ -94,13 +153,17 @@ export function QuickMatchResult({
         undefined;
       
       // Debug data conversion
-      console.log("Processed score values:", {
-        original: { homeScore, awayScore },
-        processed: { processedHomeScore, processedAwayScore }
+      console.log("Processed values:", {
+        original: { homeScore, awayScore, manualWinStatus },
+        processed: { 
+          processedHomeScore, 
+          processedAwayScore, 
+          manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus 
+        }
       });
       
       // Save the match result with our now very robust save function
-      await onSave(processedHomeScore, processedAwayScore);
+      await onSave(processedHomeScore, processedAwayScore, manualWinStatus);
       
       console.log("Score saved successfully");
       
@@ -122,7 +185,7 @@ export function QuickMatchResult({
           activityId: activity.id,
           homeScore: processedHomeScore,
           awayScore: processedAwayScore,
-          isWin: calculateWinStatus(processedHomeScore, processedAwayScore, isHome),
+          isWin: manualWinStatus, // Save the exact value including undefined for draws
           timestamp: new Date().toISOString()
         };
         const savedScores = JSON.parse(localStorage.getItem('savedMatchScores') || '{}');
@@ -152,7 +215,7 @@ export function QuickMatchResult({
           pendingUpdates[activity.id] = {
             homeScore,
             awayScore,
-            isWin: calculateWinStatus(homeScore, awayScore, isHome),
+            isWin: manualWinStatus,
             timestamp: new Date().toISOString()
           };
           localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
@@ -227,34 +290,67 @@ export function QuickMatchResult({
         </div>
         
         {!isReadOnly && (
-          <div className="space-y-2">
-            {hasError && (
-              <div className="flex items-center gap-1 text-red-500 text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>
-                  {retryCount >= 2 
-                    ? "Resultatet sparas lokalt och synkas senare" 
-                    : "Kunde inte spara ändringar. Försök igen."}
-                </span>
-              </div>
-            )}
+          <div className="space-y-4">
+            <div>
+              <div className="mb-2 text-sm font-medium">Resultat:</div>
+              <RadioGroup 
+                value={getWinStatusValue()} 
+                onValueChange={handleWinStatusChange}
+                className="flex flex-row gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="win" id="win" />
+                  <Label htmlFor="win" className="flex items-center cursor-pointer">
+                    <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                    <span>Vinst</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="draw" id="draw" />
+                  <Label htmlFor="draw" className="flex items-center cursor-pointer">
+                    <Circle className="h-4 w-4 mr-1 text-gray-600" />
+                    <span>Oavgjort</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="loss" id="loss" />
+                  <Label htmlFor="loss" className="flex items-center cursor-pointer">
+                    <XCircle className="h-4 w-4 mr-1 text-red-600" />
+                    <span>Förlust</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
             
-            {showSuccess && (
-              <div className="flex items-center gap-1 text-green-500 text-sm">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Resultat sparat framgångsrikt</span>
-              </div>
-            )}
-            
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className={`w-full ${isMobile ? 'h-10' : ''} ${hasError ? "bg-red-500 hover:bg-red-600" : ""} ${showSuccess ? "bg-green-500 hover:bg-green-600" : ""}`}
-              size={isMobile ? "sm" : "default"}
-            >
-              <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
-              {isSaving ? "Sparar..." : "Spara resultat"}
-            </Button>
+            <div className="mt-3">
+              {hasError && (
+                <div className="flex items-center gap-1 text-red-500 text-sm mb-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>
+                    {retryCount >= 2 
+                      ? "Resultatet sparas lokalt och synkas senare" 
+                      : "Kunde inte spara ändringar. Försök igen."}
+                  </span>
+                </div>
+              )}
+              
+              {showSuccess && (
+                <div className="flex items-center gap-1 text-green-500 text-sm mb-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Resultat sparat framgångsrikt</span>
+                </div>
+              )}
+              
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className={`w-full ${isMobile ? 'h-10' : ''} ${hasError ? "bg-red-500 hover:bg-red-600" : ""} ${showSuccess ? "bg-green-500 hover:bg-green-600" : ""}`}
+                size={isMobile ? "sm" : "default"}
+              >
+                <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
+                {isSaving ? "Sparar..." : "Spara resultat"}
+              </Button>
+            </div>
           </div>
         )}
       </div>

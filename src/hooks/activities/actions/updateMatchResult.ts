@@ -17,10 +17,11 @@ export const handleMatchResultUpdate = async (
   toast: any,
   activityId: string,
   homeScore?: number,
-  awayScore?: number
+  awayScore?: number,
+  isWin?: boolean
 ): Promise<void> => {
   try {
-    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
+    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
     
     // Find the existing activity
     const activity = activities.find(a => a.id === activityId);
@@ -34,11 +35,17 @@ export const handleMatchResultUpdate = async (
     // Determine if it's a home match
     const isHome = isHomeMatch(activity);
     
-    // Calculate win status based on scores and home/away status
+    // Calculate win status based on scores and home/away status if not explicitly provided
     // For draws (equal scores), isWin will be undefined
-    const isWin = calculateWinStatus(homeScore, awayScore, isHome);
+    if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
+      if (homeScore === awayScore) {
+        isWin = undefined; // Draw
+      } else {
+        isWin = calculateWinStatus(homeScore, awayScore, isHome);
+      }
+    }
     
-    console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin}`);
+    console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
     
     // Create updated activity with new scores, preserving existing player_stats
     const updatedActivity: Activity = {
@@ -76,7 +83,7 @@ export const handleMatchResultUpdate = async (
     const updateData = {
       home_score: updatedActivity.homeScore,
       away_score: updatedActivity.awayScore,
-      is_win: updatedActivity.isWin,
+      is_win: updatedActivity.isWin === true ? true : updatedActivity.isWin === false ? false : null,
       result: updatedActivity.result,
       player_stats: updatedActivity.player_stats // Make sure we're updating player_stats too
     };
@@ -85,6 +92,7 @@ export const handleMatchResultUpdate = async (
       id: updatedActivity.id,
       ...updateData,
       is_win_type: typeof updateData.is_win,
+      is_win_value: updateData.is_win,
       player_stats: JSON.stringify(updateData.player_stats)
     });
 

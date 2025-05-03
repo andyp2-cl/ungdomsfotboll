@@ -6,7 +6,7 @@ import { getResultColorClass } from "./match-result/utils";
 
 interface MatchResultQuickViewProps {
   activity: Activity;
-  onSave: (homeScore?: number, awayScore?: number) => Promise<void>;
+  onSave: (homeScore?: number, awayScore?: number, isWin?: boolean) => Promise<void>;
   isReadOnly?: boolean;
 }
 
