@@ -1,3 +1,4 @@
+
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -130,9 +131,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   // Wrapper for match result update
-  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean): Promise<void> => {
+  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean): Promise<void> => {
     try {
-      await handleMatchResultUpdate(activityId, homeScore, awayScore, isWin);
+      await handleMatchResult(activityId, homeScore, awayScore, isWin);
     } catch (error) {
       console.error("Error updating match result:", error);
     }
@@ -183,11 +184,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
-        handleMatchResultUpdate={handleMatchResult}
-        
-        // Loading state
-        isLoading={isLoading}
-        retryLoading={retryLoading}
+        handleMatchResultUpdate={handleMatchResultWrapper}
       />
     </RefreshablePageContainer>
   );
