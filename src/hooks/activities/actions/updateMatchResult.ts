@@ -40,32 +40,33 @@ export const handleMatchResultUpdate = async (
     const isHome = isHomeMatch(activity);
     
     // Update the isWin status based on score
-    // Pass all three required parameters to calculateWinStatus
     updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
-    // Try database update - properly pass activity ID and updates
+    // Try database update with more detailed logging
     try {
+      const updateData = {
+        home_score: updatedActivity.homeScore,
+        away_score: updatedActivity.awayScore,
+        is_win: updatedActivity.isWin,
+        result: updatedActivity.result
+      };
+      
       console.log("Updating activity in database:", {
         id: updatedActivity.id,
-        home_score: updatedActivity.homeScore,
-        away_score: updatedActivity.awayScore,
-        is_win: updatedActivity.isWin,
-        result: updatedActivity.result
+        ...updateData
       });
       
-      // Call the function with proper parameters - this was the source of the error
-      await updateActivityWithRLSHandling(updatedActivity.id, {
-        home_score: updatedActivity.homeScore,
-        away_score: updatedActivity.awayScore,
-        is_win: updatedActivity.isWin,
-        result: updatedActivity.result
-      });
+      // Call the enhanced RLS handling function with correct parameters
+      const { success, error } = await updateActivityWithRLSHandling(updatedActivity.id, updateData);
       
-      console.log("Activity updated in database");
+      if (!success) {
+        console.error("Database update failed:", error);
+        toast.warning("Resultat sparades lokalt men kunde inte uppdateras i databasen");
+      } else {
+        console.log("Activity updated in database successfully");
+      }
     } catch (dbError) {
       console.error("Failed to update activity in database:", dbError);
-      
-      // Continue with local update even if db update failed
       toast.warning("Resultat sparades lokalt men kunde inte uppdateras i databasen");
     }
     

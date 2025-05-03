@@ -4,7 +4,10 @@ import { Activity } from "@/types/player";
 
 // Enhanced helper function to handle RLS policy errors with activities table
 // This will use multiple approaches (upsert, update, direct methods) to ensure data is saved
-export const updateActivityWithRLSHandling = async (activityId: string, updates: any): Promise<{success: boolean, error?: any, data?: any}> => {
+export const updateActivityWithRLSHandling = async (
+  activityId: string, 
+  updates: any
+): Promise<{success: boolean, error?: any, data?: any}> => {
   console.log(`Attempting to update activity with RLS handling: ${activityId}`, updates);
 
   try {
@@ -13,7 +16,8 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
     const { error: minimalUpdateError, data: minimalUpdateData } = await supabase
       .from('activities')
       .update(updates)
-      .eq('id', activityId);
+      .eq('id', activityId)
+      .select();
     
     if (!minimalUpdateError) {
       console.log("Activity updated successfully via minimal update");
@@ -32,7 +36,8 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
       const { error: statsError, data: statsData } = await supabase
         .from('activities')
         .update(statsOnlyUpdate)
-        .eq('id', activityId);
+        .eq('id', activityId)
+        .select();
         
       if (!statsError) {
         console.log("Player stats updated successfully");
@@ -167,16 +172,17 @@ const tryUpsertApproach = async (activityId: string, updates: any) => {
       };
       
       // Try to insert as a new record, but with ON CONFLICT DO UPDATE
-      const { error: upsertError } = await supabase
+      const { error: upsertError, data: upsertData } = await supabase
         .from('activities')
         .upsert(completeActivity, { 
           onConflict: 'id',
           ignoreDuplicates: false
-        });
+        })
+        .select();
         
       if (!upsertError) {
         console.log("Activity updated via upsert approach");
-        return { success: true, data: completeActivity };
+        return { success: true, data: upsertData };
       } else {
         console.warn("Upsert approach failed:", upsertError.message);
         return { success: false, error: upsertError };
