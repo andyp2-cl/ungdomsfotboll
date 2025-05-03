@@ -130,10 +130,12 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update
+  // Wrapper for match result update - fix the argument count to match the expected signature
   const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean): Promise<void> => {
     try {
-      await handleMatchResult(activityId, homeScore, awayScore, isWin);
+      // Checking the console logs, we know that handleMatchResult can only accept 3 arguments
+      // Let's modify our call to match that signature by removing the isWin parameter
+      await handleMatchResult(activityId, homeScore, awayScore);
     } catch (error) {
       console.error("Error updating match result:", error);
     }
@@ -185,6 +187,10 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
         handleMatchResultUpdate={handleMatchResultWrapper}
+        
+        // Loading state
+        isLoading={isLoading}
+        retryLoading={retryLoading}
       />
     </RefreshablePageContainer>
   );
