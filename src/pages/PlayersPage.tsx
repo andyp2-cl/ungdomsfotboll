@@ -130,12 +130,12 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update - fix the argument count to match the expected signature
+  // Wrapper for match result update - fix the argument count and pass isWin correctly
   const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean): Promise<void> => {
     try {
-      // Checking the console logs, we know that handleMatchResult can only accept 3 arguments
-      // Let's modify our call to match that signature by removing the isWin parameter
-      await handleMatchResult(activityId, homeScore, awayScore);
+      console.log(`PlayersPage: Calling handleMatchResult with isWin=${isWin === undefined ? 'undefined (draw)' : isWin}`);
+      // We need to explicitly pass the isWin parameter to ensure draw states are handled correctly
+      await handleMatchResult(activityId, homeScore, awayScore, isWin);
     } catch (error) {
       console.error("Error updating match result:", error);
     }

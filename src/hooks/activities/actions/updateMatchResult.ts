@@ -104,8 +104,10 @@ export const handleMatchResultUpdate = async (
         .update({
           home_score: homeScore,
           away_score: awayScore,
+          // IMPORTANT: Setting null for draw states in the database
           is_win: isWin === undefined ? null : isWin,
-          result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : null
+          result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : null,
+          league_id: activity.league_id // Preserve league_id when updating
         })
         .eq('id', activityId);
         
