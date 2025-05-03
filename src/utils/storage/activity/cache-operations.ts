@@ -1,141 +1,117 @@
 
 import { Activity } from "@/types/player";
-import { saveToCache, getFromCache } from "@/utils/cache";
+
+// Key for storing activities in localStorage
+const CACHE_KEY = 'cachedActivities';
+const CACHE_TIME_KEY = 'cachedActivitiesTime';
+const CACHE_VERSION = 'v2'; // Increment this when cache format changes
 
 /**
- * Cache activities locally for offline access and performance
+ * Stores activities in localStorage cache
  */
-export const cacheActivities = (activities: Activity[]): void => {
+export const cacheActivities = async (activities: Activity[]): Promise<void> => {
   try {
-    // Don't cache if the list is empty
-    if (!activities || activities.length === 0) {
-      console.warn("Attempted to cache empty activities list, aborting");
-      return;
-    }
+    // Store the data with a timestamp
+    const cacheObj = {
+      version: CACHE_VERSION,
+      timestamp: Date.now(),
+      activities: activities
+    };
     
-    // Extract just match activities for separate backup
-    const matchActivities = activities.filter(a => a.type === 'match');
+    localStorage.setItem(CACHE_KEY, JSON.stringify(activities));
+    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+    console.log(`Stored ${activities.length} activities in cache`);
     
-    // Store in localStorage for offline fallback (legacy method)
-    localStorage.setItem('cachedActivities', JSON.stringify(activities));
-    localStorage.setItem('cachedActivitiesTime', Date.now().toString());
-    localStorage.setItem('cachedActivitiesCount', activities.length.toString());
-    
-    // Store matches separately for additional redundancy
-    if (matchActivities && matchActivities.length > 0) {
-      localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
-      localStorage.setItem('cachedMatchActivitiesTime', Date.now().toString());
-      localStorage.setItem('cachedMatchActivitiesCount', matchActivities.length.toString());
-      
-      console.log(`Cached ${matchActivities.length} match activities separately for redundancy`);
-      
-      // Store match data with longer TTL for better preservation
-      saveToCache('match-activities', matchActivities, { 
-        ttl: 60 * 60 * 24 * 7, // 7 days
-        tag: 'match-activities' 
-      });
-    }
-    
-    // Also store in the API cache system with a longer TTL
-    saveToCache('activities', activities, { 
-      ttl: 60 * 60, // 1 hour
-      tag: 'activities' 
-    });
-    
-    console.log(`Cached ${activities.length} activities successfully`);
+    // Also store in a versioned cache key
+    localStorage.setItem(`${CACHE_KEY}_${CACHE_VERSION}`, JSON.stringify(cacheObj));
   } catch (error) {
     console.error("Error caching activities:", error);
-  }
-};
-
-/**
- * Retrieve activities from cache, with special handling for match data
- */
-export const getActivitiesFromCache = (showToast: boolean = false): Activity[] | null => {
-  try {
-    // Try the standard cache first
-    const cachedData = getFromCache<Activity[]>('activities');
     
-    if (cachedData && cachedData.length > 0) {
-      // Check if we have match activities in the cache
-      const matchActivities = cachedData.filter(a => a.type === 'match');
-      console.log(`Found ${matchActivities.length} match activities in standard cache`);
+    // Try with a smaller subset if the error might be storage quota exceeded
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      // Store only essential fields for each activity
+      const essentialActivities = activities.map(activity => ({
+        id: activity.id,
+        name: activity.name,
+        date: activity.date,
+        type: activity.type,
+        time: activity.time,
+        participants: activity.participants
+      }));
       
-      if (matchActivities.length > 0) {
-        return cachedData;
-      }
-    }
-    
-    // If no match data in standard cache, try the match-specific cache
-    const cachedMatchData = getFromCache<Activity[]>('match-activities');
-    const standardCachedData = localStorage.getItem('cachedActivities');
-    const matchOnlyCachedData = localStorage.getItem('cachedMatchActivities');
-    
-    // If we have both general activities and match-specific activities, merge them
-    if (standardCachedData && matchOnlyCachedData) {
       try {
-        const activities = JSON.parse(standardCachedData);
-        const matchActivities = JSON.parse(matchOnlyCachedData);
-        
-        // Create a merged set without duplicates
-        const existingIds = new Set(activities.map((a: Activity) => a.id));
-        const mergedActivities = [...activities];
-        
-        matchActivities.forEach((match: Activity) => {
-          if (!existingIds.has(match.id)) {
-            mergedActivities.push(match);
-            existingIds.add(match.id);
-          }
-        });
-        
-        console.log(`Created merged cache with ${mergedActivities.length} activities including ${matchActivities.length} matches`);
-        return mergedActivities;
-      } catch (e) {
-        console.error("Error merging cached data:", e);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(essentialActivities));
+        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        console.log(`Stored ${essentialActivities.length} essential-only activities in cache`);
+      } catch (fallbackError) {
+        console.error("Even essential-only caching failed:", fallbackError);
       }
     }
-    
-    // Fall back to any cache that has data, prioritizing match data
-    if (cachedMatchData && cachedMatchData.length > 0) {
-      console.log(`Using special match cache with ${cachedMatchData.length} activities`);
-      return cachedMatchData;
+  }
+};
+
+/**
+ * Retrieves activities from localStorage cache
+ */
+export const getActivitiesFromCache = (): Activity[] | null => {
+  try {
+    // Try the versioned cache first (more complete with metadata)
+    const versionedCache = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
+    if (versionedCache) {
+      const cacheObj = JSON.parse(versionedCache);
+      console.log(`Retrieved ${cacheObj.activities.length} activities from versioned cache`);
+      return cacheObj.activities;
     }
     
-    if (matchOnlyCachedData) {
-      try {
-        const matchActivities = JSON.parse(matchOnlyCachedData);
-        console.log(`Using localStorage match cache with ${matchActivities.length} activities`);
-        return matchActivities;
-      } catch (e) {
-        console.error("Error parsing cached match activities:", e);
-      }
+    // Fall back to the simple cache
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    if (!cachedData) {
+      console.log('No cached activities found');
+      return null;
     }
     
-    // Last resort - regular localStorage cache
-    if (standardCachedData) {
-      try {
-        const activities = JSON.parse(standardCachedData);
-        console.log(`Using regular localStorage cache with ${activities.length} activities`);
-        return activities;
-      } catch (e) {
-        console.error("Error parsing cached activities:", e);
-      }
-    }
-    
-    // No usable cache found
-    return null;
+    const activities = JSON.parse(cachedData);
+    console.log(`Retrieved ${activities.length} activities from simple cache`);
+    return activities;
   } catch (error) {
-    console.error("Error reading cached activities:", error);
+    console.error("Error retrieving activities from cache:", error);
     return null;
   }
 };
 
 /**
- * Check if we should refresh the cache based on its age
+ * Checks if the cache should be refreshed based on age
  */
 export const shouldRefreshCache = (): boolean => {
-  const cacheTime = Number(localStorage.getItem('cachedActivitiesTime') || 0);
-  const cacheAge = (Date.now() - cacheTime) / 1000;
+  const cacheTimeStr = localStorage.getItem(CACHE_TIME_KEY);
+  if (!cacheTimeStr) return true;
   
-  return cacheAge > 300; // 5 minutes
+  const cacheTime = parseInt(cacheTimeStr, 10);
+  const now = Date.now();
+  const cacheAge = now - cacheTime;
+  const MAX_CACHE_AGE = 5 * 60 * 1000; // 5 minutes
+  
+  return cacheAge > MAX_CACHE_AGE;
+};
+
+/**
+ * Clears the activities cache
+ */
+export const clearActivitiesCache = (): void => {
+  localStorage.removeItem(CACHE_KEY);
+  localStorage.removeItem(CACHE_TIME_KEY);
+  localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
+  console.log('Activities cache cleared');
+};
+
+/**
+ * Gets the age of the cache in seconds
+ */
+export const getCacheAge = (): number | null => {
+  const cacheTimeStr = localStorage.getItem(CACHE_TIME_KEY);
+  if (!cacheTimeStr) return null;
+  
+  const cacheTime = parseInt(cacheTimeStr, 10);
+  const now = Date.now();
+  return Math.round((now - cacheTime) / 1000);
 };

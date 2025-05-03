@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Save, Download } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,9 +11,9 @@ import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./hooks/useActivityTabViews";
-import { Save } from "lucide-react";
 import { useBackupRestore } from "@/utils/storage/backup";
 import { BackupRestoreDialog } from "@/components/backup-restore/BackupRestoreDialog";
+import { downloadCSVTemplate, downloadExportInstructions } from "@/components/file-import/helpers/downloadHelpers";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -75,15 +75,18 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     
     try {
       if (props.retryLoading) {
+        // Force refresh from database
         await props.retryLoading();
+        console.log("Forcing data refresh from server");
         toast.success("Data uppdaterad från servern");
       } else {
+        // Fallback if retryLoading is not available
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success("Data uppdaterad");
       }
     } catch (error) {
-      toast.error("Kunde inte uppdatera data");
       console.error("Error refreshing data:", error);
+      toast.error("Kunde inte uppdatera data");
     } finally {
       setIsRefreshing(false);
     }
@@ -104,10 +107,32 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
       await createBackup();
       toast.success("Säkerhetskopia skapad");
     } catch (error) {
-      toast.error("Kunde inte skapa säkerhetskopia");
       console.error("Error creating backup:", error);
+      toast.error("Kunde inte skapa säkerhetskopia");
     }
   };
+
+  const handleDownloadCSVTemplate = () => {
+    downloadCSVTemplate();
+    toast.success("CSV-mall nedladdad");
+  };
+
+  const handleDownloadExportInstructions = () => {
+    downloadExportInstructions();
+    toast.success("Exportinstruktioner nedladdade");
+  };
+
+  // Display debug information about data loading state
+  console.log("ActivityTabContent rendering with:", {
+    activitiesCount: props.activities.length,
+    filteredActivitiesCount: props.filteredActivities.length,
+    filteredHistoricalActivitiesCount: props.filteredHistoricalActivities.length,
+    isLoading: props.isLoading,
+    loadError: props.loadError
+  });
+
+  // Add debug section if there's no data but we're not in loading state
+  const hasNoData = props.activities.length === 0 && !props.isLoading;
 
   return (
     <div className="space-y-6">
@@ -137,6 +162,37 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           setSearchQuery={setSearchQuery}
           isHistorical={isHistorical}
         />
+      )}
+      
+      {hasNoData && (
+        <div className="p-4 border rounded-md bg-amber-50 space-y-4">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <span className="text-amber-600">Inga aktiviteter hittades</span>
+          </h3>
+          <p>Du kan:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Klicka på "Uppdatera" för att försöka ladda datan igen</li>
+            <li>Importera aktiviteter från CSV genom att gå till "Verktyg"</li>
+            <li>
+              <button 
+                onClick={handleDownloadCSVTemplate} 
+                className="text-blue-600 underline hover:text-blue-800 flex items-center gap-1"
+              >
+                <Download className="h-3 w-3" />
+                Ladda ner CSV-mall
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={handleDownloadExportInstructions} 
+                className="text-blue-600 underline hover:text-blue-800 flex items-center gap-1"
+              >
+                <Download className="h-3 w-3" />
+                Ladda ner exportinstruktioner
+              </button>
+            </li>
+          </ul>
+        </div>
       )}
       
       <PullToRefresh onRefresh={handleRefresh} disabled={!!props.selectedActivity || !!selectedPlayer || props.isLoading}>

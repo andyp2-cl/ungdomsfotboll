@@ -4,6 +4,7 @@ import { Activity } from "@/types/player";
 import { getStoredActivities } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
+import { clearActivitiesCache } from "@/utils/storage/activity/cache-operations";
 
 export function useActivityState() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -86,6 +87,10 @@ export function useActivityState() {
       
       // Clear API cache if forcing refresh
       if (forceRefresh) {
+        // Clear local storage cache for activities
+        clearActivitiesCache();
+        
+        // Also clear service worker cache if available
         await clearApiCache();
         setLastRefreshTime(Date.now());
       }
@@ -99,10 +104,9 @@ export function useActivityState() {
         }
       }, 3000);
       
+      console.log(`Loading activities with forceRefresh=${forceRefresh}, retryCount=${retryCount}`);
+      
       try {
-        // Log attempt
-        console.log(`Loading activities with forceRefresh=${forceRefresh}, retryCount=${retryCount}`);
-        
         // Try with increased priority for data freshness
         const storedActivities = await getStoredActivities({
           forceRefresh: forceRefresh || retryCount > 0,
@@ -127,21 +131,9 @@ export function useActivityState() {
             console.log("Sample match data:", matches[0]);
           } else {
             console.warn("No matches found in loaded activities");
-            
-            if (forceRefresh && retryCount < maxAttempts - 1) {
-              // Try again with force refresh and incremented retry count
-              setRetryCount(prev => prev + 1);
-              setTimeout(() => {
-                sonnerToast.info(`Inga matcher hittades. Försöker igen (${retryCount + 1}/${maxAttempts})...`);
-                loadActivities({
-                  forceRefresh: true,
-                  showToast: true,
-                  maxAttempts
-                });
-              }, 2000);
-            }
           }
           
+          // Set activities in state
           setActivities(storedActivities);
           setRetryCount(0); // Reset retry count on success
           
@@ -167,37 +159,14 @@ export function useActivityState() {
               setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
             } catch (e) {
               console.error("Failed to parse cached activities:", e);
+              setLoadError("Fel vid läsning av cachad data.");
             }
-            
-            // If we're below max attempts, increment retry counter and try again
-            if (retryCount < maxAttempts - 1) {
-              setRetryCount(prev => prev + 1);
-              
-              // Try again after a delay with exponential backoff
-              setTimeout(() => {
-                if (showToast) {
-                  sonnerToast.info(`Försöker hämta data igen (försök ${retryCount + 1}/${maxAttempts})...`);
-                }
-                loadActivities({
-                  forceRefresh: true,
-                  showToast: showToast,
-                  maxAttempts
-                });
-              }, 2000 * Math.pow(2, retryCount));
-            } else if (retryCount >= maxAttempts - 1 && showToast) {
-              // After maximum retries, suggest a solution
-              sonnerToast.error("Kunde inte hämta nya aktiviteter efter flera försök", {
-                description: "Prova att logga ut och in igen, eller be en administratör kontrollera databasen",
-                duration: 8000
-              });
-            }
-          } else if (isOffline) {
-            setLoadError("Du är offline och inga lokalt sparade aktiviteter hittades");
           } else {
-            toast({
-              title: "Inga aktiviteter hittades",
-              description: "Inga aktiviteter hittades i databasen.",
-            });
+            setLoadError(isOffline 
+              ? "Du är offline och inga lokalt sparade aktiviteter hittades"
+              : "Inga aktiviteter hittades i databasen eller i lokal cache."
+            );
+            setActivities([]);
           }
         }
       } catch (error) {
@@ -217,25 +186,14 @@ export function useActivityState() {
             console.log(`Found ${cachedMatches.length} matches in cache`);
           } catch (e) {
             console.error("Failed to parse cached activities:", e);
+            setLoadError("Fel vid läsning av cachad data.");
           }
         } else {
           setLoadError(isOffline 
             ? "Du är offline. Kontrollera din nätverksanslutning och försök igen." 
             : "Ett fel uppstod när aktiviteter skulle hämtas från databasen."
           );
-        }
-        
-        // Try again if retry count not exceeded
-        if (retryCount < maxAttempts - 1) {
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            sonnerToast.info(`Felhämtning: Försöker igen (${retryCount + 1}/${maxAttempts})...`);
-            loadActivities({
-              forceRefresh: true,
-              showToast: true,
-              maxAttempts
-            });
-          }, 3000 * Math.pow(2, retryCount));
+          setActivities([]);
         }
       }
     } finally {

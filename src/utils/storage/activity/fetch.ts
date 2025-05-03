@@ -41,6 +41,20 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
     toast.info("Hämtar färsk data från servern", { duration: 2000 });
   }
   
+  // Cache diagnostics - log what's currently in cache
+  try {
+    const cacheDiagnostics = getActivitiesFromCache();
+    console.log(`Cache diagnostic check: ${cacheDiagnostics ? cacheDiagnostics.length : 0} activities in cache`);
+    if (cacheDiagnostics && cacheDiagnostics.length > 0) {
+      console.log(`Cache contains ${cacheDiagnostics.filter(a => a.type === 'match').length} matches`);
+      console.log(`First cached activity: ${JSON.stringify(cacheDiagnostics[0]?.id)} - ${cacheDiagnostics[0]?.name}`);
+    } else {
+      console.log("Cache is empty or invalid");
+    }
+  } catch (e) {
+    console.error("Error checking cache diagnostics:", e);
+  }
+  
   // Try to fetch from database first if online, regardless of forceRefresh
   if (navigator.onLine) {
     try {
@@ -113,6 +127,20 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       console.log(`Found ${matchActivities.length} cached match activities`);
       
       return cachedActivities;
+    } else {
+      console.warn("No activities found in cache");
+      
+      // Try to load activities directly from localStorage as last resort
+      const rawCachedData = localStorage.getItem('cachedActivities');
+      if (rawCachedData) {
+        try {
+          const parsedActivities = JSON.parse(rawCachedData);
+          console.log(`Last resort: Loaded ${parsedActivities.length} activities from raw localStorage`);
+          return parsedActivities;
+        } catch (e) {
+          console.error("Failed to parse raw localStorage cached activities:", e);
+        }
+      }
     }
   } catch (cacheError) {
     console.error("Error getting activities from cache:", cacheError);
