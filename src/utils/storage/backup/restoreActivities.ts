@@ -46,7 +46,7 @@ export const restoreActivities = async (activities: any[]): Promise<{
     // First validate if activities have the correct format
     const validateActivities = processedActivities.every(activity => {
       const requiredFields = ['id', 'name', 'date', 'type'];
-      const isValid = requiredFields.every(field => activity[field] !== undefined);
+      const isValid = requiredFields.every(field => activity[field as keyof Activity] !== undefined);
       if (!isValid) {
         console.error("Invalid activity missing required fields:", activity);
       }

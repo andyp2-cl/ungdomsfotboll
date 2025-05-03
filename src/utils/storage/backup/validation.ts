@@ -1,76 +1,75 @@
 
-import { Activity } from "@/types/player";
 import { validateBackupData } from "./utils";
 
 /**
- * Validates the backup data and ensures it's in the correct format
+ * Validates a backup file before restoration
  */
-export const validateBackup = (): { 
-  backupData: any;
-  isValid: boolean;
-  error?: string;
-} => {
+export const validateBackup = () => {
   try {
-    console.log("Validating backup data...");
-    const backupData = localStorage.getItem('hassleholmsif_backup');
+    // Get the backup data from localStorage
+    const backupString = localStorage.getItem('hassleholmsif_backup');
     
-    if (!backupData) {
-      console.error("No backup found");
-      return { 
-        backupData: null, 
-        isValid: false, 
-        error: "No backup found" 
-      };
-    }
-    
-    let backup;
-    try {
-      backup = JSON.parse(backupData);
-      console.log("Loaded backup data:", {
-        timestamp: backup.timestamp,
-        players: backup.players?.length || 0,
-        activities: backup.activities?.length || 0
-      });
-    } catch (error) {
-      console.error("Error parsing backup data:", error);
-      return { 
-        backupData: null, 
+    if (!backupString) {
+      return {
         isValid: false,
-        error: "Invalid backup format" 
+        error: "No backup data found in localStorage",
+        backupData: null
       };
     }
     
-    if (!backup.players || !backup.activities) {
-      console.error("Invalid backup format. Missing players or activities:", backup);
-      return { 
-        backupData: backup, 
+    // Parse the backup data
+    const backupData = JSON.parse(backupString);
+    
+    // Validate the backup data structure
+    const isValid = validateBackupData(backupData);
+    
+    if (isValid) {
+      // Check how many activities are in the backup
+      const activityCount = backupData.activities.length;
+      const playerCount = backupData.players.length;
+      const matchCount = backupData.activities.filter((a: any) => a.type === 'match').length;
+      
+      console.log(`Validation successful. Backup contains ${playerCount} players and ${activityCount} activities, including ${matchCount} matches.`);
+      
+      // Log first player and activity for debugging
+      if (backupData.players.length > 0) {
+        console.log("First player sample:", {
+          id: backupData.players[0].id,
+          name: backupData.players[0].name,
+          hasActivities: Array.isArray(backupData.players[0].activities) && backupData.players[0].activities.length > 0
+        });
+      }
+      
+      if (backupData.activities.length > 0) {
+        const firstMatch = backupData.activities.find((a: any) => a.type === 'match');
+        if (firstMatch) {
+          console.log("First match sample:", {
+            id: firstMatch.id,
+            name: firstMatch.name,
+            homeScore: firstMatch.homeScore || firstMatch.home_score,
+            awayScore: firstMatch.awayScore || firstMatch.away_score
+          });
+        }
+      }
+      
+      return {
+        isValid: true,
+        backupData,
+        error: null
+      };
+    } else {
+      return {
         isValid: false,
-        error: "Invalid backup format. Missing players or activities" 
+        error: "Backup data validation failed",
+        backupData: null
       };
     }
-    
-    if (backup.players.length === 0 && backup.activities.length === 0) {
-      console.error("Backup contains no data (empty players and activities arrays)");
-      return { 
-        backupData: backup, 
-        isValid: false,
-        error: "Backup contains no data" 
-      };
-    }
-    
-    // Use the existing validation function
-    const isValid = validateBackupData(backup);
-    
-    return { 
-      backupData: backup, 
-      isValid 
-    };
   } catch (error) {
     console.error("Error validating backup:", error);
-    return { 
-      backupData: null, 
+    return {
       isValid: false,
-      error: "Error validating backup" 
+      error: error instanceof Error ? error.message : "Unknown error during validation",
+      backupData: null
     };
   }
 };
