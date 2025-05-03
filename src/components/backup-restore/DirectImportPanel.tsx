@@ -27,7 +27,12 @@ export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
       
       // Skapa en tillfällig Supabase-klient för produktionsmiljön
       const { createClient } = await import('@supabase/supabase-js');
-      const liveSupabase = createClient(liveSupabaseUrl, liveAnonKey);
+      const liveSupabase = createClient(liveSupabaseUrl, liveAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: false
+        }
+      });
       
       console.log("Försöker hämta data från live Supabase...");
       
@@ -167,6 +172,7 @@ export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
       
       {error && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>Importen misslyckades</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
