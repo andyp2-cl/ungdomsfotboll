@@ -11,8 +11,7 @@ import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./hooks/useActivityTabViews";
-import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
-import { Globe, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useBackupRestore } from "@/utils/storage/backup";
 import { BackupRestoreDialog } from "@/components/backup-restore/BackupRestoreDialog";
 
@@ -42,7 +41,6 @@ interface ActivityTabContentProps {
 export function ActivityTabContent(props: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupMode, setBackupMode] = useState<"backup" | "restore">("backup");
   const isMobile = useIsMobile();
@@ -91,10 +89,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     }
   };
 
-  const handleOpenImportDialog = () => {
-    setIsImportDialogOpen(true);
-  };
-
   const handleOpenBackupDialog = () => {
     setBackupMode("backup");
     setIsBackupDialogOpen(true);
@@ -125,7 +119,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           isMobile={isMobile}
-          onImportClick={handleOpenImportDialog}
           onBackupClick={handleOpenBackupDialog}
           onRestoreClick={handleOpenRestoreDialog}
         />
@@ -165,27 +158,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onImportActivities={props.handleImportedActivities}
         />
       </PullToRefresh>
-      
-      {/* Import from Live Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              Importera från live-miljö
-            </DialogTitle>
-          </DialogHeader>
-          <ImportFromLiveForm 
-            onImportedActivities={async (activities) => {
-              const result = await props.handleImportedActivities(activities);
-              if (result) {
-                setIsImportDialogOpen(false);
-              }
-              return result;
-            }} 
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Backup/Restore Dialog */}
       <BackupRestoreDialog 
