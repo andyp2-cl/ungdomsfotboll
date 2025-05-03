@@ -10,7 +10,7 @@ import { ActivityTabHeader } from "./components/ActivityTabHeader";
 import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
-import { useActivityTabViews } from "./hooks/useActivityTabViews";
+import { useActivityTabViews } from "@/hooks/activities/useActivityTabViews";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
 
