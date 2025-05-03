@@ -2,7 +2,7 @@
 import { validateBackup } from "../validation";
 import { clearExistingData } from "../clearDatabase";
 import { restorePlayers } from "../restorePlayers";
-import { restoreActivities, restorePlayerActivities } from "../restoreActivities";
+import { restoreActivities, restorePlayerActivities } from "../restore-activities";
 import { toast } from "sonner";
 import { checkDatabaseConnection } from "./databaseConnection";
 import { cacheBackupData, refreshCaches } from "./cacheBackupData";
