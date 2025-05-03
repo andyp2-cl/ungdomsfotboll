@@ -63,7 +63,6 @@ export function QuickMatchResult({
         (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore);
       
       // Call the save function passed from parent with numeric values
-      // Fixed: Don't test the Promise<void> for truthiness
       await onSave(processedHomeScore, processedAwayScore);
       
       // Force clear caches to ensure fresh data loads

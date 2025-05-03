@@ -75,6 +75,7 @@ export const handleMatchResultUpdate = async (
           localStorage.removeItem('sb-activities-fetch-time');
           console.log("Cleared local cache after successful storage update");
           
+          toastLibrary.success("Matchresultat sparat lokalt");
           return true;
         }
       } catch (saveError) {

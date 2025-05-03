@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Activity } from "@/types/player";
-import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch, extractTeamNames, isHassleholm } from "@/components/activity-detail/match-result/utils";
 import { Check, X, Minus } from "lucide-react";
 
 interface MatchResultDisplayProps {
@@ -16,21 +16,17 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
   
   // Get team name information
   const matchName = activity.name || '';
-  let teamInfo = { homeTeam: '', awayTeam: '' };
+  const { homeTeam, awayTeam } = extractTeamNames(activity);
   
-  if (matchName.includes(' - ')) {
-    const parts = matchName.split(' - ');
-    if (parts.length >= 2) {
-      teamInfo.homeTeam = parts[0].trim();
-      teamInfo.awayTeam = parts[1].trim();
-    }
-  }
+  // Check if Hässleholms IF is one of the teams
+  const isHifHome = isHassleholm(homeTeam);
+  const isHifAway = isHassleholm(awayTeam);
   
   // Legacy result message
   let resultMessage = '';
   if (activity.result) {
     resultMessage = `Resultat: ${activity.result}`;
-  } else if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+  } else if (showResult) {
     resultMessage = `Resultat: ${activity.homeScore}-${activity.awayScore}`;
   }
   
@@ -51,12 +47,20 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
     }
     
     // If isWin is not available, fall back to calculating based on scores
-    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    if (showResult) {
+      // Check if Hässleholms IF is one of the teams
+      if (isHifHome) {
+        return activity.homeScore! > activity.awayScore! ? "text-green-600" : "text-red-600";
+      } else if (isHifAway) {
+        return activity.awayScore! > activity.homeScore! ? "text-green-600" : "text-red-600";
+      }
+      
+      // If can't identify Hässleholms IF, fall back to home/away logic
       const isHome = isHomeMatch(activity);
       if (isHome) {
-        return activity.homeScore > activity.awayScore ? "text-green-600" : "text-red-600";
+        return activity.homeScore! > activity.awayScore! ? "text-green-600" : "text-red-600";
       } else {
-        return activity.awayScore > activity.homeScore ? "text-green-600" : "text-red-600";
+        return activity.awayScore! > activity.homeScore! ? "text-green-600" : "text-red-600";
       }
     }
     
@@ -75,22 +79,43 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
     }
     
     // Calculate icon if isWin is not explicitly set
-    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
-      const isHome = isHomeMatch(activity);
-      if (isHome) {
-        if (activity.homeScore > activity.awayScore) {
+    if (showResult) {
+      if (isHifHome) {
+        if (activity.homeScore! > activity.awayScore!) {
           return <Check className="h-4 w-4 mr-1 text-green-600" />;
-        } else if (activity.homeScore < activity.awayScore) {
+        } else if (activity.homeScore! < activity.awayScore!) {
+          return <X className="h-4 w-4 mr-1 text-red-600" />;
+        }
+      } else if (isHifAway) {
+        if (activity.awayScore! > activity.homeScore!) {
+          return <Check className="h-4 w-4 mr-1 text-green-600" />;
+        } else if (activity.awayScore! < activity.homeScore!) {
           return <X className="h-4 w-4 mr-1 text-red-600" />;
         }
       } else {
-        if (activity.awayScore > activity.homeScore) {
-          return <Check className="h-4 w-4 mr-1 text-green-600" />;
-        } else if (activity.awayScore < activity.homeScore) {
-          return <X className="h-4 w-4 mr-1 text-red-600" />;
+        // Fall back to home/away logic
+        const isHome = isHomeMatch(activity);
+        if (isHome) {
+          if (activity.homeScore! > activity.awayScore!) {
+            return <Check className="h-4 w-4 mr-1 text-green-600" />;
+          } else if (activity.homeScore! < activity.awayScore!) {
+            return <X className="h-4 w-4 mr-1 text-red-600" />;
+          }
+        } else {
+          if (activity.awayScore! > activity.homeScore!) {
+            return <Check className="h-4 w-4 mr-1 text-green-600" />;
+          } else if (activity.awayScore! < activity.homeScore!) {
+            return <X className="h-4 w-4 mr-1 text-red-600" />;
+          }
         }
       }
+      
+      // If scores are equal (draw)
+      if (activity.homeScore === activity.awayScore) {
+        return <Minus className="h-4 w-4 mr-1 text-gray-600" />;
+      }
     }
+    
     return null;
   };
   
@@ -98,43 +123,37 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
   const getEnhancedResultText = () => {
     if (!showResult) return resultMessage;
     
-    const { homeTeam, awayTeam } = teamInfo;
-    const isHifInHomeTeam = homeTeam.toLowerCase().includes('hässleholm') || homeTeam.toLowerCase().includes('hif');
-    const isHifInAwayTeam = awayTeam.toLowerCase().includes('hässleholm') || awayTeam.toLowerCase().includes('hif');
-    
     // Draw case
     if (activity.homeScore === activity.awayScore) {
       return `Resultat: ${activity.homeScore}-${activity.awayScore} (Oavgjort)`;
     }
     
+    // Check if Hässleholms IF is one of the teams
+    if (isHifHome) {
+      return activity.homeScore! > activity.awayScore! 
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
+    } else if (isHifAway) {
+      return activity.awayScore! > activity.homeScore! 
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
+    }
+    
     // Determine win/loss based on isWin property if available
     if (activity.isWin === true) {
-      if (isHifInHomeTeam && activity.homeScore > activity.awayScore) {
-        return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`;
-      } else if (isHifInAwayTeam && activity.awayScore > activity.homeScore) {
-        return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`;
-      }
       return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`;
     } else if (activity.isWin === false) {
       return `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
     }
     
-    // Calculate win/loss based on scores
+    // Calculate win/loss based on home/away if we can't identify by team name
     const isHome = isHomeMatch(activity);
-    if (isHifInHomeTeam) {
-      return activity.homeScore > activity.awayScore 
-        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
-        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
-    } else if (isHifInAwayTeam) {
-      return activity.awayScore > activity.homeScore 
-        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
-        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
-    } else if (isHome) {
-      return activity.homeScore > activity.awayScore
+    if (isHome) {
+      return activity.homeScore! > activity.awayScore!
         ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`
         : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
     } else {
-      return activity.awayScore > activity.homeScore
+      return activity.awayScore! > activity.homeScore!
         ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`
         : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
     }

@@ -31,7 +31,8 @@ export const determineMatchOutcome = (
     homeTeam,
     awayTeam,
     isHifHome,
-    isHifAway
+    isHifAway,
+    activity_name: activity.name
   });
   
   // If we can identify that Hässleholms IF is home or away, use that to determine win
