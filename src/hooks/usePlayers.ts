@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -56,7 +57,8 @@ export function usePlayers(initialTab?: string) {
     handleAddActivity,
     handleImportedActivities,
     handleClearHistoricalActivities,
-    handleMatchResultUpdate
+    handleMatchResultUpdate,
+    retryLoading  // Include retryLoading from useActivities
   } = useActivities(players, setPlayers);
 
   // Wrapper for activity update
@@ -174,6 +176,7 @@ export function usePlayers(initialTab?: string) {
     handleMatchResult,
     
     // Loading state
-    isLoading
+    isLoading,
+    retryLoading  // Add retryLoading to the returned object
   };
 }

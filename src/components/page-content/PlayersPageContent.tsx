@@ -51,6 +51,10 @@ interface PlayersPageContentProps {
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => void;
+  
+  // Loading state
+  isLoading?: boolean;
+  retryLoading?: () => void;
 }
 
 export function PlayersPageContent(props: PlayersPageContentProps) {
@@ -96,6 +100,8 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               filteredActivities={props.filteredActivities}
               filteredHistoricalActivities={props.filteredHistoricalActivities}
               isAddActivityOpen={props.isAddActivityOpen}
+              isLoading={props.isLoading}
+              retryLoading={props.retryLoading}
               handleActivityTypeChange={props.handleActivityTypeChange}
               setSelectedActivity={props.setSelectedActivity}
               handleActivityUpdate={handleActivityUpdateWrapper}
