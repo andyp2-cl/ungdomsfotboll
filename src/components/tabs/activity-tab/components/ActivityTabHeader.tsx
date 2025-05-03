@@ -1,17 +1,21 @@
 
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BarChart2, RefreshCw, Loader2, Download } from "lucide-react";
-import { toast } from "sonner";
+import { RefreshCw, LayoutList, History, LineChart, Database, FileImport } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useImportDialog } from "../hooks/useImportDialog";
+import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Activity } from "@/types/player";
 
 interface ActivityTabHeaderProps {
-  activeView: string;
-  handleViewChange: (value: string) => void;
+  activeView: "current" | "historical" | "statistics" | "tools";
+  handleViewChange: (view: "current" | "historical" | "statistics" | "tools") => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh?: () => void; // Refresh callback
-  isMobile?: boolean;
-  isRefreshing?: boolean;
-  onImportClick?: () => void; // New callback for import button
+  onRefresh: () => Promise<void>;
+  isRefreshing: boolean;
+  isMobile: boolean;
+  onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 
 export function ActivityTabHeader({
@@ -19,84 +23,80 @@ export function ActivityTabHeader({
   handleViewChange,
   setIsAddActivityOpen,
   onRefresh,
-  isMobile = false,
-  isRefreshing = false,
-  onImportClick
+  isRefreshing,
+  isMobile,
+  onImportActivities
 }: ActivityTabHeaderProps) {
-  const handleRefresh = () => {
-    if (onRefresh) {
-      toast.info("Uppdaterar data från servern...", {
-        id: "refresh-data",
-        duration: isRefreshing ? Infinity : 3000
-      });
-      onRefresh();
-    }
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  
+  const handleImportClick = () => {
+    setIsImportDialogOpen(true);
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full sm:w-auto">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Aktiviteter</h2>
-        <div className="flex items-center gap-2">
-          {onImportClick && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onImportClick}
-              title="Importera data från live-miljön"
-              aria-label="Importera data från live-miljön"
-              className="flex items-center gap-1"
-            >
-              <Download className="h-4 w-4" />
-              {!isMobile && "Importera från live"}
-            </Button>
-          )}
-          {onRefresh && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="Uppdatera data från servern"
-              aria-label="Uppdatera data från servern"
-              className="flex items-center gap-1"
-            >
-              {isRefreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              {!isMobile && (isRefreshing ? "Uppdaterar..." : "Uppdatera data")}
-            </Button>
-          )}
-          <Button 
-            size="sm" 
-            onClick={() => setIsAddActivityOpen(true)}
-            aria-label="Lägg till aktivitet"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            {!isMobile && "Ny aktivitet"}
-          </Button>
-        </div>
-      </div>
-      <Tabs
-        value={activeView}
-        onValueChange={handleViewChange}
-        className="w-full"
-      >
-        <TabsList className="w-full">
-          <TabsTrigger value="historical" className="flex-1">
-            Tidigare
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+      <Tabs className="w-full sm:w-auto" value={activeView} onValueChange={(value) => handleViewChange(value as any)}>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="current">
+            <LayoutList className="h-4 w-4 mr-2 hidden sm:block" />
+            Aktuella
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="flex-1">
-            Kommande
+          <TabsTrigger value="historical">
+            <History className="h-4 w-4 mr-2 hidden sm:block" />
+            Historiska
           </TabsTrigger>
-          <TabsTrigger value="statistics" className="flex-1">
-            <BarChart2 className="h-4 w-4 mr-2" />
-            {!isMobile && "Statistik"}
+          <TabsTrigger value="statistics">
+            <LineChart className="h-4 w-4 mr-2 hidden sm:block" />
+            Statistik
+          </TabsTrigger>
+          <TabsTrigger value="tools">
+            <Database className="h-4 w-4 mr-2 hidden sm:block" />
+            Verktyg
           </TabsTrigger>
         </TabsList>
       </Tabs>
+      
+      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onRefresh} 
+          disabled={isRefreshing}
+          className="sm:mr-2"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Uppdatera
+        </Button>
+
+        {activeView === "tools" && onImportActivities && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleImportClick} 
+            className="sm:mr-2"
+          >
+            <FileImport className="h-4 w-4 mr-2" />
+            Importera från live
+          </Button>
+        )}
+      </div>
+
+      {/* Import from Live Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importera från Live-miljö</DialogTitle>
+          </DialogHeader>
+          <ImportFromLiveForm onImportedActivities={async (activities) => {
+            if (onImportActivities) {
+              await onImportActivities(activities);
+              setIsImportDialogOpen(false);
+              return true;
+            }
+            return false;
+          }} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
