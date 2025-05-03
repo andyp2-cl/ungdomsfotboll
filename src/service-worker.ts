@@ -13,8 +13,8 @@ self.__WB_MANIFEST;
 declare const self: ServiceWorkerGlobalScope
 
 // Cache names
-const CACHE_NAME = 'hif-team-app-v1';
-const API_CACHE_NAME = 'hif-api-cache';
+const CACHE_NAME = 'hif-team-app-v1.1'; // Incremented version
+const API_CACHE_NAME = 'hif-api-cache-v1';  // Versioned API cache
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -71,7 +71,8 @@ self.addEventListener('fetch', (event) => {
           cache: 'no-store',
           headers: new Headers({
             'X-Custom-Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
           })
         })
           .then(response => {

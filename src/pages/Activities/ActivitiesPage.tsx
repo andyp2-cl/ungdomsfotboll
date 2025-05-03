@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { forceRefreshAllActivities } from "@/utils/storage/activity/fetch";
 import { refreshPlayerActivitiesCache } from "@/lib/supabase/playerActivities";
+import { clearActivitiesCache } from "@/utils/storage/activity/cache-operations";
 import { toast } from "sonner";
 
 export function ActivitiesPage() {
@@ -26,11 +27,31 @@ export function ActivitiesPage() {
     queryKey: ['activities'],
     queryFn: getStoredActivities,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
   const handleRefreshData = async () => {
     setIsRefreshing(true);
     try {
+      toast.info("Rensar cache och uppdaterar data...");
+      
+      // Clear local cache first
+      clearActivitiesCache();
+      
+      // Clear service worker cache if available
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        try {
+          const messageChannel = new MessageChannel();
+          navigator.serviceWorker.controller.postMessage({
+            type: 'CLEAR_API_CACHE',
+            timestamp: Date.now()
+          }, [messageChannel.port2]);
+          console.log("Sent cache clear request to service worker");
+        } catch (e) {
+          console.error("Error communicating with service worker:", e);
+        }
+      }
+      
       // Force refresh all data
       await forceRefreshAllActivities();
       await refreshPlayerActivitiesCache();

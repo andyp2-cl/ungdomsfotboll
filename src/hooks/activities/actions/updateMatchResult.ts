@@ -40,7 +40,7 @@ export const handleMatchResultUpdate = async (
     const isHome = isHomeMatch(activity);
     
     // Update the isWin status based on score
-    // The calculateWinStatus function requires homeScore, awayScore, and isHome params
+    // Pass all three required parameters to calculateWinStatus
     updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
     // Try database update
