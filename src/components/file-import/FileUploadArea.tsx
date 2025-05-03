@@ -5,9 +5,16 @@ import { FileWarning } from "lucide-react";
 interface FileUploadAreaProps {
   isLoading: boolean;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  acceptTypes?: string;
+  fileType?: string;
 }
 
-export function FileUploadArea({ isLoading, onFileChange }: FileUploadAreaProps) {
+export function FileUploadArea({ 
+  isLoading, 
+  onFileChange, 
+  acceptTypes = ".txt", 
+  fileType = "TXT" 
+}: FileUploadAreaProps) {
   return (
     <div className="flex items-center justify-center w-full">
       <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 hover:bg-muted/50">
@@ -23,14 +30,14 @@ export function FileUploadArea({ isLoading, onFileChange }: FileUploadAreaProps)
               <p className="mb-2 text-sm text-muted-foreground">
                 <span className="font-semibold">Klicka för att ladda upp</span> eller dra och släpp
               </p>
-              <p className="text-xs text-muted-foreground">TXT (Textfil)</p>
+              <p className="text-xs text-muted-foreground">{fileType} ({acceptTypes.replace(/\./g, '')})</p>
             </>
           )}
         </div>
         <input 
           id="file-upload" 
           type="file" 
-          accept=".txt" 
+          accept={acceptTypes}
           className="hidden" 
           onChange={onFileChange}
           disabled={isLoading}
