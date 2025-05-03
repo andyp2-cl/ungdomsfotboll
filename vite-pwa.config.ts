@@ -39,8 +39,23 @@ const pwaOptions: VitePWAOptions = {
         options: {
           cacheName: 'supabase-cache',
           expiration: {
-            maxEntries: 50,
+            maxEntries: 100,
             maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
+          },
+          cacheableResponse: {
+            statuses: [0, 200]
+          }
+        }
+      },
+      {
+        // Specific cache for match data
+        urlPattern: /activities.*type=match/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'match-data-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
           },
           cacheableResponse: {
             statuses: [0, 200]
@@ -52,9 +67,7 @@ const pwaOptions: VitePWAOptions = {
   // Add the missing required properties with correct types
   injectRegister: 'auto',
   minify: true,
-  injectManifest: {
-    injectionPoint: undefined
-  },
+  injectManifest: undefined,
   includeManifestIcons: true,
   disable: false
 };

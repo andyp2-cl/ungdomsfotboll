@@ -109,12 +109,55 @@ export const fetchActivitiesFromDB = async (options: {
     localStorage.setItem('sb-connection-test', 'true');
     localStorage.setItem('sb-activities-last-update', Date.now().toString());
     
+    // Track match data specifically for diagnostics
+    const matchActivities = data?.filter(item => item.type === 'match') || [];
+    localStorage.setItem('match-data-count', String(matchActivities.length));
+    localStorage.setItem('match-data-last-update', Date.now().toString());
+    
+    // If no match data is detected, we might need an extra query specifically for matches
+    if (data && data.length > 0 && matchActivities.length === 0) {
+      console.warn("No match activities found in the initial fetch, attempting to fetch matches specifically");
+      
+      try {
+        const { data: matchData } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('type', 'match')
+          .order('date', { ascending: true });
+          
+        if (matchData && matchData.length > 0) {
+          console.log(`Specifically fetched ${matchData.length} match activities`);
+          localStorage.setItem('match-data-count', String(matchData.length));
+          
+          // Merge match data with other activities without duplicates
+          const mergedActivities = [...data];
+          const existingIds = new Set(data.map(a => a.id));
+          
+          matchData.forEach(match => {
+            if (!existingIds.has(match.id)) {
+              mergedActivities.push(match);
+              existingIds.add(match.id);
+            }
+          });
+          
+          // Update the data to return with the merged activities
+          data.length = 0;
+          data.push(...mergedActivities);
+        } else {
+          console.warn("Still no match activities found after specific query");
+        }
+      } catch (matchFetchError) {
+        console.error("Error fetching match activities specifically:", matchFetchError);
+        // Continue with what we have
+      }
+    }
+    
     // Dismiss any loading toasts
     if (!silent) {
       toast.dismiss("fetch-activities");
       
       if (showToast && data) {
-        toast.success(`Hämtade ${data.length} aktiviteter från servern`);
+        toast.success(`Hämtade ${data.length} aktiviteter från servern${matchActivities.length > 0 ? ` (${matchActivities.length} matcher)` : ''}`);
       } else if (showToast && (!data || data.length === 0)) {
         toast.info("Inga aktiviteter hittades i databasen");
       }
@@ -123,7 +166,6 @@ export const fetchActivitiesFromDB = async (options: {
     // Validate and log the returned data
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
-      const matchActivities = data.filter(item => item.type === 'match');
       console.log(`Found ${matchActivities.length} match activities`);
       
       // Log some samples to debug
