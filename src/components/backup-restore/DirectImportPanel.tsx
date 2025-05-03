@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Database } from "lucide-react";
+import { Database, Info, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
@@ -18,43 +18,111 @@ export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
       setError(null);
       setResults(null);
       
-      toast.loading("Försöker importera data direkt från live-miljön...", { id: "direct-import" });
+      toast.loading("Importerar data direkt från Supabase...", { id: "direct-import" });
       
-      // URL till live-miljöns Supabase
+      // Direktåtkomst till Supabase via produktionsprojektet (live-miljön)
+      // Detta använder samma anon-nyckel som live-miljön använder
       const liveSupabaseUrl = "https://zkrruihxszziifyogzko.supabase.co";
       const liveAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U";
       
-      // Försök att direktimportera aktiviteter
-      const { data: activities, error: activitiesError } = await supabase
+      // Skapa en tillfällig Supabase-klient för produktionsmiljön
+      const { createClient } = await import('@supabase/supabase-js');
+      const liveSupabase = createClient(liveSupabaseUrl, liveAnonKey);
+      
+      console.log("Försöker hämta data från live Supabase...");
+      
+      // Hämta aktiviteter från live-miljön
+      const { data: activities, error: activitiesError } = await liveSupabase
         .from('activities')
         .select('*');
-        
+      
       if (activitiesError) {
         throw new Error(`Kunde inte hämta aktiviteter: ${activitiesError.message}`);
       }
       
-      // Försök att direktimportera spelare
-      const { data: players, error: playersError } = await supabase
+      // Hämta spelare från live-miljön
+      const { data: players, error: playersError } = await liveSupabase
         .from('players')
         .select('*');
-        
+      
       if (playersError) {
         throw new Error(`Kunde inte hämta spelare: ${playersError.message}`);
       }
       
-      // Återställ nuvarande data och importera den nya
-      console.log(`Importerade ${players.length} spelare och ${activities.length} aktiviteter`);
+      // Hämta alla player_activities-relationer
+      const { data: playerActivities, error: paError } = await liveSupabase
+        .from('player_activities')
+        .select('*');
       
-      // Rensa och importera data i din befintliga miljö
-      // Detta förutsätter att du har funktioner för att rensa och importera data
+      if (paError) {
+        throw new Error(`Kunde inte hämta player_activities: ${paError.message}`);
+      }
       
-      // Uppdatera UI med resultat
+      console.log(`Hämtade ${activities.length} aktiviteter, ${players.length} spelare och ${playerActivities.length} relationer från live-miljön`);
+      
+      // IMPORTERA DATA TILL UTVECKLINGSMILJÖN
+      // 1. Först rensa befintlig data
+      toast.loading("Rensar befintlig data...", { id: "direct-import" });
+      
+      // Ta bort alla player_activities-relationer först (för att undvika FK-begränsningar)
+      const { error: delPaError } = await supabase
+        .from('player_activities')
+        .delete()
+        .neq('player_id', 'dummy-to-delete-all');
+      
+      if (delPaError) {
+        console.error("Fel vid rensning av player_activities:", delPaError);
+      }
+      
+      // 2. Importera data
+      toast.loading("Importerar data...", { id: "direct-import" });
+      
+      // Importera spelare
+      let playersImported = 0;
+      if (players && players.length > 0) {
+        const { error: insertPlayersError } = await supabase
+          .from('players')
+          .upsert(players, { onConflict: 'id' });
+        
+        if (insertPlayersError) {
+          console.error("Fel vid import av spelare:", insertPlayersError);
+          throw new Error(`Kunde inte importera spelare: ${insertPlayersError.message}`);
+        }
+        playersImported = players.length;
+      }
+      
+      // Importera aktiviteter
+      let activitiesImported = 0;
+      if (activities && activities.length > 0) {
+        const { error: insertActivitiesError } = await supabase
+          .from('activities')
+          .upsert(activities, { onConflict: 'id' });
+        
+        if (insertActivitiesError) {
+          console.error("Fel vid import av aktiviteter:", insertActivitiesError);
+          throw new Error(`Kunde inte importera aktiviteter: ${insertActivitiesError.message}`);
+        }
+        activitiesImported = activities.length;
+      }
+      
+      // Importera player_activities-relationer
+      if (playerActivities && playerActivities.length > 0) {
+        const { error: insertPaError } = await supabase
+          .from('player_activities')
+          .upsert(playerActivities, { onConflict: 'id' });
+        
+        if (insertPaError) {
+          console.error("Fel vid import av player_activities:", insertPaError);
+          throw new Error(`Kunde inte importera player_activities: ${insertPaError.message}`);
+        }
+      }
+      
       setResults({
-        players: players.length,
-        activities: activities.length
+        players: playersImported,
+        activities: activitiesImported
       });
       
-      toast.success(`Importerade ${players.length} spelare och ${activities.length} aktiviteter från live-miljön!`, { 
+      toast.success(`Importerade ${activitiesImported} aktiviteter och ${playersImported} spelare från live-miljön!`, { 
         id: "direct-import" 
       });
       
@@ -83,7 +151,7 @@ export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
         >
           {isLoading ? (
             <>
-              <Spinner className="mr-2 h-4 w-4" /> Importerar från live-miljön...
+              <Spinner className="mr-2 h-4 w-4" /> Importerar från Supabase...
             </>
           ) : (
             <>
@@ -112,6 +180,20 @@ export function DirectImportPanel({ onSuccess }: { onSuccess?: () => void }) {
           </AlertDescription>
         </Alert>
       )}
+      
+      <Alert className="bg-blue-50 text-blue-800 border-blue-200">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Om direktimport</AlertTitle>
+        <AlertDescription className="text-sm">
+          <p>
+            Denna funktion använder Supabase direkt för att hämta data från live-miljön 
+            utan att gå via ett API.
+          </p>
+          <p className="mt-2">
+            Vid problem: Säkerställ att du är inloggad i båda miljöerna.
+          </p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
