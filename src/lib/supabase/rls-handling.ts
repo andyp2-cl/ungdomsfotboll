@@ -1,5 +1,6 @@
 
 import { supabase } from './client';
+import { Activity } from "@/types/player";
 
 // Enhanced helper function to handle RLS policy errors with activities table
 // This will use multiple approaches (upsert, update, direct methods) to ensure data is saved
@@ -9,16 +10,9 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
   try {
     // APPROACH 1: Direct update attempt with the minimal changes needed
     console.log("APPROACH 1: Trying direct update with minimal fields");
-    const minimalUpdates = {
-      home_score: updates.home_score,
-      away_score: updates.away_score,
-      is_win: updates.is_win,
-      result: updates.result,
-    };
-    
     const { error: minimalUpdateError, data: minimalUpdateData } = await supabase
       .from('activities')
-      .update(minimalUpdates)
+      .update(updates)
       .eq('id', activityId);
     
     if (!minimalUpdateError) {
@@ -67,14 +61,14 @@ export const updateActivityWithRLSHandling = async (activityId: string, updates:
       }
     }
 
-    return await tryAlternativeUpdateApproaches(activityId, updates, minimalUpdates);
+    return await tryAlternativeUpdateApproaches(activityId, updates);
   } catch (err) {
     console.error("Error in updateActivityWithRLSHandling:", err);
     return { success: false, error: err };
   }
 };
 
-const tryAlternativeUpdateApproaches = async (activityId: string, updates: any, minimalUpdates: any) => {
+const tryAlternativeUpdateApproaches = async (activityId: string, updates: any) => {
   try {
     // APPROACH 3: Try direct REST API approach with auth token
     console.log("APPROACH 3: Trying direct REST API approach");
@@ -94,7 +88,7 @@ const tryAlternativeUpdateApproaches = async (activityId: string, updates: any, 
         'Authorization': token ? `Bearer ${token}` : '',
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify(minimalUpdates)
+      body: JSON.stringify(updates)
     });
 
     if (response.ok) {

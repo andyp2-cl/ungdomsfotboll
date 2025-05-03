@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Power, AlertTriangle, Database } from 'lucide-react';
+import { RefreshCw, Power, AlertTriangle, Database, ServerCrash } from 'lucide-react';
 import { toast } from 'sonner';
 import { clearActivitiesCache } from '@/utils/storage/activity/cache-operations';
+import { supabase } from '@/lib/supabase/client';
 
 interface DiagnosticToolsProps {
   clearAuthAndReconnect: () => Promise<void>;
@@ -45,6 +46,29 @@ export function DiagnosticTools({ clearAuthAndReconnect, isPerformingReset }: Di
     }
   };
   
+  const testDatabaseConnection = async () => {
+    try {
+      toast.loading("Testar databasanslutning...");
+      
+      // Test the database connection
+      const { data, error } = await supabase
+        .from('activities')
+        .select('id, name')
+        .limit(1);
+        
+      if (error) {
+        console.error("Database connection error:", error);
+        toast.error("Kunde inte ansluta till databasen: " + error.message);
+      } else {
+        console.log("Database connection successful:", data);
+        toast.success("Databasanslutning fungerar korrekt!");
+      }
+    } catch (error) {
+      console.error("Error testing database connection:", error);
+      toast.error("Ett fel uppstod vid test av databasanslutning");
+    }
+  };
+  
   return (
     <div className="border-t pt-4 mt-6">
       <h3 className="text-base font-medium mb-2">Felsökningsverktyg</h3>
@@ -80,6 +104,16 @@ export function DiagnosticTools({ clearAuthAndReconnect, isPerformingReset }: Di
         >
           <Database className="h-4 w-4 mr-2 text-blue-600" />
           Rensa API cache
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full justify-start"
+          onClick={testDatabaseConnection}
+        >
+          <ServerCrash className="h-4 w-4 mr-2 text-green-600" />
+          Testa databasanslutning
         </Button>
         
         <Button 

@@ -43,7 +43,7 @@ export const handleMatchResultUpdate = async (
     // Pass all three required parameters to calculateWinStatus
     updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
-    // Try database update
+    // Try database update - properly pass activity ID and updates
     try {
       console.log("Updating activity in database:", {
         id: updatedActivity.id,
@@ -53,7 +53,14 @@ export const handleMatchResultUpdate = async (
         result: updatedActivity.result
       });
       
-      await updateActivityWithRLSHandling(updatedActivity);
+      // Call the function with proper parameters - this was the source of the error
+      await updateActivityWithRLSHandling(updatedActivity.id, {
+        home_score: updatedActivity.homeScore,
+        away_score: updatedActivity.awayScore,
+        is_win: updatedActivity.isWin,
+        result: updatedActivity.result
+      });
+      
       console.log("Activity updated in database");
     } catch (dbError) {
       console.error("Failed to update activity in database:", dbError);
