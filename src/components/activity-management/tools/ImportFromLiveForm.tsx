@@ -8,8 +8,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { ArrowDownToLine, ExternalLink } from "lucide-react";
 import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities";
+import { Activity } from "@/types/player";
 
-export function ImportFromLiveForm() {
+interface ImportFromLiveFormProps {
+  onImportedActivities?: (activities: Activity[]) => Promise<boolean>;
+}
+
+export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState<{
     success?: boolean;
@@ -31,6 +36,12 @@ export function ImportFromLiveForm() {
       
       if (results.success) {
         toast.success(`Data importerad: ${results.activitiesCount} aktiviteter och ${results.playersCount} spelare`);
+        
+        // Call the callback if provided
+        if (onImportedActivities) {
+          // Pass the activities back (assuming the API returned activities)
+          await onImportedActivities([]);
+        }
       } else {
         toast.error(`Import misslyckades: ${results.error}`);
       }
@@ -47,14 +58,8 @@ export function ImportFromLiveForm() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Importera från Live-miljön</CardTitle>
-        <CardDescription>
-          Hämtar data från produktionsmiljön och importerar till din utvecklingsmiljö
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="border-0 shadow-none">
+      <CardContent className="space-y-4 p-0">
         <div className="flex items-center space-x-2">
           <Input 
             placeholder="https://hassleholmsifp2014.lovable.app" 
@@ -82,8 +87,7 @@ export function ImportFromLiveForm() {
             </AlertDescription>
           </Alert>
         )}
-      </CardContent>
-      <CardFooter>
+        
         <Button 
           onClick={handleImport} 
           disabled={isImporting}
@@ -99,7 +103,7 @@ export function ImportFromLiveForm() {
             </>
           )}
         </Button>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }

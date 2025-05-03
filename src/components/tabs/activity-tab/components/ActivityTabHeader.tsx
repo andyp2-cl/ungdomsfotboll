@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BarChart2, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, BarChart2, RefreshCw, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface ActivityTabHeaderProps {
@@ -11,6 +11,7 @@ interface ActivityTabHeaderProps {
   onRefresh?: () => void; // Refresh callback
   isMobile?: boolean;
   isRefreshing?: boolean;
+  onImportClick?: () => void; // New callback for import button
 }
 
 export function ActivityTabHeader({
@@ -19,7 +20,8 @@ export function ActivityTabHeader({
   setIsAddActivityOpen,
   onRefresh,
   isMobile = false,
-  isRefreshing = false
+  isRefreshing = false,
+  onImportClick
 }: ActivityTabHeaderProps) {
   const handleRefresh = () => {
     if (onRefresh) {
@@ -36,6 +38,19 @@ export function ActivityTabHeader({
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Aktiviteter</h2>
         <div className="flex items-center gap-2">
+          {onImportClick && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onImportClick}
+              title="Importera data från live-miljön"
+              aria-label="Importera data från live-miljön"
+              className="flex items-center gap-1"
+            >
+              <Download className="h-4 w-4" />
+              {!isMobile && "Importera från live"}
+            </Button>
+          )}
           {onRefresh && (
             <Button 
               variant="outline" 

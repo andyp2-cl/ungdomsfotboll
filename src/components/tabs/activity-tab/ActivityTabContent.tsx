@@ -11,6 +11,8 @@ import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./hooks/useActivityTabViews";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -38,6 +40,7 @@ interface ActivityTabContentProps {
 export function ActivityTabContent(props: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Use the custom hook for managing views and selections
@@ -83,6 +86,15 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     }
   };
 
+  const handleImportSuccess = async (activities: Activity[]): Promise<boolean> => {
+    const result = await props.handleImportedActivities(activities);
+    if (result) {
+      setIsImportDialogOpen(false);
+      await handleRefresh();
+    }
+    return result;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -90,7 +102,10 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           activeView={activeView}
           handleViewChange={handleViewChange}
           setIsAddActivityOpen={props.setIsAddActivityOpen}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
           isMobile={isMobile}
+          onImportClick={() => setIsImportDialogOpen(true)}
         />
         
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -128,6 +143,18 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onMatchResultUpdate={props.handleMatchResultUpdate}
         />
       </PullToRefresh>
+
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Importera från live-miljön</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <ImportFromLiveForm onImportedActivities={handleImportSuccess} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

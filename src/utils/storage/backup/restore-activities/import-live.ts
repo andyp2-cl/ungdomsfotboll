@@ -10,6 +10,8 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
   success: boolean;
   activitiesCount: number;
   playersCount: number;
+  activities?: Activity[];
+  players?: Player[];
   error?: string;
 }> => {
   try {
@@ -46,6 +48,8 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       success: activityResult.success && playersResult.success,
       activitiesCount: activityResult.count,
       playersCount: playersResult.count,
+      activities: activities, // Return the fetched activities
+      players: players,       // Return the fetched players
       error: activityResult.error || playersResult.error
     };
   } catch (error) {
