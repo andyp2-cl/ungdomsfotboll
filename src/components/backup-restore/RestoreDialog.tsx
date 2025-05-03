@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useBackupRestore } from "@/utils/storage/backup";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Clock, AlertTriangle, Lock, DatabaseBackup, Database } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DatabaseDiagnostics } from "./DatabaseDiagnostics";
+import DatabaseDiagnostics from "./DatabaseDiagnostics";
 
 interface RestoreDialogProps {
   backupInfo: {timestamp: string, playerCount: number, activityCount: number} | null;
@@ -106,7 +105,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
     setIsRestoring(true);
     try {
       toast.message("Återställer data", {
-        description: "Återställer data från säkerhetskopia. Detta kan ta en stund...",
+        description: "Återställer data från säkerhetskopian. Detta kan ta en stund...",
         duration: 10000
       });
       

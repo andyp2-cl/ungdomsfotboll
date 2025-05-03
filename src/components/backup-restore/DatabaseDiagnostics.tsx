@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '../ui/button';
@@ -6,7 +5,7 @@ import { fetchActivitiesFromDB } from '@/utils/storage/activity/fetch-operations
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, RefreshCw, AlertTriangle, Database, Shield, LogOut, Power } from 'lucide-react';
 
-function DatabaseDiagnostics() {
+export function DatabaseDiagnostics() {
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string; details?: any }>>({});
   const [isPerformingReset, setIsPerformingReset] = useState(false);
@@ -323,4 +322,5 @@ function testToLabel(testId: string): string {
   return labels[testId] || testId;
 }
 
+// We export both the named export and a default export for backward compatibility
 export default DatabaseDiagnostics;
