@@ -86,6 +86,20 @@ function saveToLocalStorage(activity: Activity): void {
     };
     localStorage.setItem('pendingActivityUpdates', JSON.stringify(pendingUpdates));
     
+    // Save match scores separately for easier access
+    if (activity.type === 'match' && (activity.homeScore !== undefined || activity.awayScore !== undefined)) {
+      const matchScores = JSON.parse(localStorage.getItem('matchScores') || '{}');
+      matchScores[activity.id] = {
+        homeScore: activity.homeScore,
+        awayScore: activity.awayScore,
+        isWin: activity.isWin,
+        result: activity.result || `${activity.homeScore}-${activity.awayScore}`,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('matchScores', JSON.stringify(matchScores));
+      console.log(`Match score for ${activity.id} saved to local storage:`, matchScores[activity.id]);
+    }
+    
     console.log(`Activity ${activity.id} saved to local storage`);
   } catch (error) {
     console.error("Error saving to localStorage:", error);
@@ -98,6 +112,15 @@ async function saveToDatabase(activity: Activity): Promise<boolean> {
   try {
     // Format activity for database
     const formattedActivity = formatActivityForDatabase(activity);
+    
+    // Log what we're saving to help debug
+    console.log("Saving to database:", {
+      id: formattedActivity.id,
+      home_score: formattedActivity.home_score,
+      away_score: formattedActivity.away_score,
+      is_win: formattedActivity.is_win,
+      result: formattedActivity.result
+    });
     
     // Try direct update with Supabase first
     const { error } = await supabase
@@ -185,8 +208,9 @@ async function tryOptimizedUpdate(activityId: string, activity: any): Promise<{s
       console.error("Insert with upsert error:", e);
     }
     
-    // Try scores-only update
+    // Try scores-only update - this is the most important part for match results
     try {
+      // Focus specifically on the match result fields
       const scoresOnly = {
         home_score: activity.home_score,
         away_score: activity.away_score,
@@ -194,12 +218,15 @@ async function tryOptimizedUpdate(activityId: string, activity: any): Promise<{s
         result: activity.result
       };
       
+      console.log("Attempting scores-only update with:", scoresOnly);
+      
       const { error } = await supabase
         .from('activities')
         .update(scoresOnly)
         .eq('id', activityId);
         
       if (!error) {
+        console.log("Scores-only update succeeded");
         return { success: true };
       }
       console.warn("Scores-only update failed:", error);

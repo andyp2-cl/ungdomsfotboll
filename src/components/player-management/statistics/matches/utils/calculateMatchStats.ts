@@ -12,105 +12,71 @@ export interface MatchStats {
   cleanSheets: number;
 }
 
-export function calculateMatchStats(matches: Activity[]): MatchStats {
-  console.log("Starting match stats calculation with", matches.length, "matches");
+export const calculateMatchStats = (matches: Activity[]): MatchStats => {
+  // Initialize stats
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+  let goalsScored = 0;
+  let goalsConceded = 0;
+  let cleanSheets = 0;
   
-  // Default values
-  const defaultStats: MatchStats = {
-    totalMatches: 0,
-    wins: 0,
-    draws: 0,
-    losses: 0,
-    goalsScored: 0,
-    goalsConceded: 0,
-    cleanSheets: 0
-  };
+  // Matches with actual results (that have scores)
+  const matchesWithResults = matches.filter(match => 
+    match.homeScore !== undefined && match.awayScore !== undefined
+  );
   
-  // Return default stats if no matches
-  if (!matches || matches.length === 0) {
-    console.log("No matches to process, returning default stats");
-    return defaultStats;
-  }
-  
-  try {
-    let totalMatches = 0;
-    let wins = 0;
-    let draws = 0;
-    let losses = 0;
-    let goalsScored = 0;
-    let goalsConceded = 0;
-    let cleanSheets = 0;
+  // Process each match with results
+  matchesWithResults.forEach(match => {
+    const homeScore = match.homeScore ?? 0;
+    const awayScore = match.awayScore ?? 0;
+    const isHome = isHomeMatch(match);
     
-    // Filter out future matches
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
-    
-    const historicalMatches = matches.filter(match => {
-      const matchDate = new Date(match.date);
-      return matchDate <= today;
-    });
-    
-    console.log(`Filtered ${matches.length - historicalMatches.length} future matches, processing ${historicalMatches.length} historical matches`);
-    
-    // Process each match
-    historicalMatches.forEach(match => {
-      // Skip matches without scores
-      if (match.homeScore === undefined || match.awayScore === undefined) {
-        return;
-      }
-      
-      console.log(`Match: ${match.name}, homeScore: ${match.homeScore}, awayScore: ${match.awayScore}`);
-      totalMatches++;
-      
-      // Count results
-      if (match.homeScore === match.awayScore) {
-        draws++;
-      } else if (match.isWin === true) {
-        wins++;
+    // Check if this match has a clear win/loss/draw status set
+    if (match.homeScore === match.awayScore) {
+      // It's a draw if scores are equal
+      draws++;
+    }
+    else if (match.isWin === true) {
+      // Explicitly marked as a win
+      wins++;
+    }
+    else if (match.isWin === false) {
+      // Explicitly marked as a loss
+      losses++;
+    }
+    else {
+      // Calculate based on scores
+      if (isHome) {
+        if (homeScore > awayScore) wins++;
+        else if (homeScore < awayScore) losses++;
+        else draws++;
       } else {
-        losses++;
+        if (awayScore > homeScore) wins++;
+        else if (awayScore < homeScore) losses++;
+        else draws++;
       }
-      
-      try {
-        // Use the utility function to determine if this is a home match
-        const isHome = isHomeMatch(match);
-        
-        // Count goals - depending on who is home/away
-        if (!isHome) {
-          // If we're the away team, reverse the scores
-          goalsScored += match.awayScore;
-          goalsConceded += match.homeScore;
-        } else {
-          // Default: assume we're the home team
-          goalsScored += match.homeScore;
-          goalsConceded += match.awayScore;
-        }
-        
-        // Count clean sheets - also adjust based on home/away
-        if ((!isHome && match.homeScore === 0) || 
-            (isHome && match.awayScore === 0)) {
-          cleanSheets++;
-        }
-      } catch (err) {
-        console.error("Error processing match stats for match:", match.id, err);
-      }
-    });
+    }
     
-    const finalStats = {
-      totalMatches,
-      wins,
-      draws,
-      losses,
-      goalsScored,
-      goalsConceded,
-      cleanSheets
-    };
-    
-    console.log("Final stats:", finalStats);
-    
-    return finalStats;
-  } catch (error) {
-    console.error("Error calculating match stats:", error);
-    return defaultStats;
-  }
-}
+    // Calculate goals scored/conceded based on home/away
+    if (isHome) {
+      goalsScored += homeScore;
+      goalsConceded += awayScore;
+      if (awayScore === 0) cleanSheets++;
+    } else {
+      goalsScored += awayScore;
+      goalsConceded += homeScore;
+      if (homeScore === 0) cleanSheets++;
+    }
+  });
+
+  return {
+    totalMatches: matchesWithResults.length,
+    wins,
+    draws,
+    losses,
+    goalsScored,
+    goalsConceded,
+    cleanSheets
+  };
+};

@@ -45,6 +45,14 @@ export const handleMatchResultUpdate = async (
     // Update the isWin status based on score
     updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
+    console.log("Updated activity with new result:", {
+      id: updatedActivity.id,
+      homeScore: updatedActivity.homeScore,
+      awayScore: updatedActivity.awayScore,
+      isWin: updatedActivity.isWin,
+      result: updatedActivity.result
+    });
+    
     // Format the activity for database update
     const formattedActivity = formatActivityForDatabase(updatedActivity);
     
@@ -71,25 +79,30 @@ export const handleMatchResultUpdate = async (
 
     // Try the most reliable saving method first - saveActivities now uses multiple fallbacks
     try {
-      // Don't check for truthiness of the void return type
-      await saveActivities(updatedActivities);
-      console.log("Activity saved successfully via enhanced storage system");
-      toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+      // Save the updated activities array
+      const saveSuccess = await saveActivities(updatedActivities);
       
-      // Log success to database
-      try {
-        await logDatabaseChange(
-          'update', 
-          'activity', 
-          activityId, 
-          `Match result updated using enhanced storage system: ${homeScore}-${awayScore}`
-        );
-      } catch (logError) {
-        console.warn("Couldn't log success to database:", logError);
+      if (saveSuccess) {
+        console.log("Activity saved successfully via enhanced storage system");
+        toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        
+        // Log success to database
+        try {
+          await logDatabaseChange(
+            'update', 
+            'activity', 
+            activityId, 
+            `Match result updated using enhanced storage system: ${homeScore}-${awayScore}`
+          );
+        } catch (logError) {
+          console.warn("Couldn't log success to database:", logError);
+        }
+        
+        // No need for further attempts
+        return;
+      } else {
+        console.warn("Enhanced storage system didn't report success, trying fallback methods");
       }
-      
-      // No need for further attempts
-      return;
     } catch (saveError) {
       console.error("Enhanced storage system failed:", saveError);
       
