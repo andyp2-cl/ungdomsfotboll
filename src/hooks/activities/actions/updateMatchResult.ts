@@ -1,8 +1,7 @@
-
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { updateActivityWithRLSHandling } from "@/lib/supabase/rls-handling";
-import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch, calculateWinStatus, determineMatchOutcome } from "@/components/activity-detail/match-result/utils";
 import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity"; 
 import { logDatabaseChange } from "@/lib/supabase/logs";
@@ -36,13 +35,17 @@ export const handleMatchResultUpdate = async (
     // Determine if it's a home match
     const isHome = isHomeMatch(activity);
     
-    // Calculate win status based on scores and home/away status if not explicitly provided
-    // For draws (equal scores), isWin will be undefined
+    // If isWin is not explicitly provided, use our enhanced logic to determine the outcome
     if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
+      // For draws (equal scores), isWin will be undefined
       if (homeScore === awayScore) {
         isWin = undefined; // Draw
       } else {
-        isWin = calculateWinStatus(homeScore, awayScore, isHome);
+        // Use the enhanced outcome determination logic
+        const tempActivity = { ...activity, homeScore, awayScore };
+        isWin = determineMatchOutcome(tempActivity);
+        
+        console.log(`Enhanced outcome determination for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
       }
     }
     
@@ -86,7 +89,8 @@ export const handleMatchResultUpdate = async (
       away_score: updatedActivity.awayScore,
       is_win: updatedActivity.isWin === true ? true : updatedActivity.isWin === false ? false : null,
       result: updatedActivity.result,
-      player_stats: updatedActivity.player_stats // Make sure we're updating player_stats too
+      player_stats: updatedActivity.player_stats, // Make sure we're updating player_stats too
+      league_id: activity.league_id // Preserve league_id when updating
     };
     
     console.log("Updating activity in database:", {

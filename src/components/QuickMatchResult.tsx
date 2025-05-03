@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -86,11 +85,18 @@ export function QuickMatchResult({
   const isHome = isHomeMatch(activity);
   
   // Determine if Hässleholms IF is the home or away team
-  const isHassleholm = isHome ? 'home' : 'away';
+  // Use the enhanced isHassleholm function to check team names
+  const homeTeam = teamNames.homeTeam;
+  const awayTeam = teamNames.awayTeam;
+  const isHassleHomeName = isHassleholm(homeTeam);
+  const isHassleAwayName = isHassleholm(awayTeam);
   
-  // Create appropriate labels
-  const homeTeamLabel = isHome ? "HIF" : teamNames.homeTeam.substring(0, isMobile ? 8 : 15);
-  const awayTeamLabel = !isHome ? "HIF" : teamNames.awayTeam.substring(0, isMobile ? 8 : 15);
+  // Set which side is Hässleholms IF based on team name analysis
+  const isHassleholm = isHassleHomeName ? 'home' : isHassleAwayName ? 'away' : (isHome ? 'home' : 'away');
+  
+  // Create appropriate labels - highlight HIF when it's in the name
+  const homeTeamLabel = isHassleHomeName ? "HIF" : homeTeam.substring(0, isMobile ? 8 : 15);
+  const awayTeamLabel = isHassleAwayName ? "HIF" : awayTeam.substring(0, isMobile ? 8 : 15);
   
   // Handle radio button change
   const handleWinStatusChange = (value: string) => {
@@ -141,6 +147,9 @@ export function QuickMatchResult({
       awayScore,
       manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus,
       isHome,
+      teamNames,
+      isHassleHomeName,
+      isHassleAwayName,
       retryCount
     });
     

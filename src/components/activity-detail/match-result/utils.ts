@@ -16,7 +16,10 @@ export const isHomeMatch = (activity: Activity): boolean => {
     'hässleholms if - ',
     'hässleholm - ',
     'hif mot ',
-    'hässleholms if mot '
+    'hässleholms if mot ',
+    'hässleholms if vit - ',
+    'hif vit - ',
+    'hässleholm vit - '
   ];
   
   // Look for patterns that indicate we're the away team
@@ -25,7 +28,10 @@ export const isHomeMatch = (activity: Activity): boolean => {
     ' - hässleholms if',
     ' - hässleholm',
     ' mot hif',
-    ' mot hässleholms if'
+    ' mot hässleholms if',
+    ' - hif vit',
+    ' - hässleholms if vit',
+    ' - hässleholm vit'
   ];
   
   // Check if any home patterns match
@@ -128,6 +134,68 @@ export const extractTeamNames = (activity: Activity) => {
   }
   
   return { homeTeam, awayTeam };
+};
+
+/**
+ * Determine if this is a Hässleholms IF match by checking name patterns
+ */
+export const isHassleholm = (teamName: string): boolean => {
+  const name = teamName.toLowerCase();
+  return (
+    name.includes('hif') || 
+    name.includes('hässleholm') || 
+    name.includes('hässleholms if')
+  );
+};
+
+/**
+ * Enhanced logic to determine match outcome for Hässleholms IF
+ */
+export const determineMatchOutcome = (activity: Activity): boolean | undefined => {
+  // First check if explicitly set
+  if (activity.isWin !== undefined) {
+    return activity.isWin; // Use the explicitly set value
+  }
+
+  // If we don't have scores, can't determine outcome
+  if (activity.homeScore === undefined || activity.awayScore === undefined) {
+    return undefined;
+  }
+
+  // Draw case
+  if (activity.homeScore === activity.awayScore) {
+    return undefined; // Draw is represented as undefined
+  }
+  
+  // Extract team names
+  const { homeTeam, awayTeam } = extractTeamNames(activity);
+  
+  // Check if Hässleholms IF is home or away team
+  const isHifHome = isHassleholm(homeTeam);
+  const isHifAway = isHassleholm(awayTeam);
+  
+  console.log(`Match analysis for ${activity.id}:`, {
+    matchName: activity.name,
+    homeTeam,
+    awayTeam, 
+    isHifHome,
+    isHifAway,
+    homeScore: activity.homeScore,
+    awayScore: activity.awayScore
+  });
+
+  // If neither team is Hässleholms IF, fall back to isHomeMatch
+  if (!isHifHome && !isHifAway) {
+    const isHome = isHomeMatch(activity);
+    return isHome ? (activity.homeScore > activity.awayScore) : (activity.awayScore > activity.homeScore);
+  }
+  
+  // Determine win status based on which team is Hässleholms IF
+  if (isHifHome) {
+    return activity.homeScore > activity.awayScore;
+  } else {
+    return activity.awayScore > activity.homeScore;
+  }
 };
 
 /**
