@@ -90,8 +90,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
     
     setIsRestoring(true);
     try {
-      toast({
-        title: "Återställer data",
+      toast.message("Återställer data", {
         description: "Återställer data från säkerhetskopia. Detta kan ta en stund...",
         duration: 10000
       });
@@ -99,25 +98,20 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
       const success = await restoreBackup();
       
       if (success) {
-        toast({
-          title: "Data återställd",
+        toast.success("Data återställd", {
           description: `Data har återställts från säkerhetskopian skapad ${formattedBackupDate} (${info.playerCount} spelare, ${info.activityCount} aktiviteter).`,
         });
         // Force reload the page to reflect changes
         window.location.reload();
       } else {
-        toast({
-          title: "Återställning misslyckades",
-          description: "Kunde inte återställa data. Se konsolen för mer information.",
-          variant: "destructive"
+        toast.error("Återställning misslyckades", {
+          description: "Kunde inte återställa data. Se konsolen för mer information."
         });
       }
     } catch (error) {
       console.error("Error in restore:", error);
-      toast({
-        title: "Återställning misslyckades",
-        description: `Ett fel uppstod: ${error instanceof Error ? error.message : 'Okänt fel'}`,
-        variant: "destructive"
+      toast.error("Återställning misslyckades", {
+        description: `Ett fel uppstod: ${error instanceof Error ? error.message : 'Okänt fel'}`
       });
     } finally {
       setIsRestoring(false);

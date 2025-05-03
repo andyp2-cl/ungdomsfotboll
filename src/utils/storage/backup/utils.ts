@@ -75,9 +75,11 @@ export const processActivitiesForRestore = (activities: any[]): Activity[] => {
       
       // Optional fields
       time: activity.time,
-      location_name: activity.location_name,
-      location_description: activity.location_description,
-      location_gps_link: activity.location_gps_link,
+      location: activity.location_name ? {
+        name: activity.location_name,
+        description: activity.location_description,
+        gpsLink: activity.location_gps_link
+      } : undefined,
       participants: activity.participants || [],
       
       // Match specific fields
@@ -85,11 +87,6 @@ export const processActivitiesForRestore = (activities: any[]): Activity[] => {
       awayScore: activity.awayScore || activity.away_score,
       isWin: activity.isWin || activity.is_win,
       result: activity.result,
-      
-      // New format support
-      home_score: activity.homeScore || activity.home_score,
-      away_score: activity.awayScore || activity.away_score,
-      is_win: activity.isWin || activity.is_win,
       
       // Keep player statistics if present
       player_stats: activity.player_stats
@@ -100,9 +97,9 @@ export const processActivitiesForRestore = (activities: any[]): Activity[] => {
       // Log match data for debugging
       console.log(`Processing match: ${activity.name}`, {
         id: activity.id,
-        home_score: processedActivity.home_score,
-        away_score: processedActivity.away_score,
-        is_win: processedActivity.is_win,
+        homeScore: processedActivity.homeScore,
+        awayScore: processedActivity.awayScore,
+        isWin: processedActivity.isWin,
         has_player_stats: !!processedActivity.player_stats
       });
     }
