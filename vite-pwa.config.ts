@@ -52,7 +52,7 @@ const pwaOptions: VitePWAOptions = {
   // Add the missing required properties with correct types
   injectRegister: 'auto',
   minify: true,
-  injectManifest: undefined, // Fix: undefined instead of null
+  // Fix: Remove injectManifest property entirely since we're not using it
   includeManifestIcons: true,
   disable: false
 };
