@@ -87,8 +87,12 @@ export function useActivityState() {
       
       // Clear API cache if forcing refresh
       if (forceRefresh) {
+        console.log("Force refreshing - clearing all caches");
+        
         // Clear local storage cache for activities
         clearActivitiesCache();
+        localStorage.removeItem('sb-activities-fetch-time');
+        localStorage.removeItem('cachedActivities');
         
         // Also clear service worker cache if available
         await clearApiCache();
@@ -127,22 +131,31 @@ export function useActivityState() {
           console.log(`Loaded ${matches.length} matches`);
           
           if (matches.length > 0) {
-            // Log a sample to debug
-            console.log("Sample match data:", matches[0]);
-          } else {
-            console.warn("No matches found in loaded activities");
+            // Log first few matches with scores to verify data is correct
+            const matchesWithScores = matches.filter(m => 
+              m.homeScore !== undefined || m.awayScore !== undefined).slice(0, 3);
+            
+            if (matchesWithScores.length > 0) {
+              console.log("Sample matches with scores:", matchesWithScores.map(m => ({
+                id: m.id,
+                name: m.name,
+                homeScore: m.homeScore,
+                awayScore: m.awayScore,
+                result: m.result,
+                isWin: m.isWin
+              })));
+            }
           }
           
           // Set activities in state
           setActivities(storedActivities);
           setRetryCount(0); // Reset retry count on success
           
-          // Cache the activities again to ensure we have the latest data
+          // Cache the activities again with updated timestamp
           localStorage.setItem('cachedActivities', JSON.stringify(storedActivities));
           localStorage.setItem('cachedActivitiesTime', Date.now().toString());
-          localStorage.setItem('cachedActivitiesCount', storedActivities.length.toString());
         } else {
-          console.warn("No activities loaded from database");
+          console.warn("No activities loaded or empty array returned");
           
           // Try to get cached activities
           const cachedActivitiesJson = localStorage.getItem('cachedActivities');
@@ -155,8 +168,6 @@ export function useActivityState() {
               if (showToast) {
                 sonnerToast.info("Visar cachad data eftersom ingen ny data hittades");
               }
-              
-              setLoadError("Inga nya aktiviteter hittades. Visar cachade aktiviteter.");
             } catch (e) {
               console.error("Failed to parse cached activities:", e);
               setLoadError("Fel vid läsning av cachad data.");
@@ -180,10 +191,6 @@ export function useActivityState() {
             const parsedActivities = JSON.parse(cachedActivities);
             setActivities(parsedActivities);
             setLoadError("Anslutningsfel. Visar cachade aktiviteter.");
-            
-            // Check specifically for matches in cache
-            const cachedMatches = parsedActivities.filter(a => a.type === 'match');
-            console.log(`Found ${cachedMatches.length} matches in cache`);
           } catch (e) {
             console.error("Failed to parse cached activities:", e);
             setLoadError("Fel vid läsning av cachad data.");
@@ -215,16 +222,6 @@ export function useActivityState() {
       }
     }
   }, [activities, selectedActivity]);
-
-  // Debug diagnostics for match data
-  useEffect(() => {
-    const matchActivities = activities.filter(a => a.type === 'match');
-    console.log(`Current state has ${activities.length} activities, including ${matchActivities.length} matches`);
-    
-    if (matchActivities.length > 0) {
-      console.log("Sample match:", matchActivities[0]);
-    }
-  }, [activities]);
 
   return {
     activities,
