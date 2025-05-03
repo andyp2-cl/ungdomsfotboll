@@ -5,6 +5,7 @@ import { validateBackup } from "./validation";
 import { clearExistingData } from "./clearDatabase";
 import { restorePlayers } from "./restorePlayers";
 import { restoreActivities, restorePlayerActivities } from "./restoreActivities";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
 /**
  * Directly fetches the backup data from localStorage
@@ -18,6 +19,66 @@ const getRawBackupData = () => {
   } catch (error) {
     console.error("Failed to parse raw backup data:", error);
     return null;
+  }
+};
+
+/**
+ * Verifies database connectivity before restoration
+ */
+const checkDatabaseConnection = async (): Promise<{ connected: boolean; error?: string }> => {
+  try {
+    console.log("Performing pre-restore database connection check...");
+    
+    // First check if Supabase is properly configured
+    const isConfigured = await isSupabaseConfigured();
+    if (!isConfigured) {
+      console.error("Supabase is not properly configured");
+      return { connected: false, error: "Databasen är inte korrekt konfigurerad" };
+    }
+    
+    // Try a simple test query to ensure we can write to the database
+    console.log("Testing database write permissions...");
+    const testId = `test-${Date.now()}`;
+    const { error: writeError } = await supabase
+      .from('leagues')
+      .insert({ id: testId, name: 'Connection Test', division: 'Test', year: 2025 })
+      .select()
+      .single();
+    
+    if (writeError) {
+      console.log("Database write test failed with error:", writeError);
+      
+      // Check if it's a row-level security error, which might be expected
+      if (writeError.message && writeError.message.includes('row-level security')) {
+        console.log("Row-level security prevented test write, but connection seems valid");
+        return { connected: true };
+      }
+      
+      // For other errors, try a read-only query as a fallback
+      console.log("Attempting read-only test query...");
+      const { error: readError } = await supabase
+        .from('players')
+        .select('id')
+        .limit(1);
+      
+      if (readError) {
+        console.error("Database read test also failed:", readError);
+        return { 
+          connected: false, 
+          error: `Databasåtkomst nekad: ${readError.message || "Okänt fel"}` 
+        };
+      } else {
+        console.log("Read test successful, proceeding with limited permissions");
+        return { connected: true };
+      }
+    }
+    
+    // If we got here, the write test succeeded
+    console.log("Database connection and permissions verified");
+    return { connected: true };
+  } catch (error) {
+    console.error("Error checking database connection:", error);
+    return { connected: false, error: error instanceof Error ? error.message : 'Okänt fel' };
   }
 };
 
@@ -37,12 +98,31 @@ export const restoreBackup = async (): Promise<boolean> => {
         matchCount: rawBackupData.activities?.filter(a => a.type === 'match').length || 0,
         timestamp: rawBackupData.timestamp
       });
+    } else {
+      console.error("No raw backup data found");
+      toast.error("Ingen säkerhetskopia hittad i lokal lagring");
+      return false;
+    }
+    
+    // Verify database connectivity before proceeding
+    const { connected, error: connectionError } = await checkDatabaseConnection();
+    if (!connected) {
+      console.error("Database connection check failed:", connectionError);
+      toast.error("Databasanslutning misslyckades", {
+        description: connectionError || "Kontrollera din internetanslutning och försök igen",
+        duration: 5000
+      });
+      return false;
     }
     
     // Validate backup data
     const { backupData, isValid, error } = validateBackup();
     if (!isValid || !backupData) {
       console.error("Backup validation failed:", error);
+      toast.error("Säkerhetskopia ogiltig", {
+        description: error || "Formatet på säkerhetskopian kunde inte valideras",
+        duration: 5000
+      });
       return false;
     }
     

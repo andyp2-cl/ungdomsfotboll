@@ -10,6 +10,7 @@ export function useConnectionManagement(isOnline: boolean) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isRLSEnabled, setIsRLSEnabled] = useState(true);
+  const [connectionStats, setConnectionStats] = useState<any>(null);
 
   // Check database connection with automatic reconnect if configured
   const checkDatabaseConnection = useCallback(async (forceCheck = false) => {
@@ -38,6 +39,14 @@ export function useConnectionManagement(isOnline: boolean) {
       
       console.log("Testing database connection...");
       
+      // Track debugging stats 
+      const stats = {
+        attempts: 0,
+        startTime: Date.now(),
+        queryTimes: [] as number[],
+        errors: [] as string[]
+      };
+      
       // Test if we already have a working connection
       const isConfigured = await isSupabaseConfigured();
       
@@ -47,24 +56,46 @@ export function useConnectionManagement(isOnline: boolean) {
         setConnectionError(null);
         
         // Try to test with actual database access
-        const { success, rlsEnabled } = await testDatabaseAccess();
+        const startQuery = Date.now();
+        const { success, rlsEnabled, error, details } = await testDatabaseAccess();
+        const queryTime = Date.now() - startQuery;
+        
+        stats.attempts++;
+        stats.queryTimes.push(queryTime);
         
         if (success) {
-          console.log("Database test successful, RLS enabled:", rlsEnabled);
+          console.log(`Database test successful in ${queryTime}ms, RLS enabled:`, rlsEnabled);
+          stats.success = true;
+          stats.responseTime = queryTime;
+          stats.details = details;
+          
           setIsRLSEnabled(rlsEnabled);
           setConnectionError(null);
+          setConnectionStats(stats);
         } else {
           console.log("Database configuration exists but test failed");
+          stats.errors.push(error || 'Unknown error');
+          stats.success = false;
+          setConnectionStats(stats);
           
           // If auto-connect is enabled, try that
           if (shouldAutoConnectDatabase()) {
+            stats.attempts++;
             console.log("Auto-connect enabled, attempting anonymous sign-in");
+            
+            const anonStartTime = Date.now();
             const anonymousSuccess = await connectAnonymously();
+            const anonTime = Date.now() - anonStartTime;
+            
+            stats.queryTimes.push(anonTime);
             
             if (anonymousSuccess) {
               setConnectionError(null);
+              stats.success = true;
+              stats.anonymousConnection = true;
             } else {
               setConnectionError("Databasanslutning misslyckades");
+              stats.errors.push('Anonymous connection failed');
             }
           } else {
             setConnectionError("Databasanslutningen kräver åtkomst");
@@ -73,22 +104,46 @@ export function useConnectionManagement(isOnline: boolean) {
       } else {
         // If auto-connect is enabled and we're not configured, try anonymous sign-in
         if (shouldAutoConnectDatabase()) {
+          stats.attempts++;
           console.log("Auto-connect enabled, attempting anonymous sign-in");
+          
+          const anonStartTime = Date.now();
           const anonymousSuccess = await connectAnonymously();
+          const anonTime = Date.now() - anonStartTime;
+          
+          stats.queryTimes.push(anonTime);
           
           if (anonymousSuccess) {
             setConnectionChecked(true);
             setConnectionError(null);
+            stats.success = true;
+            stats.anonymousConnection = true;
+            setConnectionStats(stats);
             return;
+          } else {
+            stats.errors.push('Anonymous connection failed');
           }
         }
         
         console.log("Database connection is not configured");
         setConnectionError("Aktivera DB-åtkomst för databasefunktioner");
       }
+      
+      // Save connection stats for debugging
+      stats.totalTime = Date.now() - stats.startTime;
+      setConnectionStats(stats);
+      localStorage.setItem('sb-connection-stats', JSON.stringify(stats));
     } catch (err) {
       console.error("Error checking database connection:", err);
       setConnectionError("Anslutningsfel: " + (err instanceof Error ? err.message : String(err)));
+      
+      // Store error details for debugging
+      const errorDetails = {
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date().toISOString(),
+        stack: err instanceof Error ? err.stack : undefined
+      };
+      localStorage.setItem('sb-connection-error', JSON.stringify(errorDetails));
     } finally {
       setConnectionChecked(true);
       setIsConnecting(false);
@@ -141,6 +196,7 @@ export function useConnectionManagement(isOnline: boolean) {
     isConnecting, 
     connectionError,
     isRLSEnabled,
+    connectionStats,
     checkDatabaseConnection,
     handleForceReconnect
   };

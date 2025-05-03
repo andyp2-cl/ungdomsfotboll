@@ -7,8 +7,10 @@ import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, AlertTriangle, Lock, DatabaseBackup } from "lucide-react";
+import { Clock, AlertTriangle, Lock, DatabaseBackup, Database } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatabaseDiagnostics } from "./DatabaseDiagnostics";
 
 interface RestoreDialogProps {
   backupInfo: {timestamp: string, playerCount: number, activityCount: number} | null;
@@ -29,6 +31,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
   const [showDebug, setShowDebug] = useState(true); // Debug mode enabled by default
   const [showRaw, setShowRaw] = useState(false);
   const [rawBackupData, setRawBackupData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("restore");
   
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')
@@ -119,107 +122,124 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
         }, 1500);
       } else {
         toast.error("Återställning misslyckades", {
-          description: "Kunde inte återställa data. Se konsolen för mer information."
+          description: "Kunde inte återställa data. Öppna fliken Diagnostik för att felsöka problemet."
         });
+        setActiveTab("diagnostic");
       }
     } catch (error) {
       console.error("Error in restore:", error);
       toast.error("Återställning misslyckades", {
         description: `Ett fel uppstod: ${error instanceof Error ? error.message : 'Okänt fel'}`
       });
+      setActiveTab("diagnostic");
     } finally {
       setIsRestoring(false);
       // Reset password field after restore attempt
       setPassword("");
-      // Close the dialog
-      setIsOpen(false);
     }
   };
   
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <DatabaseBackup className="h-5 w-5 text-primary" />
             Återställ data
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <p>Detta kommer att återställa alla spelare och aktiviteter till den senaste säkerhetskopian.</p>
-            {formattedBackupDate ? (
-              <div className="mt-2 font-medium">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  Säkerhetskopia från: {formattedBackupDate}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="restore">Återställ</TabsTrigger>
+                <TabsTrigger value="diagnostic">Diagnostik</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="restore">
+                <div>
+                  <p>Detta kommer att återställa alla spelare och aktiviteter till den senaste säkerhetskopian.</p>
+                  {formattedBackupDate ? (
+                    <div className="mt-2 font-medium">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        Säkerhetskopia från: {formattedBackupDate}
+                      </div>
+                      <div className="text-muted-foreground mt-1">
+                        Innehåller {backupInfo?.playerCount} spelare och {backupInfo?.activityCount} aktiviteter.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-center gap-2 font-medium text-amber-500">
+                      <AlertTriangle className="h-4 w-4" />
+                      Ingen säkerhetskopia hittades eller så saknar den data.
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="restore-password" className="font-medium">Ange lösenord för att fortsätta:</Label>
+                    </div>
+                    <Input 
+                      id="restore-password"
+                      type="password"
+                      placeholder="Lösenord"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={passwordError ? "border-red-500" : ""}
+                    />
+                    {passwordError && (
+                      <p className="text-red-500 text-sm">{passwordError}</p>
+                    )}
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="debug-mode" 
+                        checked={showDebug} 
+                        onChange={() => setShowDebug(!showDebug)}
+                        className="accent-primary h-4 w-4"
+                      />
+                      <label htmlFor="debug-mode" className="text-sm text-muted-foreground cursor-pointer">
+                        Visa detaljerad information vid återställning
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input 
+                        type="checkbox" 
+                        id="raw-mode" 
+                        checked={showRaw} 
+                        onChange={() => setShowRaw(!showRaw)}
+                        className="accent-primary h-4 w-4"
+                      />
+                      <label htmlFor="raw-mode" className="text-sm text-muted-foreground cursor-pointer">
+                        Visa rå data från säkerhetskopia
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {showRaw && rawBackupData && (
+                    <div className="mt-4 text-xs bg-gray-100 p-2 rounded-md max-h-36 overflow-y-auto">
+                      <p>Players: {rawBackupData.players?.length || 0}</p>
+                      <p>Activities: {rawBackupData.activities?.length || 0}</p>
+                      <p>Matches: {rawBackupData.activities?.filter((a: any) => a.type === 'match').length || 0}</p>
+                      <p>Timestamp: {rawBackupData.timestamp}</p>
+                    </div>
+                  )}
+                  
+                  <p className="mt-4 font-medium text-destructive">
+                    Varning: Alla ändringar sedan senaste säkerhetskopian kommer att förloras.
+                  </p>
                 </div>
-                <div className="text-muted-foreground mt-1">
-                  Innehåller {backupInfo?.playerCount} spelare och {backupInfo?.activityCount} aktiviteter.
+              </TabsContent>
+              
+              <TabsContent value="diagnostic">
+                <div className="py-2">
+                  <DatabaseDiagnostics />
                 </div>
-              </div>
-            ) : (
-              <div className="mt-2 flex items-center gap-2 font-medium text-amber-500">
-                <AlertTriangle className="h-4 w-4" />
-                Ingen säkerhetskopia hittades eller så saknar den data.
-              </div>
-            )}
-            
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="restore-password" className="font-medium">Ange lösenord för att fortsätta:</Label>
-              </div>
-              <Input 
-                id="restore-password"
-                type="password"
-                placeholder="Lösenord"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={passwordError ? "border-red-500" : ""}
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm">{passwordError}</p>
-              )}
-            </div>
-            
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="debug-mode" 
-                  checked={showDebug} 
-                  onChange={() => setShowDebug(!showDebug)}
-                  className="accent-primary h-4 w-4"
-                />
-                <label htmlFor="debug-mode" className="text-sm text-muted-foreground cursor-pointer">
-                  Visa detaljerad information vid återställning
-                </label>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <input 
-                  type="checkbox" 
-                  id="raw-mode" 
-                  checked={showRaw} 
-                  onChange={() => setShowRaw(!showRaw)}
-                  className="accent-primary h-4 w-4"
-                />
-                <label htmlFor="raw-mode" className="text-sm text-muted-foreground cursor-pointer">
-                  Visa rå data från säkerhetskopia
-                </label>
-              </div>
-            </div>
-            
-            {showRaw && rawBackupData && (
-              <div className="mt-4 text-xs bg-gray-100 p-2 rounded-md max-h-36 overflow-y-auto">
-                <p>Players: {rawBackupData.players?.length || 0}</p>
-                <p>Activities: {rawBackupData.activities?.length || 0}</p>
-                <p>Matches: {rawBackupData.activities?.filter((a: any) => a.type === 'match').length || 0}</p>
-                <p>Timestamp: {rawBackupData.timestamp}</p>
-              </div>
-            )}
-            
-            <p className="mt-4 font-medium text-destructive">
-              Varning: Alla ändringar sedan senaste säkerhetskopian kommer att förloras.
-            </p>
+              </TabsContent>
+            </Tabs>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -227,9 +247,11 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
             setPassword("");
             setPasswordError("");
           }}>Avbryt</AlertDialogCancel>
-          <AlertDialogAction onClick={handleRestore} disabled={isRestoring}>
-            {isRestoring ? "Återställer..." : "Återställ data"}
-          </AlertDialogAction>
+          {activeTab === "restore" && (
+            <AlertDialogAction onClick={handleRestore} disabled={isRestoring}>
+              {isRestoring ? "Återställer..." : "Återställ data"}
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
