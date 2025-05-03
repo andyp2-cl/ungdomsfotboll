@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useBackupRestore } from "@/utils/storage/backup";
-import { RestoreDialog } from "./RestoreDialog";
+import { RestoreDialog } from "./restore-dialog";
 
 export function RestoreButton() {
   const { getLastBackupInfo } = useBackupRestore();
