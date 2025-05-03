@@ -1,53 +1,56 @@
 
-import React from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutList, History, LineChart, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Activity } from "@/types/player";
+import { RefreshCcw, LayoutGrid, Calendar, BarChart3, Wrench } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ActivityTabHeaderProps {
+export interface ActivityTabHeaderProps {
   activeView: "current" | "historical" | "statistics" | "tools";
   handleViewChange: (view: "current" | "historical" | "statistics" | "tools") => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   onRefresh: () => Promise<void>;
   isRefreshing: boolean;
   isMobile: boolean;
-  onBackupClick?: () => void;
-  onRestoreClick?: () => void;
-  onImportClick?: () => void;
-  onImportActivities?: (activities: Activity[]) => Promise<boolean>;
+  onImportClick?: () => void; // Added this prop to match the usage in ActivityTabContent
 }
 
-export function ActivityTabHeader({
-  activeView,
-  handleViewChange,
-  setIsAddActivityOpen,
-  onRefresh,
+export function ActivityTabHeader({ 
+  activeView, 
+  handleViewChange, 
+  onRefresh, 
   isRefreshing,
-  isMobile
+  isMobile,
+  onImportClick
 }: ActivityTabHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-      <Tabs className="w-full sm:w-auto" value={activeView} onValueChange={(value) => handleViewChange(value as any)}>
-        <TabsList className="w-full grid grid-cols-4">
-          <TabsTrigger value="current">
-            <LayoutList className="h-4 w-4 mr-2 hidden sm:block" />
-            Aktuella
-          </TabsTrigger>
-          <TabsTrigger value="historical">
-            <History className="h-4 w-4 mr-2 hidden sm:block" />
-            Historiska
-          </TabsTrigger>
-          <TabsTrigger value="statistics">
-            <LineChart className="h-4 w-4 mr-2 hidden sm:block" />
-            Statistik
-          </TabsTrigger>
-          <TabsTrigger value="tools">
-            <Database className="h-4 w-4 mr-2 hidden sm:block" />
-            Verktyg
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+    <div className="space-y-2">
+      <h2 className="text-2xl font-bold">Aktiviteter</h2>
+      
+      <ToggleGroup 
+        type="single" 
+        value={activeView} 
+        onValueChange={(value) => {
+          if (value) handleViewChange(value as any);
+        }}
+        className={`${isMobile ? 'justify-center w-full text-xs' : ''}`}
+      >
+        <ToggleGroupItem value="current" aria-label="Visa nuvarande aktiviteter" className={`${isMobile ? 'text-xs' : ''}`}>
+          <Calendar className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {!isMobile ? 'Nuvarande' : 'Nu'}
+        </ToggleGroupItem>
+        <ToggleGroupItem value="historical" aria-label="Visa historiska aktiviteter" className={`${isMobile ? 'text-xs' : ''}`}>
+          <LayoutGrid className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {!isMobile ? 'Historiska' : 'Hist.'}
+        </ToggleGroupItem>
+        <ToggleGroupItem value="statistics" aria-label="Visa statistik" className={`${isMobile ? 'text-xs' : ''}`}>
+          <BarChart3 className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {!isMobile ? 'Statistik' : 'Stats'}
+        </ToggleGroupItem>
+        <ToggleGroupItem value="tools" aria-label="Visa verktyg" className={`${isMobile ? 'text-xs' : ''}`}>
+          <Wrench className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {!isMobile ? 'Verktyg' : 'Tools'}
+        </ToggleGroupItem>
+      </ToggleGroup>
     </div>
   );
 }

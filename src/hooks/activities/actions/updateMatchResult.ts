@@ -71,27 +71,25 @@ export const handleMatchResultUpdate = async (
 
     // Try the most reliable saving method first - saveActivities now uses multiple fallbacks
     try {
-      const success = await saveActivities(updatedActivities);
+      // Fixed: Don't test the void return type for truthiness
+      await saveActivities(updatedActivities);
+      console.log("Activity saved successfully via enhanced storage system");
+      toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
       
-      if (success) {
-        console.log("Activity saved successfully via enhanced storage system");
-        toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
-        
-        // Log success to database
-        try {
-          await logDatabaseChange(
-            'update', 
-            'activity', 
-            activityId, 
-            `Match result updated using enhanced storage system: ${homeScore}-${awayScore}`
-          );
-        } catch (logError) {
-          console.warn("Couldn't log success to database:", logError);
-        }
-        
-        // No need for further attempts
-        return;
+      // Log success to database
+      try {
+        await logDatabaseChange(
+          'update', 
+          'activity', 
+          activityId, 
+          `Match result updated using enhanced storage system: ${homeScore}-${awayScore}`
+        );
+      } catch (logError) {
+        console.warn("Couldn't log success to database:", logError);
       }
+      
+      // No need for further attempts
+      return;
     } catch (saveError) {
       console.error("Enhanced storage system failed:", saveError);
       
