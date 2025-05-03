@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { updateActivityWithRLSHandling } from "@/lib/supabase";
@@ -21,175 +22,69 @@ export const handleMatchResultUpdate = async (
     const activity = activities.find(a => a.id === activityId);
     
     if (!activity) {
-      console.error(`Activity not found: ${activityId}`);
-      toast({
-        title: "Kunde inte uppdatera matchresultat",
-        description: "Matchen hittades inte.",
-        variant: "destructive"
-      });
+      console.error(`Activity with id ${activityId} not found`);
+      toast.error("Kunde inte hitta aktiviteten");
       return;
     }
     
-    // Create a copy of the activity to avoid mutations
-    const updatedActivity: Activity = { 
+    // Create updated activity with new scores
+    const updatedActivity: Activity = {
       ...activity,
-      homeScore, 
-      awayScore
+      homeScore,
+      awayScore,
+      result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined
     };
     
-    // Add result string if both scores are defined
+    // Update the isWin status based on score
     if (homeScore !== undefined && awayScore !== undefined) {
-      updatedActivity.result = `${homeScore}-${awayScore}`;
+      // Assume our team is the home team unless there's a clear indicator otherwise
+      // In a more sophisticated setup, we would determine this based on team names
+      const isHome = !activity.name.toLowerCase().includes(" borta");
       
-      // Set isWin based on scores (win = true, loss = false, draw = undefined)
-      if (homeScore > awayScore) {
-        updatedActivity.isWin = true;
-      } else if (homeScore < awayScore) {
-        updatedActivity.isWin = false;
-      } else {
-        // For a draw, set isWin to undefined (not false)
+      if (homeScore === awayScore) {
+        // Draw
         updatedActivity.isWin = undefined;
+      } else if (isHome) {
+        // Home team - we win if home score > away score
+        updatedActivity.isWin = homeScore > awayScore;
+      } else {
+        // Away team - we win if away score > home score
+        updatedActivity.isWin = awayScore > homeScore;
       }
-    } else {
-      // Clear result if scores aren't defined
-      updatedActivity.result = undefined;
-      updatedActivity.isWin = undefined;
     }
     
-    // Update player stats
-    if (!updatedActivity.player_stats) {
-      updatedActivity.player_stats = { goals: {}, assists: {} };
+    // Try database update
+    try {
+      console.log("Updating activity in database:", {
+        id: updatedActivity.id,
+        home_score: updatedActivity.homeScore,
+        away_score: updatedActivity.awayScore,
+        is_win: updatedActivity.isWin,
+        result: updatedActivity.result
+      });
+      
+      await updateActivityWithRLSHandling(updatedActivity);
+      console.log("Activity updated in database");
+    } catch (dbError) {
+      console.error("Failed to update activity in database:", dbError);
+      
+      // Continue with local update even if db update failed
+      toast.warning("Resultat sparades lokalt men kunde inte uppdateras i databasen");
     }
     
-    updatedActivity.player_stats = {
-      ...updatedActivity.player_stats,
-      scores: {
-        home: homeScore,
-        away: awayScore
-      },
-      isWin: updatedActivity.isWin
-    };
-    
-    // Update local state first to give immediate feedback
+    // Always update local state
     const updatedActivities = activities.map(a => 
       a.id === activityId ? updatedActivity : a
     );
+    
     setActivities(updatedActivities);
     
-    // IMPROVEMENT 1: Save to localStorage as a fallback
-    saveToLocalStorage(activityId, {
-      homeScore,
-      awayScore,
-      isWin: updatedActivity.isWin,
-      result: updatedActivity.result
-    });
+    // Update local storage
+    await saveActivities(updatedActivities);
     
-    // Try MULTIPLE saving approaches in sequence for maximum reliability
-    try {
-      // APPROACH 1: Use enhanced RLS handling method from client.ts
-      console.log("Trying direct RLS handling approach...");
-      const rlsResult = await updateActivityWithRLSHandling(activityId, {
-        home_score: homeScore,
-        away_score: awayScore,
-        is_win: updatedActivity.isWin,
-        result: updatedActivity.result,
-        player_stats: updatedActivity.player_stats
-      });
-      
-      if (rlsResult.success) {
-        console.log("Match result saved successfully via RLS handling");
-        toast({
-          title: "Resultat uppdaterat",
-          description: homeScore !== undefined && awayScore !== undefined ? 
-            `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-            "Resultat borttaget",
-        });
-        return;
-      }
-      
-      console.log("RLS handling approach didn't work, trying next approach...");
-      
-      // APPROACH 2: Use the standard saveActivities helper 
-      console.log("Trying standard saveActivities approach...");
-      await saveActivities([updatedActivity]);
-      console.log("Match result saved successfully via saveActivities");
-      
-      toast({
-        title: "Resultat uppdaterat",
-        description: homeScore !== undefined && awayScore !== undefined ? 
-          `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-          "Resultat borttaget",
-      });
-      
-      // APPROACH 3: Direct REST API call as last resort
-      // This is implemented but will only execute if the previous approaches fail
-      
-    } catch (error) {
-      console.error("Error saving match result:", error);
-      
-      try {
-        // APPROACH 3: Direct REST API call as last resort
-        console.log("Trying direct REST API call...");
-        const apiUrl = `https://zkrruihxszziifyogzko.supabase.co/rest/v1/activities?id=eq.${activityId}`;
-        const directApiResult = await fetch(apiUrl, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            home_score: homeScore,
-            away_score: awayScore,
-            is_win: updatedActivity.isWin,
-            result: updatedActivity.result
-          })
-        });
-        
-        if (directApiResult.ok) {
-          console.log("Match result saved successfully via direct API call");
-          toast({
-            title: "Resultat uppdaterat",
-            description: homeScore !== undefined && awayScore !== undefined ? 
-              `Resultat uppdaterat: ${homeScore}-${awayScore}` : 
-              "Resultat borttaget",
-          });
-          return;
-        } else {
-          console.error("Direct API call failed:", await directApiResult.text());
-          throw new Error("Direct API call failed");
-        }
-      } catch (directApiError) {
-        console.error("Error with direct API approach:", directApiError);
-        
-        toast({
-          title: "Lokalt uppdaterad",
-          description: "Resultatet har sparats lokalt, men kunde inte sparas i databasen. Synkroniseras automatiskt senare.",
-          variant: "warning"
-        });
-      }
-    }
-  } catch (error: any) {
-    console.error("Error in handleMatchResultUpdate:", error);
-    toast({
-      title: "Ett fel uppstod",
-      description: `Resultatet har sparats lokalt. ${error?.message || "Okänt fel"}`,
-      variant: "warning"
-    });
-  }
-};
-
-// Local storage helper for offline capability
-const saveToLocalStorage = (activityId: string, scoreData: any) => {
-  try {
-    const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
-    pendingUpdates[activityId] = {
-      ...scoreData,
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
-    console.log("Match result saved to localStorage as backup");
+    toast.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
   } catch (error) {
-    console.error("Error saving to localStorage:", error);
+    console.error("Error handling match result update:", error);
+    toast.error("Ett fel uppstod vid uppdatering av matchresultat");
   }
 };

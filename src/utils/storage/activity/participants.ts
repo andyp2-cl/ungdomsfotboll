@@ -4,8 +4,9 @@ import { logDatabaseChange } from "@/lib/supabase/logs";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { Activity } from "@/types/player";
+import { fetchPlayerActivities, refreshPlayerActivitiesCache } from "@/lib/supabase/playerActivities";
 
-// Handle participant relationships for an activity
+// Handle participant relationships for an activity with improved error handling and logging
 export const updateActivityParticipants = async (activity: Activity): Promise<void> => {
   if (!activity.id) {
     console.error("Cannot update participants: Activity ID is missing");
@@ -44,6 +45,9 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           console.error("Error deleting all participant relationships:", deleteAllError);
           throw deleteAllError;
         }
+        
+        // Force refresh cache after deletion
+        await refreshPlayerActivitiesCache();
       }
       return;
     }
@@ -131,42 +135,49 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
       }
     }
     
-    // Update local cache
-    try {
-      const { data } = await supabase
-        .from('player_activities')
-        .select('*');
-        
-      if (data) {
-        // Map player to activities and activities to players
-        const playerActivities: Record<string, string[]> = {};
-        const activityPlayers: Record<string, string[]> = {};
-        
-        data.forEach(relation => {
-          // Add activity to player's activities
-          if (!playerActivities[relation.player_id]) {
-            playerActivities[relation.player_id] = [];
-          }
-          playerActivities[relation.player_id].push(relation.activity_id);
-          
-          // Add player to activity's participants
-          if (!activityPlayers[relation.activity_id]) {
-            activityPlayers[relation.activity_id] = [];
-          }
-          activityPlayers[relation.activity_id].push(relation.player_id);
-        });
-        
-        // Cache the results
-        localStorage.setItem('cachedPlayerActivities', JSON.stringify(playerActivities));
-        localStorage.setItem('cachedActivityPlayers', JSON.stringify(activityPlayers));
-        localStorage.setItem('playerActivitiesFetchTime', Date.now().toString());
-      }
-    } catch (cacheError) {
-      console.error('Error updating player activities cache:', cacheError);
-    }
+    // Force refresh the player activities cache
+    await refreshPlayerActivitiesCache();
   } catch (error) {
     console.error(`Error updating participants for activity ${activity.id}:`, error);
     toast.error("Kunde inte uppdatera deltagare");
     throw error;
+  }
+};
+
+// Function to verify all player_activities links are valid (IDs match format)
+export const validateParticipantLinks = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('player_activities')
+      .select('*');
+      
+    if (error) {
+      console.error("Error validating participant links:", error);
+      return false;
+    }
+    
+    if (!data || data.length === 0) {
+      console.warn("No participant links found to validate");
+      return true;
+    }
+    
+    let validCount = 0;
+    let invalidCount = 0;
+    
+    for (const link of data) {
+      if (link.id === `${link.player_id}_${link.activity_id}`) {
+        validCount++;
+      } else {
+        invalidCount++;
+        console.warn("Invalid participant link found:", link);
+      }
+    }
+    
+    console.log(`Participant link validation: ${validCount} valid, ${invalidCount} invalid`);
+    
+    return invalidCount === 0;
+  } catch (error) {
+    console.error("Error during participant link validation:", error);
+    return false;
   }
 };

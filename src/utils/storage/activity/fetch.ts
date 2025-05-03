@@ -84,8 +84,15 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
         
         // Populate participants arrays in activities
         if (activityPlayers) {
+          console.log(`Populating participants for ${activities.length} activities from activityPlayers with ${Object.keys(activityPlayers).length} entries`);
+          
           for (const activity of activities) {
             activity.participants = activityPlayers[activity.id] || [];
+            
+            // Log for verification of problematic activities
+            if (activity.type === 'match' && (!activity.participants || activity.participants.length === 0)) {
+              console.log(`No participants found for match: ${activity.id} - ${activity.name}`);
+            }
           }
           console.log('Successfully populated activity participants');
         } else {
@@ -186,4 +193,60 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
   }
   
   return [];
+};
+
+/**
+ * Force refresh all activities and clear cache
+ */
+export const forceRefreshAllActivities = async (): Promise<Activity[]> => {
+  try {
+    console.log("Force refreshing all activities...");
+    toast.info("Uppdaterar alla aktiviteter från server...");
+    
+    // Clear relevant caches
+    localStorage.removeItem('cachedActivities');
+    localStorage.removeItem('sb-activities-fetch-time');
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('cachedPlayerActivities');
+    localStorage.removeItem('cachedActivityPlayers');
+    localStorage.removeItem('playerActivitiesFetchTime');
+    
+    // Fetch fresh data with retries
+    const activities = await fetchActivitiesFromDB({
+      showToast: true,
+      forceRefresh: true,
+      retryCount: 3
+    });
+    
+    if (activities.length > 0) {
+      // Fetch player-activity relationships
+      try {
+        const { activityPlayers } = await fetchPlayerActivities();
+        
+        // Populate participants arrays in activities
+        if (activityPlayers) {
+          for (const activity of activities) {
+            activity.participants = activityPlayers[activity.id] || [];
+          }
+        }
+      } catch (relationError) {
+        console.error('Error refreshing activity-player relationships:', relationError);
+      }
+      
+      // Cache the refreshed data
+      await cacheActivities(activities);
+      
+      console.log(`Successfully refreshed ${activities.length} activities`);
+      toast.success(`Uppdaterade ${activities.length} aktiviteter`);
+      
+      return activities;
+    } else {
+      toast.warning("Inga aktiviteter hittades vid uppdatering.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error during force refresh:", error);
+    toast.error("Kunde inte uppdatera aktiviteter. Försök igen senare.");
+    return [];
+  }
 };
