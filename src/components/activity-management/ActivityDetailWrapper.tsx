@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityDetail } from "@/components/activity-detail";
@@ -39,13 +38,6 @@ export function ActivityDetailWrapper({
   const handleActivityUpdate = async (activity: Activity): Promise<void> => {
     await onActivityUpdate(activity);
   };
-
-  // Create a wrapper for handleMatchResultUpdate that ensures proper return type
-  const onMatchResultUpdate = handleMatchResultUpdate 
-    ? async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
-        return await handleMatchResultUpdate(activityId, homeScore, awayScore);
-      }
-    : undefined;
   
   return (
     <ActivityDetail
@@ -66,7 +58,7 @@ export function ActivityDetailWrapper({
       relatedActivities={relatedActivities}
       cupMatches={cupMatches}
       onActivitySelect={onActivitySelect}
-      onMatchResultUpdate={onMatchResultUpdate}
+      onMatchResultUpdate={handleMatchResultUpdate}
     />
   );
 }

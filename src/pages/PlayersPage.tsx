@@ -1,4 +1,3 @@
-
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -73,16 +72,16 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistoricalWrapper,
     handleMatchResultWrapper,
     handleRefresh
-  } = usePlayerPageWrappers({
+  } = usePlayerPageWrappers(
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
     handleKioskUpdate,
     handleImportActivities,
     handleClearHistorical,
-    handleMatchResult,
+    handleMatchResult, // This should now return Promise<boolean>
     setViewMode
-  });
+  );
 
   // Check for selected activity in location state
   useEffect(() => {

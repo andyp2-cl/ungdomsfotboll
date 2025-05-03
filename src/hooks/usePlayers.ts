@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -40,7 +39,6 @@ export function usePlayers(initialTab?: string) {
   // Get activity state and actions
   const {
     activities,
-    setActivities,
     isLoading: isActivitiesLoading,
     selectedActivityTypes,
     selectedActivity,
@@ -59,7 +57,7 @@ export function usePlayers(initialTab?: string) {
     handleImportedActivities,
     handleClearHistoricalActivities,
     handleMatchResultUpdate,
-    retryLoading
+    retryLoading  // Include retryLoading from useActivities
   } = useActivities(players, setPlayers);
 
   // Wrapper for activity update
@@ -92,15 +90,14 @@ export function usePlayers(initialTab?: string) {
   };
 
   // Wrapper for match result update - changed to return boolean to match expected type
-  const handleMatchResult = async (
-    activityId: string, 
-    homeScore?: number, 
-    awayScore?: number
-  ): Promise<boolean> => {
+  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
     try {
-      return await handleMatchResultUpdate(activities, setActivities, activityId, homeScore, awayScore);
+      console.log(`PlayersPage: Calling handleMatchResultUpdate with scores=${homeScore}-${awayScore}`);
+      
+      // Call the function and return its result (must be boolean)
+      return await handleMatchResultUpdate(activityId, homeScore, awayScore);
     } catch (error) {
-      console.error("Error in handleMatchResult:", error);
+      console.error("Error updating match result:", error);
       return false;
     }
   };
@@ -172,7 +169,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper,
+    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
@@ -183,6 +180,6 @@ export function usePlayers(initialTab?: string) {
     
     // Loading state
     isLoading,
-    retryLoading
+    retryLoading  // Add retryLoading to the returned object
   };
 }
