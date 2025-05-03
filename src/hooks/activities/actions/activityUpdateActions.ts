@@ -3,7 +3,7 @@ import { Activity, Player } from "@/types/player";
 import { handleActivityUpdate } from "./updateActivity";
 import { handleKioskAssignmentUpdate } from "./updateKioskAssignment";
 import { handleAddActivity } from "./addActivity";
-import { handleMatchResultUpdate } from "./updateMatchResult";
+import { handleMatchResultUpdate } from "./match-result";
 
 /**
  * Export all activity update actions from a single point
