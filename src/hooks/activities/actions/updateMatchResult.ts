@@ -5,6 +5,7 @@ import { updateActivityWithRLSHandling } from "@/lib/supabase";
 import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity"; 
+import { logDatabaseChange } from "@/lib/supabase/logs";
 
 /**
  * Updates match result (score) for an existing activity
@@ -72,6 +73,18 @@ export const handleMatchResultUpdate = async (
     try {
       await saveActivities(updatedActivities);
       console.log("Activity saved to local storage successfully");
+      
+      // Log local storage success to database
+      try {
+        await logDatabaseChange(
+          'update', 
+          'activity', 
+          activityId, 
+          `Match result updated locally: ${homeScore}-${awayScore}`
+        );
+      } catch (logError) {
+        console.warn("Couldn't log local storage success to database:", logError);
+      }
     } catch (localError) {
       console.error("Error saving to local storage:", localError);
     }
@@ -84,6 +97,18 @@ export const handleMatchResultUpdate = async (
       if (success) {
         console.log("Activity updated in database successfully");
         toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        
+        // Log successful database update
+        try {
+          await logDatabaseChange(
+            'update', 
+            'activity', 
+            activityId, 
+            `Match result updated in database: ${homeScore}-${awayScore}`
+          );
+        } catch (logError) {
+          console.warn("Couldn't log database update to logs table:", logError);
+        }
       } else {
         console.error("Database update failed:", error);
         
@@ -99,6 +124,18 @@ export const handleMatchResultUpdate = async (
         if (scoreSuccess) {
           console.log("Score fields updated successfully");
           toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+          
+          // Log fallback success
+          try {
+            await logDatabaseChange(
+              'update', 
+              'activity', 
+              activityId, 
+              `Match result updated via fallback: ${homeScore}-${awayScore}`
+            );
+          } catch (logError) {
+            console.warn("Couldn't log fallback success to database:", logError);
+          }
         } else {
           console.error("Score-only update also failed:", scoreError);
           
@@ -108,19 +145,70 @@ export const handleMatchResultUpdate = async (
           if (backupSuccess) {
             console.log("Activity updated successfully via backup method");
             toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+            
+            // Log backup success
+            try {
+              await logDatabaseChange(
+                'update', 
+                'activity', 
+                activityId, 
+                `Match result updated via full activity update: ${homeScore}-${awayScore}`
+              );
+            } catch (logError) {
+              console.warn("Couldn't log backup success to database:", logError);
+            }
           } else {
             console.error("All update methods failed", backupError || scoreError || error);
+            
+            // Log the failure
+            try {
+              await logDatabaseChange(
+                'update', 
+                'activity', 
+                activityId, 
+                `Failed to update match result in database: ${homeScore}-${awayScore}. Error: ${(backupError || scoreError || error)?.message || 'Unknown error'}`
+              );
+            } catch (logError) {
+              console.warn("Couldn't log failure to database:", logError);
+            }
+            
             toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
           }
         }
       }
     } catch (dbError) {
       console.error("Failed to update activity in database:", dbError);
+      
+      // Log database error
+      try {
+        await logDatabaseChange(
+          'error', 
+          'activity', 
+          activityId, 
+          `Error updating match result: ${dbError?.message || 'Unknown error'}`
+        );
+      } catch (logError) {
+        console.warn("Couldn't log database error to logs table:", logError);
+      }
+      
       toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
     }
   } catch (error) {
     console.error("Error handling match result update:", error);
     toastLibrary.error("Ett fel uppstod vid uppdatering av matchresultat");
+    
+    // Log the overall error
+    try {
+      await logDatabaseChange(
+        'error', 
+        'activity', 
+        activityId, 
+        `Match result update failed with error: ${error?.message || 'Unknown error'}`
+      );
+    } catch (logError) {
+      console.warn("Couldn't log error to database:", logError);
+    }
+    
     throw error; // Rethrow for handling by the caller
   }
 };
