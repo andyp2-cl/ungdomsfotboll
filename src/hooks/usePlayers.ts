@@ -90,14 +90,23 @@ export function usePlayers(initialTab?: string) {
   };
 
   // Wrapper for match result update - changed to return boolean to match expected type
-  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
+  const handleMatchResult = async (
+    activityId: string, 
+    homeScore?: number, 
+    awayScore?: number
+  ): Promise<boolean> => {
     try {
-      console.log(`PlayersPage: Calling handleMatchResultUpdate with scores=${homeScore}-${awayScore}`);
+      const success = await handleMatchResultUpdate(
+        activities,
+        setActivities,
+        activityId,
+        homeScore,
+        awayScore
+      );
       
-      // Call the function and return its result (must be boolean)
-      return await handleMatchResultUpdate(activityId, homeScore, awayScore);
+      return success;
     } catch (error) {
-      console.error("Error updating match result:", error);
+      console.error("Error in handleMatchResult:", error);
       return false;
     }
   };
