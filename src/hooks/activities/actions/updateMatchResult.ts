@@ -37,6 +37,8 @@ export const handleMatchResultUpdate = async (
     // Calculate win status based on scores and home/away status
     const isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
+    console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin}`);
+    
     // Create updated activity with new scores
     const updatedActivity: Activity = {
       ...activity,
@@ -93,7 +95,7 @@ export const handleMatchResultUpdate = async (
             'update', 
             'activity', 
             activityId, 
-            `Match result updated using enhanced storage system: ${homeScore}-${awayScore}`
+            `Match result updated using enhanced storage system: ${homeScore}-${awayScore}, isWin=${isWin}`
           );
         } catch (logError) {
           console.warn("Couldn't log success to database:", logError);
@@ -124,7 +126,7 @@ export const handleMatchResultUpdate = async (
             'update', 
             'activity', 
             activityId, 
-            `Match result updated in database: ${homeScore}-${awayScore}`
+            `Match result updated in database: ${homeScore}-${awayScore}, isWin=${isWin}`
           );
         } catch (logError) {
           console.warn("Couldn't log database update to logs table:", logError);
@@ -145,7 +147,7 @@ export const handleMatchResultUpdate = async (
               'update', 
               'activity', 
               activityId, 
-              `Match result updated via full activity update: ${homeScore}-${awayScore}`
+              `Match result updated via full activity update: ${homeScore}-${awayScore}, isWin=${isWin}`
             );
           } catch (logError) {
             console.warn("Couldn't log backup success to database:", logError);
@@ -159,7 +161,7 @@ export const handleMatchResultUpdate = async (
               'error', 
               'activity', 
               activityId, 
-              `Failed to update match result in database: ${homeScore}-${awayScore}. Error: ${(backupError || error)?.message || 'Unknown error'}`
+              `Failed to update match result in database: ${homeScore}-${awayScore}, isWin=${isWin}. Error: ${(backupError || error)?.message || 'Unknown error'}`
             );
           } catch (logError) {
             console.warn("Couldn't log failure to database:", logError);

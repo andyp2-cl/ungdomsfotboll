@@ -2,7 +2,7 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
-import { Check, X } from "lucide-react";
+import { Check, X, Minus } from "lucide-react";
 
 interface MatchResultDisplayProps {
   activity: Activity;
@@ -52,10 +52,32 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
   };
 
   const renderResultIcon = () => {
-    if (activity.isWin === true) {
+    if (activity.homeScore === activity.awayScore && 
+        activity.homeScore !== undefined && 
+        activity.awayScore !== undefined) {
+      return <Minus className="h-4 w-4 mr-1 text-gray-600" />;
+    } else if (activity.isWin === true) {
       return <Check className="h-4 w-4 mr-1 text-green-600" />;
     } else if (activity.isWin === false) {
       return <X className="h-4 w-4 mr-1 text-red-600" />;
+    }
+    
+    // Calculate icon if isWin is not explicitly set
+    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+      const isHome = isHomeMatch(activity);
+      if (isHome) {
+        if (activity.homeScore > activity.awayScore) {
+          return <Check className="h-4 w-4 mr-1 text-green-600" />;
+        } else if (activity.homeScore < activity.awayScore) {
+          return <X className="h-4 w-4 mr-1 text-red-600" />;
+        }
+      } else {
+        if (activity.awayScore > activity.homeScore) {
+          return <Check className="h-4 w-4 mr-1 text-green-600" />;
+        } else if (activity.awayScore < activity.homeScore) {
+          return <X className="h-4 w-4 mr-1 text-red-600" />;
+        }
+      }
     }
     return null;
   };

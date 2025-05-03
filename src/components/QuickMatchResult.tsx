@@ -4,7 +4,7 @@ import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save, AlertCircle, CheckCircle2 } from "lucide-react";
-import { extractTeamNames, isHomeMatch } from "./activity-detail/match-result/utils";
+import { extractTeamNames, isHomeMatch, calculateWinStatus } from "./activity-detail/match-result/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,10 +71,15 @@ export function QuickMatchResult({
     setHasError(false);
     setShowSuccess(false);
     
+    // Calculate win status based on scores and home/away status
+    const isWin = calculateWinStatus(homeScore, awayScore, isHome);
+    
     console.log("QuickMatchResult - Saving match result:", { 
       activityId: activity.id, 
       homeScore, 
       awayScore,
+      isHome,
+      isWin,
       retryCount
     });
     
@@ -117,11 +122,14 @@ export function QuickMatchResult({
           activityId: activity.id,
           homeScore: processedHomeScore,
           awayScore: processedAwayScore,
+          isWin: calculateWinStatus(processedHomeScore, processedAwayScore, isHome),
           timestamp: new Date().toISOString()
         };
         const savedScores = JSON.parse(localStorage.getItem('savedMatchScores') || '{}');
         savedScores[activity.id] = backupData;
         localStorage.setItem('savedMatchScores', JSON.stringify(savedScores));
+        
+        console.log("Match result also saved to local backup:", backupData);
       } catch (e) {
         console.error("Failed to save backup to localStorage:", e);
       }
@@ -144,6 +152,7 @@ export function QuickMatchResult({
           pendingUpdates[activity.id] = {
             homeScore,
             awayScore,
+            isWin: calculateWinStatus(homeScore, awayScore, isHome),
             timestamp: new Date().toISOString()
           };
           localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));

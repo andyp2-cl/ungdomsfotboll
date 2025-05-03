@@ -1,5 +1,6 @@
 
 import { Activity } from "@/types/player";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 /**
  * Format Activity object for database storage
@@ -10,6 +11,21 @@ export const formatActivityForDatabase = (activity: Activity): any => {
   // Create a base object to avoid mutations
   const baseActivity = { ...activity };
   const { location, player_stats, ...rest } = baseActivity;
+  
+  // Determine if it's a home match for win calculation
+  const isHome = isHomeMatch(activity);
+  
+  // Calculate win status if it's not explicitly set but we have scores
+  let isWin = activity.isWin;
+  
+  // If isWin is undefined but we have scores, calculate it
+  if (isWin === undefined && 
+      activity.homeScore !== undefined && 
+      activity.awayScore !== undefined && 
+      activity.homeScore !== activity.awayScore) {
+    isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
+    console.log(`Calculated isWin=${isWin} for activity ${activity.id} based on scores ${activity.homeScore}-${activity.awayScore} and isHome=${isHome}`);
+  }
   
   // Create the base formatted activity object
   const formattedActivity = {
@@ -28,7 +44,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     home_score: activity.homeScore !== undefined ? activity.homeScore : null,
     away_score: activity.awayScore !== undefined ? activity.awayScore : null,
     // Ensure boolean values are explicitly true/false/null, not undefined
-    is_win: activity.isWin === true ? true : activity.isWin === false ? false : null,
+    is_win: isWin === true ? true : isWin === false ? false : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false,
@@ -88,6 +104,17 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     leagueId: item.league_id || undefined,
     league_id: item.league_id || undefined
   };
+  
+  // For match type activities with scores but undefined isWin, calculate it
+  if (activity.type === 'match' && 
+      activity.homeScore !== undefined && 
+      activity.awayScore !== undefined && 
+      activity.isWin === undefined &&
+      activity.homeScore !== activity.awayScore) {
+    const isHome = isHomeMatch(activity);
+    activity.isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
+    console.log(`Calculated isWin=${activity.isWin} for loaded activity ${activity.id} based on scores ${activity.homeScore}-${activity.awayScore}`);
+  }
   
   // For cup type activities, make sure cupId is set properly
   if (activity.type === 'cup') {

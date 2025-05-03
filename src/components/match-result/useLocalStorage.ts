@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Activity } from '@/types/player';
 import { toast } from 'sonner';
+import { isHomeMatch, calculateWinStatus } from '@/components/activity-detail/match-result/utils';
 
 interface MatchResult {
   homeScore?: number;
@@ -40,8 +41,23 @@ export function useLocalStorage(activity: Activity) {
   }, [isOnline]);
   
   // Save match result to local storage
-  const saveToLocalStorage = (activityId: string, data: MatchResult) => {
+  const saveToLocalStorage = (activityId: string, homeScore?: number, awayScore?: number) => {
     try {
+      // Determine if it's a home match
+      const isHome = isHomeMatch(activity);
+      
+      // Calculate win status
+      const isWin = calculateWinStatus(homeScore, awayScore, isHome);
+      
+      // Prepare data
+      const data: MatchResult = {
+        homeScore,
+        awayScore,
+        isWin,
+        result: homeScore !== undefined && awayScore !== undefined ? 
+          `${homeScore}-${awayScore}` : undefined
+      };
+      
       // Get current pending updates
       const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
       
@@ -54,7 +70,22 @@ export function useLocalStorage(activity: Activity) {
       // Save back to localStorage
       localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
       
-      console.log("Saved match result to localStorage:", { activityId, data });
+      // Also save in the matchScores storage for redundancy
+      const matchScores = JSON.parse(localStorage.getItem('matchScores') || '{}');
+      matchScores[activityId] = {
+        homeScore,
+        awayScore,
+        isWin,
+        result: data.result,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('matchScores', JSON.stringify(matchScores));
+      
+      console.log("Saved match result to localStorage:", { 
+        activityId, 
+        ...data,
+        isHome
+      });
       
       return true;
     } catch (error) {

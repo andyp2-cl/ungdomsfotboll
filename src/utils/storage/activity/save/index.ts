@@ -5,6 +5,7 @@ import { logDatabaseChange } from "@/lib/supabase/logs";
 import { supabase } from "@/lib/supabase/client";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 import { toast } from "sonner";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 // Main export function for saving activities
 export async function saveActivities(activities: Activity[]): Promise<boolean> {
@@ -63,6 +64,18 @@ export async function saveActivities(activities: Activity[]): Promise<boolean> {
 // Function to save activity to local storage
 function saveToLocalStorage(activity: Activity): void {
   try {
+    // For match activities, ensure isWin is properly set
+    if (activity.type === 'match' && 
+        activity.homeScore !== undefined && 
+        activity.awayScore !== undefined && 
+        activity.homeScore !== activity.awayScore && 
+        activity.isWin === undefined) {
+      
+      const isHome = isHomeMatch(activity);
+      activity.isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
+      console.log(`Set isWin to ${activity.isWin} for activity ${activity.id} with scores ${activity.homeScore}-${activity.awayScore}`);
+    }
+    
     // Get existing activities from localStorage
     const existingActivitiesJson = localStorage.getItem('activities');
     const existingActivities = existingActivitiesJson ? JSON.parse(existingActivitiesJson) : [];
