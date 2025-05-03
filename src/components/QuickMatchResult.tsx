@@ -77,48 +77,42 @@ export function QuickMatchResult({
         processed: { processedHomeScore, processedAwayScore }
       });
       
-      // Make multiple save attempts for reliability
-      let saveAttempts = 0;
-      let saveSuccess = false;
-      
-      while (saveAttempts < 3 && !saveSuccess) {
-        try {
-          saveAttempts++;
-          await onSave(processedHomeScore, processedAwayScore);
-          saveSuccess = true;
-          
-          // Fix: Using the correct toast syntax
-          toast.success("Resultat sparat", {
-            description: "Matchresultatet har sparats framgångsrikt."
-          });
-          
-          hookToast({
-            variant: "default",
-            description: "Matchresultatet har sparats."
-          });
-        } catch (attemptError) {
-          console.error(`Save attempt ${saveAttempts} failed:`, attemptError);
-          
-          if (saveAttempts >= 3) {
-            throw attemptError; // Re-throw on final attempt
-          }
-          
-          // Wait a moment before retrying
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      // Try with direct call first - simplify the flow
+      try {
+        await onSave(processedHomeScore, processedAwayScore);
+        
+        console.log("Score saved successfully");
+        
+        // Use sonner toast correctly
+        toast.success("Resultat sparat", {
+          description: "Matchresultatet har sparats."
+        });
+        
+        // Also use shadcn toast
+        hookToast({
+          description: "Matchresultatet har sparats.",
+          variant: "default"
+        });
+        
+        // Reset error state on success
+        setHasError(false);
+      } catch (error) {
+        console.error("Error saving match result:", error);
+        throw error; // Rethrow to be caught by outer catch
       }
     } catch (error) {
-      console.error("Error saving match result after multiple attempts:", error);
+      console.error("Error in save handler:", error);
       setHasError(true);
       
-      // Fix: Using the correct toast syntax
-      toast.error("Ett fel uppstod", {
-        description: "Kunde inte spara resultat. Försök igen."
+      // Use sonner toast correctly for error
+      toast.error("Kunde inte spara resultat", {
+        description: "Ett fel uppstod vid sparande av resultat. Försök igen."
       });
       
+      // Also use shadcn toast for error
       hookToast({
-        variant: "destructive",
-        description: "Kunde inte spara ändringar. Försök igen."
+        description: "Kunde inte spara ändringar. Försök igen.",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
