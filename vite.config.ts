@@ -2,15 +2,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { componentTagger } from "lovable-tagger";
 import pwaOptions from './vite-pwa.config';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    VitePWA(pwaOptions)
-  ],
+    VitePWA(pwaOptions),
+    mode === 'development' && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -20,7 +22,8 @@ export default defineConfig({
     include: ['react', 'react-dom'],
   },
   server: {
-    port: 8080
+    port: 8080,
+    host: "::"
   },
   build: {
     chunkSizeWarningLimit: 2000, // Increase the warning limit to 2MB
@@ -34,4 +37,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));
