@@ -125,8 +125,7 @@ async function saveToDatabase(activity: Activity): Promise<boolean> {
     // Try direct update with Supabase first
     const { error } = await supabase
       .from('activities')
-      .upsert(formattedActivity)
-      .select();
+      .upsert(formattedActivity);
     
     if (!error) {
       console.log(`Activity ${activity.id} saved to database successfully`);

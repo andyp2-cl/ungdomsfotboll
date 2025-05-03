@@ -31,19 +31,20 @@ export const handleMatchResultUpdate = async (
       return;
     }
     
+    // Determine if it's a home match
+    const isHome = isHomeMatch(activity);
+    
+    // Calculate win status based on scores and home/away status
+    const isWin = calculateWinStatus(homeScore, awayScore, isHome);
+    
     // Create updated activity with new scores
     const updatedActivity: Activity = {
       ...activity,
       homeScore,
       awayScore,
+      isWin,
       result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined
     };
-    
-    // Determine if it's a home match
-    const isHome = isHomeMatch(activity);
-    
-    // Update the isWin status based on score
-    updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
     console.log("Updated activity with new result:", {
       id: updatedActivity.id,

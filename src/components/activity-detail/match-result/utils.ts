@@ -2,107 +2,70 @@
 import { Activity } from "@/types/player";
 
 /**
- * Extracts team names from an activity name
- */
-export const extractTeamNames = (activity: Activity): { homeTeam: string, awayTeam: string } => {
-  // Default values
-  let homeTeam = "Hemmalag";
-  let awayTeam = "Bortalag";
-  
-  if (activity.name) {
-    // Attempt to extract team names from activity name format "Team A - Team B"
-    const parts = activity.name.split(/\s*-\s*/);
-    if (parts.length >= 2) {
-      homeTeam = parts[0].trim();
-      awayTeam = parts[1].trim();
-    }
-  }
-  
-  return { homeTeam, awayTeam };
-};
-
-/**
- * Determines if the activity is a home match for our team
+ * Check if the team is the home team based on team name matching
  */
 export const isHomeMatch = (activity: Activity): boolean => {
-  // Look for keywords indicating away game
-  if (activity.name) {
-    const lowerCaseName = activity.name.toLowerCase();
-    if (lowerCaseName.includes("borta") || 
-        lowerCaseName.includes(" b ") ||
-        lowerCaseName.endsWith(" b")) {
-      return false;
-    }
-    
-    // Common format: "Team A - Team B" where Team A is the home team
-    // Check if "Hässleholms" or "HIF" is mentioned first
-    if (lowerCaseName.startsWith("hif") || 
-        lowerCaseName.startsWith("hässleholms") ||
-        lowerCaseName.startsWith("hassleholm")) {
-      return true;
-    }
-  }
+  // We consider ourselves as the home team if:
+  // 1. Our name is explicitly in the name of the match as the home team
+  // 2. The match is created by us and no explicit away team is specified
+  const matchName = activity.name?.toLowerCase() || '';
   
-  // Default to home match if can't determine
+  // Look for common patterns that indicate we're the home team
+  const homePatterns = [
+    'hif - ', 
+    'hässleholms if - ',
+    'hässleholm - ',
+    'hif mot ',
+    'hässleholms if mot '
+  ];
+  
+  // Look for patterns that indicate we're the away team
+  const awayPatterns = [
+    ' - hif',
+    ' - hässleholms if',
+    ' - hässleholm',
+    ' mot hif',
+    ' mot hässleholms if'
+  ];
+  
+  // Check if any home patterns match
+  const isHome = homePatterns.some(pattern => 
+    matchName.includes(pattern.toLowerCase())
+  );
+  
+  // Check if any away patterns match
+  const isAway = awayPatterns.some(pattern => 
+    matchName.includes(pattern.toLowerCase())
+  );
+  
+  // If we find explicit patterns, use them
+  if (isHome) return true;
+  if (isAway) return false;
+  
+  // Default to home team if no clear indication
   return true;
 };
 
 /**
- * Gets the outcome text (Vinst, Förlust, Oavgjort) based on scores
- */
-export const getOutcomeText = (
-  homeScore: number,
-  awayScore: number,
-  isHomeTeam: boolean = true
-): string => {
-  if (homeScore === awayScore) {
-    return "Oavgjort";
-  }
-  
-  if (isHomeTeam) {
-    return homeScore > awayScore ? "Vinst" : "Förlust";
-  } else {
-    return awayScore > homeScore ? "Vinst" : "Förlust";
-  }
-};
-
-/**
- * Gets the appropriate color class based on outcome
- */
-export const getOutcomeColorClass = (
-  homeScore: number,
-  awayScore: number,
-  isHomeTeam: boolean = true
-): string => {
-  if (homeScore === awayScore) {
-    return "bg-gray-100 text-gray-800"; // Draw
-  }
-  
-  if (isHomeTeam) {
-    return homeScore > awayScore 
-      ? "bg-green-100 text-green-800" // Win
-      : "bg-red-100 text-red-800"; // Loss
-  } else {
-    return awayScore > homeScore 
-      ? "bg-green-100 text-green-800" // Win 
-      : "bg-red-100 text-red-800"; // Loss
-  }
-};
-
-/**
- * Calculates win status based on scores and team position
+ * Calculate if a match is a win based on scores
  */
 export const calculateWinStatus = (
-  homeScore?: number,
-  awayScore?: number,
-  isHomeTeam: boolean = true
+  homeScore?: number, 
+  awayScore?: number, 
+  isHome?: boolean
 ): boolean | undefined => {
-  // If scores are undefined or equal, it's a draw (undefined)
-  if (homeScore === undefined || awayScore === undefined || homeScore === awayScore) {
+  // If either score is undefined, we can't determine win status
+  if (homeScore === undefined || awayScore === undefined) {
     return undefined;
   }
   
-  if (isHomeTeam) {
+  // If scores are equal, it's a draw (return undefined for draw)
+  if (homeScore === awayScore) {
+    return undefined;
+  }
+  
+  // Determine if it's a win based on home/away status
+  if (isHome) {
     return homeScore > awayScore;
   } else {
     return awayScore > homeScore;
@@ -110,23 +73,59 @@ export const calculateWinStatus = (
 };
 
 /**
- * Gets the appropriate color class based on match result
+ * Get the CSS class based on the match result
  */
 export const getResultColorClass = (activity: Activity): string => {
-  // If it's a draw (scores are equal)
-  if (activity.homeScore !== undefined && 
-      activity.awayScore !== undefined && 
-      activity.homeScore === activity.awayScore) {
-    return "text-amber-600";
+  // If we don't have scores, return empty class
+  if (activity.homeScore === undefined || activity.awayScore === undefined) {
+    return '';
   }
   
-  // If win/loss is explicitly set
+  // Draw case
+  if (activity.homeScore === activity.awayScore) {
+    return 'text-gray-600';
+  }
+  
+  // Check explicit win status if available
   if (activity.isWin === true) {
-    return "text-green-600";
+    return 'text-green-600';
   } else if (activity.isWin === false) {
-    return "text-red-600";
+    return 'text-red-600';
   }
   
-  // Default
-  return "";
+  // Fall back to calculating based on score
+  const isHome = isHomeMatch(activity);
+  if (isHome) {
+    return activity.homeScore > activity.awayScore ? 'text-green-600' : 'text-red-600';
+  } else {
+    return activity.awayScore > activity.homeScore ? 'text-green-600' : 'text-red-600';
+  }
+};
+
+/**
+ * Extract team names from activity
+ */
+export const extractTeamNames = (activity: Activity) => {
+  const matchName = activity.name || '';
+  
+  // Default team names
+  let homeTeam = 'Hemma';
+  let awayTeam = 'Borta';
+  
+  // Try to parse from name
+  if (matchName.includes(' - ')) {
+    const parts = matchName.split(' - ');
+    if (parts.length >= 2) {
+      homeTeam = parts[0].trim();
+      awayTeam = parts[1].trim();
+    }
+  } else if (matchName.includes(' mot ')) {
+    const parts = matchName.split(' mot ');
+    if (parts.length >= 2) {
+      homeTeam = parts[0].trim();
+      awayTeam = parts[1].trim();
+    }
+  }
+  
+  return { homeTeam, awayTeam };
 };
