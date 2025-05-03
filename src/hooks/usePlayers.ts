@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -39,6 +40,7 @@ export function usePlayers(initialTab?: string) {
   // Get activity state and actions
   const {
     activities,
+    setActivities,
     isLoading: isActivitiesLoading,
     selectedActivityTypes,
     selectedActivity,
@@ -57,7 +59,7 @@ export function usePlayers(initialTab?: string) {
     handleImportedActivities,
     handleClearHistoricalActivities,
     handleMatchResultUpdate,
-    retryLoading  // Include retryLoading from useActivities
+    retryLoading
   } = useActivities(players, setPlayers);
 
   // Wrapper for activity update
@@ -96,15 +98,7 @@ export function usePlayers(initialTab?: string) {
     awayScore?: number
   ): Promise<boolean> => {
     try {
-      const success = await handleMatchResultUpdate(
-        activities,
-        setActivities,
-        activityId,
-        homeScore,
-        awayScore
-      );
-      
-      return success;
+      return await handleMatchResultUpdate(activities, setActivities, activityId, homeScore, awayScore);
     } catch (error) {
       console.error("Error in handleMatchResult:", error);
       return false;
@@ -178,7 +172,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
+    handleActivityUpdate: handleActivityUpdateWrapper,
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
@@ -189,6 +183,6 @@ export function usePlayers(initialTab?: string) {
     
     // Loading state
     isLoading,
-    retryLoading  // Add retryLoading to the returned object
+    retryLoading
   };
 }
