@@ -24,7 +24,7 @@ interface ActivityTabViewContentProps {
   onActivityUpdate: (activity: Activity) => Promise<void>;
   onDeleteActivity: (activityId: string) => Promise<boolean>;
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
   onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 

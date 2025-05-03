@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityDetail } from "@/components/activity-detail";
@@ -13,7 +12,7 @@ interface ActivityDetailWrapperProps {
   onActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function ActivityDetailWrapper({

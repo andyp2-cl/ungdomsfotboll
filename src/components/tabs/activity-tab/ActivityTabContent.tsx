@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ interface ActivityTabContentProps {
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function ActivityTabContent(props: ActivityTabContentProps) {
