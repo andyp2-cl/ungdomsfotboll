@@ -76,13 +76,7 @@ export function ActivityTabContent({
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Lägg till aktivitet
               </Button>
-              <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto overflow-x-auto'}`}>
-                <ActivityFilter 
-                  selectedTypes={selectedActivityTypes}
-                  onTypeChange={handleActivityTypeChange}
-                  isMobile={isMobile}
-                />
-              </div>
+              {/* Removed activity filter as requested */}
             </div>
           </div>
           
