@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save, AlertCircle, CheckCircle2 } from "lucide-react";
-import { extractTeamNames, isHomeMatch, calculateWinStatus } from "./activity-detail/match-result/utils";
+import { extractTeamNames, isHomeMatch, calculateWinStatus, isHassleholm } from "./activity-detail/match-result/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -92,7 +93,7 @@ export function QuickMatchResult({
   const isHassleAwayName = isHassleholm(awayTeam);
   
   // Set which side is Hässleholms IF based on team name analysis
-  const isHassleholm = isHassleHomeName ? 'home' : isHassleAwayName ? 'away' : (isHome ? 'home' : 'away');
+  const hassleTeamSide = isHassleHomeName ? 'home' : isHassleAwayName ? 'away' : (isHome ? 'home' : 'away');
   
   // Create appropriate labels - highlight HIF when it's in the name
   const homeTeamLabel = isHassleHomeName ? "HIF" : homeTeam.substring(0, isMobile ? 8 : 15);
@@ -257,7 +258,7 @@ export function QuickMatchResult({
       <div className="space-y-4 px-1 pb-2">
         <div className="grid grid-cols-3 gap-3 items-center">
           <div className="space-y-1">
-            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'home' ? "font-semibold" : ""}`}>
+            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${hassleTeamSide === 'home' ? "font-semibold" : ""}`}>
               {homeTeamLabel}
             </div>
             {isReadOnly ? (
@@ -271,7 +272,7 @@ export function QuickMatchResult({
                 min={0}
                 value={homeScore === undefined ? "" : homeScore}
                 onChange={(e) => setHomeScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'home' ? "border-blue-200" : ""} ${hasError ? "border-red-500" : ""}`}
+                className={`${isMobile ? 'h-10 text-center' : ''} ${hassleTeamSide === 'home' ? "border-blue-200" : ""} ${hasError ? "border-red-500" : ""}`}
               />
             )}
           </div>
@@ -281,7 +282,7 @@ export function QuickMatchResult({
           </div>
           
           <div className="space-y-1">
-            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${isHassleholm === 'away' ? "font-semibold" : ""}`}>
+            <div className={`font-medium text-center ${isMobile ? 'text-xs' : 'text-sm'} ${hassleTeamSide === 'away' ? "font-semibold" : ""}`}>
               {awayTeamLabel}
             </div>
             {isReadOnly ? (
@@ -295,7 +296,7 @@ export function QuickMatchResult({
                 min={0}
                 value={awayScore === undefined ? "" : awayScore}
                 onChange={(e) => setAwayScore(e.target.value === "" ? undefined : Number(e.target.value))}
-                className={`${isMobile ? 'h-10 text-center' : ''} ${isHassleholm === 'away' ? "border-blue-200" : ""} ${hasError ? "border-red-500" : ""}`}
+                className={`${isMobile ? 'h-10 text-center' : ''} ${hassleTeamSide === 'away' ? "border-blue-200" : ""} ${hasError ? "border-red-500" : ""}`}
               />
             )}
           </div>
