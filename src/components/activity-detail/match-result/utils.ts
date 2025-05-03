@@ -48,6 +48,48 @@ export const isHomeMatch = (activity: Activity): boolean => {
 };
 
 /**
+ * Gets the outcome text (Vinst, Förlust, Oavgjort) based on scores
+ */
+export const getOutcomeText = (
+  homeScore: number,
+  awayScore: number,
+  isHomeTeam: boolean = true
+): string => {
+  if (homeScore === awayScore) {
+    return "Oavgjort";
+  }
+  
+  if (isHomeTeam) {
+    return homeScore > awayScore ? "Vinst" : "Förlust";
+  } else {
+    return awayScore > homeScore ? "Vinst" : "Förlust";
+  }
+};
+
+/**
+ * Gets the appropriate color class based on outcome
+ */
+export const getOutcomeColorClass = (
+  homeScore: number,
+  awayScore: number,
+  isHomeTeam: boolean = true
+): string => {
+  if (homeScore === awayScore) {
+    return "bg-gray-100 text-gray-800"; // Draw
+  }
+  
+  if (isHomeTeam) {
+    return homeScore > awayScore 
+      ? "bg-green-100 text-green-800" // Win
+      : "bg-red-100 text-red-800"; // Loss
+  } else {
+    return awayScore > homeScore 
+      ? "bg-green-100 text-green-800" // Win 
+      : "bg-red-100 text-red-800"; // Loss
+  }
+};
+
+/**
  * Calculates win status based on scores and team position
  */
 export const calculateWinStatus = (

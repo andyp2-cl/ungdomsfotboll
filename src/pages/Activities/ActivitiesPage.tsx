@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { forceRefreshAllActivities } from "@/utils/storage/activity/fetch";
 import { refreshPlayerActivitiesCache } from "@/lib/supabase/playerActivities";
+import { toast } from "sonner";
 
 export function ActivitiesPage() {
   const navigate = useNavigate();
@@ -88,7 +90,7 @@ export function ActivitiesPage() {
         </div>
       ) : null}
       
-      {activities.length === 0 && !isLoading && (
+      {activities && activities.length === 0 && !isLoading && (
         <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-lg">
           <Info className="h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-xl font-semibold mb-2">Inga aktiviteter hittades</h3>

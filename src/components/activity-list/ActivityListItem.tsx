@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -68,16 +67,28 @@ export function ActivityListItem({
   }
   
   const getResultTextColor = () => {
+    // If scores are equal (draw)
     if (activity.homeScore === activity.awayScore && 
         activity.homeScore !== undefined && 
         activity.awayScore !== undefined) {
       return "text-gray-600";
     }
     
+    // Use the explicit isWin flag if available
     if (activity.isWin === true) {
-      return "text-green-600";
+      return "text-green-600"; // Win
     } else if (activity.isWin === false) {
-      return "text-red-600";
+      return "text-red-600"; // Loss
+    }
+    
+    // If isWin is not available, fall back to calculating based on scores
+    if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+      const isHome = isHomeMatch(activity);
+      if (isHome) {
+        return activity.homeScore > activity.awayScore ? "text-green-600" : "text-red-600";
+      } else {
+        return activity.awayScore > activity.homeScore ? "text-green-600" : "text-red-600";
+      }
     }
     
     return "";

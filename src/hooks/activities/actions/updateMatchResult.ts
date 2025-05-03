@@ -2,6 +2,7 @@
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { updateActivityWithRLSHandling } from "@/lib/supabase";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 /**
  * Updates match result (score) for an existing activity
@@ -35,23 +36,11 @@ export const handleMatchResultUpdate = async (
       result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined
     };
     
+    // Determine if it's a home match
+    const isHome = isHomeMatch(activity);
+    
     // Update the isWin status based on score
-    if (homeScore !== undefined && awayScore !== undefined) {
-      // Assume our team is the home team unless there's a clear indicator otherwise
-      // In a more sophisticated setup, we would determine this based on team names
-      const isHome = !activity.name.toLowerCase().includes(" borta");
-      
-      if (homeScore === awayScore) {
-        // Draw
-        updatedActivity.isWin = undefined;
-      } else if (isHome) {
-        // Home team - we win if home score > away score
-        updatedActivity.isWin = homeScore > awayScore;
-      } else {
-        // Away team - we win if away score > home score
-        updatedActivity.isWin = awayScore > homeScore;
-      }
-    }
+    updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
     // Try database update
     try {
