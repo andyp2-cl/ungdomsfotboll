@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { ArrowDownToLine, ExternalLink } from "lucide-react";
+import { ArrowDownToLine, ExternalLink, AlertCircle } from "lucide-react";
 import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities";
 import { Activity } from "@/types/player";
 
@@ -22,14 +22,30 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
     playersCount?: number;
     error?: string;
   } | null>(null);
-  const [customUrl, setCustomUrl] = useState('');
+  const [customUrl, setCustomUrl] = useState('https://hassleholmsifp2014.lovable.app');
+  const [urlError, setUrlError] = useState<string | null>(null);
+
+  const validateUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      setUrlError(null);
+      return true;
+    } catch (e) {
+      setUrlError("Ogiltig URL-format");
+      return false;
+    }
+  };
 
   const handleImport = async () => {
+    if (!validateUrl(customUrl)) {
+      return;
+    }
+
     try {
       setIsImporting(true);
       setImportResults(null);
       
-      const liveUrl = customUrl.trim() || 'https://hassleholmsifp2014.lovable.app';
+      const liveUrl = customUrl.trim();
       console.log("Importing from live URL:", liveUrl);
       
       const results = await importFromLiveEnv(liveUrl);
@@ -64,21 +80,42 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
   return (
     <Card className="border-0 shadow-none">
       <CardContent className="space-y-4 p-0">
-        <div className="flex items-center space-x-2">
-          <Input 
-            placeholder="https://hassleholmsifp2014.lovable.app" 
-            value={customUrl}
-            onChange={(e) => setCustomUrl(e.target.value)}
-            className="flex-1"
-            disabled={isImporting}
-          />
-          <Button 
-            onClick={() => window.open('https://hassleholmsifp2014.lovable.app', '_blank')}
-            size="icon" 
-            variant="outline"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <Input 
+              placeholder="https://hassleholmsifp2014.lovable.app" 
+              value={customUrl}
+              onChange={(e) => {
+                setCustomUrl(e.target.value);
+                if (e.target.value) {
+                  validateUrl(e.target.value);
+                } else {
+                  setUrlError(null);
+                }
+              }}
+              className={`flex-1 ${urlError ? 'border-red-500' : ''}`}
+              disabled={isImporting}
+            />
+            <Button 
+              onClick={() => window.open(customUrl, '_blank')}
+              size="icon" 
+              variant="outline"
+              disabled={!customUrl || !!urlError}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {urlError && (
+            <div className="text-red-500 text-sm flex items-center">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {urlError}
+            </div>
+          )}
+          
+          <p className="text-sm text-muted-foreground">
+            Ange hela URL:en till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app")
+          </p>
         </div>
         
         {importResults && (
@@ -94,7 +131,7 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
         
         <Button 
           onClick={handleImport} 
-          disabled={isImporting}
+          disabled={isImporting || !customUrl || !!urlError}
           className="w-full"
         >
           {isImporting ? (

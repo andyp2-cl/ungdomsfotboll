@@ -20,13 +20,9 @@ export function filterActivitiesBySearchTerm(activities: Activity[], searchTerm:
       return true;
     }
     
-    // Search in opponent
-    if (activity.opponent?.toLowerCase().includes(lowercaseSearchTerm)) {
-      return true;
-    }
-    
-    // Search in location
-    if (activity.location?.toLowerCase().includes(lowercaseSearchTerm)) {
+    // Search in location (checking if location exists and has name property)
+    if (activity.location?.name && 
+        activity.location.name.toLowerCase().includes(lowercaseSearchTerm)) {
       return true;
     }
     

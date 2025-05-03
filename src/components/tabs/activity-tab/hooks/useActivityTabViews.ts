@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { filterActivitiesBySearchTerm } from "@/utils/search";
 
@@ -35,7 +35,7 @@ export function useActivityTabViews({
   const [activeView, setActiveView] = useState<"current" | "historical" | "statistics" | "tools">("current");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
-  // Filter activities by search term
+  // Filter activities by search query
   const filteredBySearchActivities = useMemo(() => {
     if (!searchQuery.trim()) {
       return activeView === "historical" ? filteredHistoricalActivities : filteredActivities;
@@ -45,47 +45,59 @@ export function useActivityTabViews({
     return filterActivitiesBySearchTerm(activitiesToFilter, searchQuery);
   }, [searchQuery, filteredActivities, filteredHistoricalActivities, activeView]);
 
-  const handleViewChange = (view: "current" | "historical" | "statistics" | "tools") => {
+  // Handle view change
+  const handleViewChange = useCallback((view: "current" | "historical" | "statistics" | "tools") => {
     setActiveView(view);
-    // Reset selections when changing views
     setSelectedActivity(null);
     setSelectedPlayer(null);
-  };
+  }, [setSelectedActivity]);
 
-  const handlePlayerSelect = (player: Player | null) => {
+  // Handle player selection
+  const handlePlayerSelect = useCallback((player: Player | null) => {
     setSelectedPlayer(player);
     setSelectedActivity(null);
-  };
+  }, [setSelectedActivity]);
 
-  // Determine if we're showing historical view
+  // Determine if current view is historical
   const isHistorical = activeView === "historical";
 
-  // Render content based on active view
-  const renderContent = () => {
+  // Render content based on current view and selection
+  const renderContent = useCallback(() => {
+    if (selectedPlayer) {
+      const playerActivities = activities.filter(activity => 
+        activity.participants?.includes(selectedPlayer.id)
+      );
+      
+      return {
+        viewType: "player-detail",
+        player: selectedPlayer,
+        activities: playerActivities,
+        selectedPlayerId: selectedPlayer.id,
+        searchQuery
+      };
+    }
+    
+    if (selectedActivity) {
+      return {
+        viewType: "activity-detail",
+        selectedActivity,
+        activities,
+        searchQuery
+      };
+    }
+    
     return {
-      current: {
-        activities: filteredBySearchActivities,
-        isHistorical: false,
-      },
-      historical: {
-        activities: filteredBySearchActivities,
-        isHistorical: true, 
-      },
-      statistics: {
-        activities: activities,
-        isStatistics: true,
-      },
-      tools: {
-        activities: activities,
-        isTools: true,
-      }
-    }[activeView];
-  };
+      activities: filteredBySearchActivities,
+      searchQuery,
+      selectedActivity: null
+    };
+  }, [activities, selectedActivity, selectedPlayer, filteredBySearchActivities, searchQuery]);
 
   return {
     activeView,
     handleViewChange,
     selectedPlayer,
+    setSelectedPlayer,
     handlePlayerSelect,
     renderContent,
     isHistorical,

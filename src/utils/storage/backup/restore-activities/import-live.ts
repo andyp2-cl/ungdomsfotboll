@@ -18,24 +18,50 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
     toast.loading("Hämtar data från live-miljön...", { id: "live-import" });
     console.log("Initiating import from live environment:", liveUrl);
     
+    // Ensure the URL has no trailing slash
+    const baseUrl = liveUrl.endsWith('/') ? liveUrl.slice(0, -1) : liveUrl;
+    
     // First, try to fetch activities
-    const activitiesResponse = await fetch(`${liveUrl}/api/export/activities`);
+    const activitiesResponse = await fetch(`${baseUrl}/api/export/activities`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
     
     if (!activitiesResponse.ok) {
       throw new Error(`Kunde inte hämta aktiviteter: ${activitiesResponse.statusText}`);
     }
     
-    const activities: Activity[] = await activitiesResponse.json();
-    console.log(`Fetched ${activities.length} activities from ${liveUrl}`);
+    let activities: Activity[];
+    try {
+      activities = await activitiesResponse.json();
+    } catch (error) {
+      console.error("Failed to parse activities JSON:", error);
+      throw new Error(`Kunde inte tolka aktivitetsdata: API endpoint returnerade inte giltig JSON. Kontrollera att API:et är tillgängligt och korrekt konfigurerat.`);
+    }
+    
+    console.log(`Fetched ${activities?.length || 0} activities from ${baseUrl}`);
     
     // Then fetch players
-    const playersResponse = await fetch(`${liveUrl}/api/export/players`);
+    const playersResponse = await fetch(`${baseUrl}/api/export/players`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
     
     if (!playersResponse.ok) {
       throw new Error(`Kunde inte hämta spelare: ${playersResponse.statusText}`);
     }
     
-    const players: Player[] = await playersResponse.json();
+    let players: Player[];
+    try {
+      players = await playersResponse.json();
+    } catch (error) {
+      console.error("Failed to parse players JSON:", error);
+      throw new Error(`Kunde inte tolka spelardata: API endpoint returnerade inte giltig JSON.`);
+    }
     
     console.log(`Hämtade ${activities.length} aktiviteter och ${players.length} spelare från live-miljön`);
     toast.success(`Hämtade ${activities.length} aktiviteter och ${players.length} spelare från live-miljön`, { id: "live-import" });
