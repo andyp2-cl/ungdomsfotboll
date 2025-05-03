@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { ArrowDownToLine, ExternalLink, AlertCircle, Info } from "lucide-react";
+import { ArrowDownToLine, ExternalLink, AlertCircle, Info, DownloadCloud } from "lucide-react";
 import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities/import-live";
 import { Activity } from "@/types/player";
 
@@ -138,6 +138,13 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
             <AlertDescription className="text-sm">
               Ange adressen till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
               Systemet kommer automatiskt lägga till "/api/export/activities" och "/api/export/players" för att hämta data.
+              <br /><br />
+              <strong>OBS:</strong> Om importen misslyckas kan du testa att:
+              <ul className="list-disc pl-5 mt-1">
+                <li>Kontrollera att live-miljön använder samma API-struktur</li>
+                <li>Verifiera att du har åtkomst till API:et genom att besöka "{customUrl}/api/export/activities" direkt i webbläsaren</li>
+                <li>Alternativt använd säkerhetskopieringsfunktionen i live-miljön och återställ manuellt</li>
+              </ul>
             </AlertDescription>
           </Alert>
         </div>
@@ -153,21 +160,27 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
           </Alert>
         )}
         
-        <Button 
-          onClick={handleImport} 
-          disabled={isImporting || !customUrl || !!urlError}
-          className="w-full"
-        >
-          {isImporting ? (
-            <>
-              <Spinner className="mr-2 h-4 w-4" /> Importerar...
-            </>
-          ) : (
-            <>
-              <ArrowDownToLine className="mr-2 h-4 w-4" /> Importera från Live-miljö
-            </>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button 
+            onClick={handleImport} 
+            disabled={isImporting || !customUrl || !!urlError}
+            className="w-full"
+          >
+            {isImporting ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" /> Importerar...
+              </>
+            ) : (
+              <>
+                <ArrowDownToLine className="mr-2 h-4 w-4" /> Importera från Live-miljö
+              </>
+            )}
+          </Button>
+          
+          <div className="text-xs text-muted-foreground text-center italic">
+            eller använd säkerhetskopieringsfunktionen nedan
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

@@ -28,7 +28,8 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       throw new Error(`Ogiltig URL: ${baseUrl}`);
     }
     
-    // First, try to fetch activities
+    // Some sites might serve the API from a different path, check if it's a Supabase-powered app
+    // First try direct API access for Lovable apps with native API
     const activitiesEndpoint = `${baseUrl}/api/export/activities`;
     console.log(`Attempting to fetch activities from ${activitiesEndpoint}`);
     
@@ -38,16 +39,25 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        // Add cache busting to prevent cached responses
         cache: 'no-cache',
         mode: 'cors',
       });
       
       if (!activitiesResponse.ok) {
         console.error("Activities fetch response not OK:", activitiesResponse.status, activitiesResponse.statusText);
+        
         // Try to get the text of the response for debugging
         const responseText = await activitiesResponse.text();
         console.error("Response body:", responseText.substring(0, 200) + "...");
+        
+        // Check if this is an HTML response (typical for error pages)
+        const contentType = activitiesResponse.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error(`API-slutpunkten returnerar HTML istället för JSON. Detta kan bero på att webbservern returnerar en felsida. 
+          
+Tips: Kontrollera att adressen är korrekt och att API:et är tillgängligt. Om du är säker på att datan finns i live-miljön, kan du försöka använda en säkerhetskopia eller exportera data direkt från Supabase-dashboarden.`);
+        }
+        
         throw new Error(`Kunde inte hämta aktiviteter: ${activitiesResponse.statusText} (${activitiesResponse.status})`);
       }
       
@@ -55,7 +65,9 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       const contentType = activitiesResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.error("Response is not JSON:", contentType);
-        throw new Error(`API-svaret är inte i JSON-format. Kontrollera att API-slutpunkten är korrekt och returnerar JSON. (Content-Type: ${contentType || 'unknown'})`);
+        throw new Error(`API-svaret är inte i JSON-format. Kontrollera att API-slutpunkten är korrekt och returnerar JSON. (Content-Type: ${contentType || 'unknown'})
+        
+Alternativ: Om du har direktåtkomst till live-databasen kan du exportera data direkt från Supabase-dashboarden.`);
       }
       
       let activities: Activity[];
