@@ -49,11 +49,14 @@ export function useLocalStorage(activity: Activity) {
       // Calculate win status
       const isWin = calculateWinStatus(homeScore, awayScore, isHome);
       
+      // Debug the win status calculation
+      console.log(`Local Storage: Calculated isWin=${isWin} for activity ${activityId} with scores ${homeScore}-${awayScore}, isHome=${isHome}`);
+      
       // Prepare data
       const data: MatchResult = {
         homeScore,
         awayScore,
-        isWin,
+        isWin, // This will be true/false/undefined (undefined for draw)
         result: homeScore !== undefined && awayScore !== undefined ? 
           `${homeScore}-${awayScore}` : undefined
       };

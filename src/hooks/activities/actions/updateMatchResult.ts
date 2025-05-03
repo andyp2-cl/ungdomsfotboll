@@ -35,6 +35,7 @@ export const handleMatchResultUpdate = async (
     const isHome = isHomeMatch(activity);
     
     // Calculate win status based on scores and home/away status
+    // For draws (equal scores), isWin will be undefined
     const isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
     console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin}`);
@@ -44,7 +45,7 @@ export const handleMatchResultUpdate = async (
       ...activity,
       homeScore,
       awayScore,
-      isWin,
+      isWin, // This will be true/false/undefined (undefined for draw)
       result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined
     };
     
@@ -68,6 +69,7 @@ export const handleMatchResultUpdate = async (
     setActivities(updatedActivities);
     
     // Prepare minimal update data to increase chances of success
+    // For draw status, we explicitly set is_win to null in the database
     const updateData = {
       home_score: updatedActivity.homeScore,
       away_score: updatedActivity.awayScore,
@@ -77,7 +79,8 @@ export const handleMatchResultUpdate = async (
     
     console.log("Updating activity in database:", {
       id: updatedActivity.id,
-      ...updateData
+      ...updateData,
+      is_win_type: typeof updateData.is_win
     });
 
     // Try the most reliable saving method first - saveActivities now uses multiple fallbacks
