@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 interface ActivityListItemProps {
   activity: Activity;
