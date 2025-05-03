@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -8,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
-import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch, getResultColorClass } from "@/components/activity-detail/match-result/utils";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -109,6 +110,10 @@ export function ActivityListItem({
     onSelect(activity);
   };
 
+  // Display match result prominently - Add this line
+  const showResult = activity.homeScore !== undefined && activity.awayScore !== undefined;
+  const resultDisplay = showResult ? `${activity.homeScore}-${activity.awayScore}` : "";
+  
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -167,7 +172,13 @@ export function ActivityListItem({
           </div>
 
           <div className="md:w-48 flex flex-col items-end justify-start">
-            {resultMessage && (
+            {/* Show match result more prominently - Update this section */}
+            {showResult && (
+              <div className={`${isMobileView ? 'text-xl font-bold mb-2' : 'text-2xl font-bold mb-3'} ${getResultTextColor()}`}>
+                {resultDisplay}
+              </div>
+            )}
+            {!showResult && resultMessage && (
               <div className={`${isMobileView ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
                 {resultMessage}
               </div>
