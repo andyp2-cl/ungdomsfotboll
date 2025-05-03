@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Clock, AlertTriangle, Lock, DatabaseBackup, Database } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DatabaseDiagnostics from "./DatabaseDiagnostics";
+import DatabaseDiagnostics from "./diagnostics/DatabaseDiagnostics";
 
 interface RestoreDialogProps {
   backupInfo: {timestamp: string, playerCount: number, activityCount: number} | null;
