@@ -129,3 +129,53 @@ export const extractTeamNames = (activity: Activity) => {
   
   return { homeTeam, awayTeam };
 };
+
+/**
+ * Get the outcome text based on scores and home/away status
+ */
+export const getOutcomeText = (
+  homeScore: number, 
+  awayScore: number, 
+  isHome: boolean
+): string => {
+  // Handle draw case
+  if (homeScore === awayScore) {
+    return "Oavgjort";
+  }
+  
+  // For home matches
+  if (isHome) {
+    return homeScore > awayScore ? "Vinst" : "Förlust";
+  } 
+  // For away matches
+  else {
+    return awayScore > homeScore ? "Vinst" : "Förlust";
+  }
+};
+
+/**
+ * Get the CSS color class for the outcome based on scores and home/away status
+ */
+export const getOutcomeColorClass = (
+  homeScore: number, 
+  awayScore: number, 
+  isHome: boolean
+): string => {
+  // Handle draw case
+  if (homeScore === awayScore) {
+    return "bg-gray-100 text-gray-800";
+  }
+  
+  // For home matches
+  if (isHome) {
+    return homeScore > awayScore 
+      ? "bg-green-100 text-green-800" // Win
+      : "bg-red-100 text-red-800";    // Loss
+  } 
+  // For away matches
+  else {
+    return awayScore > homeScore 
+      ? "bg-green-100 text-green-800" // Win
+      : "bg-red-100 text-red-800";    // Loss
+  }
+};
