@@ -38,9 +38,9 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
         toast.success(`Data importerad: ${results.activitiesCount} aktiviteter och ${results.playersCount} spelare`);
         
         // Call the callback if provided
-        if (onImportedActivities) {
-          // Pass the activities back (assuming the API returned activities)
-          await onImportedActivities([]);
+        if (onImportedActivities && results.activities) {
+          // Pass the activities back to the parent component
+          await onImportedActivities(results.activities);
         }
       } else {
         toast.error(`Import misslyckades: ${results.error}`);

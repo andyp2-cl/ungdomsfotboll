@@ -14,6 +14,8 @@ interface ActivitiesTabContentProps {
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
   isAddActivityOpen: boolean;
+  isLoading?: boolean;
+  retryLoading?: () => void;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
@@ -34,6 +36,8 @@ export function ActivitiesTabContent({
   filteredActivities,
   filteredHistoricalActivities,
   isAddActivityOpen,
+  isLoading,
+  retryLoading,
   handleActivityTypeChange,
   setSelectedActivity,
   handleActivityUpdate,
@@ -64,9 +68,9 @@ export function ActivitiesTabContent({
         filteredActivities={filteredActivities}
         filteredHistoricalActivities={filteredHistoricalActivities}
         isAddActivityOpen={isAddActivityOpen}
-        isLoading={false} // Add the missing isLoading property with default value
-        loadError={null} // Add loadError with default null value
-        retryLoading={() => {}} // Add retryLoading function with empty implementation
+        isLoading={isLoading} 
+        loadError={null} 
+        retryLoading={retryLoading}
         handleActivityTypeChange={handleActivityTypeChange}
         setSelectedActivity={setSelectedActivity}
         handleActivityUpdate={handleActivityUpdate}

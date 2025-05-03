@@ -57,7 +57,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerActivitySelect,
     
     // Loading state
-    isLoading
+    isLoading,
+    retryLoading
   } = usePlayers(initialTab);
 
   // Check for selected activity in location state
@@ -173,6 +174,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
+        retryLoading={retryLoading}
+        isLoading={isLoading}
       />
     </RefreshablePageContainer>
   );
