@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { ArrowDownToLine, ExternalLink } from "lucide-react";
@@ -30,7 +30,10 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
       setImportResults(null);
       
       const liveUrl = customUrl.trim() || 'https://hassleholmsifp2014.lovable.app';
+      console.log("Importing from live URL:", liveUrl);
+      
       const results = await importFromLiveEnv(liveUrl);
+      console.log("Import results:", results);
       
       setImportResults(results);
       
@@ -39,6 +42,7 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
         
         // Call the callback if provided
         if (onImportedActivities && results.activities) {
+          console.log("Passing activities to parent component:", results.activities.length);
           // Pass the activities back to the parent component
           await onImportedActivities(results.activities);
         }

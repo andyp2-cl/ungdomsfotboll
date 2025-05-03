@@ -16,6 +16,7 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
 }> => {
   try {
     toast.loading("Hämtar data från live-miljön...", { id: "live-import" });
+    console.log("Initiating import from live environment:", liveUrl);
     
     // First, try to fetch activities
     const activitiesResponse = await fetch(`${liveUrl}/api/export/activities`);
@@ -25,6 +26,7 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
     }
     
     const activities: Activity[] = await activitiesResponse.json();
+    console.log(`Fetched ${activities.length} activities from ${liveUrl}`);
     
     // Then fetch players
     const playersResponse = await fetch(`${liveUrl}/api/export/players`);

@@ -55,6 +55,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistorical,
     handleAddActivity,
     handlePlayerActivitySelect,
+    handleMatchResult,
     
     // Loading state
     isLoading,
@@ -174,8 +175,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
-        retryLoading={retryLoading}
+        handleMatchResultUpdate={handleMatchResult}
+        
+        // Loading state
         isLoading={isLoading}
+        retryLoading={retryLoading}
       />
     </RefreshablePageContainer>
   );
