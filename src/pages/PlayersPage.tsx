@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Activity } from "@/types/player";
 import { usePlayerPageWrappers } from "@/hooks/players/usePlayerPageWrappers";
-import { useActivityWrappers } from "@/hooks/activities/useActivityWrappers"; // Import the new hook
+import { useActivityWrappers } from "@/hooks/activities/useActivityWrappers"; 
 
 export default function PlayersPage({ initialTab }: { initialTab?: string } = {}) {
   const location = useLocation();
@@ -78,7 +78,7 @@ export default function PlayersPage({ initialTab }: { initialTab?: string } = {}
     setViewMode
   );
   
-  // Get activity wrapper functions from our new hook
+  // Get activity wrapper functions from our custom hook
   const {
     handleActivityUpdateWrapper,
     handleKioskUpdateWrapper,
