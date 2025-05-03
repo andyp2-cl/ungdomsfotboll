@@ -40,6 +40,12 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
         return false;
       }
       
+      // Remove any trailing slashes and paths - we only want the base URL
+      if (url.includes('/api/') || url.includes('/export/')) {
+        setUrlError("Ange endast bas-URL:en utan '/api/' eller '/export/' sökvägar");
+        return false;
+      }
+      
       setUrlError(null);
       return true;
     } catch (e) {
@@ -57,7 +63,8 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
       setIsImporting(true);
       setImportResults(null);
       
-      const liveUrl = customUrl.trim();
+      // Normalize the URL - remove trailing slashes
+      const liveUrl = customUrl.trim().replace(/\/+$/, '');
       console.log("Importing from live URL:", liveUrl);
       
       const results = await importFromLiveEnv(liveUrl);

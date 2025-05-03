@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, LayoutList, History, LineChart, Database, FileUp } from "lucide-react";
+import { RefreshCw, LayoutList, History, LineChart, Database, FileUp, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Activity } from "@/types/player";
 
 interface ActivityTabHeaderProps {
@@ -68,7 +67,7 @@ export function ActivityTabHeader({
             onClick={onImportClick} 
             className="sm:mr-2"
           >
-            <FileUp className="h-4 w-4 mr-2" />
+            <Globe className="h-4 w-4 mr-2" />
             Importera från live
           </Button>
         )}

@@ -10,6 +10,9 @@ import { ActivityTabSearch } from "./activity-tab/components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./activity-tab/components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./activity-tab/hooks/useActivityTabViews";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
+import { Globe } from "lucide-react";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -37,6 +40,7 @@ interface ActivityTabContentProps {
 export function ActivityTabContent(props: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Use the custom hook for managing views and selections
@@ -82,6 +86,10 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     }
   };
 
+  const handleOpenImportDialog = () => {
+    setIsImportDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -92,6 +100,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           isMobile={isMobile}
+          onImportClick={activeView === "tools" ? handleOpenImportDialog : undefined}
         />
         
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -128,6 +137,27 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onMatchResultUpdate={props.handleMatchResultUpdate}
         />
       </PullToRefresh>
+      
+      {/* Import from Live Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              Importera från live-miljö
+            </DialogTitle>
+          </DialogHeader>
+          <ImportFromLiveForm 
+            onImportedActivities={async (activities) => {
+              const result = await props.handleImportedActivities(activities);
+              if (result) {
+                setIsImportDialogOpen(false);
+              }
+              return result;
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

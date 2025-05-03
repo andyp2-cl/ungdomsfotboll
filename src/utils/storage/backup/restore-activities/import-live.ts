@@ -55,20 +55,28 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       const contentType = activitiesResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.error("Response is not JSON:", contentType);
-        // Try to get the text of the response for debugging
-        const responseText = await activitiesResponse.text();
-        console.error("Non-JSON response body:", responseText.substring(0, 200) + "...");
-        throw new Error(`API-svaret är inte i JSON-format. API-endpointen '${activitiesEndpoint}' returnerar inte JSON. (Content-Type: ${contentType || 'unknown'})`);
+        throw new Error(`API-svaret är inte i JSON-format. Kontrollera att API-slutpunkten är korrekt och returnerar JSON. (Content-Type: ${contentType || 'unknown'})`);
       }
       
       let activities: Activity[];
       try {
-        activities = await activitiesResponse.json();
+        const text = await activitiesResponse.text();
+        console.log("Response text preview:", text.substring(0, 100) + "...");
+        
+        if (!text || text.trim() === "") {
+          throw new Error("API-svaret är tomt");
+        }
+        
+        try {
+          activities = JSON.parse(text);
+        } catch (parseError) {
+          console.error("Failed to parse JSON:", parseError);
+          // First 100 characters of text for debugging
+          console.error("Failed JSON content:", text.substring(0, 100));
+          throw new Error(`Kunde inte tolka aktivitetsdata. API endpoint returnerar ogiltig JSON.`);
+        }
       } catch (error) {
         console.error("Failed to parse activities JSON:", error);
-        // Try to get the text of the response for debugging
-        const responseText = await activitiesResponse.text();
-        console.error("Failed parsing JSON from:", responseText.substring(0, 200) + "...");
         throw new Error(`Kunde inte tolka aktivitetsdata: API endpoint returnerade inte giltig JSON.`);
       }
       
@@ -101,7 +109,18 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       
       let players: Player[];
       try {
-        players = await playersResponse.json();
+        const text = await playersResponse.text();
+        
+        if (!text || text.trim() === "") {
+          throw new Error("Spelar-API-svaret är tomt");
+        }
+        
+        try {
+          players = JSON.parse(text);
+        } catch (parseError) {
+          console.error("Failed to parse player JSON:", parseError);
+          throw new Error(`Kunde inte tolka spelardata: API endpoint returnerar ogiltig JSON.`);
+        }
       } catch (error) {
         console.error("Failed to parse players JSON:", error);
         throw new Error(`Kunde inte tolka spelardata: API endpoint returnerade inte giltig JSON.`);
