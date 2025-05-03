@@ -136,15 +136,36 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
             <Info className="h-4 w-4" />
             <AlertTitle>Tips</AlertTitle>
             <AlertDescription className="text-sm">
-              Ange adressen till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
-              Systemet kommer automatiskt lägga till "/api/export/activities" och "/api/export/players" för att hämta data.
-              <br /><br />
-              <strong>OBS:</strong> Om importen misslyckas kan du testa att:
-              <ul className="list-disc pl-5 mt-1">
-                <li>Kontrollera att live-miljön använder samma API-struktur</li>
-                <li>Verifiera att du har åtkomst till API:et genom att besöka "{customUrl}/api/export/activities" direkt i webbläsaren</li>
-                <li>Alternativt använd säkerhetskopieringsfunktionen i live-miljön och återställ manuellt</li>
-              </ul>
+              <p>
+                Ange adressen till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
+                Systemet kommer automatiskt lägga till "/api/export/activities" och "/api/export/players" för att hämta data.
+              </p>
+              
+              <div className="mt-3">
+                <strong>Om importen misslyckas med HTML-fel:</strong>
+                <ol className="list-decimal pl-5 mt-1 space-y-1">
+                  <li>Det är troligt att live-miljön inte stödjer det API-format som används här</li>
+                  <li>Alternativa sätt att återställa data:</li>
+                </ol>
+              </div>
+              
+              <div className="mt-2 space-y-2 bg-blue-100 p-3 rounded-md">
+                <strong className="text-blue-900">Alternativ 1: Använd säkerhetskopiering i live-miljön</strong>
+                <div className="pl-3">
+                  <p>1. Gå till live-miljön och använd "Verktyg" → "Säkerhetskopiering"</p>
+                  <p>2. Skapa en säkerhetskopia och ladda ner filen</p>
+                  <p>3. I dev-miljön använd "Återställ från säkerhetskopia" med den nedladdade filen</p>
+                </div>
+              </div>
+              
+              <div className="mt-2 space-y-2 bg-blue-100 p-3 rounded-md">
+                <strong className="text-blue-900">Alternativ 2: Exportera direkt från Supabase</strong>
+                <div className="pl-3">
+                  <p>1. Logga in på Supabase-dashboarden för live-miljön</p>
+                  <p>2. Exportera tabellerna "activities", "players", och "player_activities"</p>
+                  <p>3. Importera dessa tabeller i Supabase för dev-miljön</p>
+                </div>
+              </div>
             </AlertDescription>
           </Alert>
         </div>

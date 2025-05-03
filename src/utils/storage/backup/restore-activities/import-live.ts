@@ -28,12 +28,29 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       throw new Error(`Ogiltig URL: ${baseUrl}`);
     }
     
-    // Some sites might serve the API from a different path, check if it's a Supabase-powered app
-    // First try direct API access for Lovable apps with native API
+    // Try direct API access for Lovable apps with native API
     const activitiesEndpoint = `${baseUrl}/api/export/activities`;
     console.log(`Attempting to fetch activities from ${activitiesEndpoint}`);
     
     try {
+      // First, check if the site is accessible at all by trying to fetch the base URL
+      const baseResponse = await fetch(baseUrl, {
+        method: 'HEAD',
+        cache: 'no-cache',
+        mode: 'cors',
+      }).catch(error => {
+        console.error("Error accessing the base URL:", error);
+        throw new Error(`Kunde inte nå ${baseUrl}. Kontrollera att webbplatsen är tillgänglig och att URL:en är korrekt.`);
+      });
+      
+      if (!baseResponse.ok) {
+        console.error("Base URL not accessible:", baseResponse.status, baseResponse.statusText);
+        throw new Error(`Kunde inte nå ${baseUrl}: ${baseResponse.statusText} (${baseResponse.status}). 
+        
+Tips: Kontrollera att webbplatsen är tillgänglig och att URL:en är korrekt.`);
+      }
+      
+      // Now try to fetch the activities
       const activitiesResponse = await fetch(activitiesEndpoint, {
         headers: {
           'Accept': 'application/json',
@@ -53,9 +70,17 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
         // Check if this is an HTML response (typical for error pages)
         const contentType = activitiesResponse.headers.get('content-type');
         if (contentType && contentType.includes('text/html')) {
-          throw new Error(`API-slutpunkten returnerar HTML istället för JSON. Detta kan bero på att webbservern returnerar en felsida. 
+          console.log("Got HTML response, this is likely a 404 page or similar");
+          throw new Error(`API-slutpunkten (${activitiesEndpoint}) returnerar HTML istället för JSON, vilket tyder på att den inte existerar.
           
-Tips: Kontrollera att adressen är korrekt och att API:et är tillgängligt. Om du är säker på att datan finns i live-miljön, kan du försöka använda en säkerhetskopia eller exportera data direkt från Supabase-dashboarden.`);
+Detta kan bero på att:
+1. Applikationen använder en annan API-struktur än förväntad
+2. Datan är inte tillgänglig via API:et
+3. URL-formatet är felaktigt
+
+Alternativ:
+- Om det är din egen applikation, försök exportera data direkt från Supabase Admin-panelen
+- Använd säkerhetskopiering/backup i live-miljön först, och återställ sedan från den filen`);
         }
         
         throw new Error(`Kunde inte hämta aktiviteter: ${activitiesResponse.statusText} (${activitiesResponse.status})`);
@@ -65,9 +90,13 @@ Tips: Kontrollera att adressen är korrekt och att API:et är tillgängligt. Om 
       const contentType = activitiesResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.error("Response is not JSON:", contentType);
-        throw new Error(`API-svaret är inte i JSON-format. Kontrollera att API-slutpunkten är korrekt och returnerar JSON. (Content-Type: ${contentType || 'unknown'})
+        throw new Error(`API-svaret är inte i JSON-format (Content-Type: ${contentType || 'unknown'}).
         
-Alternativ: Om du har direktåtkomst till live-databasen kan du exportera data direkt från Supabase-dashboarden.`);
+Detta kan bero på att:
+1. API:et är skyddat och kräver autentisering
+2. Applikationen använder en annan struktur än förväntad
+        
+Alternativ: Använd direktexport från Supabase Admin-panelen i live-miljön för att exportera data.`);
       }
       
       let activities: Activity[];
@@ -116,7 +145,7 @@ Alternativ: Om du har direktåtkomst till live-databasen kan du exportera data d
       const playerContentType = playersResponse.headers.get('content-type');
       if (!playerContentType || !playerContentType.includes('application/json')) {
         console.error("Player response is not JSON:", playerContentType);
-        throw new Error(`Spelar-API-svaret är inte i JSON-format. API-endpointen '${playersEndpoint}' returnerar inte JSON. (Content-Type: ${playerContentType || 'unknown'})`);
+        throw new Error(`Spelar-API-svaret är inte i JSON-format (Content-Type: ${playerContentType || 'unknown'}).`);
       }
       
       let players: Player[];
@@ -151,8 +180,8 @@ Alternativ: Om du har direktåtkomst till live-databasen kan du exportera data d
         success: activityResult.success && playersResult.success,
         activitiesCount: activityResult.count,
         playersCount: playersResult.count,
-        activities: activities, // Return the fetched activities
-        players: players,       // Return the fetched players
+        activities: activities,
+        players: players,
         error: activityResult.error || playersResult.error
       };
     } catch (error) {
