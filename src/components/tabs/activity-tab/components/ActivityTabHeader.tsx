@@ -11,7 +11,9 @@ export interface ActivityTabHeaderProps {
   onRefresh: () => Promise<void>;
   isRefreshing: boolean;
   isMobile: boolean;
-  onImportClick?: () => void; // Added this prop to match the usage in ActivityTabContent
+  onImportClick?: () => void; 
+  onBackupClick?: () => void;
+  onRestoreClick?: () => void;
 }
 
 export function ActivityTabHeader({ 
@@ -20,7 +22,9 @@ export function ActivityTabHeader({
   onRefresh, 
   isRefreshing,
   isMobile,
-  onImportClick
+  onImportClick,
+  onBackupClick,
+  onRestoreClick
 }: ActivityTabHeaderProps) {
   return (
     <div className="space-y-2">
