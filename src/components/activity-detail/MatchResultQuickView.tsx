@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Activity } from "@/types/player";
-import { QuickMatchResult } from "./QuickMatchResult";
+import { QuickMatchResult } from "../QuickMatchResult";
+import { getResultColorClass } from "./match-result/utils";
 
 interface MatchResultQuickViewProps {
   activity: Activity;
@@ -18,6 +19,8 @@ export function MatchResultQuickView({
     return null;
   }
 
+  const resultColorClass = getResultColorClass(activity);
+
   return (
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchresultat</h3>
@@ -25,6 +28,7 @@ export function MatchResultQuickView({
         activity={activity}
         onSave={onSave}
         isReadOnly={isReadOnly}
+        resultColorClass={resultColorClass}
       />
     </div>
   );

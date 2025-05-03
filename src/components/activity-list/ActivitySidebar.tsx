@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import { Activity, Player } from "@/types/player";
 import { MatchResultDisplay } from "./MatchResultDisplay";
 import { GradePieChart } from "../activity-detail/match-result/GradePieChart";
+import { getResultColorClass } from "../activity-detail/match-result/utils";
 
 interface ActivitySidebarProps {
   activity: Activity;
@@ -19,6 +20,7 @@ export function ActivitySidebar({
   isMobile = false 
 }: ActivitySidebarProps) {
   const showGradeChart = participantPlayers.length > 0;
+  const resultColorClass = getResultColorClass(activity);
 
   return (
     <div className="md:w-48 flex flex-col items-end justify-start">

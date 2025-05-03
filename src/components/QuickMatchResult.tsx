@@ -9,6 +9,7 @@ import { useLocalStorage } from "./match-result/useLocalStorage";
 import { useAuthenticationState } from "./match-result/useAuthenticationState";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Check, X } from "lucide-react";
 
 interface QuickMatchResultProps {
   activity: Activity;
@@ -46,6 +47,18 @@ export function QuickMatchResult({
   // Create appropriate labels
   const homeTeamLabel = isHome ? "HIF" : teamNames.homeTeam.substring(0, isMobile ? 8 : 15);
   const awayTeamLabel = !isHome ? "HIF" : teamNames.awayTeam.substring(0, isMobile ? 8 : 15);
+  
+  // Render an icon based on win/loss status
+  const renderResultIcon = () => {
+    if (isReadOnly) {
+      if (activity.isWin === true) {
+        return <Check className="h-4 w-4 mr-1 text-green-600" />;
+      } else if (activity.isWin === false) {
+        return <X className="h-4 w-4 mr-1 text-red-600" />;
+      }
+    }
+    return null;
+  };
   
   // Handle input changes with proper type conversion
   const handleHomeScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,17 +149,20 @@ export function QuickMatchResult({
   return (
     <ScrollArea className={isMobile ? "max-h-[45vh]" : ""}>
       <div className="space-y-4 px-1 pb-2">
-        <ScoreInputDisplay
-          homeTeamLabel={homeTeamLabel}
-          awayTeamLabel={awayTeamLabel}
-          homeScore={homeScore}
-          awayScore={awayScore}
-          handleHomeScoreChange={handleHomeScoreChange}
-          handleAwayScoreChange={handleAwayScoreChange}
-          isReadOnly={isReadOnly}
-          isHassleholm={isHassleholm}
-          resultColorClass={resultColorClass}
-        />
+        <div className="flex items-center mb-2">
+          {renderResultIcon()}
+          <ScoreInputDisplay
+            homeTeamLabel={homeTeamLabel}
+            awayTeamLabel={awayTeamLabel}
+            homeScore={homeScore}
+            awayScore={awayScore}
+            handleHomeScoreChange={handleHomeScoreChange}
+            handleAwayScoreChange={handleAwayScoreChange}
+            isReadOnly={isReadOnly}
+            isHassleholm={isHassleholm}
+            resultColorClass={resultColorClass}
+          />
+        </div>
         
         {!isReadOnly && (
           <SaveResultButton 

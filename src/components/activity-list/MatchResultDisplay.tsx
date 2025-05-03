@@ -2,6 +2,7 @@
 import React from "react";
 import { Activity } from "@/types/player";
 import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
+import { Check, X } from "lucide-react";
 
 interface MatchResultDisplayProps {
   activity: Activity;
@@ -50,6 +51,15 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
     return "";
   };
 
+  const renderResultIcon = () => {
+    if (activity.isWin === true) {
+      return <Check className="h-4 w-4 mr-1 text-green-600" />;
+    } else if (activity.isWin === false) {
+      return <X className="h-4 w-4 mr-1 text-red-600" />;
+    }
+    return null;
+  };
+
   if (!showResult && !resultMessage) {
     return null;
   }
@@ -57,12 +67,14 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
   return (
     <>
       {showResult && (
-        <div className={`${isMobile ? 'text-xl font-bold mb-2' : 'text-2xl font-bold mb-3'} ${getResultTextColor()}`}>
+        <div className={`${isMobile ? 'text-xl font-bold mb-2' : 'text-2xl font-bold mb-3'} ${getResultTextColor()} flex items-center`}>
+          {renderResultIcon()}
           {resultDisplay}
         </div>
       )}
       {!showResult && resultMessage && (
-        <div className={`${isMobile ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
+        <div className={`${isMobile ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()} flex items-center`}>
+          {renderResultIcon()}
           {resultMessage}
         </div>
       )}
