@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { cacheActivities, getActivitiesFromCache, shouldRefreshCache } from "./cache-operations";
 import { fetchActivitiesFromDB } from "./fetch-operations";
 import { handleFetchError } from "./error-handling";
+import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
 
 /**
  * Get activities from Supabase with improved caching and error handling
@@ -77,6 +78,23 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       const endTime = performance.now();
       console.log(`Fetched ${activities.length} activities from database in ${(endTime - startTime).toFixed(2)}ms`);
       
+      // Fetch player-activity relationships to populate participants
+      try {
+        const { activityPlayers } = await fetchPlayerActivities();
+        
+        // Populate participants arrays in activities
+        if (activityPlayers) {
+          for (const activity of activities) {
+            activity.participants = activityPlayers[activity.id] || [];
+          }
+          console.log('Successfully populated activity participants');
+        } else {
+          console.warn('No activity-player relationships found');
+        }
+      } catch (relationError) {
+        console.error('Error fetching activity-player relationships:', relationError);
+      }
+      
       // Cache the results every time we get fresh data
       if (activities && activities.length > 0) {
         await cacheActivities(activities);
@@ -121,6 +139,22 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
     const cachedActivities = getActivitiesFromCache();
     if (cachedActivities && cachedActivities.length > 0) {
       console.log(`Using ${cachedActivities.length} cached activities`);
+      
+      // Try to fetch player-activity relationships from cache
+      const cachedActivityPlayers = localStorage.getItem('cachedActivityPlayers');
+      if (cachedActivityPlayers) {
+        try {
+          const activityPlayers = JSON.parse(cachedActivityPlayers);
+          
+          // Populate participants arrays in activities
+          for (const activity of cachedActivities) {
+            activity.participants = activityPlayers[activity.id] || [];
+          }
+          console.log('Successfully populated activity participants from cache');
+        } catch (cacheError) {
+          console.error('Error parsing cached activity players:', cacheError);
+        }
+      }
       
       // Log cache diagnostics
       const matchActivities = cachedActivities.filter(a => a.type === 'match');

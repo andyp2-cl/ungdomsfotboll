@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Download } from "lucide-react";
+import { Plus, Save, Download, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,6 +14,8 @@ import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { useBackupRestore } from "@/utils/storage/backup";
 import { BackupRestoreDialog } from "@/components/backup-restore/BackupRestoreDialog";
 import { downloadCSVTemplate, downloadExportInstructions } from "@/components/file-import/helpers/downloadHelpers";
+import { supabase } from "@/lib/supabase/client";
+import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -43,6 +45,13 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupMode, setBackupMode] = useState<"backup" | "restore">("backup");
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [diagnosticData, setDiagnosticData] = useState<{
+    activitiesCount: number;
+    playersCount: number;
+    playerActivitiesCount: number;
+    connectionStatus: string;
+  } | null>(null);
   const isMobile = useIsMobile();
   const { createBackup, getLastBackupInfo } = useBackupRestore();
 
@@ -73,12 +82,22 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     
+    // Clear existing caches to force fresh data
+    localStorage.removeItem('cachedActivities');
+    localStorage.removeItem('cachedActivityPlayers');
+    localStorage.removeItem('cachedPlayerActivities');
+    localStorage.removeItem('sb-activities-fetch-time');
+    localStorage.removeItem('playerActivitiesFetchTime');
+    
     try {
       if (props.retryLoading) {
         // Force refresh from database
         await props.retryLoading();
         console.log("Forcing data refresh from server");
         toast.success("Data uppdaterad från servern");
+        
+        // Fetch diagnostic information
+        await runDiagnostics();
       } else {
         // Fallback if retryLoading is not available
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -89,6 +108,67 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
       toast.error("Kunde inte uppdatera data");
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const runDiagnostics = async () => {
+    setShowDiagnostics(true);
+    
+    try {
+      // Check database connection
+      let connectionStatus = "Kontrollerar...";
+      try {
+        const { count } = await supabase
+          .from('activities')
+          .select('*', { count: 'exact', head: true });
+        
+        connectionStatus = "Ansluten ✓";
+      } catch (error) {
+        connectionStatus = "Ej ansluten ✗";
+      }
+      
+      // Get counts directly from database
+      let activitiesCount = 0;
+      let playersCount = 0;
+      let playerActivitiesCount = 0;
+      
+      try {
+        const { count: actCount } = await supabase
+          .from('activities')
+          .select('*', { count: 'exact', head: true });
+        activitiesCount = actCount || 0;
+      } catch (e) {
+        console.error("Error counting activities:", e);
+      }
+      
+      try {
+        const { count: plrCount } = await supabase
+          .from('players')
+          .select('*', { count: 'exact', head: true });
+        playersCount = plrCount || 0;
+      } catch (e) {
+        console.error("Error counting players:", e);
+      }
+      
+      try {
+        const { count: paCount } = await supabase
+          .from('player_activities')
+          .select('*', { count: 'exact', head: true });
+        playerActivitiesCount = paCount || 0;
+      } catch (e) {
+        console.error("Error counting player_activities:", e);
+      }
+      
+      setDiagnosticData({
+        activitiesCount,
+        playersCount,
+        playerActivitiesCount,
+        connectionStatus
+      });
+      
+    } catch (error) {
+      console.error("Error running diagnostics:", error);
+      toast.error("Kunde inte köra diagnostik");
     }
   };
 
@@ -153,8 +233,39 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
           </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            disabled={isRefreshing}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Uppdaterar..." : "Uppdatera data"}
+          </Button>
         </div>
       </div>
+      
+      {showDiagnostics && diagnosticData && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+          <h3 className="text-sm font-medium mb-2">Diagnostisk information:</h3>
+          <div className="text-xs space-y-1">
+            <p>Databasanslutning: <span className="font-mono">{diagnosticData.connectionStatus}</span></p>
+            <p>Antal aktiviteter i databasen: <span className="font-mono">{diagnosticData.activitiesCount}</span></p>
+            <p>Antal spelare i databasen: <span className="font-mono">{diagnosticData.playersCount}</span></p>
+            <p>Antal spelaraktivitetsrelationer: <span className="font-mono">{diagnosticData.playerActivitiesCount}</span></p>
+            <p>Visar: <span className="font-mono">{props.activities.length} aktiviteter</span></p>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => setShowDiagnostics(false)}>
+                Stäng
+              </Button>
+              <Button size="sm" variant="outline" onClick={runDiagnostics}>
+                Uppdatera diagnostik
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {activeView !== "statistics" && !props.isLoading && !props.loadError && (
         <ActivityTabSearch
@@ -171,7 +282,15 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           </h3>
           <p>Du kan:</p>
           <ul className="list-disc pl-5 space-y-2">
-            <li>Klicka på "Uppdatera" för att försöka ladda datan igen</li>
+            <li>Klicka på "Uppdatera data" för att försöka ladda datan igen</li>
+            <li>
+              <button 
+                onClick={runDiagnostics} 
+                className="text-blue-600 underline hover:text-blue-800 flex items-center gap-1"
+              >
+                Kontrollera anslutning och visa diagnostisk information
+              </button>
+            </li>
             <li>Importera aktiviteter från CSV genom att gå till "Verktyg"</li>
             <li>
               <button 

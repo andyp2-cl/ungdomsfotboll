@@ -1,6 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
+import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { Activity } from "@/types/player";
 
@@ -26,7 +27,7 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
     }
     
     const existingPlayerIds = existingRelationships?.map(relation => relation.player_id) || [];
-    console.log(`Found ${existingPlayerIds.length} existing participants`);
+    console.log(`Found ${existingPlayerIds.length} existing participants for activity ${activity.name}`);
     
     // If no participants in activity, just return
     if (!activity.participants || activity.participants.length === 0) {
@@ -49,7 +50,7 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
     
     // Determine which participants to add and remove
     const playersToAdd = activity.participants.filter(id => !existingPlayerIds.includes(id));
-    const playersToRemove = existingPlayerIds.filter(id => !activity.participants.includes(id));
+    const playersToRemove = existingPlayerIds.filter(id => !activity.participants?.includes(id));
     
     console.log(`Participants to add: ${playersToAdd.length}, to remove: ${playersToRemove.length}`);
     
@@ -72,7 +73,7 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
     // Add new participants
     if (playersToAdd.length > 0) {
       const newRelationships = playersToAdd.map(playerId => ({
-        id: uuidv4(),
+        id: `${playerId}_${activity.id}`, // Use predictable ID format
         activity_id: activity.id,
         player_id: playerId
       }));
@@ -85,25 +86,87 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
         
       if (insertError) {
         console.error("Error adding participants:", insertError);
-        throw insertError;
+        
+        // Try one by one if bulk insert fails
+        let successCount = 0;
+        for (const playerId of playersToAdd) {
+          try {
+            const { error: singleInsertError } = await supabase
+              .from('player_activities')
+              .insert({
+                id: `${playerId}_${activity.id}`,
+                activity_id: activity.id,
+                player_id: playerId
+              });
+              
+            if (!singleInsertError) {
+              successCount++;
+            }
+          } catch (err) {
+            console.error(`Error adding participant ${playerId}:`, err);
+          }
+        }
+        
+        if (successCount > 0) {
+          console.log(`Added ${successCount}/${playersToAdd.length} participants individually after bulk insert failure`);
+          toast.info(`Lade till ${successCount} av ${playersToAdd.length} deltagare`);
+        } else {
+          toast.error("Kunde inte lägga till deltagare");
+          throw new Error("Failed to add participants");
+        }
+      } else {
+        console.log(`Added ${playersToAdd.length} participants to activity ${activity.id}`);
+        
+        // Log changes for audit trail
+        try {
+          await logDatabaseChange(
+            'update',
+            'activity_participants',
+            activity.id,
+            `Added ${playersToAdd.length} participants to ${activity.name}`
+          );
+        } catch (logError) {
+          console.error("Error logging participant changes (continuing anyway):", logError);
+        }
       }
-      
-      console.log(`Added ${playersToAdd.length} participants to activity ${activity.id}`);
-      
-      // Log changes for audit trail
-      try {
-        await logDatabaseChange(
-          'update',
-          'activity_participants',
-          activity.id,
-          `Added ${playersToAdd.length} participants to ${activity.name}`
-        );
-      } catch (logError) {
-        console.error("Error logging participant changes (continuing anyway):", logError);
+    }
+    
+    // Update local cache
+    try {
+      const { data } = await supabase
+        .from('player_activities')
+        .select('*');
+        
+      if (data) {
+        // Map player to activities and activities to players
+        const playerActivities: Record<string, string[]> = {};
+        const activityPlayers: Record<string, string[]> = {};
+        
+        data.forEach(relation => {
+          // Add activity to player's activities
+          if (!playerActivities[relation.player_id]) {
+            playerActivities[relation.player_id] = [];
+          }
+          playerActivities[relation.player_id].push(relation.activity_id);
+          
+          // Add player to activity's participants
+          if (!activityPlayers[relation.activity_id]) {
+            activityPlayers[relation.activity_id] = [];
+          }
+          activityPlayers[relation.activity_id].push(relation.player_id);
+        });
+        
+        // Cache the results
+        localStorage.setItem('cachedPlayerActivities', JSON.stringify(playerActivities));
+        localStorage.setItem('cachedActivityPlayers', JSON.stringify(activityPlayers));
+        localStorage.setItem('playerActivitiesFetchTime', Date.now().toString());
       }
+    } catch (cacheError) {
+      console.error('Error updating player activities cache:', cacheError);
     }
   } catch (error) {
     console.error(`Error updating participants for activity ${activity.id}:`, error);
+    toast.error("Kunde inte uppdatera deltagare");
     throw error;
   }
 };
