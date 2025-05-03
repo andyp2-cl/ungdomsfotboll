@@ -40,21 +40,32 @@ export function useResultSaver({
         // For draws (equal scores), isWin will be undefined
         if (homeScore === awayScore) {
           isWin = undefined; // Draw
+          console.log("Match is a draw");
         } else {
           // Extract team names to check which team is Hässleholms IF
           const { homeTeam, awayTeam } = extractTeamNames(activity);
           const isHifHome = isHassleholm(homeTeam);
           const isHifAway = isHassleholm(awayTeam);
           
+          console.log("Team detection:", {
+            homeTeam,
+            awayTeam,
+            isHifHome,
+            isHifAway
+          });
+          
           // If we can identify that Hässleholms IF is home or away, use that to determine win
           if (isHifHome) {
             isWin = homeScore > awayScore;
+            console.log(`HIF is home team, ${isWin ? "win" : "loss"}`);
           } else if (isHifAway) {
             isWin = awayScore > homeScore;
+            console.log(`HIF is away team, ${isWin ? "win" : "loss"}`);
           } else {
             // If we can't identify by name, fall back to using isHomeMatch
             const isHome = isHomeMatch(activity);
             isWin = isHome ? (homeScore > awayScore) : (awayScore > homeScore);
+            console.log(`Could not detect HIF in team names, using fallback: isHome=${isHome}, isWin=${isWin}`);
           }
         }
         

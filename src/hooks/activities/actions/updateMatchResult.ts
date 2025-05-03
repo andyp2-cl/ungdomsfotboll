@@ -37,24 +37,35 @@ export const handleMatchResultUpdate = async (
     
     // Only calculate outcome if we have scores
     if (homeScore !== undefined && awayScore !== undefined) {
-      // For draws (equal scores), isWin will be undefined
+      // Draw case: scores are equal
       if (homeScore === awayScore) {
-        isWin = undefined; // Draw
+        isWin = undefined; // Draw is represented as undefined
+        console.log(`Match is a draw: ${homeScore}-${awayScore}`);
       } else {
         // Extract team names to check which team is Hässleholms IF
         const { homeTeam, awayTeam } = extractTeamNames(activity);
         const isHifHome = isHassleholm(homeTeam);
         const isHifAway = isHassleholm(awayTeam);
         
+        console.log(`Team detection:`, {
+          homeTeam,
+          awayTeam,
+          isHifHome,
+          isHifAway
+        });
+        
         // If we can identify that Hässleholms IF is home or away, use that to determine win
         if (isHifHome) {
           isWin = homeScore > awayScore;
+          console.log(`HIF is home team, ${isWin ? "win" : "loss"} with score ${homeScore}-${awayScore}`);
         } else if (isHifAway) {
           isWin = awayScore > homeScore;
+          console.log(`HIF is away team, ${isWin ? "win" : "loss"} with score ${homeScore}-${awayScore}`);
         } else {
           // If we can't identify by name, fall back to using isHomeMatch
           const isHome = isHomeMatch(activity);
           isWin = isHome ? (homeScore > awayScore) : (awayScore > homeScore);
+          console.log(`Could not detect HIF in team names, using fallback: isHome=${isHome}, isWin=${isWin}`);
         }
       }
       
@@ -74,18 +85,6 @@ export const handleMatchResultUpdate = async (
       player_stats: activity.player_stats || { goals: {}, assists: {} }
     };
     
-    console.log("Updated activity with new result:", {
-      id: updatedActivity.id,
-      homeScore: updatedActivity.homeScore,
-      awayScore: updatedActivity.awayScore,
-      isWin: updatedActivity.isWin,
-      result: updatedActivity.result,
-      player_stats: updatedActivity.player_stats
-    });
-    
-    // Format the activity for database update
-    const formattedActivity = formatActivityForDatabase(updatedActivity);
-    
     // Directly update the local state first for immediate UI feedback
     const updatedActivities = activities.map(a => 
       a.id === activityId ? updatedActivity : a
@@ -94,25 +93,6 @@ export const handleMatchResultUpdate = async (
     // Update React state
     setActivities(updatedActivities);
     
-    // Prepare minimal update data to increase chances of success
-    // For draw status, we explicitly set is_win to null in the database
-    const updateData = {
-      home_score: updatedActivity.homeScore,
-      away_score: updatedActivity.awayScore,
-      is_win: updatedActivity.isWin === true ? true : updatedActivity.isWin === false ? false : null,
-      result: updatedActivity.result,
-      player_stats: updatedActivity.player_stats, // Make sure we're updating player_stats too
-      league_id: activity.league_id // Preserve league_id when updating
-    };
-    
-    console.log("Updating activity in database:", {
-      id: updatedActivity.id,
-      ...updateData,
-      is_win_type: typeof updateData.is_win,
-      is_win_value: updateData.is_win,
-      player_stats: JSON.stringify(updateData.player_stats)
-    });
-
     // Try a direct update to the database first
     try {
       const { data, error } = await supabase
@@ -150,129 +130,61 @@ export const handleMatchResultUpdate = async (
       console.error("Error with direct update:", directUpdateError);
     }
     
-    // If direct update fails, try the enhanced storage system
+    // If direct update fails, try saving activities with storage system
     try {
-      // Save the updated activities array
       const saveSuccess = await saveActivities(updatedActivities);
       
       if (saveSuccess) {
         console.log("Activity saved successfully via enhanced storage system");
         toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
-        
-        // Log success to database
-        try {
-          await logDatabaseChange(
-            'update', 
-            'activity', 
-            activityId, 
-            `Match result updated using enhanced storage system: ${homeScore}-${awayScore}, isWin=${isWin}`
-          );
-        } catch (logError) {
-          console.warn("Couldn't log success to database:", logError);
-        }
-        
-        // No need for further attempts
         return;
-      } else {
-        console.warn("Enhanced storage system didn't report success, trying fallback methods");
       }
     } catch (saveError) {
       console.error("Enhanced storage system failed:", saveError);
-      
-      // Continue with fallback methods below
     }
 
-    // Then try updating with RLS handling approach as another fallback
+    // Last attempt - try with RLS handling approach
     try {
-      const { success, error } = await updateActivityWithRLSHandling(updatedActivity.id, updateData);
+      // Prepare minimal update data
+      const updateData = {
+        home_score: updatedActivity.homeScore,
+        away_score: updatedActivity.awayScore,
+        is_win: updatedActivity.isWin === true ? true : updatedActivity.isWin === false ? false : null,
+        result: updatedActivity.result,
+        player_stats: updatedActivity.player_stats,
+        league_id: activity.league_id
+      };
+      
+      const { success } = await updateActivityWithRLSHandling(updatedActivity.id, updateData);
       
       if (success) {
         console.log("Activity updated in database successfully via RLS handling");
         toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
-        
-        // Log successful database update
-        try {
-          await logDatabaseChange(
-            'update', 
-            'activity', 
-            activityId, 
-            `Match result updated in database: ${homeScore}-${awayScore}, isWin=${isWin}`
-          );
-        } catch (logError) {
-          console.warn("Couldn't log database update to logs table:", logError);
-        }
-      } else {
-        console.error("Database update failed:", error);
-        
-        // Final attempt: try with full formatted activity
-        const { success: backupSuccess, error: backupError } = await updateActivityWithRLSHandling(updatedActivity.id, formattedActivity);
-        
-        if (backupSuccess) {
-          console.log("Activity updated successfully via backup method");
-          toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
-          
-          // Log backup success
-          try {
-            await logDatabaseChange(
-              'update', 
-              'activity', 
-              activityId, 
-              `Match result updated via full activity update: ${homeScore}-${awayScore}, isWin=${isWin}`
-            );
-          } catch (logError) {
-            console.warn("Couldn't log backup success to database:", logError);
-          }
-        } else {
-          console.error("All update methods failed", backupError || error);
-          
-          // Log the failure
-          try {
-            await logDatabaseChange(
-              'error', 
-              'activity', 
-              activityId, 
-              `Failed to update match result in database: ${homeScore}-${awayScore}, isWin=${isWin}. Error: ${(backupError || error)?.message || 'Unknown error'}`
-            );
-          } catch (logError) {
-            console.warn("Couldn't log failure to database:", logError);
-          }
-          
-          toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
-        }
-      }
-    } catch (dbError) {
-      console.error("Failed to update activity in database:", dbError);
+        return;
+      } 
       
-      // Log database error
-      try {
-        await logDatabaseChange(
-          'error', 
-          'activity', 
-          activityId, 
-          `Error updating match result: ${dbError?.message || 'Unknown error'}`
-        );
-      } catch (logError) {
-        console.warn("Couldn't log database error to logs table:", logError);
+      // Final fallback - try with full formatted activity
+      const { success: backupSuccess } = await updateActivityWithRLSHandling(
+        updatedActivity.id, 
+        formatActivityForDatabase(updatedActivity)
+      );
+      
+      if (backupSuccess) {
+        console.log("Activity updated successfully via backup method");
+        toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        return;
       }
       
+      // If we get here, all database update attempts failed
+      toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
+      
+    } catch (error) {
+      console.error("Failed to update activity in database:", error);
       toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
     }
   } catch (error) {
     console.error("Error handling match result update:", error);
     toastLibrary.error("Ett fel uppstod vid uppdatering av matchresultat");
-    
-    // Log the overall error
-    try {
-      await logDatabaseChange(
-        'error', 
-        'activity', 
-        activityId, 
-        `Match result update failed with error: ${error?.message || 'Unknown error'}`
-      );
-    } catch (logError) {
-      console.warn("Couldn't log error to database:", logError);
-    }
-    
-    throw error; // Rethrow for handling by the caller
+    throw error;
   }
 };

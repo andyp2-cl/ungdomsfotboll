@@ -3,9 +3,6 @@ import React, { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { ActivityFormValues } from "./formSchema";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -20,65 +17,6 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
   // Only show result fields for matches
   if (activityType !== "match") {
     return null;
-  }
-  
-  const homeScore = form.watch("homeScore");
-  const awayScore = form.watch("awayScore");
-  const isWin = form.watch("isWin");
-
-  // Log form values for debugging
-  console.log("Form values for match result:", { 
-    homeScore, 
-    awayScore, 
-    isWin: isWin === undefined ? "undefined/draw" : isWin 
-  });
-
-  // Handle win status when scores change
-  useEffect(() => {
-    if (homeScore !== undefined && awayScore !== undefined && homeScore === awayScore) {
-      form.setValue("isWin", undefined);
-    }
-  }, [homeScore, awayScore, form]);
-
-  // Improved radio button change handler
-  const handleWinStatusChange = (value: string) => {
-    console.log("Form radio changed to:", value);
-    
-    switch (value) {
-      case "win":
-        form.setValue("isWin", true);
-        break;
-      case "loss":
-        form.setValue("isWin", false);
-        break;
-      case "draw":
-        // Critical fix: For draw, set to undefined instead of false
-        form.setValue("isWin", undefined);
-        
-        // Only suggest equalizing scores if both scores are defined
-        const currentHomeScore = form.getValues("homeScore");
-        const currentAwayScore = form.getValues("awayScore");
-        
-        if (currentHomeScore !== undefined && currentAwayScore !== undefined && 
-            currentHomeScore !== currentAwayScore) {
-          // If scores don't match, suggest equalizing them
-          if (window.confirm("Vill du göra målen lika för oavgjort?")) {
-            form.setValue("homeScore", currentHomeScore);
-            form.setValue("awayScore", currentHomeScore);
-          }
-        }
-        break;
-    }
-  };
-
-  // Determine current radio value based on isWin
-  let winStatusValue;
-  if (isWin === true) {
-    winStatusValue = "win";
-  } else if (isWin === false) {
-    winStatusValue = "loss";
-  } else {
-    winStatusValue = "draw";
   }
 
   return (
@@ -133,37 +71,6 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
             </FormItem>
           )}
         />
-      </div>
-      
-      <div>
-        <FormLabel className="block mb-2">Matchresultat (valfritt)</FormLabel>
-        <RadioGroup 
-          value={winStatusValue} 
-          onValueChange={handleWinStatusChange}
-          className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="win" id="win" />
-            <Label htmlFor="win" className="flex items-center cursor-pointer">
-              <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
-              Vinst
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="draw" id="draw" />
-            <Label htmlFor="draw" className="flex items-center cursor-pointer">
-              <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
-              Oavgjort
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="loss" id="loss" />
-            <Label htmlFor="loss" className="flex items-center cursor-pointer">
-              <XCircle className="h-4 w-4 mr-1 text-red-600" />
-              Förlust
-            </Label>
-          </div>
-        </RadioGroup>
       </div>
     </div>
   );
