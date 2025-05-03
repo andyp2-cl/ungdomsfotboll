@@ -14,6 +14,7 @@ interface ActivityTabHeaderProps {
   isMobile: boolean;
   onBackupClick?: () => void;
   onRestoreClick?: () => void;
+  onImportClick?: () => void;
   onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 
