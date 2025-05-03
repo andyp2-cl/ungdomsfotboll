@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { ArrowDownToLine, ExternalLink, AlertCircle, Info } from "lucide-react";
-import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities";
+import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities/import-live";
 import { Activity } from "@/types/player";
 
 interface ImportFromLiveFormProps {
@@ -129,8 +129,8 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
             <Info className="h-4 w-4" />
             <AlertTitle>Tips</AlertTitle>
             <AlertDescription className="text-sm">
-              Ange hela URL:en till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
-              Se till att API:et är tillgängligt och korrekt konfigurerat med /api/export/activities och /api/export/players ändpunkter.
+              Ange adressen till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
+              Systemet kommer automatiskt lägga till "/api/export/activities" och "/api/export/players" för att hämta data.
             </AlertDescription>
           </Alert>
         </div>
