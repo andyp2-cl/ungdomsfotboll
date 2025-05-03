@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { isHomeMatch, calculateWinStatus } from "./utils";
+import { isHomeMatch, extractTeamNames, isHassleholm } from "./utils";
 
 interface ResultSaverProps {
   activity: Activity;
   updateActivity: (activity: Activity) => void;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function useResultSaver({
@@ -21,8 +21,7 @@ export function useResultSaver({
 
   const saveMatchResult = async (
     homeScore?: number,
-    awayScore?: number,
-    manualWinStatus?: boolean
+    awayScore?: number
   ) => {
     if (isSaving) return;
     
@@ -30,26 +29,37 @@ export function useResultSaver({
     try {
       console.log("Saving match result:", {
         homeScore,
-        awayScore,
-        manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus
+        awayScore
       });
       
-      // Calculate if it's a win (if not manually set)
-      // For scores, if they're equal it's a draw (undefined)
-      // If manual status is set, use that
-      let isWin: boolean | undefined = manualWinStatus;
+      // Enhanced logic to determine if Hässleholms IF won the match
+      let isWin: boolean | undefined;
       
-      // If no manual status but we have scores, calculate based on the scores
-      if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
+      // Only calculate outcome if we have scores
+      if (homeScore !== undefined && awayScore !== undefined) {
+        // For draws (equal scores), isWin will be undefined
         if (homeScore === awayScore) {
           isWin = undefined; // Draw
         } else {
-          const isHome = isHomeMatch(activity);
-          isWin = calculateWinStatus(homeScore, awayScore, isHome);
+          // Extract team names to check which team is Hässleholms IF
+          const { homeTeam, awayTeam } = extractTeamNames(activity);
+          const isHifHome = isHassleholm(homeTeam);
+          const isHifAway = isHassleholm(awayTeam);
+          
+          // If we can identify that Hässleholms IF is home or away, use that to determine win
+          if (isHifHome) {
+            isWin = homeScore > awayScore;
+          } else if (isHifAway) {
+            isWin = awayScore > homeScore;
+          } else {
+            // If we can't identify by name, fall back to using isHomeMatch
+            const isHome = isHomeMatch(activity);
+            isWin = isHome ? (homeScore > awayScore) : (awayScore > homeScore);
+          }
         }
+        
+        console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
       }
-      
-      console.log(`Final isWin value: ${isWin === undefined ? 'undefined (draw)' : isWin ? 'true (win)' : 'false (loss)'}`)
       
       // Create updated player stats
       const updatedPlayerStats = prepareUpdatedPlayerStats(
@@ -65,7 +75,7 @@ export function useResultSaver({
         ...activity,
         homeScore,
         awayScore,
-        isWin,
+        isWin, // This will be true/false/undefined (undefined for draw)
         player_stats: updatedPlayerStats,
       };
       
@@ -87,7 +97,7 @@ export function useResultSaver({
       
       // Also call the match result update function if provided
       if (onMatchResultUpdate) {
-        await onMatchResultUpdate(activity.id, homeScore, awayScore, isWin);
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
       }
       
       toast({

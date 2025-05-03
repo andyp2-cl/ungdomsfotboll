@@ -1,7 +1,8 @@
+
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { updateActivityWithRLSHandling } from "@/lib/supabase/rls-handling";
-import { isHomeMatch, calculateWinStatus, determineMatchOutcome } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch, extractTeamNames, isHassleholm, determineMatchOutcome } from "@/components/activity-detail/match-result/utils";
 import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity"; 
 import { logDatabaseChange } from "@/lib/supabase/logs";
@@ -17,11 +18,10 @@ export const handleMatchResultUpdate = async (
   toast: any,
   activityId: string,
   homeScore?: number,
-  awayScore?: number,
-  isWin?: boolean
+  awayScore?: number
 ): Promise<void> => {
   try {
-    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
+    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
     
     // Find the existing activity
     const activity = activities.find(a => a.id === activityId);
@@ -32,24 +32,36 @@ export const handleMatchResultUpdate = async (
       return;
     }
     
-    // Determine if it's a home match
-    const isHome = isHomeMatch(activity);
+    // Enhanced logic to determine if Hässleholms IF won the match
+    let isWin: boolean | undefined;
     
-    // If isWin is not explicitly provided, use our enhanced logic to determine the outcome
-    if (isWin === undefined && homeScore !== undefined && awayScore !== undefined) {
+    // Only calculate outcome if we have scores
+    if (homeScore !== undefined && awayScore !== undefined) {
       // For draws (equal scores), isWin will be undefined
       if (homeScore === awayScore) {
         isWin = undefined; // Draw
       } else {
-        // Use the enhanced outcome determination logic
-        const tempActivity = { ...activity, homeScore, awayScore };
-        isWin = determineMatchOutcome(tempActivity);
+        // Extract team names to check which team is Hässleholms IF
+        const { homeTeam, awayTeam } = extractTeamNames(activity);
+        const isHifHome = isHassleholm(homeTeam);
+        const isHifAway = isHassleholm(awayTeam);
         
-        console.log(`Enhanced outcome determination for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
+        // If we can identify that Hässleholms IF is home or away, use that to determine win
+        if (isHifHome) {
+          isWin = homeScore > awayScore;
+        } else if (isHifAway) {
+          isWin = awayScore > homeScore;
+        } else {
+          // If we can't identify by name, fall back to using isHomeMatch
+          const isHome = isHomeMatch(activity);
+          isWin = isHome ? (homeScore > awayScore) : (awayScore > homeScore);
+        }
       }
+      
+      console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
     }
     
-    console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
+    console.log(`Activity ${activityId} (${activity.name}): scores=${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
     
     // Create updated activity with new scores, preserving existing player_stats
     const updatedActivity: Activity = {

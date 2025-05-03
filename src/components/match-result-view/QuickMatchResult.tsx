@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -5,10 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { ScoreDisplay } from "./ScoreDisplay";
-import { WinStatusRadioGroup } from "./WinStatusRadioGroup";
 import { ResultActions } from "./ResultActions";
 import { MatchResultProps } from "./types";
-import { isHomeMatch, calculateWinStatus } from "../activity-detail/match-result/utils";
+import { isHomeMatch, determineMatchOutcome } from "../activity-detail/match-result/utils";
 
 export function QuickMatchResult({ 
   activity, 
@@ -18,7 +18,6 @@ export function QuickMatchResult({
 }: MatchResultProps) {
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
-  const [manualWinStatus, setManualWinStatus] = useState<boolean | undefined>(activity.isWin);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -30,11 +29,10 @@ export function QuickMatchResult({
     // Update local state when activity props change
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
-    setManualWinStatus(activity.isWin);
     
     // Reset error state
     setHasError(false);
-  }, [activity.homeScore, activity.awayScore, activity.isWin]);
+  }, [activity.homeScore, activity.awayScore]);
   
   // Reset success message after 3 seconds
   useEffect(() => {
@@ -49,45 +47,6 @@ export function QuickMatchResult({
     };
   }, [showSuccess]);
   
-  // Handle auto win/loss status when scores change
-  useEffect(() => {
-    // Only auto-calculate if both scores exist and they are different (not a draw)
-    // And no manual override exists
-    if (homeScore !== undefined && 
-        awayScore !== undefined && 
-        homeScore !== awayScore && 
-        manualWinStatus === undefined) {
-      
-      const isHome = isHomeMatch(activity);
-      const calculatedStatus = calculateWinStatus(homeScore, awayScore, isHome);
-      setManualWinStatus(calculatedStatus);
-      
-      console.log(`Auto-calculated win status: ${calculatedStatus} based on scores ${homeScore}-${awayScore}, isHome=${isHome}`);
-    }
-    
-    // For equal scores, set to draw (undefined) unless manually overridden
-    if (homeScore !== undefined && awayScore !== undefined && homeScore === awayScore) {
-      console.log("Scores are equal, setting to draw");
-      setManualWinStatus(undefined); // Draw
-    }
-  }, [homeScore, awayScore, activity]);
-  
-  const handleWinStatusChange = (status: boolean | undefined) => {
-    setManualWinStatus(status);
-    
-    // For draw, ensure scores are equal if they exist
-    if (status === undefined && homeScore !== undefined && awayScore !== undefined && homeScore !== awayScore) {
-      // Optional: Suggest equalizing the scores
-      if (window.confirm("Vill du göra målen lika för oavgjort?")) {
-        // Set both to the home score value
-        setHomeScore(homeScore);
-        setAwayScore(homeScore);
-      }
-    }
-    
-    console.log(`Changed win status to: ${status === undefined ? 'draw' : status ? 'win' : 'loss'}`);
-  };
-  
   const handleSave = async () => {
     if (isReadOnly) return;
     
@@ -99,7 +58,6 @@ export function QuickMatchResult({
       activityId: activity.id, 
       homeScore, 
       awayScore,
-      manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus,
       retryCount
     });
     
@@ -115,16 +73,13 @@ export function QuickMatchResult({
       
       // Debug data conversion
       console.log("Processed values:", {
-        original: { homeScore, awayScore, manualWinStatus },
-        processed: { 
-          processedHomeScore, 
-          processedAwayScore, 
-          manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus 
-        }
+        original: { homeScore, awayScore },
+        processed: { processedHomeScore, processedAwayScore }
       });
       
-      // IMPORTANT: Make sure to pass manualWinStatus explicitly
-      await onSave(processedHomeScore, processedAwayScore, manualWinStatus);
+      // Let the backend determine the win status based on scores
+      // We no longer pass manualWinStatus here
+      await onSave(processedHomeScore, processedAwayScore);
       
       console.log("Score saved successfully");
       
@@ -146,7 +101,6 @@ export function QuickMatchResult({
           activityId: activity.id,
           homeScore: processedHomeScore,
           awayScore: processedAwayScore,
-          isWin: manualWinStatus, // Save the exact value including undefined for draws
           timestamp: new Date().toISOString()
         };
         const savedScores = JSON.parse(localStorage.getItem('savedMatchScores') || '{}');
@@ -176,7 +130,6 @@ export function QuickMatchResult({
           pendingUpdates[activity.id] = {
             homeScore,
             awayScore,
-            isWin: manualWinStatus,
             timestamp: new Date().toISOString()
           };
           localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
@@ -230,11 +183,6 @@ export function QuickMatchResult({
         
         {!isReadOnly && (
           <div className="space-y-4">
-            <WinStatusRadioGroup 
-              winStatus={manualWinStatus}
-              onWinStatusChange={handleWinStatusChange}
-            />
-            
             <ResultActions 
               onSave={handleSave}
               isSaving={isSaving}

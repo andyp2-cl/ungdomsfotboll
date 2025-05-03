@@ -10,8 +10,6 @@ interface ScoreSectionProps {
   awayScore: number | undefined;
   setHomeScore: (score: number | undefined) => void;
   setAwayScore: (score: number | undefined) => void;
-  manualWinStatus: boolean | undefined;
-  setManualWinStatus: (status: boolean | undefined) => void;
   onSave: () => void;
   isSaving: boolean;
   isHistorical: boolean;
@@ -23,8 +21,6 @@ export function ScoreSection({
   awayScore,
   setHomeScore,
   setAwayScore,
-  manualWinStatus,
-  setManualWinStatus,
   onSave,
   isSaving,
   isHistorical
@@ -48,8 +44,6 @@ export function ScoreSection({
         awayScore={awayScore}
         setHomeScore={setHomeScore}
         setAwayScore={setAwayScore}
-        manualWinStatus={manualWinStatus}
-        setManualWinStatus={setManualWinStatus}
         onSave={onSave}
         isSaving={isSaving}
       />

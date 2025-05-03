@@ -10,7 +10,7 @@ interface ActivityResultSectionProps {
   activity: Activity;
   isHistorical: boolean;
   updateActivity: (updatedActivity: Activity) => void;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   participatingPlayers?: any[];  // Added participatingPlayers prop
 }
 
@@ -24,16 +24,12 @@ export function ActivityResultSection({
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
-  const [manualWinStatus, setManualWinStatus] = useState<boolean | undefined>(activity.isWin);
   const isMobile = useIsMobile();
   
   // Update local state when activity changes
   useEffect(() => {
     setHomeScore(activity.homeScore);
     setAwayScore(activity.awayScore);
-    
-    // Important: Make sure we keep the three-state boolean for win status
-    setManualWinStatus(activity.isWin);
     
     console.log("ActivityResultSection updated with activity:", { 
       id: activity.id,
@@ -56,12 +52,11 @@ export function ActivityResultSection({
     setIsSaving(true);
     console.log("Saving match result with:", {
       homeScore,
-      awayScore,
-      manualWinStatus: manualWinStatus === undefined ? "undefined/draw" : manualWinStatus
+      awayScore
     });
     
     try {
-      await saveMatchResult(homeScore, awayScore, manualWinStatus);
+      await saveMatchResult(homeScore, awayScore);
     } finally {
       setIsSaving(false);
     }
@@ -78,8 +73,6 @@ export function ActivityResultSection({
           awayScore={awayScore}
           setHomeScore={setHomeScore}
           setAwayScore={setAwayScore}
-          manualWinStatus={manualWinStatus}
-          setManualWinStatus={setManualWinStatus}
           onSave={handleSave}
           isSaving={isSaving}
           isHistorical={isHistorical}
