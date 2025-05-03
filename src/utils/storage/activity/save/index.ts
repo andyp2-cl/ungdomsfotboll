@@ -27,6 +27,7 @@ export async function saveActivities(activities: Activity[]): Promise<boolean> {
         // Then try to save to database with our most robust approach
         await saveToDatabase(activity);
         successCount++;
+        console.log(`Activity ${activity.id} saved successfully`);
       } catch (error) {
         console.error(`Failed to save activity ${activity.id}:`, error);
         errorCount++;
@@ -38,6 +39,8 @@ export async function saveActivities(activities: Activity[]): Promise<boolean> {
     // Show toast only if at least one activity had an issue
     if (errorCount > 0) {
       toast.warning(`${errorCount} aktiviteter kunde inte sparas i databasen, men finns lokalt.`);
+    } else if (successCount > 0) {
+      toast.success(`${successCount} aktiviteter sparades framgångsrikt`);
     }
     
     // Return success if at least one activity was saved
@@ -99,7 +102,7 @@ async function saveToDatabase(activity: Activity): Promise<boolean> {
     // Try direct update with Supabase first
     const { error } = await supabase
       .from('activities')
-      .upsert(formattedActivity)
+      .upsert(formattedActivity, { onConflict: 'id' })
       .select();
     
     if (!error) {
@@ -162,9 +165,25 @@ async function tryOptimizedUpdate(activityId: string, activity: any): Promise<{s
       if (response.ok) {
         return { success: true };
       }
-      console.warn("REST API approach failed");
+      console.warn("REST API approach failed:", await response.text());
     } catch (e) {
       console.error("REST API error:", e);
+    }
+    
+    // Try using the INSERT method with ON CONFLICT DO UPDATE
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .insert(activity)
+        .onConflict('id')
+        .merge();
+        
+      if (!error) {
+        return { success: true };
+      }
+      console.warn("Insert with merge failed:", error);
+    } catch (e) {
+      console.error("Insert with merge error:", e);
     }
     
     // Try scores-only update
@@ -184,29 +203,13 @@ async function tryOptimizedUpdate(activityId: string, activity: any): Promise<{s
       if (!error) {
         return { success: true };
       }
-      console.warn("Scores-only update failed");
+      console.warn("Scores-only update failed:", error);
     } catch (e) {
       console.error("Scores update error:", e);
     }
     
-    // Try RPC function call if it exists
-    try {
-      const { error } = await supabase.rpc('update_activity_score', { 
-        p_activity_id: activityId,
-        p_home_score: activity.home_score,
-        p_away_score: activity.away_score
-      });
-      
-      if (!error) {
-        return { success: true };
-      }
-      console.warn("RPC function failed");
-    } catch (e) {
-      console.error("RPC function error:", e);
-    }
-    
-    // Return true anyway since we've saved to local storage
-    return { success: true, error: "All database methods failed, but saved to local storage" };
+    // Return false but we'll still have the local storage backup
+    return { success: false, error: "All database methods failed, falling back to local storage only" };
     
   } catch (error) {
     console.error("All optimized update methods failed:", error);

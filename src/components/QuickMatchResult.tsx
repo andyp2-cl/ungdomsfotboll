@@ -81,11 +81,11 @@ export function QuickMatchResult({
     try {
       // Convert string values to numbers if needed
       const processedHomeScore = homeScore !== undefined && homeScore !== null ? 
-        (typeof homeScore === 'string' ? parseInt(homeScore as string, 10) : homeScore) : 
+        (typeof homeScore === 'string' ? parseInt(homeScore as any, 10) : homeScore) : 
         undefined;
         
       const processedAwayScore = awayScore !== undefined && awayScore !== null ? 
-        (typeof awayScore === 'string' ? parseInt(awayScore as string, 10) : awayScore) : 
+        (typeof awayScore === 'string' ? parseInt(awayScore as any, 10) : awayScore) : 
         undefined;
       
       // Debug data conversion
@@ -110,6 +110,21 @@ export function QuickMatchResult({
       
       // Reset error state on success
       setHasError(false);
+      
+      // Save to localStorage directly as an extra backup
+      try {
+        const backupData = {
+          activityId: activity.id,
+          homeScore: processedHomeScore,
+          awayScore: processedAwayScore,
+          timestamp: new Date().toISOString()
+        };
+        const savedScores = JSON.parse(localStorage.getItem('savedMatchScores') || '{}');
+        savedScores[activity.id] = backupData;
+        localStorage.setItem('savedMatchScores', JSON.stringify(savedScores));
+      } catch (e) {
+        console.error("Failed to save backup to localStorage:", e);
+      }
     } catch (error) {
       console.error("Error saving match result:", error);
       setHasError(true);

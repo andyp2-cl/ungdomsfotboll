@@ -71,7 +71,7 @@ export const handleMatchResultUpdate = async (
 
     // Try the most reliable saving method first - saveActivities now uses multiple fallbacks
     try {
-      // Fixed: Don't test the void return type for truthiness
+      // Don't check for truthiness of the void return type
       await saveActivities(updatedActivities);
       console.log("Activity saved successfully via enhanced storage system");
       toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
