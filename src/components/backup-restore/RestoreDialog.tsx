@@ -4,10 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useBackupRestore } from "@/utils/storage/backup";
 import { validateBackupData } from "@/utils/storage/backup/utils";
 import { format } from "date-fns";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, AlertTriangle, Lock } from "lucide-react";
+import { Clock, AlertTriangle, Lock, DatabaseBackup } from "lucide-react";
+import { toast } from "sonner";
 
 interface RestoreDialogProps {
   backupInfo: {timestamp: string, playerCount: number, activityCount: number} | null;
@@ -20,10 +21,11 @@ interface RestoreDialogProps {
 const PASSWORD = "tommieannatedandreas"; // The password for restore functionality
 
 export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen, setIsOpen }: RestoreDialogProps) {
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { restoreBackup, getLastBackupInfo } = useBackupRestore();
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showDebug, setShowDebug] = useState(false);
   
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')
@@ -49,7 +51,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
     const info = getLastBackupInfo();
     
     if (!backupData || !info || (info.playerCount === 0 && info.activityCount === 0)) {
-      toast({
+      uiToast({
         title: "Återställning misslyckades",
         description: "Säkerhetskopian är tom eller saknas. Skapa en ny säkerhetskopia först.",
         variant: "destructive"
@@ -63,16 +65,22 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
       const isValid = validateBackupData(parsed);
       
       if (!isValid) {
-        toast({
+        uiToast({
           title: "Återställning misslyckades",
           description: "Säkerhetskopian är ogiltig eller skadad. Skapa en ny säkerhetskopia.",
           variant: "destructive"
         });
         return;
       }
+      
+      // Show debugging info about match count if requested
+      if (showDebug) {
+        const matchCount = parsed.activities.filter(a => a.type === 'match').length;
+        toast.info(`Säkerhetskopian innehåller ${matchCount} matcher`);
+      }
     } catch (error) {
       console.error("Error validating backup data:", error);
-      toast({
+      uiToast({
         title: "Återställning misslyckades",
         description: "Kunde inte tolka säkerhetskopian. Skapa en ny säkerhetskopia först.",
         variant: "destructive"
@@ -85,6 +93,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
       toast({
         title: "Återställer data",
         description: "Återställer data från säkerhetskopia. Detta kan ta en stund...",
+        duration: 10000
       });
       
       const success = await restoreBackup();
@@ -123,7 +132,10 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Återställ data</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <DatabaseBackup className="h-5 w-5 text-primary" />
+            Återställ data
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Detta kommer att återställa alla spelare och aktiviteter till den senaste säkerhetskopian.
             {formattedBackupDate ? (
@@ -159,6 +171,21 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
               {passwordError && (
                 <p className="text-red-500 text-sm">{passwordError}</p>
               )}
+            </div>
+            
+            <div className="mt-4">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="debug-mode" 
+                  checked={showDebug} 
+                  onChange={() => setShowDebug(!showDebug)}
+                  className="accent-primary h-4 w-4"
+                />
+                <label htmlFor="debug-mode" className="text-sm text-muted-foreground cursor-pointer">
+                  Visa detaljerad information vid återställning
+                </label>
+              </div>
             </div>
             
             <p className="mt-4 font-medium text-destructive">

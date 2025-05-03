@@ -1,8 +1,8 @@
-
 import { Activity } from "@/types/player";
 import { saveActivities } from "../activityStorage";
 import { processActivitiesForRestore } from "./utils";
 import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 /**
  * Restores activities from backup data
@@ -13,11 +13,19 @@ export const restoreActivities = async (activities: any[]): Promise<{
   error?: any;
 }> => {
   try {
+    // Count match activities in backup for debugging
+    const matchCount = activities.filter(a => a.type === 'match').length;
+    console.log(`Attempting to restore ${activities.length} activities, including ${matchCount} matches`);
+    
     // Process activities to ensure all required fields are properly set
     let processedActivities: Activity[] = [];
     try {
       processedActivities = processActivitiesForRestore(activities);
       console.log("Processed activities for restore:", processedActivities.length);
+      
+      // Check specifically for matches after processing
+      const processedMatchCount = processedActivities.filter(a => a.type === 'match').length;
+      console.log(`After processing: ${processedMatchCount} matches ready for restore`);
       
       if (processedActivities.length === 0) {
         console.error("No activities were processed successfully");
@@ -41,6 +49,17 @@ export const restoreActivities = async (activities: any[]): Promise<{
     if (!validateActivities) {
       console.error("Some activities are missing required fields");
       return { success: false, count: 0, error: "Invalid activities" };
+    }
+    
+    // Special attention to match activities
+    const matchActivities = processedActivities.filter(a => a.type === 'match');
+    console.log(`Preparing to restore ${matchActivities.length} match activities specifically`);
+    
+    // Keep a copy of match activities for redundancy
+    if (matchActivities.length > 0) {
+      // Save to cache for redundancy
+      localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
+      toast.info(`Lagrat ${matchActivities.length} matcher i lokal cache för redundans`);
     }
     
     // Split activities into batches to avoid timeouts and memory issues
@@ -122,7 +141,7 @@ export const restorePlayerActivities = async (players: any[]): Promise<{
       try {
         const { error } = await supabase
           .from('player_activities')
-          .upsert(batch);
+          .upsert(batch, { onConflict: 'id' });
           
         if (error) {
           console.error(`Error saving player-activity relationship batch ${i}:`, error);
@@ -135,6 +154,24 @@ export const restorePlayerActivities = async (players: any[]): Promise<{
         hasErrors = true;
         // Continue with next batch
       }
+    }
+    
+    // Re-fetch activities to ensure they're properly linked to players
+    try {
+      const { data: refreshedActivities } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('type', 'match');
+        
+      const matchCount = refreshedActivities?.length || 0;
+      console.log(`After restoring relationships: ${matchCount} match activities found in database`);
+      
+      // Cache these activities for redundancy
+      if (refreshedActivities && refreshedActivities.length > 0) {
+        localStorage.setItem('cachedMatchActivities', JSON.stringify(refreshedActivities));
+      }
+    } catch (error) {
+      console.error("Error fetching refreshed activities (non-critical):", error);
     }
     
     return { 

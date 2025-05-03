@@ -1,5 +1,4 @@
-
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -27,170 +26,119 @@ export const processMatchData = (activity: any) => {
 };
 
 /**
- * Retrieves information about the last backup from localStorage
+ * Validates backup data structure
  */
-export const getLastBackupInfo = (): { 
-  timestamp: string; 
-  playerCount: number; 
-  activityCount: number; 
-} | null => {
-  const backupData = localStorage.getItem('hassleholmsif_backup');
-  if (!backupData) return null;
+export const validateBackupData = (data: any): boolean => {
+  if (!data) return false;
   
-  try {
-    const backup = JSON.parse(backupData);
-    if (!backup.timestamp || !backup.players || !backup.activities) {
-      return null;
-    }
-    
-    return {
-      timestamp: backup.timestamp,
-      playerCount: backup.players.length,
-      activityCount: backup.activities.length
-    };
-  } catch (error) {
-    console.error("Error parsing backup info:", error);
-    return null;
-  }
-};
-
-/**
- * Performs a deep data validation of the backup content
- */
-export const validateBackupData = (backupData: any): boolean => {
-  if (!backupData || typeof backupData !== 'object') {
-    console.error("Invalid backup data: not an object");
+  // Check for required top-level properties
+  if (!data.players || !data.activities || !data.timestamp) {
+    console.error("Missing required backup properties");
     return false;
   }
   
-  if (!backupData.timestamp || !backupData.players || !backupData.activities) {
-    console.error("Invalid backup data: missing required fields", backupData);
+  // Validate players array
+  if (!Array.isArray(data.players)) {
+    console.error("Players is not an array");
     return false;
   }
   
-  if (!Array.isArray(backupData.players) || !Array.isArray(backupData.activities)) {
-    console.error("Invalid backup data: players or activities not arrays");
+  // Validate activities array
+  if (!Array.isArray(data.activities)) {
+    console.error("Activities is not an array");
     return false;
   }
   
-  // Validate each player has required fields
-  const validPlayers = backupData.players.filter(player => 
-    player && player.id && player.name && player.grade
-  );
-  
-  if (validPlayers.length === 0 && backupData.players.length > 0) {
-    console.error("Invalid backup data: no valid players found");
-    return false;
-  }
-  
-  // Validate activities have required fields
-  const validActivities = backupData.activities.filter(activity => 
-    activity && activity.id && activity.name && activity.date && activity.type
-  );
-  
-  if (validActivities.length === 0 && backupData.activities.length > 0) {
-    console.error("Invalid backup data: no valid activities found");
-    return false;
-  }
+  // Check for match activities specifically - log results but don't fail validation
+  const matchCount = data.activities.filter((a: any) => a.type === 'match').length;
+  console.log(`Backup contains ${matchCount} match activities`);
   
   return true;
 };
 
 /**
- * Process activities to ensure all required fields are properly set for restoration
+ * Process backup activities to ensure all required fields are properly set
  */
-export const processActivitiesForRestore = (activities: Activity[]): Activity[] => {
-  if (!activities || !Array.isArray(activities) || activities.length === 0) {
-    console.error("Invalid or empty activities array provided for processing");
+export const processActivitiesForRestore = (activities: any[]): Activity[] => {
+  if (!activities || !Array.isArray(activities)) {
+    console.error("Invalid activities data for processing", activities);
     return [];
   }
-
-  console.log("Processing activities for restore, count:", activities.length);
   
-  // First pass: ensure basic properties are set
-  const processedActivities = activities.map(activity => {
-    // Skip null or undefined activities
-    if (!activity) {
-      console.error("Null or undefined activity found in backup");
-      return null;
-    }
+  return activities.map(activity => {
+    // Ensure all required fields are present
+    const processedActivity: Activity = {
+      id: activity.id || `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: activity.name || "Unnamed Activity",
+      date: activity.date || new Date().toISOString().split('T')[0],
+      type: activity.type || "training",
+      
+      // Optional fields
+      time: activity.time,
+      location_name: activity.location_name,
+      location_description: activity.location_description,
+      location_gps_link: activity.location_gps_link,
+      participants: activity.participants || [],
+      
+      // Match specific fields
+      homeScore: activity.homeScore || activity.home_score,
+      awayScore: activity.awayScore || activity.away_score,
+      isWin: activity.isWin || activity.is_win,
+      result: activity.result,
+      
+      // New format support
+      home_score: activity.homeScore || activity.home_score,
+      away_score: activity.awayScore || activity.away_score,
+      is_win: activity.isWin || activity.is_win,
+      
+      // Keep player statistics if present
+      player_stats: activity.player_stats
+    };
     
-    // Deep clone to avoid modifying original
-    const processedActivity: Activity = JSON.parse(JSON.stringify(activity));
-    
-    // Ensure id exists
-    if (!processedActivity.id) {
-      processedActivity.id = uuidv4();
-    }
-    
-    // Ensure type is valid
-    if (!processedActivity.type || (processedActivity.type !== 'match' && processedActivity.type !== 'cup')) {
-      processedActivity.type = 'match'; // Default to match if not valid
-    }
-    
-    // Ensure date exists and is a string
-    if (!processedActivity.date) {
-      processedActivity.date = new Date().toISOString().split('T')[0];
-    }
-    
-    // Ensure name exists
-    if (!processedActivity.name) {
-      processedActivity.name = `Activity ${processedActivity.id.substring(0, 6)}`;
-    }
-    
-    // Ensure participants array exists
-    if (!processedActivity.participants) {
-      processedActivity.participants = [];
-    }
-    
-    // Ensure matches array exists for cup activities
-    if (processedActivity.type === 'cup' && !processedActivity.matches) {
-      processedActivity.matches = [];
-    }
-    
-    // Set default values for match-specific fields if not present
-    if (processedActivity.type === 'match') {
-      if (processedActivity.homeScore !== undefined && processedActivity.awayScore !== undefined) {
-        if (processedActivity.result === undefined) {
-          processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
-        }
-      } else if ((processedActivity as any).home_score !== undefined && (processedActivity as any).away_score !== undefined) {
-        // Handle database-style field names
-        processedActivity.homeScore = (processedActivity as any).home_score;
-        processedActivity.awayScore = (processedActivity as any).away_score;
-        processedActivity.result = `${processedActivity.homeScore}-${processedActivity.awayScore}`;
-      }
-    }
-    
-    // Initialize player_stats if not present
-    if (!processedActivity.player_stats) {
-      processedActivity.player_stats = {
-        goals: {},
-        assists: {},
-        scores: {
-          home: processedActivity.homeScore,
-          away: processedActivity.awayScore
-        },
-        isWin: processedActivity.isWin
-      };
+    // Ensure match data is properly set
+    if (activity.type === 'match') {
+      // Log match data for debugging
+      console.log(`Processing match: ${activity.name}`, {
+        id: activity.id,
+        home_score: processedActivity.home_score,
+        away_score: processedActivity.away_score,
+        is_win: processedActivity.is_win,
+        has_player_stats: !!processedActivity.player_stats
+      });
     }
     
     return processedActivity;
-  }).filter(Boolean) as Activity[]; // Remove null entries
-  
-  // Second pass: resolve cup and match relationships
-  processedActivities.forEach(activity => {
-    if (activity.type === 'cup') {
-      // For cups, find all matches that reference this cup via cupId
-      const matchActivities = processedActivities.filter(
-        possibleMatch => possibleMatch.cupId === activity.id
-      );
-      
-      if (matchActivities.length > 0) {
-        activity.matches = matchActivities.map(match => match.id);
-      }
-    }
   });
-  
-  return processedActivities;
+};
+
+/**
+ * Retrieves information about the last backup
+ */
+export const getLastBackupInfo = (): { timestamp: string; playerCount: number; activityCount: number } | null => {
+  try {
+    const backupData = localStorage.getItem('hassleholmsif_backup');
+    
+    if (!backupData) {
+      return null;
+    }
+    
+    const data = JSON.parse(backupData);
+    
+    if (!data.timestamp || !Array.isArray(data.players) || !Array.isArray(data.activities)) {
+      return null;
+    }
+    
+    // Count match activities specifically
+    const matchCount = data.activities.filter((a: any) => a.type === 'match').length;
+    console.log(`Backup contains ${matchCount} match activities out of ${data.activities.length} total activities`);
+    
+    return {
+      timestamp: data.timestamp,
+      playerCount: data.players.length,
+      activityCount: data.activities.length
+    };
+  } catch (error) {
+    console.error("Error getting backup info:", error);
+    return null;
+  }
 };

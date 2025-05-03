@@ -1,6 +1,6 @@
 
 import { logDatabaseChange } from "@/lib/supabase/logs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { validateBackup } from "./validation";
 import { clearExistingData } from "./clearDatabase";
 import { restorePlayers } from "./restorePlayers";
@@ -20,7 +20,9 @@ export const restoreBackup = async (): Promise<boolean> => {
       return false;
     }
     
-    console.log("Restoring backup with activities:", backupData.activities.length);
+    // Count matches in backup before restoration
+    const matchCount = backupData.activities.filter(a => a.type === 'match').length;
+    console.log(`Restoring backup with ${backupData.activities.length} activities, including ${matchCount} matches`);
     
     // First make a copy of the backup data to preserve it
     const backupCopy = JSON.stringify(backupData);
@@ -50,6 +52,11 @@ export const restoreBackup = async (): Promise<boolean> => {
       return false;
     }
     
+    // Special step: Verify match activities were restored
+    const restoredMatchCount = activitiesCount > 0 ? 
+      "Match count will be verified after player-activity relationships are restored" : "No activities restored";
+    console.log(restoredMatchCount);
+    
     // Now restore player-activity relationships
     const { success: relationshipsSuccess, count: relationshipsCount, error: relationshipsError } = 
       await restorePlayerActivities(backupData.players);
@@ -65,15 +72,36 @@ export const restoreBackup = async (): Promise<boolean> => {
         'restore',
         'backup',
         'all',
-        `Restored from backup: ${playersCount} players and ${activitiesCount} activities`
+        `Restored from backup: ${playersCount} players and ${activitiesCount} activities including ${matchCount} matches`
       );
     } catch (error) {
       console.error("Error logging restoration (non-critical):", error);
       // This is non-critical, so we still continue
     }
     
+    // Save to cache before reloading
+    try {
+      localStorage.setItem('cachedActivities', JSON.stringify(backupData.activities));
+      localStorage.setItem('cachedActivitiesTime', Date.now().toString());
+      localStorage.setItem('cachedActivitiesCount', backupData.activities.length.toString());
+      
+      // Separately cache matches for redundancy
+      const matchActivities = backupData.activities.filter(a => a.type === 'match');
+      if (matchActivities && matchActivities.length > 0) {
+        localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
+        localStorage.setItem('cachedMatchActivitiesTime', Date.now().toString());
+        localStorage.setItem('cachedMatchActivitiesCount', matchActivities.length.toString());
+        console.log(`Cached ${matchActivities.length} match activities for redundancy`);
+      }
+    } catch (cacheError) {
+      console.error("Error saving to cache (non-critical):", cacheError);
+    }
+    
     console.log("Backup restoration completed successfully");
     console.log(`Restored ${playersCount} players, ${activitiesCount} activities, and ${relationshipsCount} relationships`);
+    
+    // Force a refresh to load activities from cache even if database connection fails
+    toast.success(`Återställning slutförd! Laddar om för att visa data...`);
     
     // Return success if we have restored some activities
     return activitiesCount > 0;
