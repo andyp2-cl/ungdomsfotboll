@@ -1,3 +1,4 @@
+
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -129,19 +130,15 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update - fixed to properly handle the Promise<boolean>
+  // Wrapper for match result update - fixing the void return type error
   const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
     try {
       console.log(`PlayersPage: Calling handleMatchResult with scores=${homeScore}-${awayScore}`);
       
-      // Call the function and wait for its completion
-      const success = await handleMatchResult(activityId, homeScore, awayScore);
+      // Call the function without checking its return value
+      await handleMatchResult(activityId, homeScore, awayScore);
       
-      if (success) {
-        console.log("Match result update was successful");
-      } else {
-        console.warn("Match result update returned false, may not have been successful");
-      }
+      console.log("Match result update completed");
     } catch (error) {
       console.error("Error updating match result:", error);
     }
