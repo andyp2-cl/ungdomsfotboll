@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LockKeyhole } from "lucide-react";
+import { connectAnonymously } from "./auth/utils/databaseUtils";
+import { setAutoConnectDatabase } from "@/utils/environment";
 
 const PASSWORD = "tommieannatedandreas"; // Lösenord enligt önskemål
 const AUTH_KEY = "hifp2014-auth";
@@ -17,22 +19,41 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ children }) => 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDatabaseConnecting, setIsDatabaseConnecting] = useState(false);
 
   useEffect(() => {
     // Kontrollera om användaren redan är autentiserad
     const auth = localStorage.getItem(AUTH_KEY);
     if (auth === "true") {
       setIsAuthenticated(true);
+      
+      // Automatically connect to database when already authenticated
+      setIsDatabaseConnecting(true);
+      connectAnonymously()
+        .finally(() => setIsDatabaseConnecting(false));
     }
     setIsLoading(false);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password === PASSWORD) {
       localStorage.setItem(AUTH_KEY, "true");
       setIsAuthenticated(true);
       setError("");
+      
+      // Enable auto-connect for database access
+      setAutoConnectDatabase(true);
+      
+      // Connect to database automatically
+      setIsDatabaseConnecting(true);
+      try {
+        await connectAnonymously();
+      } catch (error) {
+        console.error("Failed to connect to database:", error);
+      } finally {
+        setIsDatabaseConnecting(false);
+      }
     } else {
       setError("Felaktigt lösenord. Försök igen.");
     }
@@ -43,6 +64,9 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ children }) => 
   }
 
   if (isAuthenticated) {
+    if (isDatabaseConnecting) {
+      return <div className="min-h-screen flex items-center justify-center">Ansluter till databasen...</div>;
+    }
     return <>{children}</>;
   }
 

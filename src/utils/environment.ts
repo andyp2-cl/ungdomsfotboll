@@ -24,7 +24,15 @@ export function isDevelopmentEnvironment(): boolean {
  * Check if automatic database connection should be enabled
  */
 export function shouldAutoConnectDatabase(): boolean {
-  // Read from localStorage to allow user override
+  // First check if user is authenticated with the main password
+  const isAuthenticated = localStorage.getItem('hifp2014-auth') === 'true';
+  
+  // If authenticated with main password, always auto-connect
+  if (isAuthenticated) {
+    return true;
+  }
+  
+  // Otherwise, read from localStorage to allow user override
   const userPreference = localStorage.getItem('autoConnectDatabase');
   
   // If user has explicitly set a preference, use that
