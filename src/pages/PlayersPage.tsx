@@ -4,7 +4,6 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { Activity } from "@/types/player";
 import { usePlayerPageWrappers } from "@/hooks/players/usePlayerPageWrappers";
 
 interface PlayersPageProps {
@@ -81,7 +80,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleKioskUpdate,
     handleImportActivities,
     handleClearHistorical,
-    handleMatchResult,
+    handleMatchResult, // This should return Promise<boolean>
     setViewMode
   );
 

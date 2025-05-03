@@ -12,7 +12,7 @@ export function usePlayerPageWrappers(
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>,
   handleImportActivities: (activities: Activity[]) => Promise<boolean>,
   handleClearHistorical: () => Promise<boolean>,
-  handleMatchResult: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>,
+  handleMatchResult: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>,
   setViewMode: (mode: "list" | "grid" | "stats") => void
 ) {
   // Converting Promise<boolean> to Promise<void> for player update functions
@@ -50,17 +50,19 @@ export function usePlayerPageWrappers(
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update - fixing the void return type error
-  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+  // Wrapper for match result update - ensuring we return a boolean
+  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
     try {
       console.log(`PlayersPage: Calling handleMatchResult with scores=${homeScore}-${awayScore}`);
       
-      // Call the function without checking its return value
-      await handleMatchResult(activityId, homeScore, awayScore);
+      // Call the function and return its result (must be boolean)
+      const result = await handleMatchResult(activityId, homeScore, awayScore);
       
-      console.log("Match result update completed");
+      console.log("Match result update completed with result:", result);
+      return result;
     } catch (error) {
       console.error("Error updating match result:", error);
+      return false;
     }
   };
 
