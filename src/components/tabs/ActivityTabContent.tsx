@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { ActivityTabHeader } from "./activity-tab/components/ActivityTabHeader";
@@ -116,16 +116,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           <Button onClick={() => props.setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh} 
-            disabled={isRefreshing}
-            className="w-full sm:w-auto"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Uppdaterar..." : "Uppdatera"}
           </Button>
         </div>
       </div>

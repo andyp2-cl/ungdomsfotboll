@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, AlertCircle } from "lucide-react";
+import { Save, AlertCircle, CheckCircle2 } from "lucide-react";
 import { extractTeamNames, isHomeMatch } from "./activity-detail/match-result/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,8 @@ export function QuickMatchResult({
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const isMobile = useIsMobile();
   const { toast: hookToast } = useToast();
   
@@ -38,6 +40,19 @@ export function QuickMatchResult({
     // Reset error state
     setHasError(false);
   }, [activity.homeScore, activity.awayScore]);
+  
+  // Reset success message after 3 seconds
+  useEffect(() => {
+    let timer: number;
+    if (showSuccess) {
+      timer = window.setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showSuccess]);
   
   const teamNames = extractTeamNames(activity);
   const isHome = isHomeMatch(activity);
@@ -54,11 +69,13 @@ export function QuickMatchResult({
     
     setIsSaving(true);
     setHasError(false);
+    setShowSuccess(false);
     
     console.log("QuickMatchResult - Saving match result:", { 
       activityId: activity.id, 
       homeScore, 
-      awayScore 
+      awayScore,
+      retryCount
     });
     
     try {
@@ -77,17 +94,17 @@ export function QuickMatchResult({
         processed: { processedHomeScore, processedAwayScore }
       });
       
+      // Save the match result with our now very robust save function
       await onSave(processedHomeScore, processedAwayScore);
       
       console.log("Score saved successfully");
       
+      // Show success state
+      setShowSuccess(true);
+      setRetryCount(0); // Reset retry counter on success
+      
       // Use sonner toast correctly
       toast.success("Resultat sparat", {
-        description: "Matchresultatet har sparats."
-      });
-      
-      // Also use shadcn toast
-      hookToast({
         description: "Matchresultatet har sparats."
       });
       
@@ -96,16 +113,40 @@ export function QuickMatchResult({
     } catch (error) {
       console.error("Error saving match result:", error);
       setHasError(true);
+      setRetryCount(prev => prev + 1);
+      
+      // Create different messages based on retry count
+      let errorMessage = "Kunde inte spara resultat. Försök igen.";
+      let toastTitle = "Kunde inte spara resultat";
+      
+      if (retryCount >= 2) {
+        errorMessage = "Flera försök misslyckades. Resultatet sparas lokalt och synkas senare.";
+        toastTitle = "Sparas lokalt";
+        
+        // Save to local storage explicitly for retry failures
+        try {
+          const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
+          pendingUpdates[activity.id] = {
+            homeScore,
+            awayScore,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
+          console.log("Score saved to local backup storage");
+        } catch (e) {
+          console.error("Failed to save to local backup storage:", e);
+        }
+      }
       
       // Use sonner toast correctly for error
-      toast.error("Kunde inte spara resultat", {
-        description: "Ett fel uppstod vid sparande av resultat. Försök igen."
+      toast.error(toastTitle, {
+        description: errorMessage
       });
       
       // Also use shadcn toast for error
       hookToast({
         variant: "destructive",
-        description: "Kunde inte spara ändringar. Försök igen."
+        description: errorMessage
       });
     } finally {
       setIsSaving(false);
@@ -166,14 +207,25 @@ export function QuickMatchResult({
             {hasError && (
               <div className="flex items-center gap-1 text-red-500 text-sm">
                 <AlertCircle className="h-4 w-4" />
-                <span>Kunde inte spara ändringar. Försök igen.</span>
+                <span>
+                  {retryCount >= 2 
+                    ? "Resultatet sparas lokalt och synkas senare" 
+                    : "Kunde inte spara ändringar. Försök igen."}
+                </span>
+              </div>
+            )}
+            
+            {showSuccess && (
+              <div className="flex items-center gap-1 text-green-500 text-sm">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Resultat sparat framgångsrikt</span>
               </div>
             )}
             
             <Button 
               onClick={handleSave} 
               disabled={isSaving}
-              className={`w-full ${isMobile ? 'h-10' : ''} ${hasError ? "bg-red-500 hover:bg-red-600" : ""}`}
+              className={`w-full ${isMobile ? 'h-10' : ''} ${hasError ? "bg-red-500 hover:bg-red-600" : ""} ${showSuccess ? "bg-green-500 hover:bg-green-600" : ""}`}
               size={isMobile ? "sm" : "default"}
             >
               <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
