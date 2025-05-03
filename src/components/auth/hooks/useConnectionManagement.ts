@@ -23,7 +23,8 @@ export function useConnectionManagement(isOnline: boolean) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isRLSEnabled, setIsRLSEnabled] = useState(true);
-  const [connectionStats, setConnectionStats] = useState<any>(null);
+  const [connectionStats, setConnectionStats] = useState<ConnectionStats | null>(null);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
 
   // Check database connection with automatic reconnect if configured
   const checkDatabaseConnection = useCallback(async (forceCheck = false) => {
@@ -35,6 +36,7 @@ export function useConnectionManagement(isOnline: boolean) {
 
     try {
       setIsConnecting(true);
+      setConnectionAttempts(prev => prev + 1);
       
       // First check cached connection status to avoid unnecessary checks
       const cachedStatus = localStorage.getItem('sb-connection-test');
@@ -85,6 +87,14 @@ export function useConnectionManagement(isOnline: boolean) {
           setIsRLSEnabled(rlsEnabled);
           setConnectionError(null);
           setConnectionStats(stats);
+
+          // Save successful connection test
+          localStorage.setItem('sb-connection-test', 'true');
+          localStorage.setItem('sb-connection-test-time', Date.now().toString());
+          
+          // Also save activities fetch time to force a refresh
+          localStorage.removeItem('sb-activities-last-update');
+          localStorage.removeItem('sb-activities-fetch-time');
         } else {
           console.log("Database configuration exists but test failed");
           stats.errors.push(error || 'Unknown error');
@@ -106,6 +116,10 @@ export function useConnectionManagement(isOnline: boolean) {
               setConnectionError(null);
               stats.success = true;
               stats.anonymousConnection = true;
+              
+              // Force activity data refresh
+              localStorage.removeItem('sb-activities-last-update');
+              localStorage.removeItem('sb-activities-fetch-time');
             } else {
               setConnectionError("Databasanslutning misslyckades");
               stats.errors.push('Anonymous connection failed');
@@ -132,6 +146,11 @@ export function useConnectionManagement(isOnline: boolean) {
             stats.success = true;
             stats.anonymousConnection = true;
             setConnectionStats(stats);
+
+            // Force activity data refresh
+            localStorage.removeItem('sb-activities-last-update');
+            localStorage.removeItem('sb-activities-fetch-time');
+            
             return;
           } else {
             stats.errors.push('Anonymous connection failed');
@@ -145,7 +164,16 @@ export function useConnectionManagement(isOnline: boolean) {
       // Save connection stats for debugging
       stats.totalTime = Date.now() - stats.startTime;
       setConnectionStats(stats);
-      localStorage.setItem('sb-connection-stats', JSON.stringify(stats));
+      localStorage.setItem('sb-connection-metrics', JSON.stringify({
+        timestamp: Date.now(),
+        attempts: stats.attempts,
+        success: stats.success || false,
+        totalTime: stats.totalTime,
+        userAgent: navigator.userAgent,
+        connectionType: (navigator as any).connection ? (navigator as any).connection.effectiveType : 'unknown',
+        lastAttemptTime: stats.queryTimes.length > 0 ? stats.queryTimes[stats.queryTimes.length - 1] : null,
+        successAttempt: stats.attempts
+      }));
     } catch (err) {
       console.error("Error checking database connection:", err);
       setConnectionError("Anslutningsfel: " + (err instanceof Error ? err.message : String(err)));
@@ -172,6 +200,8 @@ export function useConnectionManagement(isOnline: boolean) {
       // Clear connection cache
       localStorage.removeItem('sb-connection-test');
       localStorage.removeItem('sb-connection-test-time');
+      localStorage.removeItem('sb-activities-last-update');
+      localStorage.removeItem('sb-activities-fetch-time');
       
       // Force reset Supabase connection
       await forceResetConnection();
@@ -182,6 +212,12 @@ export function useConnectionManagement(isOnline: boolean) {
         if (success) {
           toast.success("Återansluten till databasen");
           setConnectionError(null);
+          
+          // Force a reload of the page to ensure clean state
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          
           return;
         }
       }
@@ -190,6 +226,11 @@ export function useConnectionManagement(isOnline: boolean) {
       await checkDatabaseConnection(true);
       
       toast.success("Återanslutning slutförd");
+      
+      // Force a reload of the page to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error("Error during force reconnect:", error);
       setConnectionError("Återanslutning misslyckades");
@@ -204,12 +245,25 @@ export function useConnectionManagement(isOnline: boolean) {
     checkDatabaseConnection();
   }, [isOnline, checkDatabaseConnection]);
 
+  // Auto-retry if we have errors and are online
+  useEffect(() => {
+    if (connectionError && isOnline && connectionAttempts < 3) {
+      const retryTimer = setTimeout(() => {
+        console.log(`Auto-retrying connection check (attempt ${connectionAttempts + 1})`);
+        checkDatabaseConnection(true);
+      }, 3000 * connectionAttempts);
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [connectionError, isOnline, connectionAttempts, checkDatabaseConnection]);
+
   return {
     connectionChecked,
     isConnecting, 
     connectionError,
     isRLSEnabled,
     connectionStats,
+    connectionAttempts,
     checkDatabaseConnection,
     handleForceReconnect
   };

@@ -31,11 +31,21 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
   
   console.log(`Getting activities with forceRefresh=${forceRefresh}, showToast=${showToast}`);
   
+  // Check if we need to force a refresh based on last fetch time
+  const lastFetchTime = localStorage.getItem('sb-activities-fetch-time');
+  const shouldForceRefresh = forceRefresh || 
+    !lastFetchTime || 
+    (Date.now() - parseInt(lastFetchTime, 10) > 1000 * 60 * 10); // 10 minutes
+  
+  if (shouldForceRefresh && showToast) {
+    toast.info("Tvingar uppdatering av data", { duration: 2000 });
+  }
+  
   // ALWAYS try to fetch from database when online, regardless of forceRefresh
   if (navigator.onLine) {
     try {
       // Reset cached connection test to ensure we're actually trying to connect
-      if (forceRefresh) {
+      if (shouldForceRefresh) {
         localStorage.removeItem('sb-connection-test');
         localStorage.removeItem('sb-activities-fetch-time');
         console.log("Force refresh - cleared connection test cache");
@@ -45,7 +55,8 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       const activities = await fetchActivitiesFromDB({ 
         showToast,
         silent: !showToast,
-        forceRefresh
+        forceRefresh: shouldForceRefresh,
+        retryCount: shouldForceRefresh ? 2 : 0 // More aggressive retry when forcing refresh
       });
       
       // Calculate and log performance

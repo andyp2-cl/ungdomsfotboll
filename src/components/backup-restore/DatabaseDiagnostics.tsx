@@ -11,6 +11,7 @@ export function DatabaseDiagnostics() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [testResults, setTestResults] = useState<any>(null);
   const [connectionDetails, setConnectionDetails] = useState<any>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -22,6 +23,46 @@ export function DatabaseDiagnostics() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Load connection details on mount
+  useEffect(() => {
+    const connectionInfo = {
+      lastSuccessfulConnection: localStorage.getItem('sb-connection-test-time') ? 
+        new Date(parseInt(localStorage.getItem('sb-connection-test-time')!, 10)).toLocaleString() : 'Okänd',
+      lastError: localStorage.getItem('sb-connection-error'),
+      cachedMatchCount: localStorage.getItem('match-data-count') || '0',
+      cachedActivitiesCount: localStorage.getItem('cachedActivitiesCount') || '0',
+      lastUpdate: localStorage.getItem('sb-activities-last-update') ? 
+        new Date(parseInt(localStorage.getItem('sb-activities-last-update')!, 10)).toLocaleString() : 'Okänd'
+    };
+    setConnectionDetails(connectionInfo);
+  }, []);
+
+  const clearLocalStorageCache = async () => {
+    try {
+      setIsClearing(true);
+      toast.loading("Rensar alla cachade data...");
+      
+      // Clear all localStorage items related to data storage
+      const keysToRemove = ['cachedActivities', 'cachedActivitiesTime', 'cachedActivitiesCount',
+                           'cachedMatchActivities', 'cachedMatchActivitiesTime', 'cachedMatchActivitiesCount',
+                           'sb-activities-last-update', 'sb-activities-fetch-time', 'sb-connection-test',
+                           'sb-connection-test-time', 'sb-connection-metrics', 'sb-connection-error'];
+                           
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // After a brief pause, reload the page
+      setTimeout(() => {
+        toast.success("All cache rensad, laddar om sidan...");
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error clearing local storage cache:", error);
+      toast.error("Fel vid rensning av cache");
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   const runDiagnostics = async () => {
     try {
@@ -106,53 +147,31 @@ export function DatabaseDiagnostics() {
         results.tests.readAccess.inProgress = false;
       }
 
-      // Step 5: Test write access with delete + insert
+      // Step 5: Test activities fetch specifically
       try {
-        results.tests.writeAccess = {
-          name: "Skrivbehörighet",
+        results.tests.activitiesFetch = {
+          name: "Aktiviteter hämtning",
           inProgress: true
         };
         
-        // Try to create a test entry
-        const testId = `test-${Date.now()}`;
         const startTime = performance.now();
-        const { error: insertError } = await supabase
-          .from('leagues')
-          .insert({ 
-            id: testId, 
-            name: 'Test League', 
-            division: 'Test', 
-            year: 2025 
-          });
+        const { data, error } = await supabase
+          .from('activities')
+          .select('id,name')
+          .limit(5);
         const queryTime = performance.now() - startTime;
           
-        // Then try to delete it
-        if (!insertError) {
-          const { error: deleteError } = await supabase
-            .from('leagues')
-            .delete()
-            .eq('id', testId);
-            
-          results.tests.writeAccess.passed = !deleteError;
-          results.tests.writeAccess.details = { 
-            queryTime: `${queryTime.toFixed(2)}ms`,
-            deleteError: deleteError ? deleteError.message : null
-          };
-        } else {
-          // Check if it's an RLS error which might be expected
-          const isRLSError = insertError.message && insertError.message.includes('row-level security');
-          results.tests.writeAccess.passed = isRLSError;
-          results.tests.writeAccess.details = { 
-            queryTime: `${queryTime.toFixed(2)}ms`,
-            error: insertError.message,
-            isRLSError
-          };
-        }
-        results.tests.writeAccess.inProgress = false;
+        results.tests.activitiesFetch.passed = !error && Array.isArray(data);
+        results.tests.activitiesFetch.details = { 
+          queryTime: `${queryTime.toFixed(2)}ms`,
+          recordsFound: data?.length || 0,
+          error: error ? error.message : null
+        };
+        results.tests.activitiesFetch.inProgress = false;
       } catch (error) {
-        results.tests.writeAccess.passed = false;
-        results.tests.writeAccess.error = error instanceof Error ? error.message : 'Okänt fel';
-        results.tests.writeAccess.inProgress = false;
+        results.tests.activitiesFetch.passed = false;
+        results.tests.activitiesFetch.error = error instanceof Error ? error.message : 'Okänt fel';
+        results.tests.activitiesFetch.inProgress = false;
       }
 
       // Gather connection details from localStorage
@@ -195,15 +214,35 @@ export function DatabaseDiagnostics() {
       setIsRunningTests(true);
       toast.loading("Tvingar återanslutning...");
       await forceResetConnection();
-      toast.success("Återanslutning slutförd");
+      toast.success("Återanslutning slutförd, laddar om sidan...");
       
-      // Run diagnostics again
+      // Force reload page after connection reset to ensure clean state
       setTimeout(() => {
-        runDiagnostics();
-      }, 1000);
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       toast.error("Återanslutning misslyckades");
       console.error("Error during forced reconnection:", error);
+    } finally {
+      setIsRunningTests(false);
+    }
+  };
+
+  const handleCompleteClear = async () => {
+    try {
+      setIsRunningTests(true);
+      toast.loading("Utför komplett återställning...");
+      
+      await clearAuthAndReconnect();
+      
+      toast.success("Återställning slutförd, laddar om sidan...");
+      // Force reload page after reset to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      toast.error("Återställning misslyckades");
+      console.error("Error during complete reset:", error);
     } finally {
       setIsRunningTests(false);
     }
@@ -244,18 +283,34 @@ export function DatabaseDiagnostics() {
           <div className="flex flex-wrap gap-2">
             <Button 
               onClick={runDiagnostics} 
-              disabled={isRunningTests}
+              disabled={isRunningTests || isClearing}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isRunningTests ? "Kör tester..." : "Kör diagnostik"}
             </Button>
             <Button 
               onClick={handleForceReconnect} 
-              disabled={isRunningTests}
+              disabled={isRunningTests || isClearing}
               variant="outline"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Tvinga återanslutning
+              Återanslut till DB
+            </Button>
+            <Button
+              onClick={clearLocalStorageCache}
+              disabled={isRunningTests || isClearing}
+              variant="outline"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+            >
+              Rensa cache
+            </Button>
+            <Button 
+              onClick={handleCompleteClear} 
+              disabled={isRunningTests || isClearing}
+              variant="outline"
+              className="border-red-300 text-red-700 hover:bg-red-50"
+            >
+              Komplett återställning
             </Button>
           </div>
 
