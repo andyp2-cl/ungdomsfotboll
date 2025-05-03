@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -210,7 +209,7 @@ export function QuickMatchResult({
     awayTeamLabel: !isHomeMatch(activity) ? "HIF" : 
       (activity.name?.split(' - ')?.[1] || 'Borta').substring(0, isMobile ? 8 : 15),
     isHome: isHomeMatch(activity),
-    hassleTeamSide: isHomeMatch(activity) ? 'home' : 'away',
+    hassleTeamSide: isHomeMatch(activity) ? 'home' : 'away' as 'home' | 'away',
     isHassleHomeName: false,
     isHassleAwayName: false
   };
