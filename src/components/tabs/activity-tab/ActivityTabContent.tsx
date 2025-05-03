@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { AnonymousAuth } from "@/components/auth/AnonymousAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ActivityTabHeader } from "./components/ActivityTabHeader";
 import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
-import { useActivityTabViews } from "@/hooks/activities/useActivityTabViews";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
 
 interface ActivityTabContentProps {
@@ -73,7 +72,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     try {
       if (props.retryLoading) {
         await props.retryLoading();
-        toast.success("Data uppdaterad");
+        toast.success("Data uppdaterad från servern");
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success("Data uppdaterad");
@@ -85,14 +84,9 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
       setIsRefreshing(false);
     }
   };
-
-  const handleImportSuccess = async (activities: Activity[]): Promise<boolean> => {
-    const result = await props.handleImportedActivities(activities);
-    if (result) {
-      setIsImportDialogOpen(false);
-      await handleRefresh();
-    }
-    return result;
+  
+  const handleImportClick = () => {
+    setIsImportDialogOpen(true);
   };
 
   return (
@@ -105,11 +99,10 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           isMobile={isMobile}
-          onImportClick={() => setIsImportDialogOpen(true)}
+          onImportClick={handleImportClick}
         />
         
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <AnonymousAuth />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button onClick={() => props.setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
@@ -141,9 +134,10 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onDeleteActivity={props.handleDeleteActivity}
           onKioskAssignmentUpdate={props.handleKioskAssignmentUpdate}
           onMatchResultUpdate={props.handleMatchResultUpdate}
+          onImportActivities={props.handleImportedActivities}
         />
       </PullToRefresh>
-
+      
       {/* Import Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -151,7 +145,18 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
             <DialogTitle>Importera från live-miljön</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <ImportFromLiveForm onImportedActivities={handleImportSuccess} />
+            <ImportFromLiveForm 
+              onImportedActivities={async (activities) => {
+                if (props.handleImportedActivities) {
+                  const result = await props.handleImportedActivities(activities);
+                  if (result) {
+                    setIsImportDialogOpen(false);
+                  }
+                  return result;
+                }
+                return false;
+              }} 
+            />
           </div>
         </DialogContent>
       </Dialog>

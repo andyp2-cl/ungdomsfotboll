@@ -49,7 +49,12 @@ export function ActivityTabViewContent({
   const selectedPlayer = players.find(player => player.id === content.selectedPlayerId);
   
   if (isLoading) {
-    return <LoadingState message="Laddar aktiviteter..." retryFunction={retryLoading} error={loadError} />;
+    return (
+      <LoadingState 
+        message="Laddar aktiviteter..." 
+        error={loadError || null} 
+      />
+    );
   }
   
   if (activeView === "tools") {

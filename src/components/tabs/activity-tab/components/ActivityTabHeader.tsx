@@ -1,10 +1,8 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, LayoutList, History, LineChart, Database, FileImport } from "lucide-react";
+import { RefreshCw, LayoutList, History, LineChart, Database, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useImportDialog } from "../hooks/useImportDialog";
-import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Activity } from "@/types/player";
 
@@ -15,6 +13,7 @@ interface ActivityTabHeaderProps {
   onRefresh: () => Promise<void>;
   isRefreshing: boolean;
   isMobile: boolean;
+  onImportClick?: () => void;
   onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 
@@ -25,14 +24,8 @@ export function ActivityTabHeader({
   onRefresh,
   isRefreshing,
   isMobile,
-  onImportActivities
+  onImportClick
 }: ActivityTabHeaderProps) {
-  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
-  
-  const handleImportClick = () => {
-    setIsImportDialogOpen(true);
-  };
-
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
       <Tabs className="w-full sm:w-auto" value={activeView} onValueChange={(value) => handleViewChange(value as any)}>
@@ -68,35 +61,18 @@ export function ActivityTabHeader({
           Uppdatera
         </Button>
 
-        {activeView === "tools" && onImportActivities && (
+        {activeView === "tools" && onImportClick && (
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleImportClick} 
+            onClick={onImportClick} 
             className="sm:mr-2"
           >
-            <FileImport className="h-4 w-4 mr-2" />
+            <FileUp className="h-4 w-4 mr-2" />
             Importera från live
           </Button>
         )}
       </div>
-
-      {/* Import from Live Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importera från Live-miljö</DialogTitle>
-          </DialogHeader>
-          <ImportFromLiveForm onImportedActivities={async (activities) => {
-            if (onImportActivities) {
-              await onImportActivities(activities);
-              setIsImportDialogOpen(false);
-              return true;
-            }
-            return false;
-          }} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
