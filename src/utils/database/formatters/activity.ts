@@ -9,7 +9,7 @@ import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/ma
 export const formatActivityForDatabase = (activity: Activity): any => {
   // Create a base object to avoid mutations
   const baseActivity = { ...activity };
-  const { location, player_stats, ...rest } = baseActivity;
+  const { location, ...rest } = baseActivity;
   
   // Determine if it's a home match for win calculation
   const isHome = isHomeMatch(activity);
@@ -27,30 +27,28 @@ export const formatActivityForDatabase = (activity: Activity): any => {
   }
   
   // Format player_stats to ensure it's properly handled
-  let player_stats = activity.player_stats;
+  let formattedPlayerStats = activity.player_stats ? { ...activity.player_stats } : { goals: {}, assists: {} };
   
   // Ensure player_stats is an object with goals and assists
-  if (!player_stats) {
-    player_stats = { goals: {}, assists: {} };
-  } else if (typeof player_stats === 'string') {
+  if (typeof formattedPlayerStats === 'string') {
     try {
-      player_stats = JSON.parse(player_stats);
+      formattedPlayerStats = JSON.parse(formattedPlayerStats);
     } catch (e) {
       console.error("Error parsing player_stats string:", e);
-      player_stats = { goals: {}, assists: {} };
+      formattedPlayerStats = { goals: {}, assists: {} };
     }
   }
   
   // Ensure goals and assists are objects
-  if (!player_stats.goals || typeof player_stats.goals !== 'object') {
-    player_stats.goals = {};
+  if (!formattedPlayerStats.goals || typeof formattedPlayerStats.goals !== 'object') {
+    formattedPlayerStats.goals = {};
   }
   
-  if (!player_stats.assists || typeof player_stats.assists !== 'object') {
-    player_stats.assists = {};
+  if (!formattedPlayerStats.assists || typeof formattedPlayerStats.assists !== 'object') {
+    formattedPlayerStats.assists = {};
   }
   
-  console.log("Formatting activity for database - player_stats:", JSON.stringify(player_stats));
+  console.log("Formatting activity for database - player_stats:", JSON.stringify(formattedPlayerStats));
   
   // Create the base formatted activity object
   const formattedActivity = {
@@ -63,7 +61,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     location_description: location?.description || null,
     location_gps_link: location?.gpsLink || null,
     // Ensure player_stats is passed as a JSON object, not undefined
-    player_stats: player_stats || {},
+    player_stats: formattedPlayerStats || {},
     cup_id: activity.cupId || null,
     // Convert undefined scores to explicit null values for database
     home_score: activity.homeScore !== undefined ? activity.homeScore : null,
@@ -152,7 +150,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
   }
   
   // Handle player_stats properly
-  let playerStats = { goals: {}, assists: {} };
+  const playerStats: any = { goals: {}, assists: {} };
   
   if (item.player_stats) {
     try {
@@ -167,37 +165,28 @@ export const formatActivityFromDatabase = (item: any): Activity => {
         assists: stats.assists
       });
         
-      playerStats = {
-        goals: stats.goals || {},
-        assists: stats.assists || {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin // Use the activity-level isWin value
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats JSON:", e);
-      playerStats = {
-        goals: {},
-        assists: {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin
-      };
-    }
-  } else {
-    playerStats = {
-      goals: {},
-      assists: {},
-      scores: {
+      playerStats.goals = stats.goals || {};
+      playerStats.assists = stats.assists || {};
+      // Add scores and win status
+      playerStats.scores = {
         home: item.home_score,
         away: item.away_score
-      },
-      isWin: activity.isWin
+      };
+      playerStats.isWin = activity.isWin; // Use the activity-level isWin value
+    } catch (e) {
+      console.error("Error parsing player_stats JSON:", e);
+      playerStats.scores = {
+        home: item.home_score,
+        away: item.away_score
+      };
+      playerStats.isWin = activity.isWin;
+    }
+  } else {
+    playerStats.scores = {
+      home: item.home_score,
+      away: item.away_score
     };
+    playerStats.isWin = activity.isWin;
   }
   
   // Update the activity with parsed player_stats
