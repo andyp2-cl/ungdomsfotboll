@@ -9,6 +9,10 @@ interface MatchResult {
   awayScore?: number;
   isWin?: boolean;
   result?: string;
+  player_stats?: {
+    goals?: Record<string, number>;
+    assists?: Record<string, number>;
+  };
 }
 
 export function useLocalStorage(activity: Activity) {
@@ -52,14 +56,17 @@ export function useLocalStorage(activity: Activity) {
       // Debug the win status calculation
       console.log(`Local Storage: Calculated isWin=${isWin} for activity ${activityId} with scores ${homeScore}-${awayScore}, isHome=${isHome}`);
       
-      // Prepare data
+      // Prepare data - IMPORTANT: Include player_stats from the activity
       const data: MatchResult = {
         homeScore,
         awayScore,
         isWin, // This will be true/false/undefined (undefined for draw)
         result: homeScore !== undefined && awayScore !== undefined ? 
-          `${homeScore}-${awayScore}` : undefined
+          `${homeScore}-${awayScore}` : undefined,
+        player_stats: activity.player_stats // Make sure to include the player_stats when saving
       };
+      
+      console.log("Saving player_stats to localStorage:", activity.player_stats);
       
       // Get current pending updates
       const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
@@ -80,6 +87,7 @@ export function useLocalStorage(activity: Activity) {
         awayScore,
         isWin,
         result: data.result,
+        player_stats: data.player_stats, // Make sure player_stats is included here too
         timestamp: new Date().toISOString()
       };
       localStorage.setItem('matchScores', JSON.stringify(matchScores));
@@ -87,7 +95,8 @@ export function useLocalStorage(activity: Activity) {
       console.log("Saved match result to localStorage:", { 
         activityId, 
         ...data,
-        isHome
+        isHome,
+        playerStatsIncluded: !!data.player_stats
       });
       
       return true;

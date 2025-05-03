@@ -4,6 +4,7 @@ import { Player, Activity } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from '../utils/date-formatter';
+import { getPlayerGoals, getPlayerAssists } from '@/utils/player-stats';
 
 interface MatchesTabContentProps {
   player: Player;
@@ -61,6 +62,15 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
             <TableBody>
               {matches.map(match => {
                 const result = formatResult(match);
+                const goals = getPlayerGoals(match, player.id);
+                const assists = getPlayerAssists(match, player.id);
+                
+                console.log(`Match ${match.id} stats for player ${player.id}:`, {
+                  match: match.name,
+                  playerStats: match.player_stats,
+                  goals,
+                  assists
+                });
                 
                 return (
                   <TableRow 
@@ -85,18 +95,18 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
                       )}
                     </TableCell>
                     <TableCell>
-                      {match.player_stats?.goals?.[player.id] ? (
+                      {goals > 0 ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          {match.player_stats.goals[player.id]}
+                          {goals}
                         </Badge>
                       ) : (
                         <span className="text-muted-foreground">0</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      {match.player_stats?.assists?.[player.id] ? (
+                      {assists > 0 ? (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {match.player_stats.assists[player.id]}
+                          {assists}
                         </Badge>
                       ) : (
                         <span className="text-muted-foreground">0</span>

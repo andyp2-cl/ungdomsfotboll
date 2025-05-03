@@ -40,13 +40,15 @@ export const handleMatchResultUpdate = async (
     
     console.log(`Activity ${activityId} (${activity.name}): home=${isHome}, scores=${homeScore}-${awayScore}, isWin=${isWin}`);
     
-    // Create updated activity with new scores
+    // Create updated activity with new scores, preserving existing player_stats
     const updatedActivity: Activity = {
       ...activity,
       homeScore,
       awayScore,
       isWin, // This will be true/false/undefined (undefined for draw)
-      result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined
+      result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : undefined,
+      // Ensure we preserve the player_stats when updating scores
+      player_stats: activity.player_stats || { goals: {}, assists: {} }
     };
     
     console.log("Updated activity with new result:", {
@@ -54,7 +56,8 @@ export const handleMatchResultUpdate = async (
       homeScore: updatedActivity.homeScore,
       awayScore: updatedActivity.awayScore,
       isWin: updatedActivity.isWin,
-      result: updatedActivity.result
+      result: updatedActivity.result,
+      player_stats: updatedActivity.player_stats
     });
     
     // Format the activity for database update
@@ -74,13 +77,15 @@ export const handleMatchResultUpdate = async (
       home_score: updatedActivity.homeScore,
       away_score: updatedActivity.awayScore,
       is_win: updatedActivity.isWin,
-      result: updatedActivity.result
+      result: updatedActivity.result,
+      player_stats: updatedActivity.player_stats // Make sure we're updating player_stats too
     };
     
     console.log("Updating activity in database:", {
       id: updatedActivity.id,
       ...updateData,
-      is_win_type: typeof updateData.is_win
+      is_win_type: typeof updateData.is_win,
+      player_stats: JSON.stringify(updateData.player_stats)
     });
 
     // Try the most reliable saving method first - saveActivities now uses multiple fallbacks

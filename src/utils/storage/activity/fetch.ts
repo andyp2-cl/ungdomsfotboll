@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 import { toast } from "sonner";
 import { cacheActivities, getActivitiesFromCache, shouldRefreshCache } from "./cache-operations";
@@ -77,6 +76,37 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       // Calculate and log performance
       const endTime = performance.now();
       console.log(`Fetched ${activities.length} activities from database in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      // Process player_stats for each activity to ensure proper formatting
+      activities.forEach(activity => {
+        if (activity.player_stats) {
+          // Ensure player_stats is properly formatted
+          if (typeof activity.player_stats === 'string') {
+            try {
+              activity.player_stats = JSON.parse(activity.player_stats);
+            } catch (e) {
+              console.error(`Error parsing player_stats for activity ${activity.id}:`, e);
+              activity.player_stats = { goals: {}, assists: {} };
+            }
+          }
+          
+          // Ensure goals and assists are objects
+          if (!activity.player_stats.goals || typeof activity.player_stats.goals !== 'object') {
+            activity.player_stats.goals = {};
+          }
+          
+          if (!activity.player_stats.assists || typeof activity.player_stats.assists !== 'object') {
+            activity.player_stats.assists = {};
+          }
+          
+          console.log(`Processed player_stats for activity ${activity.id}:`, {
+            goals: activity.player_stats.goals,
+            assists: activity.player_stats.assists
+          });
+        } else {
+          activity.player_stats = { goals: {}, assists: {} };
+        }
+      });
       
       // Fetch player-activity relationships to populate participants
       try {

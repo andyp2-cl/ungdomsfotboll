@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
@@ -26,6 +25,32 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
     console.log(`Calculated isWin=${isWin} for activity ${activity.id} based on scores ${activity.homeScore}-${activity.awayScore} and isHome=${isHome}`);
   }
+  
+  // Format player_stats to ensure it's properly handled
+  let player_stats = activity.player_stats;
+  
+  // Ensure player_stats is an object with goals and assists
+  if (!player_stats) {
+    player_stats = { goals: {}, assists: {} };
+  } else if (typeof player_stats === 'string') {
+    try {
+      player_stats = JSON.parse(player_stats);
+    } catch (e) {
+      console.error("Error parsing player_stats string:", e);
+      player_stats = { goals: {}, assists: {} };
+    }
+  }
+  
+  // Ensure goals and assists are objects
+  if (!player_stats.goals || typeof player_stats.goals !== 'object') {
+    player_stats.goals = {};
+  }
+  
+  if (!player_stats.assists || typeof player_stats.assists !== 'object') {
+    player_stats.assists = {};
+  }
+  
+  console.log("Formatting activity for database - player_stats:", JSON.stringify(player_stats));
   
   // Create the base formatted activity object
   const formattedActivity = {
@@ -126,20 +151,23 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     activity.cupName = activity.name;
   }
   
-  // Set result field if home_score and away_score are available
-  if (item.home_score !== null && item.home_score !== undefined && 
-      item.away_score !== null && item.away_score !== undefined) {
-    activity.result = `${item.home_score}-${item.away_score}`;
-  }
-  
   // Handle player_stats properly
+  let playerStats = { goals: {}, assists: {} };
+  
   if (item.player_stats) {
     try {
       const stats = typeof item.player_stats === 'string' 
         ? JSON.parse(item.player_stats) 
         : item.player_stats;
         
-      activity.player_stats = {
+      console.log("Parsed player_stats from database:", {
+        original: item.player_stats,
+        parsed: stats,
+        goals: stats.goals,
+        assists: stats.assists
+      });
+        
+      playerStats = {
         goals: stats.goals || {},
         assists: stats.assists || {},
         scores: {
@@ -150,7 +178,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
       };
     } catch (e) {
       console.error("Error parsing player_stats JSON:", e);
-      activity.player_stats = {
+      playerStats = {
         goals: {},
         assists: {},
         scores: {
@@ -161,7 +189,7 @@ export const formatActivityFromDatabase = (item: any): Activity => {
       };
     }
   } else {
-    activity.player_stats = {
+    playerStats = {
       goals: {},
       assists: {},
       scores: {
@@ -170,6 +198,15 @@ export const formatActivityFromDatabase = (item: any): Activity => {
       },
       isWin: activity.isWin
     };
+  }
+  
+  // Update the activity with parsed player_stats
+  activity.player_stats = playerStats;
+  
+  // Set result field if home_score and away_score are available
+  if (item.home_score !== null && item.home_score !== undefined && 
+      item.away_score !== null && item.away_score !== undefined) {
+    activity.result = `${item.home_score}-${item.away_score}`;
   }
   
   return activity;

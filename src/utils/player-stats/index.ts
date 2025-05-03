@@ -50,9 +50,20 @@ export const normalizePlayerStats = (playerStatsJson: any): PlayerStats => {
   }
   
   // Se till att goals och assists är objekt, inte nummer
-  const goals = typeof playerStatsJson.goals === 'object' ? playerStatsJson.goals || {} : {};
-  const assists = typeof playerStatsJson.assists === 'object' ? playerStatsJson.assists || {} : {};
+  const goals = typeof playerStatsJson.goals === 'object' && playerStatsJson.goals !== null ? 
+    playerStatsJson.goals : {};
+  
+  const assists = typeof playerStatsJson.assists === 'object' && playerStatsJson.assists !== null ? 
+    playerStatsJson.assists : {};
+    
   const cup_matches = Array.isArray(playerStatsJson.cup_matches) ? playerStatsJson.cup_matches : [];
+  
+  console.log("Normalized player stats:", { 
+    originalGoals: playerStatsJson.goals, 
+    originalAssists: playerStatsJson.assists,
+    normalizedGoals: goals,
+    normalizedAssists: assists
+  });
   
   // Skapa ett korrekt formaterat objekt
   return {
@@ -117,6 +128,13 @@ export function mergePlayerStats(baseStats: Partial<PlayerStats>, newStats: Part
   const normalizedBase = normalizePlayerStats(baseStats);
   const normalizedNew = normalizePlayerStats(newStats);
   
+  console.log("Merging player stats:", {
+    baseGoals: normalizedBase.goals,
+    baseAssists: normalizedBase.assists,
+    newGoals: normalizedNew.goals,
+    newAssists: normalizedNew.assists
+  });
+  
   // Sammanfoga statistiken
   return {
     goals: { ...normalizedBase.goals, ...normalizedNew.goals },
@@ -152,11 +170,23 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
     };
   }
   
+  // Ensure player_stats is properly handled as an object
+  const player_stats = item.player_stats ? 
+    (typeof item.player_stats === 'string' ? JSON.parse(item.player_stats) : item.player_stats) : 
+    { goals: {}, assists: {} };
+    
+  console.log("Formatting player stats from database:", {
+    originalPlayerStats: item.player_stats,
+    parsedPlayerStats: player_stats,
+    goals: player_stats.goals,
+    assists: player_stats.assists
+  });
+  
   // Explicit hantering av isWin för att undvika undefined-referensproblem
   const isWinValue = item.is_win === true ? true : item.is_win === false ? false : undefined;
   
   return normalizePlayerStats({
-    ...item.player_stats,
+    ...player_stats,
     scores: {
       home: item.home_score,
       away: item.away_score
@@ -164,3 +194,40 @@ export const formatPlayerStatsFromDatabase = (item: any): PlayerStats => {
     isWin: isWinValue,
   });
 };
+
+/**
+ * Kontrollerar om spelarstatistik har mål eller assist
+ */
+export function hasPlayerStats(activity: any): boolean {
+  if (!activity || !activity.player_stats) return false;
+  
+  const stats = normalizePlayerStats(activity.player_stats);
+  
+  // Check if there are any goals
+  const hasGoals = stats.goals && Object.keys(stats.goals).length > 0;
+  
+  // Check if there are any assists
+  const hasAssists = stats.assists && Object.keys(stats.assists).length > 0;
+  
+  return hasGoals || hasAssists;
+}
+
+/**
+ * Hämtar antal mål för en spelare i en aktivitet
+ */
+export function getPlayerGoals(activity: any, playerId: string): number {
+  if (!activity || !activity.player_stats) return 0;
+  
+  const stats = normalizePlayerStats(activity.player_stats);
+  return stats.goals && stats.goals[playerId] ? Number(stats.goals[playerId]) : 0;
+}
+
+/**
+ * Hämtar antal assist för en spelare i en aktivitet
+ */
+export function getPlayerAssists(activity: any, playerId: string): number {
+  if (!activity || !activity.player_stats) return 0;
+  
+  const stats = normalizePlayerStats(activity.player_stats);
+  return stats.assists && stats.assists[playerId] ? Number(stats.assists[playerId]) : 0;
+}
