@@ -8,13 +8,8 @@ export interface MatchResultProps {
   resultColorClass?: string;
 }
 
-export interface TeamInfo {
-  homeTeam: string;
-  awayTeam: string;
-  homeTeamLabel: string;
-  awayTeamLabel: string;
-  isHome: boolean;
-  hassleTeamSide: 'home' | 'away';
-  isHassleHomeName: boolean;
-  isHassleAwayName: boolean;
+export interface ResultActionsProps {
+  onSave: () => void;
+  isSaving: boolean;
+  isReadOnly?: boolean;
 }

@@ -28,8 +28,10 @@ export function useResultSaver({
     setIsSaving(true);
     try {
       console.log("Saving match result:", {
+        activityId: activity.id,
         homeScore,
-        awayScore
+        awayScore,
+        existingPlayerStats: activity.player_stats
       });
       
       // Enhanced logic to determine if Hässleholms IF won the match
@@ -72,14 +74,19 @@ export function useResultSaver({
         console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
       }
       
-      // Create updated player stats
+      // Create updated player stats - ensure we preserve existing stats
+      const currentPlayerStats = activity.player_stats || { goals: {}, assists: {} };
       const updatedPlayerStats = prepareUpdatedPlayerStats(
-        activity,
+        {
+          ...activity,
+          player_stats: currentPlayerStats
+        },
         homeScore,
         awayScore,
-        isWin,
-        true // Assuming we're always the home team for now
+        isWin
       );
+      
+      console.log("Updated player stats:", updatedPlayerStats);
       
       // Create updated activity object
       const updatedActivity: Activity = {
@@ -100,11 +107,16 @@ export function useResultSaver({
       console.log("Updating activity with new result:", {
         activityId: updatedActivity.id,
         result: updatedActivity.result,
-        isWin: updatedActivity.isWin
+        isWin: updatedActivity.isWin,
+        player_stats: updatedActivity.player_stats
       });
       
       // Call the activity update function
       await updateActivity(updatedActivity);
+      
+      // Force clear cache to ensure data is reloaded fresh next time
+      localStorage.removeItem('cachedActivities');
+      localStorage.removeItem('sb-activities-fetch-time');
       
       // Also call the match result update function if provided
       if (onMatchResultUpdate) {

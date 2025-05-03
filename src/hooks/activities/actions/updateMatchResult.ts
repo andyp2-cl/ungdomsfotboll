@@ -95,6 +95,15 @@ export const handleMatchResultUpdate = async (
     
     // Try a direct update to the database first
     try {
+      console.log("Attempting direct Supabase update with data:", {
+        home_score: homeScore,
+        away_score: awayScore,
+        is_win: isWin === undefined ? null : isWin,
+        result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : null,
+        league_id: activity.league_id,
+        player_stats: updatedActivity.player_stats
+      });
+      
       const { data, error } = await supabase
         .from('activities')
         .update({
@@ -103,7 +112,8 @@ export const handleMatchResultUpdate = async (
           // IMPORTANT: Setting null for draw states in the database
           is_win: isWin === undefined ? null : isWin,
           result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : null,
-          league_id: activity.league_id // Preserve league_id when updating
+          league_id: activity.league_id, // Preserve league_id when updating
+          player_stats: updatedActivity.player_stats // Important: Include player_stats
         })
         .eq('id', activityId);
         
@@ -121,6 +131,11 @@ export const handleMatchResultUpdate = async (
             activityId, 
             `Match result updated directly: ${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'draw' : isWin}`
           );
+          
+          // Force refresh local cache to ensure data consistency
+          localStorage.removeItem('cachedActivities');
+          localStorage.removeItem('sb-activities-fetch-time');
+          
           return;
         } catch (logError) {
           console.warn("Couldn't log direct update to database:", logError);
@@ -155,11 +170,18 @@ export const handleMatchResultUpdate = async (
         league_id: activity.league_id
       };
       
+      console.log("Attempting RLS handling update with data:", updateData);
+      
       const { success } = await updateActivityWithRLSHandling(updatedActivity.id, updateData);
       
       if (success) {
         console.log("Activity updated in database successfully via RLS handling");
         toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        
+        // Force refresh local cache to ensure data consistency
+        localStorage.removeItem('cachedActivities');
+        localStorage.removeItem('sb-activities-fetch-time');
+        
         return;
       } 
       
@@ -172,6 +194,11 @@ export const handleMatchResultUpdate = async (
       if (backupSuccess) {
         console.log("Activity updated successfully via backup method");
         toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        
+        // Force refresh local cache to ensure data consistency
+        localStorage.removeItem('cachedActivities');
+        localStorage.removeItem('sb-activities-fetch-time');
+        
         return;
       }
       

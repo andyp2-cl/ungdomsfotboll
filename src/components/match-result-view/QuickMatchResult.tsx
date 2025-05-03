@@ -6,9 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { ScoreDisplay } from "./ScoreDisplay";
+import { ScoreInput } from "./ScoreInput";
 import { ResultActions } from "./ResultActions";
 import { MatchResultProps } from "./types";
-import { isHomeMatch, determineMatchOutcome } from "../activity-detail/match-result/utils";
+import { isHomeMatch, extractTeamNames, isHassleholm } from "../activity-detail/match-result/utils";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 export function QuickMatchResult({ 
   activity, 
@@ -58,138 +61,115 @@ export function QuickMatchResult({
       activityId: activity.id, 
       homeScore, 
       awayScore,
-      retryCount
+      retryCount,
+      player_stats: activity.player_stats
     });
     
     try {
-      // Convert string values to numbers if needed
-      const processedHomeScore = homeScore !== undefined && homeScore !== null ? 
-        (typeof homeScore === 'string' ? parseInt(homeScore as any, 10) : homeScore) : 
-        undefined;
+      // Ensure scores are numbers
+      const processedHomeScore = homeScore === undefined ? undefined : 
+        (typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore);
         
-      const processedAwayScore = awayScore !== undefined && awayScore !== null ? 
-        (typeof awayScore === 'string' ? parseInt(awayScore as any, 10) : awayScore) : 
-        undefined;
+      const processedAwayScore = awayScore === undefined ? undefined : 
+        (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore);
       
-      // Debug data conversion
-      console.log("Processed values:", {
-        original: { homeScore, awayScore },
-        processed: { processedHomeScore, processedAwayScore }
-      });
-      
-      // Let the backend determine the win status based on scores
-      // We no longer pass manualWinStatus here
+      // Call the save function passed from parent
       await onSave(processedHomeScore, processedAwayScore);
       
-      console.log("Score saved successfully");
-      
-      // Show success state
-      setShowSuccess(true);
-      setRetryCount(0); // Reset retry counter on success
-      
-      // Use sonner toast correctly
-      toast.success("Resultat sparat", {
-        description: "Matchresultatet har sparats."
+      console.log("Match result saved successfully:", {
+        homeScore: processedHomeScore,
+        awayScore: processedAwayScore
       });
       
-      // Reset error state on success
-      setHasError(false);
-      
-      // Save to localStorage directly as an extra backup
-      try {
-        const backupData = {
-          activityId: activity.id,
-          homeScore: processedHomeScore,
-          awayScore: processedAwayScore,
-          timestamp: new Date().toISOString()
-        };
-        const savedScores = JSON.parse(localStorage.getItem('savedMatchScores') || '{}');
-        savedScores[activity.id] = backupData;
-        localStorage.setItem('savedMatchScores', JSON.stringify(savedScores));
-        
-        console.log("Match result also saved to local backup:", backupData);
-      } catch (e) {
-        console.error("Failed to save backup to localStorage:", e);
-      }
+      setShowSuccess(true);
+      setRetryCount(0); // Reset retry count on success
     } catch (error) {
       console.error("Error saving match result:", error);
       setHasError(true);
-      setRetryCount(prev => prev + 1);
       
-      // Create different messages based on retry count
-      let errorMessage = "Kunde inte spara resultat. Försök igen.";
-      let toastTitle = "Kunde inte spara resultat";
-      
-      if (retryCount >= 2) {
-        errorMessage = "Flera försök misslyckades. Resultatet sparas lokalt och synkas senare.";
-        toastTitle = "Sparas lokalt";
-        
-        // Save to local storage explicitly for retry failures
-        try {
-          const pendingUpdates = JSON.parse(localStorage.getItem('pendingScoreUpdates') || '{}');
-          pendingUpdates[activity.id] = {
-            homeScore,
-            awayScore,
-            timestamp: new Date().toISOString()
-          };
-          localStorage.setItem('pendingScoreUpdates', JSON.stringify(pendingUpdates));
-          console.log("Score saved to local backup storage");
-        } catch (e) {
-          console.error("Failed to save to local backup storage:", e);
-        }
+      // If still failing after multiple attempts, show detailed error
+      if (retryCount > 1) {
+        toast.error("Problem med att spara resultatet", {
+          description: "Det verkar vara ett tekniskt problem. Försök ladda om sidan."
+        });
+      } else {
+        toast.error("Kunde inte spara matchresultat");
+        setRetryCount(prev => prev + 1);
       }
-      
-      // Use sonner toast correctly for error
-      toast.error(toastTitle, {
-        description: errorMessage
-      });
-      
-      // Also use shadcn toast for error
-      hookToast({
-        variant: "destructive",
-        description: errorMessage
-      });
     } finally {
       setIsSaving(false);
     }
   };
+  
+  // Extract team names for display
+  const teamNames = extractTeamNames(activity);
+  const isHome = isHomeMatch(activity);
+  
+  // Determine if Hässleholms IF is the home or away team
+  const isHifHome = isHassleholm(teamNames.homeTeam);
+  const isHifAway = isHassleholm(teamNames.awayTeam);
+  
+  // Create appropriate labels
+  const homeTeamLabel = isMobile ? 
+    (isHifHome ? "HIF" : teamNames.homeTeam.substring(0, 8)) : 
+    (isHifHome ? "Hässleholms IF" : teamNames.homeTeam);
+    
+  const awayTeamLabel = isMobile ? 
+    (isHifAway ? "HIF" : teamNames.awayTeam.substring(0, 8)) : 
+    (isHifAway ? "Hässleholms IF" : teamNames.awayTeam);
 
-  const teamInfo = {
-    homeTeam: activity.name?.split(' - ')?.[0] || 'Hemma',
-    awayTeam: activity.name?.split(' - ')?.[1] || 'Borta',
-    homeTeamLabel: isHomeMatch(activity) ? "HIF" : 
-      (activity.name?.split(' - ')?.[0] || 'Hemma').substring(0, isMobile ? 8 : 15),
-    awayTeamLabel: !isHomeMatch(activity) ? "HIF" : 
-      (activity.name?.split(' - ')?.[1] || 'Borta').substring(0, isMobile ? 8 : 15),
-    isHome: isHomeMatch(activity),
-    hassleTeamSide: isHomeMatch(activity) ? 'home' : 'away' as 'home' | 'away',
-    isHassleHomeName: false,
-    isHassleAwayName: false
-  };
+  if (isReadOnly && homeScore !== undefined && awayScore !== undefined) {
+    return (
+      <div className={`text-center text-lg font-bold ${resultColorClass}`}>
+        {homeScore} - {awayScore}
+      </div>
+    );
+  }
 
   return (
     <ScrollArea className={isMobile ? "max-h-[45vh]" : ""}>
       <div className="space-y-4 px-1 pb-2">
-        <ScoreDisplay 
-          homeScore={homeScore}
-          awayScore={awayScore}
-          setHomeScore={isReadOnly ? undefined : setHomeScore}
-          setAwayScore={isReadOnly ? undefined : setAwayScore}
-          teamInfo={teamInfo}
-          isReadOnly={isReadOnly}
-          resultColorClass={resultColorClass}
-          hasError={hasError}
-        />
+        <div className="grid grid-cols-3 gap-3 items-center">
+          <ScoreInput
+            label={homeTeamLabel}
+            value={homeScore}
+            onChange={setHomeScore}
+            isHighlighted={isHifHome}
+          />
+          
+          <div className="flex justify-center items-center">
+            <div className="text-xl font-bold">-</div>
+          </div>
+          
+          <ScoreInput 
+            label={awayTeamLabel}
+            value={awayScore}
+            onChange={setAwayScore}
+            isHighlighted={isHifAway}
+          />
+        </div>
         
         {!isReadOnly && (
-          <div className="space-y-4">
-            <ResultActions 
-              onSave={handleSave}
-              isSaving={isSaving}
-              hasError={hasError}
-              showSuccess={showSuccess}
-              retryCount={retryCount}
-            />
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className={`w-full ${isMobile ? 'h-10' : ''}`}
+            size={isMobile ? "sm" : "default"}
+          >
+            <Save className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
+            {isSaving ? "Sparar..." : "Spara resultat"}
+          </Button>
+        )}
+        
+        {showSuccess && (
+          <div className="text-center text-green-600 font-medium py-1">
+            Resultat sparat!
+          </div>
+        )}
+        
+        {hasError && (
+          <div className="text-center text-red-600 font-medium py-1">
+            Kunde inte spara resultatet. Försök igen.
           </div>
         )}
       </div>
