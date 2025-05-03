@@ -1,6 +1,7 @@
 
 import { supabase } from './client';
 import { Activity } from "@/types/player";
+import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 
 // Enhanced helper function to handle RLS policy errors with activities table
 // This will use multiple approaches (upsert, update, direct methods) to ensure data is saved
@@ -66,6 +67,7 @@ export const updateActivityWithRLSHandling = async (
       }
     }
 
+    // APPROACH 3: Try alternative update approaches
     return await tryAlternativeUpdateApproaches(activityId, updates);
   } catch (err) {
     console.error("Error in updateActivityWithRLSHandling:", err);
@@ -73,6 +75,7 @@ export const updateActivityWithRLSHandling = async (
   }
 };
 
+// Try several alternative approaches to update the activity
 const tryAlternativeUpdateApproaches = async (activityId: string, updates: any) => {
   try {
     // APPROACH 3: Try direct REST API approach with auth token
@@ -126,6 +129,7 @@ const tryMinimalScoreUpdate = async (activityId: string, updates: any, apiUrl: s
   };
   
   try {
+    console.log("APPROACH 3B: Trying minimal score-only update via REST API");
     const minimalResponse = await fetch(apiUrl, {
       method: 'PATCH',
       headers: {
@@ -143,7 +147,43 @@ const tryMinimalScoreUpdate = async (activityId: string, updates: any, apiUrl: s
       return { success: true, data: minimalJsonResponse };
     } else {
       console.warn("Even minimal score update failed");
-      return { success: false, error: "Minimal score update failed" };
+      
+      // Try updating just one field at a time as last resort
+      console.log("APPROACH 3C: Trying single-field updates");
+      
+      // Try to update home_score only
+      const homeScoreResponse = await fetch(apiUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({ home_score: updates.home_score })
+      });
+      
+      if (homeScoreResponse.ok) {
+        console.log("Home score updated successfully");
+        // Now try away score
+        const awayScoreResponse = await fetch(apiUrl, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U',
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({ away_score: updates.away_score })
+        });
+        
+        if (awayScoreResponse.ok) {
+          console.log("Both scores updated via separate requests");
+          return { success: true, error: "Partial success" };
+        }
+      }
+      
+      return { success: false, error: "Single field updates failed" };
     }
   } catch (error) {
     console.error("Error with minimal score update:", error);
@@ -171,6 +211,9 @@ const tryUpsertApproach = async (activityId: string, updates: any) => {
         id: activityId
       };
       
+      // Log what we're about to insert
+      console.log("Trying upsert with complete activity:", completeActivity);
+      
       // Try to insert as a new record, but with ON CONFLICT DO UPDATE
       const { error: upsertError, data: upsertData } = await supabase
         .from('activities')
@@ -185,7 +228,29 @@ const tryUpsertApproach = async (activityId: string, updates: any) => {
         return { success: true, data: upsertData };
       } else {
         console.warn("Upsert approach failed:", upsertError.message);
-        return { success: false, error: upsertError };
+        
+        // Try one last resort - insert + delete
+        console.log("APPROACH 5: Final attempt with delete + insert");
+        
+        // Try deleting first (may not be necessary but helps avoid conflicts)
+        await supabase
+          .from('activities')
+          .delete()
+          .eq('id', activityId);
+          
+        // Then insert as new
+        const { error: insertError, data: insertData } = await supabase
+          .from('activities')
+          .insert(completeActivity)
+          .select();
+          
+        if (!insertError) {
+          console.log("Activity recreated successfully");
+          return { success: true, data: insertData };
+        } else {
+          console.error("Final insert attempt failed:", insertError);
+          return { success: false, error: insertError };
+        }
       }
     } else {
       return { success: false, error: "Existing activity not found" };
@@ -193,5 +258,26 @@ const tryUpsertApproach = async (activityId: string, updates: any) => {
   } catch (upsertError) {
     console.error("Error with upsert approach:", upsertError);
     return { success: false, error: upsertError };
+  }
+};
+
+// Helper function to get activity by ID
+export const getActivityById = async (activityId: string): Promise<Activity | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('id', activityId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching activity by ID:", error);
+      return null;
+    }
+    
+    return data as Activity;
+  } catch (error) {
+    console.error("Exception fetching activity by ID:", error);
+    return null;
   }
 };

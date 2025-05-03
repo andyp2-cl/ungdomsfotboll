@@ -53,6 +53,7 @@ export function ActivityTabViewContent({
       <LoadingState 
         message="Laddar aktiviteter..." 
         error={loadError || null} 
+        onRetry={retryLoading}
       />
     );
   }
@@ -94,6 +95,8 @@ export function ActivityTabViewContent({
   }
   
   if (content.selectedActivity) {
+    console.log("Rendering ActivityDetailWrapper with handleMatchResultUpdate:", !!onMatchResultUpdate);
+    
     return (
       <ActivityDetailWrapper
         selectedActivity={content.selectedActivity}
