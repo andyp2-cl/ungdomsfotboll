@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { ArrowDownToLine, ExternalLink, AlertCircle } from "lucide-react";
+import { ArrowDownToLine, ExternalLink, AlertCircle, Info } from "lucide-react";
 import { importFromLiveEnv } from "@/utils/storage/backup/restore-activities";
 import { Activity } from "@/types/player";
 
@@ -26,8 +26,20 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
   const [urlError, setUrlError] = useState<string | null>(null);
 
   const validateUrl = (url: string): boolean => {
+    if (!url.trim()) {
+      setUrlError("URL får inte vara tom");
+      return false;
+    }
+    
     try {
       new URL(url);
+      
+      // Check that URL has correct format (protocol + domain)
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        setUrlError("URL måste börja med http:// eller https://");
+        return false;
+      }
+      
       setUrlError(null);
       return true;
     } catch (e) {
@@ -113,9 +125,14 @@ export function ImportFromLiveForm({ onImportedActivities }: ImportFromLiveFormP
             </div>
           )}
           
-          <p className="text-sm text-muted-foreground">
-            Ange hela URL:en till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app")
-          </p>
+          <Alert className="bg-blue-50 text-blue-800 border-blue-200">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Tips</AlertTitle>
+            <AlertDescription className="text-sm">
+              Ange hela URL:en till live-miljön (t.ex. "https://hassleholmsifp2014.lovable.app"). 
+              Se till att API:et är tillgängligt och korrekt konfigurerat med /api/export/activities och /api/export/players ändpunkter.
+            </AlertDescription>
+          </Alert>
         </div>
         
         {importResults && (

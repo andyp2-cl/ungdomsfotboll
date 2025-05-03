@@ -21,16 +21,42 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
     // Ensure the URL has no trailing slash
     const baseUrl = liveUrl.endsWith('/') ? liveUrl.slice(0, -1) : liveUrl;
     
+    // Validate URL format
+    try {
+      new URL(baseUrl);
+    } catch (error) {
+      throw new Error(`Ogiltig URL: ${baseUrl}`);
+    }
+    
     // First, try to fetch activities
+    console.log(`Attempting to fetch activities from ${baseUrl}/api/export/activities`);
+    
     const activitiesResponse = await fetch(`${baseUrl}/api/export/activities`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      // Add cache busting to prevent cached responses
+      cache: 'no-cache',
+      mode: 'cors',
     });
     
     if (!activitiesResponse.ok) {
-      throw new Error(`Kunde inte hämta aktiviteter: ${activitiesResponse.statusText}`);
+      console.error("Activities fetch response not OK:", activitiesResponse.status, activitiesResponse.statusText);
+      // Try to get the text of the response for debugging
+      const responseText = await activitiesResponse.text();
+      console.error("Response body:", responseText.substring(0, 200) + "...");
+      throw new Error(`Kunde inte hämta aktiviteter: ${activitiesResponse.statusText} (${activitiesResponse.status})`);
+    }
+    
+    // Check if the response is actually JSON by looking at content-type header
+    const contentType = activitiesResponse.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error("Response is not JSON:", contentType);
+      // Try to get the text of the response for debugging
+      const responseText = await activitiesResponse.text();
+      console.error("Non-JSON response body:", responseText.substring(0, 200) + "...");
+      throw new Error(`API-svaret är inte i JSON-format. Kontrollera att API-slutpunkten är korrekt och returnerar JSON. (Content-Type: ${contentType || 'unknown'})`);
     }
     
     let activities: Activity[];
@@ -38,21 +64,35 @@ export const importFromLiveEnv = async (liveUrl: string = 'https://hassleholmsif
       activities = await activitiesResponse.json();
     } catch (error) {
       console.error("Failed to parse activities JSON:", error);
-      throw new Error(`Kunde inte tolka aktivitetsdata: API endpoint returnerade inte giltig JSON. Kontrollera att API:et är tillgängligt och korrekt konfigurerat.`);
+      // Try to get the text of the response for debugging
+      const responseText = await activitiesResponse.text();
+      console.error("Failed parsing JSON from:", responseText.substring(0, 200) + "...");
+      throw new Error(`Kunde inte tolka aktivitetsdata: API endpoint returnerade inte giltig JSON. Kontrollera att API-endpointen är ${baseUrl}/api/export/activities`);
     }
     
     console.log(`Fetched ${activities?.length || 0} activities from ${baseUrl}`);
     
     // Then fetch players
+    console.log(`Attempting to fetch players from ${baseUrl}/api/export/players`);
     const playersResponse = await fetch(`${baseUrl}/api/export/players`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      cache: 'no-cache',
+      mode: 'cors',
     });
     
     if (!playersResponse.ok) {
-      throw new Error(`Kunde inte hämta spelare: ${playersResponse.statusText}`);
+      console.error("Players fetch response not OK:", playersResponse.status, playersResponse.statusText);
+      throw new Error(`Kunde inte hämta spelare: ${playersResponse.statusText} (${playersResponse.status})`);
+    }
+    
+    // Check if the response is actually JSON
+    const playerContentType = playersResponse.headers.get('content-type');
+    if (!playerContentType || !playerContentType.includes('application/json')) {
+      console.error("Player response is not JSON:", playerContentType);
+      throw new Error(`Spelar-API-svaret är inte i JSON-format. (Content-Type: ${playerContentType || 'unknown'})`);
     }
     
     let players: Player[];

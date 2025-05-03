@@ -1,9 +1,12 @@
 
 import React from "react";
 import { Activity } from "@/types/player";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatabaseBackup, FileDown, FileUp, Globe } from "lucide-react";
 import { ImportActivitiesForm } from "./ImportActivitiesForm";
 import { ImportFromLiveForm } from "./ImportFromLiveForm";
+import { BackupRestoreActions } from "@/components/backup-restore";
 
 interface ToolsTabContentProps {
   onImportedActivities: (activities: Activity[]) => Promise<boolean>;
@@ -14,17 +17,40 @@ export function ToolsTabContent({ onImportedActivities }: ToolsTabContentProps) 
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Verktyg för aktiviteter</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ImportActivitiesForm onImportedActivities={onImportedActivities} />
-        <ImportFromLiveForm />
-      </div>
+      <Tabs defaultValue="file">
+        <TabsList className="mb-4">
+          <TabsTrigger value="file" className="flex items-center gap-2">
+            <FileUp className="h-4 w-4" />
+            Från fil
+          </TabsTrigger>
+          <TabsTrigger value="live" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Från Live-miljö
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="file">
+          <ImportActivitiesForm onImportedActivities={onImportedActivities} />
+        </TabsContent>
+        
+        <TabsContent value="live">
+          <ImportFromLiveForm onImportedActivities={onImportedActivities} />
+        </TabsContent>
+      </Tabs>
       
-      <Card className="p-4 bg-muted/50">
-        <p className="text-sm text-muted-foreground">
-          Dessa verktyg är till för att hjälpa dig hantera aktivitetsdata. 
-          Importverktyget låter dig importera aktiviteter från JSON-filer,
-          och Live-import-verktyget låter dig hämta data direkt från produktionsmiljön.
-        </p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <DatabaseBackup className="h-5 w-5" />
+            Säkerhetskopiering
+          </CardTitle>
+          <CardDescription>
+            Skapa eller återställ säkerhetskopior av alla aktiviteter och spelare
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BackupRestoreActions />
+        </CardContent>
       </Card>
     </div>
   );
