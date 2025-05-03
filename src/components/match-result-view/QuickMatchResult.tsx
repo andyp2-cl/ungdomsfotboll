@@ -63,21 +63,19 @@ export function QuickMatchResult({
         (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore);
       
       // Call the save function passed from parent with numeric values
-      const success = await onSave(processedHomeScore, processedAwayScore);
+      // Fixed: Don't test the Promise<void> for truthiness directly
+      await onSave(processedHomeScore, processedAwayScore);
       
       // Force clear caches to ensure fresh data loads
       localStorage.removeItem('cachedActivities');
       localStorage.removeItem('sb-activities-fetch-time');
       
       console.log("Match result saved:", {
-        success,
         homeScore: processedHomeScore,
         awayScore: processedAwayScore
       });
       
-      if (success) {
-        toast.success("Matchresultat sparat!");
-      }
+      toast.success("Matchresultat sparat!");
     } catch (error) {
       console.error("Error saving match result:", error);
       setHasError(true);

@@ -1,4 +1,3 @@
-
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -130,16 +129,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update - fixed to properly handle the isWin parameter
-  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number, isWin?: boolean): Promise<void> => {
+  // Wrapper for match result update - fixed to properly handle the Promise<void>
+  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
     try {
-      console.log(`PlayersPage: Calling handleMatchResult with isWin=${isWin === undefined ? 'undefined (draw)' : isWin}`);
+      console.log(`PlayersPage: Calling handleMatchResult with scores=${homeScore}-${awayScore}`);
       
-      // Check the expected parameter count for handleMatchResult
-      if (typeof handleMatchResult === 'function') {
-        // Ensure we're passing the correct number of arguments based on the function signature
-        await handleMatchResult(activityId, homeScore, awayScore);
-      }
+      // Call the function without checking truthiness
+      await handleMatchResult(activityId, homeScore, awayScore);
     } catch (error) {
       console.error("Error updating match result:", error);
     }
