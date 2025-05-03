@@ -24,8 +24,23 @@ export const restoreBackup = async (): Promise<boolean> => {
     const matchCount = backupData.activities.filter(a => a.type === 'match').length;
     console.log(`Restoring backup with ${backupData.activities.length} activities, including ${matchCount} matches`);
     
-    // First make a copy of the backup data to preserve it
-    const backupCopy = JSON.stringify(backupData);
+    // First directly cache the data for fallback
+    try {
+      localStorage.setItem('cachedActivities', JSON.stringify(backupData.activities));
+      localStorage.setItem('cachedActivitiesTime', Date.now().toString());
+      localStorage.setItem('cachedActivitiesCount', backupData.activities.length.toString());
+      
+      // Immediately cache matches for redundancy
+      const matchActivities = backupData.activities.filter(a => a.type === 'match');
+      if (matchActivities && matchActivities.length > 0) {
+        localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
+        localStorage.setItem('cachedMatchActivitiesTime', Date.now().toString());
+        localStorage.setItem('cachedMatchActivitiesCount', matchActivities.length.toString());
+        console.log(`Cached ${matchActivities.length} match activities for redundancy`);
+      }
+    } catch (cacheError) {
+      console.error("Error directly caching backup data (non-critical):", cacheError);
+    }
     
     // Clear existing data in database before restoring
     const { success: clearSuccess, error: clearError } = await clearExistingData();
@@ -34,7 +49,7 @@ export const restoreBackup = async (): Promise<boolean> => {
       // Continue despite warnings
     }
     
-    // Restore players
+    // Restore players first
     const { success: playersSuccess, count: playersCount, error: playersError } = 
       await restorePlayers(backupData.players);
     
@@ -43,13 +58,33 @@ export const restoreBackup = async (): Promise<boolean> => {
       // Continue with activities even if player restore fails
     }
     
-    // Restore activities
+    // Restore activities with priority on matches
+    // First sort activities to prioritize matches
+    const prioritizedActivities = [...backupData.activities];
+    prioritizedActivities.sort((a, b) => {
+      // Matches come first
+      if (a.type === 'match' && b.type !== 'match') return -1;
+      if (a.type !== 'match' && b.type === 'match') return 1;
+      return 0;
+    });
+    
+    // Restore activities with prioritized list
     const { success: activitiesSuccess, count: activitiesCount, error: activitiesError } = 
-      await restoreActivities(backupData.activities);
+      await restoreActivities(prioritizedActivities);
     
     if (!activitiesSuccess) {
       console.error("Failed to restore activities:", activitiesError);
-      return false;
+      
+      // Try again with just match data as a fallback
+      const matchActivities = backupData.activities.filter(a => a.type === 'match');
+      if (matchActivities && matchActivities.length > 0) {
+        console.log(`Trying again with just ${matchActivities.length} match activities`);
+        
+        const { success: matchSuccess } = await restoreActivities(matchActivities);
+        if (!matchSuccess) {
+          console.error("Failed to restore even just match activities");
+        }
+      }
     }
     
     // Special step: Verify match activities were restored
@@ -79,32 +114,14 @@ export const restoreBackup = async (): Promise<boolean> => {
       // This is non-critical, so we still continue
     }
     
-    // Save to cache before reloading
-    try {
-      localStorage.setItem('cachedActivities', JSON.stringify(backupData.activities));
-      localStorage.setItem('cachedActivitiesTime', Date.now().toString());
-      localStorage.setItem('cachedActivitiesCount', backupData.activities.length.toString());
-      
-      // Separately cache matches for redundancy
-      const matchActivities = backupData.activities.filter(a => a.type === 'match');
-      if (matchActivities && matchActivities.length > 0) {
-        localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
-        localStorage.setItem('cachedMatchActivitiesTime', Date.now().toString());
-        localStorage.setItem('cachedMatchActivitiesCount', matchActivities.length.toString());
-        console.log(`Cached ${matchActivities.length} match activities for redundancy`);
-      }
-    } catch (cacheError) {
-      console.error("Error saving to cache (non-critical):", cacheError);
-    }
-    
     console.log("Backup restoration completed successfully");
     console.log(`Restored ${playersCount} players, ${activitiesCount} activities, and ${relationshipsCount} relationships`);
     
     // Force a refresh to load activities from cache even if database connection fails
     toast.success(`Återställning slutförd! Laddar om för att visa data...`);
     
-    // Return success if we have restored some activities
-    return activitiesCount > 0;
+    // Return success if we have restored some activities or players
+    return activitiesCount > 0 || playersCount > 0;
   } catch (error) {
     console.error("Error in restoreBackup:", error);
     return false;

@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 import { v4 as uuidv4 } from "uuid";
 
@@ -75,17 +76,17 @@ export const processActivitiesForRestore = (activities: any[]): Activity[] => {
       
       // Optional fields
       time: activity.time,
-      location: activity.location_name ? {
-        name: activity.location_name,
-        description: activity.location_description,
-        gpsLink: activity.location_gps_link
+      location: activity.location_name || activity.locationName ? {
+        name: activity.location_name || activity.locationName || "",
+        description: activity.location_description || activity.locationDescription || "",
+        gpsLink: activity.location_gps_link || activity.locationGpsLink || ""
       } : undefined,
       participants: activity.participants || [],
       
       // Match specific fields
-      homeScore: activity.homeScore || activity.home_score,
-      awayScore: activity.awayScore || activity.away_score,
-      isWin: activity.isWin || activity.is_win,
+      homeScore: activity.homeScore !== undefined ? activity.homeScore : activity.home_score,
+      awayScore: activity.awayScore !== undefined ? activity.awayScore : activity.away_score,
+      isWin: activity.isWin !== undefined ? activity.isWin : activity.is_win,
       result: activity.result,
       
       // Keep player statistics if present

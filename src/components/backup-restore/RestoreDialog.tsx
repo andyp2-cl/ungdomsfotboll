@@ -25,7 +25,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
   const { restoreBackup, getLastBackupInfo } = useBackupRestore();
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(true); // Set debug mode on by default for now
   
   const formattedBackupDate = backupInfo?.timestamp 
     ? format(new Date(backupInfo.timestamp), 'yyyy-MM-dd HH:mm:ss')
@@ -75,7 +75,7 @@ export function RestoreDialog({ backupInfo, isRestoring, setIsRestoring, isOpen,
       
       // Show debugging info about match count if requested
       if (showDebug) {
-        const matchCount = parsed.activities.filter(a => a.type === 'match').length;
+        const matchCount = parsed.activities.filter((a: any) => a.type === 'match').length;
         toast.info(`Säkerhetskopian innehåller ${matchCount} matcher`);
       }
     } catch (error) {

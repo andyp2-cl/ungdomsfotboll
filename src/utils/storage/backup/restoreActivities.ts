@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { saveActivities } from "../activityStorage";
 import { processActivitiesForRestore } from "./utils";
@@ -26,6 +27,12 @@ export const restoreActivities = async (activities: any[]): Promise<{
       // Check specifically for matches after processing
       const processedMatchCount = processedActivities.filter(a => a.type === 'match').length;
       console.log(`After processing: ${processedMatchCount} matches ready for restore`);
+      
+      // Log a sample match to verify data structure
+      if (processedMatchCount > 0) {
+        const sampleMatch = processedActivities.find(a => a.type === 'match');
+        console.log("Sample processed match:", sampleMatch);
+      }
       
       if (processedActivities.length === 0) {
         console.error("No activities were processed successfully");
@@ -57,24 +64,36 @@ export const restoreActivities = async (activities: any[]): Promise<{
     
     // Keep a copy of match activities for redundancy
     if (matchActivities.length > 0) {
-      // Save to cache for redundancy
+      // Save to cache immediately for redundancy
       localStorage.setItem('cachedMatchActivities', JSON.stringify(matchActivities));
       toast.info(`Lagrat ${matchActivities.length} matcher i lokal cache för redundans`);
+      
+      // Save matches first in a separate batch to prioritize them
+      try {
+        console.log("Saving match activities as priority batch");
+        await saveActivities(matchActivities);
+        console.log("Match activities saved successfully");
+      } catch (matchError) {
+        console.error("Error saving match activities:", matchError);
+        // Continue with other activities
+      }
     }
     
-    // Split activities into batches to avoid timeouts and memory issues
+    // Split remaining activities into batches to avoid timeouts and memory issues
     const batchSize = 5;
+    const remainingActivities = processedActivities.filter(a => a.type !== 'match');
     const batches = [];
     
-    for (let i = 0; i < processedActivities.length; i += batchSize) {
-      batches.push(processedActivities.slice(i, i + batchSize));
+    for (let i = 0; i < remainingActivities.length; i += batchSize) {
+      batches.push(remainingActivities.slice(i, i + batchSize));
     }
     
-    console.log(`Saving activities in ${batches.length} batches`);
+    console.log(`Saving remaining activities in ${batches.length} batches`);
     
-    let successCount = 0;
+    let successCount = matchActivities.length; // Start with match count if we saved them
     let hasErrors = false;
     
+    // Process remaining activities in batches
     for (let i = 0; i < batches.length; i++) {
       console.log(`Processing batch ${i+1}/${batches.length} with ${batches[i].length} activities`);
       try {
@@ -169,6 +188,11 @@ export const restorePlayerActivities = async (players: any[]): Promise<{
       // Cache these activities for redundancy
       if (refreshedActivities && refreshedActivities.length > 0) {
         localStorage.setItem('cachedMatchActivities', JSON.stringify(refreshedActivities));
+        localStorage.setItem('cachedMatchActivitiesTime', Date.now().toString());
+        toast.info(`Verifierade och cachade ${matchCount} matcher från databasen`);
+      } else {
+        console.warn("No match activities found after restoration!");
+        toast.warning("Inga matcher hittades i databasen efter återställning");
       }
     } catch (error) {
       console.error("Error fetching refreshed activities (non-critical):", error);
