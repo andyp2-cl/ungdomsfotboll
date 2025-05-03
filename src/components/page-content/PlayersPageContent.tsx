@@ -50,7 +50,7 @@ interface PlayersPageContentProps {
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => void;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
   
   // Loading state
   isLoading?: boolean;

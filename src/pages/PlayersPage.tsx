@@ -1,4 +1,3 @@
-
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -80,7 +79,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleKioskUpdate,
     handleImportActivities,
     handleClearHistorical,
-    handleMatchResult, // This should return Promise<boolean>
+    handleMatchResult, // This should now return Promise<boolean>
     setViewMode
   );
 

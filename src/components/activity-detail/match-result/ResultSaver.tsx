@@ -8,7 +8,7 @@ import { isHomeMatch, extractTeamNames, isHassleholm } from "./utils";
 interface ResultSaverProps {
   activity: Activity;
   updateActivity: (activity: Activity) => void;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function useResultSaver({
@@ -119,16 +119,19 @@ export function useResultSaver({
       localStorage.removeItem('sb-activities-fetch-time');
       
       // Also call the match result update function if provided
+      let updateResult = true;
       if (onMatchResultUpdate) {
-        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+        updateResult = await onMatchResultUpdate(activity.id, homeScore, awayScore);
       }
       
       toast({
-        title: "Matchresultat sparat",
-        description: `Resultatet ${homeScore}-${awayScore} har sparats.`
+        title: updateResult ? "Matchresultat sparat" : "Varning: Delvis sparat",
+        description: updateResult 
+          ? `Resultatet ${homeScore}-${awayScore} har sparats.`
+          : "Resultatet sparades lokalt men kunde inte sparas i databasen."
       });
       
-      return true;
+      return updateResult;
     } catch (error) {
       console.error("Error saving match result:", error);
       toast({

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -90,12 +89,16 @@ export function usePlayers(initialTab?: string) {
     }
   };
 
-  // Wrapper for match result update
-  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+  // Wrapper for match result update - changed to return boolean to match expected type
+  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
     try {
-      await handleMatchResultUpdate(activityId, homeScore, awayScore);
+      console.log(`PlayersPage: Calling handleMatchResultUpdate with scores=${homeScore}-${awayScore}`);
+      
+      // Call the function and return its result (must be boolean)
+      return await handleMatchResultUpdate(activityId, homeScore, awayScore);
     } catch (error) {
       console.error("Error updating match result:", error);
+      return false;
     }
   };
 

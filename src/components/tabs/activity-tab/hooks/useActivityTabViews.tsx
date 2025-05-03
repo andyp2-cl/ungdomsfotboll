@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityList } from "@/components/activity-list";
@@ -19,7 +18,7 @@ interface UseActivityTabViewsProps {
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleActivityUpdate: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function useActivityTabViews({
