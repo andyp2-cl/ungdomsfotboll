@@ -87,14 +87,14 @@ export function QuickMatchResult({
           await onSave(processedHomeScore, processedAwayScore);
           saveSuccess = true;
           
-          toast({
-            title: "Resultat sparat",
-            description: "Matchresultatet har sparats framgångsrikt.",
+          // Fix: Using the correct toast syntax
+          toast.success("Resultat sparat", {
+            description: "Matchresultatet har sparats framgångsrikt."
           });
           
           hookToast({
-            title: "Resultat sparat",
-            description: "Matchresultatet har sparats.",
+            variant: "default",
+            description: "Matchresultatet har sparats."
           });
         } catch (attemptError) {
           console.error(`Save attempt ${saveAttempts} failed:`, attemptError);
@@ -111,16 +111,14 @@ export function QuickMatchResult({
       console.error("Error saving match result after multiple attempts:", error);
       setHasError(true);
       
-      toast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte spara resultat. Försök igen.",
-        duration: 5000
+      // Fix: Using the correct toast syntax
+      toast.error("Ett fel uppstod", {
+        description: "Kunde inte spara resultat. Försök igen."
       });
       
       hookToast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte spara ändringar. Försök igen.",
-        variant: "destructive"
+        variant: "destructive",
+        description: "Kunde inte spara ändringar. Försök igen."
       });
     } finally {
       setIsSaving(false);
