@@ -117,6 +117,8 @@ export function QuickMatchResult({
         }
         break;
     }
+    
+    console.log(`Changed win status to: ${value}, manualWinStatus will be: ${value === 'draw' ? 'undefined' : value === 'win'}`);
   };
   
   // Determine current radio value based on isWin
@@ -162,6 +164,7 @@ export function QuickMatchResult({
         }
       });
       
+      // IMPORTANT: Make sure to pass manualWinStatus explicitly
       // Save the match result with our now very robust save function
       await onSave(processedHomeScore, processedAwayScore, manualWinStatus);
       

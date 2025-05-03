@@ -6,6 +6,7 @@ import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/ma
 import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity"; 
 import { logDatabaseChange } from "@/lib/supabase/logs";
+import { supabase } from "@/lib/supabase/client";
 
 /**
  * Updates match result (score) for an existing activity
@@ -96,7 +97,42 @@ export const handleMatchResultUpdate = async (
       player_stats: JSON.stringify(updateData.player_stats)
     });
 
-    // Try the most reliable saving method first - saveActivities now uses multiple fallbacks
+    // Try a direct update to the database first
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .update({
+          home_score: homeScore,
+          away_score: awayScore,
+          is_win: isWin === undefined ? null : isWin,
+          result: (homeScore !== undefined && awayScore !== undefined) ? `${homeScore}-${awayScore}` : null
+        })
+        .eq('id', activityId);
+        
+      if (error) {
+        console.error("Direct Supabase update failed:", error);
+        toastLibrary.error("Direktuppdatering misslyckades");
+      } else {
+        console.log("Direct Supabase update succeeded!");
+        toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+        
+        try {
+          await logDatabaseChange(
+            'update', 
+            'activity', 
+            activityId, 
+            `Match result updated directly: ${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'draw' : isWin}`
+          );
+          return;
+        } catch (logError) {
+          console.warn("Couldn't log direct update to database:", logError);
+        }
+      }
+    } catch (directUpdateError) {
+      console.error("Error with direct update:", directUpdateError);
+    }
+    
+    // If direct update fails, try the enhanced storage system
     try {
       // Save the updated activities array
       const saveSuccess = await saveActivities(updatedActivities);
