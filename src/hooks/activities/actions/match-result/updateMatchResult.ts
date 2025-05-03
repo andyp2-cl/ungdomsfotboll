@@ -82,13 +82,21 @@ export const handleMatchResultUpdate = async (
       }
     }
     
-    // If we reach here, no update method succeeded
-    if (!success) {
-      console.error("All update methods failed for activity", activityId);
-      return false;
+    // If we reach here with success = true, one of the methods worked
+    if (success) {
+      // Additional cache clearing to ensure fresh data loads on next fetch
+      localStorage.removeItem('cachedActivities');
+      localStorage.removeItem('sb-activities-fetch-time');
+      sessionStorage.removeItem('activities-cache');
+      
+      // Add a message to console to track successful saves
+      console.log(`Successfully updated match result for activity ${activityId} with scores ${homeScore}-${awayScore}, isWin=${isWin}`);
+      
+      return true;
     }
     
-    return success;
+    console.error("All update methods failed for activity", activityId);
+    return false;
   } catch (error) {
     console.error("Error handling match result update:", error);
     toastLibrary.error("Ett fel uppstod vid uppdatering av matchresultat");

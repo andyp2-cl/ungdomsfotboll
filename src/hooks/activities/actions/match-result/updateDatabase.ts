@@ -53,6 +53,8 @@ export const updateMatchResultInDatabase = async (
         // Force refresh local cache to ensure data consistency
         localStorage.removeItem('cachedActivities');
         localStorage.removeItem('sb-activities-fetch-time');
+        localStorage.removeItem('sb-activities-last-fetch');
+        sessionStorage.removeItem('activities-cache');
         console.log("Cleared local cache after successful update");
         
         return true;
@@ -80,6 +82,8 @@ export const updateMatchResultInDatabase = async (
         // Force refresh local cache to ensure data consistency
         localStorage.removeItem('cachedActivities');
         localStorage.removeItem('sb-activities-fetch-time');
+        localStorage.removeItem('sb-activities-last-fetch');
+        sessionStorage.removeItem('activities-cache');
         console.log("Cleared local cache after successful RLS update");
         
         return true;

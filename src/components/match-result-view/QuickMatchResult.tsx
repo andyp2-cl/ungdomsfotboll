@@ -63,12 +63,13 @@ export function QuickMatchResult({
         (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore);
       
       // Call the save function passed from parent with numeric values
-      // Fixed: Don't test the Promise<void> for truthiness directly
+      // Fixed: Don't test the Promise<void> for truthiness
       await onSave(processedHomeScore, processedAwayScore);
       
       // Force clear caches to ensure fresh data loads
       localStorage.removeItem('cachedActivities');
       localStorage.removeItem('sb-activities-fetch-time');
+      sessionStorage.removeItem('activities-cache');
       
       console.log("Match result saved:", {
         homeScore: processedHomeScore,
@@ -104,9 +105,30 @@ export function QuickMatchResult({
 
   // For read-only view with existing scores, use simplified display
   if (isReadOnly && homeScore !== undefined && awayScore !== undefined) {
+    // Determine win/loss/draw status text
+    let statusText = "";
+    if (homeScore === awayScore) {
+      statusText = "(Oavgjort)";
+    } else if (isHifHome && homeScore > awayScore) {
+      statusText = "(Vinst för HIF)";
+    } else if (isHifAway && awayScore > homeScore) {
+      statusText = "(Vinst för HIF)";
+    } else if (activity.isWin === true) {
+      statusText = "(Vinst)";
+    } else if (activity.isWin === false) {
+      statusText = "(Förlust)";
+    }
+    
     return (
-      <div className={`text-center text-lg font-bold ${resultColorClass}`}>
-        {homeScore} - {awayScore}
+      <div>
+        <div className={`text-center text-lg font-bold ${resultColorClass} mb-1`}>
+          {homeScore} - {awayScore}
+        </div>
+        {statusText && (
+          <div className="text-center text-sm">
+            {statusText}
+          </div>
+        )}
       </div>
     );
   }

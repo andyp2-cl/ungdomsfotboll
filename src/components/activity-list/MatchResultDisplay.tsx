@@ -14,6 +14,18 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
   const showResult = activity.homeScore !== undefined && activity.awayScore !== undefined;
   const resultDisplay = showResult ? `${activity.homeScore}-${activity.awayScore}` : "";
   
+  // Get team name information
+  const matchName = activity.name || '';
+  let teamInfo = { homeTeam: '', awayTeam: '' };
+  
+  if (matchName.includes(' - ')) {
+    const parts = matchName.split(' - ');
+    if (parts.length >= 2) {
+      teamInfo.homeTeam = parts[0].trim();
+      teamInfo.awayTeam = parts[1].trim();
+    }
+  }
+  
   // Legacy result message
   let resultMessage = '';
   if (activity.result) {
@@ -81,6 +93,52 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
     }
     return null;
   };
+  
+  // Create a more descriptive result text that indicates who won
+  const getEnhancedResultText = () => {
+    if (!showResult) return resultMessage;
+    
+    const { homeTeam, awayTeam } = teamInfo;
+    const isHifInHomeTeam = homeTeam.toLowerCase().includes('hässleholm') || homeTeam.toLowerCase().includes('hif');
+    const isHifInAwayTeam = awayTeam.toLowerCase().includes('hässleholm') || awayTeam.toLowerCase().includes('hif');
+    
+    // Draw case
+    if (activity.homeScore === activity.awayScore) {
+      return `Resultat: ${activity.homeScore}-${activity.awayScore} (Oavgjort)`;
+    }
+    
+    // Determine win/loss based on isWin property if available
+    if (activity.isWin === true) {
+      if (isHifInHomeTeam && activity.homeScore > activity.awayScore) {
+        return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`;
+      } else if (isHifInAwayTeam && activity.awayScore > activity.homeScore) {
+        return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`;
+      }
+      return `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`;
+    } else if (activity.isWin === false) {
+      return `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
+    }
+    
+    // Calculate win/loss based on scores
+    const isHome = isHomeMatch(activity);
+    if (isHifInHomeTeam) {
+      return activity.homeScore > activity.awayScore 
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
+    } else if (isHifInAwayTeam) {
+      return activity.awayScore > activity.homeScore 
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst för Hässleholms IF)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust för Hässleholms IF)`;
+    } else if (isHome) {
+      return activity.homeScore > activity.awayScore
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
+    } else {
+      return activity.awayScore > activity.homeScore
+        ? `Resultat: ${activity.homeScore}-${activity.awayScore} (Vinst)`
+        : `Resultat: ${activity.homeScore}-${activity.awayScore} (Förlust)`;
+    }
+  };
 
   if (!showResult && !resultMessage) {
     return null;
@@ -97,7 +155,12 @@ export function MatchResultDisplay({ activity, isMobile = false }: MatchResultDi
       {!showResult && resultMessage && (
         <div className={`${isMobile ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()} flex items-center`}>
           {renderResultIcon()}
-          {resultMessage}
+          {getEnhancedResultText()}
+        </div>
+      )}
+      {showResult && (
+        <div className="text-sm mb-3">
+          {getEnhancedResultText()}
         </div>
       )}
     </>
