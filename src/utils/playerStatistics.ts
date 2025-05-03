@@ -1,5 +1,6 @@
 
 import { Activity, Player } from "@/types/player";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 export interface PlayerStatistics {
   totalMatches: number;
@@ -84,10 +85,8 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
     }
     // If no isWin flag but we have scores, calculate based on scores
     else if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      // Determine if we're home or away
-      const isHome = match.homeTeam === "Hässleholms IF" || 
-                    !match.awayTeam || 
-                    match.awayTeam.includes("motståndare");
+      // Determine if we're home or away using the utility function
+      const isHome = isHomeMatch(match);
                     
       // Calculate if we won
       if (isHome) {
