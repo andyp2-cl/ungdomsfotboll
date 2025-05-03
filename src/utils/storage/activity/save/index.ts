@@ -102,7 +102,7 @@ async function saveToDatabase(activity: Activity): Promise<boolean> {
     // Try direct update with Supabase first
     const { error } = await supabase
       .from('activities')
-      .upsert(formattedActivity, { onConflict: 'id' })
+      .upsert(formattedActivity)
       .select();
     
     if (!error) {
@@ -170,20 +170,19 @@ async function tryOptimizedUpdate(activityId: string, activity: any): Promise<{s
       console.error("REST API error:", e);
     }
     
-    // Try using the INSERT method with ON CONFLICT DO UPDATE
+    // Try using the INSERT method with upsert
     try {
+      // Use the correct method for Supabase JS v2
       const { error } = await supabase
         .from('activities')
-        .insert(activity)
-        .onConflict('id')
-        .merge();
+        .upsert(activity);
         
       if (!error) {
         return { success: true };
       }
-      console.warn("Insert with merge failed:", error);
+      console.warn("Insert with upsert failed:", error);
     } catch (e) {
-      console.error("Insert with merge error:", e);
+      console.error("Insert with upsert error:", e);
     }
     
     // Try scores-only update
