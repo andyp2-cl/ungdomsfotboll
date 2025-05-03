@@ -12,7 +12,7 @@ import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
-import { Globe, Save } from "lucide-react";
+import { Globe, Save, HardDrive } from "lucide-react";
 import { useBackupRestore } from "@/utils/storage/backup";
 import { BackupRestoreDialog } from "@/components/backup-restore/BackupRestoreDialog";
 
@@ -44,7 +44,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
-  const [backupMode, setBackupMode] = useState<"backup" | "restore">("backup");
+  const [backupMode, setBackupMode] = useState<"backup" | "restore" | "direct-import">("backup");
   const isMobile = useIsMobile();
   const { createBackup, getLastBackupInfo } = useBackupRestore();
 
@@ -104,6 +104,11 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     setBackupMode("restore");
     setIsBackupDialogOpen(true);
   };
+  
+  const handleOpenDirectImportDialog = () => {
+    setBackupMode("direct-import");
+    setIsBackupDialogOpen(true);
+  };
 
   const handleQuickBackup = async () => {
     try {
@@ -128,6 +133,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onImportClick={handleOpenImportDialog}
           onBackupClick={handleOpenBackupDialog}
           onRestoreClick={handleOpenRestoreDialog}
+          onDirectImportClick={handleOpenDirectImportDialog}
         />
         
         <div className="flex items-center gap-2 w-full sm:w-auto">

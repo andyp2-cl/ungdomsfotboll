@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, LayoutList, History, LineChart, Database, FileUp, Globe, Save, RotateCcw } from "lucide-react";
+import { RefreshCw, LayoutList, History, LineChart, Database, FileUp, Globe, Save, RotateCcw, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Activity } from "@/types/player";
 
@@ -15,6 +15,7 @@ interface ActivityTabHeaderProps {
   onImportClick?: () => void;
   onBackupClick?: () => void;
   onRestoreClick?: () => void;
+  onDirectImportClick?: () => void;
   onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 
@@ -27,7 +28,8 @@ export function ActivityTabHeader({
   isMobile,
   onImportClick,
   onBackupClick,
-  onRestoreClick
+  onRestoreClick,
+  onDirectImportClick
 }: ActivityTabHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
@@ -87,6 +89,18 @@ export function ActivityTabHeader({
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Återställ
+            </Button>
+          )}
+          
+          {onDirectImportClick && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onDirectImportClick} 
+              className="sm:mr-2 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 text-blue-600"
+            >
+              <HardDrive className="h-4 w-4 mr-2" />
+              Live DB-import
             </Button>
           )}
         </>
