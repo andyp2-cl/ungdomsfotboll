@@ -35,35 +35,6 @@ export function usePlayerPageWrappers(
     }
   };
 
-  // Wrapper for handleKioskUpdate to ensure consistent return type
-  const handleKioskUpdateWrapper = async (activityId: string, playerId?: string): Promise<boolean> => {
-    return await handleKioskUpdate(activityId, playerId);
-  };
-  
-  // Wrapper for import activities
-  const handleImportActivitiesWrapper = async (activities: Activity[]): Promise<boolean> => {
-    return await handleImportActivities(activities);
-  };
-  
-  // Wrapper for clear historical
-  const handleClearHistoricalWrapper = async (): Promise<boolean> => {
-    return await handleClearHistorical();
-  };
-
-  // Wrapper for match result update - fixing the void return type error
-  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
-    try {
-      console.log(`PlayersPage: Calling handleMatchResult with scores=${homeScore}-${awayScore}`);
-      
-      // Call the function without checking its return value
-      await handleMatchResult(activityId, homeScore, awayScore);
-      
-      console.log("Match result update completed");
-    } catch (error) {
-      console.error("Error updating match result:", error);
-    }
-  };
-
   // Handle refresh - force reload of players and activities data
   const handleRefresh = async (): Promise<void> => {
     try {
@@ -87,10 +58,6 @@ export function usePlayerPageWrappers(
     handleBulkPlayerUpdateWrapper,
     handleAddPlayerWrapper,
     setViewModeWrapper,
-    handleKioskUpdateWrapper,
-    handleImportActivitiesWrapper,
-    handleClearHistoricalWrapper,
-    handleMatchResultWrapper,
     handleRefresh
   };
 }

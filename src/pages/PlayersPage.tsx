@@ -6,12 +6,9 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Activity } from "@/types/player";
 import { usePlayerPageWrappers } from "@/hooks/players/usePlayerPageWrappers";
+import { useActivityWrappers } from "@/hooks/activities/useActivityWrappers"; // Import the new hook
 
-interface PlayersPageProps {
-  initialTab?: string;
-}
-
-export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+export default function PlayersPage({ initialTab }: { initialTab?: string } = {}) {
   const location = useLocation();
   const {
     // Tab state
@@ -63,16 +60,12 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     retryLoading
   } = usePlayers(initialTab);
 
-  // Get wrapper functions from our custom hook
+  // Get player wrapper functions from our custom hook
   const {
     handlePlayerUpdateWrapper,
     handleBulkPlayerUpdateWrapper,
     handleAddPlayerWrapper,
     setViewModeWrapper,
-    handleKioskUpdateWrapper,
-    handleImportActivitiesWrapper,
-    handleClearHistoricalWrapper,
-    handleMatchResultWrapper,
     handleRefresh
   } = usePlayerPageWrappers(
     handlePlayerUpdate,
@@ -83,6 +76,23 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistorical,
     handleMatchResult,
     setViewMode
+  );
+  
+  // Get activity wrapper functions from our new hook
+  const {
+    handleActivityUpdateWrapper,
+    handleKioskUpdateWrapper,
+    handleDeleteActivityWrapper,
+    handleImportActivitiesWrapper,
+    handleClearHistoricalWrapper,
+    handleMatchResultWrapper
+  } = useActivityWrappers(
+    handleActivityUpdate,
+    handleDelete,
+    handleKioskUpdate,
+    handleImportActivities,
+    handleClearHistorical,
+    handleMatchResult
   );
 
   // Check for selected activity in location state
@@ -96,9 +106,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       }
     }
   }, [location.state, activities, setSelectedActivity]);
-
-  // Wrapper for handleDelete to match expected handleDeleteActivity
-  const handleDeleteActivity = handleDelete;
 
   return (
     <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
@@ -138,9 +145,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         setIsAddActivityOpen={setIsAddActivityOpen}
         selectedActivityTypes={selectedActivityTypes}
         handleActivityTypeChange={handleActivityTypeChange}
-        handleActivityUpdate={handleActivityUpdate}
+        handleActivityUpdate={handleActivityUpdateWrapper}
         handleKioskUpdate={handleKioskUpdateWrapper}
-        handleDelete={handleDeleteActivity}
+        handleDelete={handleDeleteActivityWrapper}
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}

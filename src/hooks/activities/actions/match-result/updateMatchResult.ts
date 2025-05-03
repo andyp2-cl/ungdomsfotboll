@@ -1,13 +1,84 @@
 
 import { Activity } from "@/types/player";
-import { saveActivities } from "@/utils/storage";
-import { toast as toastLibrary } from "sonner";
 import { determineMatchOutcome } from "./determineOutcome";
-import { updateMatchResultInDatabase } from "./updateDatabase";
+import { formatActivityForDatabase } from "@/utils/database/formatters";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 /**
- * Updates match result (score) for an existing activity
- * Uses multiple approaches for maximum reliability
+ * Updates a match result in the database
+ */
+export const updateMatchResultInDatabase = async (
+  activityId: string,
+  homeScore?: number,
+  awayScore?: number
+): Promise<boolean> => {
+  try {
+    console.log(`Updating match result in database for activity ${activityId}:`, {
+      homeScore,
+      awayScore
+    });
+    
+    // First fetch the activity to get all current data
+    const { data: activity, error: fetchError } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('id', activityId)
+      .single();
+    
+    if (fetchError || !activity) {
+      console.error("Error fetching activity for match result update:", fetchError);
+      return false;
+    }
+    
+    // Convert database activity to our application model
+    const appActivity: Activity = {
+      id: activity.id,
+      name: activity.name,
+      date: activity.date,
+      type: activity.type as "match" | "cup",
+      participants: [], // We don't need participants for this operation
+      homeScore,
+      awayScore
+    };
+    
+    // Determine if the match was a win for Hässleholms IF
+    const isWin = determineMatchOutcome(appActivity, homeScore, awayScore);
+    
+    console.log(`Match outcome determined: isWin=${isWin}`);
+    
+    // Format match result as text
+    const result = (homeScore !== undefined && awayScore !== undefined) 
+      ? `${homeScore}-${awayScore}` 
+      : undefined;
+    
+    // Update the match in the database
+    const { error: updateError } = await supabase
+      .from('activities')
+      .update({
+        home_score: homeScore,
+        away_score: awayScore,
+        is_win: isWin,
+        result
+      })
+      .eq('id', activityId);
+    
+    if (updateError) {
+      console.error("Error updating match result in database:", updateError);
+      toast.error("Kunde inte spara matchresultatet i databasen");
+      return false;
+    }
+    
+    console.log(`Successfully updated match result in database for ${activityId}`);
+    return true;
+  } catch (error) {
+    console.error("Unexpected error updating match result in database:", error);
+    return false;
+  }
+};
+
+/**
+ * Updates a match result both in memory and the database
  */
 export const handleMatchResultUpdate = async (
   activities: Activity[],
@@ -16,91 +87,62 @@ export const handleMatchResultUpdate = async (
   activityId: string,
   homeScore?: number,
   awayScore?: number
-): Promise<boolean> => {
+): Promise<void> => {
+  console.log(`Handling match result update: activityId=${activityId}, scores=${homeScore}-${awayScore}`);
+  
   try {
-    console.log(`Updating match result for activity ${activityId}: ${homeScore}-${awayScore}`);
+    // First update the activity in memory
+    const updatedActivities = activities.map(activity => {
+      if (activity.id === activityId) {
+        // Determine if the match was a win for Hässleholms IF
+        const isWin = determineMatchOutcome(activity, homeScore, awayScore);
+        
+        // Format match result as text
+        const result = (homeScore !== undefined && awayScore !== undefined) 
+          ? `${homeScore}-${awayScore}` 
+          : undefined;
+        
+        console.log(`Updating activity ${activityId} with scores ${homeScore}-${awayScore}, isWin=${isWin}`);
+        
+        return {
+          ...activity,
+          homeScore,
+          awayScore,
+          isWin,
+          result
+        };
+      }
+      return activity;
+    });
     
-    // Find the existing activity
-    const activity = activities.find(a => a.id === activityId);
-    
-    if (!activity) {
-      console.error(`Activity with id ${activityId} not found`);
-      toastLibrary.error("Kunde inte hitta aktiviteten");
-      return false;
-    }
-    
-    // Determine if Hässleholms IF won the match
-    const isWin = determineMatchOutcome(activity, homeScore, awayScore);
-    
-    console.log(`Final activity data: scores=${homeScore}-${awayScore}, isWin=${isWin === undefined ? 'undefined (draw)' : isWin ? 'win' : 'loss'}`);
-    
-    // Create result string ONLY if both scores exist
-    const result = (homeScore !== undefined && awayScore !== undefined)
-      ? `${homeScore}-${awayScore}`
-      : undefined;
-    
-    // Create updated activity with new scores, preserving existing player_stats
-    const updatedActivity: Activity = {
-      ...activity,
-      homeScore,
-      awayScore,
-      isWin, // This will be true/false/undefined (undefined for draw)
-      result,
-      // Ensure we preserve the player_stats when updating scores
-      player_stats: activity.player_stats || { goals: {}, assists: {} }
-    };
-    
-    // Directly update the local state first for immediate UI feedback
-    const updatedActivities = activities.map(a => 
-      a.id === activityId ? updatedActivity : a
-    );
-    
-    // Update React state
+    // Update state immediately for responsive UI
     setActivities(updatedActivities);
     
-    // Try to update in database
-    let success = await updateMatchResultInDatabase(activity, homeScore, awayScore, isWin);
-
-    // If all database updates failed, try fallback with storage system
-    if (!success) {
-      try {
-        console.log("Attempting to save with storage system...");
-        success = await saveActivities(updatedActivities);
-        
-        if (success) {
-          console.log("Activity saved successfully via enhanced storage system");
-          
-          // Force refresh local cache to ensure data consistency
-          localStorage.removeItem('cachedActivities');
-          localStorage.removeItem('sb-activities-fetch-time');
-          console.log("Cleared local cache after successful storage update");
-          
-          toastLibrary.success("Matchresultat sparat lokalt");
-          return true;
-        }
-      } catch (saveError) {
-        console.error("Enhanced storage system failed:", saveError);
-      }
-    }
+    // Now update the database
+    const success = await updateMatchResultInDatabase(activityId, homeScore, awayScore);
     
-    // If we reach here with success = true, one of the methods worked
-    if (success) {
-      // Additional cache clearing to ensure fresh data loads on next fetch
+    if (!success) {
+      toast({
+        title: "Varning",
+        description: "Resultatet sparades i minnet men kunde inte sparas i databasen.",
+        variant: "warning"
+      });
+    } else {
+      // Force clear cache to ensure data is reloaded fresh next time
       localStorage.removeItem('cachedActivities');
       localStorage.removeItem('sb-activities-fetch-time');
-      sessionStorage.removeItem('activities-cache');
       
-      // Add a message to console to track successful saves
-      console.log(`Successfully updated match result for activity ${activityId} with scores ${homeScore}-${awayScore}, isWin=${isWin}`);
-      
-      return true;
+      toast({
+        title: "Matchresultat sparat",
+        description: "Resultatet har sparats både lokalt och i databasen."
+      });
     }
-    
-    console.error("All update methods failed for activity", activityId);
-    return false;
   } catch (error) {
-    console.error("Error handling match result update:", error);
-    toastLibrary.error("Ett fel uppstod vid uppdatering av matchresultat");
-    return false;
+    console.error("Error in handleMatchResultUpdate:", error);
+    toast({
+      title: "Fel vid sparande",
+      description: "Ett oväntat fel inträffade. Försök igen.",
+      variant: "destructive"
+    });
   }
 };
