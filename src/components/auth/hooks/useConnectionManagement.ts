@@ -5,6 +5,19 @@ import { testDatabaseAccess, connectAnonymously } from '../utils/databaseUtils';
 import { toast } from 'sonner';
 import { shouldAutoConnectDatabase } from '@/utils/environment';
 
+// Define the type for the connection stats
+interface ConnectionStats {
+  attempts: number;
+  startTime: number;
+  queryTimes: number[];
+  errors: string[];
+  success?: boolean;
+  responseTime?: number;
+  details?: Record<string, any>;
+  anonymousConnection?: boolean;
+  totalTime?: number;
+}
+
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -40,11 +53,11 @@ export function useConnectionManagement(isOnline: boolean) {
       console.log("Testing database connection...");
       
       // Track debugging stats 
-      const stats = {
+      const stats: ConnectionStats = {
         attempts: 0,
         startTime: Date.now(),
-        queryTimes: [] as number[],
-        errors: [] as string[]
+        queryTimes: [],
+        errors: []
       };
       
       // Test if we already have a working connection
