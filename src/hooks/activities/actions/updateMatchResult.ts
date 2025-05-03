@@ -26,7 +26,7 @@ export const handleMatchResultUpdate = async (
     
     if (!activity) {
       console.error(`Activity with id ${activityId} not found`);
-      toast.error("Kunde inte hitta aktiviteten");
+      toastLibrary.error("Kunde inte hitta aktiviteten");
       return;
     }
     
@@ -44,6 +44,9 @@ export const handleMatchResultUpdate = async (
     // Update the isWin status based on score
     updatedActivity.isWin = calculateWinStatus(homeScore, awayScore, isHome);
     
+    // Format the activity for database update
+    const formattedActivity = formatActivityForDatabase(updatedActivity);
+    
     // Directly update the local state first for immediate UI feedback
     const updatedActivities = activities.map(a => 
       a.id === activityId ? updatedActivity : a
@@ -51,9 +54,6 @@ export const handleMatchResultUpdate = async (
     
     // Update React state
     setActivities(updatedActivities);
-    
-    // Format the activity for database update
-    const formattedActivity = formatActivityForDatabase(updatedActivity);
     
     // Prepare minimal update data to increase chances of success
     const updateData = {
@@ -68,8 +68,17 @@ export const handleMatchResultUpdate = async (
       ...updateData
     });
 
-    // Try updating with simplified approach first
+    // Try saving to local storage first as a reliable fallback
     try {
+      await saveActivities(updatedActivities);
+      console.log("Activity saved to local storage successfully");
+    } catch (localError) {
+      console.error("Error saving to local storage:", localError);
+    }
+
+    // Then try updating with database approach
+    try {
+      // First attempt: minimal data update
       const { success, error } = await updateActivityWithRLSHandling(updatedActivity.id, updateData);
       
       if (success) {
@@ -78,33 +87,36 @@ export const handleMatchResultUpdate = async (
       } else {
         console.error("Database update failed:", error);
         
-        // Try with full formatted activity as fallback
-        console.log("Attempting backup update with formatted activity");
-        const { success: backupSuccess, error: backupError } = await updateActivityWithRLSHandling(updatedActivity.id, formattedActivity);
+        // Second attempt: try with just the score fields
+        console.log("Attempting fallback update with only score fields");
+        const scoreOnlyData = {
+          home_score: updatedActivity.homeScore,
+          away_score: updatedActivity.awayScore
+        };
         
-        if (backupSuccess) {
-          console.log("Activity updated successfully via backup method");
+        const { success: scoreSuccess, error: scoreError } = await updateActivityWithRLSHandling(updatedActivity.id, scoreOnlyData);
+        
+        if (scoreSuccess) {
+          console.log("Score fields updated successfully");
           toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
         } else {
-          console.error("Backup update method also failed:", backupError);
+          console.error("Score-only update also failed:", scoreError);
           
-          // We'll still show success because the local state was updated
-          // But warn that it's only local
-          toastLibrary.warning("Resultat sparades lokalt men kunde inte uppdateras i databasen");
-          throw new Error("Failed to update database: " + (backupError || error));
+          // Final attempt: try with full formatted activity
+          const { success: backupSuccess, error: backupError } = await updateActivityWithRLSHandling(updatedActivity.id, formattedActivity);
+          
+          if (backupSuccess) {
+            console.log("Activity updated successfully via backup method");
+            toastLibrary.success(`Matchresultat ${homeScore}-${awayScore} har sparats`);
+          } else {
+            console.error("All update methods failed", backupError || scoreError || error);
+            toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
+          }
         }
       }
     } catch (dbError) {
       console.error("Failed to update activity in database:", dbError);
-      
-      // Show warning toast for database error
-      toastLibrary.warning("Resultat sparades lokalt men kunde inte uppdateras i databasen");
-      
-      // Try to save to local storage as last resort
-      await saveActivities(updatedActivities);
-      
-      // Rethrow for better error handling upstream
-      throw dbError;
+      toastLibrary.warning("Resultatet sparades lokalt men kunde inte uppdateras i databasen");
     }
   } catch (error) {
     console.error("Error handling match result update:", error);

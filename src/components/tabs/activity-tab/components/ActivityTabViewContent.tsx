@@ -53,7 +53,7 @@ export function ActivityTabViewContent({
       <LoadingState 
         message="Laddar aktiviteter..." 
         error={loadError || null} 
-        retry={retryLoading}  // Fixed: Changed onRetry to retry
+        retry={retryLoading}
       />
     );
   }

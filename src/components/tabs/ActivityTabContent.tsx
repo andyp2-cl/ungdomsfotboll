@@ -72,7 +72,13 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     
     try {
       if (props.retryLoading) {
+        // Clear form storage cache
+        localStorage.removeItem('cachedActivities');
+        localStorage.removeItem('activitiesFetchTime');
+        
+        // Force refresh from database
         await props.retryLoading();
+        console.log("Force refreshing data from server");
         toast.success("Data uppdaterad från servern");
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -89,6 +95,9 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
   const handleOpenImportDialog = () => {
     setIsImportDialogOpen(true);
   };
+
+  // Debug information
+  console.log("ActivityTabContent rendering with handleMatchResultUpdate:", !!props.handleMatchResultUpdate);
 
   return (
     <div className="space-y-6">
@@ -107,6 +116,16 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           <Button onClick={() => props.setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            disabled={isRefreshing}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Uppdaterar..." : "Uppdatera"}
           </Button>
         </div>
       </div>
@@ -135,6 +154,7 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onDeleteActivity={props.handleDeleteActivity}
           onKioskAssignmentUpdate={props.handleKioskAssignmentUpdate}
           onMatchResultUpdate={props.handleMatchResultUpdate}
+          onImportActivities={props.handleImportedActivities}
         />
       </PullToRefresh>
       

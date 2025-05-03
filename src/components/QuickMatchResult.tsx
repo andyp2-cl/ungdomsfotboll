@@ -64,11 +64,11 @@ export function QuickMatchResult({
     try {
       // Convert string values to numbers if needed
       const processedHomeScore = homeScore !== undefined && homeScore !== null ? 
-        (typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore) : 
+        (typeof homeScore === 'string' ? parseInt(homeScore as string, 10) : homeScore) : 
         undefined;
         
       const processedAwayScore = awayScore !== undefined && awayScore !== null ? 
-        (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore) : 
+        (typeof awayScore === 'string' ? parseInt(awayScore as string, 10) : awayScore) : 
         undefined;
       
       // Debug data conversion
@@ -77,31 +77,24 @@ export function QuickMatchResult({
         processed: { processedHomeScore, processedAwayScore }
       });
       
-      // Try with direct call first - simplify the flow
-      try {
-        await onSave(processedHomeScore, processedAwayScore);
-        
-        console.log("Score saved successfully");
-        
-        // Use sonner toast correctly
-        toast.success("Resultat sparat", {
-          description: "Matchresultatet har sparats."
-        });
-        
-        // Also use shadcn toast
-        hookToast({
-          description: "Matchresultatet har sparats.",
-          variant: "default"
-        });
-        
-        // Reset error state on success
-        setHasError(false);
-      } catch (error) {
-        console.error("Error saving match result:", error);
-        throw error; // Rethrow to be caught by outer catch
-      }
+      await onSave(processedHomeScore, processedAwayScore);
+      
+      console.log("Score saved successfully");
+      
+      // Use sonner toast correctly
+      toast.success("Resultat sparat", {
+        description: "Matchresultatet har sparats."
+      });
+      
+      // Also use shadcn toast
+      hookToast({
+        description: "Matchresultatet har sparats."
+      });
+      
+      // Reset error state on success
+      setHasError(false);
     } catch (error) {
-      console.error("Error in save handler:", error);
+      console.error("Error saving match result:", error);
       setHasError(true);
       
       // Use sonner toast correctly for error
@@ -111,8 +104,8 @@ export function QuickMatchResult({
       
       // Also use shadcn toast for error
       hookToast({
-        description: "Kunde inte spara ändringar. Försök igen.",
-        variant: "destructive"
+        variant: "destructive",
+        description: "Kunde inte spara ändringar. Försök igen."
       });
     } finally {
       setIsSaving(false);
