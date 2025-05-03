@@ -12,6 +12,9 @@ import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
+import { Globe, Save } from "lucide-react";
+import { useBackupRestore } from "@/utils/storage/backup";
+import { BackupRestoreDialog } from "@/components/backup-restore/BackupRestoreDialog";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -40,7 +43,10 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
+  const [backupMode, setBackupMode] = useState<"backup" | "restore">("backup");
   const isMobile = useIsMobile();
+  const { createBackup, getLastBackupInfo } = useBackupRestore();
 
   // Use the custom hook for managing views and selections
   const {
@@ -84,9 +90,29 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
       setIsRefreshing(false);
     }
   };
-  
-  const handleImportClick = () => {
+
+  const handleOpenImportDialog = () => {
     setIsImportDialogOpen(true);
+  };
+
+  const handleOpenBackupDialog = () => {
+    setBackupMode("backup");
+    setIsBackupDialogOpen(true);
+  };
+
+  const handleOpenRestoreDialog = () => {
+    setBackupMode("restore");
+    setIsBackupDialogOpen(true);
+  };
+
+  const handleQuickBackup = async () => {
+    try {
+      await createBackup();
+      toast.success("Säkerhetskopia skapad");
+    } catch (error) {
+      toast.error("Kunde inte skapa säkerhetskopia");
+      console.error("Error creating backup:", error);
+    }
   };
 
   return (
@@ -99,7 +125,9 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           isMobile={isMobile}
-          onImportClick={handleImportClick}
+          onImportClick={handleOpenImportDialog}
+          onBackupClick={handleOpenBackupDialog}
+          onRestoreClick={handleOpenRestoreDialog}
         />
         
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -138,28 +166,33 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
         />
       </PullToRefresh>
       
-      {/* Import Dialog */}
+      {/* Import from Live Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Importera från live-miljön</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              Importera från live-miljö
+            </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <ImportFromLiveForm 
-              onImportedActivities={async (activities) => {
-                if (props.handleImportedActivities) {
-                  const result = await props.handleImportedActivities(activities);
-                  if (result) {
-                    setIsImportDialogOpen(false);
-                  }
-                  return result;
-                }
-                return false;
-              }} 
-            />
-          </div>
+          <ImportFromLiveForm 
+            onImportedActivities={async (activities) => {
+              const result = await props.handleImportedActivities(activities);
+              if (result) {
+                setIsImportDialogOpen(false);
+              }
+              return result;
+            }} 
+          />
         </DialogContent>
       </Dialog>
+
+      {/* Backup/Restore Dialog */}
+      <BackupRestoreDialog 
+        isOpen={isBackupDialogOpen} 
+        onOpenChange={setIsBackupDialogOpen}
+        defaultTab={backupMode}
+      />
     </div>
   );
 }

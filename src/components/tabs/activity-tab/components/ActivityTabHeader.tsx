@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, LayoutList, History, LineChart, Database, FileUp, Globe } from "lucide-react";
+import { RefreshCw, LayoutList, History, LineChart, Database, FileUp, Globe, Save, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Activity } from "@/types/player";
 
@@ -13,6 +13,8 @@ interface ActivityTabHeaderProps {
   isRefreshing: boolean;
   isMobile: boolean;
   onImportClick?: () => void;
+  onBackupClick?: () => void;
+  onRestoreClick?: () => void;
   onImportActivities?: (activities: Activity[]) => Promise<boolean>;
 }
 
@@ -23,7 +25,9 @@ export function ActivityTabHeader({
   onRefresh,
   isRefreshing,
   isMobile,
-  onImportClick
+  onImportClick,
+  onBackupClick,
+  onRestoreClick
 }: ActivityTabHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
@@ -60,7 +64,34 @@ export function ActivityTabHeader({
           Uppdatera
         </Button>
 
-        {activeView === "tools" && onImportClick && (
+        {/* Alltid visa säkerhetskopieringsknappar oavsett flik */}
+        <>
+          {onBackupClick && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onBackupClick} 
+              className="sm:mr-2"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Säkerhetskopia
+            </Button>
+          )}
+
+          {onRestoreClick && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onRestoreClick} 
+              className="sm:mr-2"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Återställ
+            </Button>
+          )}
+        </>
+
+        {onImportClick && (
           <Button 
             variant="outline" 
             size="sm" 
