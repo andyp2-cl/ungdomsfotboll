@@ -1,368 +1,326 @@
 
-import React, { useState, useEffect } from "react";
-import { supabase, isSupabaseConfigured, forceResetConnection } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Database, RefreshCw, Check, X } from "lucide-react";
-import { toast } from "sonner";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import { Button } from '../ui/button';
+import { fetchActivitiesFromDB } from '@/utils/storage/activity/fetch-operations';
+import { toast } from 'sonner';
+import { CheckCircle, XCircle, RefreshCw, AlertTriangle, Database, Shield, LogOut, Power } from 'lucide-react';
 
-export function DatabaseDiagnostics() {
+function DatabaseDiagnostics() {
   const [isRunningTests, setIsRunningTests] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [testResults, setTestResults] = useState<any>(null);
-  const [connectionDetails, setConnectionDetails] = useState<any>(null);
-  const [isClearing, setIsClearing] = useState(false);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Load connection details on mount
-  useEffect(() => {
-    const connectionInfo = {
-      lastSuccessfulConnection: localStorage.getItem('sb-connection-test-time') ? 
-        new Date(parseInt(localStorage.getItem('sb-connection-test-time')!, 10)).toLocaleString() : 'Okänd',
-      lastError: localStorage.getItem('sb-connection-error'),
-      cachedMatchCount: localStorage.getItem('match-data-count') || '0',
-      cachedActivitiesCount: localStorage.getItem('cachedActivitiesCount') || '0',
-      lastUpdate: localStorage.getItem('sb-activities-last-update') ? 
-        new Date(parseInt(localStorage.getItem('sb-activities-last-update')!, 10)).toLocaleString() : 'Okänd'
-    };
-    setConnectionDetails(connectionInfo);
-  }, []);
-
-  const clearLocalStorageCache = async () => {
-    try {
-      setIsClearing(true);
-      toast.loading("Rensar alla cachade data...");
-      
-      // Clear all localStorage items related to data storage
-      const keysToRemove = ['cachedActivities', 'cachedActivitiesTime', 'cachedActivitiesCount',
-                           'cachedMatchActivities', 'cachedMatchActivitiesTime', 'cachedMatchActivitiesCount',
-                           'sb-activities-last-update', 'sb-activities-fetch-time', 'sb-connection-test',
-                           'sb-connection-test-time', 'sb-connection-metrics', 'sb-connection-error'];
-                           
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      // After a brief pause, reload the page
-      setTimeout(() => {
-        toast.success("All cache rensad, laddar om sidan...");
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      console.error("Error clearing local storage cache:", error);
-      toast.error("Fel vid rensning av cache");
-    } finally {
-      setIsClearing(false);
-    }
-  };
-
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string; details?: any }>>({});
+  const [isPerformingReset, setIsPerformingReset] = useState(false);
+  
+  // Run diagnostic tests on the database connection
   const runDiagnostics = async () => {
+    setIsRunningTests(true);
+    setTestResults({});
+    
     try {
-      setIsRunningTests(true);
-      toast.loading("Kör diagnostik...");
-
-      const results: any = {
-        startTime: Date.now(),
-        tests: {},
-        online: navigator.onLine
-      };
-
-      // Step 1: Check if device is online
-      results.tests.online = { 
-        passed: navigator.onLine,
-        name: "Nätverksanslutning"
-      };
+      // Test 1: Check if online
+      const isOnline = navigator.onLine;
+      setTestResults(prev => ({ 
+        ...prev, 
+        online: { 
+          success: isOnline, 
+          message: isOnline ? 'Enheten är ansluten till internet' : 'Enheten är offline'
+        }
+      }));
       
-      if (!navigator.onLine) {
-        toast.error("Enheten är offline. Anslut till internet först");
-        results.online = false;
-        setTestResults(results);
+      if (!isOnline) {
+        toast.error("Din enhet är offline. Anslut till internet först.");
         return;
       }
-
-      // Step 2: Check if Supabase client is configured
+      
+      // Test 2: Check session
+      const { data: { session } } = await supabase.auth.getSession();
+      setTestResults(prev => ({ 
+        ...prev, 
+        session: { 
+          success: !!session, 
+          message: session 
+            ? `Session hittad: ${session.user?.email || 'Anonym'}` 
+            : 'Ingen aktiv session hittad'
+        }
+      }));
+      
+      // Test 3: Check direct API access to Supabase
       try {
-        results.tests.configured = {
-          name: "Supabase klientkonfiguration",
-          inProgress: true
-        };
-        const isConfigured = await isSupabaseConfigured();
-        results.tests.configured.passed = isConfigured;
-        results.tests.configured.inProgress = false;
-      } catch (error) {
-        results.tests.configured.passed = false;
-        results.tests.configured.error = error instanceof Error ? error.message : 'Okänt fel';
-        results.tests.configured.inProgress = false;
-      }
-
-      // Step 3: Test authentication
-      try {
-        results.tests.auth = {
-          name: "Autentisering",
-          inProgress: true
-        };
-        const { data: { session } } = await supabase.auth.getSession();
-        results.tests.auth.passed = !!session;
-        results.tests.auth.details = session ? { 
-          userId: session.user.id,
-          expiresAt: new Date(session.expires_at! * 1000).toLocaleString()
-        } : null;
-        results.tests.auth.inProgress = false;
-      } catch (error) {
-        results.tests.auth.passed = false;
-        results.tests.auth.error = error instanceof Error ? error.message : 'Okänt fel';
-        results.tests.auth.inProgress = false;
-      }
-
-      // Step 4: Test read access
-      try {
-        results.tests.readAccess = {
-          name: "Läsbehörighet",
-          inProgress: true
-        };
-        const startTime = performance.now();
-        const { data, error } = await supabase
-          .from('players')
-          .select('count')
-          .limit(1);
-        const queryTime = performance.now() - startTime;
+        const directResponse = await fetch("https://zkrruihxszziifyogzko.supabase.co/rest/v1/leagues?select=id&limit=1", {
+          headers: {
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcnJ1aWh4c3p6aWlmeW9nemtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNjQ1NDksImV4cCI6MjA1ODc0MDU0OX0.ct3AMhbgnJg6pOjlACfwPR5n_Nz2pHX5AScfe84YM0U",
+            "Content-Type": "application/json"
+          }
+        });
         
-        results.tests.readAccess.passed = !error;
-        results.tests.readAccess.details = { 
-          queryTime: `${queryTime.toFixed(2)}ms`,
-          error: error ? error.message : null
-        };
-        results.tests.readAccess.inProgress = false;
+        if (directResponse.ok) {
+          const data = await directResponse.json();
+          setTestResults(prev => ({ 
+            ...prev, 
+            directApi: { 
+              success: true, 
+              message: 'Direkt API-anslutning fungerar', 
+              details: data
+            }
+          }));
+        } else {
+          const errorText = await directResponse.text();
+          throw new Error(`HTTP ${directResponse.status}: ${errorText}`);
+        }
       } catch (error) {
-        results.tests.readAccess.passed = false;
-        results.tests.readAccess.error = error instanceof Error ? error.message : 'Okänt fel';
-        results.tests.readAccess.inProgress = false;
+        setTestResults(prev => ({ 
+          ...prev, 
+          directApi: { 
+            success: false, 
+            message: `Direkt API-anslutning misslyckades: ${error instanceof Error ? error.message : String(error)}`
+          }
+        }));
       }
-
-      // Step 5: Test activities fetch specifically
+      
+      // Test 4: Try to fetch activities
       try {
-        results.tests.activitiesFetch = {
-          name: "Aktiviteter hämtning",
-          inProgress: true
-        };
+        const activities = await fetchActivitiesFromDB({ 
+          showToast: false, 
+          silent: true,
+          forceRefresh: true
+        });
         
-        const startTime = performance.now();
-        const { data, error } = await supabase
-          .from('activities')
-          .select('id,name')
-          .limit(5);
-        const queryTime = performance.now() - startTime;
-          
-        results.tests.activitiesFetch.passed = !error && Array.isArray(data);
-        results.tests.activitiesFetch.details = { 
-          queryTime: `${queryTime.toFixed(2)}ms`,
-          recordsFound: data?.length || 0,
-          error: error ? error.message : null
-        };
-        results.tests.activitiesFetch.inProgress = false;
+        setTestResults(prev => ({ 
+          ...prev, 
+          activities: { 
+            success: activities && activities.length > 0, 
+            message: activities && activities.length > 0 
+              ? `Hämtade ${activities.length} aktiviteter från databasen` 
+              : 'Inga aktiviteter hittades i databasen',
+            details: {
+              count: activities?.length || 0,
+              matchCount: activities?.filter(a => a.type === 'match').length || 0
+            }
+          }
+        }));
       } catch (error) {
-        results.tests.activitiesFetch.passed = false;
-        results.tests.activitiesFetch.error = error instanceof Error ? error.message : 'Okänt fel';
-        results.tests.activitiesFetch.inProgress = false;
+        setTestResults(prev => ({ 
+          ...prev, 
+          activities: { 
+            success: false, 
+            message: `Kunde inte hämta aktiviteter: ${error instanceof Error ? error.message : String(error)}`
+          }
+        }));
       }
-
-      // Gather connection details from localStorage
-      const connectionInfo = {
-        lastSuccessfulConnection: localStorage.getItem('sb-connection-test-time') ? 
-          new Date(parseInt(localStorage.getItem('sb-connection-test-time')!, 10)).toLocaleString() : 'Okänd',
-        lastError: localStorage.getItem('sb-connection-error'),
-        cachedMatchCount: localStorage.getItem('match-data-count') || '0',
-        cachedActivitiesCount: localStorage.getItem('cachedActivitiesCount') || '0',
-        lastUpdate: localStorage.getItem('sb-activities-last-update') ? 
-          new Date(parseInt(localStorage.getItem('sb-activities-last-update')!, 10)).toLocaleString() : 'Okänd'
-      };
-      setConnectionDetails(connectionInfo);
-
-      // Complete the tests
-      results.endTime = Date.now();
-      results.duration = results.endTime - results.startTime;
-      setTestResults(results);
       
-      // Show summary
-      const passedTests = Object.values(results.tests).filter((t: any) => t.passed).length;
-      const totalTests = Object.keys(results.tests).length;
-      
-      if (passedTests === totalTests) {
-        toast.success(`Alla ${totalTests} tester passerade!`);
-      } else {
-        toast.warning(`${passedTests} av ${totalTests} tester passerade`);
+      // Test 5: Check cache
+      try {
+        const cachedActivitiesJson = localStorage.getItem('cachedActivities');
+        const hasCachedData = !!cachedActivitiesJson;
+        
+        if (hasCachedData) {
+          const cachedActivities = JSON.parse(cachedActivitiesJson);
+          setTestResults(prev => ({ 
+            ...prev, 
+            cache: { 
+              success: true, 
+              message: `Hittade ${cachedActivities.length} cachade aktiviteter`,
+              details: {
+                count: cachedActivities.length,
+                lastCacheTime: localStorage.getItem('cachedActivitiesTime') 
+                  ? new Date(parseInt(localStorage.getItem('cachedActivitiesTime') || '0')).toLocaleString() 
+                  : 'Okänd'
+              }
+            }
+          }));
+        } else {
+          setTestResults(prev => ({ 
+            ...prev, 
+            cache: { 
+              success: false, 
+              message: 'Ingen cachad data hittades'
+            }
+          }));
+        }
+      } catch (error) {
+        setTestResults(prev => ({ 
+          ...prev, 
+          cache: { 
+            success: false, 
+            message: `Fel vid kontroll av cache: ${error instanceof Error ? error.message : String(error)}`
+          }
+        }));
       }
-    } catch (e) {
-      console.error("Error running diagnostics:", e);
-      toast.error("Fel vid diagnostik");
-    } finally {
-      toast.dismiss();
-      setIsRunningTests(false);
-    }
-  };
-
-  const handleForceReconnect = async () => {
-    try {
-      setIsRunningTests(true);
-      toast.loading("Tvingar återanslutning...");
-      await forceResetConnection();
-      toast.success("Återanslutning slutförd, laddar om sidan...");
       
-      // Force reload page after connection reset to ensure clean state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      toast.success("Diagnoserna är klara");
     } catch (error) {
-      toast.error("Återanslutning misslyckades");
-      console.error("Error during forced reconnection:", error);
+      console.error("Error running diagnostics:", error);
+      toast.error("Ett fel uppstod vid körning av diagnoser");
     } finally {
       setIsRunningTests(false);
     }
   };
-
-  const handleCompleteClear = async () => {
+  
+  // Complex reset operation to completely clear state and reconnect
+  const clearAuthAndReconnect = async () => {
     try {
-      setIsRunningTests(true);
-      toast.loading("Utför komplett återställning...");
+      setIsPerformingReset(true);
+      toast.loading("Utför fullständig återställning...");
       
-      await clearAuthAndReconnect();
+      // Step 1: Clear all localStorage related to authentication and caching
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.startsWith('sb-') || 
+          key.startsWith('supabase') || 
+          key.startsWith('cached') || 
+          key.includes('activities')
+        )) {
+          keysToRemove.push(key);
+        }
+      }
       
-      toast.success("Återställning slutförd, laddar om sidan...");
-      // Force reload page after reset to ensure clean state
+      console.log(`Clearing ${keysToRemove.length} localStorage items:`, keysToRemove);
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Step 2: Sign out from Supabase
+      await supabase.auth.signOut({ scope: 'global' });
+      console.log("Signed out of Supabase");
+      
+      // Step 3: Try to connect anonymously
+      try {
+        await supabase.auth.signInAnonymously();
+        console.log("Signed in anonymously");
+      } catch (err) {
+        console.error("Anonymous sign-in failed:", err);
+      }
+      
+      toast.success("Återställning slutförd. Laddar om sidan...");
+      
+      // Step 4: Force reload the page to reset all React state
       setTimeout(() => {
         window.location.reload();
       }, 1500);
     } catch (error) {
-      toast.error("Återställning misslyckades");
       console.error("Error during complete reset:", error);
+      toast.error("Fel vid återställning");
     } finally {
-      setIsRunningTests(false);
+      setIsPerformingReset(false);
     }
   };
-
+  
+  useEffect(() => {
+    // Run diagnostics automatically on mount
+    runDiagnostics();
+  }, []);
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Database className="h-5 w-5" />
-          Databasdiagnostik
-        </CardTitle>
-        <CardDescription>
-          Diagnostisera problem med databasanslutningen
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-4">
-          {/* Network status */}
-          <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Nätverk:</span> 
-            <span className={`flex items-center gap-1 ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
-              {isOnline ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>Ansluten</span>
-                </>
-              ) : (
-                <>
-                  <X className="h-4 w-4" />
-                  <span>Frånkopplad</span>
-                </>
-              )}
-            </span>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              onClick={runDiagnostics} 
-              disabled={isRunningTests || isClearing}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isRunningTests ? "Kör tester..." : "Kör diagnostik"}
-            </Button>
-            <Button 
-              onClick={handleForceReconnect} 
-              disabled={isRunningTests || isClearing}
-              variant="outline"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Återanslut till DB
-            </Button>
-            <Button
-              onClick={clearLocalStorageCache}
-              disabled={isRunningTests || isClearing}
-              variant="outline"
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              Rensa cache
-            </Button>
-            <Button 
-              onClick={handleCompleteClear} 
-              disabled={isRunningTests || isClearing}
-              variant="outline"
-              className="border-red-300 text-red-700 hover:bg-red-50"
-            >
-              Komplett återställning
-            </Button>
-          </div>
-
-          {/* Test results */}
-          {testResults && (
-            <div className="mt-4">
-              <h4 className="font-medium mb-2">Testresultat:</h4>
-              <div className="space-y-2">
-                {Object.entries(testResults.tests).map(([key, test]: [string, any]) => (
-                  <div key={key} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                    <span>{test.name}:</span>
-                    <span className="flex items-center">
-                      {test.inProgress ? (
-                        "Kör test..."
-                      ) : test.passed ? (
-                        <span className="text-green-600 flex items-center">
-                          <Check className="h-4 w-4 mr-1" />
-                          Godkänd
-                        </span>
-                      ) : (
-                        <span className="text-red-600 flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-1" />
-                          Misslyckad
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                ))}
-                <div className="text-xs text-gray-500 mt-1">
-                  Testtid: {testResults.duration}ms
-                </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-medium">Databasdiagnostik</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={runDiagnostics} 
+          disabled={isRunningTests}
+        >
+          <RefreshCw className={`h-4 w-4 mr-1 ${isRunningTests ? 'animate-spin' : ''}`} />
+          {isRunningTests ? 'Kör tester...' : 'Kör tester igen'}
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-3">
+        {Object.entries(testResults).map(([testId, result]) => (
+          <div 
+            key={testId} 
+            className={`p-3 rounded-lg border ${
+              result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+            }`}
+          >
+            <div className="flex items-start">
+              <div className="mr-2 mt-0.5">
+                {result.success ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600" />
+                )}
               </div>
-            </div>
-          )}
-
-          {/* Connection details */}
-          {connectionDetails && (
-            <div className="mt-2">
-              <h4 className="font-medium mb-2">Anslutningsdetaljer:</h4>
-              <div className="text-xs space-y-1 bg-gray-50 p-2 rounded">
-                <div><strong>Senaste anslutning:</strong> {connectionDetails.lastSuccessfulConnection}</div>
-                <div><strong>Cachade aktiviteter:</strong> {connectionDetails.cachedActivitiesCount}</div>
-                <div><strong>Cachade matcher:</strong> {connectionDetails.cachedMatchCount}</div>
-                <div><strong>Senaste datauppdatering:</strong> {connectionDetails.lastUpdate}</div>
-                {connectionDetails.lastError && (
-                  <div className="text-red-600"><strong>Senaste fel:</strong> {connectionDetails.lastError}</div>
+              <div>
+                <div className="font-medium">{testToLabel(testId)}</div>
+                <div className="text-sm text-gray-600">{result.message}</div>
+                
+                {result.details && (
+                  <div className="mt-1 p-2 bg-white rounded text-xs">
+                    {Object.entries(result.details).map(([key, value]) => (
+                      <div key={key} className="grid grid-cols-3 gap-2">
+                        <span className="font-medium">{key}:</span>
+                        <span className="col-span-2">{
+                          typeof value === 'object' 
+                            ? JSON.stringify(value) 
+                            : String(value)
+                        }</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+      
+      <div className="border-t pt-4 mt-6">
+        <h3 className="text-base font-medium mb-2">Felsökningsverktyg</h3>
+        
+        <div className="space-y-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-start"
+            onClick={() => {
+              localStorage.removeItem('sb-activities-fetch-time');
+              localStorage.removeItem('sb-connection-test');
+              localStorage.removeItem('sb-connection-test-time');
+              toast.success("Cachen rensad. Laddar om...");
+              setTimeout(() => window.location.reload(), 1000);
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Rensa connection cache och ladda om
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-start"
+            onClick={clearAuthAndReconnect}
+            disabled={isPerformingReset}
+          >
+            <Power className="h-4 w-4 mr-2 text-amber-600" />
+            Fullständig återställning
+          </Button>
+          
+          <div className="text-xs text-amber-700 p-2 bg-amber-50 rounded mt-2">
+            <div className="flex gap-1 items-center mb-1">
+              <AlertTriangle className="h-4 w-4" />
+              <strong>Fullständig återställning</strong>
+            </div>
+            Använd detta alternativ om inget annat fungerar. Detta rensar alla cachade 
+            data, loggar ut dig och försöker återansluta. Sidan kommer att laddas om.
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
+
+// Helper function to convert test IDs to human-readable labels
+function testToLabel(testId: string): string {
+  const labels: Record<string, string> = {
+    online: 'Internet-anslutning',
+    session: 'Supabase session',
+    directApi: 'Direkt API-åtkomst',
+    activities: 'Aktiviteter från databasen',
+    cache: 'Lokal cache'
+  };
+  
+  return labels[testId] || testId;
+}
+
+export default DatabaseDiagnostics;

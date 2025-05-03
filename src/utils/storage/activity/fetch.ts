@@ -1,7 +1,7 @@
 
 import { Activity } from "@/types/player";
 import { toast } from "sonner";
-import { cacheActivities, getActivitiesFromCache } from "./cache-operations";
+import { cacheActivities, getActivitiesFromCache, shouldRefreshCache } from "./cache-operations";
 import { fetchActivitiesFromDB } from "./fetch-operations";
 import { handleFetchError } from "./error-handling";
 
@@ -35,13 +35,13 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
   const lastFetchTime = localStorage.getItem('sb-activities-fetch-time');
   const shouldForceRefresh = forceRefresh || 
     !lastFetchTime || 
-    (Date.now() - parseInt(lastFetchTime, 10) > 1000 * 60 * 10); // 10 minutes
+    (Date.now() - parseInt(lastFetchTime, 10) > 1000 * 60 * 5); // 5 minutes
   
   if (shouldForceRefresh && showToast) {
-    toast.info("Tvingar uppdatering av data", { duration: 2000 });
+    toast.info("Hämtar färsk data från servern", { duration: 2000 });
   }
   
-  // ALWAYS try to fetch from database when online, regardless of forceRefresh
+  // Try to fetch from database first if online, regardless of forceRefresh
   if (navigator.onLine) {
     try {
       // Reset cached connection test to ensure we're actually trying to connect
@@ -67,7 +67,7 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
       if (activities && activities.length > 0) {
         await cacheActivities(activities);
         
-        // Log match data specifically
+        // Log match data specifically for debugging issues
         const matchActivities = activities.filter(a => a.type === 'match');
         console.log(`Cached ${matchActivities.length} match activities`);
         
@@ -75,64 +75,53 @@ export const getStoredActivities = async (context?: any): Promise<Activity[]> =>
         const matchesWithScores = matchActivities.filter(m => 
           m.homeScore !== undefined && m.awayScore !== undefined);
         console.log(`Found ${matchesWithScores.length} matches with scores`);
+        
+        return activities;
       } else {
         if (showToast) {
-          toast.warning("Inga aktiviteter hämtades, försöker med lokal cache");
+          toast.warning("Inga aktiviteter hämtades från databasen, försöker med lokal cache");
         }
         
         // Even if no data returned, mark as successful connection if no error was thrown
         localStorage.setItem('sb-connection-test', 'true');
         localStorage.setItem('sb-connection-test-time', Date.now().toString());
-        
-        // Try to use cache as fallback if we got empty data but no error
-        const cachedActivities = getActivitiesFromCache();
-        if (cachedActivities && cachedActivities.length > 0) {
-          console.log(`Using ${cachedActivities.length} cached activities as fallback`);
-          return cachedActivities;
-        }
       }
-      
-      return activities;
     } catch (error) {
       console.error("Failed to fetch from database, trying cache:", error);
       toast.dismiss();
       
-      // On error, always try to use cache as fallback
-      const cachedActivities = getActivitiesFromCache(false);
-      if (cachedActivities && cachedActivities.length > 0) {
-        if (showToast) {
-          toast.warning("Kunde inte ansluta till databasen. Visar cachad data.");
-        }
-        
-        console.log(`Using ${cachedActivities.length} cached activities due to fetch error`);
-        
-        // Log cache diagnostics
-        const matchActivities = cachedActivities.filter(a => a.type === 'match');
-        console.log(`Found ${matchActivities.length} cached match activities`);
-        
-        return cachedActivities;
-      }
-      
-      // If we can't get from cache either, handle the error properly
       if (showToast) {
-        toast.error("Kunde inte hämta aktiviteter. Kontrollera din anslutning.");
+        toast.warning("Kunde inte ansluta till databasen. Försöker med lokal cache.");
       }
-      return handleFetchError(error, showToast);
     }
   } else {
-    // When offline, use the cache and be clear about it
+    // When offline, alert about it
     console.log("Device is offline, using cached activities");
-    const cachedData = getActivitiesFromCache(false);
-    
     if (showToast) {
-      toast.dismiss();
-      if (!cachedData || cachedData.length === 0) {
-        toast.warning("Ingen data tillgänglig offline. Anslut till internet för att ladda data.");
-      } else {
-        toast.info(`Visar ${cachedData.length} cachade aktiviteter (offline-läge)`);
-      }
+      toast.info("Du är offline. Visar cachade aktiviteter.");
     }
-    
-    return cachedData || [];
   }
+  
+  // If we get here, try to use cached data as fallback
+  try {
+    const cachedActivities = getActivitiesFromCache();
+    if (cachedActivities && cachedActivities.length > 0) {
+      console.log(`Using ${cachedActivities.length} cached activities`);
+      
+      // Log cache diagnostics
+      const matchActivities = cachedActivities.filter(a => a.type === 'match');
+      console.log(`Found ${matchActivities.length} cached match activities`);
+      
+      return cachedActivities;
+    }
+  } catch (cacheError) {
+    console.error("Error getting activities from cache:", cacheError);
+  }
+  
+  // No data from database or cache
+  if (showToast) {
+    toast.error("Kunde inte hämta aktiviteter. Kontrollera din anslutning.");
+  }
+  
+  return [];
 };

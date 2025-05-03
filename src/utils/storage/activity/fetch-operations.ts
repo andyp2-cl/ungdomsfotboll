@@ -39,7 +39,7 @@ export const fetchActivitiesFromDB = async (options: {
       setTimeout(() => reject(new Error("Anslutningen timeout - databasförfrågan tog för lång tid")), 30000)
     );
     
-    // Create the actual fetch promise with cache control headers
+    // Create the actual fetch promise with cache control to ensure fresh data
     let fetchPromise;
     
     if (forceRefresh) {
@@ -65,15 +65,15 @@ export const fetchActivitiesFromDB = async (options: {
     // Race the fetch against the timeout
     const { data, error, count } = await Promise.race([fetchPromise, timeoutPromise]);
     
-    // Log diagnostic info
+    // Update fetch time
     localStorage.setItem('sb-activities-fetch-time', Date.now().toString());
     localStorage.setItem('sb-activities-fetch-count', String(count || 0));
     
-    // Handle potential errors
+    // Handle errors
     if (error) {
       console.error("Supabase query error:", error);
       
-      // Attempt retry if we haven't exceeded retry count
+      // Retry if we haven't exceeded retry count
       if (retryCount < 3) {
         console.log(`Retry attempt ${retryCount + 1} for fetching activities`);
         
@@ -83,7 +83,7 @@ export const fetchActivitiesFromDB = async (options: {
           });
         }
         
-        // Wait with exponential backoff before retrying
+        // Wait with exponential backoff
         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
         
         // Recursive retry with incremented count
@@ -91,7 +91,7 @@ export const fetchActivitiesFromDB = async (options: {
           showToast,
           silent,
           retryCount: retryCount + 1,
-          forceRefresh: true // Always force refresh on retry attempts
+          forceRefresh: true // Always force refresh on retry
         });
       }
       
@@ -105,18 +105,18 @@ export const fetchActivitiesFromDB = async (options: {
       throw error;
     }
     
-    // Success! Store the fetch time for telemetry
+    // Success! Store test
     localStorage.setItem('sb-connection-test', 'true');
     localStorage.setItem('sb-activities-last-update', Date.now().toString());
     
-    // Track match data specifically for diagnostics
+    // Track match data
     const matchActivities = data?.filter(item => item.type === 'match') || [];
     localStorage.setItem('match-data-count', String(matchActivities.length));
     localStorage.setItem('match-data-last-update', Date.now().toString());
     
-    // If no match data is detected, we might need an extra query specifically for matches
+    // Check if we need to fetch match data specifically
     if (data && data.length > 0 && matchActivities.length === 0) {
-      console.warn("No match activities found in the initial fetch, attempting to fetch matches specifically");
+      console.warn("No match activities found in the initial fetch, attempting specific query");
       
       try {
         const { data: matchData } = await supabase
@@ -126,10 +126,10 @@ export const fetchActivitiesFromDB = async (options: {
           .order('date', { ascending: true });
           
         if (matchData && matchData.length > 0) {
-          console.log(`Specifically fetched ${matchData.length} match activities`);
+          console.log(`Fetched ${matchData.length} match activities specifically`);
           localStorage.setItem('match-data-count', String(matchData.length));
           
-          // Merge match data with other activities without duplicates
+          // Merge without duplicates
           const mergedActivities = [...data];
           const existingIds = new Set(data.map(a => a.id));
           
@@ -140,19 +140,16 @@ export const fetchActivitiesFromDB = async (options: {
             }
           });
           
-          // Update the data to return with the merged activities
+          // Update data
           data.length = 0;
           data.push(...mergedActivities);
-        } else {
-          console.warn("Still no match activities found after specific query");
         }
-      } catch (matchFetchError) {
-        console.error("Error fetching match activities specifically:", matchFetchError);
-        // Continue with what we have
+      } catch (err) {
+        console.error("Error fetching match activities specifically:", err);
       }
     }
     
-    // Dismiss any loading toasts
+    // Dismiss loading toast
     if (!silent) {
       toast.dismiss("fetch-activities");
       
@@ -163,12 +160,11 @@ export const fetchActivitiesFromDB = async (options: {
       }
     }
     
-    // Validate and log the returned data
+    // Log and return data
     console.log(`Fetched ${data?.length || 0} activities from database`);
     if (data) {
       console.log(`Found ${matchActivities.length} match activities`);
       
-      // Log some samples to debug
       if (matchActivities.length > 0) {
         console.log("Sample matches:", matchActivities.slice(0, 3).map(m => ({
           id: m.id,
@@ -178,17 +174,13 @@ export const fetchActivitiesFromDB = async (options: {
           away_score: m.away_score,
           cup_id: m.cup_id
         })));
-      } else {
-        console.warn("No match activities found in the fetched data");
       }
     }
     
-    // If we get here with no data, just return an empty array instead of null
     return data || [];
   } catch (error) {
     console.error("Error fetching from database:", error);
     
-    // Always dismiss the loading toast
     toast.dismiss("fetch-activities");
     
     if (!silent && showToast) {
