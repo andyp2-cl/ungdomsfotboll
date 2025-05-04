@@ -101,6 +101,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               selectedActivity={props.selectedActivity}
               selectedActivityTypes={props.selectedActivityTypes}
               filteredActivities={props.filteredActivities}
+              filteredHistoricalActivities={props.filteredHistoricalActivities}
               handleActivityTypeChange={props.handleActivityTypeChange}
               setSelectedActivity={props.setSelectedActivity}
               handleActivityUpdate={handleActivityUpdateWrapper}

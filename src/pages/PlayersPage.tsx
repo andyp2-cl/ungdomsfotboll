@@ -146,6 +146,7 @@ export default function PlayersPage() {
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
             handleActivityTypeChange={handleActivityTypeChange}
             setSelectedActivity={setSelectedActivity}
             handleActivityUpdate={async (activity) => {

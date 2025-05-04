@@ -11,6 +11,7 @@ interface ActivitiesTabContentProps {
   selectedActivity: Activity | null;
   selectedActivityTypes: string[];
   filteredActivities: Activity[];
+  filteredHistoricalActivities?: Activity[];
   onActivitySelect: (activity: Activity | null) => void;
   onActivityTypeChange: (type: string) => void;
   onAddActivityClick: () => void;
@@ -27,6 +28,7 @@ export function ActivitiesTabContent({
   selectedActivity,
   selectedActivityTypes,
   filteredActivities,
+  filteredHistoricalActivities,
   onActivitySelect,
   onActivityTypeChange,
   onAddActivityClick,
@@ -55,6 +57,7 @@ export function ActivitiesTabContent({
           selectedActivity={selectedActivity}
           selectedActivityTypes={selectedActivityTypes}
           filteredActivities={filteredActivities}
+          filteredHistoricalActivities={filteredHistoricalActivities}
           handleActivityTypeChange={onActivityTypeChange}
           setSelectedActivity={onActivitySelect}
           handleActivityUpdate={onActivityUpdate}
