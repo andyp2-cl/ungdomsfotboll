@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -16,7 +17,7 @@ interface ActivityListItemProps {
   onSelect: (activity: Activity) => void;
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
-  isMobile?: boolean; // Add isMobile prop to the interface
+  isMobile?: boolean;
 }
 
 export function ActivityListItem({ 
@@ -152,6 +153,7 @@ export function ActivityListItem({
                 onPlayerSelect={onPlayerSelect}
                 totalCount={participants.length}
                 isMobile={isMobileView}
+                showAll={true} // Explicitly show all participants
               />
             </div>
           </div>

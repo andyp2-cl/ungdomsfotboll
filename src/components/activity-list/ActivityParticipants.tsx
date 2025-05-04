@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,20 +13,23 @@ interface ActivityParticipantsProps {
   totalCount?: number;
   maxDisplayed?: number;
   isMobile?: boolean;
+  showAll?: boolean;
 }
 
 export function ActivityParticipants({
   participants,
   onPlayerSelect,
   totalCount = 0,
-  maxDisplayed = 5,
-  isMobile = false
+  maxDisplayed = 100, // Changed from 5 to 100 to show all participants
+  isMobile = false,
+  showAll = true // New prop with default true to show all participants
 }: ActivityParticipantsProps) {
   // Sort participants by grade
   const sortedParticipants = sortPlayersByGrade(participants);
   
-  const displayParticipants = sortedParticipants.slice(0, maxDisplayed);
-  const remainingCount = Math.max(0, totalCount - maxDisplayed);
+  // If showAll is true, we display all participants, otherwise we use the maxDisplayed limit
+  const displayParticipants = showAll ? sortedParticipants : sortedParticipants.slice(0, maxDisplayed);
+  const remainingCount = showAll ? 0 : Math.max(0, totalCount - maxDisplayed);
 
   if (!sortedParticipants.length) {
     return (
@@ -36,7 +40,7 @@ export function ActivityParticipants({
   }
 
   return (
-    <div className="flex items-center -space-x-2">
+    <div className="flex flex-wrap gap-1 items-center">
       <TooltipProvider>
         {displayParticipants.map((player) => (
           <Tooltip key={player.id}>
