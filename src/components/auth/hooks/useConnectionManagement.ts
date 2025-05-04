@@ -1,17 +1,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured, forceResetConnection } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { testDatabaseAccess, connectAnonymously } from '../utils/databaseUtils';
 import { toast } from 'sonner';
-import { shouldAutoConnectDatabase } from '@/utils/environment';
 
 export function useConnectionManagement(isOnline: boolean) {
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [isRLSEnabled, setIsRLSEnabled] = useState(true);
+  const [isRLSEnabled, setIsRLSEnabled] = useState(false);
 
-  // Check database connection with automatic reconnect if configured
+  // Check database connection with automatic connect
   const checkDatabaseConnection = useCallback(async (forceCheck = false) => {
     if (!isOnline) {
       console.log("Skip connection check - device is offline");
@@ -38,53 +37,28 @@ export function useConnectionManagement(isOnline: boolean) {
       
       console.log("Testing database connection...");
       
-      // Test if we already have a working connection
-      const isConfigured = await isSupabaseConfigured();
-      
-      if (isConfigured) {
-        console.log("Database connection is configured");
+      // Always try to connect directly
+      const { success, rlsEnabled } = await testDatabaseAccess();
+        
+      if (success) {
+        console.log("Database connection established successfully");
         setConnectionChecked(true);
         setConnectionError(null);
+        setIsRLSEnabled(rlsEnabled || false);
+      } else {
+        console.log("Database connection attempt failed, trying backup connection...");
         
-        // Try to test with actual database access
-        const { success, rlsEnabled } = await testDatabaseAccess();
+        // Always try anonymous connection as fallback
+        const anonymousSuccess = await connectAnonymously();
         
-        if (success) {
-          console.log("Database test successful, RLS enabled:", rlsEnabled);
-          setIsRLSEnabled(rlsEnabled);
+        if (anonymousSuccess) {
+          console.log("Anonymous connection successful");
+          setConnectionChecked(true);
           setConnectionError(null);
         } else {
-          console.log("Database configuration exists but test failed");
-          
-          // If auto-connect is enabled, try that
-          if (shouldAutoConnectDatabase()) {
-            console.log("Auto-connect enabled, attempting anonymous sign-in");
-            const anonymousSuccess = await connectAnonymously();
-            
-            if (anonymousSuccess) {
-              setConnectionError(null);
-            } else {
-              setConnectionError("Databasanslutning misslyckades");
-            }
-          } else {
-            setConnectionError("Databasanslutningen kräver åtkomst");
-          }
+          console.log("All connection attempts failed");
+          setConnectionError("Databasanslutningen misslyckades");
         }
-      } else {
-        // If auto-connect is enabled and we're not configured, try anonymous sign-in
-        if (shouldAutoConnectDatabase()) {
-          console.log("Auto-connect enabled, attempting anonymous sign-in");
-          const anonymousSuccess = await connectAnonymously();
-          
-          if (anonymousSuccess) {
-            setConnectionChecked(true);
-            setConnectionError(null);
-            return;
-          }
-        }
-        
-        console.log("Database connection is not configured");
-        setConnectionError("Aktivera DB-åtkomst för databasefunktioner");
       }
     } catch (err) {
       console.error("Error checking database connection:", err);
@@ -105,17 +79,21 @@ export function useConnectionManagement(isOnline: boolean) {
       localStorage.removeItem('sb-connection-test');
       localStorage.removeItem('sb-connection-test-time');
       
-      // Force reset Supabase connection
-      await forceResetConnection();
+      // Try direct connection
+      const { success } = await testDatabaseAccess();
       
-      // Try to connect anonymously if auto-connect is enabled
-      if (shouldAutoConnectDatabase()) {
-        const success = await connectAnonymously();
-        if (success) {
-          toast.success("Återansluten till databasen");
-          setConnectionError(null);
-          return;
-        }
+      if (success) {
+        toast.success("Återansluten till databasen");
+        setConnectionError(null);
+        return;
+      }
+
+      // Try anonymous connection
+      const anonSuccess = await connectAnonymously();
+      if (anonSuccess) {
+        toast.success("Återansluten till databasen");
+        setConnectionError(null);
+        return;
       }
 
       // Fall back to normal connection check

@@ -1,75 +1,34 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import PasswordProtection from "./components/PasswordProtection";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import PlayersPage from "./pages/PlayersPage";
-import PlayerManagementPage from "./pages/PlayerManagementPage";
-import { useSyncEngine } from "./hooks/useSyncEngine";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { LoginStatus } from "./components/auth/LoginStatus";
-import LayoutMain from "./components/LayoutMain";
 
-// Create a QueryClient with basic configuration
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import HomePage from "./pages/Index";
+import PlayersPage from "./pages/PlayersPage";
+import NotFound from "./pages/NotFound";
+import PlayerManagementPage from "./pages/PlayerManagementPage";
+
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
     },
   },
 });
 
 function App() {
-  // Basic online status tracking
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
-  useEffect(() => {
-    // Set up event listeners for online/offline status
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-  
-  // Show offline toast once on startup if needed
-  useEffect(() => {
-    if (!isOnline) {
-      toast.warning("Du är offline. Ändringar sparas lokalt och synkas när du är online igen.");
-    }
-  }, []);
-  
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <PasswordProtection>
-            <div className="fixed top-0 right-0 p-2 z-50">
-              <LoginStatus />
-            </div>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/players" element={<PlayersPage initialTab="players" />} />
-              <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
-              <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
-              <Route path="/player-management" element={<PlayerManagementPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </PasswordProtection>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/players" element={<PlayersPage />} />
+          <Route path="/player/:id" element={<PlayerManagementPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }
