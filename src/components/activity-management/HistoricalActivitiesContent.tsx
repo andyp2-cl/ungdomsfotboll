@@ -21,7 +21,7 @@ interface HistoricalActivitiesContentProps {
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   cupMatches: Activity[];
-  onClearHistoricalActivities?: () => void;
+  onClearHistoricalActivities?: () => Promise<boolean>;
 }
 
 export function HistoricalActivitiesContent({
@@ -78,7 +78,7 @@ export function HistoricalActivitiesContent({
                   <Button 
                     variant="destructive" 
                     onClick={() => {
-                      onClearHistoricalActivities();
+                      onClearHistoricalActivities && onClearHistoricalActivities();
                       setIsConfirmDialogOpen(false);
                     }}
                   >
@@ -98,20 +98,19 @@ export function HistoricalActivitiesContent({
       </div>
       
       <ActivityTabContent
-        title="Tidigare aktiviteter"
         activities={activities}
         players={players}
         selectedActivity={selectedActivity}
         selectedActivityTypes={selectedActivityTypes}
         filteredActivities={filteredHistoricalActivities}
-        onActivityTypeChange={onActivityTypeChange}
-        onActivitySelect={onActivitySelect}
-        onActivityUpdate={handleActivityUpdate}
+        handleActivityTypeChange={onActivityTypeChange}
+        setSelectedActivity={onActivitySelect}
+        handleActivityUpdate={handleActivityUpdate}
         onAddActivityClick={onAddActivityClick}
         onEditActivityClick={onEditActivityClick}
-        handleKioskUpdate={handleKioskUpdate}
+        setEditingActivity={onEditActivityClick}
+        handleKioskAssignmentUpdate={handleKioskUpdate}
         handleDeleteActivity={handleDeleteActivity}
-        cupMatches={cupMatches}
       />
     </div>
   );

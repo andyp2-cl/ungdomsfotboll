@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
@@ -116,23 +115,20 @@ export function ActivityManagement({
       <ActivityManagementTabs activeTab={activeTab} setActiveTab={setActiveTab}>
         <TabsContent value="activities" className="space-y-6">
           <ActivityTabContent
-            title="Alla aktiviteter"
             activities={activities}
             players={players}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
-            onActivityTypeChange={onActivityTypeChange}
-            onActivitySelect={onActivitySelect}
-            onActivityUpdate={onActivityUpdate}
+            handleActivityTypeChange={onActivityTypeChange}
+            setSelectedActivity={onActivitySelect}
+            handleActivityUpdate={onActivityUpdate}
             onAddActivityClick={onAddActivityClick}
             onEditActivityClick={onEditActivityClick}
-            handleKioskUpdate={handleKioskUpdate}
+            setEditingActivity={onEditActivityClick}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
             handleDeleteActivity={handleDeleteActivity}
-            cupMatches={selectedActivity?.type === 'cup' 
-              ? activities.filter(a => a.cupId === selectedActivity.id)
-              : []}
-            handleMatchResultUpdate={onMatchResultUpdate || (async () => false)}
+            handleMatchResultUpdate={onMatchResultUpdate}
           />
         </TabsContent>
         

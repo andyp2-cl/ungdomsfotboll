@@ -50,21 +50,20 @@ export function ActivitiesTabContent({
       </CardHeader>
       <CardContent>
         <ActivityTabContent 
-          title="Aktiviteter"
           activities={activities}
           players={players}
           selectedActivity={selectedActivity}
           selectedActivityTypes={selectedActivityTypes}
           filteredActivities={filteredActivities}
-          onActivityTypeChange={onActivityTypeChange}
-          onActivitySelect={onActivitySelect}
-          onActivityUpdate={onActivityUpdate}
+          handleActivityTypeChange={onActivityTypeChange}
+          setSelectedActivity={onActivitySelect}
+          handleActivityUpdate={onActivityUpdate}
           onAddActivityClick={onAddActivityClick}
           onEditActivityClick={onEditActivityClick}
-          handleKioskUpdate={handleKioskUpdate}
+          setEditingActivity={onEditActivityClick}
+          handleKioskAssignmentUpdate={handleKioskUpdate}
           handleDeleteActivity={handleDeleteActivity}
           handleMatchResultUpdate={handleMatchResultUpdate}
-          cupMatches={cupMatches}
         />
       </CardContent>
     </Card>

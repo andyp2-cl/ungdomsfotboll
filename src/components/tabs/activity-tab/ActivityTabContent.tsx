@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
