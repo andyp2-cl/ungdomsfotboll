@@ -1,8 +1,9 @@
 
 import { ActivityType } from "@/types/player";
-import { useFormState } from "./useFormState";
+import { useFormStateManager } from "./useFormStateManager";
 import { useActivityData } from "./useActivityData";
 import { useActivitySubmission } from "./useActivitySubmission";
+import { format } from "date-fns";
 
 interface UseAddActivityFormProps {
   onSave: (activity: any) => void;
@@ -19,8 +20,16 @@ export function useAddActivityForm({
   onTypeChange, 
   onDateChange 
 }: UseAddActivityFormProps) {
-  // Get form state and handlers
-  const formState = useFormState({ onTypeChange, onDateChange });
+  // Get form state and handlers using the reusable manager
+  const formState = useFormStateManager({
+    onTypeChange,
+    onDateChange: (date) => {
+      // Format the date for the parent component if needed
+      if (onDateChange && date) {
+        onDateChange(format(new Date(date), 'yyyy-MM-dd'));
+      }
+    }
+  });
   
   // Fetch activity data (cups and leagues)
   const { activities, cupNames, leagues, activitiesLoading, leaguesLoading } = useActivityData();

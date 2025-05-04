@@ -6,6 +6,8 @@ import { League } from "./hooks/useActivityData";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityFormValues } from "./formSchema";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 // Props for standalone usage
 interface StandaloneLeagueSelectorProps {
@@ -31,6 +33,24 @@ type LeagueSelectorProps = StandaloneLeagueSelectorProps | FormLeagueSelectorPro
 export function LeagueSelector(props: LeagueSelectorProps) {
   // If form is provided, use FormField integration
   if ('form' in props) {
+    const { data: leagues = [] } = useQuery({
+      queryKey: ["leagues"],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from("leagues")
+          .select("*")
+          .order("year", { ascending: false })
+          .order("name");
+          
+        if (error) {
+          console.error("Error fetching leagues:", error);
+          throw error;
+        }
+        
+        return data || [];
+      },
+    });
+    
     return (
       <FormField
         control={props.form.control}
@@ -48,7 +68,11 @@ export function LeagueSelector(props: LeagueSelectorProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Ingen liga</SelectItem>
-                  {/* We'll get leagues from useQuery in the component that uses this */}
+                  {leagues.map((league) => (
+                    <SelectItem key={league.id} value={league.id}>
+                      {league.name} ({league.year} {league.division})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </FormControl>

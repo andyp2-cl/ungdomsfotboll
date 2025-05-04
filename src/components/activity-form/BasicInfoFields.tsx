@@ -7,8 +7,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { TimeInput } from "./TimeInput";
 import { ActivityFormValues } from "./formSchema";
 import { LeagueSelector } from "./LeagueSelector";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
 import { useEffect } from "react";
 
 interface BasicInfoFieldsProps {
@@ -18,26 +16,6 @@ interface BasicInfoFieldsProps {
 
 export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
   const type = form.watch("type");
-  
-  // Fetch leagues for the league selector when type is "match"
-  const { data: leagues = [] } = useQuery({
-    queryKey: ["leagues"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leagues")
-        .select("*")
-        .order("year", { ascending: false })
-        .order("name");
-        
-      if (error) {
-        console.error("Error fetching leagues:", error);
-        throw error;
-      }
-      
-      return data || [];
-    },
-    enabled: type === "match"
-  });
   
   useEffect(() => {
     if (onTypeChange) {

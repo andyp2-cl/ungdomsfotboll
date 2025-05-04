@@ -13,7 +13,7 @@ export function usePlayers() {
   const playerState = usePlayerState();
   const { players, isLoading } = playerState;
   
-  // Get player filters
+  // Get player filters with default values
   const playerFilters = usePlayerFilters({
     players,
     searchQuery: "",
