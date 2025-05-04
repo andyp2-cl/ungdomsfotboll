@@ -1,6 +1,6 @@
 
 import { Activity, Player } from "@/types/player";
-import { generateUniqueId } from "@/utils/unique-id";
+import { v4 as uuidv4 } from "uuid";
 import { saveActivities } from "@/utils/storage";
 import { supabase } from "@/lib/supabase/client";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
@@ -21,7 +21,7 @@ export const handleActivitySubmit = async (
 ): Promise<void> => {
   try {
     // Generate a unique ID for the activity if it doesn't already have one
-    const activityId = activity.id || generateUniqueId();
+    const activityId = activity.id || uuidv4();
 
     // Extract player IDs from the selected players
     const participantIds = players.map((player) => player.id);
@@ -31,10 +31,8 @@ export const handleActivitySubmit = async (
       ...activity,
       id: activityId,
       participants: participantIds,
-      // Use activity.type directly
-      type: activity.type || "match", 
+      type: activity.type,
       name: activity.name || "Namnlös aktivitet", // Default name if no name is provided
-      // Always update the updated_at timestamp
       date: activity.date || new Date().toISOString().split('T')[0],
     };
 

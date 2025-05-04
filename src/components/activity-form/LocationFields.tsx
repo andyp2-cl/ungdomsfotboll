@@ -1,79 +1,51 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { MapPin } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { ActivityFormValues } from "./formSchema";
-import { useEffect } from "react";
-import { generateFootballFieldUrl } from "@/utils/locationUtils";
+import React from "react";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface LocationFieldsProps {
-  form: UseFormReturn<ActivityFormValues>;
+  locationName: string;
+  locationDescription: string;
+  locationGpsLink: string;
+  onLocationNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLocationDescriptionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLocationGpsLinkChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function LocationFields({ form }: LocationFieldsProps) {
-  // Auto-generate GPS link when location name changes
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'location.name' && value.location?.name && !value.location?.gpsLink) {
-        const gpsLink = generateFootballFieldUrl(value.location.name);
-        form.setValue('location.gpsLink', gpsLink);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-  
+export function LocationFields({
+  locationName,
+  locationDescription,
+  locationGpsLink,
+  onLocationNameChange,
+  onLocationDescriptionChange,
+  onLocationGpsLinkChange
+}: LocationFieldsProps) {
   return (
-    <div className="border-t pt-4 mt-4">
-      <h3 className="font-medium flex items-center mb-3">
-        <MapPin className="h-4 w-4 mr-2" />
-        Plats
-      </h3>
-      
-      <FormField
-        control={form.control}
-        name="location.name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Platsnamn</FormLabel>
-            <FormControl>
-              <Input placeholder="t.ex. Östervångs IP" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <FormField
-          control={form.control}
-          name="location.description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Beskrivning</FormLabel>
-              <FormControl>
-                <Input placeholder="t.ex. Plan 7, manna 7" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="location.gpsLink"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>GPS-länk</FormLabel>
-              <FormControl>
-                <Input placeholder="https://maps.google.com/..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+    <>
+      <div>
+        <Label htmlFor="locationName">Plats</Label>
+        <Input
+          id="locationName"
+          value={locationName}
+          onChange={onLocationNameChange}
         />
       </div>
-    </div>
+      <div>
+        <Label htmlFor="locationDescription">Beskrivning av plats</Label>
+        <Input
+          id="locationDescription"
+          value={locationDescription}
+          onChange={onLocationDescriptionChange}
+        />
+      </div>
+      <div>
+        <Label htmlFor="locationGpsLink">GPS-länk</Label>
+        <Input
+          id="locationGpsLink"
+          value={locationGpsLink}
+          onChange={onLocationGpsLinkChange}
+        />
+      </div>
+    </>
   );
 }
