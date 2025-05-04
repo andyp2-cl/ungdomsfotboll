@@ -40,7 +40,6 @@ export function usePlayers(initialTab?: string) {
   // Get activity state and actions
   const {
     activities,
-    setActivities,
     isLoading: isActivitiesLoading,
     selectedActivityTypes,
     selectedActivity,
@@ -59,7 +58,7 @@ export function usePlayers(initialTab?: string) {
     handleImportedActivities,
     handleClearHistoricalActivities,
     handleMatchResultUpdate,
-    retryLoading
+    retryLoading  // Include retryLoading from useActivities
   } = useActivities(players, setPlayers);
 
   // Wrapper for activity update
@@ -91,17 +90,12 @@ export function usePlayers(initialTab?: string) {
     }
   };
 
-  // Wrapper for match result update - changed to return boolean to match expected type
-  const handleMatchResult = async (
-    activityId: string, 
-    homeScore?: number, 
-    awayScore?: number
-  ): Promise<boolean> => {
+  // Wrapper for match result update
+  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
     try {
-      return await handleMatchResultUpdate(activities, setActivities, activityId, homeScore, awayScore);
+      await handleMatchResultUpdate(activityId, homeScore, awayScore);
     } catch (error) {
-      console.error("Error in handleMatchResult:", error);
-      return false;
+      console.error("Error updating match result:", error);
     }
   };
 
@@ -172,7 +166,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper,
+    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
@@ -183,6 +177,6 @@ export function usePlayers(initialTab?: string) {
     
     // Loading state
     isLoading,
-    retryLoading
+    retryLoading  // Add retryLoading to the returned object
   };
 }

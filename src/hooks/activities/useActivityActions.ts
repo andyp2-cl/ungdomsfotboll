@@ -3,6 +3,7 @@ import { Activity, Player } from "@/types/player";
 import { handleActivityUpdate, handleKioskAssignmentUpdate, handleAddActivity, handleMatchResultUpdate } from "./actions/activityUpdateActions";
 import { handleImportedActivities, handleScrapedMatches, handleClearHistoricalActivities } from "./actions/activityBatchActions";
 import { handleDeleteActivity } from "./actions/activityDeleteActions";
+import { preserveMatchData } from "./utils/arrayUtils";
 
 /**
  * Hook that provides actions for managing activities
@@ -29,7 +30,7 @@ export function useActivityActions(
     handleAddActivity: (newActivity: Activity) =>
       handleAddActivity(activities, setActivities, toast, newActivity),
       
-    handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> =>
+    handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) =>
       handleMatchResultUpdate(activities, setActivities, toast, activityId, homeScore, awayScore),
       
     handleImportedActivities: (importedActivities: Activity[]) =>

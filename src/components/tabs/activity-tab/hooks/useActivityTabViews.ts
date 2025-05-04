@@ -15,7 +15,7 @@ interface UseActivityTabViewsProps {
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function useActivityTabViews({

@@ -10,7 +10,7 @@ interface ActivityResultSectionProps {
   activity: Activity;
   isHistorical: boolean;
   updateActivity: (updatedActivity: Activity) => void;
-  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   participatingPlayers?: any[];  // Added participatingPlayers prop
 }
 

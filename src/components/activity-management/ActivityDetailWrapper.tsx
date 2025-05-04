@@ -13,7 +13,7 @@ interface ActivityDetailWrapperProps {
   onActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityDetailWrapper({
@@ -39,13 +39,6 @@ export function ActivityDetailWrapper({
   const handleActivityUpdate = async (activity: Activity): Promise<void> => {
     await onActivityUpdate(activity);
   };
-
-  // Create a wrapper for handleMatchResultUpdate that ensures proper return type
-  const onMatchResultUpdate = handleMatchResultUpdate 
-    ? async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
-        return await handleMatchResultUpdate(activityId, homeScore, awayScore);
-      }
-    : undefined;
   
   return (
     <ActivityDetail
@@ -66,7 +59,7 @@ export function ActivityDetailWrapper({
       relatedActivities={relatedActivities}
       cupMatches={cupMatches}
       onActivitySelect={onActivitySelect}
-      onMatchResultUpdate={onMatchResultUpdate}
+      onMatchResultUpdate={handleMatchResultUpdate}
     />
   );
 }

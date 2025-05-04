@@ -8,7 +8,6 @@ import { updateMatchResultInDatabase } from "./updateDatabase";
 /**
  * Updates match result (score) for an existing activity
  * Uses multiple approaches for maximum reliability
- * @returns Promise<boolean> indicating success or failure
  */
 export const handleMatchResultUpdate = async (
   activities: Activity[],
@@ -62,7 +61,7 @@ export const handleMatchResultUpdate = async (
     // Try to update in database
     let success = await updateMatchResultInDatabase(activity, homeScore, awayScore, isWin);
 
-    // If database update failed, try fallback with storage system
+    // If all database updates failed, try fallback with storage system
     if (!success) {
       try {
         console.log("Attempting to save with storage system...");
