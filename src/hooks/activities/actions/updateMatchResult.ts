@@ -1,8 +1,7 @@
-
 import { Activity } from "@/types/player";
 import { saveActivities } from "@/utils/storage";
 import { updateActivityWithRLSHandling } from "@/lib/supabase/rls-handling";
-import { isHomeMatch, extractTeamNames, isHassleholm } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch, extractTeamNames, isHassleholm } from "@/components/activity-detail/match-result/utils/team-detection";
 import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity"; 
 import { logDatabaseChange } from "@/lib/supabase/logs";

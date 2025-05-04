@@ -1,6 +1,6 @@
-
 import { Activity } from "@/types/player";
-import { isHomeMatch, extractTeamNames, isHassleholm } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils/team-detection";
+import { extractTeamNames, isHassleholm } from "@/components/activity-detail/match-result/utils/team-detection";
 
 /**
  * Determines if a match was won by Hässleholms IF based on scores and team info

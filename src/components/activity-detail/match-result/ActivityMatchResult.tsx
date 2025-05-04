@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ResultDisplay } from "./ResultDisplay";
 import { ResultForm } from "./ResultForm";
-import { isHomeMatch, calculateWinStatus } from "./utils";
+import { isHomeMatch } from "./utils/team-detection";
+import { calculateWinStatus } from "./utils/outcome-calculation";
 
 interface ActivityMatchResultProps {
   activity: Activity;

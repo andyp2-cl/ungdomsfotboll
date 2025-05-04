@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
@@ -131,10 +130,7 @@ export function ActivityManagement({
             cupMatches={selectedActivity?.type === 'cup' 
               ? activities.filter(a => a.cupId === selectedActivity.id)
               : []}
-            handleMatchResultUpdate={async (activityId, homeScore, awayScore) => {
-              // Provide empty implementation since it's not required here
-              console.log("Match result update not implemented in ActivityManagement");
-            }}
+            handleMatchResultUpdate={onMatchResultUpdate || (async () => false)}
           />
         </TabsContent>
         

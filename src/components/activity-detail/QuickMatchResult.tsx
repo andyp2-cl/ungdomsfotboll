@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save } from "lucide-react";
-import { extractTeamNames, isHomeMatch } from "./match-result/utils";
+import { extractTeamNames, isHomeMatch } from "./match-result/utils/team-detection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";

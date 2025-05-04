@@ -1,4 +1,3 @@
-
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -99,6 +98,26 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // Wrapper for handleDelete to match expected handleDeleteActivity
   const handleDeleteActivity = handleDelete;
   
+  // Wrapper for handleClearHistorical to match expected handleClearHistoricalActivity
+  const handleClearHistoricalWrapper = async () => {
+    try {
+      const result = await handleClearHistorical();
+      return result;
+    } catch (error) {
+      console.error("Error clearing historical activities:", error);
+      return false;
+    }
+  };
+
+  // Wrapper for handlePlayerUpdate to match expected handlePlayerUpdateActivity
+  const handlePlayerUpdateWrapper = async (players: Player[]) => {
+    try {
+      await handlePlayerUpdate(players);
+    } catch (error) {
+      console.error("Error updating players:", error);
+    }
+  };
+
   console.log("PlayersPage rendering with:", {
     activitiesCount: activities.length,
     playersCount: players.length,

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Activity } from '@/types/player';
 import { toast } from 'sonner';
-import { isHomeMatch, calculateWinStatus } from '@/components/activity-detail/match-result/utils';
+import { isHomeMatch, calculateWinStatus } from '@/components/activity-detail/match-result/utils/outcome-calculation';
 
 interface MatchResult {
   homeScore?: number;

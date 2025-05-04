@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -123,6 +122,12 @@ export function usePlayers(initialTab?: string) {
       return false;
     }
   };
+
+  useEffect(() => {
+    if (players && players.length > 0) {
+      retryLoading();
+    }
+  }, [players, retryLoading]);
 
   const isLoading = isPlayersLoading || isActivitiesLoading;
 

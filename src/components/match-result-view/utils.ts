@@ -1,6 +1,9 @@
-
 import { Activity } from "@/types/player";
-import { extractTeamNames, isHomeMatch, isHassleholm } from "@/components/activity-detail/match-result/utils";
+import { 
+  extractTeamNames, 
+  isHomeMatch, 
+  isHassleholm 
+} from "@/components/activity-detail/match-result/utils/team-detection";
 import { TeamInfo } from "./types";
 
 /**
