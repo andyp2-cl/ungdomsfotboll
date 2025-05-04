@@ -1,7 +1,7 @@
-
-import React from "react";
+import React, { useMemo } from "react";
 import { Activity, Player } from "@/types/player";
-import { GradePieChart } from "./match-result/GradePieChart";
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { getGradeColor } from "@/utils/gradeUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GradeDistributionChartProps {
@@ -16,37 +16,57 @@ export function GradeDistributionChart({ activity, participatingPlayers }: Grade
     return null;
   }
   
-  // We've moved the GradePieChart to the overview list item, so we'll use a different
-  // visualization or information here in the detailed view
+  // Calculate grade distribution among participating players
+  const gradeDistribution = useMemo(() => {
+    // Group players by grade
+    const gradeGroups = participatingPlayers.reduce((acc, player) => {
+      if (!player.grade) return acc;
+      
+      if (!acc[player.grade]) {
+        acc[player.grade] = 0;
+      }
+      
+      acc[player.grade]++;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Convert to data format needed for recharts
+    return Object.entries(gradeGroups)
+      .map(([grade, count]) => ({ 
+        name: grade, 
+        value: count 
+      }))
+      .sort((a, b) => {
+        // Sort by grade - prioritize A, then B, then C, then D
+        const getGradeValue = (grade: string) => {
+          switch(grade) {
+            case 'A': return 1;
+            case 'B': return 2;
+            case 'C': return 3;
+            case 'D': return 4;
+            default: return 5;
+          }
+        };
+        
+        return getGradeValue(a.name) - getGradeValue(b.name);
+      });
+  }, [participatingPlayers]);
+  
   return (
     <div className={`${isMobile ? 'mt-3 border-t pt-3' : 'mt-4 border-t pt-4'}`}>
       <h4 className={`${isMobile ? 'text-sm' : ''} font-medium mb-2`}>Nivåfördelning - Spelare</h4>
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-2 sm:grid-cols-4 gap-3'}`}>
-        {['A', 'B', 'C', 'D'].map(grade => {
-          const count = participatingPlayers.filter(p => p.grade === grade).length;
-          const percentage = participatingPlayers.length > 0 
-            ? Math.round((count / participatingPlayers.length) * 100) 
-            : 0;
+        {gradeDistribution.map((gradeData, index) => {
+          const { name, value } = gradeData;
+          const bgColor = getGradeColor(name);
           
-          // Skip showing grades with 0 players
-          if (count === 0) return null;
-          
-          // Map grades to colors
-          const bgColor = grade === 'A' 
-            ? 'bg-green-100 text-green-800' 
-            : grade === 'B'
-            ? 'bg-blue-100 text-blue-800'
-            : grade === 'C'
-            ? 'bg-amber-100 text-amber-800'
-            : 'bg-red-100 text-red-800';
-            
           return (
             <div 
-              key={grade} 
+              key={name} 
               className={`rounded-md py-2 px-3 text-center ${bgColor}`}
             >
-              <div className={`font-bold ${isMobile ? 'text-sm' : ''}`}>Nivå {grade}</div>
-              <div className={isMobile ? 'text-xs' : 'text-sm'}>{count} st ({percentage}%)</div>
+              <div className={`font-bold ${isMobile ? 'text-sm' : ''}`}>Nivå {name}</div>
+              <div className={isMobile ? 'text-xs' : 'text-sm'}>{value} st</div>
             </div>
           );
         })}

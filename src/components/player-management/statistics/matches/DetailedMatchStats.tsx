@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface DetailedMatchStatsProps {
   activities: Activity[];

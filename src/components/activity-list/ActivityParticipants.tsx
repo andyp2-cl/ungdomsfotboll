@@ -1,15 +1,15 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ActivityParticipantsProps {
   activity?: Activity;
   participants?: Player[];
   onPlayerSelect?: (playerId: string) => void;
   isMobile?: boolean;
-  totalCount?: number;  // Added to display the total count of participants
-  players?: Player[];   // Added to support both direct participants and looking up players
+  totalCount?: number;
+  players?: Player[];
 }
 
 export function ActivityParticipants({ 
@@ -23,22 +23,8 @@ export function ActivityParticipants({
   // Make sure participants is an array before using slice
   const safeParticipants = Array.isArray(participants) ? participants : [];
   
-  // Sort participants by grade (A, B, C, D) 
-  const sortedParticipants = [...safeParticipants].sort((a, b) => {
-    // Sort by grade - prioritize A, then B, then C, then D
-    const getGradeValue = (grade?: string) => {
-      if (!grade) return 5; // No grade goes last
-      switch(grade) {
-        case 'A': return 1;
-        case 'B': return 2;
-        case 'C': return 3;
-        case 'D': return 4;
-        default: return 5;
-      }
-    };
-    
-    return getGradeValue(a.grade) - getGradeValue(b.grade);
-  });
+  // Sort participants by grade (A, B, C, D) using the utility function
+  const sortedParticipants = sortPlayersByGrade(safeParticipants);
   
   // Split participants into two rows for better visibility
   const participantsPerRow = isMobile ? 3 : 5;

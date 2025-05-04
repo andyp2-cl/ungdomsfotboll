@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ActivityMatchStatsProps {
   activity: Activity;
@@ -22,6 +23,9 @@ export function ActivityMatchStats({
   isHistorical = false
 }: ActivityMatchStatsProps) {
   const isMobile = useIsMobile();
+  
+  // Sort participants by grade (A, B, C, D)
+  const sortedParticipants = sortPlayersByGrade(participatingPlayers);
   
   // Get total goals and assists
   const getTotalGoals = () => {
@@ -56,7 +60,7 @@ export function ActivityMatchStats({
     <div className="border rounded-md p-4">
       <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
       
-      {participatingPlayers.length > 0 ? (
+      {sortedParticipants.length > 0 ? (
         <ScrollArea className={isMobile ? "max-h-[60vh]" : ""}>
           <div className="space-y-3 px-1">
             <p className="text-sm text-muted-foreground mb-2">
@@ -65,7 +69,7 @@ export function ActivityMatchStats({
                 "Anteckna hur många mål och assist varje spelare har gjort:"}
             </p>
             
-            {participatingPlayers.map(player => {
+            {sortedParticipants.map(player => {
               const goals = activity.player_stats?.goals?.[player.id] || 0;
               const assists = activity.player_stats?.assists?.[player.id] || 0;
               
