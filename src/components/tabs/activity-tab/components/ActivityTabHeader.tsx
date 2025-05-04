@@ -1,58 +1,39 @@
 
-import { Button } from "@/components/ui/button";
-import { RefreshCcw, LayoutGrid, Calendar, BarChart3, Wrench } from "lucide-react";
+import React from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { BarChart3, Calendar, Clock } from "lucide-react";
 
-export interface ActivityTabHeaderProps {
-  activeView: "current" | "historical" | "statistics" | "tools";
-  handleViewChange: (view: "current" | "historical" | "statistics" | "tools") => void;
+interface ActivityTabHeaderProps {
+  activeView: "upcoming" | "historical" | "statistics";
+  handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
-  onRefresh: () => Promise<void>;
-  isRefreshing: boolean;
-  isMobile: boolean;
-  onImportClick?: () => void; 
-  onBackupClick?: () => void;
-  onRestoreClick?: () => void;
+  isMobile?: boolean;
 }
 
-export function ActivityTabHeader({ 
-  activeView, 
-  handleViewChange, 
-  onRefresh, 
-  isRefreshing,
-  isMobile,
-  onImportClick,
-  onBackupClick,
-  onRestoreClick
+export function ActivityTabHeader({
+  activeView,
+  handleViewChange,
+  isMobile = false
 }: ActivityTabHeaderProps) {
   return (
-    <div className="space-y-2">
-      <h2 className="text-2xl font-bold">Aktiviteter</h2>
-      
+    <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4'}`}>
       <ToggleGroup 
         type="single" 
         value={activeView} 
-        onValueChange={(value) => {
-          if (value) handleViewChange(value as any);
-        }}
-        className={`${isMobile ? 'justify-center w-full text-xs' : ''}`}
+        onValueChange={handleViewChange} 
+        className={`justify-start ${isMobile ? 'w-full flex' : ''}`}
       >
-        <ToggleGroupItem value="current" aria-label="Visa nuvarande aktiviteter" className={`${isMobile ? 'text-xs' : ''}`}>
-          <Calendar className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
-          {!isMobile ? 'Nuvarande' : 'Nu'}
+        <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+          <Calendar className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {isMobile ? 'Kommande' : 'Kommande'}
         </ToggleGroupItem>
-        <ToggleGroupItem value="historical" aria-label="Visa historiska aktiviteter" className={`${isMobile ? 'text-xs' : ''}`}>
-          <LayoutGrid className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
-          {!isMobile ? 'Historiska' : 'Hist.'}
+        <ToggleGroupItem value="historical" aria-label="Historiska aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+          <Clock className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {isMobile ? 'Historik' : 'Historik'}
         </ToggleGroupItem>
-        <ToggleGroupItem value="statistics" aria-label="Visa statistik" className={`${isMobile ? 'text-xs' : ''}`}>
-          <BarChart3 className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
-          {!isMobile ? 'Statistik' : 'Stats'}
-        </ToggleGroupItem>
-        <ToggleGroupItem value="tools" aria-label="Visa verktyg" className={`${isMobile ? 'text-xs' : ''}`}>
-          <Wrench className={`${isMobile ? 'h-4 w-4 mr-1' : 'h-4 w-4 mr-2'}`} />
-          {!isMobile ? 'Verktyg' : 'Tools'}
+        <ToggleGroupItem value="statistics" aria-label="Statistik" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
+          <BarChart3 className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
+          {isMobile ? 'Statistik' : 'Statistik'}
         </ToggleGroupItem>
       </ToggleGroup>
     </div>

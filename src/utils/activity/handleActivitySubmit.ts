@@ -26,34 +26,16 @@ export async function handleActivitySubmit(
     // Format date to ISO string
     const formattedDate = format(values.date, 'yyyy-MM-dd');
     
-    // Make sure score values are converted to numbers or remain undefined
-    // Safely handle homeScore conversion
-    let homeScore: number | undefined = undefined;
-    if (values.homeScore !== undefined && values.homeScore !== null) {
-      if (typeof values.homeScore === 'string') {
-        // Only parse if the string is not empty
-        if (values.homeScore !== "") {
-          homeScore = parseInt(values.homeScore, 10);
-        }
-      } else {
-        homeScore = values.homeScore;
-      }
-    }
-    
-    // Safely handle awayScore conversion
-    let awayScore: number | undefined = undefined;
-    if (values.awayScore !== undefined && values.awayScore !== null) {
-      if (typeof values.awayScore === 'string') {
-        // Only parse if the string is not empty
-        if (values.awayScore !== "") {
-          awayScore = parseInt(values.awayScore, 10);
-        }
-      } else {
-        awayScore = values.awayScore;
-      }
-    }
+    // Make sure score values are converted to numbers
+    const homeScore = typeof values.homeScore === 'string' 
+      ? parseInt(values.homeScore, 10) 
+      : values.homeScore;
       
-    // Create result string ONLY if both scores exist
+    const awayScore = typeof values.awayScore === 'string' 
+      ? parseInt(values.awayScore, 10) 
+      : values.awayScore;
+      
+    // Create result string if both scores exist
     const result = (homeScore !== undefined && awayScore !== undefined)
       ? `${homeScore}-${awayScore}`
       : undefined;
@@ -67,7 +49,7 @@ export async function handleActivitySubmit(
       isWin = calculateWinStatus(homeScore, awayScore, isHomeTeam);
     }
     
-    console.log("Form submission - win status:", { 
+    console.log("Form submission - win status:", {
       explicitIsWin: values.isWin,
       calculatedIsWin: isWin,
       homeScore,

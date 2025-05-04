@@ -56,11 +56,11 @@ export function usePlayerFilters({
       const normalizedName = normalizeString(player.name);
       const nameMatches = !searchQuery || normalizedName.includes(normalizedQuery);
       
-      // Determine if this player is a coach
+      // Skip grade filtering for coaches
       const isCoach = player.positions?.includes('TRÄNARE');
       
       // Check if player grade is selected, or no grades are selected
-      // Coaches are excluded from grade filtering (they will show up regardless of grade selections)
+      // Coaches are excluded from grade filtering
       const gradeMatches = isCoach || selectedGrades.length === 0 || 
         (player.grade && selectedGrades.includes(player.grade));
       

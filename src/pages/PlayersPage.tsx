@@ -1,5 +1,4 @@
-
-import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
+import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 import { useLocation } from "react-router-dom";
@@ -55,11 +54,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistorical,
     handleAddActivity,
     handlePlayerActivitySelect,
-    handleMatchResult,
     
     // Loading state
-    isLoading,
-    retryLoading
+    isLoading
   } = usePlayers(initialTab);
 
   // Check for selected activity in location state
@@ -73,24 +70,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       }
     }
   }, [location.state, activities, setSelectedActivity]);
-
-  // Handle refresh - force reload of players and activities data
-  const handleRefresh = async () => {
-    try {
-      // Reload data (typically would call API endpoints here)
-      console.log("Refreshing data...");
-      // We'll trigger the refresh without passing specific data
-      // Using undefined instead of empty objects as parameters
-      await Promise.all([
-        handlePlayerUpdate(undefined as any), 
-        handleActivityUpdate(undefined as any)
-      ]);
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-      return Promise.reject(error);
-    }
-  };
 
   // Converting Promise<boolean> to Promise<void> for player update functions
   const handlePlayerUpdateWrapper = async (player: any) => {
@@ -130,22 +109,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     return await handleClearHistorical();
   };
 
-  // Wrapper for match result update - fixing the void return type error
-  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
-    try {
-      console.log(`PlayersPage: Calling handleMatchResult with scores=${homeScore}-${awayScore}`);
-      
-      // Call the function without checking its return value
-      await handleMatchResult(activityId, homeScore, awayScore);
-      
-      console.log("Match result update completed");
-    } catch (error) {
-      console.error("Error updating match result:", error);
-    }
-  };
-
   return (
-    <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
+    <PageContainer isLoading={isLoading}>
       <PlayersPageContent 
         // Tab state
         activeTab={activeTab}
@@ -189,12 +154,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
-        handleMatchResultUpdate={handleMatchResultWrapper}
-        
-        // Loading state
-        isLoading={isLoading}
-        retryLoading={retryLoading}
       />
-    </RefreshablePageContainer>
+    </PageContainer>
   );
 }

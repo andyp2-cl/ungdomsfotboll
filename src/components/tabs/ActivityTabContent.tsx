@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { AnonymousAuth } from "@/components/auth/AnonymousAuth";
 import { ActivityTabHeader } from "./activity-tab/components/ActivityTabHeader";
 import { ActivityTabSearch } from "./activity-tab/components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./activity-tab/components/ActivityTabViewContent";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { useActivityTabViews } from "./activity-tab/hooks/useActivityTabViews";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
-import { Globe } from "lucide-react";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -40,7 +38,6 @@ interface ActivityTabContentProps {
 export function ActivityTabContent(props: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Use the custom hook for managing views and selections
@@ -72,14 +69,8 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     
     try {
       if (props.retryLoading) {
-        // Clear form storage cache
-        localStorage.removeItem('cachedActivities');
-        localStorage.removeItem('activitiesFetchTime');
-        
-        // Force refresh from database
         await props.retryLoading();
-        console.log("Force refreshing data from server");
-        toast.success("Data uppdaterad från servern");
+        toast.success("Data uppdaterad");
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success("Data uppdaterad");
@@ -92,13 +83,6 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
     }
   };
 
-  const handleOpenImportDialog = () => {
-    setIsImportDialogOpen(true);
-  };
-
-  // Debug information
-  console.log("ActivityTabContent rendering with handleMatchResultUpdate:", !!props.handleMatchResultUpdate);
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -106,13 +90,11 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           activeView={activeView}
           handleViewChange={handleViewChange}
           setIsAddActivityOpen={props.setIsAddActivityOpen}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
           isMobile={isMobile}
-          onImportClick={activeView === "tools" ? handleOpenImportDialog : undefined}
         />
         
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <AnonymousAuth />
           <Button onClick={() => props.setIsAddActivityOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till
@@ -144,30 +126,8 @@ export function ActivityTabContent(props: ActivityTabContentProps) {
           onDeleteActivity={props.handleDeleteActivity}
           onKioskAssignmentUpdate={props.handleKioskAssignmentUpdate}
           onMatchResultUpdate={props.handleMatchResultUpdate}
-          onImportActivities={props.handleImportedActivities}
         />
       </PullToRefresh>
-      
-      {/* Import from Live Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              Importera från live-miljö
-            </DialogTitle>
-          </DialogHeader>
-          <ImportFromLiveForm 
-            onImportedActivities={async (activities) => {
-              const result = await props.handleImportedActivities(activities);
-              if (result) {
-                setIsImportDialogOpen(false);
-              }
-              return result;
-            }} 
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

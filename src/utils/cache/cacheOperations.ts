@@ -1,111 +1,106 @@
 
+/**
+ * Core cache operations for storing and retrieving API responses
+ */
 import { CachedData, CacheOptions } from './types';
-import { cleanupCache, _incrementHits, _incrementSaves } from './cacheManagement';
+import { updateCacheStats } from './cacheManagement';
+
+/** Default cache lifetime in seconds */
+export const DEFAULT_TTL = 300; // 5 minutes
 
 /**
- * Core cache operations for fetching and storing data
+ * Store API response in cache
  */
-
-// Default TTL in seconds (1 hour)
-const DEFAULT_TTL = 3600;
-
-/**
- * Save data to cache with specified options
- * 
- * @param key Cache key
- * @param data Data to cache
- * @param options Cache options
- */
-export function saveToCache<T>(key: string, data: T, options?: CacheOptions): void {
+export function cacheApiResponse<T>(key: string, data: T, options: CacheOptions = {}): void {
   try {
-    const ttl = options?.ttl || DEFAULT_TTL;
-    const now = Date.now();
+    const { ttl = DEFAULT_TTL, tag } = options;
     
-    const cacheEntry: CachedData<T> & { _tag?: string } = {
+    // Don't store undefined or null values
+    if (data === undefined || data === null) {
+      return;
+    }
+    
+    const timestamp = Date.now();
+    const expiresAt = timestamp + (ttl * 1000);
+    
+    // Store the data with metadata
+    const cacheEntry: CachedData<T> = {
       data,
-      timestamp: now,
-      expiresAt: now + (ttl * 1000)
+      timestamp,
+      expiresAt
     };
     
-    // Add tag if provided
-    if (options?.tag) {
-      cacheEntry._tag = options.tag;
+    // Save to localStorage
+    localStorage.setItem(`api-cache:${key}`, JSON.stringify(cacheEntry));
+    
+    // If this entry has a tag, add it to the tag index
+    if (tag) {
+      try {
+        // Get existing tag index
+        const tagIndex = JSON.parse(localStorage.getItem(`api-cache-tag:${tag}`) || '[]');
+        
+        // Add this key if not already in the index
+        if (!tagIndex.includes(key)) {
+          tagIndex.push(key);
+          localStorage.setItem(`api-cache-tag:${tag}`, JSON.stringify(tagIndex));
+        }
+      } catch (e) {
+        console.error(`Failed to update tag index for tag ${tag}:`, e);
+      }
     }
     
-    localStorage.setItem(`cache:${key}`, JSON.stringify(cacheEntry));
-    _incrementSaves();
-  } catch (error) {
-    console.error(`Error saving data to cache for key ${key}:`, error);
+    // Update cache stats
+    updateCacheStats(true);
+    
+  } catch (e) {
+    console.error("Failed to cache API response:", e);
   }
 }
 
 /**
- * Get data from cache
- * 
- * @param key Cache key
- * @param options Cache options
- * @returns The cached data or null if not found or expired
+ * Get cached API response if available and not expired
  */
-export function getFromCache<T>(key: string, options?: CacheOptions): T | null {
+export function getCachedApiResponse<T>(key: string, options: CacheOptions = {}): T | null {
   try {
-    // Skip cache if forceRefresh is true
-    if (options?.forceRefresh) {
+    const { forceRefresh = false } = options;
+    
+    // If force refresh is requested, bypass cache
+    if (forceRefresh) {
       return null;
     }
     
-    const cacheItem = localStorage.getItem(`cache:${key}`);
-    if (!cacheItem) {
+    // Try to get cached entry
+    const cachedJson = localStorage.getItem(`api-cache:${key}`);
+    if (!cachedJson) {
       return null;
     }
     
-    const cached = JSON.parse(cacheItem) as CachedData<T>;
+    // Parse the cached entry
+    const cached = JSON.parse(cachedJson) as CachedData<T>;
     const now = Date.now();
     
-    // Return null if expired
-    if (cached.expiresAt < now) {
-      localStorage.removeItem(`cache:${key}`);
+    // Check if expired
+    if (now > cached.expiresAt) {
+      console.log(`Cache expired for ${key}, age: ${((now - cached.timestamp) / 1000).toFixed(0)}s`);
+      
+      // Clean up expired entry
+      localStorage.removeItem(`api-cache:${key}`);
+      
+      // Update cache stats
+      updateCacheStats();
+      
       return null;
     }
     
-    _incrementHits();
+    // Update cache hit stats
+    updateCacheStats(false, true);
+    
+    // Log cache hit
+    console.log(`Cache hit for ${key}, age: ${((now - cached.timestamp) / 1000).toFixed(0)}s, expires in ${((cached.expiresAt - now) / 1000).toFixed(0)}s`);
+    
     return cached.data;
-  } catch (error) {
-    console.error(`Error retrieving data from cache for key ${key}:`, error);
+  } catch (e) {
+    console.error("Failed to retrieve cached API response:", e);
     return null;
-  }
-}
-
-/**
- * Wrapper for async operations with caching
- * 
- * @param key Cache key
- * @param fetchFn Function that fetches the data
- * @param options Cache options
- * @returns The data from cache or from the fetch function
- */
-export async function cachedFetch<T>(
-  key: string,
-  fetchFn: () => Promise<T>,
-  options?: CacheOptions
-): Promise<T> {
-  // Clean up expired cache entries occasionally (1% chance)
-  if (Math.random() < 0.01) {
-    cleanupCache();
-  }
-  
-  // Try to get from cache first
-  const cachedData = getFromCache<T>(key, options);
-  if (cachedData !== null) {
-    return cachedData;
-  }
-  
-  // Fetch fresh data
-  try {
-    const data = await fetchFn();
-    saveToCache<T>(key, data, options);
-    return data;
-  } catch (error) {
-    console.error(`Error in cachedFetch for key ${key}:`, error);
-    throw error;
   }
 }

@@ -33,8 +33,7 @@ export function usePlayers(initialTab?: string) {
     handleGradeChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer,
-    isMobile
+    handleAddPlayer
   } = usePlayersData();
 
   // Get activity state and actions
@@ -57,8 +56,7 @@ export function usePlayers(initialTab?: string) {
     handleAddActivity,
     handleImportedActivities,
     handleClearHistoricalActivities,
-    handleMatchResultUpdate,
-    retryLoading  // Include retryLoading from useActivities
+    handleMatchResultUpdate
   } = useActivities(players, setPlayers);
 
   // Wrapper for activity update
@@ -152,7 +150,6 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    isMobile,
     
     // Activity data
     activities,
@@ -176,7 +173,6 @@ export function usePlayers(initialTab?: string) {
     handleMatchResult,
     
     // Loading state
-    isLoading,
-    retryLoading  // Add retryLoading to the returned object
+    isLoading
   };
 }

@@ -1,7 +1,6 @@
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
-import { filterActivitiesBySearchTerm } from "@/utils/search";
 
 interface UseActivityTabViewsProps {
   activities: Activity[];
@@ -18,7 +17,7 @@ interface UseActivityTabViewsProps {
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
-export function useActivityTabViews({
+export const useActivityTabViews = ({
   activities,
   players,
   selectedActivity,
@@ -31,38 +30,71 @@ export function useActivityTabViews({
   handleActivityUpdate,
   handleKioskAssignmentUpdate,
   handleMatchResultUpdate
-}: UseActivityTabViewsProps) {
-  const [activeView, setActiveView] = useState<"current" | "historical" | "statistics" | "tools">("current");
+}: UseActivityTabViewsProps) => {
+  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-
-  // Filter activities by search query
-  const filteredBySearchActivities = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return activeView === "historical" ? filteredHistoricalActivities : filteredActivities;
-    }
-    
-    const activitiesToFilter = activeView === "historical" ? filteredHistoricalActivities : filteredActivities;
-    return filterActivitiesBySearchTerm(activitiesToFilter, searchQuery);
-  }, [searchQuery, filteredActivities, filteredHistoricalActivities, activeView]);
-
-  // Handle view change
-  const handleViewChange = useCallback((view: "current" | "historical" | "statistics" | "tools") => {
-    setActiveView(view);
-    setSelectedActivity(null);
-    setSelectedPlayer(null);
-  }, [setSelectedActivity]);
+  const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
-  const handlePlayerSelect = useCallback((player: Player | null) => {
-    setSelectedPlayer(player);
-    setSelectedActivity(null);
-  }, [setSelectedActivity]);
+  const handlePlayerSelect = useCallback((playerId: string) => {
+    if (!playerId) {
+      setSelectedPlayer(null);
+      return;
+    }
+    
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayer(player);
+      setSelectedActivity(null);
+    }
+  }, [players, setSelectedActivity]);
+
+  // Handle view change
+  const handleViewChange = useCallback((value: string) => {
+    if (value === "upcoming" || value === "historical" || value === "statistics") {
+      // Store the previous view before changing
+      setPreviousView(activeView);
+      setActiveView(value as "upcoming" | "historical" | "statistics");
+      setSelectedActivity(null);
+      setSelectedPlayer(null);
+    }
+  }, [setSelectedActivity, activeView]);
 
   // Determine if current view is historical
   const isHistorical = activeView === "historical";
 
+  // Filter activities by search query
+  const filteredBySearchActivities = isHistorical 
+    ? filteredHistoricalActivities.filter(activity => 
+        searchQuery 
+          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+          : true)
+    : filteredActivities.filter(activity => 
+        searchQuery 
+          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
+          : true);
+
+  // Get related activities for a selected activity
+  const getRelatedActivities = useCallback((activity: Activity) => {
+    if (activity.cupId) {
+      return activities.filter(a => 
+        a.cupId === activity.cupId && a.id !== activity.id
+      );
+    }
+    return [];
+  }, [activities]);
+
+  // Get cup matches for a selected cup
+  const getCupMatches = useCallback((activity: Activity) => {
+    if (activity.type === 'cup') {
+      return activities.filter(a => a.cupId === activity.id);
+    }
+    return [];
+  }, [activities]);
+
   // Render content based on current view and selection
   const renderContent = useCallback(() => {
+    // Handle Player detail view
     if (selectedPlayer) {
       const playerActivities = activities.filter(activity => 
         activity.participants?.includes(selectedPlayer.id)
@@ -72,26 +104,48 @@ export function useActivityTabViews({
         viewType: "player-detail",
         player: selectedPlayer,
         activities: playerActivities,
-        selectedPlayerId: selectedPlayer.id,
         searchQuery
       };
     }
     
+    // Handle Activity detail view
     if (selectedActivity) {
+      const relatedActivities = getRelatedActivities(selectedActivity);
+      const cupMatches = getCupMatches(selectedActivity);
+      
       return {
         viewType: "activity-detail",
-        selectedActivity,
-        activities,
+        activity: selectedActivity,
+        relatedActivities,
+        cupMatches,
         searchQuery
       };
     }
     
+    // Handle Statistics view
+    if (activeView === "statistics") {
+      return {
+        viewType: "statistics",
+        searchQuery
+      };
+    }
+    
+    // Handle Activities list view
     return {
+      viewType: "activities-list",
       activities: filteredBySearchActivities,
-      searchQuery,
-      selectedActivity: null
+      searchQuery
     };
-  }, [activities, selectedActivity, selectedPlayer, filteredBySearchActivities, searchQuery]);
+  }, [
+    activeView, 
+    selectedPlayer, 
+    selectedActivity, 
+    activities, 
+    filteredBySearchActivities, 
+    getRelatedActivities,
+    getCupMatches,
+    searchQuery
+  ]);
 
   return {
     activeView,
@@ -101,6 +155,7 @@ export function useActivityTabViews({
     handlePlayerSelect,
     renderContent,
     isHistorical,
-    filteredBySearchActivities
+    filteredBySearchActivities,
+    previousView
   };
-}
+};

@@ -1,10 +1,10 @@
 
 import { Activity, Player } from "@/types/player";
-import { deleteActivityFromDatabase } from "./activityDatabaseActions";
-import { saveActivities } from "@/utils/storage";
+import { saveActivities, savePlayers } from "@/utils/storage";
+import { logDatabaseChange, permanentlyDeleteActivity } from "@/lib/supabase";
 
 /**
- * Deletes an activity
+ * Handles deleting an activity and related cleanup
  */
 export const handleDeleteActivity = async (
   activities: Activity[],
@@ -14,57 +14,87 @@ export const handleDeleteActivity = async (
   toast: any,
   activityId: string
 ): Promise<boolean> => {
+  const activityToDelete = activities.find(activity => activity.id === activityId);
+  
+  if (!activityToDelete) {
+    toast({
+      title: "Fel",
+      description: "Kunde inte hitta aktiviteten",
+      variant: "destructive"
+    });
+    return false;
+  }
+  
   try {
-    console.log(`Deleting activity ${activityId}`);
+    const deleteResult = await permanentlyDeleteActivity(activityId);
     
-    // Optimistically update the local state first for immediate UI feedback
-    const updatedActivities = activities.filter(a => a.id !== activityId);
-    setActivities(updatedActivities);
-    
-    // Remove activity from players
-    const updatedPlayers = players.map(player => ({
-      ...player,
-      activities: player.activities ? player.activities.filter(id => id !== activityId) : []
-    }));
-    setPlayers(updatedPlayers);
-    
-    // Try to delete in database
-    let success = await deleteActivityFromDatabase(activityId);
-    
-    // If database deletion failed, save updated activities list to local storage
-    if (!success) {
-      try {
-        await saveActivities(updatedActivities);
-        console.log("Updated activities saved to local storage after deletion");
-        success = true;
-      } catch (saveError) {
-        console.error("Error saving updated activities to local storage:", saveError);
-      }
-    }
-    
-    // Force refresh local cache to ensure data consistency
-    localStorage.removeItem('cachedActivities');
-    localStorage.removeItem('sb-activities-fetch-time');
-    
-    if (success) {
+    if (!deleteResult) {
       toast({
-        title: "Aktivitet borttagen",
-        description: "Aktiviteten har tagits bort.",
-      });
-      return true;
-    } else {
-      toast({
-        title: "Kunde inte ta bort aktivitet fullständigt",
-        description: "Aktiviteten har tagits bort lokalt men inte i databasen.",
+        title: "Fel vid radering",
+        description: "Ett fel uppstod när aktiviteten skulle raderas från databasen.",
         variant: "destructive"
       });
       return false;
     }
-  } catch (error) {
-    console.error("Error handling activity deletion:", error);
+    
+    const updatedActivities = activities.filter(activity => activity.id !== activityId);
+    
+    if (activityToDelete.cupId) {
+      const parentCup = updatedActivities.find(a => a.id === activityToDelete.cupId);
+      if (parentCup && parentCup.matches) {
+        parentCup.matches = parentCup.matches.filter(matchId => matchId !== activityId);
+        console.log(`Removed match ${activityId} from cup ${parentCup.id}`);
+      }
+    }
+    
+    if (activityToDelete.type === 'cup' && activityToDelete.matches && activityToDelete.matches.length > 0) {
+      const matchesToDelete = activityToDelete.matches;
+      console.log(`Deleting ${matchesToDelete.length} matches for cup ${activityToDelete.id}`);
+      
+      for (const matchId of matchesToDelete) {
+        await permanentlyDeleteActivity(matchId);
+        console.log(`Deleted match ${matchId} from cup ${activityToDelete.id}`);
+      }
+      
+      const remainingActivities = updatedActivities.filter(a => !matchesToDelete.includes(a.id));
+      setActivities(remainingActivities);
+      await saveActivities(remainingActivities);
+    } else {
+      setActivities(updatedActivities);
+      await saveActivities(updatedActivities);
+    }
+    
+    const updatedPlayers = players.map(player => {
+      if (player.activities?.includes(activityId)) {
+        return {
+          ...player,
+          activities: player.activities.filter(id => id !== activityId)
+        };
+      }
+      return player;
+    });
+    
+    setPlayers(updatedPlayers);
+    await savePlayers(updatedPlayers);
+    
+    await logDatabaseChange(
+      'delete',
+      'activity',
+      activityId,
+      `Aktivitet "${activityToDelete.name}" har raderats permanent`
+    );
+    
     toast({
-      title: "Kunde inte ta bort aktivitet",
-      description: "Ett fel uppstod när aktiviteten skulle tas bort. Försök igen.",
+      title: "Aktivitet raderad",
+      description: `${activityToDelete.name} har tagits bort permanent.`,
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting activity:", error);
+    toast({
+      title: "Fel vid radering",
+      description: "Ett fel uppstod när aktiviteten skulle raderas.",
       variant: "destructive"
     });
     return false;

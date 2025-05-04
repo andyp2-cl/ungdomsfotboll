@@ -1,16 +1,18 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PasswordProtection from "./components/PasswordProtection";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
+import { useSyncEngine } from "./hooks/useSyncEngine";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LoginStatus } from "./components/auth/LoginStatus";
+import LayoutMain from "./components/LayoutMain";
 
 // Create a QueryClient with basic configuration
 const queryClient = new QueryClient({
@@ -54,6 +56,9 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <PasswordProtection>
+            <div className="fixed top-0 right-0 p-2 z-50">
+              <LoginStatus />
+            </div>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/players" element={<PlayersPage initialTab="players" />} />

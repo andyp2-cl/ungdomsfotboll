@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -50,11 +51,6 @@ interface PlayersPageContentProps {
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => void;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  
-  // Loading state
-  isLoading?: boolean;
-  retryLoading?: () => void;
 }
 
 export function PlayersPageContent(props: PlayersPageContentProps) {
@@ -100,8 +96,6 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               filteredActivities={props.filteredActivities}
               filteredHistoricalActivities={props.filteredHistoricalActivities}
               isAddActivityOpen={props.isAddActivityOpen}
-              isLoading={props.isLoading}
-              retryLoading={props.retryLoading}
               handleActivityTypeChange={props.handleActivityTypeChange}
               setSelectedActivity={props.setSelectedActivity}
               handleActivityUpdate={handleActivityUpdateWrapper}
@@ -111,7 +105,6 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               handleDeleteActivity={props.handleDelete}
               handleImportedActivities={props.handleImportActivities}
               handleClearHistoricalActivities={props.handleClearHistorical}
-              handleMatchResultUpdate={props.handleMatchResultUpdate}
             />
           }
         />

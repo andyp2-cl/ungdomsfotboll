@@ -19,12 +19,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/lovable-uploads/283f2e70-ce59-494a-b7c5-17020cba7215.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }

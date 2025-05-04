@@ -10,15 +10,13 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     activities, 
     setActivities,
     isLoading,
-    loadError,
     selectedActivity,
     setSelectedActivity,
     editingActivity,
     setEditingActivity,
     isAddActivityOpen,
     setIsAddActivityOpen,
-    toast,
-    retryLoading
+    toast
   } = useActivityState();
   
   // Get filtering functionality
@@ -55,7 +53,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     // State
     activities,
     isLoading,
-    loadError,
     selectedActivity,
     setSelectedActivity,
     editingActivity,
@@ -77,9 +74,6 @@ export function useActivities(players: Player[], setPlayers: (players: Player[])
     handleImportedActivities,
     handleScrapedMatches,
     handleClearHistoricalActivities,
-    handleMatchResultUpdate,
-    
-    // Loading and error handling
-    retryLoading
+    handleMatchResultUpdate
   };
 }

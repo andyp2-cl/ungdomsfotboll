@@ -1,6 +1,5 @@
 
 import { Activity, Player } from "@/types/player";
-import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 export interface PlayerStatistics {
   totalMatches: number;
@@ -45,10 +44,8 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
   const assistsByActivity: PlayerStatistics['assistsByActivity'] = [];
 
   historicalMatches.forEach(match => {
-    // Safely extract player stats
-    const playerStats = match.player_stats || {};
-    const goals = playerStats.goals?.[player.id] || 0;
-    const assists = playerStats.assists?.[player.id] || 0;
+    const goals = match.player_stats?.goals?.[player.id] || 0;
+    const assists = match.player_stats?.assists?.[player.id] || 0;
 
     totalGoals += Number(goals);
     totalAssists += Number(assists);
@@ -76,28 +73,12 @@ export const calculatePlayerStatistics = (player: Player, activities: Activity[]
         match.homeScore === match.awayScore) {
       draws++;
     }
-    // Then check for explicit win/loss flag
+    // Then check for explicit win/loss
     else if (match.isWin === true) {
       wins++;
     } 
     else if (match.isWin === false) {
       losses++;
-    }
-    // If no isWin flag but we have scores, calculate based on scores
-    else if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      // Determine if we're home or away using the utility function
-      const isHome = isHomeMatch(match);
-                    
-      // Calculate if we won
-      if (isHome) {
-        if (match.homeScore > match.awayScore) wins++;
-        else if (match.homeScore < match.awayScore) losses++;
-        else draws++;
-      } else {
-        if (match.awayScore > match.homeScore) wins++;
-        else if (match.awayScore < match.homeScore) losses++;
-        else draws++;
-      }
     }
   });
 

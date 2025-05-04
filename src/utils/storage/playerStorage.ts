@@ -4,14 +4,10 @@ import { mockPlayers } from "@/data/mockData";
 import { supabase, logDatabaseChange } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
 import { formatPlayerForDatabase, formatDatabasePlayer } from "../database/formatters";
-import { toast } from "sonner";
-import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
 
 // Get players from Supabase or use mockdata as fallback
 export const getStoredPlayers = async (): Promise<Player[]> => {
   try {
-    console.log("Fetching players from database...");
-    
     // First, get all players
     const { data: playersData, error: playersError } = await supabase
       .from('players')
@@ -23,51 +19,25 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
     }
     
     const players = playersData.map(formatDatabasePlayer);
-    console.log(`Fetched ${players.length} players from database`);
     
     // Then, get player-activity relationships and populate the activities array
-    try {
-      const { playerActivities } = await fetchPlayerActivities();
-      
-      // Populate activities for each player
-      if (playerActivities) {
-        players.forEach(player => {
-          player.activities = playerActivities[player.id] || [];
-        });
-        console.log("Successfully populated player activities");
-      } else {
-        console.warn("No player-activity relationships returned");
-      }
-    } catch (relationshipError) {
-      console.error("Error fetching player-activity relationships:", relationshipError);
-      toast.error("Kunde inte hämta spelaraktivitetsrelationer");
-      
-      // Try to get from cache
-      const cachedPlayerActivities = localStorage.getItem('cachedPlayerActivities');
-      if (cachedPlayerActivities) {
-        try {
-          const playerActivitiesMap = JSON.parse(cachedPlayerActivities);
-          players.forEach(player => {
-            player.activities = playerActivitiesMap[player.id] || [];
-          });
-          console.log("Used cached player-activity relationships as fallback");
-        } catch (cacheError) {
-          console.error("Error parsing cached player activities:", cacheError);
-        }
-      }
+    const { data: playerActivitiesData, error: relationshipError } = await supabase
+      .from('player_activities')
+      .select('*');
+    
+    if (relationshipError) {
+      console.error("Error fetching player activities:", relationshipError);
+      throw relationshipError;
     }
+    
+    // Populate activities for each player
+    players.forEach(player => {
+      const playerActivityRelations = playerActivitiesData.filter(pa => pa.player_id === player.id);
+      player.activities = playerActivityRelations.map(relation => relation.activity_id);
+    });
     
     if (players.length > 0) {
       console.log("Retrieved players from Supabase:", players.length);
-      
-      // Cache players for offline use
-      try {
-        localStorage.setItem('cachedPlayers', JSON.stringify(players));
-        localStorage.setItem('playersFetchTime', Date.now().toString());
-      } catch (cacheError) {
-        console.error("Error caching players:", cacheError);
-      }
-      
       return players;
     }
     
@@ -77,19 +47,6 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
     return mockPlayers;
   } catch (error) {
     console.error("Error fetching players:", error);
-    
-    // Try to load from cache as fallback
-    try {
-      const cachedPlayers = localStorage.getItem('cachedPlayers');
-      if (cachedPlayers) {
-        const parsedPlayers = JSON.parse(cachedPlayers);
-        console.log(`Loaded ${parsedPlayers.length} players from cache`);
-        return parsedPlayers;
-      }
-    } catch (cacheError) {
-      console.error("Error loading from cache:", cacheError);
-    }
-    
     return mockPlayers;
   }
 };
@@ -110,10 +67,8 @@ export const updatePlayerActivities = async (player: Player): Promise<void> => {
       throw fetchError;
     }
     
-    const existingActivityIds = existingRelations?.map(rel => rel.activity_id) || [];
-    console.log(`Player ${player.name} has ${existingActivityIds.length} existing activities`);
-    
     // Delete relationships that are no longer valid
+    const existingActivityIds = existingRelations.map(rel => rel.activity_id);
     const activityIdsToRemove = existingActivityIds.filter(
       actId => !player.activities?.includes(actId)
     );
@@ -152,7 +107,7 @@ export const updatePlayerActivities = async (player: Player): Promise<void> => {
       console.log(`Adding ${newActivityIds.length} activities for player ${player.name}`);
       
       const newRelations = newActivityIds.map(activityId => ({
-        id: `${player.id}_${activityId}`, // Use predictable ID format
+        id: uuidv4(),
         player_id: player.id,
         activity_id: activityId
       }));
@@ -176,19 +131,8 @@ export const updatePlayerActivities = async (player: Player): Promise<void> => {
         );
       }
     }
-    
-    // Update cache after successful update
-    try {
-      const { playerActivities, activityPlayers } = await fetchPlayerActivities();
-      localStorage.setItem('cachedPlayerActivities', JSON.stringify(playerActivities));
-      localStorage.setItem('cachedActivityPlayers', JSON.stringify(activityPlayers));
-      localStorage.setItem('playerActivitiesFetchTime', Date.now().toString());
-    } catch (cacheError) {
-      console.error('Error updating player activities cache:', cacheError);
-    }
   } catch (error) {
     console.error("Error updating player activities:", error);
-    toast.error(`Kunde inte uppdatera aktiviteter för ${player.name}`);
     throw error;
   }
 };

@@ -28,8 +28,7 @@ export function PlayerFilter({
   activeFiltersCount = 0
 }: PlayerFilterProps) {
   const grades: PlayerGrade[] = ['A', 'B', 'C', 'D'];
-  // Remove TRÄNARE from the positions list in the filter dropdown
-  const positions: PlayerPosition[] = ['MV', 'BACK', 'MF', 'ANF'];
+  const positions: PlayerPosition[] = ['MV', 'BACK', 'MF', 'ANF', 'TRÄNARE'];
   const [open, setOpen] = useState(false);
   
   // Position label mapping for display

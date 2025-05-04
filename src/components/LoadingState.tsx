@@ -13,8 +13,8 @@ import { toast } from "sonner";
 
 interface LoadingStateProps {
   message?: string;
-  error?: string | null;
-  retry?: () => void;  // Ensuring this is "retry" rather than "onRetry"
+  error?: string;
+  retry?: () => void;
 }
 
 export function LoadingState({ 
@@ -155,7 +155,7 @@ export function LoadingState({
   if (error) {
     return <ErrorState 
       error={error} 
-      retry={retry} // Ensuring this is "retry" rather than "onRetry"
+      retry={retry} 
       onDiagnostic={checkDatabaseManually} 
       onForceReconnect={handleForceReconnect}
       isCheckingDb={isCheckingDb || isForceReconnecting}

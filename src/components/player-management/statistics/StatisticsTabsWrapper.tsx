@@ -46,7 +46,6 @@ export function StatisticsTabsWrapper({
         <OverviewTabContent 
           activities={activities} 
           players={players} 
-          onPlayerSelect={onPlayerSelect}
         />
       </TabsContent>
       

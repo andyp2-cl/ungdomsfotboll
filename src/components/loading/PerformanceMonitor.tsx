@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { getCacheStats } from "@/utils/cache";
+import { getApiCacheStats } from "@/utils/cache/apiCache";
 import { Activity } from "lucide-react";
 
 export function PerformanceMonitor() {
@@ -27,7 +27,7 @@ export function PerformanceMonitor() {
   useEffect(() => {
     const updateStats = () => {
       // Get API cache stats
-      const cacheStats = getCacheStats();
+      const cacheStats = getApiCacheStats();
       
       // Calculate localStorage usage
       let totalSize = 0;

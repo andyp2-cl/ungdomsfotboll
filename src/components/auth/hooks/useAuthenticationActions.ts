@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { connectAnonymously } from "../utils/databaseUtils";
 
 export function useAuthenticationActions(isOnline: boolean) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -16,16 +15,7 @@ export function useAuthenticationActions(isOnline: boolean) {
     try {
       setIsAuthenticating(true);
       
-      // Try to connect anonymously first (for password-protected users)
-      const anonymousResult = await connectAnonymously();
-      
-      if (anonymousResult) {
-        toast.success("Databasåtkomst aktiverad");
-        setIsAuthenticating(false);
-        return;
-      }
-      
-      // If anonymous auth fails, switch to magic link option
+      // Since anonymous auth is disabled, switch to magic link option
       const email = prompt("Ange din e-postadress för att aktivera databasåtkomst:");
       
       if (!email) {

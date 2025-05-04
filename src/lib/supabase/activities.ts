@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 import { Activity } from '@/types/player';
 import { formatActivityFromDatabase } from '@/utils/database/formatters/activity';
@@ -13,16 +12,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     if (error) {
       console.error('Error fetching activities:', error);
       throw error;
-    }
-    
-    console.log('Fetched activities from database:', data?.length || 0);
-    
-    // Log league IDs for debugging
-    const leagueIds = data?.filter(a => a.league_id).map(a => a.league_id);
-    if (leagueIds?.length) {
-      console.log(`Found ${leagueIds.length} activities with league IDs`, leagueIds);
-    } else {
-      console.log('No activities with league IDs found');
     }
     
     // Transform the database format to our application format
@@ -76,17 +65,6 @@ export const fetchActivities = async (): Promise<Activity[]> => {
     });
     
     console.log(`Found matches for ${matchesByCup.size} different cups`);
-    
-    // Add logging to check if league_id is being properly mapped to objects
-    const activitiesWithLeagues = activities.filter(activity => activity.league_id);
-    console.log(`Activities with league IDs: ${activitiesWithLeagues.length}`);
-    if (activitiesWithLeagues.length > 0) {
-      console.log('Sample league ID values:', activitiesWithLeagues.slice(0, 3).map(a => ({
-        activityId: a.id,
-        leagueId: a.league_id,
-        name: a.name
-      })));
-    }
     
     return activities;
   } catch (error) {

@@ -1,117 +1,54 @@
 
 import { Activity } from "@/types/player";
-
-// Key for storing activities in localStorage
-const CACHE_KEY = 'cachedActivities';
-const CACHE_TIME_KEY = 'cachedActivitiesTime';
-const CACHE_VERSION = 'v2'; // Increment this when cache format changes
+import { cacheApiResponse, getCachedApiResponse } from "@/utils/cache/apiCache";
 
 /**
- * Stores activities in localStorage cache
+ * Cache activities locally for offline access and performance
  */
-export const cacheActivities = async (activities: Activity[]): Promise<void> => {
+export const cacheActivities = (activities: Activity[]): void => {
   try {
-    // Store the data with a timestamp
-    const cacheObj = {
-      version: CACHE_VERSION,
-      timestamp: Date.now(),
-      activities: activities
-    };
+    // Store in localStorage for offline fallback (legacy method)
+    localStorage.setItem('cachedActivities', JSON.stringify(activities));
+    localStorage.setItem('cachedActivitiesTime', Date.now().toString());
     
-    localStorage.setItem(CACHE_KEY, JSON.stringify(activities));
-    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    console.log(`Stored ${activities.length} activities in cache`);
+    // Also store in the API cache system with a 15-minute TTL
+    cacheApiResponse('activities', activities, { 
+      ttl: 15 * 60, // 15 minutes
+      tag: 'activities' 
+    });
     
-    // Also store in a versioned cache key
-    localStorage.setItem(`${CACHE_KEY}_${CACHE_VERSION}`, JSON.stringify(cacheObj));
+    console.log(`Cached ${activities.length} activities successfully`);
   } catch (error) {
     console.error("Error caching activities:", error);
-    
-    // Try with a smaller subset if the error might be storage quota exceeded
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      // Store only essential fields for each activity
-      const essentialActivities = activities.map(activity => ({
-        id: activity.id,
-        name: activity.name,
-        date: activity.date,
-        type: activity.type,
-        time: activity.time,
-        participants: activity.participants
-      }));
-      
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(essentialActivities));
-        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-        console.log(`Stored ${essentialActivities.length} essential-only activities in cache`);
-      } catch (fallbackError) {
-        console.error("Even essential-only caching failed:", fallbackError);
-      }
-    }
   }
 };
 
 /**
- * Retrieves activities from localStorage cache
+ * Retrieve activities from cache
  */
-export const getActivitiesFromCache = (): Activity[] | null => {
+export const getActivitiesFromCache = (showToast: boolean = false): Activity[] | null => {
   try {
-    // Try the versioned cache first (more complete with metadata)
-    const versionedCache = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-    if (versionedCache) {
-      const cacheObj = JSON.parse(versionedCache);
-      console.log(`Retrieved ${cacheObj.activities.length} activities from versioned cache`);
-      return cacheObj.activities;
+    const cachedData = getCachedApiResponse<Activity[]>('activities');
+    
+    if (cachedData && cachedData.length > 0) {
+      return cachedData;
     }
     
-    // Fall back to the simple cache
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    if (!cachedData) {
-      console.log('No cached activities found');
-      return null;
-    }
-    
-    const activities = JSON.parse(cachedData);
-    console.log(`Retrieved ${activities.length} activities from simple cache`);
-    return activities;
+    // Fallback to legacy cache
+    const legacyCachedData = localStorage.getItem('cachedActivities');
+    return legacyCachedData ? JSON.parse(legacyCachedData) : null;
   } catch (error) {
-    console.error("Error retrieving activities from cache:", error);
+    console.error("Error reading cached activities:", error);
     return null;
   }
 };
 
 /**
- * Checks if the cache should be refreshed based on age
+ * Check if we should refresh the cache based on its age
  */
 export const shouldRefreshCache = (): boolean => {
-  const cacheTimeStr = localStorage.getItem(CACHE_TIME_KEY);
-  if (!cacheTimeStr) return true;
+  const cacheTime = Number(localStorage.getItem('cachedActivitiesTime') || 0);
+  const cacheAge = (Date.now() - cacheTime) / 1000;
   
-  const cacheTime = parseInt(cacheTimeStr, 10);
-  const now = Date.now();
-  const cacheAge = now - cacheTime;
-  const MAX_CACHE_AGE = 5 * 60 * 1000; // 5 minutes
-  
-  return cacheAge > MAX_CACHE_AGE;
-};
-
-/**
- * Clears the activities cache
- */
-export const clearActivitiesCache = (): void => {
-  localStorage.removeItem(CACHE_KEY);
-  localStorage.removeItem(CACHE_TIME_KEY);
-  localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-  console.log('Activities cache cleared');
-};
-
-/**
- * Gets the age of the cache in seconds
- */
-export const getCacheAge = (): number | null => {
-  const cacheTimeStr = localStorage.getItem(CACHE_TIME_KEY);
-  if (!cacheTimeStr) return null;
-  
-  const cacheTime = parseInt(cacheTimeStr, 10);
-  const now = Date.now();
-  return Math.round((now - cacheTime) / 1000);
+  return cacheAge > 300; // 5 minutes
 };

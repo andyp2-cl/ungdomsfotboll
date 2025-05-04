@@ -365,41 +365,23 @@ export const forceReconnect = async (): Promise<boolean> => {
  */
 export const clearAuthAndReconnect = async (): Promise<boolean> => {
   try {
-    console.log("Complete reset of auth and connection state");
+    console.log("Clearing auth state and reconnecting...");
     
-    // Clear all supabase related items from localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('sb-') || key.startsWith('supabase'))) {
-        localStorage.removeItem(key);
-      }
-    }
-    
-    // Sign out completely
+    // Sign out first
     await supabase.auth.signOut({ scope: 'global' });
     
-    // Wait a moment
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Clear connection cache
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
     
-    // Try to reconnect anonymously
-    const anonymousSuccess = await connectAnonymously();
+    // Wait a moment for auth state to clear
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (anonymousSuccess) {
-      console.log("Anonymous reconnection successful");
-      
-      // Clear any cached activity data to force a refresh
-      localStorage.removeItem('cachedActivities');
-      localStorage.removeItem('cachedActivitiesTime');
-      localStorage.removeItem('sb-activities-last-update');
-      localStorage.removeItem('sb-activities-fetch-time');
-      
-      return true;
-    } else {
-      console.error("Anonymous reconnection failed");
-      return false;
-    }
+    // Try to connect anonymously
+    return await connectAnonymously();
   } catch (error) {
-    console.error("Error during auth reset and reconnect:", error);
+    console.error("Error during auth clear and reconnection:", error);
     return false;
   }
 };

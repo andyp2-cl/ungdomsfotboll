@@ -54,24 +54,23 @@ export function generateMonthlyActivityData(activities: Activity[]): MonthlyActi
     };
   }
   
-  // Count activities by type - Fixed the type comparison by converting to string
+  // Count activities by type
   recentActivities.forEach(activity => {
     try {
       const monthKey = format(parseISO(activity.date), 'yyyy-MM');
       
       if (monthlyData[monthKey]) {
-        const activityTypeString = String(activity.type); // Convert to string explicitly
-        
-        // Compare using string equality
-        if (activityTypeString === 'match') {
+        // Use separate if conditions for each type to avoid TypeScript comparison errors
+        if (activity.type === 'match') {
           monthlyData[monthKey].matches++;
         } 
         
-        if (activityTypeString === 'training') {
+        // Check for 'training' value as a string to avoid type issues
+        if (activity.type === 'training') {
           monthlyData[monthKey].trainings++;
         }
         
-        if (activityTypeString === 'cup') {
+        if (activity.type === 'cup') {
           monthlyData[monthKey].cups++;
         }
         
@@ -100,7 +99,7 @@ export function calculateWinRateData(activities: Activity[]): WinRateData[] {
   const recentMatches = activities.filter(activity => {
     try {
       const activityDate = parseISO(activity.date);
-      return isAfter(activityDate, sixMonthsAgo) && String(activity.type) === 'match';
+      return isAfter(activityDate, sixMonthsAgo) && activity.type === 'match';
     } catch (e) {
       return false;
     }

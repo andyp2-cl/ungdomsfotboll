@@ -4,10 +4,10 @@ import { Player, Activity } from "@/types/player";
 import { BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Import our components
-import { OverviewTabContent } from "@/components/team-statistics/overview";
-import { AttendanceTabContent } from "@/components/team-statistics/AttendanceTabContent";
+// Import our new components
+import { OverviewTabContent } from "@/components/team-statistics/OverviewTabContent";
 import { PerformanceTabContent } from "@/components/team-statistics/PerformanceTabContent";
+import { AttendanceTabContent } from "@/components/team-statistics/AttendanceTabContent";
 import { TrendsTabContent } from "@/components/team-statistics/TrendsTabContent";
 import { calculatePlayerStats } from "@/components/team-statistics/utils/playerStatsUtils";
 

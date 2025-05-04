@@ -3,9 +3,6 @@ import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { determineMatchOutcome } from "@/hooks/activities/actions/match-result/determineOutcome";
-import { extractTeamNames, isHomeMatch, isHassleholm } from "./utils/team-detection";
-import { updateMatchResultInDatabase } from "@/hooks/activities/actions/match-result/updateDatabase";
 
 interface ResultSaverProps {
   activity: Activity;
@@ -23,44 +20,41 @@ export function useResultSaver({
 
   const saveMatchResult = async (
     homeScore?: number,
-    awayScore?: number
+    awayScore?: number,
+    manualWinStatus?: boolean
   ) => {
     if (isSaving) return;
     
     setIsSaving(true);
     try {
       console.log("Saving match result:", {
-        activityId: activity.id,
         homeScore,
         awayScore,
-        existingPlayerStats: activity.player_stats
+        manualWinStatus
       });
       
-      // Determine if Hässleholms IF won the match
-      const isWin = determineMatchOutcome(activity, homeScore, awayScore);
+      // Calculate if it's a win (if not manually set)
+      const isWin = manualWinStatus !== undefined 
+        ? manualWinStatus 
+        : homeScore !== undefined && awayScore !== undefined 
+          ? homeScore > awayScore 
+          : undefined;
       
-      console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
-      
-      // Create updated player stats - ensure we preserve existing stats
-      const currentPlayerStats = activity.player_stats || { goals: {}, assists: {} };
+      // Create updated player stats
       const updatedPlayerStats = prepareUpdatedPlayerStats(
-        {
-          ...activity,
-          player_stats: currentPlayerStats
-        },
+        activity,
         homeScore,
         awayScore,
-        isWin
+        isWin,
+        true // Assuming we're always the home team for now
       );
-      
-      console.log("Updated player stats:", updatedPlayerStats);
       
       // Create updated activity object
       const updatedActivity: Activity = {
         ...activity,
         homeScore,
         awayScore,
-        isWin, // This will be true/false/undefined (undefined for draw)
+        isWin,
         player_stats: updatedPlayerStats,
       };
       
@@ -74,39 +68,20 @@ export function useResultSaver({
       console.log("Updating activity with new result:", {
         activityId: updatedActivity.id,
         result: updatedActivity.result,
-        isWin: updatedActivity.isWin,
-        player_stats: updatedActivity.player_stats
+        isWin: updatedActivity.isWin
       });
       
-      // First try to update in the database for permanent storage
-      let databaseSuccess = false;
-      
-      try {
-        databaseSuccess = await updateMatchResultInDatabase(activity, homeScore, awayScore, isWin);
-        console.log(`Database update ${databaseSuccess ? 'successful' : 'failed'}`);
-      } catch (dbError) {
-        console.error("Error updating match result in database:", dbError);
-      }
-      
-      // Call the activity update function - this works locally regardless of database success
+      // Call the activity update function
       await updateActivity(updatedActivity);
-      
-      // Force clear cache to ensure data is reloaded fresh next time
-      localStorage.removeItem('cachedActivities');
-      localStorage.removeItem('sb-activities-fetch-time');
       
       // Also call the match result update function if provided
       if (onMatchResultUpdate) {
-        try {
-          await onMatchResultUpdate(activity.id, homeScore, awayScore);
-        } catch (updateError) {
-          console.error("Error in onMatchResultUpdate:", updateError);
-        }
+        await onMatchResultUpdate(activity.id, homeScore, awayScore);
       }
       
       toast({
         title: "Matchresultat sparat",
-        description: `Resultatet ${homeScore}-${awayScore} har sparats${!databaseSuccess ? ' lokalt' : ''}.`
+        description: `Resultatet ${homeScore}-${awayScore} har sparats.`
       });
       
       return true;

@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { useAuthentication } from './hooks/useAuthentication';
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, RefreshCw, LogOut, WifiOff, ToggleLeft, ToggleRight } from "lucide-react";
+import { CheckCircle2, RefreshCw, LogOut, WifiOff } from "lucide-react";
 import { toast } from 'sonner';
-import { useAnonymousAuth } from './hooks/useAnonymousAuth';
 
 export function LoginStatus() {
   const {
@@ -22,59 +21,19 @@ export function LoginStatus() {
     handleLogout,
     triggerSync
   } = useAuthentication();
-  
-  const {
-    autoConnectActive,
-    toggleAutoConnect
-  } = useAnonymousAuth();
-  
-  // Auto-connect toggle button
-  const AutoConnectToggle = () => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="flex items-center gap-1.5 text-xs"
-      onClick={() => {
-        toggleAutoConnect();
-        toast.success(autoConnectActive 
-          ? "Automatisk DB-åtkomst inaktiverad" 
-          : "Automatisk DB-åtkomst aktiverad"
-        );
-      }}
-      title={autoConnectActive 
-        ? "Klicka för att inaktivera automatisk DB-åtkomst" 
-        : "Klicka för att aktivera automatisk DB-åtkomst"
-      }
-    >
-      {autoConnectActive ? (
-        <>
-          <ToggleRight className="h-4 w-4 text-green-500" />
-          <span className="hidden md:inline">Auto DB</span>
-        </>
-      ) : (
-        <>
-          <ToggleLeft className="h-4 w-4 text-gray-500" />
-          <span className="hidden md:inline">Auto DB</span>
-        </>
-      )}
-    </Button>
-  );
 
   // If offline, show offline mode indicator
   if (!isOnline) {
     return (
-      <div className="flex items-center gap-2">
-        <AutoConnectToggle />
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex gap-1.5 items-center text-yellow-600"
-          onClick={triggerSync}
-        >
-          <WifiOff className="h-4 w-4" />
-          <span className="text-xs">Offline-läge</span>
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex gap-1.5 items-center text-yellow-600"
+        onClick={triggerSync}
+      >
+        <WifiOff className="h-4 w-4" />
+        <span className="text-xs">Offline-läge</span>
+      </Button>
     );
   }
   
@@ -129,7 +88,6 @@ export function LoginStatus() {
   // Default state - either logged in or login button
   return (
     <div className="flex items-center gap-2">
-      <AutoConnectToggle />
       {isAuthenticated ? (
         <div className="flex items-center gap-2">
           <Button 
