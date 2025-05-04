@@ -76,7 +76,12 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 outerRadius={50}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ leagueName, value, percent }) => `${leagueName}: ${(percent * 100).toFixed(0)}%`}
+                label={({ leagueName, value, payload }) => {
+                  // Calculate the percentage from the payload data
+                  const total = leagueStats.reduce((sum, item) => sum + item.value, 0);
+                  const percent = payload && payload.value ? (payload.value / total) * 100 : 0;
+                  return `${leagueName}: ${percent.toFixed(0)}%`;
+                }}
               >
                 {leagueStats.map((entry, index) => (
                   <Cell 
@@ -86,7 +91,11 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value, name, props) => [`${value} matcher (${(props.percent * 100).toFixed(0)}%)`, props.payload.leagueName]} 
+                formatter={(value, name, props) => {
+                  const total = leagueStats.reduce((sum, item) => sum + item.value, 0);
+                  const percent = (Number(value) / total) * 100;
+                  return [`${value} matcher (${percent.toFixed(0)}%)`, props.payload.leagueName];
+                }} 
                 labelFormatter={() => ''} 
               />
             </PieChart>
