@@ -8,7 +8,7 @@ import { Player } from "@/types/player";
 /**
  * Combines player state, filtering, and actions into one hook
  */
-export function usePlayers() {
+export function usePlayers(initialTab?: string) {
   // Get player state
   const playerState = usePlayerState();
   const { players, isLoading } = playerState;
@@ -28,6 +28,12 @@ export function usePlayers() {
   return {
     ...playerState,
     ...playerFilters,
-    ...playerActions
+    ...playerActions,
+    // Add any tab management needed for PlayerManagementPage
+    activeTab: initialTab || "players",
+    setActiveTab: (tab: string) => {
+      // This is just a placeholder since we don't have actual implementation
+      console.log("Setting active tab to", tab);
+    }
   };
 }

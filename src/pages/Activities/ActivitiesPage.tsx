@@ -229,3 +229,5 @@ export function ActivitiesPage() {
     </PageContainer>
   );
 }
+
+export default ActivitiesPage;

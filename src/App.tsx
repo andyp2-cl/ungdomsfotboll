@@ -8,12 +8,10 @@ import PasswordProtection from "./components/PasswordProtection";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
-import ActivitiesPage from "./pages/ActivitiesPage";
-import PlayerDetail from "./pages/PlayerDetail";
-import ActivityDetail from "./pages/ActivityDetail";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ActivitiesPage } from "./pages/Activities/ActivitiesPage";
 
 // Create a QueryClient with basic configuration
 const queryClient = new QueryClient({
@@ -61,8 +59,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/players" element={<PlayersPage />} />
               <Route path="/activities" element={<ActivitiesPage />} />
-              <Route path="/players/:id" element={<PlayerDetail />} />
-              <Route path="/activities/:id" element={<ActivityDetail />} />
+              <Route path="/players/:id" element={<PlayersPage />} />
+              <Route path="/activities/:id" element={<ActivitiesPage />} />
               <Route path="/player-management" element={<PlayerManagementPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

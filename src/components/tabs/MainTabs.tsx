@@ -6,16 +6,18 @@ import { saveActiveTab } from "@/utils/storage";
 
 interface MainTabsProps {
   activeTab: string;
-  setActiveTab: (tab: string) => void;
-  playersContent: ReactNode;
-  activitiesContent: ReactNode;
+  onTabChange: (tab: string) => void;
+  playerCount?: number;
+  activityCount?: number;
+  children?: ReactNode;
 }
 
 export function MainTabs({ 
   activeTab, 
-  setActiveTab, 
-  playersContent, 
-  activitiesContent 
+  onTabChange, 
+  playerCount,
+  activityCount,
+  children 
 }: MainTabsProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,19 +33,17 @@ export function MainTabs({
   }, [activeTab, navigate, location.pathname]);
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-        <TabsTrigger value="players">Spelare</TabsTrigger>
-        <TabsTrigger value="activities">Matcher</TabsTrigger>
+        <TabsTrigger value="players">
+          Spelare {playerCount !== undefined ? `(${playerCount})` : ''}
+        </TabsTrigger>
+        <TabsTrigger value="activities">
+          Matcher {activityCount !== undefined ? `(${activityCount})` : ''}
+        </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="players" className="space-y-6">
-        {playersContent}
-      </TabsContent>
-      
-      <TabsContent value="activities" className="space-y-6">
-        {activitiesContent}
-      </TabsContent>
+      {children}
     </Tabs>
   );
 }
