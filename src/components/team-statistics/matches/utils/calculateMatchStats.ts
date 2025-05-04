@@ -1,6 +1,6 @@
 
 import { Activity } from "@/types/player";
-import { determineMatchOutcome } from "@/components/activity-detail/match-result/utils";
+import { determineOutcome } from "@/components/activity-detail/match-result/utils";
 import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 export interface MatchStatistics {
@@ -67,7 +67,7 @@ export const calculateMatchStatistics = (activities: Activity[]): MatchStatistic
         console.log(`Match ${match.id} is explicitly marked as a loss`);
       } else {
         // Calculate based on isHome and scores
-        const isWin = determineMatchOutcome(match);
+        const isWin = determineOutcome(match);
         if (isWin === true) {
           wins++;
           console.log(`Match ${match.id} calculated as a win`);

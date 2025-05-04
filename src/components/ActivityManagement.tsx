@@ -16,13 +16,14 @@ interface ActivityManagementProps {
   filteredHistoricalActivities: Activity[];
   onActivityTypeChange: (type: string) => void;
   onActivitySelect: (activity: Activity | null) => void;
-  onActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
+  onActivityUpdate: (activity: Activity) => Promise<void>;
   onAddActivityClick: () => void;
   onEditActivityClick: (activity: Activity) => void;
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onDeleteActivity?: (activityId: string) => Promise<boolean>;
   onImportedActivities: (importedActivities: Activity[]) => Promise<boolean>;
   onClearHistoricalActivities?: () => Promise<boolean>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function ActivityManagement({
@@ -40,7 +41,8 @@ export function ActivityManagement({
   onKioskAssignmentUpdate,
   onDeleteActivity,
   onImportedActivities,
-  onClearHistoricalActivities
+  onClearHistoricalActivities,
+  onMatchResultUpdate
 }: ActivityManagementProps) {
   const [activeTab, setActiveTab] = useState<"activities" | "historical" | "tools" | "logs">("activities");
   
@@ -82,6 +84,18 @@ export function ActivityManagement({
       console.error("Error updating kiosk assignment:", error);
       return false;
     }
+  };
+
+  const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
+    if (onMatchResultUpdate) {
+      try {
+        return await onMatchResultUpdate(activityId, homeScore, awayScore);
+      } catch (error) {
+        console.error("Error updating match result:", error);
+        return false;
+      }
+    }
+    return false;
   };
 
   const handleDeleteActivity = async (activityId: string): Promise<boolean> => {

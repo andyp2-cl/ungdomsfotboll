@@ -106,7 +106,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   });
 
   return (
-    <RefreshablePageContainer isLoading={isLoading} onRefresh={async () => { await handleRefresh(); }} disabled={!!selectedPlayer || !!selectedActivity}>
+    <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
       <PlayersPageContent 
         // Tab state
         activeTab={activeTab}

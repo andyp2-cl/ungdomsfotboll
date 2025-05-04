@@ -13,13 +13,13 @@ interface KioskAssignmentProps {
 
 export function KioskAssignment({ activity, players, onKioskAssignmentUpdate }: KioskAssignmentProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>(
-    activity.kiosk_assigned_player_id || undefined
+    activity.kioskAssignedPlayerId || undefined
   );
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
   // Get the currently assigned player (if any)
-  const assignedPlayer = players.find(p => p.id === activity.kiosk_assigned_player_id);
+  const assignedPlayer = players.find(p => p.id === activity.kioskAssignedPlayerId);
 
   const handleAssign = async () => {
     setIsLoading(true);
@@ -91,7 +91,7 @@ export function KioskAssignment({ activity, players, onKioskAssignmentUpdate }: 
         
         <Button 
           onClick={handleAssign}
-          disabled={isLoading || selectedPlayerId === activity.kiosk_assigned_player_id}
+          disabled={isLoading || selectedPlayerId === activity.kioskAssignedPlayerId}
         >
           {isLoading ? "Uppdaterar..." : "Uppdatera kioskansvar"}
         </Button>
