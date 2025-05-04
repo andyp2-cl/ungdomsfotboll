@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import HomePage from "./pages/Index";
 import PlayersPage from "./pages/PlayersPage";
+import ActivitiesPage from "./pages/ActivitiesPage";
 import NotFound from "./pages/NotFound";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 
@@ -24,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/players" element={<PlayersPage />} />
+          <Route path="/activities" element={<ActivitiesPage />} />
           <Route path="/player/:id" element={<PlayerManagementPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
