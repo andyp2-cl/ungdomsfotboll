@@ -6,6 +6,7 @@ import { toast as toastLibrary } from "sonner";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { handleMatchResultUpdate } from "./match-result";
+import { supabase } from "@/lib/supabase/client"; // Added missing import
 
 /**
  * Updates an existing activity
@@ -216,3 +217,4 @@ export const handleAddActivity = async (
 
 // Export the handleMatchResultUpdate function from the dedicated module
 export { handleMatchResultUpdate };
+
