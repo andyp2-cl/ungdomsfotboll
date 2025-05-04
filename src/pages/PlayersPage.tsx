@@ -1,3 +1,4 @@
+
 import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -79,7 +80,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleKioskUpdate,
     handleImportActivities,
     handleClearHistorical,
-    handleMatchResult, // This should now return Promise<boolean>
+    handleMatchResult,
     setViewMode
   );
 
@@ -97,9 +98,15 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Wrapper for handleDelete to match expected handleDeleteActivity
   const handleDeleteActivity = handleDelete;
+  
+  console.log("PlayersPage rendering with:", {
+    activitiesCount: activities.length,
+    playersCount: players.length,
+    tab: activeTab
+  });
 
   return (
-    <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
+    <RefreshablePageContainer isLoading={isLoading} onRefresh={async () => { await handleRefresh(); }} disabled={!!selectedPlayer || !!selectedActivity}>
       <PlayersPageContent 
         // Tab state
         activeTab={activeTab}

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -58,7 +59,7 @@ export function usePlayers(initialTab?: string) {
     handleClearHistoricalActivities,
     handleMatchResultUpdate,
     retryLoading  // Include retryLoading from useActivities
-  } = useActivities(players, setPlayers);
+  } = useActivities(players);
 
   // Wrapper for activity update
   const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {

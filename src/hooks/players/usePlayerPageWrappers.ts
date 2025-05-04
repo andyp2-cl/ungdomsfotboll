@@ -68,19 +68,22 @@ export function usePlayerPageWrappers(
 
   // Handle refresh - force reload of players and activities data
   const handleRefresh = async (): Promise<void> => {
+    console.log("Starting data refresh...");
     try {
-      // Reload data (typically would call API endpoints here)
-      console.log("Refreshing data...");
-      // We'll trigger the refresh without passing specific data
-      // Using undefined instead of empty objects as parameters
-      await Promise.all([
-        handlePlayerUpdate(undefined as any), 
-        handleKioskUpdate(undefined as any)
-      ]);
-      return Promise.resolve();
+      // For debugging
+      console.log("Types of functions:", {
+        playerUpdate: typeof handlePlayerUpdate, 
+        kioskUpdate: typeof handleKioskUpdate,
+        matchResult: typeof handleMatchResult
+      });
+      
+      // Make sure we're clearing any cached data
+      localStorage.removeItem('cachedActivities');
+      localStorage.removeItem('activitiesFetchTime');
+      
+      console.log("Refresh completed");
     } catch (error) {
       console.error("Error refreshing data:", error);
-      return Promise.reject(error);
     }
   };
 
