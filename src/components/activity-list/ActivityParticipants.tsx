@@ -1,126 +1,76 @@
 import React from "react";
-import { Activity, Player } from "@/types/player";
+import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserRound } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ActivityParticipantsProps {
-  activity?: Activity;
-  participants?: Player[];
+  participants: Player[];
   onPlayerSelect?: (playerId: string) => void;
-  isMobile?: boolean;
   totalCount?: number;
-  players?: Player[];
+  maxDisplayed?: number;
+  isMobile?: boolean;
 }
 
-export function ActivityParticipants({ 
-  activity,
-  participants = [],
+export function ActivityParticipants({
+  participants,
   onPlayerSelect,
-  isMobile = false,
-  totalCount,
-  players = []
+  totalCount = 0,
+  maxDisplayed = 5,
+  isMobile = false
 }: ActivityParticipantsProps) {
-  // Make sure participants is an array before using slice
-  const safeParticipants = Array.isArray(participants) ? participants : [];
+  // Sort participants by grade
+  const sortedParticipants = sortPlayersByGrade(participants);
   
-  // Sort participants by grade (A, B, C, D) using the utility function
-  const sortedParticipants = sortPlayersByGrade(safeParticipants);
-  
-  // Split participants into two rows for better visibility
-  const participantsPerRow = isMobile ? 3 : 5;
-  const firstRowParticipants = sortedParticipants.slice(0, participantsPerRow);
-  const secondRowParticipants = sortedParticipants.slice(participantsPerRow, participantsPerRow * 2);
-  const remainingCount = (totalCount !== undefined ? totalCount : sortedParticipants.length) - (participantsPerRow * 2);
+  const displayParticipants = sortedParticipants.slice(0, maxDisplayed);
+  const remainingCount = Math.max(0, totalCount - maxDisplayed);
 
-  if (sortedParticipants.length === 0) {
+  if (!sortedParticipants.length) {
     return (
-      <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
-        <p className="text-xs text-muted-foreground font-medium">Inga deltagare ännu</p>
+      <div className="text-xs text-muted-foreground">
+        Inga deltagare
       </div>
     );
   }
 
   return (
-    <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
-      <p className="text-xs text-muted-foreground font-medium mb-1">Deltagare:</p>
-      
-      {/* First row of participants */}
-      <div className="flex flex-wrap items-center gap-1 mb-1">
-        {firstRowParticipants.map((player, index) => (
-          <ParticipantBadge 
-            key={player.id} 
-            player={player} 
-            onPlayerSelect={onPlayerSelect} 
-            showComma={index < firstRowParticipants.length - 1} 
-          />
+    <div className="flex items-center -space-x-2">
+      <TooltipProvider>
+        {displayParticipants.map((player) => (
+          <Tooltip key={player.id}>
+            <TooltipTrigger asChild>
+              <Avatar
+                className={`border-2 border-background cursor-pointer ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
+                onClick={() => onPlayerSelect?.(player.id)}
+              >
+                <AvatarImage src={player.image} alt={player.name} />
+                <AvatarFallback className="text-xs bg-muted">
+                  <UserRound className="h-3 w-3" />
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div>
+                <p>{player.name}</p>
+                {player.grade && (
+                  <Badge variant="outline" className="mt-1">{player.grade}</Badge>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         ))}
-      </div>
-      
-      {/* Second row of participants */}
-      {secondRowParticipants.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1">
-          {secondRowParticipants.map((player, index) => (
-            <ParticipantBadge 
-              key={player.id} 
-              player={player} 
-              onPlayerSelect={onPlayerSelect} 
-              showComma={index < secondRowParticipants.length - 1} 
-            />
-          ))}
-          {remainingCount > 0 && (
-            <span className="text-xs text-muted-foreground ml-1">
-              +{remainingCount} fler
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
-interface ParticipantBadgeProps {
-  player: Player;
-  onPlayerSelect?: (playerId: string) => void;
-  showComma: boolean;
-}
-
-function ParticipantBadge({ player, onPlayerSelect, showComma }: ParticipantBadgeProps) {
-  // Add safe handling for player.name
-  const displayName = player?.name || "Unknown";
-  
-  // Create a safe initial for the avatar fallback that doesn't rely on split
-  const getInitials = (name: string): string => {
-    if (!name) return "?";
-    
-    // Split the name and get initials
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return (parts[0][0] + parts[1][0]).substring(0, 2);
-    }
-    return name.substring(0, 2);
-  };
-
-  const initials = getInitials(displayName);
-
-  return (
-    <button 
-      className="inline-flex items-center text-sm hover:bg-muted px-1.5 py-0.5 rounded"
-      onClick={(e) => {
-        e.stopPropagation();
-        onPlayerSelect && onPlayerSelect(player.id);
-      }}
-    >
-      <Avatar className="h-4 w-4 mr-1 flex-shrink-0">
-        {player.image ? (
-          <AvatarImage src={player.image} alt={displayName} />
-        ) : (
-          <AvatarFallback className="text-[8px]">
-            {initials}
-          </AvatarFallback>
+        {remainingCount > 0 && (
+          <Badge
+            variant="secondary"
+            className={`ml-2 ${isMobile ? 'text-xs h-6 w-6' : 'h-8 w-8'} rounded-full flex items-center justify-center`}
+          >
+            +{remainingCount}
+          </Badge>
         )}
-      </Avatar>
-      <span className="truncate">{displayName}</span>
-      {showComma && <span className="ml-0.5 text-muted-foreground">,</span>}
-    </button>
+      </TooltipProvider>
+    </div>
   );
 }

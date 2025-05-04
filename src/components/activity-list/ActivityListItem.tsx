@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -85,9 +85,11 @@ export function ActivityListItem({
   
   const isCupMatch = activity.cupId ? true : false;
   
-  const participantPlayers = participants
-    .map(id => players.find(p => p.id === id))
-    .filter(player => player !== undefined) as Player[];
+  const participantPlayers = sortPlayersByGrade(
+    participants
+      .map(id => players.find(p => p.id === id))
+      .filter(player => player !== undefined) as Player[]
+  );
 
   const showGradeChart = participantPlayers.length > 0;
   

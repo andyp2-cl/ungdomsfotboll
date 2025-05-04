@@ -4,6 +4,7 @@ import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle, UserMinus } from "lucide-react";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ParticipantsListProps {
   participants: Player[];
@@ -16,22 +17,8 @@ export function ParticipantsList({
   onPlayerSelect,
   onRemovePlayer
 }: ParticipantsListProps) {
-  // Sort participants by grade (A, B, C, D)
-  const sortedParticipants = [...participants].sort((a, b) => {
-    // Sort by grade - prioritize A, then B, then C, then D
-    const getGradeValue = (grade?: string) => {
-      if (!grade) return 5; // No grade goes last
-      switch(grade) {
-        case 'A': return 1;
-        case 'B': return 2;
-        case 'C': return 3;
-        case 'D': return 4;
-        default: return 5;
-      }
-    };
-    
-    return getGradeValue(a.grade) - getGradeValue(b.grade);
-  });
+  // Using the shared utility function for consistent sorting
+  const sortedParticipants = sortPlayersByGrade(participants);
 
   if (sortedParticipants.length === 0) {
     return <p className="text-muted-foreground mb-4">Inga deltagare tillagda än</p>;

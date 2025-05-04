@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { X } from "lucide-react";
 import { PlayerList } from "../player-ui";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ParticipantListProps {
   participants: Player[];
@@ -22,22 +22,10 @@ export function ParticipantList({
 }: ParticipantListProps) {
   const isMobileDevice = useIsMobile();
   
-  // Sort participants by grade (A, B, C, D)
-  const sortedParticipants = [...participants].sort((a, b) => {
-    // Sort by grade - prioritize A, then B, then C, then D
-    const getGradeValue = (grade?: string) => {
-      if (!grade) return 5; // No grade goes last
-      switch(grade) {
-        case 'A': return 1;
-        case 'B': return 2;
-        case 'C': return 3;
-        case 'D': return 4;
-        default: return 5;
-      }
-    };
-    
-    return getGradeValue(a.grade) - getGradeValue(b.grade);
-  });
+  // We're now using the shared sortPlayersByGrade function
+  // Note: This is actually redundant since the participants are already sorted
+  // in the parent component (ParticipantsSection), but we keep it for consistency and safety
+  const sortedParticipants = sortPlayersByGrade(participants);
   
   if (sortedParticipants.length === 0) {
     return (
