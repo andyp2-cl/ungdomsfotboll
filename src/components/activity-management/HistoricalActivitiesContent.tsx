@@ -111,6 +111,7 @@ export function HistoricalActivitiesContent({
         setEditingActivity={onEditActivityClick}
         handleKioskAssignmentUpdate={handleKioskUpdate}
         handleDeleteActivity={handleDeleteActivity}
+        cupMatches={cupMatches}
       />
     </div>
   );

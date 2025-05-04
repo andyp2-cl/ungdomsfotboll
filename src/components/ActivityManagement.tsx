@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
@@ -128,7 +129,8 @@ export function ActivityManagement({
             setEditingActivity={onEditActivityClick}
             handleKioskAssignmentUpdate={handleKioskUpdate}
             handleDeleteActivity={handleDeleteActivity}
-            handleMatchResultUpdate={onMatchResultUpdate}
+            handleMatchResultUpdate={handleMatchResult}
+            cupMatches={cupMatches}
           />
         </TabsContent>
         

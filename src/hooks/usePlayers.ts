@@ -22,8 +22,13 @@ export function usePlayers(initialTab?: string) {
   });
   
   // Get player actions with updated player state
-  const playerActions = usePlayerActions(players, playerState.setPlayers, 
-    playerState.setIsLoading, playerState.setSelectedPlayer, playerState.setIsAddPlayerOpen);
+  const playerActions = usePlayerActions(
+    players, 
+    playerState.setPlayers, 
+    playerState.setIsLoading, 
+    playerState.setSelectedPlayer, 
+    playerState.setIsAddPlayerOpen
+  );
   
   // Return mock data for properties expected by PlayersPage
   const mockProperties = useMemo(() => ({

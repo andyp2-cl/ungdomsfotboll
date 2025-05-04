@@ -43,7 +43,8 @@ export function ActivityTabViewContent({
   onMatchResultUpdate
 }: ActivityTabViewContentProps) {
   const content = renderContent();
-  const selectedPlayer = players.find(player => player.id === content.selectedPlayerId);
+  const selectedPlayerId = content.selectedPlayerId;
+  const selectedPlayer = selectedPlayerId ? players.find(player => player.id === selectedPlayerId) : null;
   
   if (isLoading) {
     return (

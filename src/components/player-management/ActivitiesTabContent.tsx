@@ -64,6 +64,7 @@ export function ActivitiesTabContent({
           handleKioskAssignmentUpdate={handleKioskUpdate}
           handleDeleteActivity={handleDeleteActivity}
           handleMatchResultUpdate={handleMatchResultUpdate}
+          cupMatches={cupMatches}
         />
       </CardContent>
     </Card>

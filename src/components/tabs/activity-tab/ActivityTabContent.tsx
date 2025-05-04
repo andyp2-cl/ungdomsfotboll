@@ -1,14 +1,13 @@
-import { useState } from "react";
+
+import React from "react";
 import { Activity, Player } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { toast } from "sonner";
-import { ActivityTabHeader } from "./components/ActivityTabHeader";
-import { ActivityTabSearch } from "./components/ActivityTabSearch";
-import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
-import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
-import { useActivityTabViews } from "./hooks/useActivityTabViews";
+import { LoadingState } from "@/components/LoadingState";
+import { ActivityList } from "@/components/ActivityList";
+import { ActivityDetailWrapper } from "@/components/activity-management/ActivityDetailWrapper";
+import { TeamStatistics } from "@/components/TeamStatistics";
+import { PlayerDetail } from "@/components/PlayerDetail";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -16,131 +15,103 @@ interface ActivityTabContentProps {
   selectedActivity: Activity | null;
   selectedActivityTypes: string[];
   filteredActivities: Activity[];
-  filteredHistoricalActivities?: Activity[];
-  isAddActivityOpen?: boolean;
-  isLoading?: boolean;
-  loadError?: string | null;
-  retryLoading?: () => void;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>;
-  setIsAddActivityOpen?: (isOpen: boolean) => void;
-  setEditingActivity: (activity: Activity | null) => void;
+  onAddActivityClick: () => void;
+  onEditActivityClick: (activity: Activity) => void;
+  setEditingActivity: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleImportedActivities?: (activities: Activity[]) => Promise<boolean>;
-  handleClearHistoricalActivities?: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
-  onAddActivityClick?: () => void;
-  onEditActivityClick?: (activity: Activity) => void;
+  isLoading?: boolean;
+  loadError?: string | null;
+  retryLoading?: () => void;
+  cupMatches?: Activity[];
 }
 
-export function ActivityTabContent(props: ActivityTabContentProps) {
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const isMobile = useIsMobile();
-
-  // Use the custom hook for managing views and selections
-  const {
-    activeView, 
-    handleViewChange,
-    selectedPlayer,
-    handlePlayerSelect,
-    renderContent,
-    isHistorical,
-    filteredBySearchActivities
-  } = useActivityTabViews({
-    activities: props.activities,
-    players: props.players,
-    selectedActivity: props.selectedActivity,
-    setSelectedActivity: props.setSelectedActivity,
-    searchQuery,
-    filteredActivities: props.filteredActivities,
-    filteredHistoricalActivities: props.filteredHistoricalActivities || [],
-    setEditingActivity: props.setEditingActivity,
-    handleDeleteActivity: props.handleDeleteActivity,
-    handleActivityUpdate: props.handleActivityUpdate,
-    handleKioskAssignmentUpdate: props.handleKioskAssignmentUpdate,
-    handleMatchResultUpdate: props.handleMatchResultUpdate
-  });
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+export function ActivityTabContent({
+  activities,
+  players,
+  selectedActivity,
+  selectedActivityTypes,
+  filteredActivities,
+  handleActivityTypeChange,
+  setSelectedActivity,
+  handleActivityUpdate,
+  onAddActivityClick,
+  onEditActivityClick,
+  setEditingActivity,
+  handleKioskAssignmentUpdate,
+  handleDeleteActivity,
+  handleMatchResultUpdate,
+  isLoading,
+  loadError,
+  retryLoading,
+  cupMatches = []
+}: ActivityTabContentProps) {
+  // Intercept player selection to avoid prop drilling
+  const [selectedPlayerId, setSelectedPlayerId] = React.useState<string | null>(null);
+  
+  if (isLoading) {
+    return (
+      <LoadingState 
+        message="Laddar aktiviteter..." 
+        error={loadError || null} 
+        retry={retryLoading}
+      />
+    );
+  }
+  
+  if (selectedActivity) {
+    console.log("Rendering ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
     
-    try {
-      if (props.retryLoading) {
-        // Clear form storage cache
-        localStorage.removeItem('cachedActivities');
-        localStorage.removeItem('activitiesFetchTime');
-        
-        // Force refresh from database
-        await props.retryLoading();
-        console.log("Force refreshing data from server");
-        toast.success("Data uppdaterad från servern");
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success("Data uppdaterad");
-      }
-    } catch (error) {
-      toast.error("Kunde inte uppdatera data");
-      console.error("Error refreshing data:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+    return (
+      <ActivityDetailWrapper
+        selectedActivity={selectedActivity}
+        players={players}
+        activities={activities}
+        cupMatches={cupMatches}
+        onActivitySelect={setSelectedActivity}
+        onEditActivityClick={onEditActivityClick}
+        onActivityUpdate={handleActivityUpdate}
+        handleKioskUpdate={handleKioskAssignmentUpdate}
+        handleDeleteActivity={handleDeleteActivity}
+        handleMatchResultUpdate={handleMatchResultUpdate}
+      />
+    );
+  }
+  
+  const selectedPlayer = players.find(player => player.id === selectedPlayerId);
+  
+  if (selectedPlayer) {
+    return (
+      <PlayerDetail
+        player={selectedPlayer}
+        activities={activities}
+        onClose={() => setSelectedPlayerId(null)}
+        onEdit={() => {}}
+        onPlayerUpdate={() => {}}
+        allPlayers={players}
+        onActivitySelect={setSelectedActivity}
+      />
+    );
+  }
 
-  // Debug information
-  console.log("ActivityTabContent rendering with handleMatchResultUpdate:", !!props.handleMatchResultUpdate);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <ActivityTabHeader 
-          activeView={activeView}
-          handleViewChange={handleViewChange}
-          setIsAddActivityOpen={props.setIsAddActivityOpen || (() => {})}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-          isMobile={isMobile}
-        />
-        
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button 
-            onClick={props.onAddActivityClick || (() => props.setIsAddActivityOpen && props.setIsAddActivityOpen(true))} 
-            className="w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Lägg till
-          </Button>
-        </div>
+  if (filteredActivities.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-500 mb-4">Inga aktiviteter hittades</p>
       </div>
-      
-      {activeView !== "statistics" && !props.isLoading && !props.loadError && (
-        <ActivityTabSearch
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          isHistorical={isHistorical}
-        />
-      )}
-      
-      <PullToRefresh onRefresh={handleRefresh} disabled={!!props.selectedActivity || !!selectedPlayer || props.isLoading}>
-        <ActivityTabViewContent
-          activeView={activeView}
-          renderContent={renderContent}
-          players={props.players}
-          activities={props.activities}
-          isLoading={props.isLoading}
-          loadError={props.loadError}
-          retryLoading={props.retryLoading}
-          onActivitySelect={props.setSelectedActivity}
-          onPlayerSelect={handlePlayerSelect}
-          onEditActivity={props.setEditingActivity}
-          onActivityUpdate={props.handleActivityUpdate}
-          onDeleteActivity={props.handleDeleteActivity}
-          onKioskAssignmentUpdate={props.handleKioskAssignmentUpdate}
-          onMatchResultUpdate={props.handleMatchResultUpdate}
-        />
-      </PullToRefresh>
-    </div>
+    );
+  }
+  
+  return (
+    <ActivityList
+      activities={filteredActivities}
+      onSelect={setSelectedActivity}
+      players={players}
+      onPlayerSelect={(playerId) => setSelectedPlayerId(playerId)}
+    />
   );
 }
