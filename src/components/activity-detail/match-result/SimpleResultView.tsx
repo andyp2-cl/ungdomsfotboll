@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 interface SimpleResultViewProps {
@@ -15,69 +14,62 @@ interface SimpleResultViewProps {
 export function SimpleResultView({ activity, onMatchResultUpdate }: SimpleResultViewProps) {
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
-  const [isLoading, setIsLoading] = useState(false);
-  const [matchResult, setMatchResult] = useState<"win" | "loss" | "draw" | undefined>(
-    activity.isWin === true ? "win" : 
-    activity.isWin === false ? "loss" : 
-    activity.homeScore === activity.awayScore && activity.homeScore !== undefined ? "draw" : 
-    undefined
-  );
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   
-  // Check if the name contains "HIF" to identify team (Hässleholms IF)
-  const isHifMatch = activity.name.includes("HIF") || 
-                      activity.name.toLowerCase().includes("hässleholm");
+  // Helper function to parse score input
+  const parseScoreInput = (value: string): number | undefined => {
+    if (value === "") return undefined;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? undefined : parsed;
+  };
   
-  // Function to handle score update
-  const handleScoreUpdate = async () => {
-    setIsLoading(true);
+  // Handle saving match result
+  const handleSaveResult = async () => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    
     try {
-      console.log("Updating match result:", {
-        activityId: activity.id,
-        homeScore,
-        awayScore,
-        matchResult
-      });
-      
-      // Update scores in database
       const success = await onMatchResultUpdate(activity.id, homeScore, awayScore);
       
       if (success) {
         toast({
-          title: "Matchresultat uppdaterat",
-          description: `Resultatet är nu satt till ${homeScore}-${awayScore}`,
+          title: "Resultat sparat",
+          description: `Matchresultat har sparats: ${homeScore}-${awayScore}`,
         });
       } else {
         toast({
-          title: "Fel",
-          description: "Kunde inte uppdatera matchresultat",
+          title: "Fel vid sparande",
+          description: "Det gick inte att spara matchresultatet",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Error updating match result:", error);
+      console.error("Error saving match result:", error);
       toast({
         title: "Fel",
-        description: "Ett fel uppstod vid uppdatering av matchresultat",
+        description: "Ett fel uppstod vid sparande av matchresultat",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
-
+  
+  const isUnsavedChanges = homeScore !== activity.homeScore || awayScore !== activity.awayScore;
+  
   return (
-    <div className="space-y-4 p-4 border rounded-md bg-gray-50">
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
+    <Card className="p-4">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex items-center gap-2">
-          <Label htmlFor="homeScore">Hemmalag</Label>
+          <span className="font-medium">Hemmalag</span>
           <Input
-            id="homeScore"
             type="number"
-            min="0"
-            className="w-16"
+            min={0}
             value={homeScore === undefined ? "" : homeScore}
-            onChange={(e) => setHomeScore(e.target.value ? parseInt(e.target.value) : undefined)}
+            onChange={(e) => setHomeScore(parseScoreInput(e.target.value))}
+            className="w-16 text-center"
           />
         </div>
         
@@ -85,54 +77,23 @@ export function SimpleResultView({ activity, onMatchResultUpdate }: SimpleResult
         
         <div className="flex items-center gap-2">
           <Input
-            id="awayScore"
             type="number"
-            min="0"
-            className="w-16"
+            min={0}
             value={awayScore === undefined ? "" : awayScore}
-            onChange={(e) => setAwayScore(e.target.value ? parseInt(e.target.value) : undefined)}
+            onChange={(e) => setAwayScore(parseScoreInput(e.target.value))}
+            className="w-16 text-center"
           />
-          <Label htmlFor="awayScore">Bortalag</Label>
+          <span className="font-medium">Bortalag</span>
         </div>
+        
+        <Button 
+          onClick={handleSaveResult} 
+          disabled={!isUnsavedChanges || isUpdating}
+          className="ml-auto"
+        >
+          {isUpdating ? "Sparar..." : "Spara resultat"}
+        </Button>
       </div>
-      
-      {isHifMatch && (
-        <div className="mt-4">
-          <p className="text-sm font-medium mb-2">Hässleholms resultat:</p>
-          <RadioGroup 
-            value={matchResult} 
-            onValueChange={(value) => setMatchResult(value as "win" | "loss" | "draw")}
-            className="flex flex-row gap-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="win" id="win" />
-              <Label htmlFor="win">Vinst</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="draw" id="draw" />
-              <Label htmlFor="draw">Oavgjort</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="loss" id="loss" />
-              <Label htmlFor="loss">Förlust</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      )}
-      
-      <Button 
-        onClick={handleScoreUpdate} 
-        disabled={isLoading}
-        className="mt-4"
-      >
-        {isLoading ? "Uppdaterar..." : "Spara resultat"}
-      </Button>
-      
-      {activity.homeScore !== undefined && activity.awayScore !== undefined && (
-        <p className="text-sm text-gray-600 mt-2">
-          Nuvarande resultat: {activity.homeScore}-{activity.awayScore}
-        </p>
-      )}
-    </div>
+    </Card>
   );
 }

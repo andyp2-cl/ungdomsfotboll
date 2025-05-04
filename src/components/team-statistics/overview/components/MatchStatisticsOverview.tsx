@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Target, Award, ShieldCheck, Clock, Calendar, Percent } from "lucide-react";
@@ -11,8 +11,37 @@ interface MatchStatisticsOverviewProps {
 }
 
 export function MatchStatisticsOverview({ activities, className = "" }: MatchStatisticsOverviewProps) {
+  // Filter to ensure we only process match activities
+  const matches = useMemo(() => activities.filter(activity => activity.type === "match"), [activities]);
+  
+  console.log(`MatchStatisticsOverview: Found ${matches.length} matches out of ${activities.length} activities`);
+  
   // Calculate overall match statistics
-  const matchStats = calculateMatchStats(activities);
+  const matchStats = useMemo(() => calculateMatchStats(matches), [matches]);
+  
+  console.log("MatchStatisticsOverview: Calculated stats:", matchStats);
+  
+  // If no match data, show placeholder
+  if (matches.length === 0) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            Matchstatistik
+          </CardTitle>
+          <CardDescription>Översikt över lagets totala matchresultat</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8">
+            <p className="text-muted-foreground text-center">
+              Ingen matchstatistik tillgänglig. Se till att det finns matcher med resultat i systemet.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>

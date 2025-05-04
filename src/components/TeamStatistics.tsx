@@ -21,13 +21,21 @@ export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStat
   // Add debug logging
   console.log("TeamStatistics received:", {
     playerCount: players.length,
-    activityCount: activities.length
+    activityCount: activities.length,
+    matchCount: activities.filter(a => a.type === "match").length
   });
 
   // Calculate player participation statistics
   const playerStats = useMemo(() => calculatePlayerStats(players, activities), [players, activities]);
   
   console.log("Calculated player stats:", playerStats.length);
+  
+  // Debug match data
+  const matchData = activities.filter(a => a.type === "match");
+  console.log("Match data count:", matchData.length);
+  if (matchData.length > 0) {
+    console.log("Sample match:", JSON.stringify(matchData[0]));
+  }
 
   // Helper function to handle player click if onPlayerSelect is provided
   const handlePlayerClick = (playerId: string) => {

@@ -37,7 +37,7 @@ export function usePlayers(initialTab?: string) {
     isMobile
   } = usePlayersData();
 
-  // Get activity state and actions
+  // Get activity state and actions from useActivities, passing players as the argument
   const {
     activities,
     isLoading: isActivitiesLoading,
@@ -90,12 +90,12 @@ export function usePlayers(initialTab?: string) {
     }
   };
 
-  // Wrapper for match result update - changed to return boolean to match expected type
+  // Wrapper for match result update - returns boolean to match expected type
   const handleMatchResult = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
     try {
       console.log(`PlayersPage: Calling handleMatchResultUpdate with scores=${homeScore}-${awayScore}`);
       
-      // Call the function and return its result (must be boolean)
+      // Call the function and return its result
       return await handleMatchResultUpdate(activityId, homeScore, awayScore);
     } catch (error) {
       console.error("Error updating match result:", error);
@@ -170,7 +170,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
+    handleActivityUpdate: handleActivityUpdateWrapper,
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
@@ -181,6 +181,6 @@ export function usePlayers(initialTab?: string) {
     
     // Loading state
     isLoading,
-    retryLoading  // Add retryLoading to the returned object
+    retryLoading
   };
 }

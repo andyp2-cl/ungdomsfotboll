@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityDetail } from "@/components/activity-detail";
@@ -34,18 +35,13 @@ export function ActivityDetailWrapper({
   
   console.log("ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
   
-  // Make sure onActivityUpdate function returns Promise<void>
-  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
-    await onActivityUpdate(activity);
-  };
-  
   return (
     <ActivityDetail
       activity={selectedActivity}
       players={players}
       onClose={() => onActivitySelect(null)}
       onEdit={onEditActivityClick}
-      onActivityUpdate={handleActivityUpdate}
+      onActivityUpdate={onActivityUpdate}
       onKioskAssignmentUpdate={handleKioskUpdate}
       onDeleteActivity={async (id) => {
         const success = await handleDeleteActivity(id);

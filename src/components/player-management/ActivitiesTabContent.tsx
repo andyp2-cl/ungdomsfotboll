@@ -1,87 +1,72 @@
 
 import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Player, Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { ActivityManagement } from "@/components/ActivityManagement";
-import { ActivityTabContent as NewActivityTabContent } from "@/components/tabs/activity-tab";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ActivityTabContent } from "@/components/activity-management/ActivityTabContent";
 
 interface ActivitiesTabContentProps {
-  activities: Activity[];
   players: Player[];
+  activities: Activity[];
   selectedActivity: Activity | null;
   selectedActivityTypes: string[];
   filteredActivities: Activity[];
-  filteredHistoricalActivities: Activity[];
-  isAddActivityOpen: boolean;
-  isLoading?: boolean;
-  retryLoading?: () => void;
-  handleActivityTypeChange: (type: string) => void;
-  setSelectedActivity: (activity: Activity | null) => void;
-  handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
-  setIsAddActivityOpen: (isOpen: boolean) => void;
-  setEditingActivity: (activity: Activity | null) => void;
-  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  onActivitySelect: (activity: Activity | null) => void;
+  onActivityTypeChange: (type: string) => void;
+  onAddActivityClick: () => void;
+  onEditActivityClick: (activity: Activity) => void;
+  onActivityUpdate: (activity: Activity) => Promise<void>;
+  handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
-  handleClearHistoricalActivities: () => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
 export function ActivitiesTabContent({
-  activities,
   players,
+  activities,
   selectedActivity,
   selectedActivityTypes,
   filteredActivities,
-  filteredHistoricalActivities,
-  isAddActivityOpen,
-  isLoading,
-  retryLoading,
-  handleActivityTypeChange,
-  setSelectedActivity,
-  handleActivityUpdate,
-  setIsAddActivityOpen,
-  setEditingActivity,
-  handleKioskAssignmentUpdate,
+  onActivitySelect,
+  onActivityTypeChange,
+  onAddActivityClick,
+  onEditActivityClick,
+  onActivityUpdate,
+  handleKioskUpdate,
   handleDeleteActivity,
-  handleImportedActivities,
-  handleClearHistoricalActivities,
   handleMatchResultUpdate
 }: ActivitiesTabContentProps) {
+  const isMobile = useIsMobile();
+  
+  // Filter activities for cup matches
+  const cupMatches = activities.filter(activity => activity.type === "cup");
+  
+  console.log("ActivitiesTabContent: Match result update handler:", !!handleMatchResultUpdate);
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Aktiviteter</h2>
-        <Button onClick={() => setIsAddActivityOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Lägg till aktivitet
-        </Button>
-      </div>
-      
-      {/* Use the new refactored ActivityTabContent component */}
-      <NewActivityTabContent
-        activities={activities}
-        players={players}
-        selectedActivity={selectedActivity}
-        selectedActivityTypes={selectedActivityTypes}
-        filteredActivities={filteredActivities}
-        filteredHistoricalActivities={filteredHistoricalActivities}
-        isAddActivityOpen={isAddActivityOpen}
-        isLoading={isLoading} 
-        loadError={null} 
-        retryLoading={retryLoading}
-        handleActivityTypeChange={handleActivityTypeChange}
-        setSelectedActivity={setSelectedActivity}
-        handleActivityUpdate={handleActivityUpdate}
-        setIsAddActivityOpen={setIsAddActivityOpen}
-        setEditingActivity={setEditingActivity}
-        handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-        handleDeleteActivity={handleDeleteActivity}
-        handleImportedActivities={handleImportedActivities}
-        handleClearHistoricalActivities={handleClearHistoricalActivities}
-        handleMatchResultUpdate={handleMatchResultUpdate}
-      />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Aktiviteter</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ActivityTabContent 
+          title="Aktiviteter"
+          activities={activities}
+          players={players}
+          selectedActivity={selectedActivity}
+          selectedActivityTypes={selectedActivityTypes}
+          filteredActivities={filteredActivities}
+          onActivityTypeChange={onActivityTypeChange}
+          onActivitySelect={onActivitySelect}
+          onActivityUpdate={onActivityUpdate}
+          onAddActivityClick={onAddActivityClick}
+          onEditActivityClick={onEditActivityClick}
+          handleKioskUpdate={handleKioskUpdate}
+          handleDeleteActivity={handleDeleteActivity}
+          handleMatchResultUpdate={handleMatchResultUpdate}
+          cupMatches={cupMatches}
+        />
+      </CardContent>
+    </Card>
   );
 }
