@@ -87,12 +87,14 @@ export default function PlayerManagementPage({ initialTab }: PlayersPageProps = 
   };
 
   // Activity function wrappers
-  const handleActivityUpdateWrapper = async (activity: Activity): Promise<boolean> => {
-    return true;
+  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
+    // Changed from returning boolean to void
+    console.log("Activity updated", activity);
   };
 
-  const handleAddActivityWrapper = async (activity: Activity): Promise<boolean> => {
-    return true;
+  const handleAddActivityWrapper = async (activity: Activity): Promise<void> => {
+    // Changed from returning boolean to void
+    console.log("Activity added", activity);
   };
   
   const handleDeleteWrapper = async (id: string): Promise<boolean> => {

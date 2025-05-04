@@ -1,23 +1,20 @@
 
-import React from "react";
-import { LoadingState } from "@/components/LoadingState";
-import { PlayerHeader } from "@/components/PlayerHeader";
+import React from 'react';
 
 interface PageContainerProps {
-  isLoading: boolean;
   children: React.ReactNode;
+  className?: string;
+  isLoading?: boolean;
 }
 
-export function PageContainer({ isLoading, children }: PageContainerProps) {
+export function PageContainer({ children, className = '', isLoading = false }: PageContainerProps) {
   return (
-    <div className="container py-6">
-      <PlayerHeader />
-      
+    <div className={`container mx-auto px-4 py-6 ${className}`}>
       {isLoading ? (
-        <LoadingState />
-      ) : (
-        children
-      )}
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : children}
     </div>
   );
 }

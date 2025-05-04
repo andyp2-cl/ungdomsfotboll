@@ -7,7 +7,7 @@ export default function ActivityDetail() {
   const { id } = useParams<{ id: string }>();
   
   return (
-    <PageContainer>
+    <PageContainer isLoading={false}>
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Aktivitetsdetaljer</h1>
         <p>Visar detaljer för aktivitet med ID: {id}</p>

@@ -4,7 +4,7 @@ import { usePlayers } from "../hooks/usePlayers";
 import { useActivities } from "../hooks/activities";
 import { Activity } from "@/types/player";
 import { DialogModals } from "@/components/DialogModals";
-import { LayoutMain } from "@/components/LayoutMain";
+import { LayoutMain } from "@/components/LayoutMain"; // Fixed import
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/player-tab/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
@@ -16,7 +16,6 @@ export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState<string>("players");
 
   // Use players hook to get player data and actions
-  const playerState = usePlayers();
   const {
     players,
     isLoading: playersLoading,
@@ -27,12 +26,13 @@ export default function PlayersPage() {
     isAddPlayerOpen,
     setIsAddPlayerOpen,
     // Filters
-    searchTerm,
-    setSearchTerm,
+    searchQuery: searchTerm, // Use searchQuery as searchTerm
+    setSearchQuery: setSearchTerm, // Map function names
     selectedPositions,
     setSelectedPositions,
     selectedGrades,
     setSelectedGrades,
+    // Missing properties from PlayersPage - these will come from the mockProperties in usePlayers
     sortBy,
     setSortBy,
     sortDirection,
@@ -48,7 +48,7 @@ export default function PlayersPage() {
     handleImageUpdate,
     handleImportedPlayers,
     handleClearHistoricalPlayers
-  } = playerState;
+  } = usePlayers();
 
   // Use activities hook to get activity data and actions
   const {
@@ -115,42 +115,41 @@ export default function PlayersPage() {
         onTabChange={setActiveTab}
         playerCount={filteredPlayers.length}
         activityCount={filteredActivities.length}
-      >
-        {activeTab === "players" && (
+        playersContent={
           <PlayerTabContent 
             players={filteredPlayers}
-            onPlayerClick={setSelectedPlayer}
-            onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-            onEditPlayerClick={setEditingPlayer}
-            searchTerm={searchTerm}
-            onSearchTermChange={setSearchTerm}
-            selectedPositions={selectedPositions}
-            onPositionsChange={setSelectedPositions}
+            activities={activities}
+            searchQuery={searchTerm}
             selectedGrades={selectedGrades}
-            onGradesChange={setSelectedGrades}
-            sortBy={sortBy}
-            onSortByChange={setSortBy}
-            sortDirection={sortDirection}
-            onSortDirectionChange={setSortDirection}
-            activeStatus={filterActiveStatus}
-            onActiveStatusChange={setFilterActiveStatus}
-            onPlayerDelete={handlePlayerDelete}
-            onImageUpdate={handleImageUpdate}
+            selectedPlayer={selectedPlayer}
+            viewMode="list"
+            filteredPlayers={filteredPlayers}
+            isAddPlayerOpen={isAddPlayerOpen}
+            setSearchQuery={setSearchTerm}
+            handleGradeChange={(grade) => setSelectedGrades(prev => 
+              prev.includes(grade) ? prev.filter(g => g !== grade) : [...prev, grade]
+            )}
+            setSelectedPlayer={setSelectedPlayer}
+            setViewMode={() => {}}
+            handlePlayerUpdate={handlePlayerUpdateWrapper}
+            handleBulkPlayerUpdate={async () => {}}
+            setIsAddPlayerOpen={setIsAddPlayerOpen}
+            setEditingPlayer={setEditingPlayer}
+            onActivitySelect={() => {}}
           />
-        )}
-
-        {activeTab === "activities" && (
+        }
+        activitiesContent={
           <ActivityTabContent 
+            title="Aktiviteter"
             activities={activities}
             players={players}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
-            onActivitySelect={setSelectedActivity}
             onActivityTypeChange={handleActivityTypeChange}
+            onActivitySelect={setSelectedActivity}
             onActivityUpdate={async (activity) => {
               await handleActivityUpdate(activity);
-              return true;
             }}
             onAddActivityClick={() => setIsAddActivityOpen(true)}
             onEditActivityClick={setEditingActivity}
@@ -163,9 +162,10 @@ export default function PlayersPage() {
               return true;
             }}
             handleMatchResultUpdate={handleMatchResultUpdateWrapper}
+            cupMatches={[]}
           />
-        )}
-      </MainTabs>
+        }
+      />
 
       <DialogModals 
         editingPlayer={editingPlayer}

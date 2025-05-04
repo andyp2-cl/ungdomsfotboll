@@ -9,6 +9,8 @@ interface MainTabsProps {
   onTabChange: (tab: string) => void;
   playerCount?: number;
   activityCount?: number;
+  playersContent?: ReactNode;
+  activitiesContent?: ReactNode;
   children?: ReactNode;
 }
 
@@ -17,6 +19,8 @@ export function MainTabs({
   onTabChange, 
   playerCount,
   activityCount,
+  playersContent,
+  activitiesContent,
   children 
 }: MainTabsProps) {
   const navigate = useNavigate();
@@ -42,6 +46,9 @@ export function MainTabs({
           Matcher {activityCount !== undefined ? `(${activityCount})` : ''}
         </TabsTrigger>
       </TabsList>
+      
+      {playersContent && <TabsContent value="players">{playersContent}</TabsContent>}
+      {activitiesContent && <TabsContent value="activities">{activitiesContent}</TabsContent>}
       
       {children}
     </Tabs>

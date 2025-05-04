@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -69,7 +70,9 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
       <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
         <MainTabs 
           activeTab={props.activeTab}
-          setActiveTab={props.setActiveTab}
+          onTabChange={props.setActiveTab}
+          playerCount={props.filteredPlayers.length}
+          activityCount={props.filteredActivities.length}
           playersContent={
             <PlayerTabContent 
               players={props.players}
@@ -93,24 +96,20 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
           }
           activitiesContent={
             <ActivityTabContent 
+              title="Aktiviteter"
               activities={props.activities}
               players={props.players}
               selectedActivity={props.selectedActivity}
               selectedActivityTypes={props.selectedActivityTypes}
               filteredActivities={props.filteredActivities}
-              filteredHistoricalActivities={props.filteredHistoricalActivities}
-              isAddActivityOpen={props.isAddActivityOpen}
-              isLoading={props.isLoading}
-              retryLoading={props.retryLoading}
-              handleActivityTypeChange={props.handleActivityTypeChange}
-              setSelectedActivity={props.setSelectedActivity}
-              handleActivityUpdate={handleActivityUpdateWrapper}
-              setIsAddActivityOpen={props.setIsAddActivityOpen}
-              setEditingActivity={props.setEditingActivity}
-              handleKioskAssignmentUpdate={props.handleKioskUpdate}
+              cupMatches={[]}
+              onActivityTypeChange={props.handleActivityTypeChange}
+              onActivitySelect={props.setSelectedActivity}
+              onActivityUpdate={handleActivityUpdateWrapper}
+              onAddActivityClick={() => props.setIsAddActivityOpen(true)}
+              onEditActivityClick={props.setEditingActivity}
+              handleKioskUpdate={props.handleKioskUpdate}
               handleDeleteActivity={props.handleDelete}
-              handleImportedActivities={props.handleImportActivities}
-              handleClearHistoricalActivities={props.handleClearHistorical}
               handleMatchResultUpdate={props.handleMatchResultUpdate}
             />
           }

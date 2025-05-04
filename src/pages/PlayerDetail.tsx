@@ -13,7 +13,7 @@ export default function PlayerDetail() {
   
   if (!player) {
     return (
-      <PageContainer>
+      <PageContainer isLoading={false}>
         <div className="p-4">
           <h1 className="text-2xl font-bold mb-4">Spelare hittades inte</h1>
           <p>Den begärda spelaren kunde inte hittas.</p>
@@ -23,7 +23,7 @@ export default function PlayerDetail() {
   }
   
   return (
-    <PageContainer>
+    <PageContainer isLoading={false}>
       <PlayerDetailComponent
         player={player}
         activities={activities || []}
