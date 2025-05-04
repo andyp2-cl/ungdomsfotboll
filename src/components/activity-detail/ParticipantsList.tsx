@@ -16,13 +16,30 @@ export function ParticipantsList({
   onPlayerSelect,
   onRemovePlayer
 }: ParticipantsListProps) {
-  if (participants.length === 0) {
+  // Sort participants by grade (A, B, C, D)
+  const sortedParticipants = [...participants].sort((a, b) => {
+    // Sort by grade - prioritize A, then B, then C, then D
+    const getGradeValue = (grade?: string) => {
+      if (!grade) return 5; // No grade goes last
+      switch(grade) {
+        case 'A': return 1;
+        case 'B': return 2;
+        case 'C': return 3;
+        case 'D': return 4;
+        default: return 5;
+      }
+    };
+    
+    return getGradeValue(a.grade) - getGradeValue(b.grade);
+  });
+
+  if (sortedParticipants.length === 0) {
     return <p className="text-muted-foreground mb-4">Inga deltagare tillagda än</p>;
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-      {participants.map((player) => (
+      {sortedParticipants.map((player) => (
         <div 
           key={player.id} 
           className="p-2 border rounded-md flex justify-between items-center"

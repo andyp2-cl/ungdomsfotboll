@@ -23,13 +23,30 @@ export function ActivityParticipants({
   // Make sure participants is an array before using slice
   const safeParticipants = Array.isArray(participants) ? participants : [];
   
+  // Sort participants by grade (A, B, C, D) 
+  const sortedParticipants = [...safeParticipants].sort((a, b) => {
+    // Sort by grade - prioritize A, then B, then C, then D
+    const getGradeValue = (grade?: string) => {
+      if (!grade) return 5; // No grade goes last
+      switch(grade) {
+        case 'A': return 1;
+        case 'B': return 2;
+        case 'C': return 3;
+        case 'D': return 4;
+        default: return 5;
+      }
+    };
+    
+    return getGradeValue(a.grade) - getGradeValue(b.grade);
+  });
+  
   // Split participants into two rows for better visibility
   const participantsPerRow = isMobile ? 3 : 5;
-  const firstRowParticipants = safeParticipants.slice(0, participantsPerRow);
-  const secondRowParticipants = safeParticipants.slice(participantsPerRow, participantsPerRow * 2);
-  const remainingCount = (totalCount !== undefined ? totalCount : safeParticipants.length) - (participantsPerRow * 2);
+  const firstRowParticipants = sortedParticipants.slice(0, participantsPerRow);
+  const secondRowParticipants = sortedParticipants.slice(participantsPerRow, participantsPerRow * 2);
+  const remainingCount = (totalCount !== undefined ? totalCount : sortedParticipants.length) - (participantsPerRow * 2);
 
-  if (safeParticipants.length === 0) {
+  if (sortedParticipants.length === 0) {
     return (
       <div className="mt-1 pt-1 border-t border-dashed border-gray-200">
         <p className="text-xs text-muted-foreground font-medium">Inga deltagare ännu</p>

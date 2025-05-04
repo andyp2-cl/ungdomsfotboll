@@ -38,6 +38,24 @@ export function ParticipantsSection({
 }: ParticipantsSectionProps) {
   const isMobile = useIsMobile();
 
+  // Sort participants by grade (A, B, C, D) - though the ParticipantList component 
+  // already does this, we're ensuring consistency here
+  const sortedParticipants = [...participatingPlayers].sort((a, b) => {
+    // Sort by grade - prioritize A, then B, then C, then D
+    const getGradeValue = (grade?: string) => {
+      if (!grade) return 5; // No grade goes last
+      switch(grade) {
+        case 'A': return 1;
+        case 'B': return 2;
+        case 'C': return 3;
+        case 'D': return 4;
+        default: return 5;
+      }
+    };
+    
+    return getGradeValue(a.grade) - getGradeValue(b.grade);
+  });
+
   return (
     <Accordion type="single" collapsible defaultValue="participants" className={isMobile ? "border rounded-lg" : ""}>
       <AccordionItem value="participants" className={isMobile ? "border-none" : ""}>
@@ -54,7 +72,7 @@ export function ParticipantsSection({
         </AccordionTrigger>
         <AccordionContent className={isMobile ? "px-3 pb-3" : ""}>
           <ParticipantList
-            participants={participatingPlayers}
+            participants={sortedParticipants}
             onPlayerSelect={onPlayerSelect}
             onRemovePlayer={onRemovePlayer}
             isMobile={isMobile}

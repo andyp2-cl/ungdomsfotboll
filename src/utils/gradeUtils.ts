@@ -23,3 +23,24 @@ export const getGradeChartConfig = () => ({
   gradeC: { theme: { light: '#f97316', dark: '#f97316' } },
   gradeD: { theme: { light: '#a855f7', dark: '#a855f7' } },
 });
+
+/**
+ * Sorts players by grade (A, B, C, D)
+ */
+export const sortPlayersByGrade = (players: any[]) => {
+  return [...players].sort((a, b) => {
+    // Sort by grade - prioritize A, then B, then C, then D
+    const getGradeValue = (grade?: string) => {
+      if (!grade) return 5; // No grade goes last
+      switch(grade) {
+        case 'A': return 1;
+        case 'B': return 2;
+        case 'C': return 3;
+        case 'D': return 4;
+        default: return 5;
+      }
+    };
+    
+    return getGradeValue(a.grade) - getGradeValue(b.grade);
+  });
+};

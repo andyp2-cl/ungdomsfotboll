@@ -22,7 +22,24 @@ export function ParticipantList({
 }: ParticipantListProps) {
   const isMobileDevice = useIsMobile();
   
-  if (participants.length === 0) {
+  // Sort participants by grade (A, B, C, D)
+  const sortedParticipants = [...participants].sort((a, b) => {
+    // Sort by grade - prioritize A, then B, then C, then D
+    const getGradeValue = (grade?: string) => {
+      if (!grade) return 5; // No grade goes last
+      switch(grade) {
+        case 'A': return 1;
+        case 'B': return 2;
+        case 'C': return 3;
+        case 'D': return 4;
+        default: return 5;
+      }
+    };
+    
+    return getGradeValue(a.grade) - getGradeValue(b.grade);
+  });
+  
+  if (sortedParticipants.length === 0) {
     return (
       <div className="p-4 text-center border-2 border-dashed rounded-lg border-muted my-4">
         <p className="text-sm text-muted-foreground">Inga deltagare har lagts till än.</p>
@@ -35,7 +52,7 @@ export function ParticipantList({
       <ScrollArea className={isMobileDevice ? "h-[calc(60vh-100px)]" : "h-[60vh]"}>
         <div className="pr-4 py-2">
           <PlayerList
-            players={participants}
+            players={sortedParticipants}
             onPlayerSelect={player => onPlayerSelect?.(player.id)}
             onPlayerAction={(player) => (
               <Button 
