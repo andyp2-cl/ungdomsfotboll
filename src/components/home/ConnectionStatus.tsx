@@ -3,7 +3,7 @@ import React from "react";
 import { Database, AlertTriangle, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { forceReconnect, clearAuthAndReconnect } from "@/components/auth/utils/databaseUtils";
+import { forceReconnect } from "@/components/auth/utils/databaseUtils";
 
 interface ConnectionStatusProps {
   syncStatus: "connected" | "connecting" | "disconnected" | "not-configured";
@@ -25,8 +25,8 @@ export const ConnectionStatus = ({
       setSyncStatus("connecting");
       toast.loading("Återställer databasanslutning...");
       
-      // Complete logout and reconnect
-      const success = await clearAuthAndReconnect();
+      // Force reconnect
+      const success = await forceReconnect();
       
       // Check connection status again
       if (success) {

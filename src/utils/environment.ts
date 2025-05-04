@@ -3,7 +3,7 @@
  * Environment utility functions
  */
 
-// Flag to control automatic database connection
+// Flag to control automatic database connection - set to true by default
 let autoConnectEnabled = true;
 
 /**
