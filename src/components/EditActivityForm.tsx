@@ -6,9 +6,7 @@ import { BasicInfoFields } from "./activity-form/BasicInfoFields";
 import { LocationFields } from "./activity-form/LocationFields";
 import { ResultFields } from "./activity-form/ResultFields";
 import { FormButtons } from "./activity-form/FormButtons";
-import { toast } from "sonner";
-import { LeagueSelector } from "./activity-form/LeagueSelector";
-import { handleActivitySubmit } from "@/utils/activity/handleActivitySubmit";
+import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -27,31 +25,32 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
     leagueId: activity.leagueId || activity.league_id
   };
   
-  const { form, isSubmitting, setIsSubmitting } = useActivityForm(normalizedActivity);
+  const { form, isSubmitting, handleSubmit } = useActivityForm(normalizedActivity);
   
-  const handleSubmit = async (values: any) => {
-    setIsSubmitting(true);
-    try {
-      console.log("Form submission values:", values);
-      // Create an empty array for players since we don't need to pass actual players here
-      const emptyPlayers: never[] = [];
-      await handleActivitySubmit(values, emptyPlayers, onSave, () => setIsSubmitting(false));
-      console.log("Activity updated successfully with leagueId:", values.leagueId);
-    } catch (error) {
-      console.error("Failed to save activity:", error);
-      toast.error("Kunde inte spara aktiviteten");
-      setIsSubmitting(false);
-    }
+  const onSubmit = async (values: any) => {
+    await handleSubmit(values, onSave);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <BasicInfoFields form={form} />
-        <LeagueSelector form={form} />
-        <LocationFields form={form} />
+        <div className="space-y-4">
+          <LocationFields
+            locationName={form.watch("location.name") || ""}
+            locationDescription={form.watch("location.description") || ""}
+            locationGpsLink={form.watch("location.gpsLink") || ""}
+            onLocationNameChange={(e) => form.setValue("location.name", e.target.value)}
+            onLocationDescriptionChange={(e) => form.setValue("location.description", e.target.value)}
+            onLocationGpsLinkChange={(e) => form.setValue("location.gpsLink", e.target.value)}
+          />
+        </div>
         <ResultFields form={form} activityType={activity.type} />
-        <FormButtons onCancel={onCancel} isSubmitting={isSubmitting} />
+        <FormButtons 
+          onCancel={onCancel} 
+          onSave={form.handleSubmit(onSubmit)}
+          isSaving={isSubmitting} 
+        />
       </form>
     </Form>
   );
