@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -147,13 +146,13 @@ export function ActivityListItem({
               )}
             </div>
             
-            <div className={`${isMobileView ? 'mt-2' : 'mt-3'}`}>
+            <div className={`${isMobileView ? 'mt-2' : 'mt-3'} max-w-[500px]`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
                 onPlayerSelect={onPlayerSelect}
                 totalCount={participants.length}
                 isMobile={isMobileView}
-                showAll={true} // Explicitly show all participants
+                showAll={true}
               />
             </div>
           </div>
