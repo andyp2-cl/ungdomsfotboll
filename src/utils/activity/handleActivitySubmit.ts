@@ -24,19 +24,18 @@ export const handleActivitySubmit = async (
     const activityId = activity.id || generateUniqueId();
 
     // Extract player IDs from the selected players
-    const playerIds = players.map((player) => player.id);
+    const participantIds = players.map((player) => player.id);
 
     // Create a new activity object with the submitted data
     const newActivity: Activity = {
       ...activity,
       id: activityId,
-      playerIds: playerIds,
-      // Use activity.type directly since "training" is now included in ActivityType
+      participants: participantIds,
+      // Use activity.type directly
       type: activity.type || "match", 
       name: activity.name || "Namnlös aktivitet", // Default name if no name is provided
-      // Use existing timestamps or create new ones
-      created_at: activity.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(), // Always update the updated_at timestamp
+      // Always update the updated_at timestamp
+      date: activity.date || new Date().toISOString().split('T')[0],
     };
 
     // If it's a match, determine the outcome

@@ -1,3 +1,4 @@
+
 import { Activity } from "@/types/player";
 import { Form } from "@/components/ui/form";
 import { useActivityForm } from "./activity-form/useActivityForm";
@@ -32,8 +33,9 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
     setIsSubmitting(true);
     try {
       console.log("Form submission values:", values);
-      // Pass onSave as the third parameter instead of normalizedActivity
-      await handleActivitySubmit(values, [], onSave, setIsSubmitting);
+      // Create an empty array for players since we don't need to pass actual players here
+      const emptyPlayers: never[] = [];
+      await handleActivitySubmit(values, emptyPlayers, onSave, () => setIsSubmitting(false));
       console.log("Activity updated successfully with leagueId:", values.leagueId);
     } catch (error) {
       console.error("Failed to save activity:", error);

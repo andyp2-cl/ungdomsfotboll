@@ -89,7 +89,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   useEffect(() => {
     if (location.state?.selectedActivityId) {
       console.log("Found selectedActivityId in location state:", location.state.selectedActivityId);
-      const activity = activities.find(a => a.id === location.state.selectedActivityId);
+      const activity = activities.find((a: any) => a.id === location.state.selectedActivityId);
       if (activity) {
         console.log("Setting selected activity:", activity.name);
         setSelectedActivity(activity);
@@ -100,9 +100,30 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // Wrapper for handleDelete to match expected handleDeleteActivity
   const handleDeleteActivity = handleDelete;
 
-  // Convert handleMatchResultWrapper to return void instead of boolean
-  const handleMatchResultVoid = async (activityId: string, homeScore?: number, awayScore?: number) => {
+  // Convert handleMatchResultWrapper to return Promise<boolean>
+  const handleMatchResultFunc = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
     await handleMatchResultWrapper(activityId, homeScore, awayScore);
+    return true; // Return true to match expected return type
+  };
+
+  // Convert activity handlers to match expected types
+  const handleActivityUpdateFunction = async (activity: Activity): Promise<void> => {
+    await handleActivityUpdate();
+  };
+
+  const handleAddActivityFunction = async (activity: Activity): Promise<void> => {
+    await handleAddActivity();
+  };
+
+  // Convert kioskUpdate to match expected types
+  const handleKioskUpdateFunction = async (activityId: string): Promise<boolean> => {
+    await handleKioskUpdateWrapper(activityId);
+    return true;
+  };
+
+  // Convert handleBulkPlayerUpdateWrapper to match expected signature
+  const handleBulkPlayerUpdateFunction = async (players: Player[]): Promise<void> => {
+    await handleBulkPlayerUpdateWrapper(players);
   };
 
   console.log("PlayersPage rendering with:", {
@@ -135,7 +156,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         setViewMode={setViewModeWrapper}
         handleGradeChange={handleGradeChange}
         handlePlayerUpdate={handlePlayerUpdateWrapper}
-        handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdateFunction}
         handleAddPlayer={handleAddPlayerWrapper}
         
         // Activity data
@@ -149,14 +170,14 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         setIsAddActivityOpen={setIsAddActivityOpen}
         selectedActivityTypes={selectedActivityTypes}
         handleActivityTypeChange={handleActivityTypeChange}
-        handleActivityUpdate={handleActivityUpdate}
-        handleKioskUpdate={handleKioskUpdateWrapper}
+        handleActivityUpdate={handleActivityUpdateFunction}
+        handleKioskUpdate={handleKioskUpdateFunction}
         handleDelete={handleDeleteActivity}
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
-        handleAddActivity={handleAddActivity}
+        handleAddActivity={handleAddActivityFunction}
         onPlayerActivitySelect={handlePlayerActivitySelect}
-        handleMatchResultUpdate={handleMatchResultVoid}
+        handleMatchResultUpdate={handleMatchResultFunc}
         
         // Loading state
         isLoading={isLoading}

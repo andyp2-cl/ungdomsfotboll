@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const activityFormSchema = z.object({
   name: z.string().min(1, "Namn måste anges"),
-  type: z.enum(["match", "cup"]),
+  type: z.enum(["match", "cup", "training"]),
   date: z.date({ required_error: "Välj ett datum" }),
   time: z.string().optional(),
   location: z.object({

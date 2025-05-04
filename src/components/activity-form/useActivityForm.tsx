@@ -18,7 +18,7 @@ export function useActivityForm(initialActivity: Activity | null) {
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
       name: initialActivity?.name || "",
-      type: initialActivity?.type || "match",
+      type: initialActivity?.type === "training" ? "match" : (initialActivity?.type || "match"),
       date: initialActivity?.date ? new Date(initialActivity.date) : new Date(),
       time: initialActivity?.time || "",
       location: {

@@ -1,7 +1,7 @@
 
-import { usePlayerState } from "./usePlayerState";
-import { usePlayerFilters } from "./usePlayerFilters";
-import { usePlayerActions } from "./usePlayerActions";
+import { usePlayerState } from "@/hooks/players/usePlayerState";
+import { usePlayerFilters } from "@/hooks/players/usePlayerFilters";
+import { usePlayerActions } from "@/hooks/players/usePlayerActions";
 import { useState, useEffect } from 'react';
 
 export function usePlayers(initialTab?: string) {
@@ -50,17 +50,18 @@ export function usePlayers(initialTab?: string) {
   const [editingActivity, setEditingActivity] = useState(null);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [selectedActivityTypes, setSelectedActivityTypes] = useState([]);
+  const [activeTab, setActiveTab] = useState(initialTab || "players");
 
   // Mock functions to satisfy the PlayersPage.tsx requirements
   const handleActivityTypeChange = () => {};
-  const handleActivityUpdate = () => {};
-  const handleKioskUpdate = () => {};
-  const handleDelete = () => {};
-  const handleImportActivities = () => {};
-  const handleClearHistorical = () => {};
-  const handleAddActivity = () => {};
+  const handleActivityUpdate = async () => {};
+  const handleKioskUpdate = async () => true;
+  const handleDelete = async () => true;
+  const handleImportActivities = async () => true;
+  const handleClearHistorical = async () => true;
+  const handleAddActivity = async () => {};
   const handlePlayerActivitySelect = () => {};
-  const handleMatchResult = async () => { return true; };
+  const handleMatchResult = async () => true;
   const retryLoading = () => {};
 
   return {
@@ -121,8 +122,8 @@ export function usePlayers(initialTab?: string) {
     handlePlayerActivitySelect,
     handleMatchResult,
     retryLoading,
-    // Set a default for activeTab
-    activeTab: initialTab || "players",
-    setActiveTab: () => {}
+    // Set activeTab from initialTab or default to "players"
+    activeTab,
+    setActiveTab
   };
 }
