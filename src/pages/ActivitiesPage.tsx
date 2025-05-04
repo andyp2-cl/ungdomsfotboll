@@ -38,8 +38,8 @@ const ActivitiesPage = () => {
                 <h2 className="font-bold">{activity.name}</h2>
                 <p className="text-gray-600">{activity.date} {activity.time}</p>
                 <p className="mt-2">{activity.type}</p>
-                {activity.location_name && (
-                  <p className="text-sm mt-2">{activity.location_name}</p>
+                {activity.location && activity.location.name && (
+                  <p className="text-sm mt-2">{activity.location.name}</p>
                 )}
               </div>
             ))}
