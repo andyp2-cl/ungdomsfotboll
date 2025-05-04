@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { isHomeMatch, extractTeamNames } from "./utils";
 
 interface SimpleResultViewProps {
   activity: Activity;
@@ -14,86 +13,79 @@ interface SimpleResultViewProps {
 export function SimpleResultView({ activity, onMatchResultUpdate }: SimpleResultViewProps) {
   const [homeScore, setHomeScore] = useState<number | undefined>(activity.homeScore);
   const [awayScore, setAwayScore] = useState<number | undefined>(activity.awayScore);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
   
-  // Helper function to parse score input
-  const parseScoreInput = (value: string): number | undefined => {
-    if (value === "") return undefined;
-    const parsed = parseInt(value, 10);
-    return isNaN(parsed) ? undefined : parsed;
-  };
+  // Extract team names
+  const teamNames = extractTeamNames(activity);
+  const isHome = isHomeMatch(activity);
+  const homeTeam = teamNames.homeTeam || "Hemmalag";
+  const awayTeam = teamNames.awayTeam || "Bortalag";
   
-  // Handle saving match result
-  const handleSaveResult = async () => {
-    if (isUpdating) return;
+  // Determine if we have existing scores
+  const hasExistingScores = activity.homeScore !== undefined && activity.awayScore !== undefined;
+  
+  const handleSave = async () => {
+    if (isSaving) return;
     
-    setIsUpdating(true);
-    
+    setIsSaving(true);
     try {
       const success = await onMatchResultUpdate(activity.id, homeScore, awayScore);
+      console.log(`Result update for ${activity.id}: ${success ? "successful" : "failed"}`);
       
       if (success) {
-        toast({
-          title: "Resultat sparat",
-          description: `Matchresultat har sparats: ${homeScore}-${awayScore}`,
-        });
-      } else {
-        toast({
-          title: "Fel vid sparande",
-          description: "Det gick inte att spara matchresultatet",
-          variant: "destructive",
-        });
+        console.log("Successfully updated match result");
       }
     } catch (error) {
       console.error("Error saving match result:", error);
-      toast({
-        title: "Fel",
-        description: "Ett fel uppstod vid sparande av matchresultat",
-        variant: "destructive",
-      });
     } finally {
-      setIsUpdating(false);
+      setIsSaving(false);
     }
   };
   
-  const isUnsavedChanges = homeScore !== activity.homeScore || awayScore !== activity.awayScore;
-  
   return (
-    <Card className="p-4">
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Hemmalag</span>
+    <div className="space-y-4 border rounded-md p-4">
+      {hasExistingScores && (
+        <div className="text-center mb-4">
+          <div className="text-xl font-bold">
+            {activity.homeScore} - {activity.awayScore}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            {homeTeam} - {awayTeam}
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-5 gap-2 items-center">
+        <div className="col-span-2">
+          <div className="text-sm text-center mb-1">{homeTeam}</div>
           <Input
             type="number"
             min={0}
             value={homeScore === undefined ? "" : homeScore}
-            onChange={(e) => setHomeScore(parseScoreInput(e.target.value))}
-            className="w-16 text-center"
+            onChange={(e) => setHomeScore(e.target.value === "" ? undefined : parseInt(e.target.value, 10))}
+            className="text-center"
           />
         </div>
-        
-        <span className="text-xl font-bold">-</span>
-        
-        <div className="flex items-center gap-2">
+        <div className="col-span-1 text-center text-2xl font-bold">-</div>
+        <div className="col-span-2">
+          <div className="text-sm text-center mb-1">{awayTeam}</div>
           <Input
             type="number"
             min={0}
             value={awayScore === undefined ? "" : awayScore}
-            onChange={(e) => setAwayScore(parseScoreInput(e.target.value))}
-            className="w-16 text-center"
+            onChange={(e) => setAwayScore(e.target.value === "" ? undefined : parseInt(e.target.value, 10))}
+            className="text-center"
           />
-          <span className="font-medium">Bortalag</span>
         </div>
-        
-        <Button 
-          onClick={handleSaveResult} 
-          disabled={!isUnsavedChanges || isUpdating}
-          className="ml-auto"
-        >
-          {isUpdating ? "Sparar..." : "Spara resultat"}
-        </Button>
       </div>
-    </Card>
+      
+      <Button 
+        onClick={handleSave} 
+        disabled={isSaving} 
+        className="w-full"
+      >
+        {isSaving ? "Sparar..." : "Spara resultat"}
+      </Button>
+    </div>
   );
 }

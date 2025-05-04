@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ActivityHeader } from "./ActivityHeader";
-import { ActivityActions } from "@/components/activity-detail/ActivityActions";
 import { MatchResultSection } from "./match-result/MatchResultSection";
 
 interface ActivityDetailProps {
@@ -49,11 +48,23 @@ export function ActivityDetail({
       <CardContent className="space-y-4">
         <ActivityHeader activity={activity} />
         
-        <ActivityActions 
-          activity={activity} 
-          onEdit={() => onEdit(activity)} 
-          onDelete={() => onDeleteActivity(activity.id)} 
-        />
+        {/* Create an ActivityActions component */}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onEdit(activity)}
+            size="sm"
+          >
+            Redigera
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => onDeleteActivity(activity.id)}
+            size="sm"
+          >
+            Ta bort
+          </Button>
+        </div>
         
         {activity.type === "match" && onMatchResultUpdate && (
           <MatchResultSection 

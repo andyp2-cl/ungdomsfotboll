@@ -11,7 +11,7 @@ interface MatchResultSectionProps {
 export function MatchResultSection({ activity, onMatchResultUpdate }: MatchResultSectionProps) {
   console.log("MatchResultSection rendering for activity:", activity.id, activity.name);
   
-  // Use the SimpleResultView component for now
+  // Use the SimpleResultView component
   return (
     <div className="mt-4">
       <h3 className="text-lg font-semibold mb-2">Matchresultat</h3>

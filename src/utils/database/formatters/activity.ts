@@ -1,5 +1,6 @@
+
 import { Activity } from "@/types/player";
-import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 /**
  * Format Activity object for database storage
@@ -22,7 +23,16 @@ export const formatActivityForDatabase = (activity: Activity): any => {
       activity.homeScore !== undefined && 
       activity.awayScore !== undefined && 
       activity.homeScore !== activity.awayScore) {
-    isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
+    
+    // Handle draw case
+    if (activity.homeScore === activity.awayScore) {
+      isWin = undefined; // Draw
+    } else if (isHome) {
+      isWin = activity.homeScore > activity.awayScore; // Win if home team scored more
+    } else {
+      isWin = activity.awayScore > activity.homeScore; // Win if away team scored more
+    }
+    
     console.log(`Calculated isWin=${isWin} for activity ${activity.id} based on scores ${activity.homeScore}-${activity.awayScore} and isHome=${isHome}`);
   }
   
@@ -135,7 +145,16 @@ export const formatActivityFromDatabase = (item: any): Activity => {
       activity.isWin === undefined &&
       activity.homeScore !== activity.awayScore) {
     const isHome = isHomeMatch(activity);
-    activity.isWin = calculateWinStatus(activity.homeScore, activity.awayScore, isHome);
+    
+    // Handle draw case
+    if (activity.homeScore === activity.awayScore) {
+      activity.isWin = undefined; // Draw
+    } else if (isHome) {
+      activity.isWin = activity.homeScore > activity.awayScore; // Win if home team scored more
+    } else {
+      activity.isWin = activity.awayScore > activity.homeScore; // Win if away team scored more
+    }
+    
     console.log(`Calculated isWin=${activity.isWin} for loaded activity ${activity.id} based on scores ${activity.homeScore}-${activity.awayScore}`);
   }
   
