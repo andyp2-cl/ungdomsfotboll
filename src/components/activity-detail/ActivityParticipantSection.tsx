@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AddPlayersToActivity } from "@/components/AddPlayersToActivity";
 import { ParticipantList } from "./ParticipantList";
 import { ParticipantActions } from "./ParticipantActions";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ActivityParticipantSectionProps {
   activity: Activity;
@@ -23,23 +24,9 @@ export function ActivityParticipantSection({
   const [isAddingPlayers, setIsAddingPlayers] = useState(false);
   
   // Get participating players and sort them by grade (A, B, C, D)
-  const participatingPlayers = players
-    .filter(player => activity.participants?.includes(player.id))
-    .sort((a, b) => {
-      // Sort by grade - prioritize A, then B, then C, then D
-      const getGradeValue = (grade?: string) => {
-        if (!grade) return 5; // No grade goes last
-        switch(grade) {
-          case 'A': return 1;
-          case 'B': return 2;
-          case 'C': return 3;
-          case 'D': return 4;
-          default: return 5;
-        }
-      };
-      
-      return getGradeValue(a.grade) - getGradeValue(b.grade);
-    });
+  const participatingPlayers = sortPlayersByGrade(
+    players.filter(player => activity.participants?.includes(player.id))
+  );
 
   const handleAddPlayers = (playerIds: string[]) => {
     const updatedParticipants = [
