@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
-import { ScoreSection } from "./ScoreSection";
-import { useResultSaver } from "./ResultSaver";
+import { ScoreSection } from "./match-result/ScoreSection";
+import { useResultSaver } from "./match-result/ResultSaver";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 

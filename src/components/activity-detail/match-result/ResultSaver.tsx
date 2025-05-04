@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";

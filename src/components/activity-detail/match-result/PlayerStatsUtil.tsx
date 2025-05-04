@@ -10,6 +10,31 @@ interface PlayerStatsUtilProps {
   updateActivity: (activity: Activity) => void;
 }
 
+// This function prepares updated player stats based on match result
+export function prepareUpdatedPlayerStats(
+  activity: Activity,
+  homeScore?: number,
+  awayScore?: number,
+  isWin?: boolean,
+  isHomeTeam: boolean = true
+) {
+  // Start with existing player stats or create empty object
+  const existingStats = activity.player_stats || {};
+  
+  return {
+    // Keep existing goals and assists data
+    goals: existingStats.goals || {},
+    assists: existingStats.assists || {},
+    // Update scores information
+    scores: {
+      home: homeScore,
+      away: awayScore
+    },
+    // Update win status
+    isWin
+  };
+}
+
 export function PlayerStatsUtil({
   activity,
   players,
