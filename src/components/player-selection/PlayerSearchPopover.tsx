@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Player } from "@/types/player";
 import { Check, ChevronsUpDown, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,7 @@ export function PlayerSearchPopover({
 }: PlayerSearchPopoverProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [highlightedPlayerId, setHighlightedPlayerId] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const inputRef = useRef<HTMLInputElement>(null);
   
   // Filter available players based on search query
   const filteredPlayers = availablePlayers.filter(player => {
@@ -34,53 +33,20 @@ export function PlayerSearchPopover({
     return player.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Reset search when popover closes or opens
+  // Reset search when popover closes
   useEffect(() => {
     if (!open) {
       setSearchQuery("");
-      setHighlightedPlayerId(null);
-    } else {
-      // Focus the input when the popover opens
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 10);
     }
   }, [open]);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && filteredPlayers.length > 0) {
-      e.preventDefault(); // Prevent form submission
-      
-      // If we have a highlighted player, select that player
-      if (highlightedPlayerId && filteredPlayers.some(p => p.id === highlightedPlayerId)) {
-        handlePlayerSelect(highlightedPlayerId, true);
-      } else if (filteredPlayers.length > 0) {
-        // Otherwise select the first player in the filtered list
-        handlePlayerSelect(filteredPlayers[0].id, true);
-      }
-    }
-  };
-
-  const handlePlayerSelect = (playerId: string, keepOpen = true) => {
+  const handlePlayerSelect = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
       onPlayerSelect(playerId);
     } else {
       // No player limit check anymore
       onPlayerSelect(playerId);
     }
-    
-    // Always clear search query and keep popover open
-    setSearchQuery("");
-    
-    // Refocus the input field for the next search
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 10);
   };
 
   return (
@@ -101,13 +67,11 @@ export function PlayerSearchPopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-[250px]'} p-0`} align="start">
-        <Command shouldFilter={false}>
+        <Command>
           <CommandInput 
             placeholder="Sök spelare..." 
             value={searchQuery}
             onValueChange={setSearchQuery}
-            onKeyDown={handleKeyDown}
-            ref={inputRef}
             className="h-9"
           />
           <CommandList className="max-h-[300px] overflow-auto">
@@ -118,7 +82,6 @@ export function PlayerSearchPopover({
                   key={player.id}
                   value={player.id}
                   onSelect={() => handlePlayerSelect(player.id)}
-                  onMouseEnter={() => setHighlightedPlayerId(player.id)}
                   className="flex items-center justify-between cursor-pointer"
                 >
                   <div className="flex items-center">

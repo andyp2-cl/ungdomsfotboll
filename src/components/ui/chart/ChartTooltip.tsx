@@ -49,7 +49,7 @@ export const ChartTooltipContent = React.forwardRef<
       if (labelFormatter) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value)}
+            {labelFormatter(value, payload)}
           </div>
         )
       }
@@ -89,7 +89,7 @@ export const ChartTooltipContent = React.forwardRef<
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload?.fill || item.color
+            const indicatorColor = color || item.payload.fill || item.color
 
             return (
               <div
@@ -100,11 +100,11 @@ export const ChartTooltipContent = React.forwardRef<
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name)
+                  formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
-                      React.createElement(itemConfig.icon)
+                      <itemConfig.icon />
                     ) : (
                       !hideIndicator && (
                         <div

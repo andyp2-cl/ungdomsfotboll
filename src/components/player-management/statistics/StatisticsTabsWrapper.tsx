@@ -4,6 +4,7 @@ import { ParticipationTabContent } from "./ParticipationTabContent";
 import { FormationTabContent } from "./formation/FormationTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
+import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
 import { Activity, Player } from "@/types/player";
 
@@ -39,6 +40,7 @@ export function StatisticsTabsWrapper({
         <TabsTrigger value="participation">Deltagande</TabsTrigger>
         <TabsTrigger value="formation">Formation</TabsTrigger>
         <TabsTrigger value="goals">Mål</TabsTrigger>
+        <TabsTrigger value="matches">Matcher</TabsTrigger>
         <TabsTrigger value="leagues">Ligor</TabsTrigger>
       </TabsList>
       
@@ -67,6 +69,15 @@ export function StatisticsTabsWrapper({
         <GoalsTabContent 
           activities={activities} 
           players={players} 
+          onPlayerSelect={onPlayerSelect}
+        />
+      </TabsContent>
+      
+      <TabsContent value="matches">
+        <MatchesTabContent 
+          activities={activities} 
+          players={players}
+          onActivitySelect={handleActivitySelectWithLogging}
           onPlayerSelect={onPlayerSelect}
         />
       </TabsContent>

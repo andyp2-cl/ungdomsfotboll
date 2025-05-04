@@ -12,7 +12,7 @@ interface UseActivityTabViewsProps {
   filteredHistoricalActivities: Activity[];
   setEditingActivity: (activity: Activity | null) => void;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleActivityUpdate: (activity: Activity) => Promise<void>;
+  handleActivityUpdate: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
@@ -37,11 +37,6 @@ export const useActivityTabViews = ({
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    if (!playerId) {
-      setSelectedPlayer(null);
-      return;
-    }
-    
     const player = players.find(p => p.id === playerId);
     if (player) {
       setSelectedPlayer(player);
@@ -94,6 +89,12 @@ export const useActivityTabViews = ({
 
   // Render content based on current view and selection
   const renderContent = useCallback(() => {
+    // Handle Statistics view
+    if (activeView === "statistics") {
+      // Statistics will be rendered by the parent component
+      return null;
+    }
+    
     // Handle Player detail view
     if (selectedPlayer) {
       const playerActivities = activities.filter(activity => 
@@ -103,8 +104,7 @@ export const useActivityTabViews = ({
       return {
         viewType: "player-detail",
         player: selectedPlayer,
-        activities: playerActivities,
-        searchQuery
+        activities: playerActivities
       };
     }
     
@@ -117,24 +117,14 @@ export const useActivityTabViews = ({
         viewType: "activity-detail",
         activity: selectedActivity,
         relatedActivities,
-        cupMatches,
-        searchQuery
-      };
-    }
-    
-    // Handle Statistics view
-    if (activeView === "statistics") {
-      return {
-        viewType: "statistics",
-        searchQuery
+        cupMatches
       };
     }
     
     // Handle Activities list view
     return {
       viewType: "activities-list",
-      activities: filteredBySearchActivities,
-      searchQuery
+      activities: filteredBySearchActivities
     };
   }, [
     activeView, 
@@ -143,8 +133,7 @@ export const useActivityTabViews = ({
     activities, 
     filteredBySearchActivities, 
     getRelatedActivities,
-    getCupMatches,
-    searchQuery
+    getCupMatches
   ]);
 
   return {

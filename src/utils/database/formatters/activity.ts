@@ -4,12 +4,9 @@ import { Activity } from "@/types/player";
 /**
  * Format Activity object for database storage
  * - Converts nested objects into flat structure
- * - Ensures no undefined values are passed to database
  */
 export const formatActivityForDatabase = (activity: Activity): any => {
-  // Create a base object to avoid mutations
-  const baseActivity = { ...activity };
-  const { location, player_stats, ...rest } = baseActivity;
+  const { location, player_stats, ...rest } = activity;
   
   // Create the base formatted activity object
   const formattedActivity = {
@@ -21,14 +18,11 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     location_name: location?.name || null,
     location_description: location?.description || null,
     location_gps_link: location?.gpsLink || null,
-    // Ensure player_stats is passed as a JSON object, not undefined
     player_stats: player_stats || {},
     cup_id: activity.cupId || null,
-    // Convert undefined scores to explicit null values for database
     home_score: activity.homeScore !== undefined ? activity.homeScore : null,
     away_score: activity.awayScore !== undefined ? activity.awayScore : null,
-    // Ensure boolean values are explicitly true/false/null, not undefined
-    is_win: activity.isWin === true ? true : activity.isWin === false ? false : null,
+    is_win: activity.isWin !== undefined ? activity.isWin : null,
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false,
@@ -39,14 +33,14 @@ export const formatActivityForDatabase = (activity: Activity): any => {
   if (activity.type === 'cup') {
     // For cup activities, ensure the cup_id is set to the activity's own ID
     formattedActivity.cup_id = activity.id;
+    console.log(`Cup activity detected: Setting cup_id=${activity.id}`);
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with league_id: ${formattedActivity.league_id}, home_score: ${formattedActivity.home_score}, away_score: ${formattedActivity.away_score}, is_win: ${formattedActivity.is_win}`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}`);
   
-  // Final check for any undefined values
+  // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {
     if (formattedActivity[key] === undefined) {
-      console.warn(`Converting undefined value to null for field: ${key}`);
       formattedActivity[key] = null;
     }
   });
@@ -59,7 +53,6 @@ export const formatActivityForDatabase = (activity: Activity): any => {
  * - Converts flat database structure to nested object structure
  */
 export const formatActivityFromDatabase = (item: any): Activity => {
-  // First create a normalized version of the activity
   const activity: Activity = {
     id: item.id,
     name: item.name,

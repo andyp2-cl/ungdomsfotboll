@@ -1,91 +1,94 @@
 
+import { supabase } from "@/lib/supabase";
 import { Activity } from "@/types/player";
-import { toast } from "sonner";
-import { cacheActivities, getActivitiesFromCache, shouldRefreshCache } from "./cache-operations";
-import { fetchActivitiesFromDB } from "./fetch-operations";
-import { handleFetchError } from "./error-handling";
+import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
 
-/**
- * Get activities from Supabase with improved caching and error handling
- */
-export const getStoredActivities = async (context?: any): Promise<Activity[]> => {
-  // Handle both TanStack Query context and our custom options format
-  let forceRefresh = false;
-  let showToast = false;
-  
-  if (context && typeof context === 'object') {
-    // If it's a TanStack Query context, check meta
-    if (context.meta) {
-      forceRefresh = !!context.meta.forceRefresh;
-      showToast = !!context.meta.showToast;
-    } 
-    // If it's our custom options object
-    else if ('forceRefresh' in context || 'showToast' in context) {
-      forceRefresh = !!context.forceRefresh;
-      showToast = !!context.showToast;
-    }
-  }
-  
-  // Start timing for performance measurement
-  const startTime = performance.now();
-  
-  // Check if we're online
-  if (!navigator.onLine) {
-    console.log("Device is offline, using cached activities");
-    
-    // When offline, always use the cache if available
-    const cachedData = getActivitiesFromCache(showToast);
-    return cachedData || [];
-  }
-  
-  // If online and not forcing a refresh, try to use the cache first
-  if (!forceRefresh) {
-    const cachedActivities = getActivitiesFromCache();
-    
-    if (cachedActivities && cachedActivities.length > 0) {
-      console.log(`Using ${cachedActivities.length} cached activities, age: ${
-        ((Date.now() - Number(localStorage.getItem('cachedActivitiesTime') || 0)) / 1000).toFixed(0)
-      }s`);
-      
-      // In background, refresh the cache if it's older than 5 minutes
-      if (shouldRefreshCache()) {
-        console.log("Cache is older than 5 minutes, refreshing in background");
-        
-        // Background refresh without waiting for result
-        setTimeout(() => {
-          fetchActivitiesFromDB({ silent: true }).catch(err => {
-            console.error("Background refresh failed:", err);
-          });
-        }, 100);
-      }
-      
-      return cachedActivities;
-    }
-  }
-  
+// Get activities from Supabase
+export const getStoredActivities = async (): Promise<Activity[]> => {
   try {
-    // Mark successful connection test early to avoid connection status issues
-    localStorage.setItem('sb-connection-test', 'true');
+    // First, get all activities
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('*');
+      
+    if (activitiesError) throw activitiesError;
     
-    // Fetch from database
-    const activities = await fetchActivitiesFromDB({ 
-      showToast,
-      silent: !showToast && !forceRefresh
+    // Ensure we have data before proceeding
+    if (!activitiesData) {
+      console.log("No activities data found in database");
+      return [];
+    }
+    
+    // Format all activities properly with correct typing
+    const activities: Activity[] = activitiesData.map(formatActivityFromDatabase);
+    
+    console.log(`Fetched ${activities.length} activities from database`);
+    
+    // Log all cup type activities and matches with cup references
+    const cupActivities = activities.filter(a => a.type === 'cup');
+    const matchesWithCupName = activities.filter(a => a.type === 'match' && a.cupName);
+    
+    console.log(`Found ${cupActivities.length} cup activities and ${matchesWithCupName.length} matches with cupName`);
+    console.log("Cup names found:", [...new Set([
+      ...cupActivities.map(c => c.name),
+      ...matchesWithCupName.map(m => m.cupName).filter(Boolean)
+    ])]);
+    
+    // Then, get player-activity relationships and populate the participants array
+    const { data: playerActivitiesData, error: relationshipError } = await supabase
+      .from('player_activities')
+      .select('*');
+      
+    if (relationshipError) throw relationshipError;
+    
+    // Populate participants for each activity
+    activities.forEach(activity => {
+      const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
+      activity.participants = activityPlayerRelations.map(relation => relation.player_id);
     });
     
-    // Calculate and log performance
-    const endTime = performance.now();
-    console.log(`Fetched ${activities.length} activities from database in ${(endTime - startTime).toFixed(2)}ms`);
+    // For cup activities, find matches that have this cup as parent
+    const cupActivitiesArray = activities.filter(a => a.type === 'cup');
     
-    // Cache the results
-    cacheActivities(activities);
+    // First pass: ensure all cup activities have a matches array
+    cupActivitiesArray.forEach(cupActivity => {
+      if (!cupActivity.matches) {
+        cupActivity.matches = [];
+      }
+    });
     
-    // Mark connection as successful
-    localStorage.setItem('sb-connection-test', 'true');
-    localStorage.setItem('sb-connection-test-time', Date.now().toString());
+    // Second pass: Process cup-match relationships
+    cupActivitiesArray.forEach(cupActivity => {
+      // Look for matches that reference this cup via cupId
+      const matchesByCupId = activities.filter(a => 
+        a.cupId === cupActivity.id && a.type === 'match'
+      );
+      
+      // Look for matches that reference this cup via cupName
+      const matchesByCupName = activities.filter(a => 
+        a.type === 'match' && a.cupName === cupActivity.name
+      );
+      
+      // Combine both sets of matches, removing duplicates
+      const allMatches = [...matchesByCupId];
+      
+      // Add matches by name if they aren't already included by ID
+      matchesByCupName.forEach(match => {
+        if (!allMatches.some(m => m.id === match.id)) {
+          allMatches.push(match);
+        }
+      });
+      
+      // Update the cup's matches array with all found matches
+      cupActivity.matches = allMatches.map(m => m.id);
+      
+      console.log(`Cup ${cupActivity.name} (${cupActivity.id}) has ${cupActivity.matches.length} matches after linking`);
+    });
     
+    console.log("Retrieved and linked activities from Supabase:", activities.length);
     return activities;
   } catch (error) {
-    return handleFetchError(error, showToast);
+    console.error("Error fetching activities:", error);
+    return [];
   }
 };

@@ -1,38 +1,44 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import HomePage from "./pages/Index";
-import PlayersPage from "./pages/PlayersPage";
-import ActivitiesPage from "./pages/ActivitiesPage";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import PasswordProtection from "./components/PasswordProtection";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import PlayersPage from "./pages/PlayersPage";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: Infinity, // Prevent automatic refetching
     },
   },
 });
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/players" element={<PlayersPage />} />
-          <Route path="/activities" element={<ActivitiesPage />} />
-          <Route path="/player/:id" element={<PlayerManagementPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <Toaster position="top-center" richColors closeButton />
-    </QueryClientProvider>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <PasswordProtection>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/players" element={<PlayersPage initialTab="players" />} />
+            <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+            <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
+            <Route path="/player-management" element={<PlayerManagementPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </PasswordProtection>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

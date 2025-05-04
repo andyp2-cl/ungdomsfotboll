@@ -1,42 +1,36 @@
 
-/**
- * Types for chart components
- */
+import * as React from "react"
+import * as RechartsPrimitive from "recharts"
 
-import React from 'react';
+// Format: { THEME_NAME: CSS_SELECTOR }
+export const THEMES = { light: "", dark: ".dark" } as const
 
-export interface ChartConfig {
-  [key: string]: {
-    label?: string;
-    color?: string;
-    icon?: React.ElementType; // Change to ElementType instead of ReactNode
-  } | undefined;
+export type ChartConfig = {
+  [k in string]: {
+    label?: React.ReactNode
+    icon?: React.ComponentType
+  } & (
+    | { color?: string; theme?: never }
+    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+  )
 }
 
-export interface ChartContextProps {
-  config: ChartConfig;
+export type ChartContextProps = {
+  config: ChartConfig
 }
 
-export interface ChartLegendContentProps {
-  className?: string;
-  payload?: any[];
-  verticalAlign?: string;
-  hideIcon?: boolean;
-  nameKey?: string;
+// Omit the conflicting 'content' property from Recharts' Tooltip props
+export interface ChartTooltipContentProps extends 
+  Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, 'content'>, 
+  React.ComponentProps<"div"> {
+  hideLabel?: boolean
+  hideIndicator?: boolean
+  indicator?: "line" | "dot" | "dashed"
+  nameKey?: string
+  labelKey?: string
 }
 
-export interface ChartTooltipContentProps {
-  active?: boolean;
-  payload?: any[];
-  label?: string;
-  formatter?: (value: any, name: string) => string;
-  className?: string;
-  indicator?: React.ReactNode;
-  hideLabel?: boolean;
-  hideIndicator?: boolean;
-  labelFormatter?: (label: any) => React.ReactNode;
-  labelClassName?: string;
-  color?: string;
-  nameKey?: string;
-  labelKey?: string;
+export interface ChartLegendContentProps extends React.ComponentProps<"div">, Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> {
+  hideIcon?: boolean
+  nameKey?: string
 }

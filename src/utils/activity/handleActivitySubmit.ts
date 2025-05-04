@@ -65,16 +65,13 @@ export async function handleActivitySubmit(
       // Make sure to preserve existing goals and assists
       goals: existingPlayerStats.goals || {},
       assists: existingPlayerStats.assists || {},
-    };
-    
-    // Only add scores information if scores are provided
-    if (homeScore !== undefined || awayScore !== undefined) {
-      updatedPlayerStats.scores = {
+      // Add scores information
+      scores: {
         home: homeScore,
         away: awayScore
-      };
-      updatedPlayerStats.isWin = isWin;
-    }
+      },
+      isWin
+    };
     
     // Handle leagueId (convert "none" to undefined)
     const leagueId = values.leagueId && values.leagueId !== "none" ? values.leagueId : undefined;
@@ -104,7 +101,7 @@ export async function handleActivitySubmit(
     // Use preserveMatchData to ensure match statistics are maintained
     const updatedActivity = preserveMatchData(originalActivity, formUpdatedActivity);
     
-    console.log("Saving activity with preserved match data and updated values:", {
+    console.log("Saving activity with preserved match data and win status:", {
       isWin: updatedActivity.isWin,
       leagueId: updatedActivity.leagueId,
       playerStats: updatedActivity.player_stats

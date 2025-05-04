@@ -42,29 +42,8 @@ export function QuickMatchResult({
     if (isReadOnly) return;
     
     setIsSaving(true);
-    console.log("QuickMatchResult - Saving match result:", { 
-      activityId: activity.id, 
-      homeScore, 
-      awayScore 
-    });
-    
     try {
-      // Convert string values to numbers if needed
-      const processedHomeScore = homeScore !== undefined && homeScore !== null ? 
-        (typeof homeScore === 'string' ? parseInt(homeScore, 10) : homeScore) : 
-        undefined;
-        
-      const processedAwayScore = awayScore !== undefined && awayScore !== null ? 
-        (typeof awayScore === 'string' ? parseInt(awayScore, 10) : awayScore) : 
-        undefined;
-      
-      // Debug data conversion
-      console.log("Processed score values:", {
-        original: { homeScore, awayScore },
-        processed: { processedHomeScore, processedAwayScore }
-      });
-      
-      await onSave(processedHomeScore, processedAwayScore);
+      await onSave(homeScore, awayScore);
       toast({
         title: "Resultat sparat",
         description: "Matchresultatet har sparats framgångsrikt.",

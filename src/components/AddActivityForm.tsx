@@ -51,10 +51,7 @@ export function AddActivityForm({
   // Fetch activities to get existing cup names
   const { data: activities, isLoading: activitiesLoading } = useQuery({
     queryKey: ["activities"],
-    queryFn: () => getStoredActivities({
-      showToast: false,
-      forceRefresh: false
-    }),
+    queryFn: getStoredActivities,
   });
 
   // Fetch leagues from Supabase

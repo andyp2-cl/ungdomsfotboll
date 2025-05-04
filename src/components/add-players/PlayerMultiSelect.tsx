@@ -27,29 +27,23 @@ export function PlayerMultiSelect({
       <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>
       
       <div className="border rounded-md p-2 h-48 overflow-y-auto">
-        {availablePlayers.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Inga spelare hittades
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {availablePlayers.map(player => (
-              <div key={player.id} className="flex items-center space-x-2 p-1 hover:bg-accent">
-                <Checkbox 
-                  checked={selectedPlayerIds.includes(player.id)} 
-                  onCheckedChange={() => onPlayerToggle(player.id)}
-                  id={`player-${player.id}`}
-                />
-                <label 
-                  htmlFor={`player-${player.id}`} 
-                  className="text-sm flex-grow cursor-pointer"
-                >
-                  {player.name}
-                </label>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="space-y-1">
+          {availablePlayers.map(player => (
+            <div key={player.id} className="flex items-center space-x-2 p-1 hover:bg-accent">
+              <Checkbox 
+                checked={selectedPlayerIds.includes(player.id)} 
+                onCheckedChange={() => onPlayerToggle(player.id)}
+                id={`player-${player.id}`}
+              />
+              <label 
+                htmlFor={`player-${player.id}`} 
+                className="text-sm flex-grow cursor-pointer"
+              >
+                {player.name}
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
       
       {selectedPlayers.length > 0 && (

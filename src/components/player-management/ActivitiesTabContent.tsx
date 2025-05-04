@@ -64,9 +64,6 @@ export function ActivitiesTabContent({
         filteredActivities={filteredActivities}
         filteredHistoricalActivities={filteredHistoricalActivities}
         isAddActivityOpen={isAddActivityOpen}
-        isLoading={false} // Add the missing isLoading property with default value
-        loadError={null} // Add loadError with default null value
-        retryLoading={() => {}} // Add retryLoading function with empty implementation
         handleActivityTypeChange={handleActivityTypeChange}
         setSelectedActivity={setSelectedActivity}
         handleActivityUpdate={handleActivityUpdate}

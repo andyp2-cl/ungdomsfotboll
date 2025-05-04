@@ -28,10 +28,7 @@ export function CupSelector({
 }: CupSelectorProps) {
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ["activities"],
-    queryFn: () => getStoredActivities({
-      showToast: false,
-      forceRefresh: false
-    }),
+    queryFn: getStoredActivities,
   });
   
   // Make sure to filter by type AND verify cups have correct fields
@@ -104,7 +101,7 @@ export function CupSelector({
 
   if (isLoading) return <div>Laddar cuper...</div>;
   if (error) return <div>Kunde inte hämta cuper</div>;
-  if (!cups?.length) return null;
+  if (!cups.length) return null;
 
   return (
     <div className="space-y-2">

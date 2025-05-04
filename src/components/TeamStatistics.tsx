@@ -48,7 +48,7 @@ export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStat
         </div>
         
         <TabsContent value="overview" className="space-y-6">
-          <OverviewTabContent players={players} activities={activities} onPlayerSelect={onPlayerSelect} />
+          <OverviewTabContent players={players} activities={activities} />
         </TabsContent>
         
         <TabsContent value="attendance" className="space-y-6">
@@ -65,7 +65,7 @@ export function TeamStatistics({ players, activities, onPlayerSelect }: TeamStat
         </TabsContent>
         
         <TabsContent value="trends" className="space-y-6">
-          <TrendsTabContent players={players} activities={activities} />
+          <TrendsTabContent activities={activities} />
         </TabsContent>
       </Tabs>
     </div>

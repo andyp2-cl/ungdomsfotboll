@@ -1,73 +1,100 @@
 
 import { Player, Activity } from "@/types/player";
+import { getGradeColor } from '@/utils/gradeUtils';
 
-export interface PlayerStats {
+export interface PlayerStatistic {
   id: string;
   name: string;
   grade: string;
+  position: string;
+  jerseyNumber: string;
+  activityCount: number;
+  participationRate: number;
   goals: number;
   assists: number;
-  matches: number;
+  matchCount: number;
   winCount: number;
   winRate: number;
-  matchCount: number;
+  fill: string;
+  activities: number;
 }
 
-export function calculatePlayerStats(players: Player[], activities: Activity[]): PlayerStats[] {
-  // Get historical matches only
-  const historicalMatches = activities.filter(activity => {
-    if (activity.type !== "match") return false;
-    
-    const activityDate = new Date(activity.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return activityDate < today;
-  });
+export function calculatePlayerStats(players: Player[], activities: Activity[]): PlayerStatistic[] {
+  return players.map(player => {
+    const activityCount = player.activities?.length || 0;
+    const participationRate = activities.length > 0
+      ? Math.round((activityCount / activities.length) * 100)
+      : 0;
 
-  // Calculate stats for each player
-  return players
-    .filter(player => !player.positions?.includes("TRÄNARE"))
-    .map(player => {
-      // Get matches this player participated in
-      const playerMatches = historicalMatches.filter(match => 
-        match.participants?.includes(player.id)
-      );
-      
-      // Calculate total goals and assists
-      let goals = 0;
-      let assists = 0;
-      
-      playerMatches.forEach(match => {
-        if (match.player_stats?.goals?.[player.id]) {
-          goals += Number(match.player_stats.goals[player.id]);
-        }
+    // Calculate goals and assists
+    let totalGoals = 0;
+    let totalAssists = 0;
+    let matchCount = 0;
+    let winCount = 0;
+
+    activities.forEach(activity => {
+      if (activity.type === "match" && activity.player_stats && activity.participants?.includes(player.id)) {
+        matchCount++;
+        totalGoals += activity.player_stats.goals?.[player.id] || 0;
+        totalAssists += activity.player_stats.assists?.[player.id] || 0;
         
-        if (match.player_stats?.assists?.[player.id]) {
-          assists += Number(match.player_stats.assists[player.id]);
+        // Count wins
+        if (activity.result) {
+          const resultParts = activity.result.split('-');
+          if (resultParts.length === 2) {
+            const ourScore = parseInt(resultParts[0], 10);
+            const theirScore = parseInt(resultParts[1], 10);
+            if (!isNaN(ourScore) && !isNaN(theirScore) && ourScore > theirScore) {
+              winCount++;
+            }
+          }
         }
-      });
-      
-      // Count wins
-      const wins = playerMatches.filter(match => match.isWin === true).length;
-      
-      // Calculate win percentage
-      const winRate = playerMatches.length > 0 
-        ? Math.round((wins / playerMatches.length) * 100)
-        : 0;
-        
-      return {
-        id: player.id,
-        name: player.name,
-        grade: player.grade,
-        goals,
-        assists,
-        matches: player.activities?.length || 0,
-        winCount: wins,
-        winRate,
-        matchCount: playerMatches.length
-      };
-    })
-    .filter(stats => stats.matchCount > 0)
-    .sort((a, b) => b.goals - a.goals);
+      }
+    });
+
+    const winRate = matchCount > 0 ? Math.round((winCount / matchCount) * 100) : 0;
+    
+    return {
+      id: player.id,
+      name: player.name,
+      grade: player.grade,
+      position: player.positions?.[0] || 'N/A',
+      jerseyNumber: player.jerseyNumber || '',
+      activityCount,
+      participationRate,
+      goals: totalGoals,
+      assists: totalAssists,
+      matchCount,
+      winCount,
+      winRate,
+      fill: getGradeColor(player.grade),
+      activities: activityCount
+    };
+  }).sort((a, b) => b.activityCount - a.activityCount);
+}
+
+export function calculateGradeStats(players: Player[]) {
+  const gradeMap = new Map<string, { grade: string, count: number, players: number }>();
+  
+  // Initialize with all grades
+  ['A', 'B', 'C', 'D'].forEach(grade => {
+    gradeMap.set(grade, { grade, count: 0, players: 0 });
+  });
+  
+  // Count players and activities by grade
+  players.forEach(player => {
+    if (!gradeMap.has(player.grade)) return;
+    
+    const gradeData = gradeMap.get(player.grade)!;
+    gradeData.players += 1;
+    gradeData.count += player.activities?.length || 0;
+    gradeMap.set(player.grade, gradeData);
+  });
+  
+  return Array.from(gradeMap.values())
+    .map(data => ({
+      ...data,
+      average: data.players > 0 ? Math.round((data.count / data.players) * 10) / 10 : 0
+    }))
+    .sort((a, b) => a.grade.localeCompare(b.grade));
 }
