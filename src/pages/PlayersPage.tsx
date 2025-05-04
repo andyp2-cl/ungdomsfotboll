@@ -146,7 +146,6 @@ export default function PlayersPage() {
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
             handleActivityTypeChange={handleActivityTypeChange}
             setSelectedActivity={setSelectedActivity}
             handleActivityUpdate={async (activity) => {
@@ -155,7 +154,6 @@ export default function PlayersPage() {
             onAddActivityClick={() => setIsAddActivityOpen(true)}
             onEditActivityClick={setEditingActivity}
             setEditingActivity={setEditingActivity}
-            setIsAddActivityOpen={setIsAddActivityOpen}
             handleKioskAssignmentUpdate={async (activityId, playerId) => {
               await handleKioskAssignmentUpdate(activityId, playerId);
               return true;
@@ -165,6 +163,7 @@ export default function PlayersPage() {
               return true;
             }}
             handleMatchResultUpdate={handleMatchResultUpdateWrapper}
+            cupMatches={activities.filter(a => a.type === 'cup')}
           />
         }
       />

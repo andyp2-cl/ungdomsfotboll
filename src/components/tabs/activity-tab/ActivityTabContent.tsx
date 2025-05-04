@@ -15,6 +15,7 @@ interface ActivityTabContentProps {
   selectedActivity: Activity | null;
   selectedActivityTypes: string[];
   filteredActivities: Activity[];
+  filteredHistoricalActivities?: Activity[]; // Added this as optional
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>;

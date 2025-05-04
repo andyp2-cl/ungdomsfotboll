@@ -101,17 +101,16 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               selectedActivity={props.selectedActivity}
               selectedActivityTypes={props.selectedActivityTypes}
               filteredActivities={props.filteredActivities}
-              filteredHistoricalActivities={props.filteredHistoricalActivities}
               handleActivityTypeChange={props.handleActivityTypeChange}
               setSelectedActivity={props.setSelectedActivity}
               handleActivityUpdate={handleActivityUpdateWrapper}
               onAddActivityClick={() => props.setIsAddActivityOpen(true)}
               onEditActivityClick={props.setEditingActivity}
               setEditingActivity={props.setEditingActivity}
-              setIsAddActivityOpen={props.setIsAddActivityOpen}
               handleKioskAssignmentUpdate={props.handleKioskUpdate}
               handleDeleteActivity={props.handleDelete}
               handleMatchResultUpdate={props.handleMatchResultUpdate}
+              cupMatches={props.activities.filter(a => a.type === 'cup')}
             />
           }
         />
