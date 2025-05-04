@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
-import { isHomeMatch, getOutcomeText, extractTeamNames } from "./utils/team-detection";
+import { isHomeMatch, extractTeamNames } from "./utils";
+import { getOutcomeText } from "./utils/result-display";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
