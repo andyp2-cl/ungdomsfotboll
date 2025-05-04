@@ -4,10 +4,10 @@ import { usePlayers } from "../hooks/usePlayers";
 import { useActivities } from "../hooks/activities";
 import { Activity } from "@/types/player";
 import { DialogModals } from "@/components/DialogModals";
-import { LayoutMain } from "@/components/LayoutMain"; // Fixed import
+import { LayoutMain } from "@/components/LayoutMain";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/player-tab/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
 
 /**
  * Main players page component with filtering, sorting, and activity management
@@ -63,6 +63,7 @@ export default function PlayersPage() {
     // Filters
     selectedActivityTypes,
     filteredActivities,
+    filteredHistoricalActivities,
     handleActivityTypeChange,
     // Actions
     handleActivityUpdate,
@@ -140,20 +141,22 @@ export default function PlayersPage() {
         }
         activitiesContent={
           <ActivityTabContent 
-            title="Aktiviteter"
             activities={activities}
             players={players}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
             filteredActivities={filteredActivities}
-            onActivityTypeChange={handleActivityTypeChange}
-            onActivitySelect={setSelectedActivity}
-            onActivityUpdate={async (activity) => {
+            filteredHistoricalActivities={filteredHistoricalActivities}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={async (activity) => {
               await handleActivityUpdate(activity);
             }}
             onAddActivityClick={() => setIsAddActivityOpen(true)}
             onEditActivityClick={setEditingActivity}
-            handleKioskUpdate={async (activityId, playerId) => {
+            setEditingActivity={setEditingActivity}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            handleKioskAssignmentUpdate={async (activityId, playerId) => {
               await handleKioskAssignmentUpdate(activityId, playerId);
               return true;
             }}
@@ -162,7 +165,6 @@ export default function PlayersPage() {
               return true;
             }}
             handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-            cupMatches={[]}
           />
         }
       />

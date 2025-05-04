@@ -3,7 +3,7 @@ import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { MobileNavBar } from "@/components/mobile-nav/MobileNavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -96,19 +96,20 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
           }
           activitiesContent={
             <ActivityTabContent 
-              title="Aktiviteter"
               activities={props.activities}
               players={props.players}
               selectedActivity={props.selectedActivity}
               selectedActivityTypes={props.selectedActivityTypes}
               filteredActivities={props.filteredActivities}
-              cupMatches={[]}
-              onActivityTypeChange={props.handleActivityTypeChange}
-              onActivitySelect={props.setSelectedActivity}
-              onActivityUpdate={handleActivityUpdateWrapper}
+              filteredHistoricalActivities={props.filteredHistoricalActivities}
+              handleActivityTypeChange={props.handleActivityTypeChange}
+              setSelectedActivity={props.setSelectedActivity}
+              handleActivityUpdate={handleActivityUpdateWrapper}
               onAddActivityClick={() => props.setIsAddActivityOpen(true)}
               onEditActivityClick={props.setEditingActivity}
-              handleKioskUpdate={props.handleKioskUpdate}
+              setEditingActivity={props.setEditingActivity}
+              setIsAddActivityOpen={props.setIsAddActivityOpen}
+              handleKioskAssignmentUpdate={props.handleKioskUpdate}
               handleDeleteActivity={props.handleDelete}
               handleMatchResultUpdate={props.handleMatchResultUpdate}
             />
