@@ -16,6 +16,7 @@ export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState<string>("players");
 
   // Use players hook to get player data and actions
+  const playerState = usePlayers();
   const {
     players,
     isLoading: playersLoading,
@@ -47,7 +48,7 @@ export default function PlayersPage() {
     handleImageUpdate,
     handleImportedPlayers,
     handleClearHistoricalPlayers
-  } = usePlayers();
+  } = playerState;
 
   // Use activities hook to get activity data and actions
   const {

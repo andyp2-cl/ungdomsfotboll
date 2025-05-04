@@ -6,8 +6,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimeInput } from "./TimeInput";
 import { ActivityFormValues } from "./formSchema";
-import { useEffect } from "react";
 import { LeagueSelector } from "./LeagueSelector";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
+import { useEffect } from "react";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -16,6 +18,26 @@ interface BasicInfoFieldsProps {
 
 export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
   const type = form.watch("type");
+  
+  // Fetch leagues for the league selector when type is "match"
+  const { data: leagues = [] } = useQuery({
+    queryKey: ["leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .order("year", { ascending: false })
+        .order("name");
+        
+      if (error) {
+        console.error("Error fetching leagues:", error);
+        throw error;
+      }
+      
+      return data || [];
+    },
+    enabled: type === "match"
+  });
   
   useEffect(() => {
     if (onTypeChange) {
@@ -63,6 +85,12 @@ export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
                     <RadioGroupItem value="cup" />
                   </FormControl>
                   <FormLabel className="font-normal cursor-pointer">Cup</FormLabel>
+                </FormItem>
+                <FormItem className="flex items-center space-x-2 space-y-0">
+                  <FormControl>
+                    <RadioGroupItem value="training" />
+                  </FormControl>
+                  <FormLabel className="font-normal cursor-pointer">Träning</FormLabel>
                 </FormItem>
               </RadioGroup>
             </FormControl>

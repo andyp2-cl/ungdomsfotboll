@@ -1,11 +1,11 @@
 
-import { Activity, ActivityType } from "@/types/player";
+import { ActivityType } from "@/types/player";
 import { useFormState } from "./useFormState";
 import { useActivityData } from "./useActivityData";
 import { useActivitySubmission } from "./useActivitySubmission";
 
 interface UseAddActivityFormProps {
-  onSave: (activity: Activity) => void;
+  onSave: (activity: any) => void;
   onTypeChange?: (type: ActivityType) => void;
   onDateChange?: (date: string) => void;
 }
@@ -32,8 +32,9 @@ export function useAddActivityForm({
   });
 
   // Create a wrapper for the save handler that passes the current form state
-  const saveActivity = () => {
-    return handleSave(formState);
+  const saveActivity = async () => {
+    const result = await handleSave(formState);
+    return result.success;
   };
 
   return {
