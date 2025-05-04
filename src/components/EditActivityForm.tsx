@@ -6,7 +6,7 @@ import { BasicInfoFields } from "./activity-form/BasicInfoFields";
 import { LocationFields } from "./activity-form/LocationFields";
 import { ResultFields } from "./activity-form/ResultFields";
 import { FormButtons } from "./activity-form/FormButtons";
-import { normalizePlayerStats } from "@/hooks/activities/utils/playerStatsUtils";
+import { normalizePlayerStats as normalizeStats } from "@/hooks/activities/utils/playerStatsUtils";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -20,7 +20,7 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
   // Create a clean copy of the activity with normalized player_stats
   const normalizedActivity = {
     ...activity,
-    player_stats: normalizePlayerStats(activity.player_stats),
+    player_stats: normalizeStats(activity.player_stats),
     // If leagueId is undefined but league_id is defined, use league_id
     leagueId: activity.leagueId || activity.league_id
   };
@@ -54,40 +54,4 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
       </form>
     </Form>
   );
-}
-
-// Helper function to ensure player_stats is properly normalized
-function normalizePlayerStats(playerStats: any) {
-  if (!playerStats) {
-    return { goals: {}, assists: {} };
-  }
-  
-  if (typeof playerStats === 'string') {
-    try {
-      const parsed = JSON.parse(playerStats);
-      if (typeof parsed === 'string') {
-        try {
-          return JSON.parse(parsed);
-        } catch (e) {
-          console.error("Error parsing double-stringified player_stats:", e);
-          return { goals: {}, assists: {} };
-        }
-      }
-      return {
-        ...parsed,
-        goals: parsed.goals || {},
-        assists: parsed.assists || {}
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats string:", e);
-      return { goals: {}, assists: {} };
-    }
-  }
-  
-  // Ensure the object has the required structure
-  return {
-    ...playerStats,
-    goals: playerStats.goals || {},
-    assists: playerStats.assists || {}
-  };
 }

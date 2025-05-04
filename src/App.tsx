@@ -1,13 +1,15 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import PasswordProtection from "./components/PasswordProtection";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
+import ActivitiesPage from "./pages/ActivitiesPage";
+import PlayerDetail from "./pages/PlayerDetail";
+import ActivityDetail from "./pages/ActivityDetail";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -52,18 +54,19 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <Router>
           <PasswordProtection>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/players" element={<PlayersPage initialTab="players" />} />
-              <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
-              <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
+              <Route path="/players" element={<PlayersPage />} />
+              <Route path="/activities" element={<ActivitiesPage />} />
+              <Route path="/players/:id" element={<PlayerDetail />} />
+              <Route path="/activities/:id" element={<ActivityDetail />} />
               <Route path="/player-management" element={<PlayerManagementPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </PasswordProtection>
-        </BrowserRouter>
+        </Router>
       </TooltipProvider>
     </QueryClientProvider>
   );

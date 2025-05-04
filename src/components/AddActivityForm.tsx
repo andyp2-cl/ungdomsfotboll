@@ -1,8 +1,7 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Activity } from "@/types/player";
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useAddActivityForm } from "./activity-form/useAddActivityForm";
+import { useAddActivityForm } from "./activity-form/hooks/useAddActivityForm";
 import { BasicFormFields } from "./activity-form/BasicFormFields";
 import { CupSelector } from "./activity-form/CupSelector";
 import { LeagueSelector } from "./activity-form/LeagueSelector";

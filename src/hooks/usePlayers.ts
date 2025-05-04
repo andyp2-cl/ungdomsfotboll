@@ -1,91 +1,29 @@
 
-import { Player } from "@/types/player";
-import { usePlayerState } from '@/hooks/players/usePlayerState';
-import { usePlayerFilters } from '@/hooks/players/usePlayerFilters';
-import { usePlayerActions } from '@/hooks/players/usePlayerActions';
+import { useMemo } from "react";
+import { usePlayerState } from "@/hooks/players/usePlayerState";
+import { usePlayerFilters } from "@/hooks/players/usePlayerFilters";
+import { usePlayerActions } from "@/hooks/players/usePlayerActions";
+import { Player, PlayerFilter } from "@/types/player";
 
-export function usePlayers(initialPlayers: Player[] = []) {
-  // Get basic player state
-  const { 
-    players, 
-    setPlayers,
-    isLoading,
-    loadError,
-    selectedPlayer,
-    setSelectedPlayer,
-    editingPlayer,
-    setEditingPlayer,
-    isAddPlayerOpen,
-    setIsAddPlayerOpen,
-    toast,
-    retryLoading
-  } = usePlayerState(initialPlayers);
+/**
+ * Combines player state, filtering, and actions into one hook
+ */
+export function usePlayers() {
+  // Get player state
+  const playerState = usePlayerState();
+  const { players, isLoading } = playerState;
   
-  // Get filtering functionality
-  const {
-    searchTerm,
-    setSearchTerm,
-    selectedPositions,
-    setSelectedPositions, 
-    selectedGrades,
-    setSelectedGrades,
-    sortBy,
-    setSortBy,
-    sortDirection,
-    setSortDirection,
-    filteredPlayers,
-    filterActiveStatus,
-    setFilterActiveStatus
-  } = usePlayerFilters(players);
+  // Get player filters with current player data
+  const playerFilters = usePlayerFilters(players);
+  const { filteredPlayers } = playerFilters;
   
-  // Get player actions
-  const {
-    handlePlayerUpdate,
-    handlePlayerDelete,
-    handleAddPlayer,
-    handleImageUpdate,
-    handleImportedPlayers,
-    handleClearHistoricalPlayers
-  } = usePlayerActions(players, setPlayers, toast);
-
+  // Get player actions with updated player state
+  const playerActions = usePlayerActions(playerState);
+  
   return {
-    // State
-    players,
-    isLoading,
-    loadError,
-    selectedPlayer,
-    setSelectedPlayer,
-    editingPlayer,
-    setEditingPlayer,
-    isAddPlayerOpen,
-    setIsAddPlayerOpen,
-    
-    // Filters
-    searchTerm,
-    setSearchTerm,
-    selectedPositions,
-    setSelectedPositions,
-    selectedGrades,
-    setSelectedGrades,
-    sortBy,
-    setSortBy,
-    sortDirection,
-    setSortDirection,
-    filterActiveStatus,
-    setFilterActiveStatus,
-    
-    // Computed
-    filteredPlayers,
-    
-    // Actions
-    handlePlayerUpdate,
-    handlePlayerDelete,
-    handleAddPlayer,
-    handleImageUpdate,
-    handleImportedPlayers,
-    handleClearHistoricalPlayers,
-    
-    // Loading and error handling
-    retryLoading
+    ...playerState,
+    ...playerFilters,
+    ...playerActions,
+    filteredPlayers
   };
 }
