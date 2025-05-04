@@ -58,38 +58,46 @@ export function ActivityParticipants({
         if (playersInGrade.length === 0) return null;
         
         return (
-          <div key={gradeKey} className="flex flex-wrap gap-1 items-center">
+          <div key={gradeKey} className="flex flex-col gap-1">
             {gradeKey !== 'undefined' && (
-              <Badge variant="outline" className="mr-1">
+              <Badge variant="outline" className="self-start mr-1 mb-1">
                 {gradeKey}
               </Badge>
             )}
             
-            <TooltipProvider>
+            <div className="flex flex-wrap gap-2">
               {playersInGrade.map((player) => (
-                <Tooltip key={player.id}>
-                  <TooltipTrigger asChild>
-                    <Avatar
-                      className={`border-2 border-background cursor-pointer ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
-                      onClick={() => onPlayerSelect?.(player.id)}
-                    >
-                      <AvatarImage src={player.image} alt={player.name} />
-                      <AvatarFallback className="text-xs bg-muted">
-                        <UserRound className="h-3 w-3" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div>
-                      <p>{player.name}</p>
-                      {player.grade && (
-                        <Badge variant="outline" className="mt-1">{player.grade}</Badge>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
+                <div 
+                  key={player.id}
+                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent"
+                  onClick={() => onPlayerSelect?.(player.id)}
+                >
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar
+                          className={`border-2 border-background ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
+                        >
+                          <AvatarImage src={player.image} alt={player.name} />
+                          <AvatarFallback className="text-xs bg-muted">
+                            <UserRound className="h-3 w-3" />
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div>
+                          <p>{player.name}</p>
+                          {player.grade && (
+                            <Badge variant="outline" className="mt-1">{player.grade}</Badge>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>{player.name}</span>
+                </div>
               ))}
-            </TooltipProvider>
+            </div>
           </div>
         );
       })}
