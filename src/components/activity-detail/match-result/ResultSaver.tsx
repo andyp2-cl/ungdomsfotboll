@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { determineMatchOutcome } from "@/hooks/activities/actions/match-result";
-import { extractTeamNames, isHomeMatch, isHassleholm } from "./utils";
+import { determineMatchOutcome } from "@/hooks/activities/actions/match-result/determineOutcome";
+import { extractTeamNames, isHomeMatch, isHassleholm } from "./utils/team-detection";
+import { updateMatchResultInDatabase } from "@/hooks/activities/actions/match-result/updateDatabase";
 
 interface ResultSaverProps {
   activity: Activity;
@@ -77,7 +78,17 @@ export function useResultSaver({
         player_stats: updatedActivity.player_stats
       });
       
-      // Call the activity update function
+      // First try to update in the database for permanent storage
+      let databaseSuccess = false;
+      
+      try {
+        databaseSuccess = await updateMatchResultInDatabase(activity, homeScore, awayScore, isWin);
+        console.log(`Database update ${databaseSuccess ? 'successful' : 'failed'}`);
+      } catch (dbError) {
+        console.error("Error updating match result in database:", dbError);
+      }
+      
+      // Call the activity update function - this works locally regardless of database success
       await updateActivity(updatedActivity);
       
       // Force clear cache to ensure data is reloaded fresh next time
@@ -86,12 +97,16 @@ export function useResultSaver({
       
       // Also call the match result update function if provided
       if (onMatchResultUpdate) {
-        await onMatchResultUpdate(activity.id, homeScore, awayScore);
+        try {
+          await onMatchResultUpdate(activity.id, homeScore, awayScore);
+        } catch (updateError) {
+          console.error("Error in onMatchResultUpdate:", updateError);
+        }
       }
       
       toast({
         title: "Matchresultat sparat",
-        description: `Resultatet ${homeScore}-${awayScore} har sparats.`
+        description: `Resultatet ${homeScore}-${awayScore} har sparats${!databaseSuccess ? ' lokalt' : ''}.`
       });
       
       return true;

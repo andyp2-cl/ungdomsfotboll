@@ -61,10 +61,10 @@ export const handleMatchResultUpdate = async (
     // Try to update in database
     let success = await updateMatchResultInDatabase(activity, homeScore, awayScore, isWin);
 
-    // If all database updates failed, try fallback with storage system
+    // If database update failed, try fallback with storage system
     if (!success) {
       try {
-        console.log("Attempting to save with storage system...");
+        console.log("Database update failed, attempting to save with storage system...");
         success = await saveActivities(updatedActivities);
         
         if (success) {
