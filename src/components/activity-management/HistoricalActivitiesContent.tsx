@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
-import { ActivityTabContent } from "./ActivityTabContent";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";

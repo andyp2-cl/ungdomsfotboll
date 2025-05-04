@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { DatabaseLogs } from "@/components/DatabaseLogs";
 import { TabsContent } from "@/components/ui/tabs";
-import { ActivityTabContent, ToolsTabContent } from "@/components/activity-management";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
+import { ToolsTabContent } from "@/components/activity-management/tools/ToolsTabContent";
 import { ActivityManagementTabs } from "@/components/activity-management/ActivityManagementTabs";
 import { HistoricalActivitiesContent } from "@/components/activity-management/HistoricalActivitiesContent";
 

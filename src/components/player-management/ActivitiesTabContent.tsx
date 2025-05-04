@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Player, Activity } from "@/types/player";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ActivityTabContent } from "@/components/activity-management/ActivityTabContent";
+import { ActivityTabContent } from "@/components/tabs/activity-tab";
 
 interface ActivitiesTabContentProps {
   players: Player[];
