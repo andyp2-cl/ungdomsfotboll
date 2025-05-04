@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
-import { ActivityTabContent } from "@/components/tabs/activity-tab";
+import { ActivityTabContent } from "./ActivityTabContent";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -21,7 +21,7 @@ interface HistoricalActivitiesContentProps {
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
   cupMatches: Activity[];
-  onClearHistoricalActivities?: () => Promise<boolean>;
+  onClearHistoricalActivities?: () => void;
 }
 
 export function HistoricalActivitiesContent({
@@ -78,7 +78,7 @@ export function HistoricalActivitiesContent({
                   <Button 
                     variant="destructive" 
                     onClick={() => {
-                      onClearHistoricalActivities && onClearHistoricalActivities();
+                      onClearHistoricalActivities();
                       setIsConfirmDialogOpen(false);
                     }}
                   >
@@ -98,18 +98,18 @@ export function HistoricalActivitiesContent({
       </div>
       
       <ActivityTabContent
+        title="Tidigare aktiviteter"
         activities={activities}
         players={players}
         selectedActivity={selectedActivity}
         selectedActivityTypes={selectedActivityTypes}
         filteredActivities={filteredHistoricalActivities}
-        handleActivityTypeChange={onActivityTypeChange}
-        setSelectedActivity={onActivitySelect}
-        handleActivityUpdate={handleActivityUpdate}
+        onActivityTypeChange={onActivityTypeChange}
+        onActivitySelect={onActivitySelect}
+        onActivityUpdate={handleActivityUpdate}
         onAddActivityClick={onAddActivityClick}
         onEditActivityClick={onEditActivityClick}
-        setEditingActivity={onEditActivityClick}
-        handleKioskAssignmentUpdate={handleKioskUpdate}
+        handleKioskUpdate={handleKioskUpdate}
         handleDeleteActivity={handleDeleteActivity}
         cupMatches={cupMatches}
       />

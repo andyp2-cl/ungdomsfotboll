@@ -4,7 +4,9 @@ import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { ActivityActions } from "./ActivityActions";
 import { ActivityHeader } from "./ActivityHeader";
+import { KioskAssignment } from "./KioskAssignment";
 import { MatchResultSection } from "./match-result/MatchResultSection";
 
 interface ActivityDetailProps {
@@ -13,25 +15,26 @@ interface ActivityDetailProps {
   onClose: () => void;
   onEdit: (activity: Activity) => void;
   onActivityUpdate: (activity: Activity) => Promise<void>;
-  onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
+  onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onDeleteActivity: (activityId: string) => Promise<boolean>;
   allActivities: Activity[];
-  relatedActivities?: Activity[];
-  cupMatches?: Activity[];
-  onActivitySelect?: (activity: Activity) => void;
+  relatedActivities: Activity[];
+  cupMatches: Activity[];
+  onActivitySelect: (activity: Activity) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<boolean>;
 }
 
-export function ActivityDetail({
+export function ActivityDetail({ 
   activity,
   players,
   onClose,
   onEdit,
   onActivityUpdate,
+  onKioskAssignmentUpdate,
   onDeleteActivity,
   allActivities,
-  relatedActivities = [],
-  cupMatches = [],
+  relatedActivities,
+  cupMatches,
   onActivitySelect,
   onMatchResultUpdate
 }: ActivityDetailProps) {
@@ -48,30 +51,26 @@ export function ActivityDetail({
       <CardContent className="space-y-4">
         <ActivityHeader activity={activity} />
         
-        {/* Create an ActivityActions component */}
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => onEdit(activity)}
-            size="sm"
-          >
-            Redigera
-          </Button>
-          <Button 
-            variant="destructive" 
-            onClick={() => onDeleteActivity(activity.id)}
-            size="sm"
-          >
-            Ta bort
-          </Button>
-        </div>
+        <ActivityActions 
+          activity={activity}
+          onEdit={() => onEdit(activity)}
+          onDelete={() => onDeleteActivity(activity.id)}
+        />
         
-        {activity.type === "match" && onMatchResultUpdate && (
+        {activity.type === 'match' && onMatchResultUpdate && (
           <MatchResultSection 
-            activity={activity}
-            onMatchResultUpdate={onMatchResultUpdate}
+            activity={activity} 
+            onMatchResultUpdate={onMatchResultUpdate} 
           />
         )}
+        
+        <KioskAssignment
+          activity={activity}
+          players={players}
+          onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+        />
+        
+        {/* Additional sections like participants, related activities, etc. can go here */}
       </CardContent>
     </Card>
   );

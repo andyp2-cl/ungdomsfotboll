@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { LoadingState } from "@/components/LoadingState";
@@ -6,6 +5,7 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetailWrapper } from "@/components/activity-management/ActivityDetailWrapper";
 import { TeamStatistics } from "@/components/TeamStatistics";
 import { PlayerDetail } from "@/components/PlayerDetail";
+import { ImportFromLiveForm } from "@/components/activity-management/tools/ImportFromLiveForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -40,11 +40,11 @@ export function ActivityTabViewContent({
   onActivityUpdate,
   onDeleteActivity,
   onKioskAssignmentUpdate,
-  onMatchResultUpdate
+  onMatchResultUpdate,
+  onImportActivities
 }: ActivityTabViewContentProps) {
   const content = renderContent();
-  const selectedPlayerId = content.selectedPlayerId;
-  const selectedPlayer = selectedPlayerId ? players.find(player => player.id === selectedPlayerId) : null;
+  const selectedPlayer = players.find(player => player.id === content.selectedPlayerId);
   
   if (isLoading) {
     return (
@@ -70,7 +70,7 @@ export function ActivityTabViewContent({
             </TabsList>
             
             <TabsContent value="live" className="pt-4">
-              <p>Import-funktion kommer snart</p>
+              <ImportFromLiveForm onImportedActivities={onImportActivities} />
             </TabsContent>
             
             <TabsContent value="file">

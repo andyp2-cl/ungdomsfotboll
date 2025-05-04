@@ -1,33 +1,101 @@
-import React from 'react';
-import { Player, Activity } from '@/types/player';
+
+import { useState } from "react";
+import { Activity, Player, PlayerGrade } from "@/types/player";
+import { SearchInput } from "@/components/SearchInput";
+import { PlayerFilter } from "@/components/PlayerFilter";
+import { Plus } from "lucide-react";
+import { PlayerList } from "@/components/player-list/PlayerList";
+import { PlayerDetail } from "@/components/PlayerDetail";
+import { Button } from "@/components/ui/button";
+import { TeamStatistics } from "@/components/TeamStatistics";
 
 interface PlayerTabContentProps {
   players: Player[];
   activities: Activity[];
   searchQuery: string;
-  selectedGrades: any[];
+  selectedGrades: PlayerGrade[];
   selectedPlayer: Player | null;
-  viewMode: string;
+  viewMode: "list" | "grid" | "stats";
   filteredPlayers: Player[];
   isAddPlayerOpen: boolean;
   setSearchQuery: (query: string) => void;
-  handleGradeChange: (grade: string) => void;
+  handleGradeChange: (grade: PlayerGrade) => void;
   setSelectedPlayer: (player: Player | null) => void;
-  setViewMode: (mode: string) => void;
-  handlePlayerUpdate: (player: Player) => Promise<any>;
-  handleBulkPlayerUpdate: (players: Player[]) => Promise<any>;
+  setViewMode: (mode: "list" | "grid" | "stats") => void;
+  handlePlayerUpdate: (player: Player) => void;
+  handleBulkPlayerUpdate: (players: Player[]) => void;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   setEditingPlayer: (player: Player | null) => void;
-  onActivitySelect: (activity: Activity) => void;
+  onActivitySelect?: (activity: Activity) => void;
 }
 
-export function PlayerTabContent(props: PlayerTabContentProps) {
+export function PlayerTabContent({
+  players,
+  activities,
+  searchQuery,
+  selectedGrades,
+  selectedPlayer,
+  viewMode,
+  filteredPlayers,
+  isAddPlayerOpen,
+  setSearchQuery,
+  handleGradeChange,
+  setSelectedPlayer,
+  setViewMode,
+  handlePlayerUpdate,
+  handleBulkPlayerUpdate,
+  setIsAddPlayerOpen,
+  setEditingPlayer,
+  onActivitySelect
+}: PlayerTabContentProps) {
   return (
-    <div>
-      <h2>Player Management</h2>
-      {/* This is a placeholder implementation. The actual implementation will be provided by the user */}
-      <p>Total players: {props.players.length}</p>
-      <p>Filter by name: <input type="text" value={props.searchQuery} onChange={(e) => props.setSearchQuery(e.target.value)} /></p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="w-full sm:w-auto flex-grow space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
+          <SearchInput 
+            placeholder="Sök spelare..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+          
+          <PlayerFilter 
+            selectedGrades={selectedGrades} 
+            onGradeChange={handleGradeChange}
+          />
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => setIsAddPlayerOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Lägg till
+          </Button>
+        </div>
+      </div>
+      
+      {selectedPlayer ? (
+        <PlayerDetail 
+          player={selectedPlayer}
+          activities={activities}
+          onClose={() => setSelectedPlayer(null)}
+          onEdit={setEditingPlayer}
+          onPlayerUpdate={handlePlayerUpdate}
+          onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
+          allPlayers={players}
+          onActivitySelect={onActivitySelect}
+        />
+      ) : viewMode === "stats" ? (
+        <TeamStatistics 
+          players={players} 
+          activities={activities}
+          onPlayerSelect={setSelectedPlayer}
+        />
+      ) : (
+        <PlayerList 
+          players={filteredPlayers}
+          onPlayerSelect={setSelectedPlayer}
+          onPlayerEdit={setEditingPlayer}
+        />
+      )}
     </div>
   );
 }

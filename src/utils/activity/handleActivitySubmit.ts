@@ -1,65 +1,138 @@
 
-import { Activity, Player } from "@/types/player";
-import { v4 as uuidv4 } from "uuid";
-import { saveActivities } from "@/utils/storage";
-import { supabase } from "@/lib/supabase/client";
-import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
-import { determineOutcome } from "@/components/activity-detail/match-result/utils";
+import { Activity, Location } from "@/types/player";
+import { ActivityFormValues } from "@/components/activity-form/formSchema";
+import { format } from "date-fns";
+import { normalizePlayerStats } from "@/utils/player-stats";
+import { preserveMatchData } from "@/hooks/activities/utils/arrayUtils";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
-/**
- * Handles the submission of a new or edited activity.
- * @param activity The activity to be submitted.
- * @param players The list of players to be associated with the activity.
- * @param setActivities A function to update the list of activities.
- * @param setIsOpen A function to close the activity submission form.
- */
-export const handleActivitySubmit = async (
-  activity: Activity,
-  players: Player[],
-  setActivities: (activities: Activity) => void,
-  setIsOpen: (isOpen: boolean) => void
-): Promise<void> => {
+export async function handleActivitySubmit(
+  values: ActivityFormValues,
+  originalActivity: Activity,
+  onSave: (updatedActivity: Activity) => void,
+  setIsSubmitting: (isSubmitting: boolean) => void
+) {
   try {
-    // Generate a unique ID for the activity if it doesn't already have one
-    const activityId = activity.id || uuidv4();
+    // Construct location object if name is provided
+    let location: Location | undefined;
+    if (values.location?.name) {
+      location = {
+        name: values.location.name,
+        description: values.location.description || undefined,
+        gpsLink: values.location.gpsLink || undefined,
+      };
+    }
 
-    // Extract player IDs from the selected players
-    const participantIds = players.map((player) => player.id);
-
-    // Create a new activity object with the submitted data
-    const newActivity: Activity = {
-      ...activity,
-      id: activityId,
-      participants: participantIds,
-      type: activity.type,
-      name: activity.name || "Namnlös aktivitet", // Default name if no name is provided
-      date: activity.date || new Date().toISOString().split('T')[0],
+    // Format date to ISO string
+    const formattedDate = format(values.date, 'yyyy-MM-dd');
+    
+    // Make sure score values are converted to numbers or remain undefined
+    // Safely handle homeScore conversion
+    let homeScore: number | undefined = undefined;
+    if (values.homeScore !== undefined && values.homeScore !== null) {
+      if (typeof values.homeScore === 'string') {
+        // Only parse if the string is not empty
+        if (values.homeScore !== "") {
+          homeScore = parseInt(values.homeScore, 10);
+        }
+      } else {
+        homeScore = values.homeScore;
+      }
+    }
+    
+    // Safely handle awayScore conversion
+    let awayScore: number | undefined = undefined;
+    if (values.awayScore !== undefined && values.awayScore !== null) {
+      if (typeof values.awayScore === 'string') {
+        // Only parse if the string is not empty
+        if (values.awayScore !== "") {
+          awayScore = parseInt(values.awayScore, 10);
+        }
+      } else {
+        awayScore = values.awayScore;
+      }
+    }
+      
+    // Create result string ONLY if both scores exist
+    const result = (homeScore !== undefined && awayScore !== undefined)
+      ? `${homeScore}-${awayScore}`
+      : undefined;
+    
+    // Get the win status from the form
+    let isWin = values.isWin;
+    
+    // Auto-calculate isWin if we have scores and it's not explicitly set
+    if (homeScore !== undefined && awayScore !== undefined && isWin === undefined) {
+      const isHomeTeam = isHomeMatch(originalActivity);
+      isWin = calculateWinStatus(homeScore, awayScore, isHomeTeam);
+    }
+    
+    console.log("Form submission - win status:", { 
+      explicitIsWin: values.isWin,
+      calculatedIsWin: isWin,
+      homeScore,
+      awayScore
+    });
+    
+    // Make sure originalActivity.player_stats is normalized
+    const existingPlayerStats = normalizePlayerStats(originalActivity.player_stats);
+    
+    // Create updated player_stats - ensure it's an object with all necessary fields
+    const updatedPlayerStats = {
+      ...existingPlayerStats,
+      // Make sure to preserve existing goals and assists
+      goals: existingPlayerStats.goals || {},
+      assists: existingPlayerStats.assists || {},
+    };
+    
+    // Only add scores information if scores are provided
+    if (homeScore !== undefined || awayScore !== undefined) {
+      updatedPlayerStats.scores = {
+        home: homeScore,
+        away: awayScore
+      };
+      updatedPlayerStats.isWin = isWin;
+    }
+    
+    // Handle leagueId (convert "none" to undefined)
+    const leagueId = values.leagueId && values.leagueId !== "none" ? values.leagueId : undefined;
+    
+    console.log("Form submission - leagueId:", {
+      formLeagueId: values.leagueId,
+      finalLeagueId: leagueId
+    });
+    
+    // Create updated activity with form values
+    const formUpdatedActivity: Activity = {
+      ...originalActivity,
+      name: values.name,
+      date: formattedDate,
+      type: values.type,
+      time: values.time || undefined,
+      location,
+      result,
+      homeScore,
+      awayScore,
+      isWin,
+      leagueId,
+      cupName: values.cupName && values.cupName !== "no-cup" ? values.cupName : undefined,
+      player_stats: updatedPlayerStats
     };
 
-    // If it's a match, determine the outcome
-    if (newActivity.type === "match") {
-      newActivity.isWin = determineOutcome(newActivity);
-    }
-
-    // Format the activity for the database
-    const formattedActivity = formatActivityForDatabase(newActivity);
-
-    // Save the activity to the database
-    const { error } = await supabase.from("activities").upsert([formattedActivity]);
-
-    if (error) {
-      console.error("Error saving activity:", error);
-      throw new Error("Failed to save activity to database.");
-    }
-
-    // Update with the new activity
-    setActivities(newActivity);
-
-    // Close the activity submission form
-    setIsOpen(false);
-  } catch (error: any) {
-    console.error("Error submitting activity:", error.message);
-    // Re-throw the error to be caught by the calling function
+    // Use preserveMatchData to ensure match statistics are maintained
+    const updatedActivity = preserveMatchData(originalActivity, formUpdatedActivity);
+    
+    console.log("Saving activity with preserved match data and updated values:", {
+      isWin: updatedActivity.isWin,
+      leagueId: updatedActivity.leagueId,
+      playerStats: updatedActivity.player_stats
+    });
+    
+    await onSave(updatedActivity);
+  } catch (error) {
+    console.error("Error saving activity:", error);
     throw error;
+  } finally {
+    setIsSubmitting(false);
   }
-};
+}

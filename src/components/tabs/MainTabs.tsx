@@ -6,22 +6,16 @@ import { saveActiveTab } from "@/utils/storage";
 
 interface MainTabsProps {
   activeTab: string;
-  onTabChange: (tab: string) => void;
-  playerCount?: number;
-  activityCount?: number;
-  playersContent?: ReactNode;
-  activitiesContent?: ReactNode;
-  children?: ReactNode;
+  setActiveTab: (tab: string) => void;
+  playersContent: ReactNode;
+  activitiesContent: ReactNode;
 }
 
 export function MainTabs({ 
   activeTab, 
-  onTabChange, 
-  playerCount,
-  activityCount,
-  playersContent,
-  activitiesContent,
-  children 
+  setActiveTab, 
+  playersContent, 
+  activitiesContent 
 }: MainTabsProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,20 +31,19 @@ export function MainTabs({
   }, [activeTab, navigate, location.pathname]);
 
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange}>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-        <TabsTrigger value="players">
-          Spelare {playerCount !== undefined ? `(${playerCount})` : ''}
-        </TabsTrigger>
-        <TabsTrigger value="activities">
-          Matcher {activityCount !== undefined ? `(${activityCount})` : ''}
-        </TabsTrigger>
+        <TabsTrigger value="players">Spelare</TabsTrigger>
+        <TabsTrigger value="activities">Matcher</TabsTrigger>
       </TabsList>
       
-      {playersContent && <TabsContent value="players">{playersContent}</TabsContent>}
-      {activitiesContent && <TabsContent value="activities">{activitiesContent}</TabsContent>}
+      <TabsContent value="players" className="space-y-6">
+        {playersContent}
+      </TabsContent>
       
-      {children}
+      <TabsContent value="activities" className="space-y-6">
+        {activitiesContent}
+      </TabsContent>
     </Tabs>
   );
 }

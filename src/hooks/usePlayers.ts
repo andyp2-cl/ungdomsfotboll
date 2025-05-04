@@ -1,76 +1,188 @@
 
-import { useMemo } from "react";
-import { usePlayerState } from "@/hooks/players/usePlayerState";
-import { usePlayerFilters } from "@/hooks/players/usePlayerFilters";
-import { usePlayerActions } from "@/hooks/players/usePlayerActions";
-import { Player } from "@/types/player";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { Player, Activity, PlayerGrade } from "@/types/player";
+import { getActiveTab } from "@/utils/storage";
+import { usePlayers as usePlayersData } from "@/hooks/players";
+import { useActivities } from "@/hooks/activities";
 
-/**
- * Combines player state, filtering, and actions into one hook
- */
 export function usePlayers(initialTab?: string) {
-  // Get player state
-  const playerState = usePlayerState();
-  const { players, isLoading } = playerState;
+  // Get tab from location or storage
+  const location = useLocation();
+  const pathTab = location.pathname === "/activities" ? "activities" : "players";
+  const storedTab = getActiveTab();
+  const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
   
-  // Get player filters
-  const playerFilters = usePlayerFilters({
+  // Get player state and actions
+  const {
     players,
-    searchQuery: "",
-    selectedPositions: [],
-    selectedGrades: []
-  });
-  
-  // Get player actions with updated player state
-  const playerActions = usePlayerActions(
-    players, 
-    playerState.setPlayers, 
-    playerState.setIsLoading, 
-    playerState.setSelectedPlayer, 
-    playerState.setIsAddPlayerOpen
-  );
-  
-  // Return mock data for properties expected by PlayersPage
-  const mockProperties = useMemo(() => ({
-    searchTerm: "",
-    setSearchTerm: (term: string) => console.log("Search term set to", term),
-    sortBy: "name",
-    setSortBy: (sort: string) => console.log("Sort by set to", sort),
-    sortDirection: "asc",
-    setSortDirection: (dir: string) => console.log("Sort direction set to", dir),
-    filterActiveStatus: "all",
-    setFilterActiveStatus: (status: string) => console.log("Active status set to", status),
-    handlePlayerDelete: async (id: string) => {
-      console.log("Delete player", id);
-      return true;
-    },
-    handleImageUpdate: async (playerId: string, imageData: string) => {
-      console.log("Update image for player", playerId);
-      return true;
-    },
-    handleImportedPlayers: async (players: Player[]) => {
-      console.log("Import players", players);
-      return true;
-    },
-    handleClearHistoricalPlayers: async () => {
-      console.log("Clear historical players");
-      return true;
-    },
-    // Add activities array for PlayerDetail
-    activities: []
-  }), []);
-  
-  // Combine all player state, filters and actions
-  return {
-    ...playerState,
-    ...playerFilters,
-    ...playerActions,
-    ...mockProperties,
-    // Add any tab management needed for PlayerManagementPage
-    activeTab: initialTab || "players",
-    setActiveTab: (tab: string) => {
-      // This is just a placeholder since we don't have actual implementation
-      console.log("Setting active tab to", tab);
+    setPlayers,
+    isLoading: isPlayersLoading,
+    searchQuery,
+    setSearchQuery,
+    selectedGrades,
+    selectedPlayer,
+    setSelectedPlayer,
+    editingPlayer,
+    setEditingPlayer,
+    isAddPlayerOpen,
+    setIsAddPlayerOpen,
+    viewMode,
+    setViewMode,
+    filteredPlayers,
+    handleGradeChange,
+    handlePlayerUpdate,
+    handleBulkPlayerUpdate,
+    handleAddPlayer,
+    isMobile
+  } = usePlayersData();
+
+  // Get activity state and actions
+  const {
+    activities,
+    setActivities,
+    isLoading: isActivitiesLoading,
+    selectedActivityTypes,
+    selectedActivity,
+    setSelectedActivity,
+    editingActivity,
+    setEditingActivity,
+    isAddActivityOpen,
+    setIsAddActivityOpen,
+    filteredActivities,
+    filteredHistoricalActivities,
+    handleActivityTypeChange,
+    handleActivityUpdate,
+    handleDeleteActivity,
+    handleKioskAssignmentUpdate,
+    handleAddActivity,
+    handleImportedActivities,
+    handleClearHistoricalActivities,
+    handleMatchResultUpdate,
+    retryLoading
+  } = useActivities(players, setPlayers);
+
+  // Wrapper for activity update
+  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
+    try {
+      await handleActivityUpdate(activity);
+    } catch (error) {
+      console.error("Error updating activity:", error);
     }
+  };
+
+  // Wrapper functions to ensure proper return types
+  const handleKioskUpdate = async (activityId: string, playerId?: string): Promise<boolean> => {
+    try {
+      await handleKioskAssignmentUpdate(activityId, playerId);
+      return true;
+    } catch (error) {
+      console.error("Error updating kiosk assignment:", error);
+      return false;
+    }
+  };
+
+  const handleDelete = async (activityId: string): Promise<boolean> => {
+    try {
+      return await handleDeleteActivity(activityId);
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      return false;
+    }
+  };
+
+  // Wrapper for match result update - changed to return boolean to match expected type
+  const handleMatchResult = async (
+    activityId: string, 
+    homeScore?: number, 
+    awayScore?: number
+  ): Promise<boolean> => {
+    try {
+      return await handleMatchResultUpdate(activities, setActivities, activityId, homeScore, awayScore);
+    } catch (error) {
+      console.error("Error in handleMatchResult:", error);
+      return false;
+    }
+  };
+
+  // Handle imported activities
+  const handleImportActivities = async (activities: Activity[]): Promise<boolean> => {
+    try {
+      await handleImportedActivities(activities);
+      return true;
+    } catch (error) {
+      console.error("Error importing activities:", error);
+      return false;
+    }
+  };
+
+  const handleClearHistorical = async (): Promise<boolean> => {
+    try {
+      await handleClearHistoricalActivities();
+      return true;
+    } catch (error) {
+      console.error("Error clearing historical activities:", error);
+      return false;
+    }
+  };
+
+  const isLoading = isPlayersLoading || isActivitiesLoading;
+
+  // Handle selection of activity from player detail view
+  const handlePlayerActivitySelect = (activity: Activity) => {
+    setSelectedPlayer(null);
+    setSelectedActivity(activity);
+    setActiveTab('activities');
+  };
+
+  return {
+    // Tab state
+    activeTab,
+    setActiveTab,
+    
+    // Player data
+    players,
+    filteredPlayers,
+    selectedPlayer,
+    setSelectedPlayer,
+    editingPlayer,
+    setEditingPlayer,
+    isAddPlayerOpen,
+    setIsAddPlayerOpen,
+    searchQuery,
+    setSearchQuery,
+    selectedGrades,
+    viewMode,
+    setViewMode,
+    handleGradeChange,
+    handlePlayerUpdate,
+    handleBulkPlayerUpdate,
+    handleAddPlayer,
+    isMobile,
+    
+    // Activity data
+    activities,
+    filteredActivities,
+    filteredHistoricalActivities,
+    selectedActivity,
+    setSelectedActivity,
+    editingActivity,
+    setEditingActivity,
+    isAddActivityOpen,
+    setIsAddActivityOpen,
+    selectedActivityTypes,
+    handleActivityTypeChange,
+    handleActivityUpdate: handleActivityUpdateWrapper,
+    handleKioskUpdate,
+    handleDelete,
+    handleImportActivities,
+    handleClearHistorical,
+    handleAddActivity,
+    handlePlayerActivitySelect,
+    handleMatchResult,
+    
+    // Loading state
+    isLoading,
+    retryLoading
   };
 }

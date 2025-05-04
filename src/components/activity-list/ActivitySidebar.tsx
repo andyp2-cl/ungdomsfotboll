@@ -1,9 +1,10 @@
+
 import React from "react";
 import { Users } from "lucide-react";
 import { Activity, Player } from "@/types/player";
 import { MatchResultDisplay } from "./MatchResultDisplay";
 import { GradePieChart } from "../activity-detail/match-result/GradePieChart";
-import { getResultColorClass } from "../activity-detail/match-result/utils/result-display";
+import { getResultColorClass } from "../activity-detail/match-result/utils";
 
 interface ActivitySidebarProps {
   activity: Activity;

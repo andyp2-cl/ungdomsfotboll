@@ -1,22 +1,24 @@
 
-import { ReactNode } from "react";
-import { Layout } from "@/components/Layout";
+import React from "react";
+import Header from "./Header";
+import { PerformanceMonitor } from "./loading/PerformanceMonitor";
 
-interface LayoutMainProps {
-  children: ReactNode;
-  title?: string;
-  isLoading?: boolean;
-}
-
-export function LayoutMain({ children, title, isLoading = false }: LayoutMainProps) {
+export default function LayoutMain({ children }: { children: React.ReactNode }) {
   return (
-    <Layout>
-      {title && <h1 className="text-2xl font-bold mb-4">{title}</h1>}
-      {isLoading ? (
-        <div className="flex justify-center items-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <div className="flex-1">
+        <main className="container mx-auto p-4">
+          {children}
+        </main>
+      </div>
+      <footer className="bg-gray-100 py-4 mt-8">
+        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+          &copy; {new Date().getFullYear()} Hässleholm IF
         </div>
-      ) : children}
-    </Layout>
+      </footer>
+      
+      <PerformanceMonitor />
+    </div>
   );
 }

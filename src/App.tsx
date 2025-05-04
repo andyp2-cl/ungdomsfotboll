@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PasswordProtection from "./components/PasswordProtection";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -11,7 +11,6 @@ import PlayersPage from "./pages/PlayersPage";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ActivitiesPage } from "./pages/Activities/ActivitiesPage";
 
 // Create a QueryClient with basic configuration
 const queryClient = new QueryClient({
@@ -53,19 +52,18 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Router>
+        <BrowserRouter>
           <PasswordProtection>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/players" element={<PlayersPage />} />
-              <Route path="/activities" element={<ActivitiesPage />} />
-              <Route path="/players/:id" element={<PlayersPage />} />
-              <Route path="/activities/:id" element={<ActivitiesPage />} />
+              <Route path="/players" element={<PlayersPage initialTab="players" />} />
+              <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+              <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
               <Route path="/player-management" element={<PlayerManagementPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </PasswordProtection>
-        </Router>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );

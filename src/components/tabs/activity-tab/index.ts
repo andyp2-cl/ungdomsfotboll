@@ -1,2 +1,2 @@
 
-export { ActivityTabContent } from './ActivityTabContent';
+export * from './ActivityTabContent';

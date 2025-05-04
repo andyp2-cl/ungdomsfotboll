@@ -1,36 +1,92 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
-import { getOutcomeText, getOutcomeColorClass } from "./utils/result-display"; 
+import { Badge } from "@/components/ui/badge";
+import { isHomeMatch, getOutcomeText, getOutcomeColorClass } from "./utils";
 
 interface ResultDisplayProps {
   activity: Activity;
 }
 
 export function ResultDisplay({ activity }: ResultDisplayProps) {
-  // Ensure we have valid scores
-  if (activity.homeScore === undefined || activity.awayScore === undefined) {
-    return <p>Matchresultat saknas</p>;
+  const homeScore = activity.homeScore;
+  const awayScore = activity.awayScore;
+  const hasResult = homeScore !== undefined && awayScore !== undefined;
+  
+  if (!hasResult) {
+    return (
+      <div className="text-center py-4">
+        <span className="text-muted-foreground">Inget resultat registrerat</span>
+      </div>
+    );
+  }
+
+  const isHome = isHomeMatch(activity);
+  
+  // Debug the stored win status
+  console.log("Displaying result with stored win status:", {
+    activityId: activity.id,
+    isWin: activity.isWin,
+    homeScore,
+    awayScore,
+    isHome,
+    isDraw: homeScore === awayScore
+  });
+  
+  // Determine outcome text and badge color
+  let outcomeText: string;
+  let outcomeColorClass: string;
+  
+  // Check for draw first - important to check this before checking isWin
+  if (homeScore === awayScore) {
+    outcomeText = "Oavgjort";
+    outcomeColorClass = "bg-gray-100 text-gray-800";
+  }
+  // Check explicit isWin value
+  else if (activity.isWin === true) {
+    outcomeText = "Vinst";
+    outcomeColorClass = "bg-green-100 text-green-800";
+  } 
+  else if (activity.isWin === false) {
+    outcomeText = "Förlust";
+    outcomeColorClass = "bg-red-100 text-red-800";
+  }
+  // Calculate based on scores as fallback
+  else {
+    outcomeText = getOutcomeText(homeScore, awayScore, isHome);
+    outcomeColorClass = getOutcomeColorClass(homeScore, awayScore, isHome);
   }
   
-  // Determine if it's a draw
-  const isDraw = activity.homeScore === activity.awayScore;
+  // Determine text color for score display
+  const scoreTextColorClass = 
+    outcomeText === "Vinst" ? "text-green-600" :
+    outcomeText === "Förlust" ? "text-red-600" :
+    "text-gray-600"; // Draw
   
-  // Determine if it's a home match
-  const isHome = activity.name?.toLowerCase().startsWith("hässleholms if") || activity.name?.toLowerCase().startsWith("hässleholms");
+  // Determine team labels
+  const ourTeamLabel = "Våra mål";
+  const theirTeamLabel = "Deras mål";
   
-  // Get the outcome text and color class
-  const outcomeText = getOutcomeText(activity.homeScore, activity.awayScore, isHome);
-  const outcomeColorClass = getOutcomeColorClass(activity.homeScore, activity.awayScore, isHome);
-
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-lg font-semibold">
-          {activity.homeScore} - {activity.awayScore}
-        </p>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="font-medium">Resultat:</span>
+          <span className={`text-lg font-bold ${scoreTextColorClass}`}>{homeScore}-{awayScore}</span>
+        </div>
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ${outcomeColorClass}`}>
+          {outcomeText}
+        </div>
       </div>
-      <div className={`rounded-full px-3 py-1 text-sm font-medium ${outcomeColorClass}`}>
-        {isDraw ? "Oavgjort" : outcomeText}
+      <div className="grid grid-cols-2 gap-4 mt-3">
+        <div className="border rounded p-3 text-center">
+          <div className="text-sm text-muted-foreground mb-1">{isHome ? ourTeamLabel : theirTeamLabel}</div>
+          <div className={`text-xl font-bold ${isHome ? scoreTextColorClass : ""}`}>{homeScore}</div>
+        </div>
+        <div className="border rounded p-3 text-center">
+          <div className="text-sm text-muted-foreground mb-1">{isHome ? theirTeamLabel : ourTeamLabel}</div>
+          <div className={`text-xl font-bold ${!isHome ? scoreTextColorClass : ""}`}>{awayScore}</div>
+        </div>
       </div>
     </div>
   );

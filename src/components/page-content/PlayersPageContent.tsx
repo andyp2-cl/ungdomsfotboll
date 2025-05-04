@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/activity-tab";
+import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { MobileNavBar } from "@/components/mobile-nav/MobileNavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -70,9 +69,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
       <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
         <MainTabs 
           activeTab={props.activeTab}
-          onTabChange={props.setActiveTab}
-          playerCount={props.filteredPlayers.length}
-          activityCount={props.filteredActivities.length}
+          setActiveTab={props.setActiveTab}
           playersContent={
             <PlayerTabContent 
               players={props.players}
@@ -102,16 +99,19 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               selectedActivityTypes={props.selectedActivityTypes}
               filteredActivities={props.filteredActivities}
               filteredHistoricalActivities={props.filteredHistoricalActivities}
+              isAddActivityOpen={props.isAddActivityOpen}
+              isLoading={props.isLoading}
+              retryLoading={props.retryLoading}
               handleActivityTypeChange={props.handleActivityTypeChange}
               setSelectedActivity={props.setSelectedActivity}
               handleActivityUpdate={handleActivityUpdateWrapper}
-              onAddActivityClick={() => props.setIsAddActivityOpen(true)}
-              onEditActivityClick={props.setEditingActivity}
+              setIsAddActivityOpen={props.setIsAddActivityOpen}
               setEditingActivity={props.setEditingActivity}
               handleKioskAssignmentUpdate={props.handleKioskUpdate}
               handleDeleteActivity={props.handleDelete}
+              handleImportedActivities={props.handleImportActivities}
+              handleClearHistoricalActivities={props.handleClearHistorical}
               handleMatchResultUpdate={props.handleMatchResultUpdate}
-              cupMatches={props.activities.filter(a => a.type === 'cup')}
             />
           }
         />

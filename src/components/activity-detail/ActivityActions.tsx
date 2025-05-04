@@ -7,28 +7,19 @@ import { Edit, Trash2 } from "lucide-react";
 interface ActivityActionsProps {
   activity: Activity;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<boolean>;
 }
 
 export function ActivityActions({ activity, onEdit, onDelete }: ActivityActionsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button 
-        variant="outline" 
-        onClick={onEdit}
-        size="sm"
-        className="flex items-center gap-1"
-      >
-        <Edit className="h-4 w-4" />
+    <div className="flex flex-wrap gap-2 justify-end">
+      <Button variant="outline" size="sm" onClick={onEdit}>
+        <Edit className="h-4 w-4 mr-2" />
         Redigera
       </Button>
-      <Button 
-        variant="destructive" 
-        onClick={onDelete}
-        size="sm"
-        className="flex items-center gap-1"
-      >
-        <Trash2 className="h-4 w-4" />
+      
+      <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50" onClick={onDelete}>
+        <Trash2 className="h-4 w-4 mr-2" />
         Ta bort
       </Button>
     </div>

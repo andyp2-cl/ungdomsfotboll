@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { LoadingState } from "@/components/LoadingState";
@@ -84,20 +85,11 @@ export function ActivityTabViewContent({
   }
   
   if (activeView === "statistics") {
-    console.log("Rendering statistics view with:", {
-      playerCount: players.length,
-      activityCount: activities.length
-    });
-    
-    // Add debug logging for the TeamStatistics component
     return (
       <TeamStatistics 
         players={players}
         activities={activities}
-        onPlayerSelect={player => {
-          console.log("Player selected in statistics:", player.id, player.name);
-          onPlayerSelect(player);
-        }}
+        onPlayerSelect={player => onPlayerSelect(player)}
       />
     );
   }

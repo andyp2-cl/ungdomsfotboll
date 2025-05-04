@@ -21,14 +21,10 @@ export const calculateMatchStats = (matches: Activity[]): MatchStats => {
   let goalsConceded = 0;
   let cleanSheets = 0;
   
-  console.log(`calculateMatchStats: Processing ${matches.length} matches`);
-  
   // Matches with actual results (that have scores)
   const matchesWithResults = matches.filter(match => 
     match.homeScore !== undefined && match.awayScore !== undefined
   );
-  
-  console.log(`calculateMatchStats: Found ${matchesWithResults.length} matches with results`);
   
   // Process each match with results
   matchesWithResults.forEach(match => {
@@ -36,10 +32,8 @@ export const calculateMatchStats = (matches: Activity[]): MatchStats => {
     const awayScore = match.awayScore ?? 0;
     const isHome = isHomeMatch(match);
     
-    console.log(`Match ${match.id}: homeScore=${homeScore}, awayScore=${awayScore}, isHome=${isHome}, isWin=${match.isWin}`);
-    
     // Check if this match has a clear win/loss/draw status set
-    if (homeScore === awayScore) {
+    if (match.homeScore === match.awayScore) {
       // It's a draw if scores are equal
       draws++;
     }
@@ -75,8 +69,8 @@ export const calculateMatchStats = (matches: Activity[]): MatchStats => {
       if (homeScore === 0) cleanSheets++;
     }
   });
-  
-  const result = {
+
+  return {
     totalMatches: matchesWithResults.length,
     wins,
     draws,
@@ -85,8 +79,4 @@ export const calculateMatchStats = (matches: Activity[]): MatchStats => {
     goalsConceded,
     cleanSheets
   };
-  
-  console.log("Match stats calculated:", result);
-
-  return result;
 };

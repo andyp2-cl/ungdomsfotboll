@@ -4,12 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Activity } from "@/types/player";
 import { activityFormSchema, ActivityFormValues } from "./formSchema";
-import { submitActivityForm } from "./utils/activitySubmission";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export function useActivityForm(initialActivity: Activity | null) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  console.log("useActivityForm initializing with:", initialActivity?.id, "leagueId:", initialActivity?.leagueId);
+  console.log("useActivityForm initializing with leagueId:", initialActivity?.leagueId);
 
   // Create form with default values
   const form = useForm<ActivityFormValues>({
@@ -32,24 +34,5 @@ export function useActivityForm(initialActivity: Activity | null) {
     },
   });
 
-  /**
-   * Submit handler for the form
-   * @param values Form values
-   * @param onSave Function to call with the updated activity
-   */
-  const handleSubmit = async (
-    values: ActivityFormValues, 
-    onSave: (activity: Activity) => void
-  ): Promise<boolean> => {
-    if (isSubmitting) return false;
-    
-    setIsSubmitting(true);
-    const emptyPlayers: never[] = [];
-    
-    return submitActivityForm(values, emptyPlayers, onSave, {
-      onComplete: () => setIsSubmitting(false)
-    });
-  };
-
-  return { form, isSubmitting, setIsSubmitting, handleSubmit };
+  return { form, isSubmitting, setIsSubmitting };
 }

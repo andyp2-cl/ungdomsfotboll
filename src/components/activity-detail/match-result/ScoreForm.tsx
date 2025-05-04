@@ -1,10 +1,11 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
-import { isHomeMatch, extractTeamNames } from "./utils/team-detection";
+import { isHomeMatch, extractTeamNames } from "./utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ScoreFormProps {

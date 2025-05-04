@@ -35,13 +35,25 @@ export function ActivityDetailWrapper({
   
   console.log("ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
   
+  // Make sure onActivityUpdate function returns Promise<void>
+  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
+    await onActivityUpdate(activity);
+  };
+
+  // Create a wrapper for handleMatchResultUpdate that ensures proper return type
+  const onMatchResultUpdate = handleMatchResultUpdate 
+    ? async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
+        return await handleMatchResultUpdate(activityId, homeScore, awayScore);
+      }
+    : undefined;
+  
   return (
     <ActivityDetail
       activity={selectedActivity}
       players={players}
       onClose={() => onActivitySelect(null)}
       onEdit={onEditActivityClick}
-      onActivityUpdate={onActivityUpdate}
+      onActivityUpdate={handleActivityUpdate}
       onKioskAssignmentUpdate={handleKioskUpdate}
       onDeleteActivity={async (id) => {
         const success = await handleDeleteActivity(id);
@@ -54,7 +66,7 @@ export function ActivityDetailWrapper({
       relatedActivities={relatedActivities}
       cupMatches={cupMatches}
       onActivitySelect={onActivitySelect}
-      onMatchResultUpdate={handleMatchResultUpdate}
+      onMatchResultUpdate={onMatchResultUpdate}
     />
   );
 }

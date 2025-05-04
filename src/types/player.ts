@@ -1,8 +1,9 @@
+
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
 export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 
-export type ActivityType = 'match' | 'cup' | 'training';
+export type ActivityType = 'match' | 'cup';
 
 export interface PlayerStats {
   goals?: Record<string, number>; // Record of player ID to number of goals

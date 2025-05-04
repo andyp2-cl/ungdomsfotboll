@@ -1,191 +1,155 @@
 
-import React, { useState } from "react";
-import { usePlayers } from "../hooks/usePlayers";
-import { useActivities } from "../hooks/activities";
-import { Activity } from "@/types/player";
-import { DialogModals } from "@/components/DialogModals";
-import { LayoutMain } from "@/components/LayoutMain";
-import { MainTabs } from "@/components/tabs/MainTabs";
-import { PlayerTabContent } from "@/components/tabs/player-tab/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/activity-tab";
+import { RefreshablePageContainer } from "@/components/page-containers/RefreshablePageContainer";
+import { usePlayers } from "@/hooks/usePlayers";
+import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { usePlayerPageWrappers } from "@/hooks/players/usePlayerPageWrappers";
 
-/**
- * Main players page component with filtering, sorting, and activity management
- */
-export default function PlayersPage() {
-  const [activeTab, setActiveTab] = useState<string>("players");
+interface PlayersPageProps {
+  initialTab?: string;
+}
 
-  // Use players hook to get player data and actions
+export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  const location = useLocation();
   const {
+    // Tab state
+    activeTab,
+    setActiveTab,
+    
+    // Player data
     players,
-    isLoading: playersLoading,
+    filteredPlayers,
     selectedPlayer,
     setSelectedPlayer,
     editingPlayer,
     setEditingPlayer,
     isAddPlayerOpen,
     setIsAddPlayerOpen,
-    // Filters
-    searchQuery: searchTerm, // Use searchQuery as searchTerm
-    setSearchQuery: setSearchTerm, // Map function names
-    selectedPositions,
-    setSelectedPositions,
+    searchQuery,
+    setSearchQuery,
     selectedGrades,
-    setSelectedGrades,
-    // Missing properties from PlayersPage - these will come from the mockProperties in usePlayers
-    sortBy,
-    setSortBy,
-    sortDirection,
-    setSortDirection,
-    filterActiveStatus,
-    setFilterActiveStatus,
-    // Computed
-    filteredPlayers,
-    // Actions
+    viewMode,
+    setViewMode,
+    handleGradeChange,
     handlePlayerUpdate,
+    handleBulkPlayerUpdate,
     handleAddPlayer,
-    handlePlayerDelete,
-    handleImageUpdate,
-    handleImportedPlayers,
-    handleClearHistoricalPlayers
-  } = usePlayers();
-
-  // Use activities hook to get activity data and actions
-  const {
+    
+    // Activity data
     activities,
-    isLoading: activitiesLoading,
+    filteredActivities,
+    filteredHistoricalActivities,
     selectedActivity,
     setSelectedActivity,
     editingActivity,
     setEditingActivity,
     isAddActivityOpen,
     setIsAddActivityOpen,
-    // Filters
     selectedActivityTypes,
-    filteredActivities,
-    filteredHistoricalActivities,
     handleActivityTypeChange,
-    // Actions
     handleActivityUpdate,
-    handleDeleteActivity,
-    handleKioskAssignmentUpdate,
+    handleKioskUpdate,
+    handleDelete,
+    handleImportActivities,
+    handleClearHistorical,
     handleAddActivity,
-    handleImportedActivities,
-    handleScrapedMatches,
-    handleClearHistoricalActivities,
-    handleMatchResultUpdate
-  } = useActivities(players, () => {});
+    handlePlayerActivitySelect,
+    handleMatchResult,
+    
+    // Loading state
+    isLoading,
+    retryLoading
+  } = usePlayers(initialTab);
 
-  // Wrapper functions to handle promises correctly
-  const handlePlayerUpdateWrapper = async (player: any) => {
-    await handlePlayerUpdate(player);
-    return true;
-  };
+  // Get wrapper functions from our custom hook
+  const {
+    handlePlayerUpdateWrapper,
+    handleBulkPlayerUpdateWrapper,
+    handleAddPlayerWrapper,
+    setViewModeWrapper,
+    handleKioskUpdateWrapper,
+    handleImportActivitiesWrapper,
+    handleClearHistoricalWrapper,
+    handleMatchResultWrapper,
+    handleRefresh
+  } = usePlayerPageWrappers({
+    handlePlayerUpdate,
+    handleBulkPlayerUpdate,
+    handleAddPlayer,
+    handleKioskUpdate,
+    handleImportActivities,
+    handleClearHistorical,
+    handleMatchResult,
+    setViewMode
+  });
 
-  const handleClearHistoricalWrapper = async () => {
-    await handleClearHistoricalPlayers();
-    return true;
-  };
-
-  // Wrapper for match result update to return boolean as required by prop type
-  const handleMatchResultUpdateWrapper = async (
-    activityId: string,
-    homeScore?: number,
-    awayScore?: number
-  ): Promise<boolean> => {
-    await handleMatchResultUpdate(activityId, homeScore, awayScore);
-    return true;
-  };
-
-  // Handle imported players and activities
-  const handleImport = async (data: any) => {
-    if (data.players) {
-      await handleImportedPlayers(data.players);
+  // Check for selected activity in location state
+  useEffect(() => {
+    if (location.state?.selectedActivityId) {
+      console.log("Found selectedActivityId in location state:", location.state.selectedActivityId);
+      const activity = activities.find(a => a.id === location.state.selectedActivityId);
+      if (activity) {
+        console.log("Setting selected activity:", activity.name);
+        setSelectedActivity(activity);
+      }
     }
-    if (data.activities) {
-      await handleImportedActivities(data.activities);
-    }
-  };
+  }, [location.state, activities, setSelectedActivity]);
 
-  const isLoading = playersLoading || activitiesLoading;
+  // Wrapper for handleDelete to match expected handleDeleteActivity
+  const handleDeleteActivity = handleDelete;
 
   return (
-    <LayoutMain title="Spelare" isLoading={isLoading}>
-      <MainTabs
+    <RefreshablePageContainer isLoading={isLoading} onRefresh={handleRefresh} disabled={!!selectedPlayer || !!selectedActivity}>
+      <PlayersPageContent 
+        // Tab state
         activeTab={activeTab}
-        onTabChange={setActiveTab}
-        playerCount={filteredPlayers.length}
-        activityCount={filteredActivities.length}
-        playersContent={
-          <PlayerTabContent 
-            players={filteredPlayers}
-            activities={activities}
-            searchQuery={searchTerm}
-            selectedGrades={selectedGrades}
-            selectedPlayer={selectedPlayer}
-            viewMode="list"
-            filteredPlayers={filteredPlayers}
-            isAddPlayerOpen={isAddPlayerOpen}
-            setSearchQuery={setSearchTerm}
-            handleGradeChange={(grade) => setSelectedGrades(prev => 
-              prev.includes(grade) ? prev.filter(g => g !== grade) : [...prev, grade]
-            )}
-            setSelectedPlayer={setSelectedPlayer}
-            setViewMode={() => {}}
-            handlePlayerUpdate={handlePlayerUpdateWrapper}
-            handleBulkPlayerUpdate={async () => {}}
-            setIsAddPlayerOpen={setIsAddPlayerOpen}
-            setEditingPlayer={setEditingPlayer}
-            onActivitySelect={() => {}}
-          />
-        }
-        activitiesContent={
-          <ActivityTabContent 
-            activities={activities}
-            players={players}
-            selectedActivity={selectedActivity}
-            selectedActivityTypes={selectedActivityTypes}
-            filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
-            handleActivityTypeChange={handleActivityTypeChange}
-            setSelectedActivity={setSelectedActivity}
-            handleActivityUpdate={async (activity) => {
-              await handleActivityUpdate(activity);
-            }}
-            onAddActivityClick={() => setIsAddActivityOpen(true)}
-            onEditActivityClick={setEditingActivity}
-            setEditingActivity={setEditingActivity}
-            handleKioskAssignmentUpdate={async (activityId, playerId) => {
-              await handleKioskAssignmentUpdate(activityId, playerId);
-              return true;
-            }}
-            handleDeleteActivity={async (activityId) => {
-              await handleDeleteActivity(activityId);
-              return true;
-            }}
-            handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-            cupMatches={activities.filter(a => a.type === 'cup')}
-          />
-        }
-      />
-
-      <DialogModals 
+        setActiveTab={setActiveTab}
+        
+        // Player data
+        players={players}
+        activities={activities}
+        filteredPlayers={filteredPlayers}
+        selectedPlayer={selectedPlayer}
+        setSelectedPlayer={setSelectedPlayer}
         editingPlayer={editingPlayer}
-        editingActivity={editingActivity}
+        setEditingPlayer={setEditingPlayer}
         isAddPlayerOpen={isAddPlayerOpen}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedGrades={selectedGrades}
+        viewMode={viewMode}
+        setViewMode={setViewModeWrapper}
+        handleGradeChange={handleGradeChange}
+        handlePlayerUpdate={handlePlayerUpdateWrapper}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
+        handleAddPlayer={handleAddPlayerWrapper}
+        
+        // Activity data
+        filteredActivities={filteredActivities}
+        filteredHistoricalActivities={filteredHistoricalActivities}
+        selectedActivity={selectedActivity}
+        setSelectedActivity={setSelectedActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
         isAddActivityOpen={isAddActivityOpen}
-        onEditingPlayerChange={setEditingPlayer}
-        onEditingActivityChange={setEditingActivity}
-        onAddPlayerOpenChange={setIsAddPlayerOpen}
-        onAddActivityOpenChange={setIsAddActivityOpen}
-        onPlayerUpdate={handlePlayerUpdateWrapper}
-        onActivityUpdate={async (activity) => {
-          await handleActivityUpdate(activity);
-          return true;
-        }}
-        onAddPlayer={handleAddPlayer}
-        onAddActivity={handleAddActivity}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        selectedActivityTypes={selectedActivityTypes}
+        handleActivityTypeChange={handleActivityTypeChange}
+        handleActivityUpdate={handleActivityUpdate}
+        handleKioskUpdate={handleKioskUpdateWrapper}
+        handleDelete={handleDeleteActivity}
+        handleImportActivities={handleImportActivitiesWrapper}
+        handleClearHistorical={handleClearHistoricalWrapper}
+        handleAddActivity={handleAddActivity}
+        onPlayerActivitySelect={handlePlayerActivitySelect}
+        handleMatchResultUpdate={handleMatchResultWrapper}
+        
+        // Loading state
+        isLoading={isLoading}
+        retryLoading={retryLoading}
       />
-    </LayoutMain>
+    </RefreshablePageContainer>
   );
 }

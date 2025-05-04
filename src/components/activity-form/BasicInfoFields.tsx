@@ -6,8 +6,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimeInput } from "./TimeInput";
 import { ActivityFormValues } from "./formSchema";
-import { LeagueSelector } from "./LeagueSelector";
 import { useEffect } from "react";
+import { LeagueSelector } from "./LeagueSelector";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ActivityFormValues>;
@@ -63,12 +63,6 @@ export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
                     <RadioGroupItem value="cup" />
                   </FormControl>
                   <FormLabel className="font-normal cursor-pointer">Cup</FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2 space-y-0">
-                  <FormControl>
-                    <RadioGroupItem value="training" />
-                  </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">Träning</FormLabel>
                 </FormItem>
               </RadioGroup>
             </FormControl>

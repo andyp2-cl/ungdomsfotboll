@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Activity } from "@/types/player";
 import { QuickMatchResult } from "../QuickMatchResult";
-import { getResultColorClass } from "./match-result/utils/result-display";
+import { getResultColorClass } from "./match-result/utils";
 
 interface MatchResultQuickViewProps {
   activity: Activity;

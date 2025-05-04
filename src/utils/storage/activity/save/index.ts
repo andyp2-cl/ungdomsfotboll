@@ -1,11 +1,11 @@
+
 import { Activity } from "@/types/player";
 import { saveActivity } from "./saveActivity";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { supabase } from "@/lib/supabase/client";
 import { formatActivityForDatabase } from "@/utils/database/formatters/activity";
 import { toast } from "sonner";
-import { isHomeMatch } from "@/components/activity-detail/match-result/utils/team-detection";
-import { calculateWinStatus } from "@/components/activity-detail/match-result/utils/outcome-calculation";
+import { isHomeMatch, calculateWinStatus } from "@/components/activity-detail/match-result/utils";
 
 // Main export function for saving activities
 export async function saveActivities(activities: Activity[]): Promise<boolean> {

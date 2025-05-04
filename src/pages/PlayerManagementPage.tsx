@@ -2,18 +2,17 @@
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
-import { Activity, Player } from "@/types/player"; 
-import { useState } from "react";
+import { Activity } from "@/types/player"; // Add missing Activity import
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
-export default function PlayerManagementPage({ initialTab }: PlayersPageProps = {}) {
+export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const {
     // Tab state
-    activeTab = "players",
-    setActiveTab = () => {},
+    activeTab,
+    setActiveTab,
     
     // Player data
     players,
@@ -33,49 +32,55 @@ export default function PlayerManagementPage({ initialTab }: PlayersPageProps = 
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    
+    // Activity data
+    activities,
+    filteredActivities,
+    filteredHistoricalActivities,
+    selectedActivity,
+    setSelectedActivity,
+    editingActivity,
+    setEditingActivity,
+    isAddActivityOpen,
+    setIsAddActivityOpen,
+    selectedActivityTypes,
+    handleActivityTypeChange,
+    handleActivityUpdate,
+    handleKioskUpdate,
+    handleDelete,
+    handleImportActivities,
+    handleClearHistorical,
+    handleAddActivity,
+    handlePlayerActivitySelect,
+    handleMatchResult,
+    
+    // Loading state
+    isLoading
   } = usePlayers(initialTab);
-  
-  // Add missing activity-related state and handlers
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
-  const [filteredHistoricalActivities, setFilteredHistoricalActivities] = useState<Activity[]>([]);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
-  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-  const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
-  
-  // Activity handling functions
-  const handleActivityTypeChange = (type: string) => {
-    if (selectedActivityTypes.includes(type)) {
-      setSelectedActivityTypes(prev => prev.filter(t => t !== type));
-    } else {
-      setSelectedActivityTypes(prev => [...prev, type]);
-    }
-  };
 
   // Wrapper functions to ensure proper return types
-  const handleKioskUpdateWrapper = async (activityId: string): Promise<boolean> => {
-    return true;
+  const handleKioskUpdateWrapper = async (activityId: string, playerId?: string): Promise<boolean> => {
+    return await handleKioskUpdate(activityId, playerId);
   };
 
   const handleImportActivitiesWrapper = async (activities: Activity[]): Promise<boolean> => {
-    return true;
+    return await handleImportActivities(activities);
   };
 
   const handleClearHistoricalWrapper = async (): Promise<boolean> => {
-    return true;
+    return await handleClearHistorical();
   };
 
   // Converting Promise<boolean> to Promise<void> for player update functions
-  const handlePlayerUpdateWrapper = async (player: Player): Promise<void> => {
+  const handlePlayerUpdateWrapper = async (player: any) => {
     await handlePlayerUpdate(player);
   };
   
-  const handleBulkPlayerUpdateWrapper = async (players: Player[]): Promise<void> => {
+  const handleBulkPlayerUpdateWrapper = async (players: any[]) => {
     await handleBulkPlayerUpdate(players);
   };
   
-  const handleAddPlayerWrapper = async (player: Player): Promise<void> => {
+  const handleAddPlayerWrapper = async (player: any) => {
     await handleAddPlayer(player);
   };
 
@@ -85,32 +90,6 @@ export default function PlayerManagementPage({ initialTab }: PlayersPageProps = 
       setViewMode(mode);
     }
   };
-
-  // Activity function wrappers
-  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
-    // Changed from returning boolean to void
-    console.log("Activity updated", activity);
-  };
-
-  const handleAddActivityWrapper = async (activity: Activity): Promise<void> => {
-    // Changed from returning boolean to void
-    console.log("Activity added", activity);
-  };
-  
-  const handleDeleteWrapper = async (id: string): Promise<boolean> => {
-    return true;
-  };
-  
-  const handlePlayerActivitySelectWrapper = (activity: Activity) => {
-    setSelectedActivity(activity);
-  };
-  
-  const handleMatchResultWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<boolean> => {
-    return true;
-  };
-
-  // Fake loading state until full implementation is complete
-  const isLoading = false;
 
   return (
     <PageContainer isLoading={isLoading}>
@@ -150,15 +129,13 @@ export default function PlayerManagementPage({ initialTab }: PlayersPageProps = 
         setIsAddActivityOpen={setIsAddActivityOpen}
         selectedActivityTypes={selectedActivityTypes}
         handleActivityTypeChange={handleActivityTypeChange}
-        handleActivityUpdate={handleActivityUpdateWrapper}
+        handleActivityUpdate={handleActivityUpdate}
         handleKioskUpdate={handleKioskUpdateWrapper}
-        handleDelete={handleDeleteWrapper}
+        handleDelete={handleDelete}
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
-        handleAddActivity={handleAddActivityWrapper}
-        onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
-        handleMatchResultUpdate={handleMatchResultWrapper}
-        retryLoading={() => {}}
+        handleAddActivity={handleAddActivity}
+        onPlayerActivitySelect={handlePlayerActivitySelect}
       />
     </PageContainer>
   );
