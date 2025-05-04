@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
 import { prepareUpdatedPlayerStats } from "./PlayerStatsUtil";
-import { isHomeMatch, extractTeamNames, isHassleholm } from "./utils";
+import { determineMatchOutcome } from "@/hooks/activities/actions/match-result";
+import { extractTeamNames, isHomeMatch, isHassleholm } from "./utils";
 
 interface ResultSaverProps {
   activity: Activity;
@@ -34,45 +35,10 @@ export function useResultSaver({
         existingPlayerStats: activity.player_stats
       });
       
-      // Enhanced logic to determine if Hässleholms IF won the match
-      let isWin: boolean | undefined;
+      // Determine if Hässleholms IF won the match
+      const isWin = determineMatchOutcome(activity, homeScore, awayScore);
       
-      // Only calculate outcome if we have scores
-      if (homeScore !== undefined && awayScore !== undefined) {
-        // For draws (equal scores), isWin will be undefined
-        if (homeScore === awayScore) {
-          isWin = undefined; // Draw
-          console.log("Match is a draw");
-        } else {
-          // Extract team names to check which team is Hässleholms IF
-          const { homeTeam, awayTeam } = extractTeamNames(activity);
-          const isHifHome = isHassleholm(homeTeam);
-          const isHifAway = isHassleholm(awayTeam);
-          
-          console.log("Team detection:", {
-            homeTeam,
-            awayTeam,
-            isHifHome,
-            isHifAway
-          });
-          
-          // If we can identify that Hässleholms IF is home or away, use that to determine win
-          if (isHifHome) {
-            isWin = homeScore > awayScore;
-            console.log(`HIF is home team, ${isWin ? "win" : "loss"}`);
-          } else if (isHifAway) {
-            isWin = awayScore > homeScore;
-            console.log(`HIF is away team, ${isWin ? "win" : "loss"}`);
-          } else {
-            // If we can't identify by name, fall back to using isHomeMatch
-            const isHome = isHomeMatch(activity);
-            isWin = isHome ? (homeScore > awayScore) : (awayScore > homeScore);
-            console.log(`Could not detect HIF in team names, using fallback: isHome=${isHome}, isWin=${isWin}`);
-          }
-        }
-        
-        console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
-      }
+      console.log(`Determined match outcome for ${activity.name}: ${isWin === undefined ? 'draw' : isWin ? 'win' : 'loss'}`);
       
       // Create updated player stats - ensure we preserve existing stats
       const currentPlayerStats = activity.player_stats || { goals: {}, assists: {} };

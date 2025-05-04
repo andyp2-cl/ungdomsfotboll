@@ -119,6 +119,7 @@ export const updateMatchResultInDatabase = async (
         const minimalUpdate = {
           home_score: homeScore,
           away_score: awayScore,
+          is_win: isWin === undefined ? null : isWin,
           result: resultString
         };
         
