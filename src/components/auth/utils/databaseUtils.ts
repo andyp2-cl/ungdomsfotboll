@@ -118,3 +118,51 @@ export function setExtendedSessionPersistence(): void {
 export async function checkConnectionWithSession(): Promise<boolean> {
   return testDatabaseAccess().then(result => result.success);
 }
+
+/**
+ * Force reconnect to database
+ * This function forces a reconnection to the database by clearing connection cache
+ */
+export async function forceReconnect(): Promise<boolean> {
+  try {
+    console.log("Forcing reconnection to database...");
+    
+    // Clear connection cache
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
+    
+    // Try to connect
+    return connectAnonymously();
+  } catch (error) {
+    console.error("Error during force reconnect:", error);
+    return false;
+  }
+}
+
+/**
+ * Clear auth information and reconnect
+ * This function clears all authentication data and forces a clean reconnection
+ */
+export async function clearAuthAndReconnect(): Promise<boolean> {
+  try {
+    console.log("Clearing auth info and reconnecting...");
+    
+    // Clear all connection and authentication data
+    localStorage.removeItem('sb-connection-test');
+    localStorage.removeItem('sb-connection-test-time');
+    localStorage.removeItem('sb-connection-error');
+    
+    // Sign out if there's a session
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // Wait a moment
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Connect anonymously
+    return connectAnonymously();
+  } catch (error) {
+    console.error("Error during auth clear and reconnect:", error);
+    return false;
+  }
+}

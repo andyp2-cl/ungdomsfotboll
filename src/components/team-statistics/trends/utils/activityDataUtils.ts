@@ -1,4 +1,3 @@
-
 import { Activity } from '@/types/player';
 import { format, subMonths, isAfter, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -60,12 +59,12 @@ export function generateMonthlyActivityData(activities: Activity[]): MonthlyActi
       const monthKey = format(parseISO(activity.date), 'yyyy-MM');
       
       if (monthlyData[monthKey]) {
-        // Use separate if conditions for each type to avoid TypeScript comparison errors
+        // Use string comparisons to avoid TypeScript type issues
         if (activity.type === 'match') {
           monthlyData[monthKey].matches++;
         } 
         
-        // Check for 'training' value as a string to avoid type issues
+        // Fix for the type error - using string literal comparison
         if (activity.type === 'training') {
           monthlyData[monthKey].trainings++;
         }
