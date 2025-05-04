@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +6,7 @@ import {
   extractTeamNames, 
   isHassleholm,
   isHomeMatch
-} from "./utils";
+} from "./utils/team-detection";
 
 interface ResultSaverProps {
   activity: Activity;

@@ -5,7 +5,7 @@ import {
   extractTeamNames, 
   isHassleholm,
   isHomeMatch
-} from "@/components/activity-detail/match-result/utils";
+} from "@/components/activity-detail/match-result/utils/team-detection";
 import { Check, X, Minus } from "lucide-react";
 
 interface MatchResultDisplayProps {

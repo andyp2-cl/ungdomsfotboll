@@ -100,6 +100,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // Wrapper for handleDelete to match expected handleDeleteActivity
   const handleDeleteActivity = handleDelete;
 
+  // Convert handleMatchResultWrapper to return void instead of boolean
+  const handleMatchResultVoid = async (activityId: string, homeScore?: number, awayScore?: number) => {
+    await handleMatchResultWrapper(activityId, homeScore, awayScore);
+  };
+
   console.log("PlayersPage rendering with:", {
     activitiesCount: activities.length,
     playersCount: players.length,
@@ -151,7 +156,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
-        handleMatchResultUpdate={handleMatchResultWrapper}
+        handleMatchResultUpdate={handleMatchResultVoid}
         
         // Loading state
         isLoading={isLoading}

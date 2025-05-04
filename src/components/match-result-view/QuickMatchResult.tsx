@@ -8,7 +8,7 @@ import {
   extractTeamNames, 
   isHassleholm,
   isHomeMatch
-} from "../activity-detail/match-result/utils";
+} from "../activity-detail/match-result/utils/team-detection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
