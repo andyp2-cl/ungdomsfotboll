@@ -69,7 +69,7 @@ export function ActivityParticipants({
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
-                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent w-[19%] min-w-[19%]"
+                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent w-[24%] min-w-[24%]"
                   onClick={() => onPlayerSelect?.(player.id)}
                 >
                   <TooltipProvider>
@@ -94,7 +94,7 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>{player.name}</span>
+                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate flex-1`}>{player.name}</span>
                 </div>
               ))}
             </div>
