@@ -12,7 +12,7 @@ interface UseActivityTabViewsProps {
   filteredHistoricalActivities: Activity[];
   setEditingActivity: (activity: Activity | null) => void;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
@@ -41,6 +41,8 @@ export const useActivityTabViews = ({
     if (player) {
       setSelectedPlayer(player);
       setSelectedActivity(null);
+    } else {
+      setSelectedPlayer(null);
     }
   }, [players, setSelectedActivity]);
 
@@ -124,7 +126,8 @@ export const useActivityTabViews = ({
     // Handle Activities list view
     return {
       viewType: "activities-list",
-      activities: filteredBySearchActivities
+      activities: filteredBySearchActivities,
+      searchQuery
     };
   }, [
     activeView, 
@@ -133,7 +136,8 @@ export const useActivityTabViews = ({
     activities, 
     filteredBySearchActivities, 
     getRelatedActivities,
-    getCupMatches
+    getCupMatches,
+    searchQuery
   ]);
 
   return {
