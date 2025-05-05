@@ -101,7 +101,6 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 outerRadius={50}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ leagueName, value }) => `${leagueName}: ${value}`}
               >
                 {leagueStats.map((entry, index) => (
                   <Cell 
@@ -120,6 +119,18 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
               />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+        
+        <div className="mt-4 flex flex-wrap gap-2 justify-center">
+          {leagueStats.map((stat, index) => (
+            <div key={stat.id} className="flex items-center">
+              <div 
+                className="w-3 h-3 mr-1" 
+                style={{ backgroundColor: COLORS[index % COLORS.length] }} 
+              />
+              <span className="text-sm">{stat.leagueName}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
