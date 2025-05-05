@@ -3,7 +3,7 @@ import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/ActivityTabContent";
+import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
 import { PageDialogs } from "@/components/tabs/PageDialogs";
 import { MobileNavBar } from "@/components/mobile-nav/MobileNavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -105,6 +105,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               handleDeleteActivity={props.handleDelete}
               handleImportedActivities={props.handleImportActivities}
               handleClearHistoricalActivities={props.handleClearHistorical}
+              handleMatchResultUpdate={props.handleMatchResultUpdate}
             />
           }
         />

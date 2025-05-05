@@ -69,7 +69,7 @@ export function ActivityParticipants({
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
-                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent flex-1 max-w-[19%]"
+                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent w-[19%] min-w-[19%]"
                   onClick={() => onPlayerSelect?.(player.id)}
                 >
                   <TooltipProvider>
