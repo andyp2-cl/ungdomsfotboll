@@ -3,6 +3,8 @@ import React from 'react';
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 interface LeaguesStatsCardProps {
   player: Player;
@@ -10,6 +12,32 @@ interface LeaguesStatsCardProps {
 }
 
 export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) {
+  // Fetch all leagues for proper naming
+  const { data: leagues = [] } = useQuery({
+    queryKey: ["all-leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*");
+        
+      if (error) {
+        console.error("Error fetching leagues:", error);
+        return [];
+      }
+      
+      return data;
+    }
+  });
+  
+  // Format league names to match the requested format
+  const getFormattedLeagueName = (leagueId: string) => {
+    const league = leagues.find(l => l.id === leagueId);
+    if (!league) return "Unknown League";
+    
+    // Format according to specified requirements: 2013 A, 2014 A1, 2014 A2, 2014 B2
+    return `${league.year} ${league.name}`;
+  };
+
   // Filter matches for this player and count by league
   const leagueStats = React.useMemo(() => {
     const playerMatches = activities.filter(
@@ -30,19 +58,16 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
 
     // Transform to array for recharts
     const data = Object.entries(leagueCounts).map(([leagueId, count]) => {
-      // Find a match with this league to get the league name
-      const match = activities.find(a => a.league_id === leagueId);
       return {
-        name: match?.name || 'Unknown League',
+        id: leagueId,
+        name: getFormattedLeagueName(leagueId),
         value: count,
-        // Extract the league name from the match name if possible
-        // Most league matches have format like "Series [League] HomeTeam - AwayTeam"
-        leagueName: match?.name?.split(' ').slice(0, 2).join(' ') || 'Unknown'
+        leagueName: getFormattedLeagueName(leagueId)
       };
     });
 
     return data;
-  }, [player.id, activities]);
+  }, [player.id, activities, leagues]);
 
   if (leagueStats.length === 0) {
     return (
@@ -76,12 +101,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
                 outerRadius={50}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ leagueName, value, payload }) => {
-                  // Calculate the percentage from the payload data
-                  const total = leagueStats.reduce((sum, item) => sum + item.value, 0);
-                  const percent = payload && payload.value ? (payload.value / total) * 100 : 0;
-                  return `${leagueName}: ${percent.toFixed(0)}%`;
-                }}
+                label={({ leagueName, value }) => `${leagueName}: ${value}`}
               >
                 {leagueStats.map((entry, index) => (
                   <Cell 

@@ -1,3 +1,4 @@
+
 import { Activity, Player } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -11,6 +12,7 @@ interface LeagueCardProps {
     id: string;
     name: string;
     division: string;
+    year: number;
     matches: Activity[];
     wins: number;
     draws: number;
@@ -27,6 +29,9 @@ const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }: LeagueCardProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+
+  // Format league name according to the requested format: 2013 A, 2014 A1, 2014 A2, 2014 B2
+  const formattedLeagueName = `${league.year} ${league.name}`;
 
   const handleActivityClick = (activity: Activity) => {
     // Navigate to the activities page with the selected activity
@@ -71,7 +76,7 @@ export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }
       <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-4">
-            <span>{league.name} ({league.division})</span>
+            <span>{formattedLeagueName} ({league.division})</span>
             <div className="flex items-center space-x-1 text-sm">
               <Badge variant="success" className="text-xs">
                 {league.wins}
