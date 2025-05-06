@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Badge } from "@/components/ui/badge";
+import { MatchStatsCard } from "../matches/MatchStatsCard";
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -43,6 +43,11 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       .sort((a, b) => a.grade.localeCompare(b.grade));
   }, [players]);
 
+  // Filter match activities
+  const matchActivities = activities.filter(activity => 
+    activity.type === "match" && new Date(activity.date) <= new Date()
+  );
+
   // Fetch league data
   const { data: leagues = [] } = useQuery({
     queryKey: ["leagues-summary"],
@@ -57,7 +62,19 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         return [];
       }
       
-      return data;
+      return data.map(league => {
+        // Fix duplicate year in league name
+        if (league.name.startsWith(league.year.toString())) {
+          const yearStr = league.year.toString();
+          if (league.name.startsWith(`${yearStr} ${yearStr}`)) {
+            return {
+              ...league,
+              name: league.name.substring(yearStr.length + 1)
+            };
+          }
+        }
+        return league;
+      });
     },
   });
 
@@ -96,7 +113,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         wins,
         draws,
         losses,
-        name: `${league.year} ${league.name}`
+        displayName: league.name
       });
     });
     
@@ -105,8 +122,84 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
 
   const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 
+  // Function to sort leagues by priority
+  const sortLeagues = (leagues: any[]) => {
+    // Custom sort order for league names
+    return leagues.sort((a, b) => {
+      // First sort by year descending
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+      
+      // Special case for 2013 A - should come first
+      if (a.name === "A" && a.year === 2013) return -1;
+      if (b.name === "A" && b.year === 2013) return 1;
+      
+      // Sort by division letter (A before B)
+      const aDivision = a.name.charAt(0);
+      const bDivision = b.name.charAt(0);
+      
+      if (aDivision !== bDivision) {
+        return aDivision.localeCompare(bDivision);
+      }
+      
+      // Then by division number if present
+      const aNumber = parseInt(a.name.substring(1), 10) || 0;
+      const bNumber = parseInt(b.name.substring(1), 10) || 0;
+      
+      return aNumber - bNumber;
+    });
+  };
+
+  // Combine leagues from 2013 A with current year leagues
+  const currentYearLeagues = useMemo(() => {
+    let leagues = [...(leagueMatchStats[Object.keys(leagueMatchStats)[0]] || [])];
+    
+    // Find 2013 A and add it to current leagues if it exists
+    if (leagueMatchStats[2013]) {
+      const league2013A = leagueMatchStats[2013].find(l => l.name === "A");
+      if (league2013A) {
+        leagues.push(league2013A);
+      }
+    }
+    
+    return sortLeagues(leagues);
+  }, [leagueMatchStats]);
+
+  // Other years leagues (excluding those already in currentYearLeagues)
+  const otherYearsLeagues = useMemo(() => {
+    const result: Record<number, any[]> = {};
+    
+    Object.entries(leagueMatchStats).forEach(([year, leagues]) => {
+      const yearNum = parseInt(year, 10);
+      // Skip the current year
+      if (yearNum === parseInt(Object.keys(leagueMatchStats)[0], 10)) {
+        return;
+      }
+      
+      // For 2013, filter out A which is already in currentYearLeagues
+      if (yearNum === 2013) {
+        const filteredLeagues = leagues.filter(l => l.name !== "A");
+        if (filteredLeagues.length > 0) {
+          result[yearNum] = sortLeagues(filteredLeagues);
+        }
+        return;
+      }
+      
+      result[yearNum] = sortLeagues(leagues);
+    });
+    
+    return result;
+  }, [leagueMatchStats]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Match Statistics Card */}
+      <MatchStatsCard 
+        activities={matchActivities} 
+        className="col-span-full md:col-span-1"
+      />
+
       {/* League Match Statistics - Current Year */}
       <Card>
         <CardHeader>
@@ -115,56 +208,50 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.keys(leagueMatchStats).length > 0 ? (
-              Object.entries(leagueMatchStats)
-                .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-                .slice(0, 1)
-                .map(([year, leagues]) => (
-                  <div key={year} className="space-y-6">
-                    <h3 className="font-medium text-lg">{year}</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      {leagues.map(league => (
-                        <div key={league.id} className="flex items-center justify-between border-b pb-3">
-                          <div>
-                            <h4 className="font-medium">{league.name}</h4>
-                            <div className="flex items-center space-x-1 mt-1">
-                              <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
-                              <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
-                              <Badge variant="destructive" className="text-xs">F: {league.losses}</Badge>
-                            </div>
-                          </div>
-                          
-                          <div className="w-20 h-20">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={[
-                                    { name: 'Vinster', value: league.wins },
-                                    { name: 'Oavgjorda', value: league.draws },
-                                    { name: 'Förluster', value: league.losses }
-                                  ]}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={15}
-                                  outerRadius={35}
-                                  paddingAngle={2}
-                                  dataKey="value"
-                                >
-                                  {[0, 1, 2].map((index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                  ))}
-                                </Pie>
-                                <Tooltip 
-                                  formatter={(value) => [`${value} st`]}
-                                />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
+            {currentYearLeagues.length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  {currentYearLeagues.map(league => (
+                    <div key={league.id} className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h4 className="font-medium">{league.year} {league.displayName}</h4>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
+                          <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
+                          <Badge variant="destructive" className="text-xs">F: {league.losses}</Badge>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="w-20 h-20">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Vinster', value: league.wins },
+                                { name: 'Oavgjorda', value: league.draws },
+                                { name: 'Förluster', value: league.losses }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={15}
+                              outerRadius={35}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              {[0, 1, 2].map((index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value) => [`${value} st`]}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
+              </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 Inga ligamatcher hittade
@@ -182,10 +269,10 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.keys(leagueMatchStats).length > 1 ? (
-              Object.entries(leagueMatchStats)
+            {Object.keys(otherYearsLeagues).length > 0 ? (
+              Object.entries(otherYearsLeagues)
                 .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-                .slice(1, 3)
+                .slice(0, 2)
                 .map(([year, leagues]) => (
                   <div key={year} className="space-y-3">
                     <h3 className="font-medium">{year}</h3>
@@ -193,7 +280,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
                       {leagues.map(league => (
                         <div key={league.id} className="flex items-center justify-between border-b pb-2">
                           <div>
-                            <h4 className="text-sm font-medium">{league.name}</h4>
+                            <h4 className="text-sm font-medium">{league.displayName}</h4>
                             <div className="flex items-center space-x-1 mt-0.5">
                               <span className="text-xs text-green-600 font-medium">{league.wins}V</span>
                               <span className="text-xs text-gray-500">-</span>

@@ -1,3 +1,4 @@
+
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -54,6 +55,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleClearHistorical,
     handleAddActivity,
     handlePlayerActivitySelect,
+    handleMatchResult,
     
     // Loading state
     isLoading
@@ -108,6 +110,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const handleClearHistoricalWrapper = async (): Promise<boolean> => {
     return await handleClearHistorical();
   };
+  
+  // Wrapper for match result update
+  const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+    await handleMatchResult(activityId, homeScore, awayScore);
+  };
 
   return (
     <PageContainer isLoading={isLoading}>
@@ -154,6 +161,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
+        handleMatchResultUpdate={handleMatchResultUpdateWrapper}
       />
     </PageContainer>
   );
