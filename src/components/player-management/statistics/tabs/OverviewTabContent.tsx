@@ -131,10 +131,6 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         return b.year - a.year;
       }
       
-      // Special case for 2013 A - should come first
-      if (a.name === "A" && a.year === 2013) return -1;
-      if (b.name === "A" && b.year === 2013) return 1;
-      
       // Sort by division letter (A before B)
       const aDivision = a.name.charAt(0);
       const bDivision = b.name.charAt(0);
@@ -151,38 +147,23 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
     });
   };
 
-  // Combine leagues from 2013 A with current year leagues
+  // Current year leagues - NOT including 2013 A (moved to history)
   const currentYearLeagues = useMemo(() => {
-    let leagues = [...(leagueMatchStats[Object.keys(leagueMatchStats)[0]] || [])];
+    // Get leagues from current year (first key in leagueMatchStats)
+    let currentYearKey = Object.keys(leagueMatchStats)[0];
+    if (!currentYearKey) return [];
     
-    // Find 2013 A and add it to current leagues if it exists
-    if (leagueMatchStats[2013]) {
-      const league2013A = leagueMatchStats[2013].find(l => l.name === "A");
-      if (league2013A) {
-        leagues.push(league2013A);
-      }
-    }
-    
-    return sortLeagues(leagues);
+    return sortLeagues([...(leagueMatchStats[currentYearKey] || [])]);
   }, [leagueMatchStats]);
 
-  // Other years leagues (excluding those already in currentYearLeagues)
+  // Other years leagues - now includes 2013 A
   const otherYearsLeagues = useMemo(() => {
     const result: Record<number, any[]> = {};
     
     Object.entries(leagueMatchStats).forEach(([year, leagues]) => {
       const yearNum = parseInt(year, 10);
-      // Skip the current year
+      // Skip the current year (already handled in currentYearLeagues)
       if (yearNum === parseInt(Object.keys(leagueMatchStats)[0], 10)) {
-        return;
-      }
-      
-      // For 2013, filter out A which is already in currentYearLeagues
-      if (yearNum === 2013) {
-        const filteredLeagues = leagues.filter(l => l.name !== "A");
-        if (filteredLeagues.length > 0) {
-          result[yearNum] = sortLeagues(filteredLeagues);
-        }
         return;
       }
       
@@ -261,7 +242,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         </CardContent>
       </Card>
 
-      {/* Historical League Statistics */}
+      {/* Historical League Statistics - Now includes 2013 A */}
       <Card>
         <CardHeader>
           <CardTitle>Ligahistorik</CardTitle>
@@ -272,7 +253,6 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
             {Object.keys(otherYearsLeagues).length > 0 ? (
               Object.entries(otherYearsLeagues)
                 .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-                .slice(0, 2)
                 .map(([year, leagues]) => (
                   <div key={year} className="space-y-3">
                     <h3 className="font-medium">{year}</h3>

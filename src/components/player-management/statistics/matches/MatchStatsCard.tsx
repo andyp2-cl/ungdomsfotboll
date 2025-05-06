@@ -18,7 +18,6 @@ export function MatchStatsCard({ activities, className = "" }: MatchStatsCardPro
       draws: activities.filter(a => a.homeScore === a.awayScore).length,
       losses: activities.filter(a => a.isWin === false && a.homeScore !== a.awayScore).length,
       goalsScored: activities.reduce((sum, a) => sum + (a.homeScore || 0), 0),
-      goalsConceded: activities.reduce((sum, a) => sum + (a.awayScore || 0), 0),
       cleanSheets: activities.filter(a => (a.awayScore === 0)).length
     };
     return stats;
@@ -57,11 +56,6 @@ export function MatchStatsCard({ activities, className = "" }: MatchStatsCardPro
           <div className="p-2 rounded-md bg-blue-50">
             <dt className="text-sm font-medium text-blue-700">Gjorda mål</dt>
             <dd className="text-2xl font-bold text-blue-700">{matchStats.goalsScored}</dd>
-          </div>
-          
-          <div className="p-2 rounded-md bg-rose-50">
-            <dt className="text-sm font-medium text-rose-700">Insläppta mål</dt>
-            <dd className="text-2xl font-bold text-rose-700">{matchStats.goalsConceded}</dd>
           </div>
           
           <div className="col-span-2 p-2 rounded-md bg-emerald-50">
