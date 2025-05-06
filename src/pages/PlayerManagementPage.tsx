@@ -91,6 +91,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     }
   };
 
+  // Add wrapper for handleMatchResult to match expected handleMatchResultUpdate
+  const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+    await handleMatchResult(activityId, homeScore, awayScore);
+  };
+
   return (
     <PageContainer isLoading={isLoading}>
       <PlayersPageContent 
@@ -136,6 +141,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelect}
+        handleMatchResultUpdate={handleMatchResultUpdateWrapper}
       />
     </PageContainer>
   );
