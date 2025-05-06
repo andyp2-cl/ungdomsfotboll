@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -146,7 +147,7 @@ export function ActivityListItem({
               )}
             </div>
             
-            <div className={`${isMobileView ? 'mt-2' : 'mt-3'} max-w-[500px]`}>
+            <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
                 onPlayerSelect={onPlayerSelect}
@@ -157,7 +158,7 @@ export function ActivityListItem({
             </div>
           </div>
 
-          <div className="md:w-48 flex flex-col items-end justify-start">
+          <div className="md:w-48 md:min-w-48 flex flex-col items-end justify-start">
             {resultMessage && (
               <div className={`${isMobileView ? 'text-base font-medium mb-2' : 'text-sm font-medium mb-3'} ${getResultTextColor()}`}>
                 {resultMessage}

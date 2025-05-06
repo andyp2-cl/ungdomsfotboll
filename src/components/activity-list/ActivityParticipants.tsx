@@ -65,18 +65,18 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-4 gap-1.5 w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
-                  className="flex items-center gap-1 border rounded-md p-1 pl-0.5 pr-2 bg-background cursor-pointer hover:bg-accent"
+                  className="flex items-center gap-1 border rounded-md p-1 bg-background cursor-pointer hover:bg-accent min-w-0"
                   onClick={() => onPlayerSelect?.(player.id)}
                 >
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar
-                          className={`border-2 border-background ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
+                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
                         >
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="text-xs bg-muted">
@@ -94,7 +94,9 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate flex-1`}>{player.name}</span>
+                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap pr-1 flex-1`}>
+                    {player.name}
+                  </span>
                 </div>
               ))}
             </div>
