@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,30 +148,27 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
     });
   };
 
-  // Current year leagues - NOT including 2013 A (moved to history)
-  const currentYearLeagues = useMemo(() => {
-    // Get leagues from current year (first key in leagueMatchStats)
-    let currentYearKey = Object.keys(leagueMatchStats)[0];
-    if (!currentYearKey) return [];
+  // All leagues, sorted by year
+  const allLeagues = useMemo(() => {
+    const allSortedLeagues: any[] = [];
     
-    return sortLeagues([...(leagueMatchStats[currentYearKey] || [])]);
-  }, [leagueMatchStats]);
-
-  // Other years leagues - now includes 2013 A
-  const otherYearsLeagues = useMemo(() => {
-    const result: Record<number, any[]> = {};
+    // First add all leagues from the current year
+    const years = Object.keys(leagueMatchStats).sort((a, b) => Number(b) - Number(a));
     
-    Object.entries(leagueMatchStats).forEach(([year, leagues]) => {
-      const yearNum = parseInt(year, 10);
-      // Skip the current year (already handled in currentYearLeagues)
-      if (yearNum === parseInt(Object.keys(leagueMatchStats)[0], 10)) {
-        return;
-      }
+    years.forEach(year => {
+      const yearLeagues = leagueMatchStats[Number(year)] || [];
+      const sortedYearLeagues = sortLeagues(yearLeagues);
       
-      result[yearNum] = sortLeagues(leagues);
+      if (sortedYearLeagues.length > 0) {
+        allSortedLeagues.push({
+          year: Number(year),
+          leagues: sortedYearLeagues,
+          isCurrent: year === years[0]
+        });
+      }
     });
     
-    return result;
+    return allSortedLeagues;
   }, [leagueMatchStats]);
 
   return (
@@ -181,126 +179,64 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         className="col-span-full md:col-span-1"
       />
 
-      {/* League Match Statistics - Current Year */}
+      {/* League Match Statistics - All leagues in one card */}
       <Card>
         <CardHeader>
           <CardTitle>Ligamatcher</CardTitle>
-          <CardDescription>Statistik över matcher i ligor</CardDescription>
+          <CardDescription>Statistik över alla ligor</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {currentYearLeagues.length > 0 ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-4">
-                  {currentYearLeagues.map(league => (
-                    <div key={league.id} className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <h4 className="font-medium">{league.year} {league.displayName}</h4>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
-                          <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
-                          <Badge variant="destructive" className="text-xs">F: {league.losses}</Badge>
+          <div className="space-y-6">
+            {allLeagues.length > 0 ? (
+              allLeagues.map(yearData => (
+                <div key={yearData.year} className="space-y-4">
+                  <h3 className="font-medium text-lg border-b pb-1">{yearData.year}</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {yearData.leagues.map(league => (
+                      <div key={league.id} className="flex items-center justify-between border-b pb-3">
+                        <div>
+                          <h4 className="font-medium">{league.displayName}</h4>
+                          <div className="flex items-center space-x-1 mt-1">
+                            <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
+                            <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
+                            <Badge variant="destructive" className="text-xs">F: {league.losses}</Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="w-16 h-16">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Vinster', value: league.wins },
+                                  { name: 'Oavgjorda', value: league.draws },
+                                  { name: 'Förluster', value: league.losses }
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={15}
+                                outerRadius={30}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                {[0, 1, 2].map((index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                formatter={(value) => [`${value} st`]}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
-                      
-                      <div className="w-20 h-20">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Vinster', value: league.wins },
-                                { name: 'Oavgjorda', value: league.draws },
-                                { name: 'Förluster', value: league.losses }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={15}
-                              outerRadius={35}
-                              paddingAngle={2}
-                              dataKey="value"
-                            >
-                              {[0, 1, 2].map((index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value) => [`${value} st`]}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 Inga ligamatcher hittade
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Historical League Statistics - Now includes 2013 A */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ligahistorik</CardTitle>
-          <CardDescription>Tidigare års ligamatcher</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Object.keys(otherYearsLeagues).length > 0 ? (
-              Object.entries(otherYearsLeagues)
-                .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-                .map(([year, leagues]) => (
-                  <div key={year} className="space-y-3">
-                    <h3 className="font-medium">{year}</h3>
-                    <div className="space-y-2">
-                      {leagues.map(league => (
-                        <div key={league.id} className="flex items-center justify-between border-b pb-2">
-                          <div>
-                            <h4 className="text-sm font-medium">{league.displayName}</h4>
-                            <div className="flex items-center space-x-1 mt-0.5">
-                              <span className="text-xs text-green-600 font-medium">{league.wins}V</span>
-                              <span className="text-xs text-gray-500">-</span>
-                              <span className="text-xs text-amber-600 font-medium">{league.draws}O</span>
-                              <span className="text-xs text-gray-500">-</span>
-                              <span className="text-xs text-red-600 font-medium">{league.losses}F</span>
-                            </div>
-                          </div>
-                          
-                          <div className="w-12 h-12">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={[
-                                    { name: 'Vinster', value: league.wins },
-                                    { name: 'Oavgjorda', value: league.draws },
-                                    { name: 'Förluster', value: league.losses }
-                                  ]}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={10}
-                                  outerRadius={20}
-                                  paddingAngle={1}
-                                  dataKey="value"
-                                >
-                                  {[0, 1, 2].map((index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                  ))}
-                                </Pie>
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Ingen historik tillgänglig
               </div>
             )}
           </div>

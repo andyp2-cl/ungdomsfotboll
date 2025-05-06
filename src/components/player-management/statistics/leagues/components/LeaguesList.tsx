@@ -30,10 +30,6 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
   const sortLeagues = (leagues: LeagueWithMatches[]) => {
     // Custom sort order for league names
     return [...leagues].sort((a, b) => {
-      // Special case for 2013 A - should come first
-      if (a.name === "A" && a.year === 2013) return -1;
-      if (b.name === "A" && b.year === 2013) return 1;
-      
       // Sort by division letter (A before B)
       const aDivision = a.name.charAt(0);
       const bDivision = b.name.charAt(0);
