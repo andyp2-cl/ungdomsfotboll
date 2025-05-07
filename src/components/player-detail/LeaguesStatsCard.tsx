@@ -24,7 +24,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
       
       if (!acc[match.league_id]) {
         // Extract basic info
-        let leagueName = match.leagueName || "";
+        let leagueName = match.league || "";
         
         // Fix duplicate year in league name
         if (leagueName) {
@@ -38,7 +38,7 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
         acc[match.league_id] = {
           id: match.league_id,
           name: leagueName,
-          year: match.leagueYear || new Date(match.date).getFullYear(),
+          year: match.year || new Date(match.date).getFullYear(),
           matches: 0,
           wins: 0,
           draws: 0,
