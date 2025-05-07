@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,8 +43,11 @@ export function PlayerDetail({
   const isCoach = player.positions?.includes('TRÄNARE');
 
   const handleActivitySelect = (activity: Activity) => {
+    console.log("PlayerDetail: Activity selected:", activity.id, activity.name);
     if (onActivitySelect) {
       onActivitySelect(activity);
+    } else {
+      console.warn("onActivitySelect is not provided to PlayerDetail");
     }
   };
 
@@ -53,6 +57,11 @@ export function PlayerDetail({
 
   const handlePlayerUpdate = (updatedPlayer: Player) => {
     onPlayerUpdate(updatedPlayer);
+  };
+
+  const handleClose = () => {
+    console.log("PlayerDetail: Close button clicked");
+    onClose();
   };
 
   return (
@@ -69,7 +78,7 @@ export function PlayerDetail({
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="h-4 w-4" />
         </Button>

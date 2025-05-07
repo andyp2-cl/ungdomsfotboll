@@ -29,6 +29,16 @@ export function MatchesTabContent({
     return activityDate < today;
   });
 
+  // Add debug logging for player selection function
+  const handlePlayerSelect = (playerId: string) => {
+    console.log("MatchesTabContent: Player selected:", playerId);
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    } else {
+      console.warn("onPlayerSelect function is not provided to MatchesTabContent");
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <MatchStatsCard 
@@ -40,7 +50,7 @@ export function MatchesTabContent({
         activities={historicalMatchActivities}
         players={players}
         onActivitySelect={onActivitySelect}
-        onPlayerSelect={onPlayerSelect}
+        onPlayerSelect={handlePlayerSelect}
         className="col-span-full md:col-span-1"
       />
     </div>

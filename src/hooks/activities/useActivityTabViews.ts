@@ -33,24 +33,36 @@ export const useActivityTabViews = ({
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSelectedPlayer(player);
-      setSelectedActivity(null);
+    console.log("useActivityTabViews: Player selected:", playerId);
+    
+    if (playerId === "") {
+      // This means we want to close the player detail view
+      console.log("useActivityTabViews: Clearing selected player");
+      setSelectedPlayer(null);
+    } else {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        console.log("useActivityTabViews: Setting selected player:", player.name);
+        setSelectedPlayer(player);
+        setSelectedActivity(null);
+      }
     }
   }, [players, setSelectedActivity]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {
     if (value === "upcoming" || value === "historical" || value === "statistics") {
+      // Store the previous view before changing
+      setPreviousView(activeView);
       setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
       setSelectedPlayer(null);
     }
-  }, [setSelectedActivity]);
+  }, [setSelectedActivity, activeView]);
 
   // Determine if current view is historical
   const isHistorical = activeView === "historical";
@@ -79,24 +91,7 @@ export const useActivityTabViews = ({
   // Get cup matches for a selected cup
   const getCupMatches = useCallback((activity: Activity) => {
     if (activity.type === 'cup') {
-      // First look for matches in the activity's matches array
-      if (activity.matches && activity.matches.length > 0) {
-        const matchesById = activities.filter(a => 
-          activity.matches?.includes(a.id)
-        );
-        
-        if (matchesById.length > 0) {
-          console.log(`Found ${matchesById.length} matches by ID for cup ${activity.name}`);
-          return matchesById;
-        }
-      }
-      
-      // Then look for matches with this activity as cupId
-      const matchesByCupId = activities.filter(a => a.cupId === activity.id);
-      if (matchesByCupId.length > 0) {
-        console.log(`Found ${matchesByCupId.length} matches by cupId for cup ${activity.name}`);
-        return matchesByCupId;
-      }
+      return activities.filter(a => a.cupId === activity.id);
     }
     return [];
   }, [activities]);
@@ -118,8 +113,7 @@ export const useActivityTabViews = ({
       return {
         viewType: "player-detail",
         player: selectedPlayer,
-        activities: playerActivities,
-        searchQuery
+        activities: playerActivities
       };
     }
     
@@ -128,14 +122,11 @@ export const useActivityTabViews = ({
       const relatedActivities = getRelatedActivities(selectedActivity);
       const cupMatches = getCupMatches(selectedActivity);
       
-      console.log(`Rendering activity detail for ${selectedActivity.name} with ${cupMatches.length} cup matches`);
-      
       return {
         viewType: "activity-detail",
         activity: selectedActivity,
         relatedActivities,
-        cupMatches,
-        searchQuery
+        cupMatches
       };
     }
     
@@ -164,6 +155,7 @@ export const useActivityTabViews = ({
     handlePlayerSelect,
     renderContent,
     isHistorical,
-    filteredBySearchActivities
+    filteredBySearchActivities,
+    previousView
   };
 };

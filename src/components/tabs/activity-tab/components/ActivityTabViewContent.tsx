@@ -82,10 +82,14 @@ export function ActivityTabViewContent({
         <PlayerDetail 
           player={content.player} 
           activities={content.activities || activities} 
-          onClose={() => onPlayerSelect("")}
+          onClose={() => {
+            console.log("Closing player detail, calling onPlayerSelect with empty string");
+            onPlayerSelect("");
+          }}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}
           onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
           allPlayers={players}
+          onActivitySelect={onActivitySelect}
         />
       );
     }
