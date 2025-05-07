@@ -29,7 +29,7 @@ export function MatchesTabContent({
     return activityDate < today;
   });
 
-  // Add debug logging for player selection function
+  // Handle player selection with proper logging
   const handlePlayerSelect = (playerId: string) => {
     console.log("MatchesTabContent: Player selected:", playerId);
     if (onPlayerSelect) {

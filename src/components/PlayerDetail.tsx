@@ -60,7 +60,7 @@ export function PlayerDetail({
   };
 
   const handleClose = () => {
-    console.log("PlayerDetail: Close button clicked");
+    console.log("PlayerDetail: Close button clicked - calling onClose()");
     onClose();
   };
 

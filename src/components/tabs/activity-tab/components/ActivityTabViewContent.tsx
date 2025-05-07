@@ -70,7 +70,10 @@ export function ActivityTabViewContent({
           console.log("Activity selected from StatisticsTabsWrapper:", activity.id, activity.name);
           onActivitySelect(activity);
         }}
-        onPlayerSelect={onPlayerSelect}
+        onPlayerSelect={(playerId) => {
+          console.log("Player selected from StatisticsTabsWrapper:", playerId);
+          onPlayerSelect(playerId);
+        }}
       />
     );
   }
@@ -83,7 +86,7 @@ export function ActivityTabViewContent({
           player={content.player} 
           activities={content.activities || activities} 
           onClose={() => {
-            console.log("Closing player detail, calling onPlayerSelect with empty string");
+            console.log("Closing player detail from ActivityTabViewContent");
             onPlayerSelect("");
           }}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}

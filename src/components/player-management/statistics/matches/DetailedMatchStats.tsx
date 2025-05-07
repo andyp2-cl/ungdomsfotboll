@@ -21,14 +21,15 @@ export function DetailedMatchStats({
 }: DetailedMatchStatsProps) {
   // Calculate player statistics from activities
   const playerStats = useMemo(() => {
-    const stats = new Map<string, { name: string, matches: number, goals: number }>();
+    const stats = new Map<string, { name: string, matches: number, goals: number, playerId: string }>();
     
     // Initialize stats for all players
     players.forEach(player => {
       stats.set(player.id, {
         name: player.name,
         matches: 0,
-        goals: 0
+        goals: 0,
+        playerId: player.id
       });
     });
     
@@ -60,10 +61,10 @@ export function DetailedMatchStats({
       
   }, [activities, players]);
 
-  const handlePlayerClick = (player: { name: string, matches: number, goals: number }) => {
-    const selectedPlayer = players.find(p => p.name === player.name);
-    if (selectedPlayer && onPlayerSelect) {
-      onPlayerSelect(selectedPlayer.id);
+  const handlePlayerClick = (playerStat: { name: string, matches: number, goals: number, playerId: string }) => {
+    if (onPlayerSelect) {
+      console.log("DetailedMatchStats: Player selected:", playerStat.playerId);
+      onPlayerSelect(playerStat.playerId);
     }
   };
 

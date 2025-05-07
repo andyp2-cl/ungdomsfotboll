@@ -37,7 +37,7 @@ export const useActivityTabViews = ({
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    console.log("useActivityTabViews: Player selected:", playerId);
+    console.log("useActivityTabViews: Player selected/deselected:", playerId);
     
     if (playerId === "") {
       // This means we want to close the player detail view
