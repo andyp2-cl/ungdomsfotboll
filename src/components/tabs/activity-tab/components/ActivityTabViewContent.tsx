@@ -82,15 +82,10 @@ export function ActivityTabViewContent({
         <PlayerDetail 
           player={content.player} 
           activities={content.activities || activities} 
-          onClose={() => {
-            // Fix for the player card not closing properly
-            console.log("Closing player detail card");
-            onPlayerSelect(""); // This properly triggers the closing behavior
-          }}
+          onClose={() => onPlayerSelect("")}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}
           onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
           allPlayers={players}
-          onActivitySelect={onActivitySelect}
         />
       );
     }
