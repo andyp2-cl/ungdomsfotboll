@@ -35,7 +35,8 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
     if (!league) return "Unknown League";
     
     // Format according to specified requirements: 2013 A, 2014 A1, 2014 A2, 2014 B2
-    return `${league.year} ${league.name}`;
+    // Fix the duplicate year issue
+    return `${league.year} ${league.name.replace(`${league.year} `, '')}`;
   };
 
   // Filter matches for this player and count by league
@@ -58,11 +59,12 @@ export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) 
 
     // Transform to array for recharts
     const data = Object.entries(leagueCounts).map(([leagueId, count]) => {
+      const formattedName = getFormattedLeagueName(leagueId);
       return {
         id: leagueId,
-        name: getFormattedLeagueName(leagueId),
+        name: formattedName,
         value: count,
-        leagueName: getFormattedLeagueName(leagueId)
+        leagueName: formattedName
       };
     });
 

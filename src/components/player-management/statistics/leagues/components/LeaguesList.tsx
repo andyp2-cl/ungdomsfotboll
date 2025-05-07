@@ -52,10 +52,7 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
     let displayName = league.name;
     
     if (displayName.startsWith(league.year.toString())) {
-      const yearStr = league.year.toString();
-      if (displayName.startsWith(`${yearStr} ${yearStr}`)) {
-        displayName = displayName.substring(yearStr.length + 1);
-      }
+      displayName = displayName.replace(`${league.year} `, '');
     }
     
     return {
