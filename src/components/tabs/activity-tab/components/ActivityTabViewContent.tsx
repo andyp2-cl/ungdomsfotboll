@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityList } from "@/components/ActivityList";
@@ -82,10 +81,15 @@ export function ActivityTabViewContent({
         <PlayerDetail 
           player={content.player} 
           activities={content.activities || activities} 
-          onClose={() => onPlayerSelect("")}
+          onClose={() => {
+            // Fix for the player card not closing properly
+            console.log("Closing player detail card");
+            onPlayerSelect("");
+          }}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}
           onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
           allPlayers={players}
+          onActivitySelect={onActivitySelect}
         />
       );
     }

@@ -65,14 +65,14 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       
       return data.map(league => {
         // Fix duplicate year in league name
-        if (league.name.startsWith(league.year.toString())) {
-          const yearStr = league.year.toString();
-          if (league.name.startsWith(`${yearStr} ${yearStr}`)) {
-            return {
-              ...league,
-              name: league.name.substring(yearStr.length + 1)
-            };
-          }
+        const yearStr = league.year.toString();
+        const yearPattern = new RegExp(`^${yearStr}\\s+${yearStr}`);
+        
+        if (yearPattern.test(league.name)) {
+          return {
+            ...league,
+            name: league.name.substring(yearStr.length + 1)
+          };
         }
         return league;
       });

@@ -1,10 +1,8 @@
 
-import React from 'react';
-import { Activity, Player } from "@/types/player";
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
+import { Activity, Player } from "@/types/player";
+import { Badge } from "@/components/ui/badge";
 
 interface LeaguesStatsCardProps {
   player: Player;
@@ -12,126 +10,86 @@ interface LeaguesStatsCardProps {
 }
 
 export function LeaguesStatsCard({ player, activities }: LeaguesStatsCardProps) {
-  // Fetch all leagues for proper naming
-  const { data: leagues = [] } = useQuery({
-    queryKey: ["all-leagues"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leagues")
-        .select("*");
+  const leaguesStats = useMemo(() => {
+    // Get all league matches played by the player
+    const playerMatches = activities.filter(activity => 
+      activity.participants?.includes(player.id) && 
+      activity.type === "match" &&
+      activity.league_id
+    );
+    
+    // Group matches by league
+    const leagueMatches = playerMatches.reduce((acc, match) => {
+      if (!match.league_id) return acc;
+      
+      if (!acc[match.league_id]) {
+        // Extract basic info
+        let leagueName = match.leagueName || "";
         
-      if (error) {
-        console.error("Error fetching leagues:", error);
-        return [];
+        // Fix duplicate year in league name
+        if (leagueName) {
+          const yearMatch = leagueName.match(/^(\d{4})\s+\1/);
+          if (yearMatch) {
+            // Remove the duplicate year
+            leagueName = leagueName.substring(yearMatch[1].length + 1);
+          }
+        }
+        
+        acc[match.league_id] = {
+          id: match.league_id,
+          name: leagueName,
+          year: match.leagueYear || new Date(match.date).getFullYear(),
+          matches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0
+        };
       }
       
-      return data;
-    }
-  });
-  
-  // Format league names to match the requested format
-  const getFormattedLeagueName = (leagueId: string) => {
-    const league = leagues.find(l => l.id === leagueId);
-    if (!league) return "Unknown League";
-    
-    // Format according to specified requirements: 2013 A, 2014 A1, 2014 A2, 2014 B2
-    return `${league.year} ${league.name}`;
-  };
-
-  // Filter matches for this player and count by league
-  const leagueStats = React.useMemo(() => {
-    const playerMatches = activities.filter(
-      activity => 
-        activity.type === "match" && 
-        activity.participants?.includes(player.id) &&
-        activity.league_id // Only include matches with a league
-    );
-
-    // Count matches by league ID
-    const leagueCounts: { [key: string]: number } = {};
-    
-    playerMatches.forEach(match => {
-      if (match.league_id) {
-        leagueCounts[match.league_id] = (leagueCounts[match.league_id] || 0) + 1;
+      const league = acc[match.league_id];
+      league.matches++;
+      
+      if (match.isWin === true) {
+        league.wins++;
+      } else if (match.isWin === false) {
+        league.losses++;
+      } else if (match.homeScore !== undefined && match.awayScore !== undefined && 
+                match.homeScore === match.awayScore) {
+        league.draws++;
       }
-    });
-
-    // Transform to array for recharts
-    const data = Object.entries(leagueCounts).map(([leagueId, count]) => {
-      return {
-        id: leagueId,
-        name: getFormattedLeagueName(leagueId),
-        value: count,
-        leagueName: getFormattedLeagueName(leagueId)
-      };
-    });
-
-    return data;
-  }, [player.id, activities, leagues]);
-
-  if (leagueStats.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Ligor</CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center h-32 text-muted-foreground">
-          Inga ligamatcher hittade
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const COLORS = ['#16a34a', '#2563eb', '#dc2626', '#9F9EA1', '#f59e0b', '#8b5cf6', '#ec4899'];
-
+      
+      return acc;
+    }, {} as Record<string, any>);
+    
+    return Object.values(leagueMatches);
+  }, [player, activities]);
+  
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Ligor</CardTitle>
+      <CardHeader className="py-3">
+        <CardTitle className="text-base">Ligamatcher</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-32">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={leagueStats}
-                cx="50%"
-                cy="50%"
-                innerRadius={25}
-                outerRadius={50}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {leagueStats.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value, name, props) => {
-                  const total = leagueStats.reduce((sum, item) => sum + item.value, 0);
-                  const percent = (Number(value) / total) * 100;
-                  return [`${value} matcher (${percent.toFixed(0)}%)`, props.payload.leagueName];
-                }} 
-                labelFormatter={() => ''} 
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        
-        <div className="mt-4 flex flex-wrap gap-2 justify-center">
-          {leagueStats.map((stat, index) => (
-            <div key={stat.id} className="flex items-center">
-              <div 
-                className="w-3 h-3 mr-1" 
-                style={{ backgroundColor: COLORS[index % COLORS.length] }} 
-              />
-              <span className="text-sm">{stat.leagueName}</span>
-            </div>
-          ))}
-        </div>
+        {leaguesStats.length > 0 ? (
+          <div className="space-y-2">
+            {leaguesStats.map(league => (
+              <div key={league.id} className="flex flex-col">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{league.year} {league.name}:</span>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
+                    <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
+                    <Badge variant="destructive" className="text-xs">F: {league.losses}</Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-2 text-muted-foreground">
+            Inga ligamatcher
+          </div>
+        )}
       </CardContent>
     </Card>
   );

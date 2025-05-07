@@ -51,11 +51,12 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
     // Fix duplicate year in league name
     let displayName = league.name;
     
-    if (displayName.startsWith(league.year.toString())) {
-      const yearStr = league.year.toString();
-      if (displayName.startsWith(`${yearStr} ${yearStr}`)) {
-        displayName = displayName.substring(yearStr.length + 1);
-      }
+    // Check for duplicate year at the beginning (e.g., "2013 2013 A")
+    const yearStr = league.year.toString();
+    const yearPattern = new RegExp(`^${yearStr}\\s+${yearStr}`);
+    
+    if (yearPattern.test(displayName)) {
+      displayName = displayName.substring(yearStr.length + 1);
     }
     
     return {
