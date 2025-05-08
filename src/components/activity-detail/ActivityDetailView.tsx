@@ -91,13 +91,7 @@ export function ActivityDetailView({
   // Using onBack as fallback for onClose
   const handleClose = () => {
     console.log("ActivityDetailView: handleClose called");
-    if (onClose) {
-      console.log("ActivityDetailView: Calling onClose");
-      onClose();
-    } else if (onBack) {
-      console.log("ActivityDetailView: Calling onBack as fallback");
-      onBack();
-    }
+    onClose();
   };
   
   const isMatch = activity.type === "match";

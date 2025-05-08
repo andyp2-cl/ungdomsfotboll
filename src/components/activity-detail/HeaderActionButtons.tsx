@@ -41,10 +41,7 @@ export function HeaderActionButtons({
       <Button 
         variant="ghost" 
         size="icon" 
-        onClick={() => {
-          console.log("Close button clicked - calling handleClose");
-          handleClose();
-        }}
+        onClick={handleClose}
       >
         <X className="h-5 w-5" />
       </Button>
