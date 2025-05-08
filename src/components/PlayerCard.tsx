@@ -62,7 +62,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
-            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
+            <UserCircle className="h-30 w-30 text-muted-foreground/50" />
           </div>
         )}
         

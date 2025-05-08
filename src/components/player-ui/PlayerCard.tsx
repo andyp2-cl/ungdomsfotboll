@@ -68,12 +68,12 @@ export function PlayerCard({
             <img 
               src={player.image} 
               alt={player.name} 
-              className="h-8 w-8 rounded-full object-cover"
+              className="h-12 w-12 rounded-full object-cover"
               loading="lazy"
               crossOrigin="anonymous"
             />
           ) : (
-            <UserCircle className="h-8 w-8 text-muted-foreground" />
+            <UserCircle className="h-12 w-12 text-muted-foreground" />
           )}
           <div>
             <div className="font-medium text-sm flex items-center">
@@ -132,7 +132,7 @@ export function PlayerCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
-            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
+            <UserCircle className="h-30 w-30 text-muted-foreground/50" />
           </div>
         )}
         

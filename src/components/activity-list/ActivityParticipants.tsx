@@ -76,7 +76,7 @@ export function ActivityParticipants({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar
-                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`}
+                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-9 w-9' : 'h-12 w-12'}`}
                         >
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="text-xs bg-muted">
