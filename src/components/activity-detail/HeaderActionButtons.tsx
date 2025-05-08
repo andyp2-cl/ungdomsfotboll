@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 interface HeaderActionButtonsProps {
   onEdit?: (activity: Activity) => void;
   currentActivity: Activity;
-  onDeleteActivity?: (activityId: string) => void;
+  onDeleteActivity?: (activityId: string) => Promise<boolean>;
   isDeleteDialogOpen: boolean;
   setIsDeleteDialogOpen: (isOpen: boolean) => void;
   handleClose: () => void;
@@ -38,7 +38,14 @@ export function HeaderActionButtons({
           </AlertDialogTrigger>
         </AlertDialog>
       )}
-      <Button variant="ghost" size="icon" onClick={handleClose}>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={() => {
+          console.log("Close button clicked - calling handleClose");
+          handleClose();
+        }}
+      >
         <X className="h-5 w-5" />
       </Button>
     </div>

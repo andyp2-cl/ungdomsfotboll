@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -18,7 +19,7 @@ interface ActivityDetailViewProps {
   onClose: () => void;
   onBack?: () => void;
   onEdit?: (activity: Activity) => void;
-  onActivityUpdate?: (updatedActivity: Activity) => void;
+  onActivityUpdate?: (updatedActivity: Activity) => Promise<void>;
   onKioskAssignmentUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
   onActivitySelect?: (activity: Activity | null) => void;
   onDeleteActivity?: (activityId: string) => Promise<boolean>;
@@ -87,7 +88,17 @@ export function ActivityDetailView({
     return false;
   };
 
-  const handleClose = onBack || onClose;
+  // Using onBack as fallback for onClose
+  const handleClose = () => {
+    console.log("ActivityDetailView: handleClose called");
+    if (onClose) {
+      console.log("ActivityDetailView: Calling onClose");
+      onClose();
+    } else if (onBack) {
+      console.log("ActivityDetailView: Calling onBack as fallback");
+      onBack();
+    }
+  };
   
   const isMatch = activity.type === "match";
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
