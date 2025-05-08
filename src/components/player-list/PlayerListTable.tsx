@@ -2,7 +2,7 @@
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, UserCircle } from "lucide-react";
 import { SortField, SortIcon } from "./PlayerListSorting";
 import { 
   Table, 
@@ -13,6 +13,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -66,13 +67,28 @@ export function PlayerListTable({
                 onClick={() => onPlayerSelect(player)}
               >
                 <TableCell>
-                  <div className="flex items-center space-x-2">
-                    {player.jerseyNumber && !player.positions?.includes("TRÄNARE") && (
-                      <span className="text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                        #{player.jerseyNumber}
-                      </span>
-                    )}
-                    <span className="font-medium">{player.name}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                      {player.image ? (
+                        <img 
+                          src={player.image} 
+                          alt={player.name} 
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <UserCircle className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {player.jerseyNumber && !player.positions?.includes("TRÄNARE") && (
+                        <span className="text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                          #{player.jerseyNumber}
+                        </span>
+                      )}
+                      <span className="font-medium">{player.name}</span>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
