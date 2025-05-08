@@ -92,7 +92,7 @@ export function PlayersListContent({
                     ) : null}
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm">
                       {player.activities?.length || 0} aktiviteter
                     </span>
                   </TableCell>

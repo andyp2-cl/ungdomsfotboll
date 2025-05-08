@@ -2,6 +2,7 @@
 import { usePlayerState } from "./usePlayerState";
 import { usePlayerFilters } from "./usePlayerFilters";
 import { usePlayerActions } from "./usePlayerActions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function usePlayers() {
   const state = usePlayerState();
@@ -41,6 +42,8 @@ export function usePlayers() {
     setIsAddPlayerOpen
   );
 
+  const isMobile = useIsMobile();
+
   return {
     players,
     setPlayers,
@@ -78,6 +81,6 @@ export function usePlayers() {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    isMobile: false
+    isMobile: isMobile
   };
 }
