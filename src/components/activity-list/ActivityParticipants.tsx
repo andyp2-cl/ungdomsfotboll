@@ -41,6 +41,11 @@ export function ActivityParticipants({
     participantsByGrade[grade].push(player);
   });
   
+  // Function to get first name only
+  const getFirstName = (fullName: string) => {
+    return fullName.split(' ')[0];
+  };
+
   if (!sortedParticipants.length) {
     return (
       <div className="text-xs text-muted-foreground">
@@ -48,6 +53,10 @@ export function ActivityParticipants({
       </div>
     );
   }
+
+  // Calculate avatar size - 50% larger than before
+  const avatarSize = isMobile ? 'h-[13.5px] w-[13.5px]' : 'h-[18px] w-[18px]';
+  const containerSize = isMobile ? 'h-14 w-14' : 'h-18 w-18';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -65,7 +74,7 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
@@ -76,11 +85,11 @@ export function ActivityParticipants({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar
-                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-9 w-9' : 'h-12 w-12'}`}
+                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-[13.5px] w-[13.5px]' : 'h-18 w-18'}`}
                         >
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="text-xs bg-muted">
-                            <UserRound className="h-3 w-3" />
+                            <UserRound className={avatarSize} />
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
@@ -95,7 +104,7 @@ export function ActivityParticipants({
                     </Tooltip>
                   </TooltipProvider>
                   <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap pr-1 flex-1`}>
-                    {player.name}
+                    {getFirstName(player.name)}
                   </span>
                 </div>
               ))}
