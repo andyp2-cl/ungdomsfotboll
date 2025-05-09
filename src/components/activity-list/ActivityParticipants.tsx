@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -54,8 +53,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Calculate avatar size based on mobile view
-  const avatarSize = isMobile ? 'h-6 w-6' : 'h-8 w-8';
+  // Set avatar size to 80px for desktop, keep proportional for mobile
+  const avatarSize = isMobile ? 'h-8 w-8' : 'h-20 w-20';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-10 w-10';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -77,7 +77,7 @@ export function ActivityParticipants({
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
-                  className="flex items-center gap-1 border rounded-md p-1 bg-background cursor-pointer hover:bg-accent min-w-0"
+                  className="flex flex-col items-center gap-1 border rounded-md p-2 bg-background cursor-pointer hover:bg-accent min-w-0"
                   onClick={() => onPlayerSelect?.(player.id)}
                 >
                   <TooltipProvider>
@@ -86,7 +86,7 @@ export function ActivityParticipants({
                         <Avatar className={`border-2 border-background flex-shrink-0 ${avatarSize}`}>
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="text-xs bg-muted">
-                            <UserRound className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+                            <UserRound className={iconSize} />
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
@@ -100,7 +100,7 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap pr-1 flex-1`}>
+                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
                     {getFirstName(player.name)}
                   </span>
                 </div>
