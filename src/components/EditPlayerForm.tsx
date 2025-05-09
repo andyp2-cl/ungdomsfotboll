@@ -1,8 +1,5 @@
 
 import React, { useState } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Save, X } from "lucide-react";
 import { ImageUploadField } from "./player-form/ImageUploadField";
+import { DevelopmentFields } from "./player-form/DevelopmentFields";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { formSchema, PlayerFormValues } from "./player-form/formSchema";
 
 interface EditPlayerFormProps {
   player: Player;
@@ -24,33 +25,36 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
   const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
   const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
 
-  const formSchema = z.object({
-    name: z.string().min(2, { message: "Namn måste vara minst 2 tecken" }),
-    grade: z.enum(["A", "B", "C", "D"]).optional(),
-    positions: z.array(z.enum(["MV", "BACK", "MF", "ANF", "TRÄNARE"])).optional(),
-    jerseyNumber: z.string().optional(),
-  });
-
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: player.name,
       grade: isTrainer ? undefined : player.grade,
       positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
+      isTrainer,
+      development: player.development || {
+        technical: 1,
+        gameUnderstanding: 1,
+        passing: 1,
+        offensive: 1,
+        defensive: 1,
+        mentality: 1
+      }
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = (values: PlayerFormValues) => {
     // Create updated player with form values
     const updatedPlayer: Player = {
       ...player,
       name: values.name,
       // Only set grade if not a trainer
       grade: isTrainer ? undefined : (values.grade || "A"),
-      positions: values.positions,
+      positions: values.positions as PlayerPosition[],
       jerseyNumber: values.jerseyNumber || undefined,
-      image: imagePreview
+      image: imagePreview,
+      development: values.development
     };
 
     onSave(updatedPlayer);
@@ -67,6 +71,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
 
   const handleTrainerChange = (checked: boolean) => {
     setIsTrainer(checked);
+    form.setValue("isTrainer", checked);
     
     // If becoming a trainer, add TRÄNARE to positions and remove grade
     if (checked) {
@@ -235,6 +240,10 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
             </FormItem>
           )}
         />
+
+        <div className="border-t pt-4">
+          <DevelopmentFields form={form} />
+        </div>
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

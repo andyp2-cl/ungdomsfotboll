@@ -6,7 +6,11 @@ import { Player } from "@/types/player";
 import { ImageUploadField } from "./player-form/ImageUploadField";
 import { PlayerPositionField } from "./player-form/PlayerPositionField";
 import { FormButtons } from "./player-form/FormButtons";
+import { DevelopmentFields } from "./player-form/DevelopmentFields";
 import { usePlayerForm } from "./player-form/usePlayerForm";
+import { Checkbox } from "./ui/checkbox";
+import { Label } from "./ui/label";
+import { useState } from "react";
 
 export interface AddPlayerFormProps {
   onSave: (player: Player) => void;
@@ -14,10 +18,17 @@ export interface AddPlayerFormProps {
 }
 
 export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
-  const { form, imagePreview, setImagePreview, handleSubmit } = usePlayerForm({ 
+  const { form, imagePreview, setImagePreview, handleSubmit, isTrainer } = usePlayerForm({ 
     onSave, 
     onCancel 
   });
+  
+  const [isTrainerLocal, setIsTrainerLocal] = useState(isTrainer);
+  
+  const handleTrainerChange = (checked: boolean) => {
+    setIsTrainerLocal(checked);
+    form.setValue("isTrainer", checked);
+  };
 
   return (
     <Form {...form}>
@@ -40,30 +51,42 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
             </FormItem>
           )}
         />
+        
+        <div className="flex items-center mb-4">
+          <Checkbox 
+            id="is-trainer-add" 
+            checked={isTrainerLocal}
+            onCheckedChange={handleTrainerChange}
+            className="mr-2"
+          />
+          <Label htmlFor="is-trainer-add">Detta är en tränare</Label>
+        </div>
 
-        <FormField
-          control={form.control}
-          name="grade"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nivå</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Välj nivå" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="A">Nivå A</SelectItem>
-                  <SelectItem value="B">Nivå B</SelectItem>
-                  <SelectItem value="C">Nivå C</SelectItem>
-                  <SelectItem value="D">Nivå D</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isTrainerLocal && (
+          <FormField
+            control={form.control}
+            name="grade"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nivå</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Välj nivå" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="A">Nivå A</SelectItem>
+                    <SelectItem value="B">Nivå B</SelectItem>
+                    <SelectItem value="C">Nivå C</SelectItem>
+                    <SelectItem value="D">Nivå D</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <PlayerPositionField form={form} />
 
@@ -80,6 +103,10 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
             </FormItem>
           )}
         />
+        
+        <div className="border-t pt-4">
+          <DevelopmentFields form={form} />
+        </div>
 
         <FormButtons onCancel={onCancel} />
       </form>

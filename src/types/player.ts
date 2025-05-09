@@ -49,6 +49,15 @@ export interface Activity {
   league_id?: string; // Database format of league ID
 }
 
+export interface PlayerDevelopment {
+  technical: number;
+  gameUnderstanding: number;
+  passing: number;
+  offensive: number;
+  defensive: number;
+  mentality: number;
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -58,4 +67,5 @@ export interface Player {
   jerseyNumber?: string; // Optional jersey number for the player
   image?: string; // URL to player's image
   matches?: number; // Number of matches the player has participated in
+  development?: PlayerDevelopment; // Added development data
 }

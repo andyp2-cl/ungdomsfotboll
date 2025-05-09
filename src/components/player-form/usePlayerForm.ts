@@ -26,7 +26,15 @@ export function usePlayerForm({
       grade: initialValues?.grade || "A",
       positions: initialValues?.positions || [],
       jerseyNumber: initialValues?.jerseyNumber || "",
-      isTrainer: initialValues?.positions?.includes("TRÄNARE") || false
+      isTrainer: initialValues?.positions?.includes("TRÄNARE") || false,
+      development: initialValues?.development || {
+        technical: 1,
+        gameUnderstanding: 1,
+        passing: 1,
+        offensive: 1,
+        defensive: 1,
+        mentality: 1
+      }
     },
   });
 
@@ -68,6 +76,7 @@ export function usePlayerForm({
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
+      development: data.development
     };
 
     onSave(newPlayer);

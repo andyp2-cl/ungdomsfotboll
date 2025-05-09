@@ -8,6 +8,7 @@ import { PlayerMatchHistory } from "@/components/player-match-history";
 import { X, Edit } from "lucide-react";
 import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
 import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
+import { DevelopmentChart } from "./player-detail/DevelopmentChart";
 
 interface PlayerDetailProps {
   player: Player;
@@ -106,7 +107,7 @@ export function PlayerDetail({
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           <Card>
             <CardHeader className="py-3">
               <CardTitle className="text-base">Grundinformation</CardTitle>
@@ -170,6 +171,10 @@ export function PlayerDetail({
           <LeaguesStatsCard 
             player={player}
             activities={activities}
+          />
+
+          <DevelopmentChart 
+            development={player.development}
           />
         </div>
         
