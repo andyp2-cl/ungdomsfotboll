@@ -54,9 +54,8 @@ export function ActivityParticipants({
     );
   }
 
-  // Calculate avatar size - 50% larger than before
-  const avatarSize = isMobile ? 'h-[13.5px] w-[13.5px]' : 'h-[18px] w-[18px]';
-  const containerSize = isMobile ? 'h-14 w-14' : 'h-18 w-18';
+  // Calculate avatar size based on mobile view
+  const avatarSize = isMobile ? 'h-6 w-6' : 'h-8 w-8';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -84,12 +83,10 @@ export function ActivityParticipants({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar
-                          className={`border-2 border-background flex-shrink-0 ${isMobile ? 'h-[13.5px] w-[13.5px]' : 'h-18 w-18'}`}
-                        >
+                        <Avatar className={`border-2 border-background flex-shrink-0 ${avatarSize}`}>
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="text-xs bg-muted">
-                            <UserRound className={avatarSize} />
+                            <UserRound className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
