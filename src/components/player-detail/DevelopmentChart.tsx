@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DevelopmentChartProps {
   development?: PlayerDevelopment;
+  className?: string;
 }
 
-export function DevelopmentChart({ development }: DevelopmentChartProps) {
+export function DevelopmentChart({ development, className }: DevelopmentChartProps) {
   // Default values if development data is not provided
   const defaultDevelopment: PlayerDevelopment = {
     technical: 1,
@@ -33,12 +34,12 @@ export function DevelopmentChart({ development }: DevelopmentChartProps) {
   ];
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="py-3">
         <CardTitle className="text-base">Utveckling</CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
-        <div className="h-[200px]">
+        <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
               <PolarGrid />

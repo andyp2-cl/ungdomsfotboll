@@ -19,6 +19,24 @@ export function usePlayerForm({
 }: UsePlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(initialValues?.image);
 
+  // Ensure development is properly initialized with required values
+  const defaultDevelopment = {
+    technical: 1,
+    gameUnderstanding: 1,
+    passing: 1,
+    offensive: 1,
+    defensive: 1,
+    mentality: 1
+  };
+
+  const initialDevelopment = initialValues?.development || defaultDevelopment;
+  
+  // Make sure all required properties exist
+  const completeDevelopment = {
+    ...defaultDevelopment,
+    ...initialDevelopment
+  };
+
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -27,14 +45,7 @@ export function usePlayerForm({
       positions: initialValues?.positions || [],
       jerseyNumber: initialValues?.jerseyNumber || "",
       isTrainer: initialValues?.positions?.includes("TRÄNARE") || false,
-      development: initialValues?.development || {
-        technical: 1,
-        gameUnderstanding: 1,
-        passing: 1,
-        offensive: 1,
-        defensive: 1,
-        mentality: 1
-      }
+      development: completeDevelopment
     },
   });
 

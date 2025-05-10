@@ -25,13 +25,6 @@ export const formSchema = z.object({
     offensive: z.number().min(1).max(10).default(1),
     defensive: z.number().min(1).max(10).default(1),
     mentality: z.number().min(1).max(10).default(1)
-  }).default({
-    technical: 1,
-    gameUnderstanding: 1,
-    passing: 1,
-    offensive: 1,
-    defensive: 1,
-    mentality: 1
   })
 });
 

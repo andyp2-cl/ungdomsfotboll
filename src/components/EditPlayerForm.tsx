@@ -25,6 +25,24 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
   const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
   const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
 
+  // Ensure development is properly initialized with required values
+  const defaultDevelopment = {
+    technical: 1,
+    gameUnderstanding: 1,
+    passing: 1,
+    offensive: 1,
+    defensive: 1,
+    mentality: 1
+  };
+
+  const initialDevelopment = player.development || defaultDevelopment;
+  
+  // Make sure all required properties exist
+  const completeDevelopment = {
+    ...defaultDevelopment,
+    ...initialDevelopment
+  };
+
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,14 +51,7 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
       isTrainer,
-      development: player.development || {
-        technical: 1,
-        gameUnderstanding: 1,
-        passing: 1,
-        offensive: 1,
-        defensive: 1,
-        mentality: 1
-      }
+      development: completeDevelopment
     },
   });
 

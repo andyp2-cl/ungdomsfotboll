@@ -107,75 +107,46 @@ export function PlayerDetail({
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">Grundinformation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Namn:</span>
-                  <span className="font-medium">{player.name}</span>
-                </div>
-                {!isCoach && player.grade && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="md:col-span-1">
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-base">Matcher & Aktiviteter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Nivå:</span>
-                    <span className="font-medium">{player.grade}</span>
+                    <span className="text-muted-foreground">Totalt aktiviteter:</span>
+                    <span className="font-medium">{playerActivities.length}</span>
                   </div>
-                )}
-                {player.positions && player.positions.length > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Position:</span>
+                    <span className="text-muted-foreground">Matcher:</span>
                     <span className="font-medium">
-                      {isCoach ? "Tränare" : player.positions.filter(p => p !== 'TRÄNARE').join(", ")}
+                      {playerMatches.length}
                     </span>
                   </div>
-                )}
-                {player.jerseyNumber && !isCoach && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tröjnummer:</span>
-                    <span className="font-medium">{player.jerseyNumber}</span>
+                    <span className="text-muted-foreground">Cuper:</span>
+                    <span className="font-medium">
+                      {playerActivities.filter(a => a.type === "cup").length}
+                    </span>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <LeaguesStatsCard 
+              player={player}
+              activities={activities}
+              className="mt-4"
+            />
+          </div>
           
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">Matcher & Aktiviteter</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Totalt aktiviteter:</span>
-                  <span className="font-medium">{playerActivities.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Matcher:</span>
-                  <span className="font-medium">
-                    {playerMatches.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cuper:</span>
-                  <span className="font-medium">
-                    {playerActivities.filter(a => a.type === "cup").length}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <LeaguesStatsCard 
-            player={player}
-            activities={activities}
-          />
-
-          <DevelopmentChart 
-            development={player.development}
-          />
+          <div className="md:col-span-2">
+            <DevelopmentChart 
+              development={player.development}
+            />
+          </div>
         </div>
         
         <PlayerMatchHistory 
