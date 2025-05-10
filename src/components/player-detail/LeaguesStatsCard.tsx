@@ -60,12 +60,8 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
   const getLeagueName = (leagueId: string): string => {
     const league = leaguesInfo.find(l => l.id === leagueId);
     if (league) {
-      // Format the name to remove duplicate year if present
-      let displayName = league.name;
-      if (displayName.startsWith(league.year.toString())) {
-        displayName = displayName.replace(`${league.year} `, '');
-      }
-      return displayName;
+      // Format the full league name with year
+      return `${league.year} ${league.name}`;
     }
     return `Liga ${leagueIds.indexOf(leagueId) + 1}`;
   };

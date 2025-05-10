@@ -35,13 +35,17 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
     mentality: 1
   };
 
-  const initialDevelopment = player.development || defaultDevelopment;
-  
-  // Make sure all required properties exist
-  const completeDevelopment = {
-    ...defaultDevelopment,
-    ...initialDevelopment
-  };
+  // Make sure all required properties exist by using the default values when properties are missing
+  const initialDevelopment = player.development 
+    ? {
+        technical: player.development.technical ?? defaultDevelopment.technical,
+        gameUnderstanding: player.development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
+        passing: player.development.passing ?? defaultDevelopment.passing,
+        offensive: player.development.offensive ?? defaultDevelopment.offensive,
+        defensive: player.development.defensive ?? defaultDevelopment.defensive,
+        mentality: player.development.mentality ?? defaultDevelopment.mentality
+      }
+    : defaultDevelopment;
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
@@ -51,10 +55,11 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       positions: player.positions || [],
       jerseyNumber: player.jerseyNumber || "",
       isTrainer,
-      development: completeDevelopment
+      development: initialDevelopment
     },
   });
 
+  // Handle form submission
   const handleSubmit = (values: PlayerFormValues) => {
     // Create updated player with form values
     const updatedPlayer: Player = {

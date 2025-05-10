@@ -4,6 +4,7 @@ import { Player } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
+import { getPositionsString } from "@/components/player-list/PlayerFormatting";
 
 interface PlayerCardProps {
   player: Player;
