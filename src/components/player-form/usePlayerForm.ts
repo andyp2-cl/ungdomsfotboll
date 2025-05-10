@@ -91,7 +91,14 @@ export function usePlayerForm({
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
-      development: { ...data.development } // Ensure all required properties are present
+      development: {
+        technical: data.development.technical,
+        gameUnderstanding: data.development.gameUnderstanding,
+        passing: data.development.passing,
+        offensive: data.development.offensive,
+        defensive: data.development.defensive,
+        mentality: data.development.mentality
+      }
     };
 
     onSave(newPlayer);

@@ -65,7 +65,14 @@ export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps
       positions: values.positions as PlayerPosition[],
       jerseyNumber: values.jerseyNumber || undefined,
       image: imagePreview,
-      development: values.development
+      development: {
+        technical: values.development.technical,
+        gameUnderstanding: values.development.gameUnderstanding,
+        passing: values.development.passing,
+        offensive: values.development.offensive,
+        defensive: values.development.defensive,
+        mentality: values.development.mentality
+      }
     };
 
     onSave(updatedPlayer);
