@@ -29,13 +29,17 @@ export function usePlayerForm({
     mentality: 1
   };
 
-  const initialDevelopment = initialValues?.development || defaultDevelopment;
-  
-  // Make sure all required properties exist
-  const completeDevelopment = {
-    ...defaultDevelopment,
-    ...initialDevelopment
-  };
+  // Make sure all required properties exist by using the default values when properties are missing
+  const initialDevelopment = initialValues?.development 
+    ? {
+        technical: initialValues.development.technical ?? defaultDevelopment.technical,
+        gameUnderstanding: initialValues.development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
+        passing: initialValues.development.passing ?? defaultDevelopment.passing,
+        offensive: initialValues.development.offensive ?? defaultDevelopment.offensive,
+        defensive: initialValues.development.defensive ?? defaultDevelopment.defensive,
+        mentality: initialValues.development.mentality ?? defaultDevelopment.mentality
+      }
+    : defaultDevelopment;
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(formSchema),
@@ -45,7 +49,7 @@ export function usePlayerForm({
       positions: initialValues?.positions || [],
       jerseyNumber: initialValues?.jerseyNumber || "",
       isTrainer: initialValues?.positions?.includes("TRÄNARE") || false,
-      development: completeDevelopment
+      development: initialDevelopment
     },
   });
 
@@ -87,7 +91,7 @@ export function usePlayerForm({
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
-      development: data.development
+      development: { ...data.development } // Ensure all required properties are present
     };
 
     onSave(newPlayer);

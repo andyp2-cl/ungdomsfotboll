@@ -66,14 +66,24 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
           </div>
         )}
         
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
           {isCoach ? (
             <Badge className="bg-amber-500 hover:bg-amber-600">
               Tränare
             </Badge>
           ) : (
-            <Badge className={getGradeColor(player.grade)}>
+            <Badge className={getGradeColor(player.grade || '')}>
               Nivå {player.grade}
+            </Badge>
+          )}
+          
+          {/* Add position badges */}
+          {!isCoach && player.positions && player.positions.length > 0 && (
+            <Badge variant="outline" className="bg-white/80">
+              {player.positions
+                .filter(pos => pos !== 'TRÄNARE')
+                .map(formatPosition)
+                .join(', ')}
             </Badge>
           )}
         </div>
@@ -88,16 +98,6 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             </span>
           )}
         </h3>
-        {!isCoach && (
-          <p className="text-sm text-muted-foreground">
-            {player.positions && player.positions.length > 0
-              ? player.positions
-                  .filter(pos => pos !== 'TRÄNARE')
-                  .map(formatPosition)
-                  .join(', ')
-              : 'Ingen position definierad'}
-          </p>
-        )}
       </CardContent>
       
       <CardFooter className="p-4 pt-0 flex justify-between">
