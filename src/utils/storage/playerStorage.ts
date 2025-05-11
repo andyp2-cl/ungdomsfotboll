@@ -18,7 +18,10 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
       throw playersError;
     }
     
+    console.log("Raw player data from database:", playersData);
+    
     const players = playersData.map(formatDatabasePlayer);
+    console.log("Transformed players with development data:", players.map(p => ({name: p.name, development: p.development, image: p.image?.substring(0, 30) + "..." })));
     
     // Then, get player-activity relationships and populate the activities array
     const { data: playerActivitiesData, error: relationshipError } = await supabase
@@ -147,6 +150,8 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
       const formattedPlayer = formatPlayerForDatabase(player);
       
       console.log(`Upserting player: ${player.name} (ID: ${player.id})`);
+      console.log("Development data being saved:", player.development);
+      console.log("Image data available:", player.image ? "Yes" : "No");
       
       // Check if player already exists to determine if this is an update or create
       const { data: existingPlayer } = await supabase
@@ -160,7 +165,7 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
       // Upsert the player
       const { error: upsertError } = await supabase
         .from('players')
-        .upsert(formattedPlayer, { onConflict: 'id' });
+        .upsert(formattedPlayer);
         
       if (upsertError) {
         console.error(`Error upserting player ${player.name}:`, upsertError);

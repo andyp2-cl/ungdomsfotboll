@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
@@ -18,17 +17,13 @@ export function usePlayerActions(
       try {
         setIsLoading(true);
         const storedPlayers = await getStoredPlayers();
-        
-        // Log players loaded for debugging
-        console.log("Players loaded from storage:", storedPlayers.length);
-        
-        // Check if specific players exist - for debugging
-        const alvin = storedPlayers.find(p => p.name.includes("Alvin"));
-        if (alvin) {
-          console.log("Alvin found in loaded players:", alvin);
-        } else {
-          console.warn("Alvin not found in loaded players!");
-        }
+        console.log("Players loaded from storage with development data:", 
+          storedPlayers.slice(0, 3).map(p => ({
+            name: p.name,
+            development: p.development,
+            image: p.image ? "Has image" : "No image" 
+          }))
+        );
         
         setPlayers(storedPlayers);
       } catch (error) {
@@ -49,6 +44,8 @@ export function usePlayerActions(
   const handlePlayerUpdate = async (updatedPlayer: Player) => {
     try {
       console.log("Updating player:", updatedPlayer.name);
+      console.log("With development data:", updatedPlayer.development);
+      console.log("With image data:", updatedPlayer.image ? "Present" : "Not present");
       
       const updatedPlayers = players.map(player => 
         player.id === updatedPlayer.id ? updatedPlayer : player

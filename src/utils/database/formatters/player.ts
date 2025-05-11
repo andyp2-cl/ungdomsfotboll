@@ -1,80 +1,63 @@
 
-import { Player, PlayerPosition } from "@/types/player";
+import { Player } from "@/types/player";
 
-/**
- * Formats a player object from our application format to the database format
- */
-export const formatPlayerForDatabase = (player: any) => {
-  // Ensure positions is properly formatted for database storage
-  let positions = player.positions;
-  
-  // If positions is an array, join it into a string
-  if (Array.isArray(positions)) {
-    positions = positions;
-  } else if (typeof positions === 'string') {
-    // If it's already a string, convert to array (space-separated)
-    positions = positions.split(' ').filter((p: string) => p.trim() !== '');
-  } else {
-    positions = null;
-  }
-  
-  // Create a formatted player object for database storage
+export const formatPlayerForDatabase = (player: Player) => {
+  // Create a database-compatible object
   return {
     id: player.id,
     name: player.name,
-    grade: player.grade || null,
-    position: positions || null,
-    jersey_number: player.jerseyNumber || null,
-    image: player.image || null
+    grade: player.grade,
+    position: player.positions, // Store positions array as-is
+    jersey_number: player.jerseyNumber,
+    image: player.image,
+    development: player.development ? JSON.stringify(player.development) : null // Convert development object to JSON string
   };
 };
 
-/**
- * Formats a player from database format to our application format
- */
-export const formatDatabasePlayer = (dbPlayer: any) => {
-  // Ensure the position is always an array of PlayerPosition
-  let positions: PlayerPosition[] = [];
+export const formatDatabasePlayer = (dbPlayer: any): Player => {
+  let development = null;
   
-  if (dbPlayer.position) {
-    if (Array.isArray(dbPlayer.position)) {
-      // Validate each position is a valid PlayerPosition
-      positions = dbPlayer.position.filter((pos: string) => 
-        ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(pos)
-      ) as PlayerPosition[];
-    } else if (typeof dbPlayer.position === 'string') {
-      // If it contains brackets and quotes, it might be a JSON string
-      if (dbPlayer.position.includes('[') && dbPlayer.position.includes('"')) {
-        try {
-          const parsed = JSON.parse(dbPlayer.position);
-          // Validate each parsed position
-          positions = Array.isArray(parsed) ? 
-            parsed.filter((pos: string) => 
-              ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(pos)
-            ) as PlayerPosition[] : [];
-        } catch (e) {
-          // If parsing fails, treat as space-separated string
-          positions = dbPlayer.position
-            .split(' ')
-            .filter(p => p.trim() !== '' && ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(p)) as PlayerPosition[];
-        }
-      } else {
-        // Treat as space-separated string
-        positions = dbPlayer.position
-          .split(' ')
-          .filter(p => p.trim() !== '' && ["MV", "BACK", "MF", "ANF", "TRÄNARE"].includes(p)) as PlayerPosition[];
-      }
+  // Parse development JSON if it exists
+  if (dbPlayer.development) {
+    try {
+      development = typeof dbPlayer.development === 'string' 
+        ? JSON.parse(dbPlayer.development) 
+        : dbPlayer.development;
+    } catch (e) {
+      console.error("Error parsing player development data:", e);
+      development = null;
     }
   }
   
+  // Default development values if missing or invalid
+  const defaultDevelopment = {
+    technical: 1,
+    gameUnderstanding: 1,
+    passing: 1,
+    offensive: 1,
+    defensive: 1,
+    mentality: 1
+  };
+  
+  // Ensure all development values have defaults applied if missing
+  const completeDevelopment = development ? {
+    technical: development.technical ?? defaultDevelopment.technical,
+    gameUnderstanding: development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
+    passing: development.passing ?? defaultDevelopment.passing,
+    offensive: development.offensive ?? defaultDevelopment.offensive,
+    defensive: development.defensive ?? defaultDevelopment.defensive,
+    mentality: development.mentality ?? defaultDevelopment.mentality
+  } : defaultDevelopment;
+  
+  // Construct the player object with all necessary fields
   return {
     id: dbPlayer.id,
     name: dbPlayer.name,
-    grade: dbPlayer.grade || undefined,
-    positions: positions,
-    jerseyNumber: dbPlayer.jersey_number || undefined,
-    image: dbPlayer.image || undefined,
-    activities: [] // Will be populated separately
+    grade: dbPlayer.grade,
+    positions: Array.isArray(dbPlayer.position) ? dbPlayer.position : (dbPlayer.position ? [dbPlayer.position] : []),
+    jerseyNumber: dbPlayer.jersey_number,
+    image: dbPlayer.image,
+    activities: [], // Activities will be populated separately
+    development: completeDevelopment
   };
 };
-
