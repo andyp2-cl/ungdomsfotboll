@@ -17,7 +17,7 @@ interface LeagueWithMatches extends League {
   wins: number;
   draws: number;
   losses: number;
-  displayName?: string; // Added displayName property
+  displayName?: string;
 }
 
 const fetchLeaguesWithMatches = async (
@@ -55,7 +55,7 @@ const fetchLeaguesWithMatches = async (
       }
     });
     
-    // Fix duplicate year in league name
+    // Clean up league name - remove duplicate year prefix
     let displayName = league.name;
     const yearStr = league.year.toString();
     

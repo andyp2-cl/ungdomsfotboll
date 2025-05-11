@@ -61,7 +61,16 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
     const league = leaguesInfo.find(l => l.id === leagueId);
     if (league) {
       // Format the league name properly without year duplication
-      return `${league.year} ${league.name.replace(/^\d+\s+\d+\s+/, '')}`;
+      const yearStr = league.year.toString();
+      let cleanName = league.name;
+      
+      // Remove year prefix if it duplicates the year
+      if (cleanName.startsWith(yearStr)) {
+        cleanName = cleanName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+        cleanName = cleanName.replace(new RegExp(`^${yearStr}\\s+`), '');
+      }
+      
+      return `${league.year} ${cleanName}`;
     }
     return `Liga ${leagueIds.indexOf(leagueId) + 1}`;
   };

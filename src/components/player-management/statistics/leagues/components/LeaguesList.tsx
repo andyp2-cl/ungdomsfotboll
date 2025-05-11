@@ -48,13 +48,14 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
   
   // Process league names to remove duplicate year prefixes
   const processedLeagues = leagues.map(league => {
-    // Fix duplicate year in league name
+    // Clean up league name - remove duplicate year prefix
     let displayName = league.name;
     
     // Remove year prefix if it duplicates the year
     const yearStr = league.year.toString();
     if (displayName.startsWith(yearStr)) {
-      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), `${yearStr} `);
+      // This pattern matches both "2013 2013" and just a single year prefix
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
       displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
     }
     

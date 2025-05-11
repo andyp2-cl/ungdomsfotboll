@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,7 +197,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
                     {yearData.leagues.map(league => (
                       <div key={league.id} className="flex items-center justify-between border-b pb-3">
                         <div>
-                          <h4 className="font-medium">{league.year} {league.displayName}</h4>
+                          <h4 className="font-medium">{yearData.year} {league.displayName}</h4>
                           <div className="flex items-center space-x-1 mt-1">
                             <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
                             <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>
