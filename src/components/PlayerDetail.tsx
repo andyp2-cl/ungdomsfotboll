@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +30,7 @@ export function PlayerDetail({
   allPlayers,
   onActivitySelect
 }: PlayerDetailProps) {
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const playerActivities = activities.filter(activity => 
