@@ -37,13 +37,16 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
   // Parse development JSON if it exists
   if (dbPlayer.development) {
     try {
-      development = typeof dbPlayer.development === 'string' 
-        ? JSON.parse(dbPlayer.development) 
-        : dbPlayer.development;
+      // Force development to be parsed as a string
+      const devStr = typeof dbPlayer.development === 'string' 
+        ? dbPlayer.development 
+        : JSON.stringify(dbPlayer.development);
       
+      development = JSON.parse(devStr);
       console.log("Successfully parsed development data:", development);
     } catch (e) {
       console.error("Error parsing player development data:", e);
+      console.error("Raw development data:", dbPlayer.development);
       development = null;
     }
   } else {

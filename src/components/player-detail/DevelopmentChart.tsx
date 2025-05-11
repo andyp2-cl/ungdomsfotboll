@@ -38,8 +38,8 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
       <CardHeader className="py-3">
         <CardTitle className="text-base">Utveckling</CardTitle>
       </CardHeader>
-      <CardContent className="pb-4">
-        <div className="h-[300px]">
+      <CardContent className="pb-4 flex-grow">
+        <div className="h-full min-h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
               <PolarGrid />

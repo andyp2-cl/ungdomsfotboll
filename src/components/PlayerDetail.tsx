@@ -145,6 +145,7 @@ export function PlayerDetail({
           <div className="md:col-span-2">
             <DevelopmentChart 
               development={player.development}
+              className="h-full" 
             />
           </div>
         </div>
