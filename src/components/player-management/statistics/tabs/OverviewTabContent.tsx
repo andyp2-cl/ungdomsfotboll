@@ -65,16 +65,19 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       
       return data.map(league => {
         // Fix duplicate year in league name
-        if (league.name.startsWith(league.year.toString())) {
-          const yearStr = league.year.toString();
-          if (league.name.startsWith(`${yearStr} ${yearStr}`)) {
-            return {
-              ...league,
-              name: league.name.substring(yearStr.length + 1)
-            };
-          }
+        let cleanName = league.name;
+        const yearStr = league.year.toString();
+        
+        // Remove year prefix if it duplicates the year
+        if (cleanName.startsWith(yearStr)) {
+          cleanName = cleanName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+          cleanName = cleanName.replace(new RegExp(`^${yearStr}\\s+`), '');
         }
-        return league;
+        
+        return {
+          ...league,
+          name: cleanName
+        };
       });
     },
   });
@@ -195,7 +198,7 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
                     {yearData.leagues.map(league => (
                       <div key={league.id} className="flex items-center justify-between border-b pb-3">
                         <div>
-                          <h4 className="font-medium">{league.displayName}</h4>
+                          <h4 className="font-medium">{league.year} {league.displayName}</h4>
                           <div className="flex items-center space-x-1 mt-1">
                             <Badge variant="success" className="text-xs">V: {league.wins}</Badge>
                             <Badge variant="outline" className="text-xs">O: {league.draws}</Badge>

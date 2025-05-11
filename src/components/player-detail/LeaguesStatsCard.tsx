@@ -60,8 +60,8 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
   const getLeagueName = (leagueId: string): string => {
     const league = leaguesInfo.find(l => l.id === leagueId);
     if (league) {
-      // Format the full league name with year
-      return `${league.year} ${league.name}`;
+      // Format the league name properly without year duplication
+      return `${league.year} ${league.name.replace(/^\d+\s+\d+\s+/, '')}`;
     }
     return `Liga ${leagueIds.indexOf(leagueId) + 1}`;
   };
@@ -92,7 +92,6 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
               outerRadius={40}
               paddingAngle={2}
               dataKey="value"
-              // Remove the label to make it less cluttered
             >
               {leagueData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

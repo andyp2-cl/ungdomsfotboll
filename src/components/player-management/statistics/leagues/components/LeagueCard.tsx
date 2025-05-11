@@ -30,7 +30,7 @@ export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // Format league name correctly - year and name separately, remove duplicate year
+  // Format league name correctly
   const formattedLeagueName = `${league.year} ${league.name}`;
 
   const handleActivityClick = (activity: Activity) => {

@@ -2,12 +2,14 @@
 import { Player } from "@/types/player";
 
 export const formatPlayerForDatabase = (player: Player) => {
+  console.log("Formatting player for database with development data:", player.development);
+  
   // Create a database-compatible object
   return {
     id: player.id,
     name: player.name,
     grade: player.grade,
-    position: player.positions, // Store positions array as-is
+    position: player.positions, // Store positions array as JSON string
     jersey_number: player.jerseyNumber,
     image: player.image,
     development: player.development ? JSON.stringify(player.development) : null // Convert development object to JSON string
@@ -23,10 +25,14 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
       development = typeof dbPlayer.development === 'string' 
         ? JSON.parse(dbPlayer.development) 
         : dbPlayer.development;
+      
+      console.log("Successfully parsed development data:", development);
     } catch (e) {
       console.error("Error parsing player development data:", e);
       development = null;
     }
+  } else {
+    console.log("No development data found for player:", dbPlayer.name);
   }
   
   // Default development values if missing or invalid

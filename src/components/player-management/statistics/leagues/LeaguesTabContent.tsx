@@ -57,9 +57,12 @@ const fetchLeaguesWithMatches = async (
     
     // Fix duplicate year in league name
     let displayName = league.name;
+    const yearStr = league.year.toString();
     
-    if (displayName.startsWith(league.year.toString())) {
-      displayName = displayName.replace(`${league.year} `, '');
+    // Remove year prefix if it duplicates the year
+    if (displayName.startsWith(yearStr)) {
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
     }
     
     return {

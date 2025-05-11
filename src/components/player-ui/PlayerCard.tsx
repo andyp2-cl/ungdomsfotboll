@@ -12,7 +12,7 @@ interface PlayerCardProps {
   onEdit?: () => void;
   action?: React.ReactNode;
   compact?: boolean;
-  showStats?: boolean;
+  showStats?: boolean 
 }
 
 export function PlayerCard({ 
