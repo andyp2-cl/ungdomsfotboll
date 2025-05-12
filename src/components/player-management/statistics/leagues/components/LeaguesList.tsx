@@ -13,7 +13,7 @@ interface LeagueWithMatches {
   wins: number;
   draws: number;
   losses: number;
-  displayName?: string; // Added displayName property
+  displayName?: string;
 }
 
 interface LeaguesListProps {
@@ -34,34 +34,33 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
         return b.year - a.year;
       }
       
+      // Clean names for comparison
+      const aName = a.displayName || a.name;
+      const bName = b.displayName || b.name;
+      
       // Custom sort for division A, A2, A1, B1, etc.
-      const aDivisionLetter = a.name.charAt(0);
-      const bDivisionLetter = b.name.charAt(0);
+      const aDivisionLetter = aName.charAt(0);
+      const bDivisionLetter = bName.charAt(0);
       
       // If division letters are different, sort alphabetically (A before B)
       if (aDivisionLetter !== bDivisionLetter) {
         return aDivisionLetter.localeCompare(bDivisionLetter);
       }
       
-      // If both are A division, handle A, A1, A2 special case
-      if (aDivisionLetter === 'A') {
-        // Plain "A" always comes first
-        if (a.name === 'A' && b.name !== 'A') return -1;
-        if (b.name === 'A' && a.name !== 'A') return 1;
-        
-        // For A1, A2, etc., sort by the number (A2 before A1)
-        const aNumber = parseInt(a.name.substring(1), 10) || 0;
-        const bNumber = parseInt(b.name.substring(1), 10) || 0;
-        
-        // Special case: A2 should come before A1
-        if (aNumber === 2 && bNumber === 1) return -1;
-        if (aNumber === 1 && bNumber === 2) return 1;
-        
-        return aNumber - bNumber;
-      }
+      // Special handling for A/A1/A2 sorting
+      const aIsJustA = aName === 'A';
+      const bIsJustA = bName === 'A';
       
-      // For other divisions, sort normally
-      return a.name.localeCompare(b.name);
+      // If one is just "A", it comes first
+      if (aIsJustA && !bIsJustA) return -1;
+      if (bIsJustA && !aIsJustA) return 1;
+      
+      // Handle A2/A1 specific ordering
+      if (aName === 'A2' && bName === 'A1') return -1;
+      if (aName === 'A1' && bName === 'A2') return 1;
+      
+      // Default to normal string comparison
+      return aName.localeCompare(bName);
     });
   };
   
@@ -103,7 +102,6 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
                   key={league.id}
                   league={{
                     ...league,
-                    // Use displayName if available, otherwise use name
                     name: league.displayName || league.name
                   }}
                   players={players}

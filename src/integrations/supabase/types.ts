@@ -170,6 +170,7 @@ export type Database = {
       players: {
         Row: {
           created_at: string
+          development: string | null
           grade: string
           id: string
           image: string | null
@@ -179,6 +180,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          development?: string | null
           grade: string
           id: string
           image?: string | null
@@ -188,6 +190,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          development?: string | null
           grade?: string
           id?: string
           image?: string | null

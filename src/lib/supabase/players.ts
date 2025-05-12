@@ -31,6 +31,13 @@ export const fetchPlayers = async (): Promise<Player[]> => {
       if (!hasAlvin) {
         console.warn('WARNING: No players with "Alvin" in their name found in database!');
       }
+
+      // Debug development data
+      const playersWithDev = data.filter(p => p.development).length;
+      console.log(`Found ${playersWithDev} players with development data`);
+      if (data.length > 0 && data[0].development) {
+        console.log('Sample development data:', data[0].development);
+      }
     } else {
       console.warn('No players found in database!');
     }
@@ -43,6 +50,30 @@ export const fetchPlayers = async (): Promise<Player[]> => {
         positions = Array.isArray(player.position) ? player.position : [player.position as any];
       }
       
+      // Parse development data with better error handling
+      let developmentData;
+      try {
+        if (player.development) {
+          developmentData = JSON.parse(player.development);
+          console.log(`Successfully parsed development data for player ${player.name}`);
+        } else {
+          console.log(`No development data found for player ${player.name}`);
+        }
+      } catch (err) {
+        console.error(`Error parsing development data for player ${player.name}:`, err);
+        developmentData = undefined;
+      }
+      
+      // Default development values
+      const defaultDevelopment = {
+        technical: 1,
+        gameUnderstanding: 1,
+        passing: 1,
+        offensive: 1,
+        defensive: 1,
+        mentality: 1
+      };
+      
       return {
         id: player.id,
         name: player.name,
@@ -51,7 +82,7 @@ export const fetchPlayers = async (): Promise<Player[]> => {
         jerseyNumber: player.jersey_number || undefined,
         image: player.image || undefined,
         activities: [], // We'll fetch activities separately
-        development: player.development ? JSON.parse(player.development) : undefined
+        development: developmentData || defaultDevelopment
       };
     });
     
@@ -65,6 +96,7 @@ export const fetchPlayers = async (): Promise<Player[]> => {
     if (players.length > 0) {
       const samplePlayerNames = players.slice(0, 5).map(p => p.name);
       console.log('Sample of transformed players:', samplePlayerNames.join(', '));
+      console.log('Sample player development data:', players[0].development);
     }
     
     return players;

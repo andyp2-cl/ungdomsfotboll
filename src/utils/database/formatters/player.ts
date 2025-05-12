@@ -4,16 +4,30 @@ import { Player } from "@/types/player";
 export const formatPlayerForDatabase = (player: Player) => {
   console.log("Formatting player for database with development data:", player.development);
   
-  // Create a database-compatible object with position as string
-  return {
-    id: player.id,
-    name: player.name,
-    grade: player.grade,
-    position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
-    jersey_number: player.jerseyNumber,
-    image: player.image,
-    development: player.development ? JSON.stringify(player.development) : null // Convert development object to JSON string
-  };
+  try {
+    // Create a database-compatible object
+    return {
+      id: player.id,
+      name: player.name,
+      grade: player.grade,
+      position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
+      jersey_number: player.jerseyNumber,
+      image: player.image,
+      development: player.development ? JSON.stringify(player.development) : null // Convert development object to JSON string
+    };
+  } catch (error) {
+    console.error("Error formatting player for database:", error);
+    // Return basic player data without development if there's an error
+    return {
+      id: player.id,
+      name: player.name,
+      grade: player.grade,
+      position: player.positions ? JSON.stringify(player.positions) : null,
+      jersey_number: player.jerseyNumber,
+      image: player.image,
+      development: null
+    };
+  }
 };
 
 export const formatDatabasePlayer = (dbPlayer: any): Player => {

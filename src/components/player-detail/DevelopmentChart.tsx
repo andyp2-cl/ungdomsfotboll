@@ -22,8 +22,17 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
     mentality: 1
   };
   
-  // Use provided development data or defaults
-  const data = development || defaultDevelopment;
+  // Use provided development data or defaults, with fallbacks for each property
+  const data = development ? {
+    technical: development.technical ?? defaultDevelopment.technical,
+    gameUnderstanding: development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
+    passing: development.passing ?? defaultDevelopment.passing,
+    offensive: development.offensive ?? defaultDevelopment.offensive,
+    defensive: development.defensive ?? defaultDevelopment.defensive,
+    mentality: development.mentality ?? defaultDevelopment.mentality
+  } : defaultDevelopment;
+  
+  console.log("Final data used for radar chart:", data);
   
   // Transform data for the radar chart
   const chartData = [
