@@ -22,6 +22,9 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
   
   // Use provided development data or defaults
   const data = development || defaultDevelopment;
+
+  // Debug: Log what development data is being received
+  console.log("DevelopmentChart received data:", data);
   
   // Transform data for the radar chart
   const chartData = [

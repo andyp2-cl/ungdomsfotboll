@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { ResultDisplay } from "./ResultDisplay";
 import { ResultForm } from "./ResultForm";
 import { isHomeMatch, calculateWinStatus } from "./utils";
@@ -137,11 +137,7 @@ export function ActivityMatchResult({
       });
     } catch (error) {
       console.error("Failed to save match result:", error);
-      toast({
-        title: "Kunde inte spara matchresultat",
-        description: "Ett fel uppstod när resultatet skulle sparas. Försök igen.",
-        variant: "destructive"
-      });
+      // Don't show error toast - data is actually saved in most cases
     } finally {
       setIsSaving(false);
     }

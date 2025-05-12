@@ -57,6 +57,7 @@ export function PlayerDetail({
   };
 
   const handlePlayerUpdate = (updatedPlayer: Player) => {
+    console.log("PlayerDetail: Updating player with development data:", updatedPlayer.development);
     onPlayerUpdate(updatedPlayer);
   };
 
@@ -64,6 +65,9 @@ export function PlayerDetail({
     console.log("PlayerDetail: Close button clicked - calling onClose()");
     onClose();
   };
+
+  // Debug: Log the player's development data to diagnose issues
+  console.log("PlayerDetail: Current player development data:", player.development);
 
   return (
     <Card className="mb-6 relative">

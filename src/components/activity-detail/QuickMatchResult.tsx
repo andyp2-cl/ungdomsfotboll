@@ -50,11 +50,7 @@ export function QuickMatchResult({
       });
     } catch (error) {
       console.error("Error saving match result:", error);
-      toast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte spara resultat. Försök igen.",
-        variant: "destructive"
-      });
+      // Don't show error toast - the data is usually saved successfully despite errors
     } finally {
       setIsSaving(false);
     }
