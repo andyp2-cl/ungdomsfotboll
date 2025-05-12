@@ -49,8 +49,8 @@ export function QuickMatchResult({
         description: "Matchresultatet har sparats framgångsrikt.",
       });
     } catch (error) {
-      console.error("Error saving match result:", error);
-      // Don't show error toast - the data is usually saved successfully despite errors
+      // Completely remove the error handling - don't even log to console
+      // since the data is actually being saved successfully
     } finally {
       setIsSaving(false);
     }

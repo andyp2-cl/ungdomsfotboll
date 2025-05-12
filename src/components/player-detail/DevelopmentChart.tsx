@@ -20,20 +20,20 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
     mentality: 1
   };
   
-  // Use provided development data or defaults
-  const data = development || defaultDevelopment;
-
+  // Use provided development data or defaults, ensuring we have a valid object
+  const data = development && typeof development === 'object' ? development : defaultDevelopment;
+  
   // Debug: Log what development data is being received
   console.log("DevelopmentChart received data:", data);
   
   // Transform data for the radar chart
   const chartData = [
-    { subject: "Teknik", value: data.technical, fullMark: 10 },
-    { subject: "Spelförståelse", value: data.gameUnderstanding, fullMark: 10 },
-    { subject: "Passningsspel", value: data.passing, fullMark: 10 },
-    { subject: "Offensiv", value: data.offensive, fullMark: 10 },
-    { subject: "Defensiv", value: data.defensive, fullMark: 10 },
-    { subject: "Mentalitet", value: data.mentality, fullMark: 10 }
+    { subject: "Teknik", value: data.technical || 1, fullMark: 10 },
+    { subject: "Spelförståelse", value: data.gameUnderstanding || 1, fullMark: 10 },
+    { subject: "Passningsspel", value: data.passing || 1, fullMark: 10 },
+    { subject: "Offensiv", value: data.offensive || 1, fullMark: 10 },
+    { subject: "Defensiv", value: data.defensive || 1, fullMark: 10 },
+    { subject: "Mentalitet", value: data.mentality || 1, fullMark: 10 }
   ];
 
   return (
