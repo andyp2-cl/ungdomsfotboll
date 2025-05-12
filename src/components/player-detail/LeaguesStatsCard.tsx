@@ -75,8 +75,66 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
     return `Liga ${leagueIds.indexOf(leagueId) + 1}`;
   };
 
+  // Custom sort function for leagues
+  const sortLeagues = (leagueIds: (string | undefined)[]) => {
+    const leagueInfoMap = new Map<string, LeagueInfo>();
+    
+    // Create a map of league id to league info
+    leagueIds.forEach(id => {
+      if (id) {
+        const league = leaguesInfo.find(l => l.id === id);
+        if (league) {
+          leagueInfoMap.set(id, league);
+        }
+      }
+    });
+    
+    // Sort leagues according to the custom order
+    return [...leagueIds].sort((aId, bId) => {
+      const a = leagueInfoMap.get(aId!);
+      const b = leagueInfoMap.get(bId!);
+      
+      if (!a || !b) return 0;
+      
+      // First sort by year (descending)
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+      
+      // Custom sort for division A, A2, A1, B1, etc.
+      const aDivisionLetter = a.name.charAt(0);
+      const bDivisionLetter = b.name.charAt(0);
+      
+      // If division letters are different, sort alphabetically (A before B)
+      if (aDivisionLetter !== bDivisionLetter) {
+        return aDivisionLetter.localeCompare(bDivisionLetter);
+      }
+      
+      // If both are A division, handle A, A1, A2 special case
+      if (aDivisionLetter === 'A') {
+        // Plain "A" always comes first
+        if (a.name === 'A' && b.name !== 'A') return -1;
+        if (b.name === 'A' && a.name !== 'A') return 1;
+        
+        // For A1, A2, etc., sort by the number (A2 before A1)
+        const aNumber = parseInt(a.name.substring(1), 10) || 0;
+        const bNumber = parseInt(b.name.substring(1), 10) || 0;
+        
+        // Special case: A2 should come before A1
+        if (aNumber === 2 && bNumber === 1) return -1;
+        if (aNumber === 1 && bNumber === 2) return 1;
+        
+        return aNumber - bNumber;
+      }
+      
+      // For other divisions, sort normally
+      return a.name.localeCompare(b.name);
+    });
+  };
+
   // Prepare data for pie chart
-  const leagueData = leagueIds.map(leagueId => ({
+  const sortedLeagueIds = sortLeagues(leagueIds);
+  const leagueData = sortedLeagueIds.map(leagueId => ({
     leagueId,
     value: getLeagueMatches(leagueId!),
     name: getLeagueName(leagueId!)
@@ -122,20 +180,20 @@ export function LeaguesStatsCard({ player, activities, className }: LeaguesStats
           <>
             {renderPieChart()}
             <div className="space-y-2 mt-2">
-              {leagueIds.map((leagueId, index) => {
+              {leagueData.map((league, index) => {
                 const color = COLORS[index % COLORS.length];
                 return (
-                  <div key={leagueId || index} className="flex justify-between items-center">
+                  <div key={league.leagueId || index} className="flex justify-between items-center">
                     <div className="flex items-center">
                       <div 
                         className="w-3 h-3 rounded-full mr-2" 
                         style={{ backgroundColor: color }}
                       />
                       <span className="text-muted-foreground">
-                        {getLeagueName(leagueId!)}:
+                        {league.name}:
                       </span>
                     </div>
-                    <span className="font-medium">{getLeagueMatches(leagueId!)}</span>
+                    <span className="font-medium">{league.value}</span>
                   </div>
                 );
               })}

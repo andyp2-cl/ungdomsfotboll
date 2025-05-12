@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,28 +126,42 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
 
   const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 
-  // Function to sort leagues by priority
+  // Function to sort leagues by priority with the specific order requested
   const sortLeagues = (leagues: any[]) => {
-    // Custom sort order for league names
-    return leagues.sort((a, b) => {
-      // First sort by year descending
+    return [...leagues].sort((a, b) => {
+      // First sort by year (descending)
       if (a.year !== b.year) {
         return b.year - a.year;
       }
       
-      // Sort by division letter (A before B)
-      const aDivision = a.name.charAt(0);
-      const bDivision = b.name.charAt(0);
+      // Custom sort for division A, A2, A1, B1, etc.
+      const aDivisionLetter = a.name.charAt(0);
+      const bDivisionLetter = b.name.charAt(0);
       
-      if (aDivision !== bDivision) {
-        return aDivision.localeCompare(bDivision);
+      // If division letters are different, sort alphabetically (A before B)
+      if (aDivisionLetter !== bDivisionLetter) {
+        return aDivisionLetter.localeCompare(bDivisionLetter);
       }
       
-      // Then by division number if present
-      const aNumber = parseInt(a.name.substring(1), 10) || 0;
-      const bNumber = parseInt(b.name.substring(1), 10) || 0;
+      // If both are A division, handle A, A1, A2 special case
+      if (aDivisionLetter === 'A') {
+        // Plain "A" always comes first
+        if (a.name === 'A' && b.name !== 'A') return -1;
+        if (b.name === 'A' && a.name !== 'A') return 1;
+        
+        // For A1, A2, etc., sort by the number (A2 before A1)
+        const aNumber = parseInt(a.name.substring(1), 10) || 0;
+        const bNumber = parseInt(b.name.substring(1), 10) || 0;
+        
+        // Special case: A2 should come before A1
+        if (aNumber === 2 && bNumber === 1) return -1;
+        if (aNumber === 1 && bNumber === 2) return 1;
+        
+        return aNumber - bNumber;
+      }
       
-      return aNumber - bNumber;
+      // For other divisions, sort normally
+      return a.name.localeCompare(b.name);
     });
   };
 

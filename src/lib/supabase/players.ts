@@ -50,7 +50,8 @@ export const fetchPlayers = async (): Promise<Player[]> => {
         positions: positions,
         jerseyNumber: player.jersey_number || undefined,
         image: player.image || undefined,
-        activities: [] // We'll fetch activities separately
+        activities: [], // We'll fetch activities separately
+        development: player.development ? JSON.parse(player.development) : undefined
       };
     });
     

@@ -10,6 +10,8 @@ interface DevelopmentChartProps {
 }
 
 export function DevelopmentChart({ development, className }: DevelopmentChartProps) {
+  console.log("Development data received in DevelopmentChart:", development);
+  
   // Default values if development data is not provided
   const defaultDevelopment: PlayerDevelopment = {
     technical: 1,
