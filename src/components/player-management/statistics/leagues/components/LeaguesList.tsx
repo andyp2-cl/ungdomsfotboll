@@ -31,16 +31,16 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
     // Custom sort order for league names
     return [...leagues].sort((a, b) => {
       // Sort by division letter (A before B)
-      const aDivision = (a.displayName || a.name).charAt(0);
-      const bDivision = (b.displayName || b.name).charAt(0);
+      const aDivision = a.name.charAt(0);
+      const bDivision = b.name.charAt(0);
       
       if (aDivision !== bDivision) {
         return aDivision.localeCompare(bDivision);
       }
       
       // Then by division number if present
-      const aNumber = parseInt((a.displayName || a.name).substring(1), 10) || 0;
-      const bNumber = parseInt((b.displayName || b.name).substring(1), 10) || 0;
+      const aNumber = parseInt(a.name.substring(1), 10) || 0;
+      const bNumber = parseInt(b.name.substring(1), 10) || 0;
       
       return aNumber - bNumber;
     });
@@ -53,19 +53,11 @@ export function LeaguesList({ leagues, players, onActivitySelect, onPlayerSelect
     
     // Remove year prefix if it duplicates the year
     const yearStr = league.year.toString();
-    
-    // Check for patterns like "2013 2013" (duplicated year)
-    if (displayName.includes(`${yearStr} ${yearStr}`)) {
-      displayName = displayName.replace(`${yearStr} ${yearStr}`, yearStr);
+    if (displayName.startsWith(yearStr)) {
+      // This pattern matches both "2013 2013" and just a single year prefix
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
     }
-    
-    // If name still has year at beginning, remove it entirely (we show year in tabs)
-    if (displayName.startsWith(`${yearStr} `)) {
-      displayName = displayName.substring(yearStr.length + 1);
-    }
-    
-    // Trim any extra spaces
-    displayName = displayName.trim();
     
     return {
       ...league,

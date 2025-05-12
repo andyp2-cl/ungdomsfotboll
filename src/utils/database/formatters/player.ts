@@ -37,22 +37,13 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
   // Parse development JSON if it exists
   if (dbPlayer.development) {
     try {
-      // Handle different data types for development
-      if (typeof dbPlayer.development === 'object' && dbPlayer.development !== null) {
-        // Already an object
-        development = dbPlayer.development;
-      } else if (typeof dbPlayer.development === 'string') {
-        // Parse JSON string
-        development = JSON.parse(dbPlayer.development);
-      } else {
-        console.error("Unknown development data type:", typeof dbPlayer.development);
-        development = null;
-      }
+      development = typeof dbPlayer.development === 'string' 
+        ? JSON.parse(dbPlayer.development) 
+        : dbPlayer.development;
       
-      console.log(`Successfully parsed development data for ${dbPlayer.name}:`, development);
+      console.log("Successfully parsed development data:", development);
     } catch (e) {
-      console.error(`Error parsing player development data for ${dbPlayer.name}:`, e);
-      console.error("Raw development data:", dbPlayer.development);
+      console.error("Error parsing player development data:", e);
       development = null;
     }
   } else {
@@ -69,20 +60,15 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
     mentality: 1
   };
   
-  // Ensure all development values have defaults applied if missing or invalid
-  let completeDevelopment;
-  if (development && typeof development === 'object') {
-    completeDevelopment = {
-      technical: development.technical || defaultDevelopment.technical,
-      gameUnderstanding: development.gameUnderstanding || defaultDevelopment.gameUnderstanding,
-      passing: development.passing || defaultDevelopment.passing,
-      offensive: development.offensive || defaultDevelopment.offensive,
-      defensive: development.defensive || defaultDevelopment.defensive,
-      mentality: development.mentality || defaultDevelopment.mentality
-    };
-  } else {
-    completeDevelopment = defaultDevelopment;
-  }
+  // Ensure all development values have defaults applied if missing
+  const completeDevelopment = development ? {
+    technical: development.technical ?? defaultDevelopment.technical,
+    gameUnderstanding: development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
+    passing: development.passing ?? defaultDevelopment.passing,
+    offensive: development.offensive ?? defaultDevelopment.offensive,
+    defensive: development.defensive ?? defaultDevelopment.defensive,
+    mentality: development.mentality ?? defaultDevelopment.mentality
+  } : defaultDevelopment;
   
   // Construct the player object with all necessary fields
   return {

@@ -1,7 +1,6 @@
 
 import { supabase } from './client';
 import { Player } from '@/types/player';
-import { formatDatabasePlayer } from '@/utils/database/formatters';
 
 // Function to fetch players from Supabase
 export const fetchPlayers = async (): Promise<Player[]> => {
@@ -37,11 +36,26 @@ export const fetchPlayers = async (): Promise<Player[]> => {
     }
     
     // Transform the database format to our application format with more robust error handling
-    const players = (data || []).map(formatDatabasePlayer);
+    const players = (data || []).map(player => {
+      // Set a default position array if none exists
+      let positions;
+      if (player.position) {
+        positions = Array.isArray(player.position) ? player.position : [player.position as any];
+      }
+      
+      return {
+        id: player.id,
+        name: player.name,
+        grade: player.grade as any,
+        positions: positions,
+        jerseyNumber: player.jersey_number || undefined,
+        image: player.image || undefined,
+        activities: [] // We'll fetch activities separately
+      };
+    });
     
     // Debug: Verify the transformation kept all players
     console.log(`Transformed ${players.length} players from database format`);
-    console.log("Sample player development data:", players[0]?.development);
     
     // Check for specific players after transformation
     const hasAlvinAfterTransform = players.some(p => p.name && p.name.toLowerCase().includes('alvin'));

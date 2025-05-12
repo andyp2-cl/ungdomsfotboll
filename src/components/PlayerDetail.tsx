@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,6 @@ export function PlayerDetail({
   allPlayers,
   onActivitySelect
 }: PlayerDetailProps) {
-  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const playerActivities = activities.filter(activity => 
@@ -57,7 +57,6 @@ export function PlayerDetail({
   };
 
   const handlePlayerUpdate = (updatedPlayer: Player) => {
-    console.log("PlayerDetail: Updating player with development data:", updatedPlayer.development);
     onPlayerUpdate(updatedPlayer);
   };
 
@@ -65,9 +64,6 @@ export function PlayerDetail({
     console.log("PlayerDetail: Close button clicked - calling onClose()");
     onClose();
   };
-
-  // Debug: Log the player's development data to diagnose issues
-  console.log("PlayerDetail: Current player development data:", player.development);
 
   return (
     <Card className="mb-6 relative">
@@ -149,7 +145,6 @@ export function PlayerDetail({
           <div className="md:col-span-2">
             <DevelopmentChart 
               development={player.development}
-              className="h-full" 
             />
           </div>
         </div>

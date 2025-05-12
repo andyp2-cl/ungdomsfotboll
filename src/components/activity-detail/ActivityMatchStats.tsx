@@ -40,25 +40,20 @@ export function ActivityMatchStats({
 
   // Update player stats - removed the isHistorical check to allow editing for historical matches
   const updatePlayerStat = (playerId: string, statType: 'goals' | 'assists', value: number) => {
-    try {
-      const updatedActivity = { ...activity };
-      
-      if (!updatedActivity.player_stats) {
-        updatedActivity.player_stats = { goals: {}, assists: {} };
-      }
-      
-      if (!updatedActivity.player_stats[statType]) {
-        updatedActivity.player_stats[statType] = {};
-      }
-      
-      // @ts-ignore (we know this is valid)
-      updatedActivity.player_stats[statType][playerId] = value;
-      
-      updateActivity(updatedActivity);
-    } catch (error) {
-      console.error("Error updating player stats:", error);
-      // Don't show an error toast as the data is usually saved successfully
+    const updatedActivity = { ...activity };
+    
+    if (!updatedActivity.player_stats) {
+      updatedActivity.player_stats = { goals: {}, assists: {} };
     }
+    
+    if (!updatedActivity.player_stats[statType]) {
+      updatedActivity.player_stats[statType] = {};
+    }
+    
+    // @ts-ignore (we know this is valid)
+    updatedActivity.player_stats[statType][playerId] = value;
+    
+    updateActivity(updatedActivity);
   };
 
   return (
