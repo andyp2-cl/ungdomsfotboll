@@ -44,10 +44,11 @@ export function DevelopmentChart({ development, className, minimal = false }: De
   // If we're rendering a minimal version (for tables/lists), just show the chart without any labels
   if (minimal) {
     return (
-      <div className={className || "h-16 w-16"}>
+      <div className={className || "h-20 w-20"}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
             <PolarGrid />
+            <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
             <Radar
               name="Utveckling"
               dataKey="value"

@@ -77,13 +77,31 @@ export function PlayersListContent({
                   onClick={() => onPlayerSelect(player)}
                 >
                   <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {player.jerseyNumber && !player.positions?.includes("TRÄNARE") && (
-                        <span className="text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                          #{player.jerseyNumber}
-                        </span>
-                      )}
-                      <span className="font-medium">{player.name}</span>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-14 w-14 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                        {player.image ? (
+                          <img 
+                            src={player.image} 
+                            alt={player.name} 
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <span className="text-lg font-medium text-muted-foreground">
+                              {player.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {player.jerseyNumber && !player.positions?.includes("TRÄNARE") && (
+                          <span className="text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+                            #{player.jerseyNumber}
+                          </span>
+                        )}
+                        <span className="font-medium">{player.name}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -99,7 +117,7 @@ export function PlayersListContent({
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="h-16 w-16">
+                    <div className="h-20 w-20">
                       <DevelopmentChart development={player.development} minimal={true} />
                     </div>
                   </TableCell>

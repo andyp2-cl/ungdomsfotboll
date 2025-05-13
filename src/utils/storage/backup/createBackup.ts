@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { BackupData } from "./types";
 import { processMatchData } from "./utils";
@@ -90,10 +91,6 @@ export async function createBackup(): Promise<BackupData> {
     const playersWithActivities: (Player & { activities?: string[] })[] = players.map(player => ({
       ...player,
       activities: [], // Initialize with empty array
-      // Convert database fields to expected format
-      grade: player.grade as any,
-      positions: player.position ? JSON.parse(player.position) : undefined,
-      jerseyNumber: player.jersey_number
     }));
     
     // Attach activities to players
@@ -141,6 +138,7 @@ export async function createBackup(): Promise<BackupData> {
     }
     
     console.log("Backup created and stored in localStorage");
+    return backupData;
   } catch (error) {
     console.error("Error creating backup:", error);
     throw error;
