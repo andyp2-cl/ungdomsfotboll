@@ -106,7 +106,7 @@ export function PlayerListTable({
                 </TableCell>
                 <TableCell>
                   <div className="h-16 w-16">
-                    <DevelopmentChart development={player.development} className="h-full w-full" />
+                    <DevelopmentChart development={player.development} minimal={true} />
                   </div>
                 </TableCell>
                 <TableCell className="text-right">

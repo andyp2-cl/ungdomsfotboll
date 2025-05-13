@@ -41,7 +41,7 @@ export function DevelopmentChart({ development, className, minimal = false }: De
     { subject: "Mentalitet", value: data.mentality, fullMark: 10 }
   ];
 
-  // If we're rendering a minimal version (for tables/lists), just show the chart
+  // If we're rendering a minimal version (for tables/lists), just show the chart without any labels
   if (minimal) {
     return (
       <div className={className || "h-16 w-16"}>

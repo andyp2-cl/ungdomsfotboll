@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { BackupData } from "./types";
 import { processMatchData } from "./utils";
@@ -7,27 +6,67 @@ import { Player } from "@/types/player";
 /**
  * Creates a backup of all players and activities data and stores it in localStorage
  */
-export const createBackup = async (): Promise<void> => {
+export async function createBackup(): Promise<BackupData> {
   try {
-    console.log("Starting backup creation process...");
+    console.log("Starting backup creation");
     
-    // Fetch players and activities in parallel
-    const [playersResponse, activitiesResponse] = await Promise.all([
-      supabase.from('players').select('*'),
-      supabase.from('activities').select('*')
-    ]);
+    // Fetch all players
+    const { data: playersData, error: playersError } = await supabase
+      .from('players')
+      .select('*');
     
-    if (playersResponse.error) {
-      console.error("Error fetching players:", playersResponse.error);
-      throw playersResponse.error;
-    }
-    if (activitiesResponse.error) {
-      console.error("Error fetching activities:", activitiesResponse.error);
-      throw activitiesResponse.error;
+    if (playersError) {
+      throw new Error(`Error fetching players: ${playersError.message}`);
     }
     
-    const players = playersResponse.data || [];
-    const activities = activitiesResponse.data || [];
+    // Transform players data to match our app format
+    const players: (Player & { activities?: string[] })[] = playersData.map((player: any) => {
+      // Parse development JSON if it exists
+      let development = null;
+      if (player.development) {
+        try {
+          development = typeof player.development === 'string' 
+            ? JSON.parse(player.development) 
+            : player.development;
+        } catch (e) {
+          console.error("Error parsing development data during backup:", e);
+        }
+      }
+      
+      // Parse positions array if it exists
+      let positions: any[] = [];
+      if (player.position) {
+        try {
+          positions = typeof player.position === 'string' 
+            ? JSON.parse(player.position) 
+            : player.position;
+        } catch (e) {
+          console.error("Error parsing position data during backup:", e);
+        }
+      }
+      
+      return {
+        id: player.id,
+        name: player.name,
+        grade: player.grade,
+        positions: positions,
+        jerseyNumber: player.jersey_number || '',
+        image: player.image,
+        development: development,
+        activities: []
+      };
+    });
+    
+    // Fetch activities
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('*');
+    
+    if (activitiesError) {
+      throw new Error(`Error fetching activities: ${activitiesError.message}`);
+    }
+    
+    const activities = activitiesData || [];
     
     console.log(`Retrieved ${players.length} players and ${activities.length} activities from database`);
     
@@ -106,4 +145,4 @@ export const createBackup = async (): Promise<void> => {
     console.error("Error creating backup:", error);
     throw error;
   }
-};
+}
