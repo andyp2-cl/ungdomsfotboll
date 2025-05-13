@@ -12,7 +12,7 @@ export const formatPlayerForDatabase = (player: Player) => {
       grade: player.grade,
       position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
       jersey_number: player.jerseyNumber,
-      image: player.image,
+      image: player.image, // Preserve image data as-is
       // Ensure development is properly stringified for storage
       development: player.development ? JSON.stringify(player.development) : null
     };
@@ -25,7 +25,7 @@ export const formatPlayerForDatabase = (player: Player) => {
       grade: player.grade,
       position: player.positions ? JSON.stringify(player.positions) : null,
       jersey_number: player.jerseyNumber,
-      image: player.image,
+      image: player.image, // Still preserve image
       development: null
     };
   }
@@ -92,7 +92,7 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
     grade: dbPlayer.grade,
     positions: Array.isArray(positions) ? positions : (positions ? [positions] : []),
     jerseyNumber: dbPlayer.jersey_number,
-    image: dbPlayer.image,
+    image: dbPlayer.image, // Directly use image data
     activities: [], // Activities will be populated separately
     development: completeDevelopment
   };

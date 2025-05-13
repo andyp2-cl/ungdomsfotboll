@@ -70,7 +70,7 @@ export function PlayerListTable({
               >
                 <TableCell>
                   <div className="flex items-center space-x-3">
-                    <div className="h-14 w-14 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                    <div className="h-20 w-20 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                       {player.image ? (
                         <img 
                           src={player.image} 
@@ -79,7 +79,7 @@ export function PlayerListTable({
                           loading="lazy"
                         />
                       ) : (
-                        <UserCircle className="h-8 w-8 text-muted-foreground" />
+                        <UserCircle className="h-12 w-12 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
@@ -105,7 +105,7 @@ export function PlayerListTable({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="h-20 w-20">
+                  <div className="h-28 w-28">
                     <DevelopmentChart development={player.development} minimal={true} />
                   </div>
                 </TableCell>

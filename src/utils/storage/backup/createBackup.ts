@@ -46,13 +46,14 @@ export async function createBackup(): Promise<BackupData> {
         }
       }
       
+      // Directly use the image data without modification
       return {
         id: player.id,
         name: player.name,
         grade: player.grade,
         positions: positions,
         jerseyNumber: player.jersey_number || '',
-        image: player.image,
+        image: player.image, // Keep image as-is
         development: development,
         activities: []
       };

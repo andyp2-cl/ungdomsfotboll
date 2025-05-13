@@ -9,17 +9,17 @@
   "theme_color": "#006633",
   "icons": [
     {
-      "src": "/hassleholmsif-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "/lovable-uploads/c9bfa360-c8b6-43f1-bc3d-4028860c25ec.png",
+      "src": "/lovable-uploads/41508f88-7dd3-4eb4-97a4-b3490738c48a.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/hassleholmsif-apple-touch-icon.png",
+      "src": "/lovable-uploads/41508f88-7dd3-4eb4-97a4-b3490738c48a.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/lovable-uploads/41508f88-7dd3-4eb4-97a4-b3490738c48a.png",
       "sizes": "180x180",
       "type": "image/png"
     }

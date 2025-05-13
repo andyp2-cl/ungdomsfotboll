@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
@@ -47,8 +48,14 @@ export function usePlayerActions(
       console.log("With development data:", updatedPlayer.development);
       console.log("With image data:", updatedPlayer.image ? "Present" : "Not present");
       
+      // Important: Make a deep copy of the player to ensure image data is properly preserved
+      const playerForUpdate = {
+        ...updatedPlayer,
+        development: updatedPlayer.development ? { ...updatedPlayer.development } : null,
+      };
+      
       const updatedPlayers = players.map(player => 
-        player.id === updatedPlayer.id ? updatedPlayer : player
+        player.id === playerForUpdate.id ? playerForUpdate : player
       );
       
       // First update local state
@@ -69,12 +76,12 @@ export function usePlayerActions(
       
       // Update selected player if needed
       setSelectedPlayer(prevSelected => 
-        prevSelected && prevSelected.id === updatedPlayer.id ? updatedPlayer : prevSelected
+        prevSelected && prevSelected.id === playerForUpdate.id ? playerForUpdate : prevSelected
       );
       
       toast({
         title: "Spelaren uppdaterad",
-        description: `${updatedPlayer.name} har uppdaterats.`,
+        description: `${playerForUpdate.name} har uppdaterats.`,
       });
       
       return true; // Return success status

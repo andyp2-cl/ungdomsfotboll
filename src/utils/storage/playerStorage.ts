@@ -1,3 +1,4 @@
+
 import { Player } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
 import { supabase } from '@/lib/supabase';
@@ -23,7 +24,8 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
     const players = playersData.map(formatDatabasePlayer);
     console.log("Transformed players with development data:", players.map(p => ({
       name: p.name, 
-      development: p.development
+      development: p.development,
+      hasImage: p.image ? true : false
     })));
     
     // Then, get player-activity relationships and populate the activities array
@@ -130,6 +132,7 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
   try {
     // Improved error handling and logging for better debugging
     for (const player of players) {
+      // Ensure image data is preserved during formatting
       const formattedPlayer = formatPlayerForDatabase(player);
       
       console.log(`Saving player: ${player.name} (ID: ${player.id})`);
@@ -140,7 +143,7 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
       // Upsert the player
       const { error: upsertError } = await supabase
         .from('players')
-        .upsert(formattedPlayer);
+        .upsert(formattedPlayer, { onConflict: 'id' });
         
       if (upsertError) {
         console.error(`Error upserting player ${player.name}:`, upsertError);
