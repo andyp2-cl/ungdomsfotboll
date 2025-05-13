@@ -70,7 +70,7 @@ export function PlayerListTable({
               >
                 <TableCell>
                   <div className="flex items-center space-x-3">
-                    <div className="h-20 w-20 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                    <div className="h-24 w-24 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                       {player.image ? (
                         <img 
                           src={player.image} 
@@ -105,7 +105,7 @@ export function PlayerListTable({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="h-28 w-28">
+                  <div className="h-36 w-36">
                     <DevelopmentChart development={player.development} minimal={true} />
                   </div>
                 </TableCell>

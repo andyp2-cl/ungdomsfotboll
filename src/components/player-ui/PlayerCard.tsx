@@ -61,7 +61,7 @@ export function PlayerCard({
   if (compact) {
     return (
       <div 
-        className={`flex justify-between items-center p-2 rounded-md border hover:bg-muted/50 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
+        className={`flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
         onClick={onSelect}
       >
         <div className="flex items-center gap-2">
@@ -69,12 +69,12 @@ export function PlayerCard({
             <img 
               src={player.image} 
               alt={player.name} 
-              className="h-12 w-12 rounded-full object-cover"
+              className="h-14 w-14 rounded-full object-cover"
               loading="lazy"
               crossOrigin="anonymous"
             />
           ) : (
-            <UserCircle className="h-12 w-12 text-muted-foreground" />
+            <UserCircle className="h-14 w-14 text-muted-foreground" />
           )}
           <div>
             <div className="font-medium text-sm flex items-center">

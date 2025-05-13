@@ -132,15 +132,14 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
   try {
     // Improved error handling and logging for better debugging
     for (const player of players) {
-      // Ensure image data is preserved during formatting
+      // Format player before saving (ensures image is preserved)
       const formattedPlayer = formatPlayerForDatabase(player);
       
       console.log(`Saving player: ${player.name} (ID: ${player.id})`);
       console.log("Development data being saved:", player.development);
-      console.log("Formatted development data:", formattedPlayer.development);
-      console.log("Image data available:", player.image ? "Yes" : "No");
+      console.log("Image data available for save:", player.image ? "Yes" : "No");
       
-      // Upsert the player
+      // Upsert the player - explicitly handle image data
       const { error: upsertError } = await supabase
         .from('players')
         .upsert(formattedPlayer, { onConflict: 'id' });

@@ -3,6 +3,7 @@ import { Player, PlayerDevelopment } from "@/types/player";
 
 export const formatPlayerForDatabase = (player: Player) => {
   console.log("Formatting player for database with development data:", player.development);
+  console.log("Player image data present:", player.image ? "Yes" : "No");
   
   try {
     // Create a database-compatible object
@@ -12,7 +13,7 @@ export const formatPlayerForDatabase = (player: Player) => {
       grade: player.grade,
       position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
       jersey_number: player.jerseyNumber,
-      image: player.image, // Preserve image data as-is
+      image: player.image, // Ensure image data is stored as-is
       // Ensure development is properly stringified for storage
       development: player.development ? JSON.stringify(player.development) : null
     };
@@ -85,6 +86,9 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
     mentality: development.mentality ?? defaultDevelopment.mentality
   } : defaultDevelopment;
   
+  // Log image data
+  console.log("Player image data from DB:", dbPlayer.image ? "Present" : "Missing");
+  
   // Construct the player object with all necessary fields
   return {
     id: dbPlayer.id,
@@ -92,7 +96,7 @@ export const formatDatabasePlayer = (dbPlayer: any): Player => {
     grade: dbPlayer.grade,
     positions: Array.isArray(positions) ? positions : (positions ? [positions] : []),
     jerseyNumber: dbPlayer.jersey_number,
-    image: dbPlayer.image, // Directly use image data
+    image: dbPlayer.image, // Use image data directly
     activities: [], // Activities will be populated separately
     development: completeDevelopment
   };

@@ -46,12 +46,14 @@ export function usePlayerActions(
     try {
       console.log("Updating player:", updatedPlayer.name);
       console.log("With development data:", updatedPlayer.development);
-      console.log("With image data:", updatedPlayer.image ? "Present" : "Not present");
+      console.log("With image data:", updatedPlayer.image ? "Present (length: " + updatedPlayer.image.length + ")" : "Not present");
       
       // Important: Make a deep copy of the player to ensure image data is properly preserved
       const playerForUpdate = {
         ...updatedPlayer,
         development: updatedPlayer.development ? { ...updatedPlayer.development } : null,
+        // Ensure image is properly preserved
+        image: updatedPlayer.image
       };
       
       const updatedPlayers = players.map(player => 
