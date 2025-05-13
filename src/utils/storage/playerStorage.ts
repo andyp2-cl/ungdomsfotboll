@@ -1,18 +1,18 @@
-
 import { Player } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
-import { supabase, logDatabaseChange } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { formatPlayerForDatabase, formatDatabasePlayer } from "../database/formatters";
+import { formatPlayerForDatabase, formatDatabasePlayer } from "../database/formatters/player";
 
 // Get players from Supabase or use mockdata as fallback
 export const getStoredPlayers = async (): Promise<Player[]> => {
   try {
-    // First, get all players
+    console.log('Fetching players from Supabase...');
+    
     const { data: playersData, error: playersError } = await supabase
       .from('players')
       .select('*');
-
+    
     if (playersError) {
       console.error("Error fetching players:", playersError);
       throw playersError;
@@ -23,8 +23,7 @@ export const getStoredPlayers = async (): Promise<Player[]> => {
     const players = playersData.map(formatDatabasePlayer);
     console.log("Transformed players with development data:", players.map(p => ({
       name: p.name, 
-      development: p.development, 
-      image: p.image?.substring(0, 30) + "..."
+      development: p.development
     })));
     
     // Then, get player-activity relationships and populate the activities array
@@ -93,16 +92,6 @@ export const updatePlayerActivities = async (player: Player): Promise<void> => {
         console.error(`Error deleting relations for player ${player.name}:`, deleteError);
         throw deleteError;
       }
-      
-      // Log the removed relations
-      for (const activityId of activityIdsToRemove) {
-        await logDatabaseChange(
-          'delete',
-          'player_activity',
-          `${player.id}-${activityId}`,
-          `Removed player ${player.name} from activity with ID ${activityId}`
-        );
-      }
     }
     
     // Add new relationships
@@ -127,16 +116,6 @@ export const updatePlayerActivities = async (player: Player): Promise<void> => {
         console.error(`Error inserting relations for player ${player.name}:`, insertError);
         throw insertError;
       }
-      
-      // Log the added relations
-      for (const activityId of newActivityIds) {
-        await logDatabaseChange(
-          'create',
-          'player_activity',
-          `${player.id}-${activityId}`,
-          `Added player ${player.name} to activity with ID ${activityId}`
-        );
-      }
     }
   } catch (error) {
     console.error("Error updating player activities:", error);
@@ -153,19 +132,10 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
     for (const player of players) {
       const formattedPlayer = formatPlayerForDatabase(player);
       
-      console.log(`Upserting player: ${player.name} (ID: ${player.id})`);
+      console.log(`Saving player: ${player.name} (ID: ${player.id})`);
       console.log("Development data being saved:", player.development);
       console.log("Formatted development data:", formattedPlayer.development);
       console.log("Image data available:", player.image ? "Yes" : "No");
-      
-      // Check if player already exists to determine if this is an update or create
-      const { data: existingPlayer } = await supabase
-        .from('players')
-        .select('id')
-        .eq('id', player.id)
-        .single();
-      
-      const isNewPlayer = !existingPlayer;
       
       // Upsert the player
       const { error: upsertError } = await supabase
@@ -176,15 +146,7 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
         console.error(`Error upserting player ${player.name}:`, upsertError);
         throw upsertError;
       } else {
-        console.log(`Successfully upserted player: ${player.name}`);
-        
-        // Log the change
-        await logDatabaseChange(
-          isNewPlayer ? 'create' : 'update',
-          'player',
-          player.id,
-          `${isNewPlayer ? 'Created' : 'Updated'} player: ${player.name}`
-        );
+        console.log(`Successfully saved player: ${player.name}`);
       }
       
       // Handle player-activity relationships
@@ -196,7 +158,6 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
     console.log("Players saved successfully to Supabase");
   } catch (error) {
     console.error("Error saving players to Supabase:", error);
-    // Re-throw to allow caller to handle
     throw error;
   }
 };

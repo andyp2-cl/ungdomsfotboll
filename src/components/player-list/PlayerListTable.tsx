@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
+import { DevelopmentChart } from "../player-detail/DevelopmentChart";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -56,6 +57,7 @@ export function PlayerListTable({
               >
                 Aktiviteter <SortIcon field="activities" sortField={sortField} sortDirection={sortDirection} />
               </TableHead>
+              <TableHead>Utveckling</TableHead>
               <TableHead className="text-right">Åtgärder</TableHead>
             </TableRow>
           </TableHeader>
@@ -75,7 +77,6 @@ export function PlayerListTable({
                           alt={player.name} 
                           className="h-full w-full object-cover"
                           loading="lazy"
-                          crossOrigin="anonymous"
                         />
                       ) : (
                         <UserCircle className="h-6 w-6 text-muted-foreground" />
@@ -102,6 +103,11 @@ export function PlayerListTable({
                   <span className="text-sm">
                     {player.activities?.length || 0} aktiviteter
                   </span>
+                </TableCell>
+                <TableCell>
+                  <div className="h-16 w-16">
+                    <DevelopmentChart development={player.development} className="h-full w-full" />
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   {onPlayerEdit && (

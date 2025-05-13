@@ -7,11 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface DevelopmentChartProps {
   development?: PlayerDevelopment;
   className?: string;
+  minimal?: boolean;
 }
 
-export function DevelopmentChart({ development, className }: DevelopmentChartProps) {
-  console.log("Development data received in DevelopmentChart:", development);
-  
+export function DevelopmentChart({ development, className, minimal = false }: DevelopmentChartProps) {
   // Default values if development data is not provided
   const defaultDevelopment: PlayerDevelopment = {
     technical: 1,
@@ -32,8 +31,6 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
     mentality: development.mentality ?? defaultDevelopment.mentality
   } : defaultDevelopment;
   
-  console.log("Final data used for radar chart:", data);
-  
   // Transform data for the radar chart
   const chartData = [
     { subject: "Teknik", value: data.technical, fullMark: 10 },
@@ -44,6 +41,27 @@ export function DevelopmentChart({ development, className }: DevelopmentChartPro
     { subject: "Mentalitet", value: data.mentality, fullMark: 10 }
   ];
 
+  // If we're rendering a minimal version (for tables/lists), just show the chart
+  if (minimal) {
+    return (
+      <div className={className || "h-16 w-16"}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+            <PolarGrid />
+            <Radar
+              name="Utveckling"
+              dataKey="value"
+              stroke="#2563eb"
+              fill="#3b82f6"
+              fillOpacity={0.6}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  // Full card version for player detail pages
   return (
     <Card className={className}>
       <CardHeader className="py-3">

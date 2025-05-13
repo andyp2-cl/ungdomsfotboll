@@ -1,5 +1,5 @@
 
-import { Player } from "@/types/player";
+import { Player, PlayerDevelopment } from "@/types/player";
 
 export const formatPlayerForDatabase = (player: Player) => {
   console.log("Formatting player for database with development data:", player.development);
@@ -13,7 +13,8 @@ export const formatPlayerForDatabase = (player: Player) => {
       position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
       jersey_number: player.jerseyNumber,
       image: player.image,
-      development: player.development ? JSON.stringify(player.development) : null // Convert development object to JSON string
+      // Ensure development is properly stringified for storage
+      development: player.development ? JSON.stringify(player.development) : null
     };
   } catch (error) {
     console.error("Error formatting player for database:", error);
@@ -31,7 +32,7 @@ export const formatPlayerForDatabase = (player: Player) => {
 };
 
 export const formatDatabasePlayer = (dbPlayer: any): Player => {
-  let development = null;
+  let development: PlayerDevelopment | null = null;
   let positions = [];
   
   // Parse positions JSON if it exists

@@ -15,6 +15,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DevelopmentChart } from "../player-detail/DevelopmentChart";
 
 interface PlayersListContentProps {
   filteredPlayers: Player[];
@@ -64,6 +65,7 @@ export function PlayersListContent({
                 <TableHead>Namn</TableHead>
                 <TableHead>Nivå</TableHead>
                 <TableHead>Aktiviteter</TableHead>
+                <TableHead>Utveckling</TableHead>
                 <TableHead className="text-right">Åtgärder</TableHead>
               </TableRow>
             </TableHeader>
@@ -95,6 +97,11 @@ export function PlayersListContent({
                     <span className="text-sm">
                       {player.activities?.length || 0} aktiviteter
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-16 w-16">
+                      <DevelopmentChart development={player.development} minimal={true} />
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
