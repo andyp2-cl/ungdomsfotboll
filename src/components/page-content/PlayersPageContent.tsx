@@ -25,13 +25,14 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: PlayerGrade[];  // Changed from string[] to PlayerGrade[]
-  viewMode: "list" | "grid" | "stats";  // Explicit union type
+  selectedGrades: PlayerGrade[];
+  viewMode: "list" | "grid" | "stats";
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
   handleBulkPlayerUpdate: (players: Player[]) => Promise<void>;
   handleAddPlayer: (player: Player) => Promise<void>;
+  handleDeletePlayer?: (playerId: string) => Promise<boolean>;
   
   // Activity data
   filteredActivities: Activity[];
@@ -86,6 +87,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
               setIsAddPlayerOpen={props.setIsAddPlayerOpen}
               setEditingPlayer={props.setEditingPlayer}
               onActivitySelect={props.onPlayerActivitySelect}
+              handleDeletePlayer={props.handleDeletePlayer}
             />
           }
           activitiesContent={

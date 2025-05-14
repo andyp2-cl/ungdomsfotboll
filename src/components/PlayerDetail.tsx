@@ -9,6 +9,7 @@ import { X, Edit } from "lucide-react";
 import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
 import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
 import { DevelopmentChart } from "./player-detail/DevelopmentChart";
+import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
 
 interface PlayerDetailProps {
   player: Player;
@@ -19,6 +20,7 @@ interface PlayerDetailProps {
   onBulkUpdate?: (player: Player) => void;
   allPlayers?: Player[];
   onActivitySelect?: (activity: Activity) => void;
+  onDeletePlayer?: (playerId: string) => Promise<boolean>;
 }
 
 export function PlayerDetail({
@@ -29,7 +31,8 @@ export function PlayerDetail({
   onPlayerUpdate,
   onBulkUpdate,
   allPlayers,
-  onActivitySelect
+  onActivitySelect,
+  onDeletePlayer
 }: PlayerDetailProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -154,6 +157,17 @@ export function PlayerDetail({
           activities={activities}
           onActivitySelect={handleActivitySelect}
         />
+        
+        {onDeletePlayer && (
+          <div className="mt-6 flex justify-center">
+            <DeletePlayerDialog 
+              player={player} 
+              onDelete={onDeletePlayer} 
+              onClose={onClose} 
+              variant="button"
+            />
+          </div>
+        )}
       </CardContent>
       
       <EditPlayerDialog 

@@ -1,61 +1,55 @@
 
-import React from "react";
 import { Player } from "@/types/player";
-import { PlayerListTable } from "./PlayerListTable";
+import { PlayerCard } from "@/components/player-ui";
 import { PlayerGridView } from "./PlayerGridView";
-import { usePlayerSorting } from "./PlayerListSorting";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { DeletePlayerDialog } from "@/components/dialogs/DeletePlayerDialog";
 
 interface PlayerListProps {
   players: Player[];
-  viewMode?: "grid" | "list";
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
-  showCoaches?: boolean;
+  onPlayerDelete?: (playerId: string) => Promise<boolean>;
+  view?: "grid" | "list";
 }
 
-export function PlayerList({ 
-  players, 
-  viewMode = "list", 
-  onPlayerSelect, 
+export function PlayerList({
+  players,
+  onPlayerSelect,
   onPlayerEdit,
-  showCoaches = true
+  onPlayerDelete,
+  view = "grid"
 }: PlayerListProps) {
-  const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
-  const isMobile = useIsMobile();
-  
-  // Filter out coaches if showCoaches is false
-  const filteredPlayers = showCoaches 
-    ? players
-    : players.filter(player => {
-        if (!player.positions) return true;
-        return !player.positions.includes('TRÄNARE');
-      });
-    
-  // Apply sorting
-  const sortedPlayers = sortPlayers(filteredPlayers);
+  if (view === "list") {
+    return <PlayerGridView players={players} onSelect={onPlayerSelect} />;
+  }
 
-  // Force grid view on mobile devices
-  const effectiveViewMode = isMobile ? "grid" : viewMode;
-
-  if (effectiveViewMode === "grid") {
+  if (players.length === 0) {
     return (
-      <PlayerGridView 
-        players={sortedPlayers} 
-        onPlayerSelect={onPlayerSelect} 
-        onPlayerEdit={onPlayerEdit} 
-      />
+      <div className="text-center py-8 text-muted-foreground">
+        Inga spelare hittades
+      </div>
     );
   }
 
   return (
-    <PlayerListTable 
-      players={sortedPlayers} 
-      sortField={sortField} 
-      sortDirection={sortDirection} 
-      toggleSort={toggleSort} 
-      onPlayerSelect={onPlayerSelect} 
-      onPlayerEdit={onPlayerEdit} 
-    />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {players.map((player) => (
+        <PlayerCard 
+          key={player.id} 
+          player={player} 
+          onClick={() => onPlayerSelect(player)}
+          actions={
+            onPlayerDelete ? (
+              <DeletePlayerDialog
+                player={player}
+                onDelete={onPlayerDelete}
+                onClose={() => {}}
+                variant="icon"
+              />
+            ) : undefined
+          }
+        />
+      ))}
+    </div>
   );
 }

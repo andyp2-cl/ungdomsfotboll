@@ -27,6 +27,7 @@ interface PlayerTabContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   setEditingPlayer: (player: Player | null) => void;
   onActivitySelect?: (activity: Activity) => void;
+  handleDeletePlayer?: (playerId: string) => Promise<boolean>;
 }
 
 export function PlayerTabContent({
@@ -46,7 +47,8 @@ export function PlayerTabContent({
   handleBulkPlayerUpdate,
   setIsAddPlayerOpen,
   setEditingPlayer,
-  onActivitySelect
+  onActivitySelect,
+  handleDeletePlayer
 }: PlayerTabContentProps) {
   return (
     <div className="space-y-6">
@@ -82,6 +84,7 @@ export function PlayerTabContent({
           onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
           allPlayers={players}
           onActivitySelect={onActivitySelect}
+          onDeletePlayer={handleDeletePlayer}
         />
       ) : viewMode === "stats" ? (
         <TeamStatistics 
@@ -94,6 +97,7 @@ export function PlayerTabContent({
           players={filteredPlayers}
           onPlayerSelect={setSelectedPlayer}
           onPlayerEdit={setEditingPlayer}
+          onPlayerDelete={handleDeletePlayer}
         />
       )}
     </div>

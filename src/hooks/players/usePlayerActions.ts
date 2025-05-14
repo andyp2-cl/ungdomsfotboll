@@ -1,7 +1,6 @@
-
 import { useEffect } from "react";
 import { Player } from "@/types/player";
-import { getStoredPlayers, savePlayers } from "@/utils/storage";
+import { getStoredPlayers, savePlayers, deletePlayer } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export function usePlayerActions(
@@ -158,9 +157,48 @@ export function usePlayerActions(
     }
   };
 
+  const handleDeletePlayer = async (playerId: string) => {
+    try {
+      // First update local state
+      setPlayers(players.filter(p => p.id !== playerId));
+      
+      // Clear selected player if it's the one being deleted
+      setSelectedPlayer(prev => prev && prev.id === playerId ? null : prev);
+      
+      // Then delete from database
+      const success = await deletePlayer(playerId);
+      
+      if (success) {
+        toast({
+          title: "Spelare borttagen",
+          description: "Spelaren har tagits bort från systemet.",
+        });
+        return true;
+      } else {
+        throw new Error("Failed to delete player from database");
+      }
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      
+      // If database delete fails, reload players to restore state
+      setIsLoading(true);
+      const storedPlayers = await getStoredPlayers();
+      setPlayers(storedPlayers);
+      setIsLoading(false);
+      
+      toast({
+        title: "Kunde inte ta bort spelaren",
+        description: "Ett fel uppstod när spelaren skulle tas bort.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer
+    handleAddPlayer,
+    handleDeletePlayer
   };
 }
