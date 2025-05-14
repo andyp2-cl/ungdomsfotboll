@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -45,13 +44,13 @@ interface MainTabsProps {
   setIsAddActivityOpen: (isOpen: boolean) => void;
   selectedActivityTypes: string[];
   handleActivityTypeChange: (type: string) => void;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => void;
-  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => void;
+  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => void;
 }
 
@@ -110,6 +109,41 @@ export function MainTabs({
     saveActiveTab(value); // Save active tab to storage
   };
   
+  const renderActivityTabContent = () => {
+    // Skapa wrappers för callbacks som förväntas returnera Promise
+    const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
+      await handleActivityUpdate(activity);
+    };
+
+    // Skapa en wrapper för handleMatchResultUpdate om det behövs
+    const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
+      await handleMatchResultUpdate(activityId, homeScore, awayScore);
+    };
+    
+    return (
+      <ActivityTabContent
+        players={players}
+        activities={activities}
+        filteredActivities={filteredActivities}
+        filteredHistoricalActivities={filteredHistoricalActivities}
+        selectedActivity={selectedActivity}
+        selectedActivityTypes={selectedActivityTypes}
+        handleActivityTypeChange={handleActivityTypeChange}
+        setSelectedActivity={setSelectedActivity}
+        handleActivityUpdate={handleActivityUpdateWrapper}
+        handleKioskAssignmentUpdate={handleKioskUpdate}
+        handleDeleteActivity={handleDelete}
+        handleImportedActivities={handleImportActivities}
+        handleClearHistoricalActivities={handleClearHistorical}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        setEditingActivity={setEditingActivity}
+        isAddActivityOpen={isAddActivityOpen}
+        handleMatchResultUpdate={handleMatchResultUpdateWrapper}
+        onPlayerSelect={player => onPlayerActivitySelect && onPlayerActivitySelect(player)}
+      />
+    );
+  };
+  
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
@@ -151,26 +185,7 @@ export function MainTabs({
         </TabsContent>
         
         <TabsContent value="activities" className="mt-0">
-          <ActivityTabContent 
-            players={players}
-            activities={activities}
-            filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
-            selectedActivity={selectedActivity}
-            selectedActivityTypes={selectedActivityTypes}
-            handleActivityTypeChange={handleActivityTypeChange}
-            setSelectedActivity={setSelectedActivity}
-            handleActivityUpdate={handleActivityUpdate}
-            handleKioskAssignmentUpdate={handleKioskUpdate}
-            handleDeleteActivity={handleDelete}
-            handleImportedActivities={handleImportActivities}
-            handleClearHistoricalActivities={handleClearHistorical}
-            setIsAddActivityOpen={setIsAddActivityOpen}
-            setEditingActivity={setEditingActivity}
-            isAddActivityOpen={isAddActivityOpen}
-            handleMatchResultUpdate={handleMatchResultUpdate}
-            onPlayerSelect={setSelectedPlayer}
-          />
+          {renderActivityTabContent()}
         </TabsContent>
       </Tabs>
       

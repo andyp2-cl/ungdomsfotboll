@@ -32,6 +32,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    handleDeletePlayer, // Import the handleDeletePlayer function from usePlayers hook
     
     // Activity data
     activities,
@@ -84,6 +85,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleAddPlayer(player);
   };
 
+  // Wrapper for handleDeletePlayer to match expected Promise<void> signature
+  const handleDeletePlayerWrapper = async (playerId: string): Promise<void> => {
+    await handleDeletePlayer(playerId);
+  };
+
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
     if (mode === "grid" || mode === "list" || mode === "stats") {
@@ -122,6 +128,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handlePlayerUpdate={handlePlayerUpdateWrapper}
         handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
         handleAddPlayer={handleAddPlayerWrapper}
+        handleDeletePlayer={handleDeletePlayerWrapper} // Pass the wrapper function
         
         // Activity data
         filteredActivities={filteredActivities}

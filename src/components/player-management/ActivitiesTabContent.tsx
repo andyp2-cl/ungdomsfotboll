@@ -1,10 +1,7 @@
 
-import React from "react";
-import { Player, Activity } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { ActivityManagement } from "@/components/ActivityManagement";
-import { ActivityTabContent as NewActivityTabContent } from "@/components/tabs/activity-tab";
+import React from 'react';
+import { Player, Activity } from '@/types/player';
+import { ActivityTabContent } from '@/components/tabs/activity-tab/ActivityTabContent'; 
 
 interface ActivitiesTabContentProps {
   activities: Activity[];
@@ -16,14 +13,16 @@ interface ActivitiesTabContentProps {
   isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
-  handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
-  setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
-  handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
-  handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
-  handleClearHistoricalActivities: () => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  setIsAddActivityOpen: (isOpen: boolean) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
+  handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  handleDelete: (activityId: string) => Promise<boolean>;
+  handleImportActivities: (activities: Activity[]) => Promise<boolean>;
+  handleClearHistorical: () => Promise<boolean>;
+  handleAddActivity: (activity: Activity) => Promise<void>;
+  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect: (player: Player) => void; // Lägg till detta för att hantera val av spelare
 }
 
 export function ActivitiesTabContent({
@@ -36,27 +35,20 @@ export function ActivitiesTabContent({
   isAddActivityOpen,
   handleActivityTypeChange,
   setSelectedActivity,
-  handleActivityUpdate,
-  setIsAddActivityOpen,
   setEditingActivity,
-  handleKioskAssignmentUpdate,
-  handleDeleteActivity,
-  handleImportedActivities,
-  handleClearHistoricalActivities,
-  handleMatchResultUpdate
+  setIsAddActivityOpen,
+  handleActivityUpdate,
+  handleKioskUpdate,
+  handleDelete,
+  handleImportActivities,
+  handleClearHistorical,
+  handleAddActivity,
+  handleMatchResultUpdate,
+  onPlayerSelect, // Inkludera denna prop
 }: ActivitiesTabContentProps) {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Aktiviteter</h2>
-        <Button onClick={() => setIsAddActivityOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Lägg till aktivitet
-        </Button>
-      </div>
-      
-      {/* Use the new refactored ActivityTabContent component */}
-      <NewActivityTabContent
+      <ActivityTabContent
         activities={activities}
         players={players}
         selectedActivity={selectedActivity}
@@ -66,14 +58,16 @@ export function ActivitiesTabContent({
         isAddActivityOpen={isAddActivityOpen}
         handleActivityTypeChange={handleActivityTypeChange}
         setSelectedActivity={setSelectedActivity}
-        handleActivityUpdate={handleActivityUpdate}
-        setIsAddActivityOpen={setIsAddActivityOpen}
         setEditingActivity={setEditingActivity}
-        handleKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-        handleDeleteActivity={handleDeleteActivity}
-        handleImportedActivities={handleImportedActivities}
-        handleClearHistoricalActivities={handleClearHistoricalActivities}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        handleActivityUpdate={handleActivityUpdate}
+        handleKioskUpdate={handleKioskUpdate}
+        handleDelete={handleDelete}
+        handleImportActivities={handleImportActivities}
+        handleClearHistorical={handleClearHistorical}
+        handleAddActivity={handleAddActivity}
         handleMatchResultUpdate={handleMatchResultUpdate}
+        onPlayerSelect={onPlayerSelect} // Skicka vidare onPlayerSelect
       />
     </div>
   );
