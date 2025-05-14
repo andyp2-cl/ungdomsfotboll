@@ -2,8 +2,6 @@
 import React from "react";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { PlayerList } from "@/components/player-ui/PlayerList";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
 import { PlayerGridView } from "@/components/player-list/PlayerGridView";
 import { Card } from "@/components/ui/card";
 import { 
@@ -16,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DevelopmentChart } from "../player-detail/DevelopmentChart";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface PlayersListContentProps {
   filteredPlayers: Player[];
@@ -142,13 +142,12 @@ export function PlayersListContent({
     );
   }
 
+  // For grid view, return the PlayerGridView component
   return (
-    <PlayerList
+    <PlayerGridView
       players={sortedPlayers}
       onPlayerSelect={onPlayerSelect}
       onPlayerEdit={onPlayerEdit}
-      compact={isMobile}
-      showStats={true}
     />
   );
 }
