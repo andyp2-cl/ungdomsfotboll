@@ -24,6 +24,7 @@ interface PlayerTabContentProps {
   setViewMode: (mode: "list" | "grid" | "stats") => void;
   handlePlayerUpdate: (player: Player) => void;
   handleBulkPlayerUpdate: (players: Player[]) => void;
+  handleDeletePlayer?: (playerId: string) => Promise<void>;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   setEditingPlayer: (player: Player | null) => void;
   onActivitySelect?: (activity: Activity) => void;
@@ -44,6 +45,7 @@ export function PlayerTabContent({
   setViewMode,
   handlePlayerUpdate,
   handleBulkPlayerUpdate,
+  handleDeletePlayer,
   setIsAddPlayerOpen,
   setEditingPlayer,
   onActivitySelect
@@ -79,6 +81,7 @@ export function PlayerTabContent({
           onClose={() => setSelectedPlayer(null)}
           onEdit={setEditingPlayer}
           onPlayerUpdate={handlePlayerUpdate}
+          onPlayerDelete={handleDeletePlayer}
           onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
           allPlayers={players}
           onActivitySelect={onActivitySelect}

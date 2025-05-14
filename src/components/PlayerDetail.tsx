@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayerHeader } from "@/components/PlayerHeader";
 import { PlayerMatchHistory } from "@/components/player-match-history";
-import { X, Edit } from "lucide-react";
+import { X, Edit, Trash2 } from "lucide-react";
 import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
+import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
 import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
 import { DevelopmentChart } from "./player-detail/DevelopmentChart";
 
@@ -16,6 +17,7 @@ interface PlayerDetailProps {
   onClose: () => void;
   onEdit: (player: Player) => void;
   onPlayerUpdate: (player: Player) => void;
+  onPlayerDelete?: (playerId: string) => Promise<void>;
   onBulkUpdate?: (player: Player) => void;
   allPlayers?: Player[];
   onActivitySelect?: (activity: Activity) => void;
@@ -27,11 +29,13 @@ export function PlayerDetail({
   onClose,
   onEdit,
   onPlayerUpdate,
+  onPlayerDelete,
   onBulkUpdate,
   allPlayers,
   onActivitySelect
 }: PlayerDetailProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
@@ -56,6 +60,10 @@ export function PlayerDetail({
     setIsEditDialogOpen(true);
   };
 
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
   const handlePlayerUpdate = (updatedPlayer: Player) => {
     onPlayerUpdate(updatedPlayer);
   };
@@ -76,6 +84,17 @@ export function PlayerDetail({
         >
           <Edit className="h-4 w-4" />
         </Button>
+        {onPlayerDelete && (
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleDeleteClick}
+            title={isCoach ? "Ta bort tränare" : "Ta bort spelare"}
+            className="text-red-500 hover:text-red-600 hover:bg-red-100"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
         <Button 
           variant="ghost" 
           size="icon" 
@@ -162,6 +181,15 @@ export function PlayerDetail({
         onOpenChange={setIsEditDialogOpen}
         onPlayerUpdate={handlePlayerUpdate}
       />
+      
+      {onPlayerDelete && (
+        <DeletePlayerDialog
+          player={player}
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirmDelete={onPlayerDelete}
+        />
+      )}
     </Card>
   );
 }
