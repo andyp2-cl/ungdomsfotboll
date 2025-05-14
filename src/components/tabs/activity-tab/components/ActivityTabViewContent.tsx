@@ -87,7 +87,7 @@ export function ActivityTabViewContent({
           activities={content.activities || activities} 
           onClose={() => {
             console.log("Closing player detail from ActivityTabViewContent");
-            onPlayerSelect("");  // Pass empty string to clear selected player
+            onPlayerSelect("");
           }}
           onEdit={(player) => console.log("Edit player not implemented in this context", player)}
           onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}

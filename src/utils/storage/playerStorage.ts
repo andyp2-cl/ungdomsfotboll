@@ -1,3 +1,4 @@
+
 import { Player } from "@/types/player";
 import { mockPlayers } from "@/data/mockData";
 import { supabase } from '@/lib/supabase';
@@ -160,40 +161,5 @@ export const savePlayers = async (players: Player[]): Promise<void> => {
   } catch (error) {
     console.error("Error saving players to Supabase:", error);
     throw error;
-  }
-};
-
-// Delete player from Supabase
-export const deletePlayer = async (playerId: string): Promise<boolean> => {
-  console.log(`Attempting to delete player with ID: ${playerId}`);
-  
-  try {
-    // First delete all player-activity relationships
-    const { error: relationsError } = await supabase
-      .from('player_activities')
-      .delete()
-      .eq('player_id', playerId);
-      
-    if (relationsError) {
-      console.error(`Error deleting player activities for player ${playerId}:`, relationsError);
-      throw relationsError;
-    }
-    
-    // Then delete the player
-    const { error: playerError } = await supabase
-      .from('players')
-      .delete()
-      .eq('id', playerId);
-      
-    if (playerError) {
-      console.error(`Error deleting player ${playerId}:`, playerError);
-      throw playerError;
-    }
-    
-    console.log(`Successfully deleted player with ID: ${playerId}`);
-    return true;
-  } catch (error) {
-    console.error("Error deleting player:", error);
-    return false;
   }
 };

@@ -34,7 +34,7 @@ export function usePlayers() {
     selectedPositions
   });
 
-  const { handlePlayerUpdate, handleBulkPlayerUpdate, handleAddPlayer, handleDeletePlayer } = usePlayerActions(
+  const { handlePlayerUpdate, handleBulkPlayerUpdate, handleAddPlayer } = usePlayerActions(
     players,
     setPlayers,
     setIsLoading,
@@ -81,7 +81,6 @@ export function usePlayers() {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer,
     isMobile: isMobile
   };
 }

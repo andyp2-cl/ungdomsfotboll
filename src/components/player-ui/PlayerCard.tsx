@@ -1,125 +1,195 @@
 
+import React from "react";
 import { Player } from "@/types/player";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { BadgeCheck } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { UserCircle } from "lucide-react";
+import { getPositionsString } from "@/components/player-list/PlayerFormatting";
 
-export interface PlayerCardProps {
+interface PlayerCardProps {
   player: Player;
-  className?: string;
-  onClick?: () => void;
-  onSelect?: () => void; 
+  onSelect?: () => void;
   onEdit?: () => void;
   action?: React.ReactNode;
-  selected?: boolean;
-  showGrade?: boolean;
-  actions?: React.ReactNode;
   compact?: boolean;
-  showStats?: boolean;
+  showStats?: boolean 
 }
 
-export function PlayerCard({
-  player,
-  className,
-  onClick,
-  onSelect,
-  onEdit,
-  action,
-  selected = false,
-  showGrade = true,
-  actions,
+export function PlayerCard({ 
+  player, 
+  onSelect, 
+  onEdit, 
+  action, 
   compact = false,
-  showStats = false
+  showStats = false 
 }: PlayerCardProps) {
+  // Get real activity count that excludes kiosk duty assignments
+  const getActivityCount = () => {
+    if (!player.activities) return 0;
+    return player.activities.length;
+  };
+
+  const getGradeColor = (grade: string) => {
+    switch (grade) {
+      case 'A':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'B':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'C':
+        return 'bg-orange-500 hover:bg-orange-600';
+      case 'D':
+        return 'bg-purple-500 hover:bg-purple-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const formatPosition = (position: string) => {
+    if (position === 'TRÄNARE') return 'Tränare';
+    
+    let formattedPosition = position
+      .replace('MV', 'Målvakt')
+      .replace('BACK', 'Back')
+      .replace('MF', 'Mittfält')
+      .replace('ANF', 'Anfall');
+    
+    return formattedPosition;
+  };
+
   const isCoach = player.positions?.includes('TRÄNARE');
-  const shouldShowGrade = showGrade && !isCoach;
-  
-  // Use onClick or onSelect if provided
-  const handleClick = onClick || onSelect;
+
+  if (compact) {
+    return (
+      <div 
+        className={`flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
+        onClick={onSelect}
+      >
+        <div className="flex items-center gap-2">
+          {player.image ? (
+            <img 
+              src={player.image} 
+              alt={player.name} 
+              className="h-14 w-14 rounded-full object-cover"
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <UserCircle className="h-14 w-14 text-muted-foreground" />
+          )}
+          <div>
+            <div className="font-medium text-sm flex items-center">
+              {player.name}
+              {player.jerseyNumber && !isCoach && (
+                <span className="ml-1 text-xs bg-gray-200 text-gray-800 px-1 py-0.5 rounded-full">
+                  #{player.jerseyNumber}
+                </span>
+              )}
+            </div>
+            {!isCoach && player.positions && (
+              <div className="text-xs text-muted-foreground">
+                {player.positions
+                  .filter(pos => pos !== 'TRÄNARE')
+                  .map(formatPosition)
+                  .join(', ')}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {isCoach ? (
+            <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+              Tränare
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs">
+              Nivå {player.grade}
+            </Badge>
+          )}
+          
+          {action && (
+            <div onClick={e => e.stopPropagation()}>
+              {action}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card 
-      className={cn(
-        "overflow-hidden transition-all",
-        selected && "ring-2 ring-primary",
-        handleClick && "cursor-pointer hover:shadow-md",
-        compact && "!p-0",
-        className
-      )} 
-      onClick={handleClick}
+      className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
+      onClick={onSelect}
     >
-      <CardHeader className="p-0 relative overflow-hidden h-40 bg-muted">
+      <div className="aspect-[4/3] bg-muted relative">
         {player.image ? (
           <img 
             src={player.image} 
             alt={player.name} 
             className="w-full h-full object-cover"
+            loading="lazy"
+            crossOrigin="anonymous"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-            <span className="text-4xl font-bold text-muted-foreground">{player.name?.charAt(0) || "?"}</span>
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <UserCircle className="h-30 w-30 text-muted-foreground/50" />
           </div>
         )}
         
-        {isCoach && (
-          <div className="absolute top-2 right-2 bg-primary text-primary-foreground py-0.5 px-2 rounded text-xs font-medium">
-            Tränare
-          </div>
-        )}
-        
-        {shouldShowGrade && player.grade && (
-          <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground py-0.5 px-2 rounded text-xs font-medium">
-            Nivå {player.grade}
-          </div>
-        )}
-        
-        {actions && (
-          <div className="absolute top-2 right-2">
-            {actions}
-          </div>
-        )}
+        <div className="absolute top-2 right-2">
+          {isCoach ? (
+            <Badge className="bg-amber-500 hover:bg-amber-600">
+              Tränare
+            </Badge>
+          ) : (
+            <Badge className={getGradeColor(player.grade || '')}>
+              Nivå {player.grade}
+            </Badge>
+          )}
+        </div>
         
         {action && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 left-2" onClick={e => e.stopPropagation()}>
             {action}
           </div>
         )}
-      </CardHeader>
+      </div>
       
-      <CardContent className="pt-3 pb-2">
-        <div className="font-medium truncate">{player.name}</div>
-        
-        <div className="text-sm text-muted-foreground flex items-center space-x-2">
-          {player.positions?.filter(position => position !== 'TRÄNARE').map((position, idx) => (
-            <span key={idx} className="inline-block">
-              {position}
-              {idx < (player.positions?.filter(p => p !== 'TRÄNARE').length || 0) - 1 ? ', ' : ''}
+      <CardContent className="p-4">
+        <h3 className="font-semibold truncate">
+          {player.name}
+          {player.jerseyNumber && !isCoach && (
+            <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+              #{player.jerseyNumber}
             </span>
-          ))}
-        </div>
-        
-        {player.jerseyNumber && (
-          <div className="text-xs text-muted-foreground mt-1">
-            #{player.jerseyNumber}
-          </div>
+          )}
+        </h3>
+        {!isCoach && (
+          <p className="text-sm text-muted-foreground">
+            {player.positions && player.positions.length > 0
+              ? player.positions
+                  .filter(pos => pos !== 'TRÄNARE')
+                  .map(formatPosition)
+                  .join(', ')
+              : 'Ingen position definierad'}
+          </p>
         )}
       </CardContent>
       
-      {player.development && showStats && (
-        <CardFooter className="pt-0 pb-3 px-4 flex items-center">
-          <div className="text-xs text-muted-foreground flex items-center">
-            <BadgeCheck className="h-3 w-3 mr-1 text-primary" />
-            <span>Utveckling: {Math.round((
-              (player.development.technical || 0) +
-              (player.development.gameUnderstanding || 0) +
-              (player.development.passing || 0) +
-              (player.development.offensive || 0) +
-              (player.development.defensive || 0) +
-              (player.development.mentality || 0)
-            ) / 6)}/10</span>
-          </div>
-        </CardFooter>
-      )}
+      <CardFooter className="p-4 pt-0 flex justify-between">
+        <span className="text-xs text-muted-foreground">
+          {getActivityCount() === 0
+            ? "Inga aktiviteter"
+            : `${getActivityCount()} aktiviteter`}
+        </span>
+        
+        {showStats && player.matches !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            {player.matches} matcher
+          </span>
+        )}
+      </CardFooter>
     </Card>
   );
 }

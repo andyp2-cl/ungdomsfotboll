@@ -33,8 +33,7 @@ export function usePlayers(initialTab?: string) {
     handleGradeChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
-    handleAddPlayer,
-    handleDeletePlayer
+    handleAddPlayer
   } = usePlayersData();
 
   // Get activity state and actions
@@ -151,7 +150,6 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer,
     
     // Activity data
     activities,
@@ -165,7 +163,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper,
+    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
