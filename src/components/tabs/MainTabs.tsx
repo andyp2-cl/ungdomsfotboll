@@ -2,14 +2,14 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
-import { ActivityTabContent } from "@/components/tabs/activity-tab";
+import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
 import { PageDialogs } from "./PageDialogs";
-import { Player, Activity } from "@/types/player";
+import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
-import { setActiveTab } from "@/utils/storage";
+import { saveActiveTab } from "@/utils/storage/tabs";
 
 interface MainTabsProps {
-  tabs: TabItem[];
+  tabs?: TabItem[];
   activeTabId: string;
   onTabChange: (tabId: string) => void;
 
@@ -19,10 +19,10 @@ interface MainTabsProps {
   filteredPlayers: Player[];
   editingPlayer: Player | null;
   searchQuery: string;
-  selectedGrades: string[];
+  selectedGrades: PlayerGrade[];
   viewMode: "list" | "grid" | "stats";
   setSearchQuery: (query: string) => void;
-  handleGradeChange: (grade: any) => void;
+  handleGradeChange: (grade: PlayerGrade) => void;
   setSelectedPlayer: (player: Player | null) => void;
   setEditingPlayer: (player: Player | null) => void;
   setViewMode: (mode: "list" | "grid" | "stats") => void;
@@ -56,7 +56,10 @@ interface MainTabsProps {
 }
 
 export function MainTabs({
-  tabs,
+  tabs = [
+    { id: "players", label: "Spelare", icon: null },
+    { id: "activities", label: "Aktiviteter", icon: null },
+  ],
   activeTabId,
   onTabChange,
   
@@ -104,7 +107,7 @@ export function MainTabs({
   
   const handleTabChange = (value: string) => {
     onTabChange(value);
-    setActiveTab(value); // Save active tab to storage
+    saveActiveTab(value); // Save active tab to storage
   };
   
   return (
@@ -155,14 +158,17 @@ export function MainTabs({
             filteredHistoricalActivities={filteredHistoricalActivities}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
-            onTypeChange={handleActivityTypeChange}
-            onSelectActivity={setSelectedActivity}
-            onKioskUpdate={handleKioskUpdate}
-            onDeleteActivity={handleDelete}
-            onImportActivities={handleImportActivities}
-            onClearHistoricalActivities={handleClearHistorical}
-            onAddActivityClick={() => setIsAddActivityOpen(true)}
-            onMatchResultUpdate={handleMatchResultUpdate}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={handleActivityUpdate}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportedActivities={handleImportActivities}
+            handleClearHistoricalActivities={handleClearHistorical}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            isAddActivityOpen={isAddActivityOpen}
+            handleMatchResultUpdate={handleMatchResultUpdate}
             onPlayerSelect={setSelectedPlayer}
           />
         </TabsContent>

@@ -27,6 +27,7 @@ interface ActivityTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect: (player: Player | null) => void;
 }
 
 export function ActivityTabContent({
@@ -46,7 +47,8 @@ export function ActivityTabContent({
   handleDeleteActivity,
   handleImportedActivities,
   handleClearHistoricalActivities,
-  handleMatchResultUpdate
+  handleMatchResultUpdate,
+  onPlayerSelect
 }: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -72,7 +74,8 @@ export function ActivityTabContent({
     handleDeleteActivity,
     handleActivityUpdate,
     handleKioskAssignmentUpdate,
-    handleMatchResultUpdate
+    handleMatchResultUpdate,
+    onPlayerSelect
   });
 
   const handleRefresh = async () => {
