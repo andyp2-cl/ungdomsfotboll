@@ -20,7 +20,7 @@ export function PlayerList({
   view = "grid"
 }: PlayerListProps) {
   if (view === "list") {
-    return <PlayerGridView players={players} onSelect={onPlayerSelect} />;
+    return <PlayerGridView players={players} onPlayerSelect={onPlayerSelect} onPlayerEdit={onPlayerEdit} />;
   }
 
   if (players.length === 0) {

@@ -8,31 +8,45 @@ export interface PlayerCardProps {
   player: Player;
   className?: string;
   onClick?: () => void;
+  onSelect?: () => void; // Add this prop to match expected usage
+  onEdit?: () => void; // Add this prop to match expected usage
+  action?: React.ReactNode; // Add this prop to match expected usage
   selected?: boolean;
   showGrade?: boolean;
   actions?: React.ReactNode;
+  compact?: boolean; // Add this prop to match expected usage
+  showStats?: boolean; // Add this prop to match expected usage
 }
 
 export function PlayerCard({
   player,
   className,
   onClick,
+  onSelect, // Support this prop
+  onEdit, // Support this prop
+  action, // Support this prop
   selected = false,
   showGrade = true,
-  actions
+  actions,
+  compact = false, // Support this prop
+  showStats = false // Support this prop
 }: PlayerCardProps) {
   const isCoach = player.positions?.includes('TRÄNARE');
   const shouldShowGrade = showGrade && !isCoach;
+  
+  // Use onClick or onSelect if provided
+  const handleClick = onClick || onSelect;
 
   return (
     <Card 
       className={cn(
         "overflow-hidden transition-all",
         selected && "ring-2 ring-primary",
-        onClick && "cursor-pointer hover:shadow-md",
+        handleClick && "cursor-pointer hover:shadow-md",
+        compact && "!p-0",
         className
       )} 
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardHeader className="p-0 relative overflow-hidden h-40 bg-muted">
         {player.image ? (
@@ -64,6 +78,12 @@ export function PlayerCard({
             {actions}
           </div>
         )}
+        
+        {action && (
+          <div className="absolute top-2 right-2">
+            {action}
+          </div>
+        )}
       </CardHeader>
       
       <CardContent className="pt-3 pb-2">
@@ -87,15 +107,18 @@ export function PlayerCard({
         )}
       </CardContent>
       
-      {player.development && (
+      {player.development && showStats && (
         <CardFooter className="pt-0 pb-3 px-4 flex items-center">
           <div className="text-xs text-muted-foreground flex items-center">
-            {player.development.potential && (
-              <>
-                <BadgeCheck className="h-3 w-3 mr-1 text-primary" />
-                <span>Potential: {player.development.potential}</span>
-              </>
-            )}
+            <BadgeCheck className="h-3 w-3 mr-1 text-primary" />
+            <span>Utveckling: {Math.round((
+              (player.development.technical || 0) +
+              (player.development.gameUnderstanding || 0) +
+              (player.development.passing || 0) +
+              (player.development.offensive || 0) +
+              (player.development.defensive || 0) +
+              (player.development.mentality || 0)
+            ) / 6)}/10</span>
           </div>
         </CardFooter>
       )}

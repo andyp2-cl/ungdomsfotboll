@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerGridViewProps {
   players: Player[];
-  onPlayerSelect: (player: Player) => void;
+  onPlayerSelect: (player: Player) => void; // Changed from onSelect to onPlayerSelect
   onPlayerEdit?: (player: Player) => void;
 }
 
