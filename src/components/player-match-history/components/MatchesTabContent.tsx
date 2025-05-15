@@ -11,9 +11,15 @@ interface MatchesTabContentProps {
   player: Player;
   matches: Activity[];
   onActivitySelect: (activity: Activity) => void;
+  allPlayers?: Player[]; // Add allPlayers prop
 }
 
-export function MatchesTabContent({ player, matches, onActivitySelect }: MatchesTabContentProps) {
+export function MatchesTabContent({ 
+  player, 
+  matches, 
+  onActivitySelect,
+  allPlayers = [] // Default to empty array
+}: MatchesTabContentProps) {
   const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
   
   // Helper function to format match result
@@ -52,15 +58,26 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
   const getParticipatingPlayers = (activity: Activity | null) => {
     if (!activity || !activity.participants) return [];
     
-    // We assume that onActivitySelect has access to all players
-    // This is a simplified approach - ideally we'd use a context or hook to get players
-    return activity.participants.map(playerId => {
-      return {
-        id: playerId,
-        name: playerId === player.id ? player.name : `Player ${playerId.substring(0, 4)}`,
-        grade: player.grade
-      } as Player;
-    });
+    // Find actual player objects from the participants IDs
+    return activity.participants
+      .map(playerId => {
+        // First check in allPlayers prop
+        if (allPlayers && allPlayers.length > 0) {
+          const foundPlayer = allPlayers.find(p => p.id === playerId);
+          if (foundPlayer) return foundPlayer;
+        }
+        
+        // Always include the current player if they're a participant
+        if (playerId === player.id) return player;
+        
+        // If we don't have the player data, create a minimal placeholder
+        return {
+          id: playerId,
+          name: `Unknown Player`, // Default name if we don't have the player data
+          grade: undefined
+        } as Player;
+      })
+      .filter(Boolean); // Remove any undefined entries
   };
 
   const handleRowClick = (match: Activity) => {

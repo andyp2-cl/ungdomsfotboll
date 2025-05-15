@@ -10,19 +10,13 @@ interface ActivitiesTabContentProps {
   selectedActivityTypes: string[];
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
-  isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   setEditingActivity: (activity: Activity | null) => void;
-  setIsAddActivityOpen: (isOpen: boolean) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
-  handleImportActivities: (activities: Activity[]) => Promise<boolean>;
-  handleClearHistorical: () => Promise<boolean>;
-  handleAddActivity: (activity: Activity) => Promise<void>;
-  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect: (player: Player) => void; // Lägg till detta för att hantera val av spelare
+  onPlayerSelect: (player: Player) => void;
 }
 
 export function ActivitiesTabContent({
@@ -32,19 +26,13 @@ export function ActivitiesTabContent({
   selectedActivityTypes,
   filteredActivities,
   filteredHistoricalActivities,
-  isAddActivityOpen,
   handleActivityTypeChange,
   setSelectedActivity,
   setEditingActivity,
-  setIsAddActivityOpen,
   handleActivityUpdate,
   handleKioskUpdate,
   handleDelete,
-  handleImportActivities,
-  handleClearHistorical,
-  handleAddActivity,
-  handleMatchResultUpdate,
-  onPlayerSelect, // Inkludera denna prop
+  onPlayerSelect,
 }: ActivitiesTabContentProps) {
   return (
     <div className="space-y-6">
@@ -55,19 +43,12 @@ export function ActivitiesTabContent({
         selectedActivityTypes={selectedActivityTypes}
         filteredActivities={filteredActivities}
         filteredHistoricalActivities={filteredHistoricalActivities}
-        isAddActivityOpen={isAddActivityOpen}
         handleActivityTypeChange={handleActivityTypeChange}
         setSelectedActivity={setSelectedActivity}
-        setEditingActivity={setEditingActivity}
-        setIsAddActivityOpen={setIsAddActivityOpen}
+        handleDelete={handleDelete}
+        onPlayerSelect={onPlayerSelect}
         handleActivityUpdate={handleActivityUpdate}
         handleKioskUpdate={handleKioskUpdate}
-        handleDelete={handleDelete}
-        handleImportActivities={handleImportActivities}
-        handleClearHistorical={handleClearHistorical}
-        handleAddActivity={handleAddActivity}
-        handleMatchResultUpdate={handleMatchResultUpdate}
-        onPlayerSelect={onPlayerSelect} // Skicka vidare onPlayerSelect
       />
     </div>
   );

@@ -172,6 +172,7 @@ export function PlayerDetail({
           player={player} 
           activities={activities}
           onActivitySelect={handleActivitySelect}
+          allPlayers={allPlayers} // Pass allPlayers to PlayerMatchHistory
         />
       </CardContent>
       

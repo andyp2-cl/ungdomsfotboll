@@ -58,10 +58,10 @@ export function ActivityPreview({
             )}
           </div>
           
-          {activity.location_name && (
+          {activity.location && activity.location.name && (
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground" />
-              <span>{activity.location_name}</span>
+              <span>{activity.location.name}</span>
             </div>
           )}
         </div>

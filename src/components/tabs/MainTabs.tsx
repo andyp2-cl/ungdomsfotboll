@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -161,8 +162,11 @@ export function MainTabs({
             setSelectedActivity={setSelectedActivity}
             handleDelete={handleDelete}
             onPlayerSelect={(player) => {
-              if (onPlayerActivitySelect && player && 'date' in player) {
-                onPlayerActivitySelect(player as Activity);
+              if (onPlayerActivitySelect) {
+                // Check if the player has a date property (which suggests it's an Activity)
+                if (player && 'date' in player) {
+                  onPlayerActivitySelect(player as unknown as Activity);
+                }
               }
             }}
             handleActivityUpdate={handleActivityUpdate}
