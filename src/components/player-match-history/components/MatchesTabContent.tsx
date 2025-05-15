@@ -22,6 +22,11 @@ export function MatchesTabContent({
 }: MatchesTabContentProps) {
   const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
   
+  // Sort matches by date (newest first)
+  const sortedMatches = [...matches].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
   // Helper function to format match result
   const formatResult = (match: Activity) => {
     if (match.homeScore !== undefined && match.awayScore !== undefined && 
@@ -97,7 +102,7 @@ export function MatchesTabContent({
 
   return (
     <>
-      {matches.length > 0 ? (
+      {sortedMatches.length > 0 ? (
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -110,7 +115,7 @@ export function MatchesTabContent({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matches.map(match => {
+              {sortedMatches.map(match => {
                 const result = formatResult(match);
                 
                 return (
@@ -166,7 +171,7 @@ export function MatchesTabContent({
       )}
       
       <Dialog open={selectedMatch !== null} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl p-0">
           {selectedMatch && (
             <ActivityPreview 
               activity={selectedMatch}
