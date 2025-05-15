@@ -1,68 +1,91 @@
 
-import React from "react";
+import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { calculatePlayerStats } from "../utils/stats-calculator";
+import { Trophy, Star } from "lucide-react";
+import { calculatePlayerStats } from '../utils/stats-calculator';
 
 interface StatsTabContentProps {
   player: Player;
-  activities: Activity[];
+  matches: Activity[];
 }
 
-export function StatsTabContent({ player, activities }: StatsTabContentProps) {
-  const stats = calculatePlayerStats(player, activities);
-  
+export function StatsTabContent({ player, matches }: StatsTabContentProps) {
+  const { 
+    totalGoals, totalAssists, 
+    matchesWithGoals, matchesWithAssists,
+    wins, draws, losses
+  } = calculatePlayerStats(player, matches);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Matcher</CardTitle>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center">
+            <Trophy className="h-4 w-4 mr-2 text-amber-500" />
+            Mål & Assist
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <dl className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Spelade</span>
-              <span className="font-medium">{stats.matches}</span>
+              <dt>Matcher:</dt>
+              <dd>{matches.length}</dd>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Vinster</span>
-              <span className="font-medium">{stats.wins}</span>
+            <div className="flex justify-between font-medium">
+              <dt>Mål:</dt>
+              <dd>{totalGoals}</dd>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Förluster</span>
-              <span className="font-medium">{stats.losses}</span>
+            <div className="flex justify-between font-medium">
+              <dt>Assist:</dt>
+              <dd>{totalAssists}</dd>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Oavgjorda</span>
-              <span className="font-medium">{stats.draws}</span>
+            <div className="flex justify-between text-muted-foreground text-sm">
+              <dt>Mål per match:</dt>
+              <dd>{matches.length > 0 ? (totalGoals / matches.length).toFixed(1) : "0"}</dd>
             </div>
-          </div>
+            <div className="flex justify-between text-muted-foreground text-sm">
+              <dt>Assist per match:</dt>
+              <dd>{matches.length > 0 ? (totalAssists / matches.length).toFixed(1) : "0"}</dd>
+            </div>
+            <div className="flex justify-between text-muted-foreground text-sm">
+              <dt>Matcher med mål:</dt>
+              <dd>{matchesWithGoals} ({matches.length > 0 ? Math.round((matchesWithGoals / matches.length) * 100) : 0}%)</dd>
+            </div>
+          </dl>
         </CardContent>
       </Card>
       
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Mål & Assist</CardTitle>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center">
+            <Star className="h-4 w-4 mr-2 text-blue-500" />
+            Resultat
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <dl className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Mål</span>
-              <span className="font-medium">{stats.goals}</span>
+              <dt>Matcher:</dt>
+              <dd>{matches.length}</dd>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Assist</span>
-              <span className="font-medium">{stats.assists}</span>
+            <div className="flex justify-between font-medium text-green-600">
+              <dt>Vinster:</dt>
+              <dd>{wins}</dd>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Mål per match</span>
-              <span className="font-medium">
-                {stats.matches > 0 
-                  ? (stats.goals / stats.matches).toFixed(2) 
-                  : '0.00'}
-              </span>
+            <div className="flex justify-between font-medium text-amber-600">
+              <dt>Oavgjorda:</dt>
+              <dd>{draws}</dd>
             </div>
-          </div>
+            <div className="flex justify-between font-medium text-red-600">
+              <dt>Förluster:</dt>
+              <dd>{losses}</dd>
+            </div>
+            <div className="flex justify-between text-muted-foreground text-sm">
+              <dt>Vinstprocent:</dt>
+              <dd>{matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0}%</dd>
+            </div>
+          </dl>
         </CardContent>
       </Card>
     </div>

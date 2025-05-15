@@ -45,13 +45,13 @@ interface MainTabsProps {
   setIsAddActivityOpen: (isOpen: boolean) => void;
   selectedActivityTypes: string[];
   handleActivityTypeChange: (type: string) => void;
-  handleActivityUpdate: (activity: Activity) => Promise<void>;
+  handleActivityUpdate: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => void;
-  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => void;
   onPlayerActivitySelect: (activity: Activity) => void;
 }
 
@@ -151,26 +151,25 @@ export function MainTabs({
         </TabsContent>
         
         <TabsContent value="activities" className="mt-0">
-          <ActivityTabContent
+          <ActivityTabContent 
+            players={players}
             activities={activities}
             filteredActivities={filteredActivities}
             filteredHistoricalActivities={filteredHistoricalActivities}
             selectedActivity={selectedActivity}
             selectedActivityTypes={selectedActivityTypes}
-            players={players}
             handleActivityTypeChange={handleActivityTypeChange}
             setSelectedActivity={setSelectedActivity}
-            handleDelete={handleDelete}
-            onPlayerSelect={(player) => {
-              if (onPlayerActivitySelect) {
-                // Check if the player has a date property (which suggests it's an Activity)
-                if (player && 'date' in player) {
-                  onPlayerActivitySelect(player as unknown as Activity);
-                }
-              }
-            }}
             handleActivityUpdate={handleActivityUpdate}
-            handleKioskUpdate={handleKioskUpdate}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportedActivities={handleImportActivities}
+            handleClearHistoricalActivities={handleClearHistorical}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            isAddActivityOpen={isAddActivityOpen}
+            handleMatchResultUpdate={handleMatchResultUpdate}
+            onPlayerSelect={setSelectedPlayer}
           />
         </TabsContent>
       </Tabs>

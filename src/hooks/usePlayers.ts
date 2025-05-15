@@ -127,7 +127,6 @@ export function usePlayers(initialTab?: string) {
     setActiveTab('activities');
   };
 
-  // Make sure we export the handleDeletePlayer function
   return {
     // Tab state
     activeTab,
@@ -151,7 +150,7 @@ export function usePlayers(initialTab?: string) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer, // Säkerställ att vi exporterar denna funktion
+    handleDeletePlayer,
     
     // Activity data
     activities,
@@ -165,7 +164,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper,
+    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,

@@ -1,32 +1,17 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from '../utils/date-formatter';
-import { ActivityPreview } from "@/components/activity-preview/ActivityPreview";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface MatchesTabContentProps {
   player: Player;
   matches: Activity[];
   onActivitySelect: (activity: Activity) => void;
-  allPlayers?: Player[]; // Add allPlayers prop
 }
 
-export function MatchesTabContent({ 
-  player, 
-  matches, 
-  onActivitySelect,
-  allPlayers = [] // Default to empty array
-}: MatchesTabContentProps) {
-  const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
-  
-  // Sort matches by date (newest first)
-  const sortedMatches = [...matches].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-  
+export function MatchesTabContent({ player, matches, onActivitySelect }: MatchesTabContentProps) {
   // Helper function to format match result
   const formatResult = (match: Activity) => {
     if (match.homeScore !== undefined && match.awayScore !== undefined && 
@@ -59,50 +44,9 @@ export function MatchesTabContent({
     return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
-  // Get participating players for the selected match
-  const getParticipatingPlayers = (activity: Activity | null) => {
-    if (!activity || !activity.participants) return [];
-    
-    // Find actual player objects from the participants IDs
-    return activity.participants
-      .map(playerId => {
-        // First check in allPlayers prop
-        if (allPlayers && allPlayers.length > 0) {
-          const foundPlayer = allPlayers.find(p => p.id === playerId);
-          if (foundPlayer) return foundPlayer;
-        }
-        
-        // Always include the current player if they're a participant
-        if (playerId === player.id) return player;
-        
-        // If we don't have the player data, create a minimal placeholder
-        return {
-          id: playerId,
-          name: `Unknown Player`, // Default name if we don't have the player data
-          grade: undefined
-        } as Player;
-      })
-      .filter(Boolean); // Remove any undefined entries
-  };
-
-  const handleRowClick = (match: Activity) => {
-    setSelectedMatch(match);
-  };
-
-  const handleClose = () => {
-    setSelectedMatch(null);
-  };
-
-  const handleViewFullActivity = () => {
-    if (selectedMatch) {
-      onActivitySelect(selectedMatch);
-      setSelectedMatch(null);
-    }
-  };
-
   return (
     <>
-      {sortedMatches.length > 0 ? (
+      {matches.length > 0 ? (
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -115,14 +59,14 @@ export function MatchesTabContent({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedMatches.map(match => {
+              {matches.map(match => {
                 const result = formatResult(match);
                 
                 return (
                   <TableRow 
                     key={match.id} 
                     className="cursor-pointer hover:bg-accent/10"
-                    onClick={() => handleRowClick(match)}
+                    onClick={() => onActivitySelect(match)}
                   >
                     <TableCell>
                       <div className="flex flex-col">
@@ -169,19 +113,6 @@ export function MatchesTabContent({
           Spelaren har inte deltagit i några matcher ännu
         </div>
       )}
-      
-      <Dialog open={selectedMatch !== null} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-2xl p-0">
-          {selectedMatch && (
-            <ActivityPreview 
-              activity={selectedMatch}
-              participatingPlayers={getParticipatingPlayers(selectedMatch)}
-              onClose={handleClose}
-              onViewFullActivity={handleViewFullActivity}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

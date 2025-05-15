@@ -35,7 +35,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer, // Inkludera denna från usePlayers
+    handleDeletePlayer,
     
     // Activity data
     activities,
@@ -87,7 +87,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleAddPlayer(player);
   };
 
-  const handleDeletePlayerWrapper = async (playerId: string): Promise<void> => {
+  const handleDeletePlayerWrapper = async (playerId: string) => {
     await handleDeletePlayer(playerId);
   };
 

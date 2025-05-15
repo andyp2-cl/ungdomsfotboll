@@ -3,8 +3,6 @@ import { useEffect } from "react";
 import { Player } from "@/types/player";
 import { getStoredPlayers, savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
-// Importera supabase-klienten för att direkt ta bort spelare
-import { supabase } from "@/lib/supabase";
 
 export function usePlayerActions(
   players: Player[],
@@ -169,33 +167,9 @@ export function usePlayerActions(
       }
 
       const playerName = playerToDelete.name;
-      
-      console.log(`Deleting player with ID: ${playerId}, Name: ${playerName}`);
-      
-      // 1. Delete player-activity relationships from Supabase
-      const { error: relationshipError } = await supabase
-        .from('player_activities')
-        .delete()
-        .eq('player_id', playerId);
-        
-      if (relationshipError) {
-        console.error("Error deleting player activity relationships:", relationshipError);
-        throw relationshipError;
-      }
-      
-      // 2. Delete player from Supabase
-      const { error: playerDeleteError } = await supabase
-        .from('players')
-        .delete()
-        .eq('id', playerId);
-        
-      if (playerDeleteError) {
-        console.error("Error deleting player from database:", playerDeleteError);
-        throw playerDeleteError;
-      }
-      
-      // 3. Update local state
       const updatedPlayers = players.filter(player => player.id !== playerId);
+      
+      // First update local state
       setPlayers(updatedPlayers);
       
       // Clear selected player if it was the deleted one
@@ -203,9 +177,12 @@ export function usePlayerActions(
         prevSelected && prevSelected.id === playerId ? null : prevSelected
       );
       
+      // Then save to database
+      await savePlayers(updatedPlayers);
+      
       toast({
         title: "Spelaren borttagen",
-        description: `${playerName} har tagits bort permanent.`,
+        description: `${playerName} har tagits bort.`,
       });
       
       return true;
