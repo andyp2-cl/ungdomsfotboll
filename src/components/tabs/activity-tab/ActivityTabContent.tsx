@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player, Activity } from '@/types/player';
 import { useActivityTabViews } from '@/hooks/useActivityTabViews';
@@ -13,7 +14,9 @@ interface ActivityTabContentProps {
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
   handleDelete: (activityId: string) => Promise<boolean>;
-  onPlayerSelect?: (player: Player) => void; // Make this optional to resolve type error
+  onPlayerSelect?: (player: Player) => void;
+  handleActivityUpdate?: (activity: Activity) => Promise<void>;
+  handleKioskUpdate?: (activityId: string, playerId?: string) => Promise<boolean>;
 }
 
 export function ActivityTabContent({
@@ -26,22 +29,23 @@ export function ActivityTabContent({
   handleActivityTypeChange,
   setSelectedActivity,
   handleDelete,
-  onPlayerSelect, // Include this prop
+  onPlayerSelect,
+  handleActivityUpdate,
+  handleKioskUpdate
 }: ActivityTabContentProps) {
   const { 
-    handleActivityUpdate, 
-    handleKioskUpdate 
+    activeView,
+    handleViewChange,
   } = useActivityTabViews({
     activities,
+    players,
+    selectedActivity,
+    setSelectedActivity,
     filteredActivities,
     filteredHistoricalActivities,
-    selectedActivity,
-    selectedActivityTypes,
-    players,
     handleActivityTypeChange,
-    setSelectedActivity,
     handleDelete,
-    onPlayerSelect: onPlayerSelect, // Pass onPlayerSelect to the hook
+    onPlayerSelect
   });
 
   return (
@@ -50,7 +54,7 @@ export function ActivityTabContent({
         activities={filteredActivities}
         onActivitySelect={setSelectedActivity}
         onDelete={handleDelete}
-        onPlayerSelect={onPlayerSelect} // Pass onPlayerSelect to ActivityList
+        onPlayerSelect={onPlayerSelect}
       />
     </div>
   );

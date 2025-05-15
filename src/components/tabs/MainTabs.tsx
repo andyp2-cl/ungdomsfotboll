@@ -109,41 +109,6 @@ export function MainTabs({
     saveActiveTab(value); // Save active tab to storage
   };
   
-  const renderActivityTabContent = () => {
-    // Skapa wrappers för callbacks som förväntas returnera Promise
-    const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
-      await handleActivityUpdate(activity);
-    };
-
-    // Skapa en wrapper för handleMatchResultUpdate om det behövs
-    const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
-      await handleMatchResultUpdate(activityId, homeScore, awayScore);
-    };
-    
-    return (
-      <ActivityTabContent
-        players={players}
-        activities={activities}
-        filteredActivities={filteredActivities}
-        filteredHistoricalActivities={filteredHistoricalActivities}
-        selectedActivity={selectedActivity}
-        selectedActivityTypes={selectedActivityTypes}
-        handleActivityTypeChange={handleActivityTypeChange}
-        setSelectedActivity={setSelectedActivity}
-        handleActivityUpdate={handleActivityUpdateWrapper}
-        handleKioskAssignmentUpdate={handleKioskUpdate}
-        handleDeleteActivity={handleDelete}
-        handleImportedActivities={handleImportActivities}
-        handleClearHistoricalActivities={handleClearHistorical}
-        setIsAddActivityOpen={setIsAddActivityOpen}
-        setEditingActivity={setEditingActivity}
-        isAddActivityOpen={isAddActivityOpen}
-        handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-        onPlayerSelect={player => onPlayerActivitySelect && onPlayerActivitySelect(player)}
-      />
-    );
-  };
-  
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
@@ -185,7 +150,24 @@ export function MainTabs({
         </TabsContent>
         
         <TabsContent value="activities" className="mt-0">
-          {renderActivityTabContent()}
+          <ActivityTabContent
+            activities={activities}
+            filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
+            selectedActivity={selectedActivity}
+            selectedActivityTypes={selectedActivityTypes}
+            players={players}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleDelete={handleDelete}
+            onPlayerSelect={(player) => {
+              if (onPlayerActivitySelect && player && 'date' in player) {
+                onPlayerActivitySelect(player as Activity);
+              }
+            }}
+            handleActivityUpdate={handleActivityUpdate}
+            handleKioskUpdate={handleKioskUpdate}
+          />
         </TabsContent>
       </Tabs>
       

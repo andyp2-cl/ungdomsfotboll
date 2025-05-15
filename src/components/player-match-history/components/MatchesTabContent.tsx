@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from '../utils/date-formatter';
+import { ActivityPreview } from "@/components/activity-preview/ActivityPreview";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface MatchesTabContentProps {
   player: Player;
@@ -12,6 +14,8 @@ interface MatchesTabContentProps {
 }
 
 export function MatchesTabContent({ player, matches, onActivitySelect }: MatchesTabContentProps) {
+  const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
+  
   // Helper function to format match result
   const formatResult = (match: Activity) => {
     if (match.homeScore !== undefined && match.awayScore !== undefined && 
@@ -44,6 +48,36 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
     return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
+  // Get participating players for the selected match
+  const getParticipatingPlayers = (activity: Activity | null) => {
+    if (!activity || !activity.participants) return [];
+    
+    // We assume that onActivitySelect has access to all players
+    // This is a simplified approach - ideally we'd use a context or hook to get players
+    return activity.participants.map(playerId => {
+      return {
+        id: playerId,
+        name: playerId === player.id ? player.name : `Player ${playerId.substring(0, 4)}`,
+        grade: player.grade
+      } as Player;
+    });
+  };
+
+  const handleRowClick = (match: Activity) => {
+    setSelectedMatch(match);
+  };
+
+  const handleClose = () => {
+    setSelectedMatch(null);
+  };
+
+  const handleViewFullActivity = () => {
+    if (selectedMatch) {
+      onActivitySelect(selectedMatch);
+      setSelectedMatch(null);
+    }
+  };
+
   return (
     <>
       {matches.length > 0 ? (
@@ -66,7 +100,7 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
                   <TableRow 
                     key={match.id} 
                     className="cursor-pointer hover:bg-accent/10"
-                    onClick={() => onActivitySelect(match)}
+                    onClick={() => handleRowClick(match)}
                   >
                     <TableCell>
                       <div className="flex flex-col">
@@ -113,6 +147,19 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
           Spelaren har inte deltagit i några matcher ännu
         </div>
       )}
+      
+      <Dialog open={selectedMatch !== null} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-md">
+          {selectedMatch && (
+            <ActivityPreview 
+              activity={selectedMatch}
+              participatingPlayers={getParticipatingPlayers(selectedMatch)}
+              onClose={handleClose}
+              onViewFullActivity={handleViewFullActivity}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
