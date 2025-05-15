@@ -3,7 +3,7 @@ import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Calendar, MapPin, Users } from "lucide-react";
+import { X, Calendar, MapPin, Users, Trophy } from "lucide-react";
 import { GradePieChart } from "@/components/activity-detail/match-result/GradePieChart";
 import { formatDate } from "@/utils/formatDate";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,29 @@ export function ActivityPreview({
   onClose,
   onViewFullActivity
 }: ActivityPreviewProps) {
+  // Function to get goal scorers from player stats
+  const getGoalScorers = () => {
+    if (!activity.player_stats?.goals) return [];
+    
+    // Get player IDs who scored, mapped to their goal count
+    const scorers = Object.entries(activity.player_stats.goals)
+      .filter(([_, goals]) => goals && goals > 0)
+      .map(([playerId, goals]) => {
+        const player = participatingPlayers.find(p => p.id === playerId);
+        return {
+          playerId,
+          playerName: player?.name || "Unknown Player",
+          goals: goals as number
+        };
+      })
+      .sort((a, b) => b.goals - a.goals); // Sort by most goals
+      
+    return scorers;
+  };
+
+  const goalScorers = getGoalScorers();
+  const hasGoalScorers = goalScorers.length > 0;
+
   return (
     <Card className="w-full max-w-md mx-auto relative">
       <Button
@@ -82,6 +105,24 @@ export function ActivityPreview({
                 <span className="text-muted-foreground text-xs">Inget resultat</span>
               )}
             </div>
+            
+            {/* Add goal scorers section */}
+            {hasGoalScorers && (
+              <div className="mt-2">
+                <div className="flex items-center mb-1">
+                  <Trophy className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
+                  <span className="text-xs font-medium">Målskyttar</span>
+                </div>
+                <div className="text-xs pl-5 space-y-0.5">
+                  {goalScorers.map((scorer) => (
+                    <div key={scorer.playerId} className="flex justify-between">
+                      <span>{scorer.playerName}</span>
+                      <span className="font-semibold">{scorer.goals}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
         

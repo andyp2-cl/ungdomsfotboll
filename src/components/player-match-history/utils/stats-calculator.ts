@@ -1,57 +1,58 @@
 
 import { Player, Activity } from "@/types/player";
 
-interface PlayerStats {
-  totalGoals: number;
-  totalAssists: number;
-  matchesWithGoals: number;
-  matchesWithAssists: number;
+export interface PlayerStats {
+  matches: number;
+  goals: number;
+  assists: number;
   wins: number;
-  draws: number;
   losses: number;
+  draws: number;
 }
 
-export const calculatePlayerStats = (player: Player, matches: Activity[]): PlayerStats => {
-  let totalGoals = 0;
-  let totalAssists = 0;
-  let matchesWithGoals = 0;
-  let matchesWithAssists = 0;
-  let wins = 0;
-  let draws = 0;
-  let losses = 0;
-
-  matches.forEach(match => {
-    // Count goals and assists
-    const goals = match.player_stats?.goals?.[player.id] || 0;
-    const assists = match.player_stats?.assists?.[player.id] || 0;
-    
-    totalGoals += goals;
-    totalAssists += assists;
-    
-    if (goals > 0) matchesWithGoals++;
-    if (assists > 0) matchesWithAssists++;
-    
-    // First check if scores are equal (draw)
-    if (match.homeScore !== undefined && match.awayScore !== undefined && 
-        match.homeScore === match.awayScore) {
-      draws++;
+export function calculatePlayerStats(player: Player, activities: Activity[]): PlayerStats {
+  // Initialize stats
+  const stats: PlayerStats = {
+    matches: 0,
+    goals: 0,
+    assists: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0
+  };
+  
+  // Filter match activities that this player participated in
+  const playerMatches = activities.filter(activity => 
+    activity.type === 'match' && 
+    activity.participants?.includes(player.id)
+  );
+  
+  // Count matches
+  stats.matches = playerMatches.length;
+  
+  // Count goals and assists
+  playerMatches.forEach(match => {
+    // Count goals
+    if (match.player_stats?.goals && match.player_stats.goals[player.id]) {
+      stats.goals += match.player_stats.goals[player.id] as number;
     }
-    // Then check explicit win/loss status
-    else if (match.isWin === true) {
-      wins++;
-    } 
-    else if (match.isWin === false) {
-      losses++;
+    
+    // Count assists
+    if (match.player_stats?.assists && match.player_stats.assists[player.id]) {
+      stats.assists += match.player_stats.assists[player.id] as number;
+    }
+    
+    // Count match results
+    if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      if (match.isWin) {
+        stats.wins += 1;
+      } else if (match.homeScore === match.awayScore) {
+        stats.draws += 1;
+      } else {
+        stats.losses += 1;
+      }
     }
   });
-
-  return {
-    totalGoals,
-    totalAssists,
-    matchesWithGoals,
-    matchesWithAssists,
-    wins,
-    draws,
-    losses
-  };
-};
+  
+  return stats;
+}
