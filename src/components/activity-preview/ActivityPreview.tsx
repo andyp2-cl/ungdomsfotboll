@@ -3,7 +3,7 @@ import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Calendar, MapPin, Users, Trophy } from "lucide-react";
+import { Calendar, MapPin, Users, Trophy } from "lucide-react";
 import { GradePieChart } from "@/components/activity-detail/match-result/GradePieChart";
 import { formatDate } from "@/utils/formatDate";
 import { Badge } from "@/components/ui/badge";
@@ -47,19 +47,34 @@ export function ActivityPreview({
   const hasGoalScorers = goalScorers.length > 0;
 
   return (
-    <Card className="w-full max-w-md mx-auto relative">
+    <Card className="w-full max-w-lg mx-auto relative">
       <Button
         variant="ghost"
         size="icon"
         className="absolute right-2 top-2"
         onClick={onClose}
       >
-        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
       </Button>
       
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">{activity.name}</CardTitle>
+          <CardTitle className="text-lg">{activity.name}</CardTitle>
           {activity.type && (
             <Badge variant="outline" className="ml-2">
               {activity.type === 'match' ? 'Match' : 
@@ -71,10 +86,10 @@ export function ActivityPreview({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-3 pb-3 text-sm">
-        <div className="grid grid-cols-2 gap-2">
+      <CardContent className="space-y-4 pb-4 text-sm">
+        <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-1.5 text-muted-foreground" />
+            <Calendar className="h-5 w-5 mr-2 text-muted-foreground" />
             <span>{formatDate(activity.date)}</span>
             {activity.time && (
               <span className="ml-1 text-muted-foreground">{activity.time}</span>
@@ -83,14 +98,14 @@ export function ActivityPreview({
           
           {activity.location && activity.location.name && (
             <div className="flex items-center">
-              <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground" />
+              <MapPin className="h-5 w-5 mr-2 text-muted-foreground" />
               <span>{activity.location.name}</span>
             </div>
           )}
         </div>
         
         {activity.type === 'match' && (
-          <div className="border-t pt-2 mt-2">
+          <div className="border-t pt-3 mt-2">
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-sm">Matchresultat</span>
               {activity.homeScore !== undefined && activity.awayScore !== undefined ? (
@@ -106,14 +121,14 @@ export function ActivityPreview({
               )}
             </div>
             
-            {/* Add goal scorers section */}
+            {/* Goal scorers section */}
             {hasGoalScorers && (
-              <div className="mt-2">
-                <div className="flex items-center mb-1">
-                  <Trophy className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
-                  <span className="text-xs font-medium">Målskyttar</span>
+              <div className="mt-3">
+                <div className="flex items-center mb-1.5">
+                  <Trophy className="h-4 w-4 mr-2 text-yellow-500" />
+                  <span className="text-sm font-medium">Målskyttar</span>
                 </div>
-                <div className="text-xs pl-5 space-y-0.5">
+                <div className="text-sm pl-6 space-y-1">
                   {goalScorers.map((scorer) => (
                     <div key={scorer.playerId} className="flex justify-between">
                       <span>{scorer.playerName}</span>
@@ -126,26 +141,26 @@ export function ActivityPreview({
           </div>
         )}
         
-        <div className="border-t pt-2">
+        <div className="border-t pt-3">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center">
-              <Users className="h-4 w-4 mr-1.5 text-muted-foreground" />
+              <Users className="h-5 w-5 mr-2 text-muted-foreground" />
               <span className="font-medium text-sm">Deltagare ({participatingPlayers.length})</span>
             </div>
           </div>
           
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-3">
             <GradePieChart 
               activity={activity}
               participatingPlayers={participatingPlayers}
               compact={true}
             />
             
-            <ScrollArea className="h-[80px]">
-              <div className="flex flex-wrap gap-2 pt-1">
+            <ScrollArea className="h-[100px]">
+              <div className="flex flex-wrap gap-3 pt-1">
                 {participatingPlayers.map((player) => (
-                  <div key={player.id} className="flex flex-col items-center gap-0.5">
-                    <PlayerAvatar player={player} size="sm" />
+                  <div key={player.id} className="flex flex-col items-center gap-1">
+                    <PlayerAvatar player={player} size="md" />
                     <span className="text-xs">{player.name.split(' ')[0]}</span>
                   </div>
                 ))}
@@ -158,7 +173,7 @@ export function ActivityPreview({
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full mt-2"
+            className="w-full mt-3"
             onClick={onViewFullActivity}
           >
             Visa full aktivitet
