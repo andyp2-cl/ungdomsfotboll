@@ -32,6 +32,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
+    handleDeletePlayer, // Ensure this is properly exported from usePlayers
     
     // Activity data
     activities,
@@ -84,6 +85,15 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleAddPlayer(player);
   };
 
+  // Wrapper for handleDeletePlayer
+  const handleDeletePlayerWrapper = async (playerId: string) => {
+    if (handleDeletePlayer) {
+      await handleDeletePlayer(playerId);
+    } else {
+      console.error("handleDeletePlayer is not implemented");
+    }
+  };
+
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
     if (mode === "grid" || mode === "list" || mode === "stats") {
@@ -94,6 +104,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // Add wrapper for handleMatchResult to match expected handleMatchResultUpdate
   const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
     await handleMatchResult(activityId, homeScore, awayScore);
+  };
+
+  // Add wrapper for handlePlayerActivitySelect
+  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
+    handlePlayerActivitySelect(activity);
   };
 
   return (
@@ -122,6 +137,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handlePlayerUpdate={handlePlayerUpdateWrapper}
         handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
         handleAddPlayer={handleAddPlayerWrapper}
+        handleDeletePlayer={handleDeletePlayerWrapper}
         
         // Activity data
         filteredActivities={filteredActivities}
@@ -140,7 +156,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelect}
+        onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
         handleMatchResultUpdate={handleMatchResultUpdateWrapper}
       />
     </PageContainer>

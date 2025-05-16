@@ -28,9 +28,9 @@ interface MainTabsProps {
   setViewMode: (mode: "list" | "grid" | "stats") => void;
   isAddPlayerOpen: boolean;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
-  handlePlayerUpdate: (player: Player) => void;
-  handleBulkPlayerUpdate: (players: Player[]) => void;
-  handleAddPlayer: (player: Player) => void;
+  handlePlayerUpdate: (player: Player) => Promise<void>;
+  handleBulkPlayerUpdate: (players: Player[]) => Promise<void>;
+  handleAddPlayer: (player: Player) => Promise<void>;
   handleDeletePlayer?: (playerId: string) => Promise<void>;
   
   // Activity state
@@ -45,14 +45,14 @@ interface MainTabsProps {
   setIsAddActivityOpen: (isOpen: boolean) => void;
   selectedActivityTypes: string[];
   handleActivityTypeChange: (type: string) => void;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDelete: (activityId: string) => Promise<boolean>;
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
-  handleAddActivity: (activity: Activity) => void;
-  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => void;
-  onPlayerActivitySelect: (activity: Activity) => void;
+  handleAddActivity: (activity: Activity) => Promise<void>;
+  handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerActivitySelect: (activity: Activity) => Promise<void>;
 }
 
 export function MainTabs({
@@ -146,7 +146,9 @@ export function MainTabs({
             handleDeletePlayer={handleDeletePlayer}
             setIsAddPlayerOpen={setIsAddPlayerOpen}
             setEditingPlayer={setEditingPlayer}
-            onActivitySelect={onPlayerActivitySelect}
+            onActivitySelect={async (activity) => {
+              await onPlayerActivitySelect(activity);
+            }}
           />
         </TabsContent>
         

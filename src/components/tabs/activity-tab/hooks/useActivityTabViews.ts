@@ -15,6 +15,7 @@ interface UseActivityTabViewsProps {
   handleActivityUpdate: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void; // Add this prop
 }
 
 export const useActivityTabViews = ({
@@ -29,7 +30,8 @@ export const useActivityTabViews = ({
   handleDeleteActivity,
   handleActivityUpdate,
   handleKioskAssignmentUpdate,
-  handleMatchResultUpdate
+  handleMatchResultUpdate,
+  onPlayerSelect
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -37,12 +39,16 @@ export const useActivityTabViews = ({
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSelectedPlayer(player);
-      setSelectedActivity(null);
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    } else {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        setSelectedPlayer(player);
+        setSelectedActivity(null);
+      }
     }
-  }, [players, setSelectedActivity]);
+  }, [players, setSelectedActivity, onPlayerSelect]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {

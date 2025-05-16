@@ -68,7 +68,7 @@ export function MatchPreview({ match, isOpen, onClose, players }: MatchPreviewPr
         return { 
           player, 
           goals,
-          name: player ? `${player.firstName} ${player.lastName}` : 'Unknown Player'
+          name: player ? `${player.name || `${player.id}`}` : 'Unknown Player'
         };
       })
     : [];
@@ -148,7 +148,7 @@ export function MatchPreview({ match, isOpen, onClose, players }: MatchPreviewPr
                 <div key={player.id} className="flex items-center gap-2">
                   <Avatar className="h-10 w-10">
                     {player.image ? (
-                      <AvatarImage src={player.image} alt={`${player.firstName} ${player.lastName}`} />
+                      <AvatarImage src={player.image} alt={player.name || player.id} />
                     ) : (
                       <AvatarFallback>
                         <User size={24} />
@@ -156,7 +156,7 @@ export function MatchPreview({ match, isOpen, onClose, players }: MatchPreviewPr
                     )}
                   </Avatar>
                   <div className="truncate">
-                    <span>{player.firstName} {player.lastName}</span>
+                    <span>{player.name || player.id}</span>
                   </div>
                 </div>
               ))}

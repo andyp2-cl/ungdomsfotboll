@@ -24,6 +24,7 @@ interface ActivitiesTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void; // Add this prop
 }
 
 export function ActivitiesTabContent({
@@ -43,7 +44,8 @@ export function ActivitiesTabContent({
   handleDeleteActivity,
   handleImportedActivities,
   handleClearHistoricalActivities,
-  handleMatchResultUpdate
+  handleMatchResultUpdate,
+  onPlayerSelect = () => {} // Provide default empty function
 }: ActivitiesTabContentProps) {
   return (
     <div className="space-y-6">
@@ -74,6 +76,7 @@ export function ActivitiesTabContent({
         handleImportedActivities={handleImportedActivities}
         handleClearHistoricalActivities={handleClearHistoricalActivities}
         handleMatchResultUpdate={handleMatchResultUpdate}
+        onPlayerSelect={onPlayerSelect}
       />
     </div>
   );
