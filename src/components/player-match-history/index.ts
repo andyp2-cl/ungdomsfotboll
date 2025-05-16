@@ -4,3 +4,4 @@ export * from './PlayerMatchTabs';
 export * from './components/MatchesTabContent';
 export * from './components/StatsTabContent';
 export * from './components/CupsTabContent';
+export * from './components/MatchPreview';

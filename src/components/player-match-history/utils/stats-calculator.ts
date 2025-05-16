@@ -9,6 +9,7 @@ interface PlayerStats {
   wins: number;
   draws: number;
   losses: number;
+  matches: number;
 }
 
 export const calculatePlayerStats = (player: Player, matches: Activity[]): PlayerStats => {
@@ -19,6 +20,7 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
   let wins = 0;
   let draws = 0;
   let losses = 0;
+  const matchCount = matches.length;
 
   matches.forEach(match => {
     // Count goals and assists
@@ -52,6 +54,7 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     matchesWithAssists,
     wins,
     draws,
-    losses
+    losses,
+    matches: matchCount
   };
 };

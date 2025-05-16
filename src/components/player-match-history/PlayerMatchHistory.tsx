@@ -8,9 +8,10 @@ interface PlayerMatchHistoryProps {
   player: Player;
   activities: Activity[];
   onActivitySelect: (activity: Activity) => void;
+  allPlayers?: Player[];
 }
 
-export function PlayerMatchHistory({ player, activities, onActivitySelect }: PlayerMatchHistoryProps) {
+export function PlayerMatchHistory({ player, activities, onActivitySelect, allPlayers = [] }: PlayerMatchHistoryProps) {
   // Find activities that this player participated in and sort by date (newest first)
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
@@ -26,6 +27,7 @@ export function PlayerMatchHistory({ player, activities, onActivitySelect }: Pla
           player={player} 
           playerActivities={playerActivities} 
           onActivitySelect={onActivitySelect} 
+          allPlayers={allPlayers}
         />
       </CardContent>
     </Card>

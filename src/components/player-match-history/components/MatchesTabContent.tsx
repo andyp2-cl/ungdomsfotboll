@@ -1,17 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from '../utils/date-formatter';
+import { MatchPreview } from './MatchPreview';
 
 interface MatchesTabContentProps {
   player: Player;
   matches: Activity[];
   onActivitySelect: (activity: Activity) => void;
+  allPlayers?: Player[];
 }
 
-export function MatchesTabContent({ player, matches, onActivitySelect }: MatchesTabContentProps) {
+export function MatchesTabContent({ player, matches, onActivitySelect, allPlayers = [] }: MatchesTabContentProps) {
+  const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
+
   // Helper function to format match result
   const formatResult = (match: Activity) => {
     if (match.homeScore !== undefined && match.awayScore !== undefined && 
@@ -44,9 +48,22 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
     return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
+  const handleRowClick = (match: Activity) => {
+    setSelectedMatch(match);
+  };
+
+  const handleClosePreview = () => {
+    setSelectedMatch(null);
+  };
+
+  // Sort matches by date (newest first)
+  const sortedMatches = [...matches].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   return (
     <>
-      {matches.length > 0 ? (
+      {sortedMatches.length > 0 ? (
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -59,14 +76,14 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matches.map(match => {
+              {sortedMatches.map(match => {
                 const result = formatResult(match);
                 
                 return (
                   <TableRow 
                     key={match.id} 
                     className="cursor-pointer hover:bg-accent/10"
-                    onClick={() => onActivitySelect(match)}
+                    onClick={() => handleRowClick(match)}
                   >
                     <TableCell>
                       <div className="flex flex-col">
@@ -113,6 +130,13 @@ export function MatchesTabContent({ player, matches, onActivitySelect }: Matches
           Spelaren har inte deltagit i några matcher ännu
         </div>
       )}
+      
+      <MatchPreview 
+        match={selectedMatch}
+        isOpen={!!selectedMatch}
+        onClose={handleClosePreview}
+        players={allPlayers}
+      />
     </>
   );
 }
