@@ -51,23 +51,13 @@ interface PlayersPageContentProps {
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
-  onPlayerActivitySelect: (activity: Activity) => Promise<void>;
+  onPlayerActivitySelect: (activity: Activity) => void;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function PlayersPageContent(props: PlayersPageContentProps) {
   const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
     await props.handleActivityUpdate(activity);
-  };
-
-  // Convert onPlayerActivitySelect to expected Promise<void> signature
-  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
-    await props.onPlayerActivitySelect(activity);
-  };
-
-  // Convert handleMatchResultUpdate to expected Promise<void> signature
-  const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
-    await props.handleMatchResultUpdate(activityId, homeScore, awayScore);
   };
 
   const isMobile = useIsMobile();
@@ -117,8 +107,8 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
           handleImportActivities={props.handleImportActivities}
           handleClearHistorical={props.handleClearHistorical}
           handleAddActivity={props.handleAddActivity}
-          handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-          onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
+          handleMatchResultUpdate={props.handleMatchResultUpdate}
+          onPlayerActivitySelect={props.onPlayerActivitySelect}
         />
       </div>
 

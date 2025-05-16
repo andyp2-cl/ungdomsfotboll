@@ -10,7 +10,6 @@ interface PlayerStats {
   draws: number;
   losses: number;
   matches: number;
-  goals?: number; // Added for compatibility with getPlayerStats
 }
 
 export const calculatePlayerStats = (player: Player, matches: Activity[]): PlayerStats => {
@@ -57,47 +56,5 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     draws,
     losses,
     matches: matchCount
-  };
-};
-
-// Add the new getPlayerStats function
-export const getPlayerStats = (playerId: string, activities: Activity[]): {
-  matches: number;
-  goals: number;
-  wins: number;
-  losses: number;
-  draws?: number;
-} => {
-  const playerMatches = activities.filter(activity => 
-    activity.participants?.includes(playerId)
-  );
-  
-  let totalGoals = 0;
-  let wins = 0;
-  let losses = 0;
-  let draws = 0;
-  
-  playerMatches.forEach(match => {
-    // Count goals
-    const goals = match.player_stats?.goals?.[playerId] || 0;
-    totalGoals += goals;
-    
-    // Count results
-    if (match.homeScore !== undefined && match.awayScore !== undefined && 
-        match.homeScore === match.awayScore) {
-      draws++;
-    } else if (match.isWin === true) {
-      wins++;
-    } else if (match.isWin === false) {
-      losses++;
-    }
-  });
-  
-  return {
-    matches: playerMatches.length,
-    goals: totalGoals,
-    wins,
-    losses,
-    draws
   };
 };

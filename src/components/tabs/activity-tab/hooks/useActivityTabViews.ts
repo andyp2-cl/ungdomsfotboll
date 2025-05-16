@@ -35,38 +35,20 @@ export const useActivityTabViews = ({
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [previewPlayer, setPreviewPlayer] = useState<Player | null>(null);
   const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
-    console.log("useActivityTabViews: Player selected/deselected:", playerId);
-    
-    if (playerId === "") {
-      // This means we want to close the player detail view
-      console.log("useActivityTabViews: Clearing selected player");
-      setSelectedPlayer(null);
-      setPreviewPlayer(null);
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
     } else {
       const player = players.find(p => p.id === playerId);
       if (player) {
-        console.log("useActivityTabViews: Setting selected player:", player.name || player.id);
-        
-        // Use preview instead of full navigation
-        setPreviewPlayer(player);
-        
-        // Only call the parent onPlayerSelect if explicitly requested
-        if (onPlayerSelect) {
-          onPlayerSelect(playerId);
-        }
+        setSelectedPlayer(player);
+        setSelectedActivity(null);
       }
     }
-  }, [players, onPlayerSelect]);
-
-  // Handle closing the player preview
-  const handleClosePlayerPreview = useCallback(() => {
-    setPreviewPlayer(null);
-  }, []);
+  }, [players, setSelectedActivity, onPlayerSelect]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {
@@ -76,7 +58,6 @@ export const useActivityTabViews = ({
       setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
       setSelectedPlayer(null);
-      setPreviewPlayer(null);
     }
   }, [setSelectedActivity, activeView]);
 
@@ -149,8 +130,7 @@ export const useActivityTabViews = ({
     // Handle Activities list view
     return {
       viewType: "activities-list",
-      activities: filteredBySearchActivities,
-      searchQuery
+      activities: filteredBySearchActivities
     };
   }, [
     activeView, 
@@ -159,8 +139,7 @@ export const useActivityTabViews = ({
     activities, 
     filteredBySearchActivities, 
     getRelatedActivities,
-    getCupMatches,
-    searchQuery
+    getCupMatches
   ]);
 
   return {
@@ -168,10 +147,7 @@ export const useActivityTabViews = ({
     handleViewChange,
     selectedPlayer,
     setSelectedPlayer,
-    previewPlayer,
-    setPreviewPlayer,
     handlePlayerSelect,
-    handleClosePlayerPreview,
     renderContent,
     isHistorical,
     filteredBySearchActivities,
