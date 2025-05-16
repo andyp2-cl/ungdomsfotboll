@@ -60,7 +60,7 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
   };
 };
 
-// Add the getPlayerStats function for backward compatibility
+// Add the new getPlayerStats function
 export const getPlayerStats = (playerId: string, activities: Activity[]): {
   matches: number;
   goals: number;

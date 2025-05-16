@@ -100,14 +100,6 @@ export function ActivityListItem({
     onSelect(activity);
   };
 
-  // Handle player selection with navigation
-  const handlePlayerClick = (playerId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent activity selection
-    if (onPlayerSelect) {
-      onPlayerSelect(playerId);
-    }
-  };
-
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -158,7 +150,7 @@ export function ActivityListItem({
             <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
-                onPlayerSelect={(playerId) => handlePlayerClick(playerId, event as React.MouseEvent)}
+                onPlayerSelect={onPlayerSelect}
                 totalCount={participants.length}
                 isMobile={isMobileView}
                 showAll={true}

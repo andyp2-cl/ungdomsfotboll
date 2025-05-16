@@ -9,12 +9,12 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, User, CalendarDays, ArrowRight } from "lucide-react";
+import { X, User, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { getPlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatDate } from "@/components/player-match-history/utils/date-formatter";
-import { useNavigate } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlayerPreviewProps {
   player: Player | null;
@@ -31,8 +31,6 @@ export function PlayerPreview({
   onClose,
   onActivitySelect
 }: PlayerPreviewProps) {
-  const navigate = useNavigate();
-  
   if (!player) return null;
 
   // Filter activities this player has participated in
@@ -43,25 +41,27 @@ export function PlayerPreview({
   );
 
   // Get player statistics
-  const stats = calculatePlayerStats(player, playerActivities);
+  const stats = getPlayerStats(player.id, activities);
   
   // Player name handling based on available properties
   const playerName = player.name || player.id;
 
-  // Navigate to player detail page
-  const handleViewPlayerDetail = () => {
-    navigate('/players', { 
-      state: { 
-        selectedPlayerId: player.id,
-        returnToActivity: true
-      }
-    });
-    onClose();
+  // Function to get result style class based on win/loss/draw
+  const getResultStyleClass = (activity: Activity) => {
+    if (!activity.homeScore || !activity.awayScore) return "";
+    
+    if (activity.homeScore === activity.awayScore) {
+      return "bg-gray-100 text-gray-800"; // Draw
+    }
+    
+    return activity.isWin 
+      ? "bg-green-100 text-green-800"  // Win
+      : "bg-red-100 text-red-800";     // Loss
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-bold">{playerName}</DialogTitle>
           <DialogClose asChild>
@@ -97,14 +97,6 @@ export function PlayerPreview({
                 </div>
               )}
             </div>
-
-            <Button 
-              variant="outline"
-              className="mt-4 w-full flex items-center justify-center"
-              onClick={handleViewPlayerDetail}
-            >
-              Visa spelarprofil <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
 
           {/* Player Statistics */}
@@ -113,46 +105,34 @@ export function PlayerPreview({
               <CardContent className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Matcher</div>
-                  <div className="text-lg font-bold">{stats.matches}</div>
+                  <div className="text-lg font-bold">{stats.matches || 0}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Mål</div>
-                  <div className="text-lg font-bold">{stats.totalGoals}</div>
+                  <div className="text-lg font-bold">{stats.goals || 0}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Vinster</div>
-                  <div className="text-lg font-bold">{stats.wins}</div>
+                  <div className="text-lg font-bold">{stats.wins || 0}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Förluster</div>
-                  <div className="text-lg font-bold">{stats.losses}</div>
+                  <div className="text-lg font-bold">{stats.losses || 0}</div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Recent Matches */}
-        <div className="mt-4 max-h-[350px] overflow-y-auto pr-1">
+        {/* All Player Matches - Now scrollable */}
+        <div className="mt-4">
           <h3 className="font-semibold mb-2">Alla aktiviteter</h3>
           {playerActivities.length === 0 ? (
             <p className="text-muted-foreground text-sm">Inga aktiviteter hittades</p>
           ) : (
-            <div className="space-y-2">
-              {playerActivities.map((activity) => {
-                // Determine result color
-                let resultTextColor = "";
-                if (activity.isWin === true) {
-                  resultTextColor = "text-green-600";
-                } else if (activity.isWin === false) {
-                  resultTextColor = "text-red-600";
-                } else if (activity.homeScore === activity.awayScore && 
-                         activity.homeScore !== undefined && 
-                         activity.awayScore !== undefined) {
-                  resultTextColor = "text-gray-600";
-                }
-                
-                return (
+            <ScrollArea className="h-[230px] pr-4">
+              <div className="space-y-2 pb-2">
+                {playerActivities.map((activity) => (
                   <Card 
                     key={activity.id} 
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -168,15 +148,15 @@ export function PlayerPreview({
                         </div>
                       </div>
                       {(activity.result || (activity.homeScore !== undefined && activity.awayScore !== undefined)) && (
-                        <div className={`px-2 py-1 rounded font-medium ${resultTextColor}`}>
-                          {activity.result ? activity.result : `${activity.homeScore}-${activity.awayScore}`}
+                        <div className={`px-2 py-1 rounded text-primary font-medium ${getResultStyleClass(activity)}`}>
+                          {activity.result || `${activity.homeScore}-${activity.awayScore}`}
                         </div>
                       )}
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       </DialogContent>

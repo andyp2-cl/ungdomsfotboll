@@ -12,10 +12,10 @@ interface UseActivityTabViewsProps {
   filteredHistoricalActivities: Activity[];
   setEditingActivity: (activity: Activity | null) => void;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleActivityUpdate: (activity: Activity) => Promise<void>;
+  handleActivityUpdate: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void;
+  onPlayerSelect?: (playerId: string) => void; // Add this prop
 }
 
 export const useActivityTabViews = ({
@@ -50,7 +50,7 @@ export const useActivityTabViews = ({
     } else {
       const player = players.find(p => p.id === playerId);
       if (player) {
-        console.log("useActivityTabViews: Setting preview player:", player.name || player.id);
+        console.log("useActivityTabViews: Setting selected player:", player.name || player.id);
         
         // Use preview instead of full navigation
         setPreviewPlayer(player);

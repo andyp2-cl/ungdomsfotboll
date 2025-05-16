@@ -1,2 +1,2 @@
 
-export { PlayerPreview } from './PlayerPreview';
+export { PlayerPreview } from "./PlayerPreview";
