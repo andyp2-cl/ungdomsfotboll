@@ -1,28 +1,32 @@
 
-import React from "react";
+import { useState } from "react";
 import { Activity, Player } from "@/types/player";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
+import { toast } from "sonner";
+import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { ActivityTabHeader } from "./components/ActivityTabHeader";
 import { ActivityTabSearch } from "./components/ActivityTabSearch";
-import { useActivityTabViews } from "./hooks/useActivityTabViews";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
-import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PlayerPreview } from "@/components/player-preview";
 
 interface ActivityTabContentProps {
   activities: Activity[];
   players: Player[];
   selectedActivity: Activity | null;
-  setSelectedActivity: (activity: Activity | null) => void;
   selectedActivityTypes: string[];
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
   filteredActivities: Activity[];
   filteredHistoricalActivities: Activity[];
-  setEditingActivity: (activity: Activity | null) => void;
+  isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
+  setSelectedActivity: (activity: Activity | null) => void;
   handleActivityUpdate: (activity: Activity) => Promise<void>;
-  handleDeleteActivity: (activityId: string) => Promise<boolean>;
+  setIsAddActivityOpen: (isOpen: boolean) => void;
+  setEditingActivity: (activity: Activity | null) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
+  handleDeleteActivity: (activityId: string) => Promise<boolean>;
+  handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
+  handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerSelect?: (playerId: string) => void;
 }
@@ -31,32 +35,36 @@ export function ActivityTabContent({
   activities,
   players,
   selectedActivity,
-  setSelectedActivity,
   selectedActivityTypes,
-  searchQuery,
-  setSearchQuery,
   filteredActivities,
   filteredHistoricalActivities,
-  setEditingActivity,
+  isAddActivityOpen,
   handleActivityTypeChange,
+  setSelectedActivity,
   handleActivityUpdate,
-  handleDeleteActivity,
+  setIsAddActivityOpen,
+  setEditingActivity,
   handleKioskAssignmentUpdate,
+  handleDeleteActivity,
+  handleImportedActivities,
+  handleClearHistoricalActivities,
   handleMatchResultUpdate,
   onPlayerSelect
 }: ActivityTabContentProps) {
-  const {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isMobile = useIsMobile();
+  
+  const { 
     activeView,
     handleViewChange,
     selectedPlayer,
     previewPlayer,
-    setPreviewPlayer,
     handlePlayerSelect,
     handleClosePlayerPreview,
     renderContent,
     isHistorical,
-    filteredBySearchActivities,
-    previousView
+    filteredBySearchActivities
   } = useActivityTabViews({
     activities,
     players,
@@ -73,58 +81,66 @@ export function ActivityTabContent({
     onPlayerSelect
   });
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Data uppdaterad");
+    } catch (error) {
+      toast.error("Kunde inte uppdatera data");
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Add debug logging
+  const handleActivitySelectWithLogging = (activity: Activity | null) => {
+    console.log("ActivityTabContent: Activity selected:", activity?.id, activity?.name);
+    setSelectedActivity(activity);
+  };
+
   return (
-    <div className="space-y-4">
-      <ActivityTabHeader />
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-muted/30 rounded-md p-3">
-        <Tabs
-          defaultValue={isHistorical ? "historical" : "upcoming"}
-          value={activeView}
-          onValueChange={handleViewChange}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upcoming">Kommande</TabsTrigger>
-            <TabsTrigger value="historical">Historiska</TabsTrigger>
-            <TabsTrigger value="statistics">Statistik</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      
-      <ActivityTabSearch 
-        searchQuery={searchQuery} 
-        setSearchQuery={setSearchQuery}
-        selectedActivityTypes={selectedActivityTypes}
-        handleActivityTypeChange={handleActivityTypeChange}
-        isHistorical={isHistorical}
-      />
-      
-      <ActivityTabViewContent 
+    <div className="space-y-6">
+      <ActivityTabHeader 
         activeView={activeView}
-        renderContent={renderContent}
-        players={players}
-        activities={activities}
-        onActivitySelect={setSelectedActivity}
-        onPlayerSelect={handlePlayerSelect}
-        onEditActivity={setEditingActivity}
-        onActivityUpdate={handleActivityUpdate}
-        onDeleteActivity={handleDeleteActivity}
-        onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-        onMatchResultUpdate={handleMatchResultUpdate}
-        previousView={previousView}
+        handleViewChange={handleViewChange}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        isMobile={isMobile}
       />
       
+      {activeView !== "statistics" && (
+        <ActivityTabSearch
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isHistorical={isHistorical}
+        />
+      )}
+      
+      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
+        <ActivityTabViewContent 
+          activeView={activeView}
+          renderContent={renderContent}
+          players={players}
+          activities={activities}
+          onActivitySelect={handleActivitySelectWithLogging}
+          onPlayerSelect={handlePlayerSelect}
+          onEditActivity={setEditingActivity}
+          onActivityUpdate={handleActivityUpdate}
+          onDeleteActivity={handleDeleteActivity}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onMatchResultUpdate={handleMatchResultUpdate}
+        />
+      </PullToRefresh>
+
       {/* Player Preview Dialog */}
       <PlayerPreview
         player={previewPlayer}
         activities={activities}
-        isOpen={!!previewPlayer}
+        isOpen={previewPlayer !== null}
         onClose={handleClosePlayerPreview}
-        onActivitySelect={(activity) => {
-          handleClosePlayerPreview();
-          setSelectedActivity(activity);
-        }}
+        onActivitySelect={handleActivitySelectWithLogging}
       />
     </div>
   );

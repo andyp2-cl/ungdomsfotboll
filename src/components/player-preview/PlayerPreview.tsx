@@ -14,7 +14,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getPlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatDate } from "@/components/player-match-history/utils/date-formatter";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlayerPreviewProps {
   player: Player | null;
@@ -46,22 +45,9 @@ export function PlayerPreview({
   // Player name handling based on available properties
   const playerName = player.name || player.id;
 
-  // Function to get result style class based on win/loss/draw
-  const getResultStyleClass = (activity: Activity) => {
-    if (!activity.homeScore || !activity.awayScore) return "";
-    
-    if (activity.homeScore === activity.awayScore) {
-      return "bg-gray-100 text-gray-800"; // Draw
-    }
-    
-    return activity.isWin 
-      ? "bg-green-100 text-green-800"  // Win
-      : "bg-red-100 text-red-800";     // Loss
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-bold">{playerName}</DialogTitle>
           <DialogClose asChild>
@@ -124,39 +110,37 @@ export function PlayerPreview({
           </div>
         </div>
 
-        {/* All Player Matches - Now scrollable */}
+        {/* Recent Matches */}
         <div className="mt-4">
-          <h3 className="font-semibold mb-2">Alla aktiviteter</h3>
+          <h3 className="font-semibold mb-2">Senaste aktiviteter</h3>
           {playerActivities.length === 0 ? (
             <p className="text-muted-foreground text-sm">Inga aktiviteter hittades</p>
           ) : (
-            <ScrollArea className="h-[230px] pr-4">
-              <div className="space-y-2 pb-2">
-                {playerActivities.map((activity) => (
-                  <Card 
-                    key={activity.id} 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => onActivitySelect && onActivitySelect(activity)}
-                  >
-                    <CardContent className="p-3 flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{activity.name}</p>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <CalendarDays className="h-3 w-3 mr-1" />
-                          {formatDate(activity.date)}
-                          {activity.time && ` ${activity.time}`}
-                        </div>
+            <div className="space-y-2">
+              {playerActivities.slice(0, 5).map((activity) => (
+                <Card 
+                  key={activity.id} 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => onActivitySelect && onActivitySelect(activity)}
+                >
+                  <CardContent className="p-3 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{activity.name}</p>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <CalendarDays className="h-3 w-3 mr-1" />
+                        {formatDate(activity.date)}
+                        {activity.time && ` ${activity.time}`}
                       </div>
-                      {(activity.result || (activity.homeScore !== undefined && activity.awayScore !== undefined)) && (
-                        <div className={`px-2 py-1 rounded text-primary font-medium ${getResultStyleClass(activity)}`}>
-                          {activity.result || `${activity.homeScore}-${activity.awayScore}`}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
+                    </div>
+                    {activity.result && (
+                      <div className="bg-primary/10 px-2 py-1 rounded text-primary font-medium">
+                        {activity.result}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </DialogContent>
