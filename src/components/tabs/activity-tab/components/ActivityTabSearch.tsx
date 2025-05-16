@@ -1,22 +1,33 @@
 
-import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
+import React from "react";
+import { SearchInput } from "@/components/SearchInput";
 
 interface ActivityTabSearchProps {
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  isHistorical: boolean;
+  setSearchQuery: (value: string) => void;
+  isHistorical?: boolean;
+  placeholder?: string;
 }
 
 export function ActivityTabSearch({
   searchQuery,
   setSearchQuery,
-  isHistorical
+  isHistorical = false,
+  placeholder
 }: ActivityTabSearchProps) {
+  const defaultPlaceholder = isHistorical
+    ? "Sök i historiska aktiviteter..."
+    : "Sök i kommande aktiviteter...";
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
+
   return (
-    <ActivitySearch
-      searchQuery={searchQuery}
-      setSearchQuery={setSearchQuery}
-      placeholder={`Sök ${isHistorical ? 'historiska ' : ''}matcher...`}
+    <SearchInput
+      placeholder={placeholder || defaultPlaceholder}
+      value={searchQuery}
+      onChange={handleSearchChange}
     />
   );
 }

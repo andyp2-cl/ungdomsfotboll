@@ -5,6 +5,7 @@ import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/activity-detail";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
 
 interface ActivityTabViewContentProps {
   activeView: "upcoming" | "historical" | "statistics";
@@ -81,18 +82,15 @@ export function ActivityTabViewContent({
   // Handle view rendering based on content type
   if (content) {
     if (content.viewType === "player-detail" && content.player) {
+      // Instead of PlayerDetail, use the new PlayerPreview component
       return (
-        <PlayerDetail 
+        <PlayerPreview 
           player={content.player} 
-          activities={content.activities || activities} 
+          activities={activities}
           onClose={() => {
-            console.log("Closing player detail from ActivityTabViewContent");
+            console.log("Closing player preview from ActivityTabViewContent");
             onPlayerSelect("");
           }}
-          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
-          onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
-          allPlayers={players}
-          onActivitySelect={onActivitySelect}
         />
       );
     }

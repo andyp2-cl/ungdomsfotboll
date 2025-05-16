@@ -120,6 +120,19 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
     await handleMatchResult(activityId, homeScore, awayScore);
   };
+  
+  // Wrapper for player activity select
+  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      handlePlayerActivitySelect(activity);
+      resolve();
+    });
+  };
+  
+  // Create an onBack function for page navigation
+  const handleBack = () => {
+    // Add any back navigation logic here if needed
+  };
 
   return (
     <PageContainer isLoading={isLoading}>
@@ -166,8 +179,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelect}
+        onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
         handleMatchResultUpdate={handleMatchResultUpdateWrapper}
+        onBack={handleBack}
       />
     </PageContainer>
   );

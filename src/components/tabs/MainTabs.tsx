@@ -110,6 +110,18 @@ export function MainTabs({
     saveActiveTab(value); // Save active tab to storage
   };
   
+  // Handler for player selection from activities tab
+  const handlePlayerSelect = (playerId: string) => {
+    if (playerId) {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        setSelectedPlayer(player);
+      }
+    } else {
+      setSelectedPlayer(null);
+    }
+  };
+  
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
@@ -171,7 +183,7 @@ export function MainTabs({
             setEditingActivity={setEditingActivity}
             isAddActivityOpen={isAddActivityOpen}
             handleMatchResultUpdate={handleMatchResultUpdate}
-            onPlayerSelect={setSelectedPlayer}
+            onPlayerSelect={handlePlayerSelect}
           />
         </TabsContent>
       </Tabs>
