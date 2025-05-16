@@ -1,7 +1,8 @@
+
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Activity } from "@/types/player";
 
@@ -11,6 +12,8 @@ interface PlayersPageProps {
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const {
     // Tab state
     activeTab,
@@ -71,7 +74,26 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         setSelectedActivity(activity);
       }
     }
-  }, [location.state, activities, setSelectedActivity]);
+
+    // Check for selected player ID
+    if (location.state?.selectedPlayerId) {
+      console.log("Found selectedPlayerId in location state:", location.state.selectedPlayerId);
+      const player = players.find(p => p.id === location.state.selectedPlayerId);
+      if (player) {
+        console.log("Setting selected player:", player.name || player.id);
+        setSelectedPlayer(player);
+        setActiveTab('players');
+      }
+    }
+  }, [location.state, activities, players, setSelectedActivity, setSelectedPlayer, setActiveTab]);
+
+  // Handle back navigation
+  const handleBackNavigation = () => {
+    if (location.state?.returnToActivity) {
+      console.log("Navigating back to activities tab");
+      navigate(-1);
+    }
+  };
 
   // Converting Promise<boolean> to Promise<void> for player update functions
   const handlePlayerUpdateWrapper = async (player: any) => {
@@ -152,6 +174,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
         handleAddPlayer={handleAddPlayerWrapper}
         handleDeletePlayer={handleDeletePlayerWrapper}
+        onBack={handleBackNavigation}
         
         // Activity data
         filteredActivities={filteredActivities}

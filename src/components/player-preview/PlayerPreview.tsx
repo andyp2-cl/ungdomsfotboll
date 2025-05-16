@@ -9,11 +9,12 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, User, CalendarDays } from "lucide-react";
+import { X, User, CalendarDays, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { getPlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatDate } from "@/components/player-match-history/utils/date-formatter";
+import { useNavigate } from "react-router-dom";
 
 interface PlayerPreviewProps {
   player: Player | null;
@@ -30,6 +31,8 @@ export function PlayerPreview({
   onClose,
   onActivitySelect
 }: PlayerPreviewProps) {
+  const navigate = useNavigate();
+  
   if (!player) return null;
 
   // Filter activities this player has participated in
@@ -40,10 +43,21 @@ export function PlayerPreview({
   );
 
   // Get player statistics
-  const stats = getPlayerStats(player.id, activities);
+  const stats = calculatePlayerStats(player, playerActivities);
   
   // Player name handling based on available properties
   const playerName = player.name || player.id;
+
+  // Navigate to player detail page
+  const handleViewPlayerDetail = () => {
+    navigate('/players', { 
+      state: { 
+        selectedPlayerId: player.id,
+        returnToActivity: true
+      }
+    });
+    onClose();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -83,6 +97,14 @@ export function PlayerPreview({
                 </div>
               )}
             </div>
+
+            <Button 
+              variant="outline"
+              className="mt-4 w-full flex items-center justify-center"
+              onClick={handleViewPlayerDetail}
+            >
+              Visa spelarprofil <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
 
           {/* Player Statistics */}
@@ -91,19 +113,19 @@ export function PlayerPreview({
               <CardContent className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Matcher</div>
-                  <div className="text-lg font-bold">{stats.matches || 0}</div>
+                  <div className="text-lg font-bold">{stats.matches}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Mål</div>
-                  <div className="text-lg font-bold">{stats.goals || 0}</div>
+                  <div className="text-lg font-bold">{stats.totalGoals}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Vinster</div>
-                  <div className="text-lg font-bold">{stats.wins || 0}</div>
+                  <div className="text-lg font-bold">{stats.wins}</div>
                 </div>
                 <div className="text-center p-2 bg-muted/50 rounded-md">
                   <div className="text-sm text-muted-foreground">Förluster</div>
-                  <div className="text-lg font-bold">{stats.losses || 0}</div>
+                  <div className="text-lg font-bold">{stats.losses}</div>
                 </div>
               </CardContent>
             </Card>
@@ -111,35 +133,49 @@ export function PlayerPreview({
         </div>
 
         {/* Recent Matches */}
-        <div className="mt-4">
-          <h3 className="font-semibold mb-2">Senaste aktiviteter</h3>
+        <div className="mt-4 max-h-[350px] overflow-y-auto pr-1">
+          <h3 className="font-semibold mb-2">Alla aktiviteter</h3>
           {playerActivities.length === 0 ? (
             <p className="text-muted-foreground text-sm">Inga aktiviteter hittades</p>
           ) : (
             <div className="space-y-2">
-              {playerActivities.slice(0, 5).map((activity) => (
-                <Card 
-                  key={activity.id} 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => onActivitySelect && onActivitySelect(activity)}
-                >
-                  <CardContent className="p-3 flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{activity.name}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <CalendarDays className="h-3 w-3 mr-1" />
-                        {formatDate(activity.date)}
-                        {activity.time && ` ${activity.time}`}
+              {playerActivities.map((activity) => {
+                // Determine result color
+                let resultTextColor = "";
+                if (activity.isWin === true) {
+                  resultTextColor = "text-green-600";
+                } else if (activity.isWin === false) {
+                  resultTextColor = "text-red-600";
+                } else if (activity.homeScore === activity.awayScore && 
+                         activity.homeScore !== undefined && 
+                         activity.awayScore !== undefined) {
+                  resultTextColor = "text-gray-600";
+                }
+                
+                return (
+                  <Card 
+                    key={activity.id} 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => onActivitySelect && onActivitySelect(activity)}
+                  >
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{activity.name}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <CalendarDays className="h-3 w-3 mr-1" />
+                          {formatDate(activity.date)}
+                          {activity.time && ` ${activity.time}`}
+                        </div>
                       </div>
-                    </div>
-                    {activity.result && (
-                      <div className="bg-primary/10 px-2 py-1 rounded text-primary font-medium">
-                        {activity.result}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {(activity.result || (activity.homeScore !== undefined && activity.awayScore !== undefined)) && (
+                        <div className={`px-2 py-1 rounded font-medium ${resultTextColor}`}>
+                          {activity.result ? activity.result : `${activity.homeScore}-${activity.awayScore}`}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
