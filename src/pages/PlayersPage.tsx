@@ -1,4 +1,3 @@
-
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -121,6 +120,11 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleMatchResult(activityId, homeScore, awayScore);
   };
 
+  // Wrapper for handlePlayerActivitySelect with Promise<void> return type
+  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
+    await Promise.resolve(handlePlayerActivitySelect(activity));
+  };
+
   return (
     <PageContainer isLoading={isLoading}>
       <PlayersPageContent 
@@ -166,7 +170,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleImportActivities={handleImportActivitiesWrapper}
         handleClearHistorical={handleClearHistoricalWrapper}
         handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelect}
+        onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
         handleMatchResultUpdate={handleMatchResultUpdateWrapper}
       />
     </PageContainer>

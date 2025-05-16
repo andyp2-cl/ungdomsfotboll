@@ -43,10 +43,7 @@ export function PlayerPreview({
   const stats = getPlayerStats(player.id, activities);
   
   // Player name handling based on available properties
-  const playerName = player.name || 
-    (player.firstName && player.lastName 
-      ? `${player.firstName} ${player.lastName}` 
-      : player.id);
+  const playerName = player.name || player.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

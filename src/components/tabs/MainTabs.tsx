@@ -171,7 +171,13 @@ export function MainTabs({
             setEditingActivity={setEditingActivity}
             isAddActivityOpen={isAddActivityOpen}
             handleMatchResultUpdate={handleMatchResultUpdate}
-            onPlayerSelect={setSelectedPlayer}
+            onPlayerSelect={(playerId: string) => {
+              // Convert the playerId to a Player object
+              const player = players.find(p => p.id === playerId);
+              if (player) {
+                setSelectedPlayer(player);
+              }
+            }}
           />
         </TabsContent>
       </Tabs>
