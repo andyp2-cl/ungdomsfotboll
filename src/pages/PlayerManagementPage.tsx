@@ -3,12 +3,15 @@ import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 import { Activity } from "@/types/player"; // Add missing Activity import
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  const location = useLocation();
   const {
     // Tab state
     activeTab,
@@ -32,7 +35,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer, // Ensure this is properly exported from usePlayers
+    handleDeletePlayer, 
     
     // Activity data
     activities,
@@ -58,6 +61,16 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     // Loading state
     isLoading
   } = usePlayers(initialTab);
+
+  // Check for selected activity in location state
+  useEffect(() => {
+    if (location.state?.selectedActivityId) {
+      const activity = activities.find(a => a.id === location.state.selectedActivityId);
+      if (activity) {
+        setSelectedActivity(activity);
+      }
+    }
+  }, [location.state, activities, setSelectedActivity]);
 
   // Wrapper functions to ensure proper return types
   const handleKioskUpdateWrapper = async (activityId: string, playerId?: string): Promise<boolean> => {
@@ -85,8 +98,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleAddPlayer(player);
   };
 
-  // Wrapper for handleDeletePlayer
-  const handleDeletePlayerWrapper = async (playerId: string) => {
+  // Wrapper for handleDeletePlayer with proper Promise<void> return type
+  const handleDeletePlayerWrapper = async (playerId: string): Promise<void> => {
     if (handleDeletePlayer) {
       await handleDeletePlayer(playerId);
     } else {
@@ -106,7 +119,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleMatchResult(activityId, homeScore, awayScore);
   };
 
-  // Add wrapper for handlePlayerActivitySelect
+  // Add wrapper for handlePlayerActivitySelect with Promise<void> return type
   const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
     handlePlayerActivitySelect(activity);
   };

@@ -8,6 +8,7 @@ import { ActivityTabHeader } from "./components/ActivityTabHeader";
 import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PlayerPreview } from "@/components/player-preview";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -27,7 +28,7 @@ interface ActivityTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect: (player: Player | null) => void;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function ActivityTabContent({
@@ -58,7 +59,9 @@ export function ActivityTabContent({
     activeView,
     handleViewChange,
     selectedPlayer,
+    previewPlayer,
     handlePlayerSelect,
+    handleClosePlayerPreview,
     renderContent,
     isHistorical,
     filteredBySearchActivities
@@ -130,6 +133,15 @@ export function ActivityTabContent({
           onMatchResultUpdate={handleMatchResultUpdate}
         />
       </PullToRefresh>
+
+      {/* Player Preview Dialog */}
+      <PlayerPreview
+        player={previewPlayer}
+        activities={activities}
+        isOpen={previewPlayer !== null}
+        onClose={handleClosePlayerPreview}
+        onActivitySelect={handleActivitySelectWithLogging}
+      />
     </div>
   );
 }
