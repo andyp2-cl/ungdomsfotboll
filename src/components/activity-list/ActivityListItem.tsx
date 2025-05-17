@@ -100,6 +100,16 @@ export function ActivityListItem({
     onSelect(activity);
   };
   
+  // Handle player selection without propagating to the card click
+  const handlePlayerClick = (e: React.MouseEvent, playerId: string) => {
+    // Prevent the click from bubbling up to the card
+    e.stopPropagation();
+    
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    }
+  };
+
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -150,11 +160,16 @@ export function ActivityListItem({
             <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
-                onPlayerSelect={isHistorical ? undefined : onPlayerSelect}
+                onPlayerSelect={playerId => {
+                  if (onPlayerSelect) {
+                    // This creates a fake MouseEvent to prevent the TS error
+                    const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
+                    handlePlayerClick(fakeEvent, playerId);
+                  }
+                }}
                 totalCount={participants.length}
                 isMobile={isMobileView}
                 showAll={true}
-                isHistorical={isHistorical}
               />
             </div>
           </div>
