@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -102,10 +101,16 @@ export function ActivityListItem({
   
   // Handle player selection without propagating to the card click
   const handlePlayerClick = (e: React.MouseEvent, playerId: string) => {
-    // Prevent the click from bubbling up to the card
-    e.stopPropagation();
+    // For historical activities, do nothing when clicking on a player
+    if (isHistorical) {
+      console.log("Preventing player selection on historical activity");
+      e.stopPropagation(); // Just stop propagation but don't trigger player selection
+      return;
+    }
     
+    // For non-historical activities, keep the existing behavior
     if (onPlayerSelect) {
+      e.stopPropagation();
       onPlayerSelect(playerId);
     }
   };
@@ -161,11 +166,9 @@ export function ActivityListItem({
               <ActivityParticipants 
                 participants={participantPlayers} 
                 onPlayerSelect={playerId => {
-                  if (onPlayerSelect) {
-                    // This creates a fake MouseEvent to prevent the TS error
-                    const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
-                    handlePlayerClick(fakeEvent, playerId);
-                  }
+                  // This creates a fake MouseEvent to prevent the TS error
+                  const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
+                  handlePlayerClick(fakeEvent, playerId);
                 }}
                 totalCount={participants.length}
                 isMobile={isMobileView}

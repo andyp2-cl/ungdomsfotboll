@@ -1,114 +1,79 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserRound } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { getPlayerInitials } from "@/components/PlayerCard";
+import { getGradeColor } from "@/utils/gradeUtils";
 
 interface ActivityParticipantsProps {
   participants: Player[];
   onPlayerSelect?: (playerId: string) => void;
   totalCount?: number;
-  maxDisplayed?: number;
+  limit?: number;
   isMobile?: boolean;
   showAll?: boolean;
+  isHistorical?: boolean;
 }
 
 export function ActivityParticipants({
   participants,
   onPlayerSelect,
   totalCount = 0,
-  maxDisplayed = 100,
+  limit = 5,
   isMobile = false,
-  showAll = true
+  showAll = false,
+  isHistorical = false
 }: ActivityParticipantsProps) {
-  // Sort participants by grade
-  const sortedParticipants = sortPlayersByGrade(participants);
+  const displayParticipants = showAll ? participants : participants.slice(0, limit);
+  const remainingCount = totalCount - limit;
   
-  // Group participants by grade for better visual organization
-  const participantsByGrade: Record<string, Player[]> = {};
+  const avatarSize = isMobile ? "h-6 w-6 text-xs" : "h-8 w-8 text-sm";
   
-  // Initialize groups for each grade level
-  ['A', 'B', 'C', 'D', undefined].forEach(grade => {
-    participantsByGrade[grade || 'undefined'] = [];
-  });
-  
-  // Populate the groups
-  sortedParticipants.forEach(player => {
-    const grade = player.grade || 'undefined';
-    participantsByGrade[grade].push(player);
-  });
-  
-  // Function to get first name only
-  const getFirstName = (fullName: string) => {
-    return fullName.split(' ')[0];
-  };
-
-  if (!sortedParticipants.length) {
-    return (
-      <div className="text-xs text-muted-foreground">
-        Inga deltagare
-      </div>
-    );
+  if (participants.length === 0) {
+    return <div className="text-sm text-muted-foreground">Inga deltagare</div>;
   }
 
-  // Set avatar size to 100px for desktop, keep proportional for mobile
-  const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
-
   return (
-    <div className="flex flex-col gap-1.5 w-full">
-      {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
-        const playersInGrade = participantsByGrade[gradeKey];
+    <div className="flex flex-wrap gap-1">
+      {displayParticipants.map((player) => {
+        const borderColor = getGradeColor(player.grade);
         
-        // Skip rendering this grade group if it's empty
-        if (playersInGrade.length === 0) return null;
+        // Handle player click, respecting isHistorical flag
+        const handleClick = () => {
+          if (isHistorical) {
+            // Do nothing for historical activities
+            console.log("Ignoring player click in historical activity");
+            return;
+          }
+          
+          if (onPlayerSelect) {
+            onPlayerSelect(player.id);
+          }
+        };
         
         return (
-          <div key={gradeKey} className="flex flex-col gap-1">
-            {gradeKey !== 'undefined' && (
-              <Badge variant="outline" className="self-start mr-1 mb-1">
-                {gradeKey}
-              </Badge>
+          <Avatar 
+            key={player.id} 
+            className={`${avatarSize} border-2 cursor-pointer hover:scale-110 transition-transform ${borderColor}`}
+            onClick={handleClick}
+          >
+            {player.image ? (
+              <AvatarImage src={player.image} alt={player.name} />
+            ) : (
+              <AvatarFallback className={avatarSize}>
+                {getPlayerInitials(player.name)}
+              </AvatarFallback>
             )}
-            
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full">
-              {playersInGrade.map((player) => (
-                <div 
-                  key={player.id}
-                  className="flex flex-col items-center gap-1 border rounded-md p-2 bg-background cursor-pointer hover:bg-accent min-w-0"
-                  onClick={() => onPlayerSelect?.(player.id)}
-                >
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Avatar className={`border-2 border-background flex-shrink-0 ${avatarSize}`}>
-                          <AvatarImage src={player.image} alt={player.name} />
-                          <AvatarFallback className="text-xs bg-muted">
-                            <UserRound className={iconSize} />
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div>
-                          <p>{player.name}</p>
-                          {player.grade && (
-                            <Badge variant="outline" className="mt-1">{player.grade}</Badge>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
-                    {getFirstName(player.name)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          </Avatar>
         );
       })}
+      
+      {!showAll && remainingCount > 0 && (
+        <Badge variant="secondary" className={`${isMobile ? 'text-xs px-2 h-6' : ''} flex items-center justify-center`}>
+          +{remainingCount} fler
+        </Badge>
+      )}
     </div>
   );
 }
