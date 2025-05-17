@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -121,10 +122,23 @@ export function usePlayers(initialTab?: string) {
   const isLoading = isPlayersLoading || isActivitiesLoading;
 
   // Handle selection of activity from player detail view
-  const handlePlayerActivitySelect = (activity: Activity) => {
-    setSelectedPlayer(null);
-    setSelectedActivity(activity);
-    setActiveTab('activities');
+  const handlePlayerActivitySelect = (activity: Activity): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      setSelectedPlayer(null);
+      setSelectedActivity(activity);
+      setActiveTab('activities');
+      resolve();
+    });
+  };
+  
+  // Handle player selection
+  const handlePlayerSelect = (playerId: string): void => {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayer(player);
+    } else if (playerId === "") {
+      setSelectedPlayer(null);
+    }
   };
 
   return {
@@ -164,7 +178,7 @@ export function usePlayers(initialTab?: string) {
     setIsAddActivityOpen,
     selectedActivityTypes,
     handleActivityTypeChange,
-    handleActivityUpdate: handleActivityUpdateWrapper, // Now properly returns Promise<void>
+    handleActivityUpdate: handleActivityUpdateWrapper,
     handleKioskUpdate,
     handleDelete,
     handleImportActivities,
@@ -172,6 +186,7 @@ export function usePlayers(initialTab?: string) {
     handleAddActivity,
     handlePlayerActivitySelect,
     handleMatchResult,
+    handlePlayerSelect,
     
     // Loading state
     isLoading

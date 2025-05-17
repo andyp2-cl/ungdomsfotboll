@@ -3,7 +3,6 @@ import { Activity, Player } from "@/types/player";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetail } from "@/components/activity-detail";
-import { PlayerDetail } from "@/components/PlayerDetail";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
 
@@ -82,7 +81,7 @@ export function ActivityTabViewContent({
   // Handle view rendering based on content type
   if (content) {
     if (content.viewType === "player-detail" && content.player) {
-      // Instead of PlayerDetail, use the new PlayerPreview component
+      // Use the new PlayerPreview component
       return (
         <PlayerPreview 
           player={content.player} 

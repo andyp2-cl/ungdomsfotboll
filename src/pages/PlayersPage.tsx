@@ -57,6 +57,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddActivity,
     handlePlayerActivitySelect,
     handleMatchResult,
+    handlePlayerSelect,
     
     // Loading state
     isLoading
@@ -96,42 +97,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     if (mode === "grid" || mode === "list" || mode === "stats") {
       setViewMode(mode);
     }
-  };
-
-  // Wrapper for handleDelete to match expected handleDeleteActivity
-  const handleDeleteActivity = handleDelete;
-  
-  // Wrapper for handleKioskUpdate to match expected handleKioskUpdate
-  const handleKioskUpdateWrapper = async (activityId: string, playerId?: string): Promise<boolean> => {
-    return await handleKioskUpdate(activityId, playerId);
-  };
-  
-  // Wrapper for import activities
-  const handleImportActivitiesWrapper = async (activities: Activity[]): Promise<boolean> => {
-    return await handleImportActivities(activities);
-  };
-  
-  // Wrapper for clear historical
-  const handleClearHistoricalWrapper = async (): Promise<boolean> => {
-    return await handleClearHistorical();
-  };
-  
-  // Wrapper for match result update
-  const handleMatchResultUpdateWrapper = async (activityId: string, homeScore?: number, awayScore?: number): Promise<void> => {
-    await handleMatchResult(activityId, homeScore, awayScore);
-  };
-  
-  // Wrapper for player activity select
-  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
-    return new Promise<void>((resolve) => {
-      handlePlayerActivitySelect(activity);
-      resolve();
-    });
-  };
-  
-  // Create an onBack function for page navigation
-  const handleBack = () => {
-    // Add any back navigation logic here if needed
   };
 
   return (
@@ -174,14 +139,14 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         selectedActivityTypes={selectedActivityTypes}
         handleActivityTypeChange={handleActivityTypeChange}
         handleActivityUpdate={handleActivityUpdate}
-        handleKioskUpdate={handleKioskUpdateWrapper}
-        handleDelete={handleDeleteActivity}
-        handleImportActivities={handleImportActivitiesWrapper}
-        handleClearHistorical={handleClearHistoricalWrapper}
+        handleKioskUpdate={handleKioskUpdate}
+        handleDelete={handleDelete}
+        handleImportActivities={handleImportActivities}
+        handleClearHistorical={handleClearHistorical}
         handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
-        handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-        onBack={handleBack}
+        onPlayerActivitySelect={handlePlayerActivitySelect}
+        handleMatchResultUpdate={handleMatchResult}
+        onPlayerSelect={handlePlayerSelect}
       />
     </PageContainer>
   );

@@ -24,7 +24,7 @@ interface ActivitiesTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void; // Add this prop
+  onPlayerSelect?: (playerId: string) => void; // Changed to accept playerId
 }
 
 export function ActivitiesTabContent({

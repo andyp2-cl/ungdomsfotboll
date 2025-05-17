@@ -12,10 +12,10 @@ interface UseActivityTabViewsProps {
   filteredHistoricalActivities: Activity[];
   setEditingActivity: (activity: Activity | null) => void;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleActivityUpdate: (activity: Activity) => void;
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void; // Add this prop
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export const useActivityTabViews = ({
@@ -41,12 +41,18 @@ export const useActivityTabViews = ({
   const handlePlayerSelect = useCallback((playerId: string) => {
     if (onPlayerSelect) {
       onPlayerSelect(playerId);
-    } else {
-      const player = players.find(p => p.id === playerId);
-      if (player) {
-        setSelectedPlayer(player);
-        setSelectedActivity(null);
-      }
+      return;
+    }
+    
+    if (playerId === "") {
+      setSelectedPlayer(null);
+      return;
+    }
+    
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayer(player);
+      setSelectedActivity(null);
     }
   }, [players, setSelectedActivity, onPlayerSelect]);
 
@@ -97,7 +103,6 @@ export const useActivityTabViews = ({
   const renderContent = useCallback(() => {
     // Handle Statistics view
     if (activeView === "statistics") {
-      // Statistics will be rendered by the parent component
       return null;
     }
     
@@ -130,7 +135,8 @@ export const useActivityTabViews = ({
     // Handle Activities list view
     return {
       viewType: "activities-list",
-      activities: filteredBySearchActivities
+      activities: filteredBySearchActivities,
+      searchQuery
     };
   }, [
     activeView, 
@@ -139,7 +145,8 @@ export const useActivityTabViews = ({
     activities, 
     filteredBySearchActivities, 
     getRelatedActivities,
-    getCupMatches
+    getCupMatches,
+    searchQuery
   ]);
 
   return {

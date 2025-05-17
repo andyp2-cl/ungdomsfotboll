@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X } from "lucide-react";
+import { X, Users, Calendar, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatDate } from "@/utils/formatDate";
 
@@ -39,25 +40,38 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
   // Format player name
   const fullName = player.name || "Okänt namn";
   
+  // Split activities into upcoming and past
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of today
+  
+  const upcomingActivities = playerActivities.filter(
+    activity => new Date(activity.date) >= today
+  ).slice(0, 3); // Show just the next 3
+  
+  const pastActivities = playerActivities.filter(
+    activity => new Date(activity.date) < today
+  );
+  
   return (
-    <Card className="relative border shadow-md">
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute right-2 top-2" 
-        onClick={onClose}
-      >
-        <X className="h-4 w-4" />
-      </Button>
-      
-      <CardHeader className="pb-2">
-        <div className="flex items-center space-x-4">
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-md md:max-w-lg">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute right-2 top-2" 
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        
+        {/* Top section - Player profile */}
+        <div className="flex items-center space-x-4 p-4 border-b">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={player.profileImageUrl || ""} alt={fullName} />
+            <AvatarImage src={player.image || ""} alt={fullName} />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle className="text-xl">{fullName}</CardTitle>
+            <h3 className="text-xl font-bold">{fullName}</h3>
             <div className="flex items-center space-x-2 mt-1">
               {player.grade && (
                 <Badge variant="outline">{player.grade}</Badge>
@@ -68,44 +82,81 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
             </div>
           </div>
         </div>
-      </CardHeader>
-
-      <CardContent className="pb-4">
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="border rounded p-2 text-center">
-            <div className="text-2xl font-semibold">{playerActivities.length}</div>
-            <div className="text-xs text-muted-foreground">Aktiviteter</div>
+        
+        {/* Middle section - Stats and leagues */}
+        <div className="p-4">
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="border rounded p-2 text-center">
+              <div className="text-2xl font-semibold">{playerActivities.length}</div>
+              <div className="text-xs text-muted-foreground">Aktiviteter</div>
+            </div>
+            <div className="border rounded p-2 text-center">
+              <div className="text-2xl font-semibold">{stats.totalGoals || 0}</div>
+              <div className="text-xs text-muted-foreground">Mål</div>
+            </div>
+            <div className="border rounded p-2 text-center">
+              <div className="text-2xl font-semibold">{stats.wins || 0}</div>
+              <div className="text-xs text-muted-foreground">Vinster</div>
+            </div>
           </div>
-          <div className="border rounded p-2 text-center">
-            <div className="text-2xl font-semibold">{stats.totalGoals}</div>
-            <div className="text-xs text-muted-foreground">Mål</div>
-          </div>
-          <div className="border rounded p-2 text-center">
-            <div className="text-2xl font-semibold">{stats.wins}</div>
-            <div className="text-xs text-muted-foreground">Vinster</div>
-          </div>
+          
+          {/* Leagues section */}
+          {leagues.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium mb-2 flex items-center">
+                <Award className="h-4 w-4 mr-1" />
+                Ligor ({leagues.length})
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {leagues.map(leagueId => (
+                  <Badge 
+                    key={leagueId} 
+                    variant="outline" 
+                    title={`Liga ID: ${leagueId}`} 
+                    className="cursor-help"
+                  >
+                    Liga
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Upcoming activities section */}
+          {upcomingActivities.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium mb-2 flex items-center">
+                <Calendar className="h-4 w-4 mr-1" />
+                Kommande aktiviteter
+              </h4>
+              <div className="space-y-2">
+                {upcomingActivities.map(activity => (
+                  <div 
+                    key={activity.id} 
+                    className="p-2 border rounded-md flex items-center justify-between"
+                  >
+                    <div>
+                      <div className="font-medium">{activity.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(activity.date)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
-        {leagues.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {leagues.map(leagueId => (
-              <Badge 
-                key={leagueId} 
-                variant="outline" 
-                title={`Liga ID: ${leagueId}`} 
-                className="cursor-help"
-              >
-                Liga
-              </Badge>
-            ))}
-          </div>
-        )}
-        
-        <div>
-          <h4 className="text-sm font-medium mb-2">Aktiviteter</h4>
-          <ScrollArea className="h-[200px]">
+        {/* Bottom section - Match history (scrollable) */}
+        <div className="p-4 pt-0 border-t">
+          <h4 className="text-sm font-medium mb-2 flex items-center">
+            <Users className="h-4 w-4 mr-1" />
+            Matchhistorik ({pastActivities.length})
+          </h4>
+          <ScrollArea className="h-[180px]">
             <div className="space-y-2 pr-4">
-              {playerActivities.map(activity => (
+              {pastActivities.map(activity => (
                 <div 
                   key={activity.id} 
                   className="p-2 border rounded-md flex items-center justify-between"
@@ -130,15 +181,15 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
                 </div>
               ))}
               
-              {playerActivities.length === 0 && (
+              {pastActivities.length === 0 && (
                 <div className="text-center p-4 text-muted-foreground">
-                  Inga aktiviteter hittades
+                  Ingen matchhistorik
                 </div>
               )}
             </div>
           </ScrollArea>
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
