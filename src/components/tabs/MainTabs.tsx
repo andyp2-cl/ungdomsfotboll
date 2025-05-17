@@ -103,7 +103,8 @@ export function MainTabs({
   handleClearHistorical,
   handleAddActivity,
   handleMatchResultUpdate,
-  onPlayerActivitySelect
+  onPlayerActivitySelect,
+  onPlayerSelect
 }: MainTabsProps) {
   
   const handleTabChange = (value: string) => {
