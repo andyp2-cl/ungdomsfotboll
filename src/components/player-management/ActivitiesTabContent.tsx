@@ -16,7 +16,7 @@ interface ActivitiesTabContentProps {
   isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
-  handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated return type
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
@@ -24,7 +24,7 @@ interface ActivitiesTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void; // Changed to accept playerId
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function ActivitiesTabContent({

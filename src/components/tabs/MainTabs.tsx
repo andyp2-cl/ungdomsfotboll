@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -53,6 +52,7 @@ interface MainTabsProps {
   handleAddActivity: (activity: Activity) => Promise<void>;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void; // Add this missing prop
 }
 
 export function MainTabs({
