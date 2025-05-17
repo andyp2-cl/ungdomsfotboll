@@ -3,7 +3,6 @@ import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { ActivityManagement } from "@/components/ActivityManagement";
 import { ActivityTabContent as NewActivityTabContent } from "@/components/tabs/activity-tab";
 
 interface ActivitiesTabContentProps {

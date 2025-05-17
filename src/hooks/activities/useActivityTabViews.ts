@@ -15,6 +15,7 @@ interface UseActivityTabViewsProps {
   handleActivityUpdate: (activity: Activity) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export const useActivityTabViews = ({
@@ -29,29 +30,22 @@ export const useActivityTabViews = ({
   handleDeleteActivity,
   handleActivityUpdate,
   handleKioskAssignmentUpdate,
-  handleMatchResultUpdate
+  handleMatchResultUpdate,
+  onPlayerSelect
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
     console.log("useActivityTabViews: Player selected/deselected:", playerId);
     
-    if (playerId === "") {
-      // This means we want to close the player detail view
-      console.log("useActivityTabViews: Clearing selected player");
-      setSelectedPlayer(null);
-    } else {
-      const player = players.find(p => p.id === playerId);
-      if (player) {
-        console.log("useActivityTabViews: Setting selected player:", player.name);
-        setSelectedPlayer(player);
-        setSelectedActivity(null);
-      }
+    // Always use the external handler if provided
+    if (onPlayerSelect) {
+      console.log("useActivityTabViews: Using external onPlayerSelect handler");
+      onPlayerSelect(playerId);
     }
-  }, [players, setSelectedActivity]);
+  }, [onPlayerSelect]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {
@@ -60,7 +54,6 @@ export const useActivityTabViews = ({
       setPreviousView(activeView);
       setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
-      setSelectedPlayer(null);
     }
   }, [setSelectedActivity, activeView]);
 
@@ -104,19 +97,6 @@ export const useActivityTabViews = ({
       return null;
     }
     
-    // Handle Player detail view
-    if (selectedPlayer) {
-      const playerActivities = activities.filter(activity => 
-        activity.participants?.includes(selectedPlayer.id)
-      );
-      
-      return {
-        viewType: "player-detail",
-        player: selectedPlayer,
-        activities: playerActivities
-      };
-    }
-    
     // Handle Activity detail view
     if (selectedActivity) {
       const relatedActivities = getRelatedActivities(selectedActivity);
@@ -138,7 +118,6 @@ export const useActivityTabViews = ({
     };
   }, [
     activeView, 
-    selectedPlayer, 
     selectedActivity, 
     activities, 
     filteredBySearchActivities, 
@@ -150,8 +129,6 @@ export const useActivityTabViews = ({
   return {
     activeView,
     handleViewChange,
-    selectedPlayer,
-    setSelectedPlayer,
     handlePlayerSelect,
     renderContent,
     isHistorical,

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -52,7 +53,7 @@ interface MainTabsProps {
   handleAddActivity: (activity: Activity) => Promise<void>;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void; // Add this missing prop
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function MainTabs({
@@ -106,16 +107,28 @@ export function MainTabs({
 }: MainTabsProps) {
   
   const handleTabChange = (value: string) => {
+    // Clear selected player and activity when switching tabs
+    if (value === "players") {
+      setSelectedPlayer(null);
+    } else if (value === "activities") {
+      setSelectedActivity(null);
+    }
+    
     onTabChange(value);
     saveActiveTab(value); // Save active tab to storage
   };
   
   // Handler for player selection from activities tab
   const handlePlayerSelect = (playerId: string) => {
+    console.log("MainTabs: handlePlayerSelect called with:", playerId);
     if (playerId) {
       const player = players.find(p => p.id === playerId);
       if (player) {
-        setSelectedPlayer(player);
+        console.log("MainTabs: Player found:", player.name);
+        // Don't change tabs or navigate, just pass to parent handler
+        if (onPlayerSelect) {
+          onPlayerSelect(playerId);
+        }
       }
     } else {
       setSelectedPlayer(null);

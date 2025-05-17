@@ -129,17 +129,19 @@ export function usePlayers(initialTab?: string) {
     return Promise.resolve();
   };
   
-  // Handle player selection - make sure it works properly
+  // Improve player selection handler to support showing player preview
   const handlePlayerSelect = (playerId: string): void => {
     console.log("usePlayers.ts: handlePlayerSelect called with playerId:", playerId);
+    
     if (playerId === "") {
+      // This is used to close the preview
       setSelectedPlayer(null);
     } else {
       const player = players.find(p => p.id === playerId);
       if (player) {
-        console.log("usePlayers.ts: Found player:", player.name);
-        // Don't navigate away from the current activity
-        // Just show the player preview
+        console.log("usePlayers.ts: Found player for preview:", player.name);
+        // Don't navigate away or change tabs, just handle the preview display
+        // in the current view
       } else {
         console.log("usePlayers.ts: Player not found for id:", playerId);
       }

@@ -57,7 +57,6 @@ export function ActivityTabContent({
   const { 
     activeView,
     handleViewChange,
-    selectedPlayer,
     handlePlayerSelect,
     renderContent,
     isHistorical,
@@ -115,7 +114,7 @@ export function ActivityTabContent({
         />
       )}
       
-      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
+      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity}>
         <ActivityTabViewContent 
           activeView={activeView}
           renderContent={renderContent}
@@ -128,6 +127,7 @@ export function ActivityTabContent({
           onDeleteActivity={handleDeleteActivity}
           onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
           onMatchResultUpdate={handleMatchResultUpdate}
+          previousView={activeView === "statistics" ? "historical" : undefined}
         />
       </PullToRefresh>
     </div>
