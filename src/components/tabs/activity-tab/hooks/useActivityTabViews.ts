@@ -39,22 +39,28 @@ export const useActivityTabViews = ({
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
+    console.log("useActivityTabViews: handlePlayerSelect called with playerId:", playerId);
+    
     if (onPlayerSelect) {
+      console.log("useActivityTabViews: Using external onPlayerSelect handler");
       onPlayerSelect(playerId);
       return;
     }
     
     if (playerId === "") {
+      console.log("useActivityTabViews: Clearing selected player");
       setSelectedPlayer(null);
       return;
     }
     
     const player = players.find(p => p.id === playerId);
     if (player) {
+      console.log("useActivityTabViews: Found player:", player.name);
       setSelectedPlayer(player);
-      setSelectedActivity(null);
+    } else {
+      console.log("useActivityTabViews: Player not found with id:", playerId);
     }
-  }, [players, setSelectedActivity, onPlayerSelect]);
+  }, [players, setSelectedPlayer, onPlayerSelect]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {

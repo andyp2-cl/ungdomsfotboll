@@ -81,7 +81,7 @@ export function ActivityTabViewContent({
   // Handle view rendering based on content type
   if (content) {
     if (content.viewType === "player-detail" && content.player) {
-      // Use the new PlayerPreview component
+      // Use the PlayerPreview component
       return (
         <PlayerPreview 
           player={content.player} 

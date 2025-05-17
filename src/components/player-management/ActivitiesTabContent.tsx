@@ -47,6 +47,14 @@ export function ActivitiesTabContent({
   handleMatchResultUpdate,
   onPlayerSelect = () => {} // Provide default empty function
 }: ActivitiesTabContentProps) {
+  // Create a handler for player selection within activities
+  const handlePlayerSelectWithinActivity = (playerId: string) => {
+    console.log("ActivitiesTabContent: Player selected:", playerId);
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -76,7 +84,7 @@ export function ActivitiesTabContent({
         handleImportedActivities={handleImportedActivities}
         handleClearHistoricalActivities={handleClearHistoricalActivities}
         handleMatchResultUpdate={handleMatchResultUpdate}
-        onPlayerSelect={onPlayerSelect}
+        onPlayerSelect={handlePlayerSelectWithinActivity}
       />
     </div>
   );

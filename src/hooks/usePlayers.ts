@@ -122,22 +122,27 @@ export function usePlayers(initialTab?: string) {
   const isLoading = isPlayersLoading || isActivitiesLoading;
 
   // Handle selection of activity from player detail view
-  const handlePlayerActivitySelect = (activity: Activity): Promise<void> => {
-    return new Promise<void>((resolve) => {
-      setSelectedPlayer(null);
-      setSelectedActivity(activity);
-      setActiveTab('activities');
-      resolve();
-    });
+  const handlePlayerActivitySelect = async (activity: Activity): Promise<void> => {
+    setSelectedPlayer(null);
+    setSelectedActivity(activity);
+    setActiveTab('activities');
+    return Promise.resolve();
   };
   
-  // Handle player selection
+  // Handle player selection - make sure it works properly
   const handlePlayerSelect = (playerId: string): void => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSelectedPlayer(player);
-    } else if (playerId === "") {
+    console.log("usePlayers.ts: handlePlayerSelect called with playerId:", playerId);
+    if (playerId === "") {
       setSelectedPlayer(null);
+    } else {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        console.log("usePlayers.ts: Found player:", player.name);
+        // Don't navigate away from the current activity
+        // Just show the player preview
+      } else {
+        console.log("usePlayers.ts: Player not found for id:", playerId);
+      }
     }
   };
 

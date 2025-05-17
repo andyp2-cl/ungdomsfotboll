@@ -25,8 +25,8 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: PlayerGrade[];  // Changed from string[] to PlayerGrade[]
-  viewMode: "list" | "grid" | "stats";  // Explicit union type
+  selectedGrades: PlayerGrade[];
+  viewMode: "list" | "grid" | "stats"; 
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
@@ -51,8 +51,9 @@ interface PlayersPageContentProps {
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
-  onPlayerActivitySelect: (activity: Activity) => void;
+  onPlayerActivitySelect: (activity: Activity) => Promise<void>;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function PlayersPageContent(props: PlayersPageContentProps) {
@@ -109,6 +110,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
           handleAddActivity={props.handleAddActivity}
           handleMatchResultUpdate={props.handleMatchResultUpdate}
           onPlayerActivitySelect={props.onPlayerActivitySelect}
+          onPlayerSelect={props.onPlayerSelect}
         />
       </div>
 
