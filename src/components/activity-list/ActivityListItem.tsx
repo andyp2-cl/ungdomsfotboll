@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipants } from "./ActivityParticipants";
@@ -99,22 +100,6 @@ export function ActivityListItem({
     onSelect(activity);
   };
   
-  // Handle player selection without propagating to the card click
-  const handlePlayerClick = (e: React.MouseEvent, playerId: string) => {
-    // For historical activities, do nothing when clicking on a player
-    if (isHistorical) {
-      console.log("Preventing player selection on historical activity");
-      e.stopPropagation(); // Just stop propagation but don't trigger player selection
-      return;
-    }
-    
-    // For non-historical activities, keep the existing behavior
-    if (onPlayerSelect) {
-      e.stopPropagation();
-      onPlayerSelect(playerId);
-    }
-  };
-
   return (
     <Card 
       className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -165,14 +150,11 @@ export function ActivityListItem({
             <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
-                onPlayerSelect={playerId => {
-                  // This creates a fake MouseEvent to prevent the TS error
-                  const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
-                  handlePlayerClick(fakeEvent, playerId);
-                }}
+                onPlayerSelect={isHistorical ? undefined : onPlayerSelect}
                 totalCount={participants.length}
                 isMobile={isMobileView}
                 showAll={true}
+                isHistorical={isHistorical}
               />
             </div>
           </div>

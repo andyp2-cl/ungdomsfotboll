@@ -3,7 +3,6 @@ import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getPlayerInitials } from "@/components/PlayerCard";
 import { getGradeColor } from "@/utils/gradeUtils";
 
 interface ActivityParticipantsProps {
@@ -14,6 +13,17 @@ interface ActivityParticipantsProps {
   isMobile?: boolean;
   showAll?: boolean;
   isHistorical?: boolean;
+}
+
+// Create a helper function for player initials
+function getPlayerInitials(name: string): string {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map(part => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export function ActivityParticipants({
