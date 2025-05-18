@@ -1,2 +1,2 @@
 
-export * from "./PlayerPreview";
+export * from './PlayerPreview';

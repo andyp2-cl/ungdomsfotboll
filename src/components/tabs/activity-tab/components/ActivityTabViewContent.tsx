@@ -122,8 +122,8 @@ export function ActivityTabViewContent({
           activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
-          // Pass undefined to ensure player clicks do nothing in the activity list
-          onPlayerSelect={undefined}
+          // Enable player selection to show player preview
+          onPlayerSelect={onPlayerSelect}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}

@@ -42,8 +42,7 @@ export function ActivityList({
               activity={activity}
               players={players}
               onSelect={onSelect}
-              // We're passing undefined instead of onPlayerSelect to disable player click functionality
-              onPlayerSelect={undefined}
+              onPlayerSelect={onPlayerSelect}
               isHistorical={isHistorical}
               isMobile={isMobile}
             />

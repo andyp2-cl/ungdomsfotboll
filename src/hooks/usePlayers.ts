@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -140,8 +139,7 @@ export function usePlayers(initialTab?: string) {
       const player = players.find(p => p.id === playerId);
       if (player) {
         console.log("usePlayers.ts: Found player for preview:", player.name);
-        // Don't navigate away or change tabs, just handle the preview display
-        // in the current view
+        setSelectedPlayer(player);
       } else {
         console.log("usePlayers.ts: Player not found for id:", playerId);
       }
