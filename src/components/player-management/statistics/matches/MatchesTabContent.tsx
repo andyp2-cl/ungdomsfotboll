@@ -50,7 +50,8 @@ export function MatchesTabContent({
         activities={historicalMatchActivities}
         players={players}
         onActivitySelect={onActivitySelect}
-        onPlayerSelect={handlePlayerSelect}
+        // Pass undefined to ensure player clicks do nothing
+        onPlayerSelect={undefined}
         className="col-span-full md:col-span-1"
       />
     </div>

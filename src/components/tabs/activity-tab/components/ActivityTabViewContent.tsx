@@ -110,7 +110,8 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          onPlayerSelect={onPlayerSelect}
+          // Pass undefined to ensure player clicks do nothing in activity detail view
+          onPlayerSelect={undefined}
         />
       );
     }
@@ -121,7 +122,8 @@ export function ActivityTabViewContent({
           activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
-          onPlayerSelect={onPlayerSelect}
+          // Pass undefined to ensure player clicks do nothing in the activity list
+          onPlayerSelect={undefined}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}

@@ -150,7 +150,7 @@ export function ActivityListItem({
             <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
-                // Pass undefined instead of the player select handler to disable clicking
+                // Explicitly pass undefined to ensure no click handling
                 onPlayerSelect={undefined}
                 totalCount={participants.length}
                 isMobile={isMobileView}
