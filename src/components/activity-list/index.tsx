@@ -1,7 +1,8 @@
 
 import React from "react";
-import { Activity, Player } from "@/types/player";
 import { ActivityListItem } from "./ActivityListItem";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Activity, Player } from "@/types/player";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -18,38 +19,37 @@ export function ActivityList({
   players, 
   onSelect, 
   onPlayerSelect,
-  isHistorical = false,
-  isMobile = false,
-  noResultsMessage = "Inga aktiviteter hittades"
+  isHistorical = false, 
+  isMobile,
+  noResultsMessage = "Inga aktiviteter hittades" 
 }: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-lg text-muted-foreground">{noResultsMessage}</p>
+      <div className="p-8 text-center">
+        <h3 className="font-semibold text-lg mb-2">Inga aktiviteter</h3>
+        <p className="text-muted-foreground">{noResultsMessage}</p>
       </div>
     );
   }
-  
-  // All activities (both upcoming and historical) should use full width
-  const gridColumns = 'grid-cols-1';
 
   return (
-    <div className={`grid ${gridColumns} gap-4`}>
-      {activities.map(activity => (
-        <ActivityListItem
-          key={activity.id}
-          activity={activity}
-          players={players}
-          onSelect={onSelect}
-          onPlayerSelect={onPlayerSelect}
-          isHistorical={isHistorical}
-          isMobile={isMobile}
-        />
-      ))}
+    <div className="space-y-4 mb-4">
+      <ScrollArea className="h-full pr-4">
+        <div className="space-y-3 pb-2">
+          {activities.map((activity) => (
+            <ActivityListItem
+              key={activity.id}
+              activity={activity}
+              players={players}
+              onSelect={onSelect}
+              // We're passing null instead of onPlayerSelect to disable player click functionality
+              onPlayerSelect={undefined}
+              isHistorical={isHistorical}
+              isMobile={isMobile}
+            />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
-
-export * from "./ActivityListItem";
-export * from "./ActivityParticipants";
-export * from "./ActivitySearch";
