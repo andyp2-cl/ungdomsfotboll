@@ -53,3 +53,10 @@ export function ActivityList({
     </div>
   );
 }
+
+// Re-export components for use in other files
+export * from './ActivityHeader';
+export * from './ActivityMeta';
+export * from './ActivitySidebar';
+export * from './ActivityParticipants';
+export * from './utils/result-utils';
