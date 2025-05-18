@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -45,6 +46,14 @@ export function ActivityParticipants({
     return fullName.split(' ')[0];
   };
 
+  // Handle click on a player
+  const handlePlayerClick = (playerId: string) => {
+    console.log("ActivityParticipants: Player clicked:", playerId);
+    if (onPlayerSelect) {
+      onPlayerSelect(playerId);
+    }
+  };
+
   if (!sortedParticipants.length) {
     return (
       <div className="text-xs text-muted-foreground">
@@ -77,7 +86,8 @@ export function ActivityParticipants({
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
-                  className="flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0"
+                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0 ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
+                  onClick={() => onPlayerSelect && handlePlayerClick(player.id)}
                 >
                   <TooltipProvider>
                     <Tooltip>

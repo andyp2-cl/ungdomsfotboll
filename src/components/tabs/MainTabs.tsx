@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -122,14 +121,15 @@ export function MainTabs({
   // Handler for player selection from activities tab
   const handlePlayerSelect = (playerId: string) => {
     console.log("MainTabs: handlePlayerSelect called with:", playerId);
-    if (playerId) {
+    if (onPlayerSelect) {
+      console.log("MainTabs: Using provided onPlayerSelect handler");
+      onPlayerSelect(playerId);
+    } else if (playerId) {
+      console.log("MainTabs: No external handler provided, using default behavior");
       const player = players.find(p => p.id === playerId);
       if (player) {
         console.log("MainTabs: Player found:", player.name);
-        // Don't change tabs or navigate, just pass to parent handler
-        if (onPlayerSelect) {
-          onPlayerSelect(playerId);
-        }
+        setSelectedPlayer(player);
       }
     } else {
       setSelectedPlayer(null);
@@ -209,7 +209,7 @@ export function MainTabs({
         isAddActivityOpen={isAddActivityOpen}
         setEditingPlayer={setEditingPlayer}
         setEditingActivity={setEditingActivity}
-        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        setIsAddPlayerOpen={setIsAddActivityOpen}
         setIsAddActivityOpen={setIsAddActivityOpen}
         handlePlayerUpdate={handlePlayerUpdate}
         handleActivityUpdate={handleActivityUpdate}

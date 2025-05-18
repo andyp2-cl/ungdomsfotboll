@@ -40,7 +40,15 @@ export function ActivityListItem({
       .filter(player => player !== undefined) as Player[]
   );
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only handle card clicks if the click target is the card itself,
+    // not a participant or other interactive element
+    if ((e.target as HTMLElement).closest('[data-player-item]')) {
+      // Stop propagation to prevent activity selection when clicking on player
+      e.stopPropagation();
+      return;
+    }
+    
     // Scroll to the top of the window before selecting the activity
     window.scrollTo(0, 0);
     onSelect(activity);
@@ -73,8 +81,7 @@ export function ActivityListItem({
             <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
               <ActivityParticipants 
                 participants={participantPlayers} 
-                // Explicitly pass undefined to ensure no click handling
-                onPlayerSelect={undefined}
+                onPlayerSelect={onPlayerSelect}
                 totalCount={participants.length}
                 isMobile={isMobileView}
                 showAll={true}

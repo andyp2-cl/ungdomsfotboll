@@ -134,6 +134,7 @@ export function usePlayers(initialTab?: string) {
     
     if (playerId === "") {
       // This is used to close the preview
+      console.log("usePlayers.ts: Clearing selected player");
       setSelectedPlayer(null);
     } else {
       const player = players.find(p => p.id === playerId);
