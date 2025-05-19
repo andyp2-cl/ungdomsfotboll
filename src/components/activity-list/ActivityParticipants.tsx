@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,7 +46,10 @@ export function ActivityParticipants({
   };
 
   // Handle click on a player
-  const handlePlayerClick = (playerId: string) => {
+  const handlePlayerClick = (playerId: string, e: React.MouseEvent) => {
+    // Stop propagation to prevent the activity selection from triggering
+    e.stopPropagation();
+    
     console.log("ActivityParticipants: Player clicked:", playerId);
     if (onPlayerSelect) {
       onPlayerSelect(playerId);
@@ -63,8 +65,8 @@ export function ActivityParticipants({
   }
 
   // Set avatar size to 100px for desktop, keep proportional for mobile
-  const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
+  const avatarSize = isMobile ? 'h-8 w-8' : 'h-10 w-10';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-6 w-6';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -86,8 +88,9 @@ export function ActivityParticipants({
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
+                  data-player-item="true"
                   className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0 ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
-                  onClick={() => onPlayerSelect && handlePlayerClick(player.id)}
+                  onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
                 >
                   <TooltipProvider>
                     <Tooltip>

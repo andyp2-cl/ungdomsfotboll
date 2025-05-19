@@ -110,8 +110,7 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          // Pass undefined to ensure player clicks do nothing in activity detail view
-          onPlayerSelect={undefined}
+          onPlayerSelect={onPlayerSelect}
         />
       );
     }
@@ -122,7 +121,6 @@ export function ActivityTabViewContent({
           activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
-          // Enable player selection to show player preview
           onPlayerSelect={onPlayerSelect}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}

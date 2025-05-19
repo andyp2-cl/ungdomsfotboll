@@ -41,11 +41,9 @@ export function ActivityListItem({
   );
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only handle card clicks if the click target is the card itself,
-    // not a participant or other interactive element
+    // Only handle card clicks if the click target is not a player item
     if ((e.target as HTMLElement).closest('[data-player-item]')) {
-      // Stop propagation to prevent activity selection when clicking on player
-      e.stopPropagation();
+      // Let the player click handler handle this
       return;
     }
     
