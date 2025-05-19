@@ -1,11 +1,10 @@
 
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, Users, Calendar, Award } from "lucide-react";
+import { X, Users, Calendar, Award, Star, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
@@ -64,14 +63,14 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           <X className="h-4 w-4" />
         </Button>
         
-        {/* Top section - Player profile */}
+        {/* Sektion 1: Profilbild och namn */}
         <div className="flex items-center space-x-4 p-4 border-b">
-          <Avatar className="h-16 w-16">
+          <Avatar className="h-20 w-20">
             <AvatarImage src={player.image || ""} alt={fullName} />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="text-xl font-bold">{fullName}</h3>
+            <h3 className="text-2xl font-bold">{fullName}</h3>
             <div className="flex items-center space-x-2 mt-1">
               {player.grade && (
                 <Badge variant="outline">{player.grade}</Badge>
@@ -83,8 +82,9 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           </div>
         </div>
         
-        {/* Middle section - Stats and leagues */}
+        {/* Sektion 2: Spelarstatistik, ligor och kommande matcher */}
         <div className="p-4">
+          {/* Statistik */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="border rounded p-2 text-center">
               <div className="text-2xl font-semibold">{playerActivities.length}</div>
@@ -100,11 +100,11 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
             </div>
           </div>
           
-          {/* Leagues section */}
+          {/* Ligor section */}
           {leagues.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2 flex items-center">
-                <Award className="h-4 w-4 mr-1" />
+                <Medal className="h-4 w-4 mr-1" />
                 Ligor ({leagues.length})
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -122,7 +122,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
             </div>
           )}
           
-          {/* Upcoming activities section */}
+          {/* Kommande aktiviteter */}
           {upcomingActivities.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2 flex items-center">
@@ -148,7 +148,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           )}
         </div>
         
-        {/* Bottom section - Match history (scrollable) */}
+        {/* Sektion 3: Scrollbar matchhistorik */}
         <div className="p-4 pt-0 border-t">
           <h4 className="text-sm font-medium mb-2 flex items-center">
             <Users className="h-4 w-4 mr-1" />
@@ -176,6 +176,12 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
                       }`}
                     >
                       {activity.homeScore}-{activity.awayScore}
+                      {player.development?.goals > 0 && (
+                        <Badge variant="outline" className="ml-2">
+                          <Star className="h-3 w-3 mr-1" /> 
+                          {player.development.goals}
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>

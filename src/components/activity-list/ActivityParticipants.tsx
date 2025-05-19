@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -64,9 +65,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Set avatar size to 100px for desktop, keep proportional for mobile
-  const avatarSize = isMobile ? 'h-8 w-8' : 'h-10 w-10';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-6 w-6';
+  // Återställ avatar size till [100px]
+  const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">

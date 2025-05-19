@@ -34,6 +34,7 @@ export const useActivityTabViews = ({
   onPlayerSelect
 }: UseActivityTabViewsProps) => {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
   // Handle player selection
@@ -44,8 +45,23 @@ export const useActivityTabViews = ({
     if (onPlayerSelect) {
       console.log("useActivityTabViews: Using external onPlayerSelect handler");
       onPlayerSelect(playerId);
+      return;
     }
-  }, [onPlayerSelect]);
+    
+    if (playerId === "") {
+      console.log("useActivityTabViews: Clearing selected player");
+      setSelectedPlayer(null);
+      return;
+    }
+    
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      console.log("useActivityTabViews: Found player:", player.name);
+      setSelectedPlayer(player);
+    } else {
+      console.log("useActivityTabViews: Player not found with id:", playerId);
+    }
+  }, [players, setSelectedPlayer, onPlayerSelect]);
 
   // Handle view change
   const handleViewChange = useCallback((value: string) => {
@@ -54,6 +70,7 @@ export const useActivityTabViews = ({
       setPreviousView(activeView);
       setActiveView(value as "upcoming" | "historical" | "statistics");
       setSelectedActivity(null);
+      setSelectedPlayer(null);
     }
   }, [setSelectedActivity, activeView]);
 
@@ -93,8 +110,20 @@ export const useActivityTabViews = ({
   const renderContent = useCallback(() => {
     // Handle Statistics view
     if (activeView === "statistics") {
-      // Statistics will be rendered by the parent component
       return null;
+    }
+    
+    // Handle Player detail view
+    if (selectedPlayer) {
+      const playerActivities = activities.filter(activity => 
+        activity.participants?.includes(selectedPlayer.id)
+      );
+      
+      return {
+        viewType: "player-detail",
+        player: selectedPlayer,
+        activities: playerActivities
+      };
     }
     
     // Handle Activity detail view
@@ -118,6 +147,7 @@ export const useActivityTabViews = ({
     };
   }, [
     activeView, 
+    selectedPlayer, 
     selectedActivity, 
     activities, 
     filteredBySearchActivities, 
@@ -129,6 +159,8 @@ export const useActivityTabViews = ({
   return {
     activeView,
     handleViewChange,
+    selectedPlayer,
+    setSelectedPlayer,
     handlePlayerSelect,
     renderContent,
     isHistorical,
