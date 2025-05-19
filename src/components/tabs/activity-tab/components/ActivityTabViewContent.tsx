@@ -50,7 +50,7 @@ export function ActivityTabViewContent({
       
       if (existingGrade) {
         existingGrade.players++;
-      } else {
+      } else if (grade) {
         acc.push({ grade, players: 1 });
       }
       

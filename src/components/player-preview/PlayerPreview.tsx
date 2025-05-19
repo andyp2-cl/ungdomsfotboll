@@ -176,10 +176,10 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
                       }`}
                     >
                       {activity.homeScore}-{activity.awayScore}
-                      {player.development?.goals > 0 && (
+                      {player.development && stats.totalGoals > 0 && (
                         <Badge variant="outline" className="ml-2">
                           <Star className="h-3 w-3 mr-1" /> 
-                          {player.development.goals}
+                          {stats.totalGoals}
                         </Badge>
                       )}
                     </div>

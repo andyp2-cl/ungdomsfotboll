@@ -65,7 +65,7 @@ export function ActivityParticipants({
     );
   }
 
-  // Återställ avatar size till [100px]
+  // Avatar size should be large (100px) by default, smaller on mobile
   const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
   const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
 
