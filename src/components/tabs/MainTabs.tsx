@@ -209,7 +209,7 @@ export function MainTabs({
         isAddActivityOpen={isAddActivityOpen}
         setEditingPlayer={setEditingPlayer}
         setEditingActivity={setEditingActivity}
-        setIsAddPlayerOpen={setIsAddActivityOpen}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
         setIsAddActivityOpen={setIsAddActivityOpen}
         handlePlayerUpdate={handlePlayerUpdate}
         handleActivityUpdate={handleActivityUpdate}

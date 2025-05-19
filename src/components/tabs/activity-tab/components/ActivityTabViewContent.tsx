@@ -39,6 +39,8 @@ export function ActivityTabViewContent({
   
   // Get content from renderContent
   const content = renderContent();
+
+  console.log("ActivityTabViewContent rendering with content:", content);
   
   // If activeView is statistics, render the statistics wrapper
   if (activeView === "statistics") {
@@ -80,7 +82,12 @@ export function ActivityTabViewContent({
   
   // Handle view rendering based on content type
   if (content) {
+    // Explicitly log the content viewType to debug
+    console.log("Content viewType:", content.viewType);
+    
     if (content.viewType === "player-detail" && content.player) {
+      console.log("Rendering PlayerPreview for:", content.player.name);
+      
       // Use the PlayerPreview component
       return (
         <PlayerPreview 

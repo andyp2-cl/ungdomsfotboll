@@ -108,6 +108,11 @@ export const useActivityTabViews = ({
 
   // Render content based on current view and selection
   const renderContent = useCallback(() => {
+    // Add debugging logs
+    console.log("renderContent called with selectedPlayer:", selectedPlayer?.name);
+    console.log("renderContent called with selectedActivity:", selectedActivity?.name);
+    console.log("renderContent called with activeView:", activeView);
+    
     // Handle Statistics view
     if (activeView === "statistics") {
       return null;
@@ -118,6 +123,9 @@ export const useActivityTabViews = ({
       const playerActivities = activities.filter(activity => 
         activity.participants?.includes(selectedPlayer.id)
       );
+      
+      console.log("Rendering player detail view for:", selectedPlayer.name);
+      console.log("Player has participated in", playerActivities.length, "activities");
       
       return {
         viewType: "player-detail",
