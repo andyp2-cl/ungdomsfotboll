@@ -82,6 +82,6 @@ export function usePlayers() {
     handleBulkPlayerUpdate,
     handleAddPlayer,
     handleDeletePlayer,
-    isMobile: isMobile
+    isMobile
   };
 }
