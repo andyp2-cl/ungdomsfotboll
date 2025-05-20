@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityList } from "@/components/ActivityList";

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
@@ -54,6 +53,7 @@ export function ActivityTabContent({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   
+  // Pass onPlayerSelect directly to useActivityTabViews
   const { 
     activeView,
     handleViewChange,
@@ -74,7 +74,7 @@ export function ActivityTabContent({
     handleActivityUpdate,
     handleKioskAssignmentUpdate,
     handleMatchResultUpdate,
-    onPlayerSelect
+    onPlayerSelect // Pass the external player selection handler
   });
 
   const handleRefresh = async () => {
@@ -121,7 +121,7 @@ export function ActivityTabContent({
           players={players}
           activities={activities}
           onActivitySelect={handleActivitySelectWithLogging}
-          onPlayerSelect={handlePlayerSelect}
+          onPlayerSelect={onPlayerSelect} // Use the passed down onPlayerSelect here
           onEditActivity={setEditingActivity}
           onActivityUpdate={handleActivityUpdate}
           onDeleteActivity={handleDeleteActivity}
