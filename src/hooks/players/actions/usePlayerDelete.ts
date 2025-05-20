@@ -2,6 +2,7 @@
 import { Player } from "@/types/player";
 import { savePlayers } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase/client";
 
 export function usePlayerDelete(
   players: Player[],
@@ -29,7 +30,28 @@ export function usePlayerDelete(
         prevSelected && prevSelected.id === playerId ? null : prevSelected
       );
       
-      // Then save to database
+      // Delete directly from Supabase database
+      const { error: playerDeleteError } = await supabase
+        .from('players')
+        .delete()
+        .eq('id', playerId);
+        
+      if (playerDeleteError) {
+        throw new Error(`Error deleting player from database: ${playerDeleteError.message}`);
+      }
+      
+      // Delete player-activity relationships
+      const { error: relationsDeleteError } = await supabase
+        .from('player_activities')
+        .delete()
+        .eq('player_id', playerId);
+        
+      if (relationsDeleteError) {
+        console.error("Error removing player-activity relationships:", relationsDeleteError);
+        // Continue with deletion even if relationship deletion has errors
+      }
+      
+      // Also update local storage through the existing savePlayers function
       await savePlayers(updatedPlayers);
       
       toast({
