@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GradeDistributionChart } from "./GradeDistributionChart";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ActivityDetailSkeleton } from "./ActivityDetailSkeleton";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -49,6 +51,7 @@ export function ActivityDetailView({
   extraContent
 }: ActivityDetailViewProps) {
   const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
   
   const {
     currentActivity,
@@ -75,6 +78,11 @@ export function ActivityDetailView({
   useEffect(() => {
     window.scrollTo(0, 0);
     setCurrentActivity(activity);
+    // Simulate loading time to show skeleton
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [activity, setCurrentActivity]);
 
   const handleDeleteActivity = async () => {
@@ -88,7 +96,6 @@ export function ActivityDetailView({
     return false;
   };
 
-  // Using onBack as fallback for onClose
   const handleClose = () => {
     console.log("ActivityDetailView: handleClose called");
     onClose();
@@ -99,89 +106,115 @@ export function ActivityDetailView({
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
+  if (isLoading) {
+    return <ActivityDetailSkeleton />;
+  }
+
   return (
-    <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 max-h-[100dvh] overflow-hidden' : 'lg:max-w-3xl mx-auto'}`}>
-      <CardHeader className={isMobile ? 'px-3 py-3 border-b flex-shrink-0' : ''}>
-        <div className="flex justify-between items-start gap-2">
-          <ActivityDetailHeaderContent 
-            activity={currentActivity}
-            formattedDate={formattedDate}
-            capitalizedDayOfWeek={capitalizedDayOfWeek}
-            isHistorical={isHistorical}
-            formatResult={() => {
-              if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
-                return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
-              }
-              return currentActivity.result || "";
-            }}
-          />
-          <HeaderActionButtons 
-            onEdit={onEdit}
-            currentActivity={currentActivity}
-            onDeleteActivity={onDeleteActivity}
-            isDeleteDialogOpen={isDeleteDialogOpen}
-            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-            handleClose={handleClose}
-          />
-        </div>
-      </CardHeader>
-      
-      <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
-        <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
-          {/* Only show StatsSection if the match is historical */}
-          {isMatch && isHistorical && (
-            <StatsSection
+    <ErrorBoundary>
+      <Card className={`w-full flex flex-col ${isMobile ? 'mx-0 px-0 max-h-[100dvh] overflow-hidden' : 'lg:max-w-3xl mx-auto'}`}>
+        <CardHeader className={isMobile ? 'px-3 py-3 border-b flex-shrink-0' : ''}>
+          <div className="flex justify-between items-start gap-2">
+            <ActivityDetailHeaderContent 
               activity={currentActivity}
-              players={players}
-              participatingPlayers={participatingPlayers}
-              updateActivity={handleActivityUpdate}
+              formattedDate={formattedDate}
+              capitalizedDayOfWeek={capitalizedDayOfWeek}
               isHistorical={isHistorical}
+              formatResult={() => {
+                if (currentActivity.homeScore !== undefined && currentActivity.awayScore !== undefined) {
+                  return `${currentActivity.homeScore}-${currentActivity.awayScore}`;
+                }
+                return currentActivity.result || "";
+              }}
             />
-          )}
-
-          <ParticipantsSection 
-            activity={currentActivity}
-            participatingPlayers={participatingPlayers}
-            isAddingPlayers={isAddingPlayers}
-            setIsAddingPlayers={setIsAddingPlayers}
-            clearParticipantsDialogOpen={clearParticipantsDialogOpen}
-            setClearParticipantsDialogOpen={setClearParticipantsDialogOpen}
-            onPlayerSelect={onPlayerSelect}
-            onRemovePlayer={handleRemovePlayer}
-            onClearAllParticipants={handleClearAllParticipants}
-            onAddPlayers={handleAddPlayers}
-            players={players}
-          />
-          
-          {/* Only show grade distribution in the detailed view if we have participants */}
-          {participatingPlayers.length > 0 && (
-            <GradeDistributionChart
-              activity={currentActivity}
-              participatingPlayers={participatingPlayers}
+            <HeaderActionButtons 
+              onEdit={onEdit}
+              currentActivity={currentActivity}
+              onDeleteActivity={onDeleteActivity}
+              isDeleteDialogOpen={isDeleteDialogOpen}
+              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+              handleClose={handleClose}
             />
-          )}
-          
-          {/* Render extra content (like cup matches) */}
-          {extraContent}
-        </CardContent>
-      </ScrollArea>
-      
-      <CardFooter className={`${isMobile ? 'px-3 py-3 border-t bg-background sticky bottom-0 z-10' : ''}`}>
-        <Button 
-          variant="outline" 
-          onClick={handleClose}
-          className={isMobile ? "w-full h-11" : ""}
-        >
-          Stäng
-        </Button>
-      </CardFooter>
+          </div>
+        </CardHeader>
+        
+        <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
+          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
+            <ErrorBoundary fallback={
+              <div className="p-4 border rounded bg-red-50 text-red-800">
+                Kunde inte ladda matchstatistik.
+              </div>
+            }>
+              {/* Only show StatsSection if the match is historical */}
+              {isMatch && isHistorical && (
+                <StatsSection
+                  activity={currentActivity}
+                  players={players}
+                  participatingPlayers={participatingPlayers}
+                  updateActivity={handleActivityUpdate}
+                  isHistorical={isHistorical}
+                />
+              )}
+            </ErrorBoundary>
 
-      <DeleteActivityDialog
-        activityName={currentActivity.name}
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onDelete={handleDeleteActivity}
-      />
-    </Card>
+            <ErrorBoundary fallback={
+              <div className="p-4 border rounded bg-red-50 text-red-800">
+                Kunde inte ladda deltagare.
+              </div>
+            }>
+              <ParticipantsSection 
+                activity={currentActivity}
+                participatingPlayers={participatingPlayers}
+                isAddingPlayers={isAddingPlayers}
+                setIsAddingPlayers={setIsAddingPlayers}
+                clearParticipantsDialogOpen={clearParticipantsDialogOpen}
+                setClearParticipantsDialogOpen={setClearParticipantsDialogOpen}
+                onPlayerSelect={onPlayerSelect}
+                onRemovePlayer={handleRemovePlayer}
+                onClearAllParticipants={handleClearAllParticipants}
+                onAddPlayers={handleAddPlayers}
+                players={players}
+              />
+            </ErrorBoundary>
+            
+            <ErrorBoundary fallback={
+              <div className="p-4 border rounded bg-red-50 text-red-800">
+                Kunde inte ladda statistikdiagram.
+              </div>
+            }>
+              {/* Only show grade distribution in the detailed view if we have participants */}
+              {participatingPlayers.length > 0 && (
+                <GradeDistributionChart
+                  activity={currentActivity}
+                  participatingPlayers={participatingPlayers}
+                />
+              )}
+            </ErrorBoundary>
+            
+            {/* Render extra content (like cup matches) */}
+            <ErrorBoundary>
+              {extraContent}
+            </ErrorBoundary>
+          </CardContent>
+        </ScrollArea>
+        
+        <CardFooter className={`${isMobile ? 'px-3 py-3 border-t bg-background sticky bottom-0 z-10' : ''}`}>
+          <Button 
+            variant="outline" 
+            onClick={handleClose}
+            className={isMobile ? "w-full h-11" : ""}
+          >
+            Stäng
+          </Button>
+        </CardFooter>
+
+        <DeleteActivityDialog
+          activityName={currentActivity.name}
+          isOpen={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onDelete={handleDeleteActivity}
+        />
+      </Card>
+    </ErrorBoundary>
   );
 }
