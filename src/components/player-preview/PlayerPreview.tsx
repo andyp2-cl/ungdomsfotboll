@@ -63,7 +63,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           <X className="h-4 w-4" />
         </Button>
         
-        {/* Sektion 1: Profilbild och namn */}
+        {/* Section 1: Profile image and name */}
         <div className="flex items-center space-x-4 p-4 border-b">
           <Avatar className="h-20 w-20">
             <AvatarImage src={player.image || ""} alt={fullName} />
@@ -82,9 +82,9 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           </div>
         </div>
         
-        {/* Sektion 2: Spelarstatistik, ligor och kommande matcher */}
+        {/* Section 2: Player statistics, leagues and upcoming matches */}
         <div className="p-4">
-          {/* Statistik */}
+          {/* Statistics */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="border rounded p-2 text-center">
               <div className="text-2xl font-semibold">{playerActivities.length}</div>
@@ -100,7 +100,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
             </div>
           </div>
           
-          {/* Ligor section */}
+          {/* Leagues section */}
           {leagues.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2 flex items-center">
@@ -122,7 +122,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
             </div>
           )}
           
-          {/* Kommande aktiviteter */}
+          {/* Upcoming activities */}
           {upcomingActivities.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2 flex items-center">
@@ -148,7 +148,7 @@ export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProp
           )}
         </div>
         
-        {/* Sektion 3: Scrollbar matchhistorik */}
+        {/* Section 3: Scrollable match history */}
         <div className="p-4 pt-0 border-t">
           <h4 className="text-sm font-medium mb-2 flex items-center">
             <Users className="h-4 w-4 mr-1" />

@@ -17,8 +17,10 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity, // Prevent automatic refetching
       retry: 1, // Only retry failed queries once
-      onError: (error) => {
-        console.error("Query error:", error);
+      meta: {
+        onError: (error) => {
+          console.error("Query error:", error);
+        }
       }
     },
   },
