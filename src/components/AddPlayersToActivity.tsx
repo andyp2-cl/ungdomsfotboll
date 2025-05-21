@@ -6,6 +6,7 @@ import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
 import { AlertCircle, Check } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -23,6 +24,7 @@ export function AddPlayersToActivity({
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -81,7 +83,7 @@ export function AddPlayersToActivity({
   }
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className={`mt-4 space-y-4 ${isMobile ? 'pb-20' : ''}`}>
       {/* Cup Selector - show for both match and cup types */}
       <CupSelector
         selectedCup={selectedCup}
@@ -97,6 +99,7 @@ export function AddPlayersToActivity({
         selectedPlayers={selectedPlayers}
         onAddPlayers={handleAddPlayers}
         isProcessing={isProcessing}
+        isMobile={isMobile}
       />
       
       <PlayerQuickSelect
@@ -118,6 +121,7 @@ export function AddPlayersToActivity({
             setIsProcessing(false);
           }
         }}
+        isMobile={isMobile}
       />
     </div>
   );

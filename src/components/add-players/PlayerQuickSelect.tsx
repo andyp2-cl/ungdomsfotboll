@@ -9,11 +9,13 @@ import { Separator } from "@/components/ui/separator";
 interface PlayerQuickSelectProps {
   availablePlayers: Player[];
   onQuickSelect: (playerId: string) => void;
+  isMobile?: boolean;
 }
 
 export function PlayerQuickSelect({
   availablePlayers,
-  onQuickSelect
+  onQuickSelect,
+  isMobile = false
 }: PlayerQuickSelectProps) {
   const [processingPlayer, setProcessingPlayer] = useState<string | null>(null);
 
@@ -28,16 +30,19 @@ export function PlayerQuickSelect({
 
   if (availablePlayers.length === 0) return null;
 
+  // Show more players in the quick select list on mobile
+  const displayCount = isMobile ? 8 : 5;
+
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-medium">Snabbval</h4>
-      <ScrollArea className="h-32 border rounded-md">
+      <ScrollArea className={`${isMobile ? 'h-56' : 'h-32'} border rounded-md`}>
         <div className="p-2 space-y-1">
-          {availablePlayers.slice(0, 5).map(player => (
+          {availablePlayers.slice(0, displayCount).map(player => (
             <Button
               key={player.id}
               variant="outline"
-              size="sm"
+              size={isMobile ? "default" : "sm"}
               className="w-full justify-start"
               onClick={() => handleQuickSelect(player.id)}
               disabled={processingPlayer === player.id}
@@ -51,11 +56,11 @@ export function PlayerQuickSelect({
             </Button>
           ))}
           
-          {availablePlayers.length > 5 && (
+          {availablePlayers.length > displayCount && (
             <>
               <Separator className="my-2" />
               <p className="text-xs text-muted-foreground">
-                +{availablePlayers.length - 5} fler spelare
+                +{availablePlayers.length - displayCount} fler spelare
               </p>
             </>
           )}

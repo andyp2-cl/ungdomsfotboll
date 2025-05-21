@@ -1,18 +1,16 @@
 
 import React from "react";
-import { Activity, Player } from "@/types/player";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Player, Activity } from "@/types/player";
 import { ParticipantList } from "./ParticipantList";
 import { ParticipantActionButtons } from "./ParticipantActionButtons";
-import { AddPlayersToActivity } from "../AddPlayersToActivity";
-import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AddPlayersToActivity } from "@/components/AddPlayersToActivity";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ParticipantsSectionProps {
   activity: Activity;
   participatingPlayers: Player[];
+  players: Player[];
   isAddingPlayers: boolean;
   setIsAddingPlayers: (isAdding: boolean) => void;
   clearParticipantsDialogOpen: boolean;
@@ -21,12 +19,12 @@ interface ParticipantsSectionProps {
   onRemovePlayer: (playerId: string) => void;
   onClearAllParticipants: () => void;
   onAddPlayers: (playerIds: string[]) => void;
-  players: Player[];
 }
 
 export function ParticipantsSection({
   activity,
   participatingPlayers,
+  players,
   isAddingPlayers,
   setIsAddingPlayers,
   clearParticipantsDialogOpen,
@@ -34,37 +32,26 @@ export function ParticipantsSection({
   onPlayerSelect,
   onRemovePlayer,
   onClearAllParticipants,
-  onAddPlayers,
-  players
+  onAddPlayers
 }: ParticipantsSectionProps) {
   const isMobile = useIsMobile();
-
-  // Sort participants by grade (A, B, C, D)
-  const sortedParticipants = sortPlayersByGrade(participatingPlayers);
-
+  
   return (
-    <Accordion type="single" collapsible defaultValue="participants" className={isMobile ? "border rounded-lg" : ""}>
-      <AccordionItem value="participants" className={isMobile ? "border-none" : ""}>
-        <AccordionTrigger className={isMobile ? "px-3 py-2" : "py-2"}>
-          <div className="flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            <span>Deltagare ({participatingPlayers.length})</span>
-            {participatingPlayers.length === 0 && (
-              <Badge variant="outline" className="ml-2">
-                Inga deltagare
-              </Badge>
-            )}
+    <div className="space-y-4">
+      <Card className={`${isMobile ? 'overflow-visible' : ''}`}>
+        <CardContent className={`${isMobile ? 'p-3' : 'p-6'} space-y-4`}>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Deltagare ({participatingPlayers.length})</h3>
           </div>
-        </AccordionTrigger>
-        <AccordionContent className={isMobile ? "px-3 pb-3" : ""}>
-          <ParticipantList
-            participants={sortedParticipants}
+          
+          <ParticipantList 
+            participants={participatingPlayers}
             onPlayerSelect={onPlayerSelect}
             onRemovePlayer={onRemovePlayer}
             isMobile={isMobile}
           />
-
-          <ParticipantActionButtons 
+          
+          <ParticipantActionButtons
             isAddingPlayers={isAddingPlayers}
             setIsAddingPlayers={setIsAddingPlayers}
             participantCount={participatingPlayers.length}
@@ -72,17 +59,19 @@ export function ParticipantsSection({
             isOpen={clearParticipantsDialogOpen}
             setIsOpen={setClearParticipantsDialogOpen}
           />
-
+          
           {isAddingPlayers && (
-            <AddPlayersToActivity 
-              activity={activity}
-              players={players}
-              onAddPlayers={onAddPlayers}
-              currentParticipantIds={activity.participants || []}
-            />
+            <div className={`${isMobile ? 'mt-4' : ''}`}>
+              <AddPlayersToActivity 
+                activity={activity}
+                players={players}
+                onAddPlayers={onAddPlayers}
+                currentParticipantIds={participatingPlayers.map(p => p.id)}
+              />
+            </div>
           )}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
