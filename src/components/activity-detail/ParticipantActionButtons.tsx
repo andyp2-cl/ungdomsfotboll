@@ -25,11 +25,11 @@ export function ParticipantActionButtons({
   const isMobile = useIsMobile();
   
   return (
-    <div className={`flex flex-wrap gap-2 ${isMobile ? 'fixed bottom-0 left-0 right-0 w-full p-3 bg-background border-t z-30' : ''}`}>
+    <div className={`flex flex-wrap gap-2 ${isMobile ? 'fixed bottom-0 left-0 right-0 w-full p-3 bg-background border-t z-40' : ''}`}>
       <Button 
-        variant="outline" 
+        variant={isAddingPlayers ? "secondary" : "outline"}
         onClick={() => setIsAddingPlayers(!isAddingPlayers)}
-        className={`flex-grow ${isMobile ? 'h-14 text-base font-medium' : ''} ${isAddingPlayers ? 'bg-primary/10' : ''}`}
+        className={`flex-grow ${isMobile ? 'h-14 text-base font-medium' : ''}`}
       >
         <UserPlus className={`${isMobile ? 'h-5 w-5 mr-2' : 'h-5 w-5 mr-2'}`} />
         {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}

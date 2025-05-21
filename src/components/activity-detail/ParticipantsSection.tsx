@@ -36,6 +36,11 @@ export function ParticipantsSection({
 }: ParticipantsSectionProps) {
   const isMobile = useIsMobile();
   
+  // Filter out players who are already participating
+  const availablePlayers = players.filter(player => 
+    !participatingPlayers.some(p => p.id === player.id)
+  );
+  
   return (
     <div className="space-y-4">
       <Card className={`${isMobile ? 'overflow-visible' : ''}`}>
@@ -44,25 +49,25 @@ export function ParticipantsSection({
             <h3 className="text-lg font-semibold">Deltagare ({participatingPlayers.length})</h3>
           </div>
           
-          <ParticipantList 
-            participants={participatingPlayers}
-            onPlayerSelect={onPlayerSelect}
-            onRemovePlayer={onRemovePlayer}
-            isMobile={isMobile}
-          />
+          {!isAddingPlayers && (
+            <ParticipantList 
+              participants={participatingPlayers}
+              onPlayerSelect={onPlayerSelect}
+              onRemovePlayer={onRemovePlayer}
+              isMobile={isMobile}
+            />
+          )}
           
-          <div className={`${isMobile && isAddingPlayers ? 'mb-24' : ''}`}>
-            {isAddingPlayers && (
-              <div className={`${isMobile ? 'mt-4 mb-24 pb-14' : ''}`}>
-                <AddPlayersToActivity 
-                  activity={activity}
-                  players={players}
-                  onAddPlayers={onAddPlayers}
-                  currentParticipantIds={participatingPlayers.map(p => p.id)}
-                />
-              </div>
-            )}
-          </div>
+          {isAddingPlayers && (
+            <div className={`${isMobile ? 'mt-2 pb-32' : ''}`}>
+              <AddPlayersToActivity 
+                activity={activity}
+                players={players}
+                onAddPlayers={onAddPlayers}
+                currentParticipantIds={participatingPlayers.map(p => p.id)}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
       

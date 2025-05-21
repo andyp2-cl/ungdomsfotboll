@@ -53,7 +53,6 @@ export function AddPlayersToActivity({
       return;
     }
     
-    // Log before saving
     console.log(`Lägger till ${selectedPlayerIds.length} spelare till aktivitet ${activity.id}`);
     
     setIsProcessing(true);
@@ -93,7 +92,9 @@ export function AddPlayersToActivity({
         onAddPlayers={onAddPlayers}
       />
 
-      {isMobile && <div className="text-sm font-medium text-center">Välj spelare att lägga till</div>}
+      <div className="text-sm font-medium text-center mt-4">
+        Välj spelare att lägga till
+      </div>
 
       <PlayerMultiSelect
         availablePlayers={availablePlayers}

@@ -37,14 +37,12 @@ export function PlayerMultiSelect({
 
   return (
     <div className="space-y-4">
-      {!isMobile && <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>}
-      
       <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-64' : 'h-48'} overflow-y-auto`}>
         <div className="space-y-1">
           {availablePlayers.map(player => (
             <div 
               key={player.id} 
-              className={`flex items-center space-x-2 p-2 ${isMobile ? 'py-3' : 'py-2'} hover:bg-accent rounded-md cursor-pointer`}
+              className={`flex items-center space-x-2 p-2 ${isMobile ? 'py-4' : 'py-2'} hover:bg-accent rounded-md cursor-pointer`}
               onClick={() => onPlayerToggle(player.id)}
             >
               <Checkbox 
