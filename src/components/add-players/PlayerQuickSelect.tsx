@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PlayerQuickSelectProps {
   availablePlayers: Player[];
@@ -31,28 +32,33 @@ export function PlayerQuickSelect({
   if (availablePlayers.length === 0) return null;
 
   // Show more players in the quick select list on mobile
-  const displayCount = isMobile ? 8 : 5;
+  const displayCount = isMobile ? 12 : 5;
 
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-medium">Snabbval</h4>
-      <ScrollArea className={`${isMobile ? 'h-56' : 'h-32'} border rounded-md`}>
+      <ScrollArea className={`${isMobile ? 'h-64' : 'h-32'} border rounded-md`}>
         <div className="p-2 space-y-1">
           {availablePlayers.slice(0, displayCount).map(player => (
             <Button
               key={player.id}
               variant="outline"
               size={isMobile ? "default" : "sm"}
-              className="w-full justify-start"
+              className="w-full justify-start py-3"
               onClick={() => handleQuickSelect(player.id)}
               disabled={processingPlayer === player.id}
             >
               {processingPlayer === player.id ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-5 w-5 mr-3 animate-spin" />
               ) : (
-                <UserPlus className="h-4 w-4 mr-2" />
+                <>
+                  <Avatar className="h-8 w-8 mr-3">
+                    <AvatarImage src={player.image} alt={player.name} />
+                    <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                </>
               )}
-              {player.name}
+              <span className={isMobile ? "text-base" : ""}>{player.name}</span>
             </Button>
           ))}
           

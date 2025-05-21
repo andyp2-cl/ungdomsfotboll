@@ -46,11 +46,12 @@ export function ParticipantList({
     );
   }
 
-  const maxHeight = isMobile ? '250px' : '400px';
+  // Make the height of the scroll area appropriate for the device
+  const maxHeight = isMobile ? '200px' : '400px';
   
   return (
     <ScrollArea className={`pr-4 ${participants.length > 8 ? `max-h-[${maxHeight}]` : ''}`}>
-      <div className="space-y-4">
+      <div className="space-y-4 mb-20">
         {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
           const playersInGrade = participantsByGrade[gradeKey];
           if (playersInGrade.length === 0) return null;
@@ -70,7 +71,7 @@ export function ParticipantList({
                     className={`flex justify-between items-center p-2 border rounded-md ${isMobile ? 'px-3 py-3' : ''}`}
                   >
                     <div 
-                      className="flex items-center gap-2 cursor-pointer flex-1"
+                      className="flex items-center gap-3 cursor-pointer flex-1"
                       onClick={() => onPlayerSelect && onPlayerSelect(player.id)}
                     >
                       <Avatar className={`${isMobile ? 'h-10 w-10' : 'h-8 w-8'}`}>
@@ -86,7 +87,7 @@ export function ParticipantList({
                       className="text-muted-foreground hover:text-destructive"
                       onClick={() => onRemovePlayer(player.id)}
                     >
-                      <X className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'}`} />
+                      <X className={`${isMobile ? 'h-6 w-6' : 'h-4 w-4'}`} />
                     </Button>
                   </div>
                 ))}

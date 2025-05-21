@@ -25,13 +25,13 @@ export function ParticipantActionButtons({
   const isMobile = useIsMobile();
   
   return (
-    <div className={`flex flex-wrap gap-2 ${isMobile ? 'sticky bottom-16 left-0 right-0 w-full p-3 bg-background border-t z-10' : ''}`}>
+    <div className={`flex flex-wrap gap-2 ${isMobile ? 'fixed bottom-16 left-0 right-0 w-full p-3 bg-background border-t z-20' : ''}`}>
       <Button 
         variant="outline" 
         onClick={() => setIsAddingPlayers(!isAddingPlayers)}
-        className={`flex-grow ${isMobile ? 'h-12' : ''}`}
+        className={`flex-grow ${isMobile ? 'h-12 text-base' : ''}`}
       >
-        <UserPlus className="h-4 w-4 mr-2" />
+        <UserPlus className="h-5 w-5 mr-2" />
         {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
       </Button>
       
@@ -39,10 +39,10 @@ export function ParticipantActionButtons({
         <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
           <Button 
             variant="outline" 
-            className={`flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200 ${isMobile ? 'h-12' : ''}`}
+            className={`flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200 ${isMobile ? 'h-12 text-base' : ''}`}
             onClick={() => setIsOpen(true)}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="h-5 w-5 mr-2" />
             Rensa alla
           </Button>
           <AlertDialogContent>
