@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
@@ -139,7 +138,7 @@ export function ActivityDetailView({
         </CardHeader>
         
         <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
-          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
+          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-32' : ''}`}>
             <ErrorBoundary fallback={
               <div className="p-4 border rounded bg-red-50 text-red-800">
                 Kunde inte ladda matchstatistik.

@@ -36,42 +36,41 @@ export function PlayerQuickSelect({
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-medium">Snabbval</h4>
-      <ScrollArea className={`${isMobile ? 'h-64' : 'h-32'} border rounded-md`}>
-        <div className="p-2 space-y-1">
-          {availablePlayers.slice(0, displayCount).map(player => (
-            <Button
-              key={player.id}
-              variant="outline"
-              size={isMobile ? "default" : "sm"}
-              className="w-full justify-start py-3"
-              onClick={() => handleQuickSelect(player.id)}
-              disabled={processingPlayer === player.id}
-            >
-              {processingPlayer === player.id ? (
-                <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-              ) : (
-                <>
-                  <Avatar className="h-8 w-8 mr-3">
-                    <AvatarImage src={player.image} alt={player.name} />
-                    <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
-                  </Avatar>
-                </>
-              )}
-              <span className={isMobile ? "text-base" : ""}>{player.name}</span>
-            </Button>
-          ))}
-          
-          {availablePlayers.length > displayCount && (
-            <>
-              <Separator className="my-2" />
-              <p className="text-xs text-muted-foreground">
-                +{availablePlayers.length - displayCount} fler spelare
-              </p>
-            </>
-          )}
+      <h4 className={`${isMobile ? 'text-base' : 'text-sm'} font-medium text-center`}>
+        {isMobile ? 'Snabbval av spelare' : 'Snabbval'}
+      </h4>
+      
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-1 gap-1'}`}>
+        {availablePlayers.slice(0, displayCount).map(player => (
+          <Button
+            key={player.id}
+            variant="outline"
+            size={isMobile ? "default" : "sm"}
+            className={`${isMobile ? 'py-5' : 'py-3'} w-full justify-start`}
+            onClick={() => handleQuickSelect(player.id)}
+            disabled={processingPlayer === player.id}
+          >
+            {processingPlayer === player.id ? (
+              <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+            ) : (
+              <Avatar className={`${isMobile ? 'h-8 w-8' : 'h-6 w-6'} mr-3`}>
+                <AvatarImage src={player.image} alt={player.name} />
+                <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+            )}
+            <span className={`truncate ${isMobile ? "text-base" : ""}`}>{player.name}</span>
+          </Button>
+        ))}
+      </div>
+      
+      {availablePlayers.length > displayCount && (
+        <div className="text-center mt-2">
+          <Separator className="my-2" />
+          <p className="text-xs text-muted-foreground">
+            +{availablePlayers.length - displayCount} fler spelare
+          </p>
         </div>
-      </ScrollArea>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
 import { AlertCircle, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Separator } from "./ui/separator";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -76,14 +77,14 @@ export function AddPlayersToActivity({
   // If no available players, show a message
   if (availablePlayers.length === 0) {
     return (
-      <div className="text-muted-foreground text-sm mt-4">
+      <div className="text-muted-foreground text-center py-8 border rounded-md">
         Alla spelare är redan tillagda i denna aktivitet.
       </div>
     );
   }
 
   return (
-    <div className={`mt-4 space-y-4 ${isMobile ? 'pb-32' : ''}`}>
+    <div className={`space-y-6 ${isMobile ? 'pb-24' : ''}`}>
       {/* Cup Selector - show for both match and cup types */}
       <CupSelector
         selectedCup={selectedCup}
@@ -91,6 +92,8 @@ export function AddPlayersToActivity({
         currentParticipantIds={currentParticipantIds}
         onAddPlayers={onAddPlayers}
       />
+
+      {isMobile && <div className="text-sm font-medium text-center">Välj spelare att lägga till</div>}
 
       <PlayerMultiSelect
         availablePlayers={availablePlayers}
@@ -101,6 +104,8 @@ export function AddPlayersToActivity({
         isProcessing={isProcessing}
         isMobile={isMobile}
       />
+      
+      {isMobile && <Separator className="my-6" />}
       
       <PlayerQuickSelect
         availablePlayers={availablePlayers}

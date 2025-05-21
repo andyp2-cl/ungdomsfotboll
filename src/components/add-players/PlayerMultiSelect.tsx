@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 
 interface PlayerMultiSelectProps {
   availablePlayers: Player[];
@@ -26,16 +27,24 @@ export function PlayerMultiSelect({
   isProcessing = false,
   isMobile = false
 }: PlayerMultiSelectProps) {
+  if (availablePlayers.length === 0) {
+    return (
+      <div className="text-center p-4 border rounded">
+        Alla spelare är redan tillagda i denna aktivitet.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>
+    <div className="space-y-4">
+      {!isMobile && <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>}
       
-      <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-56' : 'h-48'} overflow-y-auto`}>
-        <div className="space-y-2">
+      <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-64' : 'h-48'} overflow-y-auto`}>
+        <div className="space-y-1">
           {availablePlayers.map(player => (
             <div 
               key={player.id} 
-              className={`flex items-center space-x-2 p-2 ${isMobile ? 'py-3' : 'py-1'} hover:bg-accent rounded-md`}
+              className={`flex items-center space-x-2 p-2 ${isMobile ? 'py-3' : 'py-2'} hover:bg-accent rounded-md cursor-pointer`}
               onClick={() => onPlayerToggle(player.id)}
             >
               <Checkbox 
@@ -54,17 +63,24 @@ export function PlayerMultiSelect({
               >
                 {player.name}
               </label>
+              {player.grade && (
+                <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
+                  {player.grade}
+                </span>
+              )}
             </div>
           ))}
         </div>
       </ScrollArea>
       
       {selectedPlayers.length > 0 && (
-        <div className="p-3 border rounded-md bg-muted/50">
+        <Card className="p-3 bg-muted/50">
           <p className="text-sm font-medium mb-2">Valda spelare ({selectedPlayers.length}):</p>
           <div className="flex flex-wrap gap-2 mt-1">
             {selectedPlayers.map(player => (
-              <div key={player.id} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full flex items-center">
+              <div key={player.id} 
+                className={`${isMobile ? 'text-sm' : 'text-xs'} bg-secondary text-secondary-foreground px-2 py-1 rounded-full flex items-center`}
+              >
                 {player.name}
                 <Button 
                   variant="ghost" 
@@ -80,7 +96,7 @@ export function PlayerMultiSelect({
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
       
       <Button 

@@ -51,27 +51,29 @@ export function ParticipantsSection({
             isMobile={isMobile}
           />
           
-          <ParticipantActionButtons
-            isAddingPlayers={isAddingPlayers}
-            setIsAddingPlayers={setIsAddingPlayers}
-            participantCount={participatingPlayers.length}
-            handleClearAllParticipants={onClearAllParticipants}
-            isOpen={clearParticipantsDialogOpen}
-            setIsOpen={setClearParticipantsDialogOpen}
-          />
-          
-          {isAddingPlayers && (
-            <div className={`${isMobile ? 'mt-4' : ''}`}>
-              <AddPlayersToActivity 
-                activity={activity}
-                players={players}
-                onAddPlayers={onAddPlayers}
-                currentParticipantIds={participatingPlayers.map(p => p.id)}
-              />
-            </div>
-          )}
+          <div className={`${isMobile && isAddingPlayers ? 'mb-24' : ''}`}>
+            {isAddingPlayers && (
+              <div className={`${isMobile ? 'mt-4 mb-24 pb-14' : ''}`}>
+                <AddPlayersToActivity 
+                  activity={activity}
+                  players={players}
+                  onAddPlayers={onAddPlayers}
+                  currentParticipantIds={participatingPlayers.map(p => p.id)}
+                />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
+      
+      <ParticipantActionButtons
+        isAddingPlayers={isAddingPlayers}
+        setIsAddingPlayers={setIsAddingPlayers}
+        participantCount={participatingPlayers.length}
+        handleClearAllParticipants={onClearAllParticipants}
+        isOpen={clearParticipantsDialogOpen}
+        setIsOpen={setClearParticipantsDialogOpen}
+      />
     </div>
   );
 }
