@@ -68,9 +68,6 @@ export function ActivityParticipants({
   // Avatar size should be large (100px) by default, smaller on mobile
   const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
   const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
-  
-  // Adjust grid columns based on mobile view
-  const gridClass = isMobile ? 'grid-cols-4' : 'grid-cols-2 sm:grid-cols-5';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -88,12 +85,12 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className={`grid ${gridClass} gap-1.5 w-full`}>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0 ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''} ${isMobile ? 'p-1.5' : ''}`}
+                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0 ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
                   onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
                 >
                   <TooltipProvider>

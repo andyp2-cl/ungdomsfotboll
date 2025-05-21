@@ -1,16 +1,18 @@
 
 import React from "react";
-import { Player, Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ParticipantList } from "./ParticipantList";
 import { ParticipantActionButtons } from "./ParticipantActionButtons";
-import { AddPlayersToActivity } from "@/components/AddPlayersToActivity";
+import { AddPlayersToActivity } from "../AddPlayersToActivity";
+import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Card, CardContent } from "@/components/ui/card";
+import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface ParticipantsSectionProps {
   activity: Activity;
   participatingPlayers: Player[];
-  players: Player[];
   isAddingPlayers: boolean;
   setIsAddingPlayers: (isAdding: boolean) => void;
   clearParticipantsDialogOpen: boolean;
@@ -19,12 +21,12 @@ interface ParticipantsSectionProps {
   onRemovePlayer: (playerId: string) => void;
   onClearAllParticipants: () => void;
   onAddPlayers: (playerIds: string[]) => void;
+  players: Player[];
 }
 
 export function ParticipantsSection({
   activity,
   participatingPlayers,
-  players,
   isAddingPlayers,
   setIsAddingPlayers,
   clearParticipantsDialogOpen,
@@ -32,51 +34,55 @@ export function ParticipantsSection({
   onPlayerSelect,
   onRemovePlayer,
   onClearAllParticipants,
-  onAddPlayers
+  onAddPlayers,
+  players
 }: ParticipantsSectionProps) {
   const isMobile = useIsMobile();
-  
-  // Filter out players who are already participating
-  const availablePlayers = players.filter(player => 
-    !participatingPlayers.some(p => p.id === player.id)
-  );
-  
+
+  // Sort participants by grade (A, B, C, D)
+  const sortedParticipants = sortPlayersByGrade(participatingPlayers);
+
   return (
-    <div className="space-y-4">
-      <Card className={`${isMobile ? 'overflow-visible' : ''}`}>
-        <CardContent className={`${isMobile ? 'p-3' : 'p-6'} space-y-4`}>
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Deltagare ({participatingPlayers.length})</h3>
+    <Accordion type="single" collapsible defaultValue="participants" className={isMobile ? "border rounded-lg" : ""}>
+      <AccordionItem value="participants" className={isMobile ? "border-none" : ""}>
+        <AccordionTrigger className={isMobile ? "px-3 py-2" : "py-2"}>
+          <div className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            <span>Deltagare ({participatingPlayers.length})</span>
+            {participatingPlayers.length === 0 && (
+              <Badge variant="outline" className="ml-2">
+                Inga deltagare
+              </Badge>
+            )}
           </div>
-          
-          {!isAddingPlayers ? (
-            <ParticipantList 
-              participants={participatingPlayers}
-              onPlayerSelect={onPlayerSelect}
-              onRemovePlayer={onRemovePlayer}
-              isMobile={isMobile}
+        </AccordionTrigger>
+        <AccordionContent className={isMobile ? "px-3 pb-3" : ""}>
+          <ParticipantList
+            participants={sortedParticipants}
+            onPlayerSelect={onPlayerSelect}
+            onRemovePlayer={onRemovePlayer}
+            isMobile={isMobile}
+          />
+
+          <ParticipantActionButtons 
+            isAddingPlayers={isAddingPlayers}
+            setIsAddingPlayers={setIsAddingPlayers}
+            participantCount={participatingPlayers.length}
+            handleClearAllParticipants={onClearAllParticipants}
+            isOpen={clearParticipantsDialogOpen}
+            setIsOpen={setClearParticipantsDialogOpen}
+          />
+
+          {isAddingPlayers && (
+            <AddPlayersToActivity 
+              activity={activity}
+              players={players}
+              onAddPlayers={onAddPlayers}
+              currentParticipantIds={activity.participants || []}
             />
-          ) : (
-            <div className={`${isMobile ? 'mt-2 pb-32' : ''}`}>
-              <AddPlayersToActivity 
-                activity={activity}
-                players={players}
-                onAddPlayers={onAddPlayers}
-                currentParticipantIds={participatingPlayers.map(p => p.id)}
-              />
-            </div>
           )}
-        </CardContent>
-      </Card>
-      
-      <ParticipantActionButtons
-        isAddingPlayers={isAddingPlayers}
-        setIsAddingPlayers={setIsAddingPlayers}
-        participantCount={participatingPlayers.length}
-        handleClearAllParticipants={onClearAllParticipants}
-        isOpen={clearParticipantsDialogOpen}
-        setIsOpen={setClearParticipantsDialogOpen}
-      />
-    </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }

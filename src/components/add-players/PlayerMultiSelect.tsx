@@ -3,11 +3,7 @@ import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, X } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
+import { Loader2, Plus } from "lucide-react";
 
 interface PlayerMultiSelectProps {
   availablePlayers: Player[];
@@ -16,7 +12,6 @@ interface PlayerMultiSelectProps {
   selectedPlayers: Player[];
   onAddPlayers: () => void;
   isProcessing?: boolean;
-  isMobile?: boolean;
 }
 
 export function PlayerMultiSelect({
@@ -25,86 +20,55 @@ export function PlayerMultiSelect({
   onPlayerToggle,
   selectedPlayers,
   onAddPlayers,
-  isProcessing = false,
-  isMobile = false
+  isProcessing = false
 }: PlayerMultiSelectProps) {
-  if (availablePlayers.length === 0) {
-    return (
-      <div className="text-center p-4 border rounded">
-        Alla spelare är redan tillagda i denna aktivitet.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-[40vh] mb-20' : 'h-48'} overflow-y-auto`}>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>
+      
+      <div className="border rounded-md p-2 h-48 overflow-y-auto">
         <div className="space-y-1">
           {availablePlayers.map(player => (
-            <div 
-              key={player.id} 
-              className={`flex items-center space-x-2 p-2 ${isMobile ? 'py-4' : 'py-2'} hover:bg-accent rounded-md cursor-pointer`}
-              onClick={() => onPlayerToggle(player.id)}
-            >
+            <div key={player.id} className="flex items-center space-x-2 p-1 hover:bg-accent">
               <Checkbox 
                 checked={selectedPlayerIds.includes(player.id)} 
                 onCheckedChange={() => onPlayerToggle(player.id)}
                 id={`player-${player.id}`}
-                className={isMobile ? "h-5 w-5" : ""}
               />
-              <PlayerAvatar player={player} size={isMobile ? "md" : "sm"} />
               <label 
                 htmlFor={`player-${player.id}`} 
-                className={`${isMobile ? 'text-base' : 'text-sm'} flex-grow cursor-pointer`}
+                className="text-sm flex-grow cursor-pointer"
               >
                 {player.name}
               </label>
-              {player.grade && (
-                <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-                  {player.grade}
-                </span>
-              )}
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
       
       {selectedPlayers.length > 0 && (
-        <Card className="p-3 bg-muted/50">
-          <p className="text-sm font-medium mb-2">Valda spelare ({selectedPlayers.length}):</p>
-          <div className="flex flex-wrap gap-2 mt-1">
+        <div className="p-2 border rounded-md bg-muted/50">
+          <p className="text-sm font-medium">Valda spelare ({selectedPlayers.length}):</p>
+          <div className="flex flex-wrap gap-1 mt-1">
             {selectedPlayers.map(player => (
-              <div key={player.id} 
-                className={`${isMobile ? 'text-sm' : 'text-xs'} bg-secondary text-secondary-foreground px-2 py-1 rounded-full flex items-center`}
-              >
+              <div key={player.id} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
                 {player.name}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="ml-1 p-0 h-4 w-4 hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPlayerToggle(player.id);
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       )}
       
       <Button 
         onClick={onAddPlayers} 
         disabled={selectedPlayerIds.length === 0 || isProcessing}
         variant="default" 
-        className={`w-full ${isMobile ? 'h-14 text-base mt-4 fixed bottom-20 left-0 right-0 z-50 mx-3' : ''}`}
+        className="w-full"
       >
         {isProcessing ? (
-          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
-          <Plus className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'} mr-2`} />
+          <Plus className="h-4 w-4 mr-2" />
         )}
         Lägg till {selectedPlayerIds.length} spelare
       </Button>

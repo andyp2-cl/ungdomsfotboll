@@ -98,7 +98,6 @@ export function ActivityDetailView({
 
   const handleClose = () => {
     console.log("ActivityDetailView: handleClose called");
-    setIsAddingPlayers(false);
     onClose();
   };
   
@@ -139,8 +138,8 @@ export function ActivityDetailView({
           </div>
         </CardHeader>
         
-        <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-180px)]' : ''}`}>
-          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-40' : ''}`}>
+        <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
+          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
             <ErrorBoundary fallback={
               <div className="p-4 border rounded bg-red-50 text-red-800">
                 Kunde inte ladda matchstatistik.
@@ -184,7 +183,7 @@ export function ActivityDetailView({
               </div>
             }>
               {/* Only show grade distribution in the detailed view if we have participants */}
-              {participatingPlayers.length > 0 && !isAddingPlayers && (
+              {participatingPlayers.length > 0 && (
                 <GradeDistributionChart
                   activity={currentActivity}
                   participatingPlayers={participatingPlayers}
@@ -194,7 +193,7 @@ export function ActivityDetailView({
             
             {/* Render extra content (like cup matches) */}
             <ErrorBoundary>
-              {!isAddingPlayers && extraContent}
+              {extraContent}
             </ErrorBoundary>
           </CardContent>
         </ScrollArea>

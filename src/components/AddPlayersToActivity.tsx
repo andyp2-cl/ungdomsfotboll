@@ -6,8 +6,6 @@ import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
 import { AlertCircle, Check } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Separator } from "./ui/separator";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -25,7 +23,6 @@ export function AddPlayersToActivity({
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -53,6 +50,7 @@ export function AddPlayersToActivity({
       return;
     }
     
+    // Log before saving
     console.log(`Lägger till ${selectedPlayerIds.length} spelare till aktivitet ${activity.id}`);
     
     setIsProcessing(true);
@@ -76,14 +74,14 @@ export function AddPlayersToActivity({
   // If no available players, show a message
   if (availablePlayers.length === 0) {
     return (
-      <div className="text-muted-foreground text-center py-8 border rounded-md">
+      <div className="text-muted-foreground text-sm mt-4">
         Alla spelare är redan tillagda i denna aktivitet.
       </div>
     );
   }
 
   return (
-    <div className={`space-y-6 ${isMobile ? 'pb-32' : ''}`}>
+    <div className="mt-4 space-y-4">
       {/* Cup Selector - show for both match and cup types */}
       <CupSelector
         selectedCup={selectedCup}
@@ -92,10 +90,6 @@ export function AddPlayersToActivity({
         onAddPlayers={onAddPlayers}
       />
 
-      <div className="text-sm font-medium text-center mt-4">
-        Välj spelare att lägga till
-      </div>
-
       <PlayerMultiSelect
         availablePlayers={availablePlayers}
         selectedPlayerIds={selectedPlayerIds}
@@ -103,38 +97,28 @@ export function AddPlayersToActivity({
         selectedPlayers={selectedPlayers}
         onAddPlayers={handleAddPlayers}
         isProcessing={isProcessing}
-        isMobile={isMobile}
       />
       
-      {isMobile && <div className="h-24"></div>}
-      
-      {!isMobile && (
-        <>
-          <Separator className="my-6" />
-          
-          <PlayerQuickSelect
-            availablePlayers={availablePlayers}
-            onQuickSelect={(playerId) => {
-              console.log("Quick selecting player:", playerId);
-              setIsProcessing(true);
-              try {
-                onAddPlayers([playerId]);
-                toast.success("Spelare tillagd", {
-                  icon: <Check className="h-4 w-4" />
-                });
-              } catch (error) {
-                console.error("Error quick-adding player:", error);
-                toast.error("Kunde inte lägga till spelare", {
-                  icon: <AlertCircle className="h-4 w-4" />
-                });
-              } finally {
-                setIsProcessing(false);
-              }
-            }}
-            isMobile={isMobile}
-          />
-        </>
-      )}
+      <PlayerQuickSelect
+        availablePlayers={availablePlayers}
+        onQuickSelect={(playerId) => {
+          console.log("Quick selecting player:", playerId);
+          setIsProcessing(true);
+          try {
+            onAddPlayers([playerId]);
+            toast.success("Spelare tillagd", {
+              icon: <Check className="h-4 w-4" />
+            });
+          } catch (error) {
+            console.error("Error quick-adding player:", error);
+            toast.error("Kunde inte lägga till spelare", {
+              icon: <AlertCircle className="h-4 w-4" />
+            });
+          } finally {
+            setIsProcessing(false);
+          }
+        }}
+      />
     </div>
   );
 }
