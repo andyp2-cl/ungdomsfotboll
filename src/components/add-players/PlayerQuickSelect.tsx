@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
 
 interface PlayerQuickSelectProps {
   availablePlayers: Player[];
@@ -53,12 +53,9 @@ export function PlayerQuickSelect({
             {processingPlayer === player.id ? (
               <Loader2 className="h-5 w-5 mr-3 animate-spin" />
             ) : (
-              <Avatar className={`${isMobile ? 'h-8 w-8' : 'h-6 w-6'} mr-3`}>
-                <AvatarImage src={player.image} alt={player.name} />
-                <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
+              <PlayerAvatar player={player} size={isMobile ? "md" : "sm"} />
             )}
-            <span className={`truncate ${isMobile ? "text-base" : ""}`}>{player.name}</span>
+            <span className={`truncate ${isMobile ? "text-base" : ""} ml-2`}>{player.name}</span>
           </Button>
         ))}
       </div>

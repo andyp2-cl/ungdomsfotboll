@@ -49,16 +49,14 @@ export function ParticipantsSection({
             <h3 className="text-lg font-semibold">Deltagare ({participatingPlayers.length})</h3>
           </div>
           
-          {!isAddingPlayers && (
+          {!isAddingPlayers ? (
             <ParticipantList 
               participants={participatingPlayers}
               onPlayerSelect={onPlayerSelect}
               onRemovePlayer={onRemovePlayer}
               isMobile={isMobile}
             />
-          )}
-          
-          {isAddingPlayers && (
+          ) : (
             <div className={`${isMobile ? 'mt-2 pb-32' : ''}`}>
               <AddPlayersToActivity 
                 activity={activity}

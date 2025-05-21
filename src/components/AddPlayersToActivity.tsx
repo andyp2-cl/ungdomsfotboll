@@ -83,7 +83,7 @@ export function AddPlayersToActivity({
   }
 
   return (
-    <div className={`space-y-6 ${isMobile ? 'pb-24' : ''}`}>
+    <div className={`space-y-6 ${isMobile ? 'pb-32' : ''}`}>
       {/* Cup Selector - show for both match and cup types */}
       <CupSelector
         selectedCup={selectedCup}
@@ -106,29 +106,35 @@ export function AddPlayersToActivity({
         isMobile={isMobile}
       />
       
-      {isMobile && <Separator className="my-6" />}
+      {isMobile && <div className="h-24"></div>}
       
-      <PlayerQuickSelect
-        availablePlayers={availablePlayers}
-        onQuickSelect={(playerId) => {
-          console.log("Quick selecting player:", playerId);
-          setIsProcessing(true);
-          try {
-            onAddPlayers([playerId]);
-            toast.success("Spelare tillagd", {
-              icon: <Check className="h-4 w-4" />
-            });
-          } catch (error) {
-            console.error("Error quick-adding player:", error);
-            toast.error("Kunde inte lägga till spelare", {
-              icon: <AlertCircle className="h-4 w-4" />
-            });
-          } finally {
-            setIsProcessing(false);
-          }
-        }}
-        isMobile={isMobile}
-      />
+      {!isMobile && (
+        <>
+          <Separator className="my-6" />
+          
+          <PlayerQuickSelect
+            availablePlayers={availablePlayers}
+            onQuickSelect={(playerId) => {
+              console.log("Quick selecting player:", playerId);
+              setIsProcessing(true);
+              try {
+                onAddPlayers([playerId]);
+                toast.success("Spelare tillagd", {
+                  icon: <Check className="h-4 w-4" />
+                });
+              } catch (error) {
+                console.error("Error quick-adding player:", error);
+                toast.error("Kunde inte lägga till spelare", {
+                  icon: <AlertCircle className="h-4 w-4" />
+                });
+              } finally {
+                setIsProcessing(false);
+              }
+            }}
+            isMobile={isMobile}
+          />
+        </>
+      )}
     </div>
   );
 }

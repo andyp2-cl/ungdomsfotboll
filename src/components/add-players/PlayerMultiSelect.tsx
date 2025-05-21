@@ -7,6 +7,7 @@ import { Loader2, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { PlayerAvatar } from "@/components/player-selection/PlayerAvatar";
 
 interface PlayerMultiSelectProps {
   availablePlayers: Player[];
@@ -37,7 +38,7 @@ export function PlayerMultiSelect({
 
   return (
     <div className="space-y-4">
-      <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-64' : 'h-48'} overflow-y-auto`}>
+      <ScrollArea className={`border rounded-md p-2 ${isMobile ? 'h-[40vh] mb-20' : 'h-48'} overflow-y-auto`}>
         <div className="space-y-1">
           {availablePlayers.map(player => (
             <div 
@@ -51,10 +52,7 @@ export function PlayerMultiSelect({
                 id={`player-${player.id}`}
                 className={isMobile ? "h-5 w-5" : ""}
               />
-              <Avatar className={`${isMobile ? 'h-8 w-8' : 'h-6 w-6'} ml-1`}>
-                <AvatarImage src={player.image} alt={player.name} />
-                <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
+              <PlayerAvatar player={player} size={isMobile ? "md" : "sm"} />
               <label 
                 htmlFor={`player-${player.id}`} 
                 className={`${isMobile ? 'text-base' : 'text-sm'} flex-grow cursor-pointer`}
@@ -101,7 +99,7 @@ export function PlayerMultiSelect({
         onClick={onAddPlayers} 
         disabled={selectedPlayerIds.length === 0 || isProcessing}
         variant="default" 
-        className={`w-full ${isMobile ? 'h-14 text-base mt-4' : ''}`}
+        className={`w-full ${isMobile ? 'h-14 text-base mt-4 fixed bottom-20 left-0 right-0 z-50 mx-3' : ''}`}
       >
         {isProcessing ? (
           <Loader2 className="h-5 w-5 mr-2 animate-spin" />
