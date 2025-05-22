@@ -14,6 +14,7 @@ import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
 import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
+import { ActivityTabViewContent } from "@/components/tabs/activity-tab/components/ActivityTabViewContent"; // Add the correct import
 
 interface ActivityTabContentProps {
   activities: Activity[];
