@@ -1,201 +1,120 @@
 
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, Users, Calendar, Award, Star, Medal } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
-import { formatDate } from "@/utils/formatDate";
+import { X, UserCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlayerPreviewProps {
   player: Player;
-  activities: Activity[];
+  activities?: Activity[];
   onClose: () => void;
 }
 
-export function PlayerPreview({ player, activities, onClose }: PlayerPreviewProps) {
-  // Get this player's activities, sort by date (newest first)
-  const playerActivities = activities
-    .filter(activity => activity.participants?.includes(player.id))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+export function PlayerPreview({ player, activities = [], onClose }: PlayerPreviewProps) {
+  const isMobile = useIsMobile();
   
-  // Calculate player stats
-  const stats = calculatePlayerStats(player, playerActivities);
-  
-  // Get unique leagues the player has participated in
-  const leagues = playerActivities
-    .filter(activity => activity.leagueId)
-    .map(activity => activity.leagueId)
-    .filter((value, index, self) => self.indexOf(value) === index);
-
-  // Get initials for avatar fallback
-  const getInitials = () => {
-    return player.name ? player.name.substring(0, 2).toUpperCase() : "??";
-  };
-
-  // Format player name
-  const fullName = player.name || "Okänt namn";
-  
-  // Split activities into upcoming and past
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set to beginning of today
-  
-  const upcomingActivities = playerActivities.filter(
-    activity => new Date(activity.date) >= today
-  ).slice(0, 3); // Show just the next 3
-  
-  const pastActivities = playerActivities.filter(
-    activity => new Date(activity.date) < today
+  // Filter activities this player has participated in
+  const playerActivities = activities.filter(
+    activity => activity.participants?.includes(player.id)
   );
   
   return (
-    <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-md md:max-w-lg">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="absolute right-2 top-2" 
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+    <Card className={`relative ${isMobile ? 'fixed inset-x-0 bottom-0 top-16 z-50 rounded-b-none' : 'w-full mb-6'}`}>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={onClose}
+        className="absolute top-2 right-2 z-10"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      
+      <CardHeader className={`${isMobile ? 'py-3 px-4' : ''} pb-0 flex flex-row items-center gap-3`}>
+        <Avatar className="h-16 w-16 border shadow">
+          <AvatarImage src={player.image} alt={player.name} />
+          <AvatarFallback className="bg-muted">
+            <UserCircle className="h-8 w-8" />
+          </AvatarFallback>
+        </Avatar>
         
-        {/* Section 1: Profile image and name */}
-        <div className="flex items-center space-x-4 p-4 border-b">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={player.image || ""} alt={fullName} />
-            <AvatarFallback>{getInitials()}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="text-2xl font-bold">{fullName}</h3>
-            <div className="flex items-center space-x-2 mt-1">
-              {player.grade && (
-                <Badge variant="outline">{player.grade}</Badge>
-              )}
-              {player.positions && player.positions.map(position => (
-                <Badge key={position} variant="secondary">{position}</Badge>
-              ))}
-            </div>
+        <div>
+          <h2 className="text-xl font-bold">{player.name}</h2>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {player.grade && (
+              <Badge variant="outline">{player.grade}</Badge>
+            )}
+            {player.positions?.map(position => (
+              <Badge key={position} variant="secondary">{position}</Badge>
+            ))}
           </div>
         </div>
-        
-        {/* Section 2: Player statistics, leagues and upcoming matches */}
-        <div className="p-4">
-          {/* Statistics */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="border rounded p-2 text-center">
-              <div className="text-2xl font-semibold">{playerActivities.length}</div>
-              <div className="text-xs text-muted-foreground">Aktiviteter</div>
+      </CardHeader>
+      
+      <ScrollArea className={isMobile ? 'h-[calc(100%-70px)]' : ''}>
+        <CardContent className={`${isMobile ? 'px-4 py-3' : ''}`}>
+          <div className="space-y-4">
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-2">Spelarinformation</h3>
+              <dl className="space-y-2">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Deltagit i</dt>
+                  <dd className="font-medium">{playerActivities.length} aktiviteter</dd>
+                </div>
+                {player.jerseyNumber && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Tröjnummer</dt>
+                    <dd className="font-medium">#{player.jerseyNumber}</dd>
+                  </div>
+                )}
+                {player.grade && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Nivå</dt>
+                    <dd className="font-medium">{player.grade}</dd>
+                  </div>
+                )}
+              </dl>
             </div>
-            <div className="border rounded p-2 text-center">
-              <div className="text-2xl font-semibold">{stats.totalGoals || 0}</div>
-              <div className="text-xs text-muted-foreground">Mål</div>
-            </div>
-            <div className="border rounded p-2 text-center">
-              <div className="text-2xl font-semibold">{stats.wins || 0}</div>
-              <div className="text-xs text-muted-foreground">Vinster</div>
-            </div>
+            
+            {playerActivities.length > 0 && (
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">Senaste aktiviteter</h3>
+                <div className="space-y-2">
+                  {playerActivities.slice(0, 5).map(activity => (
+                    <div key={activity.id} className="p-2 bg-muted/50 rounded-md">
+                      <p className="font-medium">{activity.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(activity.date).toLocaleDateString('sv-SE')}
+                        {activity.time && `, ${activity.time}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {player.development && player.development.length > 0 && (
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">Utveckling</h3>
+                <div className="space-y-2">
+                  {player.development.map((dev, index) => (
+                    <div key={index} className="p-2 border-l-2 border-primary">
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(dev.date).toLocaleDateString('sv-SE')}
+                      </p>
+                      <p>{dev.note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          
-          {/* Leagues section */}
-          {leagues.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2 flex items-center">
-                <Medal className="h-4 w-4 mr-1" />
-                Ligor ({leagues.length})
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {leagues.map(leagueId => (
-                  <Badge 
-                    key={leagueId} 
-                    variant="outline" 
-                    title={`Liga ID: ${leagueId}`} 
-                    className="cursor-help"
-                  >
-                    Liga
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Upcoming activities */}
-          {upcomingActivities.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2 flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                Kommande aktiviteter
-              </h4>
-              <div className="space-y-2">
-                {upcomingActivities.map(activity => (
-                  <div 
-                    key={activity.id} 
-                    className="p-2 border rounded-md flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-medium">{activity.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(activity.date)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Section 3: Scrollable match history */}
-        <div className="p-4 pt-0 border-t">
-          <h4 className="text-sm font-medium mb-2 flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            Matchhistorik ({pastActivities.length})
-          </h4>
-          <ScrollArea className="h-[180px]">
-            <div className="space-y-2 pr-4">
-              {pastActivities.map(activity => (
-                <div 
-                  key={activity.id} 
-                  className="p-2 border rounded-md flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-medium">{activity.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDate(activity.date)}
-                    </div>
-                  </div>
-                  {(activity.homeScore !== undefined && activity.awayScore !== undefined) && (
-                    <div 
-                      className={`font-medium ${
-                        activity.isWin === true ? 'text-green-600' : 
-                        activity.isWin === false ? 'text-red-600' : 
-                        'text-gray-600'
-                      }`}
-                    >
-                      {activity.homeScore}-{activity.awayScore}
-                      {player.development && stats.totalGoals > 0 && (
-                        <Badge variant="outline" className="ml-2">
-                          <Star className="h-3 w-3 mr-1" /> 
-                          {stats.totalGoals}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {pastActivities.length === 0 && (
-                <div className="text-center p-4 text-muted-foreground">
-                  Ingen matchhistorik
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </ScrollArea>
+    </Card>
   );
 }
