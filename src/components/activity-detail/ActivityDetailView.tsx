@@ -138,8 +138,8 @@ export function ActivityDetailView({
           </div>
         </CardHeader>
         
-        <ScrollArea className={`flex-grow ${isMobile ? 'max-h-[calc(100dvh-120px)]' : ''}`}>
-          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-20' : ''}`}>
+        <ScrollArea className={`flex-grow ${isMobile ? 'h-[calc(100dvh-120px)]' : ''}`}>
+          <CardContent className={`space-y-6 ${isMobile ? 'px-3 py-4 pb-32' : ''}`}>
             <ErrorBoundary fallback={
               <div className="p-4 border rounded bg-red-50 text-red-800">
                 Kunde inte ladda matchstatistik.

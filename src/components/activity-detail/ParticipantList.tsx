@@ -1,11 +1,12 @@
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, UserCircle } from "lucide-react";
 import { PlayerList } from "../player-ui";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantListProps {
   participants: Player[];
@@ -35,30 +36,41 @@ export function ParticipantList({
     );
   }
 
+  // Custom player list for better mobile experience with avatars
   return (
     <div className="mb-4">
-      <ScrollArea className={isMobileDevice ? "h-[calc(60vh-100px)]" : "h-[60vh]"}>
+      <ScrollArea className={isMobileDevice ? "h-[calc(45vh-100px)]" : "h-[50vh]"}>
         <div className="pr-4 py-2">
-          <PlayerList
-            players={sortedParticipants}
-            onPlayerSelect={player => onPlayerSelect?.(player.id)}
-            onPlayerAction={(player) => (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemovePlayer(player.id);
-                }}
+          <div className="grid grid-cols-1 gap-2">
+            {sortedParticipants.map((player) => (
+              <div 
+                key={player.id} 
+                className="flex items-center justify-between p-2 border rounded-md"
+                onClick={() => onPlayerSelect && onPlayerSelect(player.id)}
               >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-            compact={true}
-            emptyMessage="Inga deltagare att visa"
-            className="overflow-y-visible px-1"
-          />
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-9 w-9 border">
+                    <AvatarImage src={player.image} alt={player.name} />
+                    <AvatarFallback className="bg-muted">
+                      <UserCircle className="h-6 w-6 text-gray-400" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{player.name}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemovePlayer(player.id);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </ScrollArea>
     </div>

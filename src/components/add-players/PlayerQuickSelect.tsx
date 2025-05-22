@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, UserCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PlayerQuickSelectProps {
   availablePlayers: Player[];
@@ -28,24 +29,32 @@ export function PlayerQuickSelect({
 
   if (availablePlayers.length === 0) return null;
 
+  // Get a small sample of players to display
+  const quickSelectPlayers = availablePlayers.slice(0, 5);
+
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-medium">Snabbval</h4>
-      <ScrollArea className="h-32 border rounded-md">
-        <div className="p-2 space-y-1">
-          {availablePlayers.slice(0, 5).map(player => (
+      <ScrollArea className="h-36 border rounded-md">
+        <div className="p-2 space-y-1.5">
+          {quickSelectPlayers.map(player => (
             <Button
               key={player.id}
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              className="w-full justify-start items-center"
               onClick={() => handleQuickSelect(player.id)}
               disabled={processingPlayer === player.id}
             >
               {processingPlayer === player.id ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <UserPlus className="h-4 w-4 mr-2" />
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarImage src={player.image} alt={player.name} />
+                  <AvatarFallback className="bg-muted">
+                    <UserCircle className="h-4 w-4 text-gray-400" />
+                  </AvatarFallback>
+                </Avatar>
               )}
               {player.name}
             </Button>

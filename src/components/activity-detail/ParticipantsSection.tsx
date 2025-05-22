@@ -74,12 +74,14 @@ export function ParticipantsSection({
           />
 
           {isAddingPlayers && (
-            <AddPlayersToActivity 
-              activity={activity}
-              players={players}
-              onAddPlayers={onAddPlayers}
-              currentParticipantIds={activity.participants || []}
-            />
+            <div className={isMobile ? "fixed inset-x-0 bottom-0 bg-white border-t p-3 z-20" : ""}>
+              <AddPlayersToActivity 
+                activity={activity}
+                players={players}
+                onAddPlayers={onAddPlayers}
+                currentParticipantIds={activity.participants || []}
+              />
+            </div>
           )}
         </AccordionContent>
       </AccordionItem>

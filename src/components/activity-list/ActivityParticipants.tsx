@@ -65,9 +65,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Avatar size should be large (100px) by default, smaller on mobile
-  const avatarSize = isMobile ? 'h-8 w-8' : 'h-[100px] w-[100px]';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-12 w-12';
+  // Avatar size should be adjusted for mobile
+  const avatarSize = isMobile ? 'h-10 w-10' : 'h-16 w-16';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-8 w-8';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -85,20 +85,20 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background min-w-0 ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
+                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
                   onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
                 >
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={`border-2 border-background flex-shrink-0 ${avatarSize}`}>
+                        <Avatar className={`border-2 border-background ${avatarSize}`}>
                           <AvatarImage src={player.image} alt={player.name} />
-                          <AvatarFallback className="text-xs bg-muted">
+                          <AvatarFallback className="bg-muted">
                             <UserRound className={iconSize} />
                           </AvatarFallback>
                         </Avatar>

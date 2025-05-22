@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ParticipantActionButtonsProps {
   isAddingPlayers: boolean;
@@ -21,12 +22,15 @@ export function ParticipantActionButtons({
   isOpen,
   setIsOpen
 }: ParticipantActionButtonsProps) {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={`flex flex-wrap gap-2 ${isAddingPlayers && isMobile ? 'hidden' : ''}`}>
       <Button 
-        variant="outline" 
+        variant={isAddingPlayers ? "secondary" : "outline"} 
         onClick={() => setIsAddingPlayers(!isAddingPlayers)}
         className="flex-grow"
+        size={isMobile ? "lg" : "default"}
       >
         <UserPlus className="h-4 w-4 mr-2" />
         {isAddingPlayers ? "Avbryt" : "Lägg till spelare"}
@@ -38,6 +42,7 @@ export function ParticipantActionButtons({
             variant="outline" 
             className="flex-grow text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
             onClick={() => setIsOpen(true)}
+            size={isMobile ? "lg" : "default"}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Rensa alla

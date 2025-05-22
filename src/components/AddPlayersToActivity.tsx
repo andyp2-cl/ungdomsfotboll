@@ -6,6 +6,8 @@ import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
 import { AlertCircle, Check } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -23,6 +25,7 @@ export function AddPlayersToActivity({
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const isMobile = useIsMobile();
   
   // Filter out players who are already participating and sort alphabetically
   const availablePlayers = players
@@ -77,6 +80,52 @@ export function AddPlayersToActivity({
       <div className="text-muted-foreground text-sm mt-4">
         Alla spelare är redan tillagda i denna aktivitet.
       </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <ScrollArea className="h-[calc(70vh-100px)]">
+        <div className="space-y-4 pb-16">
+          {/* Cup Selector - show for both match and cup types */}
+          <CupSelector
+            selectedCup={selectedCup}
+            onCupSelect={setSelectedCup}
+            currentParticipantIds={currentParticipantIds}
+            onAddPlayers={onAddPlayers}
+          />
+
+          <PlayerMultiSelect
+            availablePlayers={availablePlayers}
+            selectedPlayerIds={selectedPlayerIds}
+            onPlayerToggle={handlePlayerToggle}
+            selectedPlayers={selectedPlayers}
+            onAddPlayers={handleAddPlayers}
+            isProcessing={isProcessing}
+          />
+          
+          <PlayerQuickSelect
+            availablePlayers={availablePlayers}
+            onQuickSelect={(playerId) => {
+              console.log("Quick selecting player:", playerId);
+              setIsProcessing(true);
+              try {
+                onAddPlayers([playerId]);
+                toast.success("Spelare tillagd", {
+                  icon: <Check className="h-4 w-4" />
+                });
+              } catch (error) {
+                console.error("Error quick-adding player:", error);
+                toast.error("Kunde inte lägga till spelare", {
+                  icon: <AlertCircle className="h-4 w-4" />
+                });
+              } finally {
+                setIsProcessing(false);
+              }
+            }}
+          />
+        </div>
+      </ScrollArea>
     );
   }
 
