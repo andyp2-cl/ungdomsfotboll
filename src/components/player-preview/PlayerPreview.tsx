@@ -15,6 +15,11 @@ interface PlayerPreviewProps {
   onClose: () => void;
 }
 
+interface DevelopmentNote {
+  date: string;
+  note: string;
+}
+
 export function PlayerPreview({ player, activities = [], onClose }: PlayerPreviewProps) {
   const isMobile = useIsMobile();
   
@@ -22,6 +27,11 @@ export function PlayerPreview({ player, activities = [], onClose }: PlayerPrevie
   const playerActivities = activities.filter(
     activity => activity.participants?.includes(player.id)
   );
+  
+  // Check if development exists and is an array
+  const developmentNotes: DevelopmentNote[] = Array.isArray(player.development) 
+    ? player.development 
+    : [];
   
   return (
     <Card className={`relative ${isMobile ? 'fixed inset-x-0 bottom-0 top-16 z-50 rounded-b-none' : 'w-full mb-6'}`}>
@@ -97,11 +107,11 @@ export function PlayerPreview({ player, activities = [], onClose }: PlayerPrevie
               </div>
             )}
             
-            {player.development && player.development.length > 0 && (
+            {developmentNotes.length > 0 && (
               <div className="border rounded-md p-4">
                 <h3 className="font-medium mb-2">Utveckling</h3>
                 <div className="space-y-2">
-                  {player.development.map((dev, index) => (
+                  {developmentNotes.map((dev, index) => (
                     <div key={index} className="p-2 border-l-2 border-primary">
                       <p className="text-sm text-muted-foreground">
                         {new Date(dev.date).toLocaleDateString('sv-SE')}
