@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
+import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -32,6 +33,7 @@ interface ActivityTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 export function ActivityTabContent({
@@ -51,7 +53,8 @@ export function ActivityTabContent({
   handleDeleteActivity,
   handleImportedActivities,
   handleClearHistoricalActivities,
-  handleMatchResultUpdate
+  handleMatchResultUpdate,
+  onPlayerSelect
 }: ActivityTabContentProps) {
   const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -60,10 +63,27 @@ export function ActivityTabContent({
   const isMobile = useIsMobile();
 
   const handlePlayerSelect = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSelectedPlayer(player);
-      setSelectedActivity(null);
+    console.log("ActivityTabContent: handlePlayerSelect called with playerId:", playerId);
+    
+    if (playerId === "") {
+      console.log("ActivityTabContent: Clearing selected player");
+      setSelectedPlayer(null);
+    } else {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        console.log("ActivityTabContent: Found player:", player.name);
+        setSelectedPlayer(player);
+        // Don't clear the activity selection by default
+      } else {
+        console.log("ActivityTabContent: Player not found for id:", playerId);
+      }
+    }
+    
+    // If we have an onPlayerSelect callback from the parent (usePlayers),
+    // call that as well to update the global state
+    if (onPlayerSelect) {
+      console.log("ActivityTabContent: Calling parent onPlayerSelect");
+      onPlayerSelect(playerId);
     }
   };
 
@@ -133,77 +153,32 @@ export function ActivityTabContent({
 
   const renderContent = () => {
     if (selectedPlayer) {
-      return (
-        <PlayerDetail 
-          player={selectedPlayer} 
-          activities={activities} 
-          onClose={() => setSelectedPlayer(null)}
-          onEdit={(player) => console.log("Edit player not implemented in this context", player)}
-          onPlayerUpdate={(player) => console.log("Player update not implemented in this context", player)}
-          allPlayers={players}
-        />
-      );
+      return {
+        viewType: "player-detail",
+        player: selectedPlayer
+      };
     }
     
     if (selectedActivity) {
-      return (
-        <ActivityDetail 
-          activity={selectedActivity}
-          players={players}
-          onBack={() => setSelectedActivity(null)}
-          onEdit={setEditingActivity}
-          onDeleteActivity={handleDeleteActivity}
-          onActivityUpdate={handleActivityUpdate}
-          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
-          onActivitySelect={setSelectedActivity}
-          relatedActivities={activities.filter(a => 
-            a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id
-          )}
-          cupMatches={selectedActivity.type === 'cup' 
-            ? activities.filter(a => a.cupId === selectedActivity.id)
-            : []}
-          allActivities={activities}
-          onClose={() => setSelectedActivity(null)}
-          onMatchResultUpdate={handleMatchResultUpdate}
-          onPlayerSelect={handlePlayerSelect}
-        />
-      );
+      return {
+        viewType: "activity-detail",
+        activity: selectedActivity,
+        relatedActivities: relatedActivities,
+        cupMatches: cupMatches
+      };
     }
     
     if (activeView === "statistics") {
-      return (
-        <StatisticsTabsWrapper 
-          players={players}
-          activities={activities}
-          gradeData={players.reduce((acc, player) => {
-            if (player.positions?.includes("TRÄNARE")) return acc;
-            
-            const grade = player.grade;
-            const existingGrade = acc.find(item => item.grade === grade);
-            
-            if (existingGrade) {
-              existingGrade.players++;
-            } else {
-              acc.push({ grade, players: 1 });
-            }
-            
-            return acc;
-          }, [] as { grade: string, players: number }[]).sort((a, b) => a.grade.localeCompare(b.grade))}
-        />
-      );
+      return {
+        viewType: "statistics"
+      };
     }
     
-    return (
-      <ActivityList 
-        activities={filteredBySearchActivities}
-        players={players}
-        onSelect={setSelectedActivity}
-        onPlayerSelect={handlePlayerSelect}
-        isHistorical={isHistorical}
-        isMobile={isMobile}
-        noResultsMessage={searchQuery ? `Inga matcher hittades för "${searchQuery}"` : "Inga aktiviteter hittades"}
-      />
-    );
+    return {
+      viewType: "activities-list",
+      activities: filteredBySearchActivities,
+      searchQuery: searchQuery
+    };
   };
 
   return (
@@ -248,7 +223,19 @@ export function ActivityTabContent({
       )}
       
       <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
-        {renderContent()}
+        <ActivityTabViewContent
+          activeView={activeView}
+          renderContent={renderContent}
+          players={players}
+          activities={activities}
+          onActivitySelect={setSelectedActivity}
+          onPlayerSelect={handlePlayerSelect}
+          onEditActivity={setEditingActivity}
+          onActivityUpdate={handleActivityUpdate}
+          onDeleteActivity={handleDeleteActivity}
+          onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
+          onMatchResultUpdate={handleMatchResultUpdate}
+        />
       </PullToRefresh>
     </div>
   );

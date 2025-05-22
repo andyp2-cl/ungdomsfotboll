@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -65,7 +65,7 @@ export function PlayerPreview({ player, activities = [], onClose }: PlayerPrevie
         </div>
       </CardHeader>
       
-      <ScrollArea className={isMobile ? 'h-[calc(100%-70px)]' : ''}>
+      <ScrollArea className={isMobile ? 'h-[calc(100%-130px)]' : ''}>
         <CardContent className={`${isMobile ? 'px-4 py-3' : ''}`}>
           <div className="space-y-4">
             <div className="border rounded-md p-4">
@@ -125,6 +125,16 @@ export function PlayerPreview({ player, activities = [], onClose }: PlayerPrevie
           </div>
         </CardContent>
       </ScrollArea>
+      
+      <CardFooter className={`${isMobile ? 'px-4 py-3 mt-auto border-t' : ''}`}>
+        <Button 
+          variant="outline" 
+          onClick={onClose}
+          className="w-full"
+        >
+          Stäng
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
