@@ -107,17 +107,6 @@ export function ActivityDetailView({
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
   const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
-  // Create a wrapper for handleActivityUpdate that returns a Promise
-  const handleActivityUpdateWithPromise = async (updatedActivity: Activity): Promise<void> => {
-    try {
-      await handleActivityUpdate(updatedActivity);
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Error in handleActivityUpdateWithPromise:", error);
-      return Promise.reject(error);
-    }
-  };
-
   if (isLoading) {
     return <ActivityDetailSkeleton />;
   }
@@ -178,7 +167,7 @@ export function ActivityDetailView({
               {isHistorical && (
                 <MatchReportSection
                   activity={currentActivity}
-                  updateActivity={handleActivityUpdateWithPromise}
+                  updateActivity={handleActivityUpdate}
                   isHistorical={isHistorical}
                 />
               )}

@@ -33,14 +33,20 @@ export function ActivityDetailWrapper({
     ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
     : [];
   
+  console.log("ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
+  
+  // Make sure onActivityUpdate function returns Promise<void>
+  const handleActivityUpdate = async (activity: Activity): Promise<void> => {
+    await onActivityUpdate(activity);
+  };
+  
   return (
     <ActivityDetail
       activity={selectedActivity}
       players={players}
-      onBack={() => onActivitySelect(null)} // Added to fix the missing property
       onClose={() => onActivitySelect(null)}
       onEdit={onEditActivityClick}
-      onActivityUpdate={onActivityUpdate}
+      onActivityUpdate={handleActivityUpdate}
       onKioskAssignmentUpdate={handleKioskUpdate}
       onDeleteActivity={async (id) => {
         const success = await handleDeleteActivity(id);
