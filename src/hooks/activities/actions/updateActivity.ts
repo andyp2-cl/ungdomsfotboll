@@ -20,7 +20,9 @@ export const handleActivityUpdate = async (
     date: updatedActivity.date,
     cupId: updatedActivity.cupId,
     cupName: updatedActivity.cupName,
-    participantsCount: updatedActivity.participants?.length || 0
+    participantsCount: updatedActivity.participants?.length || 0,
+    matchReport: updatedActivity.matchReport ? `${updatedActivity.matchReport.substring(0, 20)}...` : 'none',
+    youtubeLink: updatedActivity.youtubeLink || 'none'
   });
   
   try {
@@ -50,7 +52,9 @@ export const handleActivityUpdate = async (
     
     // Try to save to database FIRST, before updating UI state
     try {
-      console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
+      console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date, 
+        "matchReport:", normalizedActivity.matchReport ? `${normalizedActivity.matchReport.substring(0, 20)}...` : 'none',
+        "youtubeLink:", normalizedActivity.youtubeLink || 'none');
       
       // Create a clean copy that won't be mutated by other code
       const activityToSave = JSON.parse(JSON.stringify(normalizedActivity));
