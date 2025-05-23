@@ -24,13 +24,6 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     console.log(`Fetched ${activities.length} activities from database`);
     
-    // Log match reports and YouTube links for debugging
-    const activitiesWithReports = activities.filter(a => a.matchReport);
-    const activitiesWithYouTube = activities.filter(a => a.youtubeLink);
-    
-    console.log(`Found ${activitiesWithReports.length} activities with match reports`);
-    console.log(`Found ${activitiesWithYouTube.length} activities with YouTube links`);
-    
     // Log all cup type activities and matches with cup references
     const cupActivities = activities.filter(a => a.type === 'cup');
     const matchesWithCupName = activities.filter(a => a.type === 'match' && a.cupName);

@@ -47,8 +47,6 @@ export interface Activity {
   isWin?: boolean; // Whether the match was a win for Hässleholms IF
   leagueId?: string; // League ID
   league_id?: string; // Database format of league ID
-  matchReport?: string; // Match report text
-  youtubeLink?: string; // YouTube video link for the match
 }
 
 export interface PlayerDevelopment {
