@@ -5,9 +5,10 @@ import { CupSelector } from "./add-players/CupSelector";
 import { PlayerMultiSelect } from "./add-players/PlayerMultiSelect";
 import { PlayerQuickSelect } from "./add-players/PlayerQuickSelect";
 import { toast } from "sonner";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
@@ -85,50 +86,73 @@ export function AddPlayersToActivity({
 
   if (isMobile) {
     return (
-      <ScrollArea className="h-[calc(70vh-100px)]">
-        <div className="space-y-4 pb-16">
-          {/* Cup Selector - show for both match and cup types */}
-          <CupSelector
-            selectedCup={selectedCup}
-            onCupSelect={setSelectedCup}
-            currentParticipantIds={currentParticipantIds}
-            onAddPlayers={onAddPlayers}
-          />
+      <div className="relative">
+        <ScrollArea className="h-[calc(70vh-100px)]">
+          <div className="space-y-4 pb-24">
+            {/* Cup Selector - show for both match and cup types */}
+            <CupSelector
+              selectedCup={selectedCup}
+              onCupSelect={setSelectedCup}
+              currentParticipantIds={currentParticipantIds}
+              onAddPlayers={onAddPlayers}
+            />
 
-          <PlayerMultiSelect
-            availablePlayers={availablePlayers}
-            selectedPlayerIds={selectedPlayerIds}
-            onPlayerToggle={handlePlayerToggle}
-            selectedPlayers={selectedPlayers}
-            onAddPlayers={handleAddPlayers}
-            isProcessing={isProcessing}
-          />
-          
-          <PlayerQuickSelect
-            availablePlayers={availablePlayers}
-            onQuickSelect={(playerId) => {
-              console.log("Quick selecting player:", playerId);
-              setIsProcessing(true);
-              try {
-                onAddPlayers([playerId]);
-                toast.success("Spelare tillagd", {
-                  icon: <Check className="h-4 w-4" />
-                });
-              } catch (error) {
-                console.error("Error quick-adding player:", error);
-                toast.error("Kunde inte lägga till spelare", {
-                  icon: <AlertCircle className="h-4 w-4" />
-                });
-              } finally {
-                setIsProcessing(false);
-              }
-            }}
-          />
+            <PlayerMultiSelect
+              availablePlayers={availablePlayers}
+              selectedPlayerIds={selectedPlayerIds}
+              onPlayerToggle={handlePlayerToggle}
+              selectedPlayers={selectedPlayers}
+              onAddPlayers={handleAddPlayers}
+              isProcessing={isProcessing}
+            />
+            
+            <PlayerQuickSelect
+              availablePlayers={availablePlayers}
+              onQuickSelect={(playerId) => {
+                console.log("Quick selecting player:", playerId);
+                setIsProcessing(true);
+                try {
+                  onAddPlayers([playerId]);
+                  toast.success("Spelare tillagd", {
+                    icon: <Check className="h-4 w-4" />
+                  });
+                } catch (error) {
+                  console.error("Error quick-adding player:", error);
+                  toast.error("Kunde inte lägga till spelare", {
+                    icon: <AlertCircle className="h-4 w-4" />
+                  });
+                } finally {
+                  setIsProcessing(false);
+                }
+              }}
+            />
+          </div>
+        </ScrollArea>
+        
+        {/* Fixed confirmation button at the bottom */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t">
+          <Button 
+            onClick={handleAddPlayers} 
+            disabled={selectedPlayerIds.length === 0 || isProcessing}
+            variant="default" 
+            className="w-full"
+            size="lg"
+          >
+            {isProcessing ? (
+              <>Lägger till...</>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Lägg till {selectedPlayerIds.length > 0 ? selectedPlayerIds.length : ""} spelare
+              </>
+            )}
+          </Button>
         </div>
-      </ScrollArea>
+      </div>
     );
   }
 
+  // Desktop view stays the same
   return (
     <div className="mt-4 space-y-4">
       {/* Cup Selector - show for both match and cup types */}

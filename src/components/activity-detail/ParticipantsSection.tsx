@@ -74,11 +74,16 @@ export function ParticipantsSection({
           />
 
           {isAddingPlayers && (
-            <div className={isMobile ? "fixed inset-x-0 bottom-0 bg-white border-t p-3 z-20" : ""}>
+            <div className={isMobile ? "mt-4" : ""}>
               <AddPlayersToActivity 
                 activity={activity}
                 players={players}
-                onAddPlayers={onAddPlayers}
+                onAddPlayers={(playerIds) => {
+                  onAddPlayers(playerIds);
+                  if (isMobile) {
+                    setIsAddingPlayers(false);
+                  }
+                }}
                 currentParticipantIds={activity.participants || []}
               />
             </div>

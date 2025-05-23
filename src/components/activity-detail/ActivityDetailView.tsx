@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { GradeDistributionChart } from "./GradeDistributionChart";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ActivityDetailSkeleton } from "./ActivityDetailSkeleton";
+import { MatchReportSection } from "./MatchReportSection";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -151,6 +152,21 @@ export function ActivityDetailView({
                   activity={currentActivity}
                   players={players}
                   participatingPlayers={participatingPlayers}
+                  updateActivity={handleActivityUpdate}
+                  isHistorical={isHistorical}
+                />
+              )}
+            </ErrorBoundary>
+
+            {/* Add Match Report Section for historical activities */}
+            <ErrorBoundary fallback={
+              <div className="p-4 border rounded bg-red-50 text-red-800">
+                Kunde inte ladda matchreferat.
+              </div>
+            }>
+              {isHistorical && (
+                <MatchReportSection
+                  activity={currentActivity}
                   updateActivity={handleActivityUpdate}
                   isHistorical={isHistorical}
                 />

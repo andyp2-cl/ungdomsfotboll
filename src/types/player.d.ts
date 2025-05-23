@@ -1,75 +1,75 @@
-
-import { Database } from './supabase';
-
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
-
-export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
-
 export interface Player {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email?: string;
-  phone?: string;
-  positions?: string[];
-  grade?: PlayerGrade;
   image?: string;
-  active?: boolean;
-  activities?: string[];
-  [key: string]: any;
+  grade?: string;
+  positions?: string[];
+  isAdmin?: boolean;
+  isTrainer?: boolean;
+  jerseyNumber?: number;
+  phone?: string;
+  address?: string;
+  city?: string;
+  zip?: string;
+  country?: string;
+  birthDate?: string;
+  height?: number;
+  weight?: number;
+  foot?: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  development?: DevelopmentNote[];
+}
+
+export interface DevelopmentNote {
+  date: string;
+  note: string;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  description?: string;
+  gps_link?: string;
 }
 
 export interface PlayerStats {
-  goals: Record<string, number>;
-  assists: Record<string, number>;
-  scores?: {
-    home?: number;
-    away?: number;
-  };
-  isWin?: boolean;
-  cup_matches?: string[]; // Adding this property to fix type errors
-  matches?: number;       // Adding these properties to match expected type
-  wins?: number;
-  draws?: number;
-  losses?: number;
-  [key: string]: any;     // Keeping index signature for Json compatibility
+  [key: string]: any;
+  matchesPlayed?: number;
+  goals?: number;
+  assists?: number;
+  yellowCards?: number;
+  redCards?: number;
+  minutesPlayed?: number;
 }
+
+export type PlayerGrade = "A" | "B" | "C" | "D";
 
 export interface Activity {
   id: string;
   name: string;
   date: string;
-  type: "match" | "cup" | "training";
   time?: string;
-  location?: {
-    name: string;
-    description?: string;
-    gpsLink?: string;
-  };
+  type: string;
+  location?: Location;
+  participants?: string[];
   kioskAssignedPlayerId?: string;
-  scraped?: boolean;
-  participants: string[];
   cupId?: string;
-  cupName?: string;
-  matches?: string[];
   result?: string;
   homeScore?: number;
   awayScore?: number;
-  isWin?: boolean;
-  player_stats?: PlayerStats;
-  [key: string]: any;
+  playerStats?: PlayerStats;
+  league_id?: string;
+  location_name?: string;
+  location_description?: string;
+  location_gps_link?: string;
+  is_win?: boolean;
+  matchReport?: string;
 }
 
-export interface CupMatch {
-  id?: string;
+export interface ActivityType {
+  id: string;
   name: string;
-  time: string;
-  location?: string;
-  locationDescription?: string;
 }
