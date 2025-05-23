@@ -1,12 +1,14 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Activity, Player } from "@/types/player";
-import { ActivityFilter } from "@/components/ActivityFilter";
-import { ActivityList } from "@/components/ActivityList";
 import { ActivityDetailWrapper } from "./ActivityDetailWrapper";
-import { Button } from "@/components/ui/button";
-import { Activity as ActivityIcon } from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ActivityList } from "@/components/ActivityList";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { FilterType } from "@/types/tabs";
+import { MatchReportSummary } from "@/components/activity-detail/MatchReportSummary";
 
 interface ActivityTabContentProps {
   title: string;
@@ -22,8 +24,10 @@ interface ActivityTabContentProps {
   onEditActivityClick: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   cupMatches: Activity[];
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  filter?: FilterType;
+  isHistorical?: boolean;
 }
 
 export function ActivityTabContent({
@@ -40,54 +44,62 @@ export function ActivityTabContent({
   onEditActivityClick,
   handleKioskUpdate,
   handleDeleteActivity,
-  handleMatchResultUpdate,
-  cupMatches
+  cupMatches,
+  onMatchResultUpdate,
+  filter,
+  isHistorical = false
 }: ActivityTabContentProps) {
+  const [activeTab, setActiveTab] = useState("list");
   const isMobile = useIsMobile();
+  
+  // Reset to list tab when selected activity is null
+  useEffect(() => {
+    if (!selectedActivity) {
+      setActiveTab("list");
+    } else {
+      setActiveTab("detail");
+    }
+  }, [selectedActivity]);
 
   return (
-    <div className="grid grid-cols-1 gap-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-          <Button 
-            onClick={onAddActivityClick}
-            className="w-full sm:w-auto"
-          >
-            <ActivityIcon className="h-4 w-4 mr-2" />
+    <Tabs value={activeTab} className="w-full">
+      <div className="flex justify-end mb-4">
+        {activeTab === "list" && (
+          <Button onClick={onAddActivityClick}>
+            <Plus className="h-4 w-4 mr-2" />
             Lägg till aktivitet
           </Button>
-          <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto overflow-x-auto'}`}>
-            <ActivityFilter 
-              selectedTypes={selectedActivityTypes}
-              onTypeChange={onActivityTypeChange}
-              isMobile={isMobile}
-            />
-          </div>
-        </div>
+        )}
       </div>
-      
-      {selectedActivity ? (
-        <ActivityDetailWrapper
-          selectedActivity={selectedActivity}
-          players={players}
-          activities={activities}
-          cupMatches={cupMatches}
-          onActivitySelect={onActivitySelect}
-          onEditActivityClick={onEditActivityClick}
-          onActivityUpdate={onActivityUpdate}
-          handleKioskUpdate={handleKioskUpdate}
-          handleDeleteActivity={handleDeleteActivity}
-          handleMatchResultUpdate={handleMatchResultUpdate}
-        />
-      ) : (
+
+      <TabsContent value="list" className="mt-0">
         <ActivityList 
-          activities={filteredActivities} 
+          activities={filteredActivities}
+          players={players}
           onSelect={onActivitySelect}
-          players={players} 
-          isMobile={isMobile}
+          isHistorical={isHistorical}
+          renderExtraContent={(activity) => isHistorical && (
+            <MatchReportSummary activity={activity} />
+          )}
         />
-      )}
-    </div>
+      </TabsContent>
+
+      <TabsContent value="detail" className="mt-0">
+        {selectedActivity && (
+          <ActivityDetailWrapper 
+            selectedActivity={selectedActivity}
+            players={players}
+            activities={activities}
+            cupMatches={cupMatches}
+            onActivitySelect={onActivitySelect}
+            onEditActivityClick={onEditActivityClick}
+            onActivityUpdate={onActivityUpdate}
+            handleKioskUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDeleteActivity}
+            handleMatchResultUpdate={onMatchResultUpdate}
+          />
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }

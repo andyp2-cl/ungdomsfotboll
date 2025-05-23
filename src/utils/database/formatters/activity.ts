@@ -26,7 +26,9 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false,
-    league_id: activity.leagueId || null
+    league_id: activity.leagueId || null,
+    match_report: activity.matchReport || null,
+    youtube_link: activity.youtubeLink || null
   };
 
   // Special handling for cup type activities
@@ -36,7 +38,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     console.log(`Cup activity detected: Setting cup_id=${activity.id}`);
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}, matchReport: ${Boolean(formattedActivity.match_report)}, youtubeLink: ${Boolean(formattedActivity.youtube_link)}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {
@@ -79,7 +81,10 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     player_stats: { goals: {}, assists: {} },
     // Add league_id from database
     leagueId: item.league_id || undefined,
-    league_id: item.league_id || undefined
+    league_id: item.league_id || undefined,
+    // Add match report and YouTube link from database
+    matchReport: item.match_report || undefined,
+    youtubeLink: item.youtube_link || undefined
   };
   
   // For cup type activities, make sure cupId is set properly
