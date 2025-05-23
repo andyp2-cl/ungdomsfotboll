@@ -24,6 +24,15 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     console.log(`Fetched ${activities.length} activities from database`);
     
+    // Log all activities with match reports or YouTube links
+    const activitiesWithReports = activities.filter(a => a.matchReport || a.youtubeLink);
+    console.log(`Found ${activitiesWithReports.length} activities with match reports or YouTube links`);
+    if (activitiesWithReports.length > 0) {
+      activitiesWithReports.forEach(a => {
+        console.log(`Activity ${a.id} (${a.name}) has: matchReport: ${a.matchReport ? 'yes' : 'no'}, youtubeLink: ${a.youtubeLink ? 'yes' : 'no'}`);
+      });
+    }
+    
     // Log all cup type activities and matches with cup references
     const cupActivities = activities.filter(a => a.type === 'cup');
     const matchesWithCupName = activities.filter(a => a.type === 'match' && a.cupName);

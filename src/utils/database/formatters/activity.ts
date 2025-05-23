@@ -38,7 +38,7 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     console.log(`Cup activity detected: Setting cup_id=${activity.id}`);
   }
 
-  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}, matchReport: ${formattedActivity.match_report?.substring(0, 20)}...`);
+  console.log(`Formatted activity for database: ${activity.id} (${activity.name}) with date ${activity.date}, type: ${activity.type}, cupId: ${formattedActivity.cup_id}, leagueId: ${formattedActivity.league_id}, matchReport: ${formattedActivity.match_report?.substring(0, 20)}..., youtubeLink: ${formattedActivity.youtube_link || 'none'}`);
   
   // Ensure no undefined values are passed to the database
   Object.keys(formattedActivity).forEach(key => {
@@ -141,6 +141,13 @@ export const formatActivityFromDatabase = (item: any): Activity => {
       },
       isWin: activity.isWin
     };
+  }
+  
+  // Log the match report and YouTube link when they exist
+  if (item.match_report || item.youtube_link) {
+    console.log(`Activity ${activity.id} loaded with matchReport:`, 
+      item.match_report ? `${item.match_report.substring(0, 20)}...` : 'none',
+      "youtubeLink:", item.youtube_link || 'none');
   }
   
   return activity;

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
@@ -48,6 +49,8 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
         date: normalizedActivity.date,
         participants: normalizedActivity.participants?.length || 0,
         matches: normalizedActivity.matches?.length || 0,
+        matchReport: normalizedActivity.matchReport ? `${normalizedActivity.matchReport.substring(0, 20)}...` : 'none',
+        youtubeLink: normalizedActivity.youtubeLink || 'none'
       });
       
       // Check if activity already exists to determine if this is an update or create

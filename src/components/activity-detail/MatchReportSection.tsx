@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -27,17 +27,40 @@ export function MatchReportSection({
   const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
   const [isSaving, setIsSaving] = useState(false);
   
+  // Update local state when activity changes to prevent stale data
+  useEffect(() => {
+    setReportText(activity.matchReport || "");
+    setYoutubeLink(activity.youtubeLink || "");
+    
+    console.log("MatchReportSection received activity update:", { 
+      id: activity.id,
+      hasMatchReport: !!activity.matchReport, 
+      hasYoutubeLink: !!activity.youtubeLink,
+      matchReport: activity.matchReport?.substring(0, 20),
+      youtubeLink: activity.youtubeLink
+    });
+  }, [activity]);
+  
   // Only show for historical activities
   if (!isHistorical) return null;
   
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateActivity({
+      // Make a clean copy of the activity to avoid mutations
+      const updatedActivity = {
         ...activity,
-        matchReport: reportText,
-        youtubeLink: youtubeLink
+        matchReport: reportText || null,
+        youtubeLink: youtubeLink || null
+      };
+      
+      console.log("Saving match report with data:", {
+        id: updatedActivity.id,
+        reportTextLength: reportText?.length || 0,
+        youtubeLink: youtubeLink || 'none'
       });
+      
+      await updateActivity(updatedActivity);
       
       toast({
         title: "Matchreferat sparat",
