@@ -1,3 +1,4 @@
+
 export interface Player {
   id: string;
   name: string;
@@ -67,9 +68,6 @@ export interface Activity {
   location_gps_link?: string;
   is_win?: boolean;
   matchReport?: string;
+  youtubeLink?: string;
 }
 
-export interface ActivityType {
-  id: string;
-  name: string;
-}

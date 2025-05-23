@@ -26,7 +26,9 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     result: activity.result || null,
     kiosk_assigned_player_id: activity.kioskAssignedPlayerId || null,
     scraped: activity.scraped || false,
-    league_id: activity.leagueId || null
+    league_id: activity.leagueId || null,
+    match_report: activity.matchReport || null,
+    youtube_link: activity.youtubeLink || null
   };
 
   // Special handling for cup type activities
@@ -79,7 +81,10 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     player_stats: { goals: {}, assists: {} },
     // Add league_id from database
     leagueId: item.league_id || undefined,
-    league_id: item.league_id || undefined
+    league_id: item.league_id || undefined,
+    // Add match report and youtube link
+    matchReport: item.match_report || undefined,
+    youtubeLink: item.youtube_link || undefined
   };
   
   // For cup type activities, make sure cupId is set properly
