@@ -12,6 +12,7 @@ interface ActivityParticipantsProps {
   onPlayerSelect?: (playerId: string) => void;
   totalCount?: number;
   maxDisplayed?: number;
+  maxShow?: number; // Add maxShow prop
   isMobile?: boolean;
   showAll?: boolean;
 }
@@ -21,11 +22,17 @@ export function ActivityParticipants({
   onPlayerSelect,
   totalCount = 0,
   maxDisplayed = 100,
+  maxShow = 100, // Default value for maxShow
   isMobile = false,
   showAll = true
 }: ActivityParticipantsProps) {
   // Sort participants by grade
   const sortedParticipants = sortPlayersByGrade(participants);
+  
+  // Limit participants based on maxShow prop
+  const displayedParticipants = maxShow < sortedParticipants.length 
+    ? sortedParticipants.slice(0, maxShow)
+    : sortedParticipants;
   
   // Group participants by grade for better visual organization
   const participantsByGrade: Record<string, Player[]> = {};
@@ -36,7 +43,7 @@ export function ActivityParticipants({
   });
   
   // Populate the groups
-  sortedParticipants.forEach(player => {
+  displayedParticipants.forEach(player => {
     const grade = player.grade || 'undefined';
     participantsByGrade[grade].push(player);
   });
@@ -57,7 +64,7 @@ export function ActivityParticipants({
     }
   };
 
-  if (!sortedParticipants.length) {
+  if (!displayedParticipants.length) {
     return (
       <div className="text-xs text-muted-foreground">
         Inga deltagare
@@ -122,6 +129,11 @@ export function ActivityParticipants({
           </div>
         );
       })}
+      {maxShow < sortedParticipants.length && (
+        <div className="text-xs text-muted-foreground text-center mt-1">
+          +{sortedParticipants.length - maxShow} fler deltagare
+        </div>
+      )}
     </div>
   );
 }

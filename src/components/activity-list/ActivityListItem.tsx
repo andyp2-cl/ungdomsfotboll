@@ -13,14 +13,34 @@ import { formatResult } from "./utils/result-utils";
 interface ActivityListItemProps {
   activity: Activity;
   players: Player[];
-  onClick: () => void;
+  onClick?: () => void;
+  onSelect?: (activity: Activity) => void;
+  onPlayerSelect?: (playerId: string) => void;
+  isHistorical?: boolean;
+  isMobile?: boolean;
 }
 
-export function ActivityListItem({ activity, players, onClick }: ActivityListItemProps) {
-  const isHistorical = new Date(activity.date) < new Date();
+export function ActivityListItem({ 
+  activity, 
+  players, 
+  onClick, 
+  onSelect,
+  onPlayerSelect,
+  isHistorical = false,
+  isMobile = false
+}: ActivityListItemProps) {
+  const actualIsHistorical = isHistorical || new Date(activity.date) < new Date();
   const participatingPlayers = players.filter(player => 
     activity.participants?.includes(player.id)
   );
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (onSelect) {
+      onSelect(activity);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -48,7 +68,7 @@ export function ActivityListItem({ activity, players, onClick }: ActivityListIte
   return (
     <Card 
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardContent className="p-4">
         <div className="space-y-3">
@@ -59,7 +79,7 @@ export function ActivityListItem({ activity, players, onClick }: ActivityListIte
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <CupMatchBadge activity={activity} />
-              {activity.type === 'match' && isHistorical && (
+              {activity.type === 'match' && actualIsHistorical && (
                 <Badge variant="outline" className="text-xs">
                   <Trophy className="h-3 w-3 mr-1" />
                   {formatResult(activity)}
@@ -99,10 +119,12 @@ export function ActivityListItem({ activity, players, onClick }: ActivityListIte
           <ActivityParticipants 
             participants={participatingPlayers} 
             maxShow={6}
+            onPlayerSelect={onPlayerSelect}
+            isMobile={isMobile}
           />
 
           {/* Match report summary for historical activities */}
-          {isHistorical && (
+          {actualIsHistorical && (
             <MatchReportSummary activity={activity} />
           )}
         </div>

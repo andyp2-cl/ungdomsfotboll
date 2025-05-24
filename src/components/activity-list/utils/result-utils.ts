@@ -50,3 +50,30 @@ export const getResultMessage = (activity: {
   }
   return '';
 };
+
+/**
+ * Formats activity result for display
+ * @param activity The activity containing result data
+ * @returns Formatted result string
+ */
+export const formatResult = (activity: {
+  result?: string;
+  homeScore?: number;
+  awayScore?: number;
+  isWin?: boolean;
+}) => {
+  if (activity.result) {
+    return activity.result;
+  } else if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    return `${activity.homeScore}-${activity.awayScore}`;
+  }
+  
+  // Fallback based on win status
+  if (activity.isWin === true) {
+    return "Vinst";
+  } else if (activity.isWin === false) {
+    return "Förlust";
+  }
+  
+  return "Okänt resultat";
+};

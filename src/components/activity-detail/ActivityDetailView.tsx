@@ -102,6 +102,11 @@ export function ActivityDetailView({
     onClose();
   };
   
+  // Create a wrapper that returns Promise<void>
+  const handleActivityUpdateWrapper = async (updatedActivity: Activity): Promise<void> => {
+    await handleActivityUpdate(updatedActivity);
+  };
+  
   const isMatch = activity.type === "match";
   const formattedDate = new Date(activity.date).toLocaleDateString('sv-SE');
   const dayOfWeek = new Date(activity.date).toLocaleDateString('sv-SE', { weekday: 'long' });
@@ -152,7 +157,7 @@ export function ActivityDetailView({
                   activity={currentActivity}
                   players={players}
                   participatingPlayers={participatingPlayers}
-                  updateActivity={handleActivityUpdate}
+                  updateActivity={handleActivityUpdateWrapper}
                   isHistorical={isHistorical}
                 />
               )}
@@ -167,7 +172,7 @@ export function ActivityDetailView({
               {isHistorical && (
                 <MatchReportSection
                   activity={currentActivity}
-                  updateActivity={handleActivityUpdate}
+                  updateActivity={handleActivityUpdateWrapper}
                   isHistorical={isHistorical}
                 />
               )}
