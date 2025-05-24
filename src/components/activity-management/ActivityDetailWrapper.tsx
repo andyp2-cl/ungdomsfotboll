@@ -13,7 +13,7 @@ interface ActivityDetailWrapperProps {
   onActivityUpdate: (activity: Activity) => Promise<void>;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
 
 export function ActivityDetailWrapper({
@@ -26,14 +26,14 @@ export function ActivityDetailWrapper({
   onActivityUpdate,
   handleKioskUpdate,
   handleDeleteActivity,
-  handleMatchResultUpdate
+  onMatchResultUpdate
 }: ActivityDetailWrapperProps) {
   
   const relatedActivities = selectedActivity?.cupId 
     ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
     : [];
   
-  console.log("ActivityDetailWrapper with handleMatchResultUpdate:", !!handleMatchResultUpdate);
+  console.log("ActivityDetailWrapper with onMatchResultUpdate:", !!onMatchResultUpdate);
   
   // Make sure onActivityUpdate function returns Promise<void>
   const handleActivityUpdate = async (activity: Activity): Promise<void> => {
@@ -45,6 +45,7 @@ export function ActivityDetailWrapper({
       activity={selectedActivity}
       players={players}
       onClose={() => onActivitySelect(null)}
+      onBack={() => onActivitySelect(null)}
       onEdit={onEditActivityClick}
       onActivityUpdate={handleActivityUpdate}
       onKioskAssignmentUpdate={handleKioskUpdate}
@@ -59,7 +60,7 @@ export function ActivityDetailWrapper({
       relatedActivities={relatedActivities}
       cupMatches={cupMatches}
       onActivitySelect={onActivitySelect}
-      onMatchResultUpdate={handleMatchResultUpdate}
+      onMatchResultUpdate={onMatchResultUpdate}
     />
   );
 }

@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, FileText } from "lucide-react";
+import { Save, FileText, Youtube } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export function MatchReportSection({
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [reportText, setReportText] = useState(activity.matchReport || "");
+  const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
   const [isSaving, setIsSaving] = useState(false);
   
   // Only show for historical activities
@@ -30,14 +32,23 @@ export function MatchReportSection({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateActivity({
+      const updatedActivity = {
         ...activity,
-        matchReport: reportText
+        matchReport: reportText.trim() || undefined,
+        youtubeLink: youtubeLink.trim() || undefined
+      };
+      
+      console.log("Saving match report and YouTube link:", {
+        id: activity.id,
+        matchReport: !!reportText.trim(),
+        youtubeLink: !!youtubeLink.trim()
       });
+      
+      await updateActivity(updatedActivity);
       
       toast({
         title: "Matchreferat sparat",
-        description: "Ditt matchreferat har sparats.",
+        description: "Ditt matchreferat och YouTube-länk har sparats.",
       });
       
       setIsEditing(false);
@@ -53,55 +64,98 @@ export function MatchReportSection({
     }
   };
 
+  const hasContent = activity.matchReport || activity.youtubeLink;
+
   return (
-    <Accordion type="single" collapsible defaultValue={activity.matchReport ? "match-report" : undefined} className="border rounded-lg">
+    <Accordion type="single" collapsible defaultValue={hasContent ? "match-report" : undefined} className="border rounded-lg">
       <AccordionItem value="match-report" className="border-none">
         <AccordionTrigger className="px-4 py-3">
           <div className="flex items-center">
             <FileText className="h-5 w-5 mr-2" />
-            <span>Matchreferat</span>
-            {!activity.matchReport && (
+            <span>Matchreferat & Videoklipp</span>
+            {!hasContent && (
               <Badge variant="outline" className="ml-2">
-                Inget referat
+                Inget innehåll
               </Badge>
             )}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
-          {!isEditing && activity.matchReport ? (
+          {!isEditing && hasContent ? (
             <div className="space-y-4">
-              <div className="whitespace-pre-wrap p-3 bg-muted/30 rounded-md">
-                {activity.matchReport}
-              </div>
+              {activity.matchReport && (
+                <div>
+                  <h4 className="font-medium mb-2">Matchreferat</h4>
+                  <div className="whitespace-pre-wrap p-3 bg-muted/30 rounded-md text-sm">
+                    {activity.matchReport}
+                  </div>
+                </div>
+              )}
+              {activity.youtubeLink && (
+                <div>
+                  <h4 className="font-medium mb-2 flex items-center">
+                    <Youtube className="h-4 w-4 mr-1" />
+                    Videoklipp
+                  </h4>
+                  <a 
+                    href={activity.youtubeLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline text-sm break-all"
+                  >
+                    {activity.youtubeLink}
+                  </a>
+                </div>
+              )}
               <Button 
                 variant="outline" 
                 onClick={() => setIsEditing(true)}
                 size="sm"
               >
-                Redigera referat
+                Redigera
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <Textarea
-                value={reportText}
-                onChange={(e) => setReportText(e.target.value)}
-                placeholder="Skriv matchreferat här..."
-                className="min-h-[150px]"
-              />
+              <div>
+                <label htmlFor="match-report" className="block text-sm font-medium mb-1">
+                  Matchreferat
+                </label>
+                <Textarea
+                  id="match-report"
+                  value={reportText}
+                  onChange={(e) => setReportText(e.target.value)}
+                  placeholder="Skriv matchreferat här..."
+                  className="min-h-[120px]"
+                />
+              </div>
+              <div>
+                <label htmlFor="youtube-link" className="block text-sm font-medium mb-1 flex items-center">
+                  <Youtube className="h-4 w-4 mr-1" />
+                  YouTube-länk
+                </label>
+                <Input
+                  id="youtube-link"
+                  type="url"
+                  value={youtubeLink}
+                  onChange={(e) => setYoutubeLink(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
               <div className="flex space-x-2">
                 <Button 
                   onClick={handleSave}
                   disabled={isSaving}
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? "Sparar..." : "Spara referat"}
+                  {isSaving ? "Sparar..." : "Spara"}
                 </Button>
                 {isEditing && (
                   <Button 
                     variant="outline" 
                     onClick={() => {
                       setReportText(activity.matchReport || "");
+                      setYoutubeLink(activity.youtubeLink || "");
                       setIsEditing(false);
                     }}
                   >

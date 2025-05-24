@@ -1,99 +1,110 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
 import { Activity, Player } from "@/types/player";
-import { ActivityParticipants } from "./ActivityParticipants";
-import { sortPlayersByGrade } from "@/utils/gradeUtils";
-import { ActivityHeader } from "./ActivityHeader";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, MapPin, Users, Trophy } from "lucide-react";
 import { ActivityMeta } from "./ActivityMeta";
-import { ActivitySidebar } from "./ActivitySidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { ActivityParticipants } from "./ActivityParticipants";
+import { CupMatchBadge } from "./CupMatchBadge";
+import { MatchReportSummary } from "./MatchReportSummary";
+import { formatResult } from "./utils/result-utils";
 
 interface ActivityListItemProps {
   activity: Activity;
   players: Player[];
-  onSelect: (activity: Activity) => void;
-  onPlayerSelect?: (playerId: string) => void;
-  isHistorical?: boolean;
-  isMobile?: boolean;
+  onClick: () => void;
 }
 
-export function ActivityListItem({ 
-  activity, 
-  players, 
-  onSelect,
-  onPlayerSelect,
-  isHistorical = false,
-  isMobile
-}: ActivityListItemProps) {
-  // Use the hook only if isMobile is not provided
-  const mobileFromHook = useIsMobile();
-  // Use passed isMobile prop if provided, otherwise use the hook value
-  const isMobileView = isMobile !== undefined ? isMobile : mobileFromHook;
-  
-  const { name, date, time, location, participants = [] } = activity;
-  
-  const isCupMatch = activity.cupId ? true : false;
-  
-  const participantPlayers = sortPlayersByGrade(
-    participants
-      .map(id => players.find(p => p.id === id))
-      .filter(player => player !== undefined) as Player[]
+export function ActivityListItem({ activity, players, onClick }: ActivityListItemProps) {
+  const isHistorical = new Date(activity.date) < new Date();
+  const participatingPlayers = players.filter(player => 
+    activity.participants?.includes(player.id)
   );
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Only handle card clicks if the click target is not a player item
-    if ((e.target as HTMLElement).closest('[data-player-item]')) {
-      // Let the player click handler handle this
-      return;
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Idag";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Imorgon";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Igår";
+    } else {
+      return date.toLocaleDateString('sv-SE', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
     }
-    
-    // Scroll to the top of the window before selecting the activity
-    window.scrollTo(0, 0);
-    onSelect(activity);
   };
 
   return (
     <Card 
-      className="border cursor-pointer relative hover:bg-accent hover:text-accent-foreground transition-colors"
-      onClick={handleCardClick}
+      className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
+      onClick={onClick}
     >
-      <CardContent className={`${isMobileView ? 'p-3' : 'p-4'}`}>
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="flex-1 flex flex-col">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-              <ActivityHeader 
-                name={name} 
-                isCupMatch={isCupMatch} 
-                leagueId={activity.leagueId}
-                isMobileView={isMobileView}
-              />
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {/* Header with title and badges */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base truncate">{activity.name}</h3>
             </div>
-            
-            <ActivityMeta 
-              date={date} 
-              time={time} 
-              location={location} 
-              isMobile={isMobileView} 
-            />
-            
-            <div className={`${isMobileView ? 'mt-2' : 'mt-3'} flex-grow`}>
-              <ActivityParticipants 
-                participants={participantPlayers} 
-                onPlayerSelect={onPlayerSelect}
-                totalCount={participants.length}
-                isMobile={isMobileView}
-                showAll={true}
-              />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CupMatchBadge activity={activity} />
+              {activity.type === 'match' && isHistorical && (
+                <Badge variant="outline" className="text-xs">
+                  <Trophy className="h-3 w-3 mr-1" />
+                  {formatResult(activity)}
+                </Badge>
+              )}
             </div>
           </div>
 
-          <ActivitySidebar 
-            activity={activity}
-            participantPlayers={participantPlayers}
-            totalParticipants={participants.length}
-            isHistorical={isHistorical}
-            isMobileView={isMobileView}
+          {/* Meta information */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span>{formatDate(activity.date)}</span>
+            </div>
+            
+            {activity.time && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{activity.time}</span>
+              </div>
+            )}
+            
+            {activity.location?.name && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                <span className="truncate">{activity.location.name}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              <span>{participatingPlayers.length} deltagare</span>
+            </div>
+          </div>
+
+          {/* Participants preview */}
+          <ActivityParticipants 
+            participants={participatingPlayers} 
+            maxShow={6}
           />
+
+          {/* Match report summary for historical activities */}
+          {isHistorical && (
+            <MatchReportSummary activity={activity} />
+          )}
         </div>
       </CardContent>
     </Card>

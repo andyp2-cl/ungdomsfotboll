@@ -22,7 +22,7 @@ interface ActivityTabContentProps {
   onEditActivityClick: (activity: Activity) => void;
   handleKioskUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   handleDeleteActivity: (activityId: string) => Promise<boolean>;
-  handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   cupMatches: Activity[];
 }
 
@@ -40,7 +40,7 @@ export function ActivityTabContent({
   onEditActivityClick,
   handleKioskUpdate,
   handleDeleteActivity,
-  handleMatchResultUpdate,
+  onMatchResultUpdate,
   cupMatches
 }: ActivityTabContentProps) {
   const isMobile = useIsMobile();
@@ -78,7 +78,7 @@ export function ActivityTabContent({
           onActivityUpdate={onActivityUpdate}
           handleKioskUpdate={handleKioskUpdate}
           handleDeleteActivity={handleDeleteActivity}
-          handleMatchResultUpdate={handleMatchResultUpdate}
+          onMatchResultUpdate={onMatchResultUpdate}
         />
       ) : (
         <ActivityList 

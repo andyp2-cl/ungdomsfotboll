@@ -24,6 +24,10 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     console.log(`Fetched ${activities.length} activities from database`);
     
+    // Log activities with match reports
+    const activitiesWithReports = activities.filter(a => a.matchReport);
+    console.log(`Found ${activitiesWithReports.length} activities with match reports`);
+    
     // Log all cup type activities and matches with cup references
     const cupActivities = activities.filter(a => a.type === 'cup');
     const matchesWithCupName = activities.filter(a => a.type === 'match' && a.cupName);

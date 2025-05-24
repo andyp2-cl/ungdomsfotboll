@@ -23,12 +23,14 @@ export type Database = {
           location_description: string | null
           location_gps_link: string | null
           location_name: string | null
+          match_report: string | null
           name: string
           player_stats: Json | null
           result: string | null
           scraped: boolean | null
           time: string | null
           type: string
+          youtube_link: string | null
         }
         Insert: {
           away_score?: number | null
@@ -43,12 +45,14 @@ export type Database = {
           location_description?: string | null
           location_gps_link?: string | null
           location_name?: string | null
+          match_report?: string | null
           name: string
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
           time?: string | null
           type: string
+          youtube_link?: string | null
         }
         Update: {
           away_score?: number | null
@@ -63,12 +67,14 @@ export type Database = {
           location_description?: string | null
           location_gps_link?: string | null
           location_name?: string | null
+          match_report?: string | null
           name?: string
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
           time?: string | null
           type?: string
+          youtube_link?: string | null
         }
         Relationships: [
           {
