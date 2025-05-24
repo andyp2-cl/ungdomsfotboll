@@ -69,12 +69,12 @@ export function PlayerCard({
             <img 
               src={player.image} 
               alt={player.name} 
-              className="h-14 w-14 rounded-full object-cover"
+              className="h-12 w-12 rounded-full object-cover"
               loading="lazy"
               crossOrigin="anonymous"
             />
           ) : (
-            <UserCircle className="h-14 w-14 text-muted-foreground" />
+            <UserCircle className="h-12 w-12 text-muted-foreground" />
           )}
           <div>
             <div className="font-medium text-sm flex items-center">
@@ -122,7 +122,7 @@ export function PlayerCard({
       className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
       onClick={onSelect}
     >
-      <div className="aspect-[4/3] bg-muted relative">
+      <div className="aspect-[3/2] bg-muted relative">
         {player.image ? (
           <img 
             src={player.image} 
@@ -133,7 +133,7 @@ export function PlayerCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
-            <UserCircle className="h-30 w-30 text-muted-foreground/50" />
+            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
           </div>
         )}
         
@@ -156,7 +156,7 @@ export function PlayerCard({
         )}
       </div>
       
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <h3 className="font-semibold truncate">
           {player.name}
           {player.jerseyNumber && !isCoach && (
@@ -177,7 +177,7 @@ export function PlayerCard({
         )}
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 flex justify-between">
+      <CardFooter className="p-3 pt-0 flex justify-between">
         <span className="text-xs text-muted-foreground">
           {getActivityCount() === 0
             ? "Inga aktiviteter"

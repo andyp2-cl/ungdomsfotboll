@@ -12,7 +12,7 @@ interface ActivityParticipantsProps {
   onPlayerSelect?: (playerId: string) => void;
   totalCount?: number;
   maxDisplayed?: number;
-  maxShow?: number; // Add maxShow prop
+  maxShow?: number;
   isMobile?: boolean;
   showAll?: boolean;
 }
@@ -22,7 +22,7 @@ export function ActivityParticipants({
   onPlayerSelect,
   totalCount = 0,
   maxDisplayed = 100,
-  maxShow = 100, // Default value for maxShow
+  maxShow = 100,
   isMobile = false,
   showAll = true
 }: ActivityParticipantsProps) {
@@ -72,9 +72,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Avatar size should be adjusted for mobile
-  const avatarSize = isMobile ? 'h-10 w-10' : 'h-16 w-16';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-8 w-8';
+  // Smaller avatar sizes to fit more players
+  const avatarSize = isMobile ? 'h-8 w-8' : 'h-10 w-10';
+  const iconSize = isMobile ? 'h-4 w-4' : 'h-5 w-5';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -92,12 +92,12 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-full">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-1 border rounded-md p-2 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
+                  className={`flex flex-col items-center gap-0.5 border rounded-md p-1.5 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
                   onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
                 >
                   <TooltipProvider>
@@ -120,7 +120,7 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-sm'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
+                  <span className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
                     {getFirstName(player.name)}
                   </span>
                 </div>

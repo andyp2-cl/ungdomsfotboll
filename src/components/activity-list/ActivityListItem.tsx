@@ -8,7 +8,7 @@ import { ActivityMeta } from "./ActivityMeta";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { MatchReportSummary } from "./MatchReportSummary";
-import { formatResult } from "./utils/result-utils";
+import { formatResult, getResultTextColor } from "./utils/result-utils";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -65,6 +65,9 @@ export function ActivityListItem({
     }
   };
 
+  // Get the color class for the result text
+  const resultTextColor = getResultTextColor(activity);
+
   return (
     <Card 
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
@@ -82,7 +85,7 @@ export function ActivityListItem({
               {activity.type === 'match' && actualIsHistorical && (
                 <Badge variant="outline" className="text-xs">
                   <Trophy className="h-3 w-3 mr-1" />
-                  {formatResult(activity)}
+                  <span className={resultTextColor}>{formatResult(activity)}</span>
                 </Badge>
               )}
             </div>
