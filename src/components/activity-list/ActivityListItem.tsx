@@ -118,10 +118,9 @@ export function ActivityListItem({
             </div>
           </div>
 
-          {/* Participants preview */}
+          {/* Participants preview - removed maxShow to show all players */}
           <ActivityParticipants 
             participants={participatingPlayers} 
-            maxShow={6}
             onPlayerSelect={onPlayerSelect}
             isMobile={isMobile}
           />

@@ -29,10 +29,8 @@ export function ActivityParticipants({
   // Sort participants by grade
   const sortedParticipants = sortPlayersByGrade(participants);
   
-  // Limit participants based on maxShow prop
-  const displayedParticipants = maxShow < sortedParticipants.length 
-    ? sortedParticipants.slice(0, maxShow)
-    : sortedParticipants;
+  // Show ALL participants - remove the limiting
+  const displayedParticipants = sortedParticipants;
   
   // Group participants by grade for better visual organization
   const participantsByGrade: Record<string, Player[]> = {};
@@ -72,9 +70,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Smaller avatar sizes to fit more players
-  const avatarSize = isMobile ? 'h-8 w-8' : 'h-10 w-10';
-  const iconSize = isMobile ? 'h-4 w-4' : 'h-5 w-5';
+  // Back to original avatar sizes
+  const avatarSize = isMobile ? 'h-10 w-10' : 'h-12 w-12';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-6 w-6';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -92,7 +90,7 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 w-full">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
@@ -129,11 +127,6 @@ export function ActivityParticipants({
           </div>
         );
       })}
-      {maxShow < sortedParticipants.length && (
-        <div className="text-xs text-muted-foreground text-center mt-1">
-          +{sortedParticipants.length - maxShow} fler deltagare
-        </div>
-      )}
     </div>
   );
 }

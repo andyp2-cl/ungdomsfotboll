@@ -4,7 +4,7 @@ import { Activity } from "@/types/player";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, FileText, Youtube } from "lucide-react";
+import { Save, FileText, Youtube, ExternalLink } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -101,9 +101,10 @@ export function MatchReportSection({
                     href={activity.youtubeLink} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline text-sm break-all"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline text-sm break-all"
                   >
                     {activity.youtubeLink}
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               )}
