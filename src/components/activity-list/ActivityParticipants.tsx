@@ -70,9 +70,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Back to original avatar sizes
-  const avatarSize = isMobile ? 'h-10 w-10' : 'h-12 w-12';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-6 w-6';
+  // Larger avatar sizes for better visibility
+  const avatarSize = isMobile ? 'h-12 w-12' : 'h-14 w-14';
+  const iconSize = isMobile ? 'h-6 w-6' : 'h-7 w-7';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
