@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -70,9 +69,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Medium avatar sizes for better balance
-  const avatarSize = isMobile ? 'h-12 w-12' : 'h-13 w-13';
-  const iconSize = isMobile ? 'h-6 w-6' : 'h-6 w-6';
+  // Reduced avatar sizes by 25%
+  const avatarSize = isMobile ? 'h-12 w-12' : 'h-10 w-10';
+  const iconSize = isMobile ? 'h-6 w-6' : 'h-5 w-5';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
