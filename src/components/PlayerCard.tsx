@@ -93,7 +93,13 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         {!isCoach && (
           <div className="absolute bottom-2 left-2 w-16 h-16 bg-white/90 rounded-full p-1">
             <GradePieChart 
-              activity={{} as any} 
+              activity={{
+                id: 'player-card',
+                name: 'Player Grade',
+                type: 'match',
+                date: new Date().toISOString(),
+                participants: [player.id]
+              } as any} 
               participatingPlayers={[player]} 
               compact={true}
             />
