@@ -70,9 +70,9 @@ export function ActivityParticipants({
     );
   }
 
-  // Larger avatar sizes for better visibility
-  const avatarSize = isMobile ? 'h-12 w-12' : 'h-14 w-14';
-  const iconSize = isMobile ? 'h-6 w-6' : 'h-7 w-7';
+  // Compact avatar sizes for better space utilization
+  const avatarSize = isMobile ? 'h-10 w-10' : 'h-12 w-12';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-6 w-6';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -90,18 +90,18 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 w-full">
+            <div className="grid grid-cols-9 gap-1 w-full">
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-0.5 border rounded-md p-1.5 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
+                  className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
                   onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
                 >
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={`border-2 border-background ${avatarSize}`}>
+                        <Avatar className={`border border-background ${avatarSize}`}>
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="bg-muted">
                             <UserRound className={iconSize} />
