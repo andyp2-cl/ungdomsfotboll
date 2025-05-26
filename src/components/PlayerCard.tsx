@@ -90,16 +90,16 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
         </div>
 
         {/* Add pie chart in bottom left corner - only for non-coaches */}
-        {!isCoach && (
+        {!isCoach && player.grade && (
           <div className="absolute bottom-2 left-2 w-16 h-16 bg-white/90 rounded-full p-1">
             <GradePieChart 
               activity={{
-                id: 'player-card',
-                name: 'Player Grade',
-                type: 'match',
+                id: `player-card-${player.id}`,
+                name: 'Player Grade Distribution',
+                type: 'match' as const,
                 date: new Date().toISOString(),
                 participants: [player.id]
-              } as any} 
+              }} 
               participatingPlayers={[player]} 
               compact={true}
             />
