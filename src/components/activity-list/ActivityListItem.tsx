@@ -3,12 +3,14 @@ import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Users, Trophy } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Trophy, Award } from "lucide-react";
 import { ActivityMeta } from "./ActivityMeta";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { MatchReportSummary } from "./MatchReportSummary";
 import { formatResult, getResultTextColor } from "./utils/result-utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -33,6 +35,28 @@ export function ActivityListItem({
   const participatingPlayers = players.filter(player => 
     activity.participants?.includes(player.id)
   );
+
+  // Fetch league info if we have a league ID
+  const { data: league } = useQuery({
+    queryKey: ["league", activity.leagueId],
+    queryFn: async () => {
+      if (!activity.leagueId) return null;
+      
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("id", activity.leagueId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching league:", error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!activity.leagueId
+  });
 
   const handleClick = () => {
     if (onClick) {
@@ -116,6 +140,13 @@ export function ActivityListItem({
               <Users className="h-4 w-4" />
               <span>{participatingPlayers.length} deltagare</span>
             </div>
+
+            {league && (
+              <div className="flex items-center gap-1">
+                <Award className="h-4 w-4" />
+                <span>{league.year} {league.name}</span>
+              </div>
+            )}
           </div>
 
           {/* Participants preview - removed maxShow to show all players */}

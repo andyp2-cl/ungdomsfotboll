@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from '../utils/date-formatter';
 import { MatchPreview } from './MatchPreview';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
 
 interface MatchesTabContentProps {
   player: Player;
@@ -15,6 +17,23 @@ interface MatchesTabContentProps {
 
 export function MatchesTabContent({ player, matches, onActivitySelect, allPlayers = [] }: MatchesTabContentProps) {
   const [selectedMatch, setSelectedMatch] = useState<Activity | null>(null);
+
+  // Fetch all leagues to get their names
+  const { data: leaguesInfo = [] } = useQuery({
+    queryKey: ["leagues-info"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*");
+      
+      if (error) {
+        console.error("Error fetching leagues info:", error);
+        return [];
+      }
+      
+      return data || [];
+    },
+  });
 
   // Helper function to format match result
   const formatResult = (match: Activity) => {
@@ -48,6 +67,17 @@ export function MatchesTabContent({ player, matches, onActivitySelect, allPlayer
     return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
+  // Helper to get league name
+  const getLeagueName = (match: Activity) => {
+    if (!match.leagueId) return "-";
+    
+    const league = leaguesInfo.find(l => l.id === match.leagueId);
+    if (league) {
+      return `${league.year} ${league.name}`;
+    }
+    return "-";
+  };
+
   const handleRowClick = (match: Activity) => {
     setSelectedMatch(match);
   };
@@ -70,6 +100,7 @@ export function MatchesTabContent({ player, matches, onActivitySelect, allPlayer
               <TableRow>
                 <TableHead>Datum</TableHead>
                 <TableHead>Match</TableHead>
+                <TableHead>Liga</TableHead>
                 <TableHead>Resultat</TableHead>
                 <TableHead>Mål</TableHead>
                 <TableHead>Assist</TableHead>
@@ -92,6 +123,11 @@ export function MatchesTabContent({ player, matches, onActivitySelect, allPlayer
                       </div>
                     </TableCell>
                     <TableCell>{match.name}</TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {getLeagueName(match)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       {result ? (
                         <Badge className={getResultBadgeClass(match)}>

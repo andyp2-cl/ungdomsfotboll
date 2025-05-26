@@ -3,6 +3,7 @@ import { Player } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
+import { GradePieChart } from "@/components/activity-detail/match-result/GradePieChart";
 
 interface PlayerCardProps {
   player: Player;
@@ -87,6 +88,17 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             </Badge>
           )}
         </div>
+
+        {/* Add pie chart in bottom left corner */}
+        {!isCoach && (
+          <div className="absolute bottom-2 left-2 w-16 h-16 bg-white/90 rounded-full p-1">
+            <GradePieChart 
+              activity={{} as any} 
+              participatingPlayers={[player]} 
+              compact={true}
+            />
+          </div>
+        )}
       </div>
       
       <CardContent className="p-4">
