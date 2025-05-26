@@ -67,13 +67,22 @@ export function MatchesTabContent({ player, matches, onActivitySelect, allPlayer
     return "bg-blue-100 text-blue-800 border-blue-300";
   };
 
-  // Helper to get league name
+  // Helper to get league name with cleaned formatting
   const getLeagueName = (match: Activity) => {
     if (!match.leagueId) return "-";
     
     const league = leaguesInfo.find(l => l.id === match.leagueId);
     if (league) {
-      return `${league.year} ${league.name}`;
+      let displayName = league.name;
+      const yearStr = league.year.toString();
+      
+      // Remove year prefix if it duplicates the year
+      if (displayName.startsWith(yearStr)) {
+        displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+        displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
+      }
+      
+      return `${league.year} ${displayName}`;
     }
     return "-";
   };

@@ -89,7 +89,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
           )}
         </div>
 
-        {/* Add pie chart in bottom left corner */}
+        {/* Add pie chart in bottom left corner - only for non-coaches */}
         {!isCoach && (
           <div className="absolute bottom-2 left-2 w-16 h-16 bg-white/90 rounded-full p-1">
             <GradePieChart 

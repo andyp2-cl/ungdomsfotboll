@@ -46,6 +46,22 @@ export function ActivityDetailHeaderContent({
     enabled: !!activity.leagueId
   });
 
+  // Function to clean league name - remove duplicate year prefix
+  const getCleanLeagueName = (league: any) => {
+    if (!league) return null;
+    
+    let displayName = league.name;
+    const yearStr = league.year.toString();
+    
+    // Remove year prefix if it duplicates the year
+    if (displayName.startsWith(yearStr)) {
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
+    }
+    
+    return `${displayName} ${league.year} ${league.division}`;
+  };
+
   return (
     <div className="space-y-1 flex-1">
       <div className="flex items-center gap-2 flex-wrap">
@@ -86,7 +102,7 @@ export function ActivityDetailHeaderContent({
           <div className="flex items-center gap-1 mt-1">
             <Award className="h-3.5 w-3.5" />
             <span>
-              {league.name} {league.year} {league.division}
+              {getCleanLeagueName(league)}
             </span>
           </div>
         )}

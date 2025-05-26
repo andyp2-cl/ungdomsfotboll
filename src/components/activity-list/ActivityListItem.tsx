@@ -58,6 +58,23 @@ export function ActivityListItem({
     enabled: !!activity.leagueId
   });
 
+  // Function to clean league name - remove duplicate year prefix
+  const getCleanLeagueName = (league: any) => {
+    if (!league) return null;
+    
+    let displayName = league.name;
+    const yearStr = league.year.toString();
+    
+    // Remove year prefix if it duplicates the year
+    if (displayName.startsWith(yearStr)) {
+      // This pattern matches both "2013 2013" and just a single year prefix
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
+      displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
+    }
+    
+    return `${league.year} ${displayName}`;
+  };
+
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -144,7 +161,7 @@ export function ActivityListItem({
             {league && (
               <div className="flex items-center gap-1">
                 <Award className="h-4 w-4" />
-                <span>{league.year} {league.name}</span>
+                <span>{getCleanLeagueName(league)}</span>
               </div>
             )}
           </div>

@@ -59,8 +59,9 @@ const fetchLeaguesWithMatches = async (
     let displayName = league.name;
     const yearStr = league.year.toString();
     
-    // Remove year prefix if it duplicates the year
+    // Remove year prefix if it duplicates the year - more comprehensive cleaning
     if (displayName.startsWith(yearStr)) {
+      // Remove both "2013 2013 A" pattern and "2013 A" pattern
       displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
       displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
     }
