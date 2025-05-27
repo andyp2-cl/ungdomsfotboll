@@ -55,6 +55,7 @@ export function ActivityParticipants({
   const handlePlayerClick = (playerId: string, e: React.MouseEvent) => {
     // Stop propagation to prevent the activity selection from triggering
     e.stopPropagation();
+    e.preventDefault();
     
     console.log("ActivityParticipants: Player clicked:", playerId);
     console.log("ActivityParticipants: onPlayerSelect function:", !!onPlayerSelect);
@@ -101,17 +102,15 @@ export function ActivityParticipants({
                   key={player.id}
                   data-player-item="true"
                   className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
-                  onClick={(e) => {
-                    console.log("ActivityParticipants: Player div clicked:", player.id, player.name);
-                    if (onPlayerSelect) {
-                      handlePlayerClick(player.id, e);
-                    }
-                  }}
+                  onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
                 >
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={`border border-background ${avatarSize}`}>
+                        <Avatar 
+                          className={`border border-background ${avatarSize} ${onPlayerSelect ? 'cursor-pointer' : ''}`}
+                          onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
+                        >
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="bg-muted">
                             <UserRound className={iconSize} />
@@ -128,7 +127,10 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
+                  <span 
+                    className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full ${onPlayerSelect ? 'cursor-pointer' : ''}`}
+                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
+                  >
                     {getFirstName(player.name)}
                   </span>
                 </div>

@@ -43,13 +43,6 @@ export function ActivityTabViewContent({
   console.log("ActivityTabViewContent rendering with content:", content);
   console.log("ActivityTabViewContent: onPlayerSelect function received:", !!onPlayerSelect);
   
-  // Handle player selection with logging
-  const handlePlayerSelectWithLogging = (playerId: string) => {
-    console.log("ActivityTabViewContent: handlePlayerSelectWithLogging called with:", playerId);
-    console.log("ActivityTabViewContent: Calling parent onPlayerSelect");
-    onPlayerSelect(playerId);
-  };
-  
   // If activeView is statistics, render the statistics wrapper
   if (activeView === "statistics") {
     const gradeData = players.reduce((acc, player) => {
@@ -80,7 +73,10 @@ export function ActivityTabViewContent({
           console.log("Activity selected from StatisticsTabsWrapper:", activity.id, activity.name);
           onActivitySelect(activity);
         }}
-        onPlayerSelect={handlePlayerSelectWithLogging}
+        onPlayerSelect={(playerId) => {
+          console.log("ActivityTabViewContent: Player selected from StatisticsTabsWrapper:", playerId);
+          onPlayerSelect(playerId);
+        }}
       />
     );
   }
@@ -122,19 +118,25 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          onPlayerSelect={handlePlayerSelectWithLogging}
+          onPlayerSelect={(playerId) => {
+            console.log("ActivityTabViewContent: Player selected from ActivityDetail:", playerId);
+            onPlayerSelect(playerId);
+          }}
         />
       );
     }
     
     if (content.viewType === "activities-list") {
-      console.log("ActivityTabViewContent: Rendering ActivityList with onPlayerSelect:", !!handlePlayerSelectWithLogging);
+      console.log("ActivityTabViewContent: Rendering ActivityList with onPlayerSelect:", !!onPlayerSelect);
       return (
         <ActivityList 
           activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
-          onPlayerSelect={handlePlayerSelectWithLogging}
+          onPlayerSelect={(playerId) => {
+            console.log("ActivityTabViewContent: Player selected from ActivityList:", playerId);
+            onPlayerSelect(playerId);
+          }}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}

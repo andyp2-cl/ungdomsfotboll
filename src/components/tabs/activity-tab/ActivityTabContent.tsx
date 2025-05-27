@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
@@ -53,14 +54,13 @@ export function ActivityTabContent({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   
-  // Pass onPlayerSelect directly to useActivityTabViews
+  // Use the correct useActivityTabViews hook from hooks directory
   const { 
     activeView,
     handleViewChange,
     handlePlayerSelect,
     renderContent,
-    isHistorical,
-    filteredBySearchActivities
+    isHistorical
   } = useActivityTabViews({
     activities,
     players,
@@ -121,7 +121,10 @@ export function ActivityTabContent({
           players={players}
           activities={activities}
           onActivitySelect={handleActivitySelectWithLogging}
-          onPlayerSelect={onPlayerSelect} // Use the passed down onPlayerSelect here
+          onPlayerSelect={(playerId) => {
+            console.log("ActivityTabContent: Player selected:", playerId);
+            onPlayerSelect(playerId);
+          }}
           onEditActivity={setEditingActivity}
           onActivityUpdate={handleActivityUpdate}
           onDeleteActivity={handleDeleteActivity}
