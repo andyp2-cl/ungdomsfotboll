@@ -47,10 +47,16 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
 
   const isCoach = player.positions?.includes('TRÄNARE');
 
+  // Handle click to navigate to player view
+  const handleCardClick = () => {
+    console.log("PlayerCard: Card clicked for player:", player.name);
+    onClick();
+  };
+
   return (
     <Card 
       className={`overflow-hidden cursor-pointer hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
-      onClick={onClick}
+      onClick={handleCardClick}
     >
       <div className="aspect-[4/3] bg-muted relative">
         {player.image ? (

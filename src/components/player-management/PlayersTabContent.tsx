@@ -46,6 +46,13 @@ export function PlayersTabContent({
   onEditPlayerClick,
   isMobile
 }: PlayersTabContentProps) {
+  
+  // Handle player selection from player card
+  const handlePlayerCardClick = (player: Player) => {
+    console.log("PlayersTabContent: Player card clicked:", player.name);
+    onPlayerSelect(player);
+  };
+
   return (
     <div className="space-y-6">
       <PlayerManagementHeader
@@ -69,7 +76,10 @@ export function PlayersTabContent({
         <PlayerDetail 
           player={selectedPlayer} 
           activities={activities} 
-          onClose={() => onPlayerSelect(null)}
+          onClose={() => {
+            console.log("PlayersTabContent: Closing player detail view");
+            onPlayerSelect(null);
+          }}
           onEdit={onEditPlayerClick}
           onPlayerUpdate={onPlayerUpdate}
           allPlayers={players}
@@ -79,7 +89,7 @@ export function PlayersTabContent({
           filteredPlayers={filteredPlayers}
           viewMode={viewMode}
           selectedPositions={selectedPositions}
-          onPlayerSelect={onPlayerSelect}
+          onPlayerSelect={handlePlayerCardClick}
           onPlayerEdit={onEditPlayerClick}
           isMobile={isMobile}
         />
