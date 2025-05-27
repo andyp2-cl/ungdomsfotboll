@@ -41,6 +41,14 @@ export function ActivityTabViewContent({
   const content = renderContent();
 
   console.log("ActivityTabViewContent rendering with content:", content);
+  console.log("ActivityTabViewContent: onPlayerSelect function received:", !!onPlayerSelect);
+  
+  // Handle player selection with logging
+  const handlePlayerSelectWithLogging = (playerId: string) => {
+    console.log("ActivityTabViewContent: handlePlayerSelectWithLogging called with:", playerId);
+    console.log("ActivityTabViewContent: Calling parent onPlayerSelect");
+    onPlayerSelect(playerId);
+  };
   
   // If activeView is statistics, render the statistics wrapper
   if (activeView === "statistics") {
@@ -72,10 +80,7 @@ export function ActivityTabViewContent({
           console.log("Activity selected from StatisticsTabsWrapper:", activity.id, activity.name);
           onActivitySelect(activity);
         }}
-        onPlayerSelect={(playerId) => {
-          console.log("Player selected from StatisticsTabsWrapper:", playerId);
-          onPlayerSelect(playerId);
-        }}
+        onPlayerSelect={handlePlayerSelectWithLogging}
       />
     );
   }
@@ -117,18 +122,19 @@ export function ActivityTabViewContent({
           allActivities={activities}
           onClose={() => onActivitySelect(null)}
           onMatchResultUpdate={onMatchResultUpdate}
-          onPlayerSelect={onPlayerSelect}
+          onPlayerSelect={handlePlayerSelectWithLogging}
         />
       );
     }
     
     if (content.viewType === "activities-list") {
+      console.log("ActivityTabViewContent: Rendering ActivityList with onPlayerSelect:", !!handlePlayerSelectWithLogging);
       return (
         <ActivityList 
           activities={content.activities}
           players={players}
           onSelect={onActivitySelect}
-          onPlayerSelect={onPlayerSelect}
+          onPlayerSelect={handlePlayerSelectWithLogging}
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}

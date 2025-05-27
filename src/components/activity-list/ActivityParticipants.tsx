@@ -57,8 +57,13 @@ export function ActivityParticipants({
     e.stopPropagation();
     
     console.log("ActivityParticipants: Player clicked:", playerId);
+    console.log("ActivityParticipants: onPlayerSelect function:", !!onPlayerSelect);
+    
     if (onPlayerSelect) {
+      console.log("ActivityParticipants: Calling onPlayerSelect with playerId:", playerId);
       onPlayerSelect(playerId);
+    } else {
+      console.log("ActivityParticipants: No onPlayerSelect function provided");
     }
   };
 
@@ -95,8 +100,13 @@ export function ActivityParticipants({
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
-                  onClick={(e) => onPlayerSelect && handlePlayerClick(player.id, e)}
+                  className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                  onClick={(e) => {
+                    console.log("ActivityParticipants: Player div clicked:", player.id, player.name);
+                    if (onPlayerSelect) {
+                      handlePlayerClick(player.id, e);
+                    }
+                  }}
                 >
                   <TooltipProvider>
                     <Tooltip>
