@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
@@ -14,7 +13,7 @@ import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
 import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
-import { ActivityTabViewContent } from "@/components/tabs/activity-tab/components/ActivityTabViewContent"; // Add the correct import
+import { ActivityTabViewContent } from "@/components/tabs/activity-tab/components/ActivityTabViewContent";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -26,7 +25,7 @@ interface ActivityTabContentProps {
   isAddActivityOpen: boolean;
   handleActivityTypeChange: (type: string) => void;
   setSelectedActivity: (activity: Activity | null) => void;
-  handleActivityUpdate: (activity: Activity) => Promise<void>; // Updated to Promise<void>
+  handleActivityUpdate: (activity: Activity) => Promise<void>;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   setEditingActivity: (activity: Activity | null) => void;
   handleKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
@@ -74,21 +73,20 @@ export function ActivityTabContent({
       if (player) {
         console.log("ActivityTabContent: Found player:", player.name);
         setSelectedPlayer(player);
-        // Don't clear the activity selection by default
+        // Clear activity selection when selecting a player
+        setSelectedActivity(null);
       } else {
         console.log("ActivityTabContent: Player not found for id:", playerId);
       }
     }
     
-    // If we have an onPlayerSelect callback from the parent (usePlayers),
-    // call that as well to update the global state
+    // Always call the parent onPlayerSelect to update global state
     if (onPlayerSelect) {
       console.log("ActivityTabContent: Calling parent onPlayerSelect");
       onPlayerSelect(playerId);
     }
   };
 
-  // Modified to properly handle view changes and ensure statistics tab works
   const handleViewChange = (value: string) => {
     if (value === "upcoming" || value === "historical" || value === "statistics") {
       setActiveView(value as "upcoming" | "historical" | "statistics");
