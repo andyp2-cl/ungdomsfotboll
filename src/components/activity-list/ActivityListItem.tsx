@@ -124,9 +124,9 @@ export function ActivityListItem({
             <div className="flex items-center gap-2 flex-shrink-0">
               <CupMatchBadge activity={activity} />
               {activity.type === 'match' && actualIsHistorical && (
-                <Badge variant="outline" className="text-xs">
-                  <Trophy className="h-3 w-3 mr-1" />
-                  <span className={resultTextColor}>{formatResult(activity)}</span>
+                <Badge variant="outline" className="text-sm">
+                  <Trophy className="h-4 w-4 mr-1" />
+                  <span className={`${resultTextColor} text-lg font-bold`}>{formatResult(activity)}</span>
                 </Badge>
               )}
             </div>

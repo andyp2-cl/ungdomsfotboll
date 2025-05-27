@@ -45,9 +45,8 @@ export function MatchReportSummary({ activity }: MatchReportSummaryProps) {
         )}
       </div>
       {hasMatchReport && (
-        <div className="text-muted-foreground line-clamp-2">
-          {activity.matchReport.substring(0, 100)}
-          {activity.matchReport.length > 100 && "..."}
+        <div className="text-muted-foreground whitespace-pre-wrap">
+          {activity.matchReport}
         </div>
       )}
     </div>
