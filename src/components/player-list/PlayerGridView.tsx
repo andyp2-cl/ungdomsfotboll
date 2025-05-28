@@ -1,80 +1,115 @@
 
 import React from "react";
-import { Player } from "@/types/player";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Player, Activity } from "@/types/player";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getPositionsString } from "./PlayerFormatting";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Edit, UserRound } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
 interface PlayerGridViewProps {
   players: Player[];
+  activities?: Activity[];
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
 }
 
-export function PlayerGridView({ players, onPlayerSelect, onPlayerEdit }: PlayerGridViewProps) {
-  const isMobile = useIsMobile();
-  
-  if (players.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-lg text-muted-foreground">Inga spelare hittades</p>
-      </div>
-    );
-  }
+export function PlayerGridView({ 
+  players, 
+  activities = [],
+  onPlayerSelect, 
+  onPlayerEdit 
+}: PlayerGridViewProps) {
+  const getWinRatio = (player: Player): number => {
+    // Filter to only get historical matches for this player
+    const playerMatches = activities.filter(activity => {
+      if (activity.type !== "match" || !activity.participants?.includes(player.id)) {
+        return false;
+      }
+      
+      // Only include played matches - same logic as stats calculator
+      const hasScores = activity.homeScore !== undefined && activity.awayScore !== undefined;
+      const hasResult = activity.isWin !== undefined;
+      
+      // Check if the match is in the past (more than 3 hours ago)
+      const matchDate = new Date(activity.date);
+      const now = new Date();
+      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+      const isInPast = matchDate < threeHoursAgo;
+      
+      return hasScores || hasResult || isInPast;
+    });
+    
+    const stats = calculatePlayerStats(player, playerMatches);
+    return stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 0;
+  };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {players.map((player) => {
-        const playerName = player.name || "Unnamed Player";
+        const winRatio = getWinRatio(player);
         
         return (
-          <div 
+          <Card 
             key={player.id} 
-            className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            className="hover:shadow-md transition-shadow cursor-pointer group"
+            onClick={() => onPlayerSelect(player)}
           >
-            <div 
-              onClick={() => onPlayerSelect(player)} 
-              className="cursor-pointer p-4"
-              // Increased touch target size for better mobile tapping
-              style={{ minHeight: isMobile ? '88px' : 'auto' }}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">{playerName}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getPositionsString(player.positions)}
-                  </p>
-                </div>
-                {player.grade && (
-                  <Badge 
-                    className={`px-2.5 py-1 ${
-                      player.grade === 'A' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                      player.grade === 'B' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                      player.grade === 'C' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' :
-                      'bg-red-100 text-red-800 hover:bg-red-200'
-                    }`}
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={player.image} alt={player.name} />
+                  <AvatarFallback>
+                    <UserRound className="h-6 w-6" />
+                  </AvatarFallback>
+                </Avatar>
+                {onPlayerEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlayerEdit(player);
+                    }}
                   >
-                    {player.grade}
-                  </Badge>
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
-            </div>
-            {onPlayerEdit && (
-              <div className="border-t p-3 bg-muted/30">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => onPlayerEdit(player)}
-                  className={isMobile ? "w-full py-3 h-auto min-h-[44px]" : ""}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Redigera
-                </Button>
+              
+              <div className="space-y-2">
+                <h3 className="font-medium truncate">{player.name}</h3>
+                
+                {player.jerseyNumber && (
+                  <p className="text-sm text-muted-foreground">#{player.jerseyNumber}</p>
+                )}
+                
+                <div className="flex flex-wrap gap-1">
+                  {player.grade && (
+                    <Badge variant="outline" className="text-xs">{player.grade}</Badge>
+                  )}
+                  {player.positions?.slice(0, 2).map(position => (
+                    <Badge key={position} variant="secondary" className="text-xs">
+                      {position}
+                    </Badge>
+                  ))}
+                </div>
+                
+                <div className="pt-2 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Aktiviteter:</span>
+                    <span>{player.activities?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Vinstratio:</span>
+                    <span className="font-medium text-green-600">{winRatio}%</span>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         );
       })}
     </div>

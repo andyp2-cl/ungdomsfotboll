@@ -54,6 +54,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddActivity,
     handlePlayerActivitySelect,
     handleMatchResult,
+    handlePlayerSelect,
     
     // Loading state
     isLoading
@@ -107,7 +108,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   };
 
   // Add wrapper for handlePlayerActivitySelect
-  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
+  const handlePlayerActivitySelectWrapper = (activity: Activity): void => {
     handlePlayerActivitySelect(activity);
   };
 
@@ -158,6 +159,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
         handleMatchResultUpdate={handleMatchResultUpdateWrapper}
+        onPlayerSelect={handlePlayerSelect}
       />
     </PageContainer>
   );
