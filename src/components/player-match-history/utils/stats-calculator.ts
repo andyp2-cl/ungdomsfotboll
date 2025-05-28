@@ -20,9 +20,18 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
   let wins = 0;
   let draws = 0;
   let losses = 0;
-  const matchCount = matches.length;
+  
+  // Only count matches that have been played (have results)
+  const playedMatches = matches.filter(match => {
+    // A match is considered played if it has scores OR explicit win/loss status OR is in the past
+    const hasScores = match.homeScore !== undefined && match.awayScore !== undefined;
+    const hasResult = match.isWin !== undefined;
+    const isInPast = new Date(match.date) < new Date();
+    
+    return hasScores || hasResult || isInPast;
+  });
 
-  matches.forEach(match => {
+  playedMatches.forEach(match => {
     // Count goals and assists
     const goals = match.player_stats?.goals?.[player.id] || 0;
     const assists = match.player_stats?.assists?.[player.id] || 0;
@@ -55,6 +64,6 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     wins,
     draws,
     losses,
-    matches: matchCount
+    matches: playedMatches.length
   };
 };

@@ -39,7 +39,7 @@ export function usePlayerSorting(activities: Activity[] = []) {
           const activitiesB = b.activities?.length || 0;
           return (activitiesA - activitiesB) * dirMod;
         case 'winRatio':
-          // Calculate win ratio for both players
+          // Calculate win ratio for both players using only played matches
           const matchesA = activities.filter(activity => 
             activity.type === "match" && activity.participants?.includes(a.id)
           );
