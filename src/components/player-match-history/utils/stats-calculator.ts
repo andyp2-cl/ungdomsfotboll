@@ -21,7 +21,7 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
   let draws = 0;
   let losses = 0;
   
-  // Only count matches that have been played (have results OR explicit win/loss status OR are in the past with no future date)
+  // Only count matches that have been played (have results OR explicit win/loss status OR are in the past)
   const playedMatches = matches.filter(match => {
     // A match is considered played if it has scores OR explicit win/loss status OR is clearly in the past
     const hasScores = match.homeScore !== undefined && match.awayScore !== undefined;

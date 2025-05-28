@@ -157,6 +157,7 @@ export function PlayersPageContent({
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder="Sök spelare..."
+                    className="w-full sm:w-64"
                   />
                   <PlayerFilter
                     selectedGrades={selectedGrades}

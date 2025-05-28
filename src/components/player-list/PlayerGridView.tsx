@@ -22,9 +22,25 @@ export function PlayerGridView({
   onPlayerEdit 
 }: PlayerGridViewProps) {
   const getWinRatio = (player: Player): number => {
-    const playerMatches = activities.filter(activity => 
-      activity.type === "match" && activity.participants?.includes(player.id)
-    );
+    // Filter to only get historical matches for this player
+    const playerMatches = activities.filter(activity => {
+      if (activity.type !== "match" || !activity.participants?.includes(player.id)) {
+        return false;
+      }
+      
+      // Only include played matches - same logic as stats calculator
+      const hasScores = activity.homeScore !== undefined && activity.awayScore !== undefined;
+      const hasResult = activity.isWin !== undefined;
+      
+      // Check if the match is in the past (more than 3 hours ago)
+      const matchDate = new Date(activity.date);
+      const now = new Date();
+      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+      const isInPast = matchDate < threeHoursAgo;
+      
+      return hasScores || hasResult || isInPast;
+    });
+    
     const stats = calculatePlayerStats(player, playerMatches);
     return stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 0;
   };
