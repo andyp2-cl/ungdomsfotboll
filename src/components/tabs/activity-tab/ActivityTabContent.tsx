@@ -1,19 +1,13 @@
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Activity, Player } from "@/types/player";
-import { SearchInput } from "@/components/SearchInput";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Calendar, Clock, List, Plus, Trash2, Search } from "lucide-react";
-import { ActivityList } from "@/components/ActivityList";
-import { ActivityDetail } from "@/components/activity-detail";
-import { PlayerDetail } from "@/components/PlayerDetail";
-import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ActivitySearch } from "@/components/activity-list/ActivitySearch";
 import { PullToRefresh } from "@/components/pull-to-refresh/PullToRefresh";
 import { toast } from "sonner";
-import { PlayerPreview } from "@/components/player-preview/PlayerPreview";
-import { ActivityTabViewContent } from "@/components/tabs/activity-tab/components/ActivityTabViewContent";
+import { useActivityTabViews } from "./hooks/useActivityTabViews";
+import { ActivityTabHeader } from "./components/ActivityTabHeader";
+import { ActivityTabSearch } from "./components/ActivityTabSearch";
+import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -33,7 +27,7 @@ interface ActivityTabContentProps {
   handleImportedActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistoricalActivities: () => Promise<boolean>;
   handleMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void;
+  onPlayerSelect: (playerId: string) => void;
 }
 
 export function ActivityTabContent({
@@ -56,44 +50,32 @@ export function ActivityTabContent({
   handleMatchResultUpdate,
   onPlayerSelect
 }: ActivityTabContentProps) {
-  const [activeView, setActiveView] = useState<"upcoming" | "historical">("historical");
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
-
-  const handlePlayerSelect = (playerId: string) => {
-    console.log("ActivityTabContent: handlePlayerSelect called with playerId:", playerId);
-    
-    if (playerId === "") {
-      console.log("ActivityTabContent: Clearing selected player");
-      setSelectedPlayer(null);
-    } else {
-      const player = players.find(p => p.id === playerId);
-      if (player) {
-        console.log("ActivityTabContent: Found player:", player.name);
-        setSelectedPlayer(player);
-        // Clear activity selection when selecting a player
-        setSelectedActivity(null);
-      } else {
-        console.log("ActivityTabContent: Player not found for id:", playerId);
-      }
-    }
-    
-    // Always call the parent onPlayerSelect to update global state
-    if (onPlayerSelect) {
-      console.log("ActivityTabContent: Calling parent onPlayerSelect");
-      onPlayerSelect(playerId);
-    }
-  };
-
-  const handleViewChange = (value: string) => {
-    if (value === "upcoming" || value === "historical") {
-      setActiveView(value as "upcoming" | "historical");
-      setSelectedActivity(null);
-      setSelectedPlayer(null);
-    }
-  };
+  
+  // Use the correct useActivityTabViews hook from hooks directory
+  const { 
+    activeView,
+    handleViewChange,
+    handlePlayerSelect,
+    renderContent,
+    isHistorical
+  } = useActivityTabViews({
+    activities,
+    players,
+    selectedActivity,
+    setSelectedActivity,
+    searchQuery,
+    filteredActivities,
+    filteredHistoricalActivities,
+    setEditingActivity,
+    handleDeleteActivity,
+    handleActivityUpdate,
+    handleKioskAssignmentUpdate,
+    handleMatchResultUpdate,
+    onPlayerSelect // Pass the external player selection handler
+  });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -109,102 +91,46 @@ export function ActivityTabContent({
     }
   };
 
-  const dummyPlayerUpdate = (player: Player) => {
-    console.log("Player update not implemented in this context", player);
-  };
-
-  const relatedActivities = selectedActivity?.cupId 
-    ? activities.filter(a => a.cupId === selectedActivity.cupId && a.id !== selectedActivity.id)
-    : [];
-
-  const cupMatches = selectedActivity?.type === 'cup'
-    ? activities.filter(a => a.cupId === selectedActivity.id)
-    : [];
-
-  const isHistorical = activeView === "historical";
-
-  const filteredBySearchActivities = isHistorical 
-    ? filteredHistoricalActivities.filter(activity => 
-        searchQuery 
-          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
-          : true)
-    : filteredActivities.filter(activity => 
-        searchQuery 
-          ? activity.name.toLowerCase().includes(searchQuery.toLowerCase()) 
-          : true);
-
-  const renderContent = () => {
-    if (selectedPlayer) {
-      return {
-        viewType: "player-detail",
-        player: selectedPlayer
-      };
-    }
-    
-    if (selectedActivity) {
-      return {
-        viewType: "activity-detail",
-        activity: selectedActivity,
-        relatedActivities: relatedActivities,
-        cupMatches: cupMatches
-      };
-    }
-    
-    return {
-      viewType: "activities-list",
-      activities: filteredBySearchActivities,
-      searchQuery: searchQuery
-    };
+  // Add debug logging
+  const handleActivitySelectWithLogging = (activity: Activity | null) => {
+    console.log("ActivityTabContent: Activity selected:", activity?.id, activity?.name);
+    setSelectedActivity(activity);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className={`${isMobile ? 'w-full overflow-x-auto pb-2' : 'w-full sm:w-auto space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4'}`}>
-          <ToggleGroup 
-            type="single" 
-            value={activeView} 
-            onValueChange={handleViewChange} 
-            className={`justify-start ${isMobile ? 'w-full flex' : ''}`}
-          >
-            <ToggleGroupItem value="upcoming" aria-label="Kommande aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
-              <Calendar className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
-              {isMobile ? 'Kommande' : 'Kommande'}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="historical" aria-label="Historiska aktiviteter" className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}>
-              <Clock className={`${isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
-              {isMobile ? 'Historik' : 'Historik'}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Button onClick={() => setIsAddActivityOpen(true)} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Lägg till
-          </Button>
-        </div>
-      </div>
-      
-      <ActivitySearch
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        placeholder={`Sök ${isHistorical ? 'historiska ' : ''}matcher...`}
+      <ActivityTabHeader 
+        activeView={activeView}
+        handleViewChange={handleViewChange}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        isMobile={isMobile}
       />
       
-      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity || !!selectedPlayer}>
-        <ActivityTabViewContent
+      {activeView !== "statistics" && (
+        <ActivityTabSearch
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isHistorical={isHistorical}
+        />
+      )}
+      
+      <PullToRefresh onRefresh={handleRefresh} disabled={!!selectedActivity}>
+        <ActivityTabViewContent 
           activeView={activeView}
           renderContent={renderContent}
           players={players}
           activities={activities}
-          onActivitySelect={setSelectedActivity}
-          onPlayerSelect={handlePlayerSelect}
+          onActivitySelect={handleActivitySelectWithLogging}
+          onPlayerSelect={(playerId) => {
+            console.log("ActivityTabContent: Player selected:", playerId);
+            onPlayerSelect(playerId);
+          }}
           onEditActivity={setEditingActivity}
           onActivityUpdate={handleActivityUpdate}
           onDeleteActivity={handleDeleteActivity}
           onKioskAssignmentUpdate={handleKioskAssignmentUpdate}
           onMatchResultUpdate={handleMatchResultUpdate}
+          previousView={activeView === "statistics" ? "historical" : undefined}
         />
       </PullToRefresh>
     </div>

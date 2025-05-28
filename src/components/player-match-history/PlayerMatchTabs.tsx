@@ -11,16 +11,9 @@ interface PlayerMatchTabsProps {
   playerActivities: Activity[];
   onActivitySelect: (activity: Activity) => void;
   allPlayers?: Player[];
-  allActivities?: Activity[];
 }
 
-export function PlayerMatchTabs({ 
-  player, 
-  playerActivities, 
-  onActivitySelect, 
-  allPlayers = [], 
-  allActivities = [] 
-}: PlayerMatchTabsProps) {
+export function PlayerMatchTabs({ player, playerActivities, onActivitySelect, allPlayers = [] }: PlayerMatchTabsProps) {
   // Get filtered activities by type
   const matches = playerActivities.filter(activity => activity.type === "match");
   const cups = playerActivities.filter(activity => activity.type === "cup");
@@ -52,8 +45,7 @@ export function PlayerMatchTabs({
       <TabsContent value="cups">
         <CupsTabContent 
           cups={cups} 
-          onActivitySelect={onActivitySelect}
-          allActivities={allActivities}
+          onActivitySelect={onActivitySelect} 
         />
       </TabsContent>
     </Tabs>
