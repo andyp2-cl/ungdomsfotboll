@@ -1,11 +1,11 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, Player } from "@/types/player";
 import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { SearchInput } from "@/components/SearchInput";
-import { GradeFilter } from "@/components/filters/GradeFilter";
-import { ViewModeToggle } from "@/components/view-mode/ViewModeToggle";
+import { PlayerFilter } from "@/components/PlayerFilter";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AddPlayerDialog } from "@/components/dialogs/AddPlayerDialog";
@@ -158,15 +158,13 @@ export function PlayersPageContent({
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder="Sök spelare..."
-                    className="w-full sm:w-64"
                   />
-                  <GradeFilter
+                  <PlayerFilter
                     selectedGrades={selectedGrades}
                     onGradeChange={handleGradeChange}
                   />
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
                   <Button onClick={() => setIsAddPlayerOpen(true)} className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Lägg till spelare
@@ -201,7 +199,7 @@ export function PlayersPageContent({
             setEditingActivity={setEditingActivity}
             handleKioskAssignmentUpdate={handleKioskUpdate}
             handleDeleteActivity={handleDelete}
-            handleImportActivities={handleImportActivities}
+            handleImportedActivities={handleImportActivities}
             handleClearHistoricalActivities={handleClearHistorical}
             handleMatchResultUpdate={handleMatchResultUpdate}
             onPlayerSelect={onPlayerSelect}
