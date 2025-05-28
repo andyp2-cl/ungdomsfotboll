@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Player } from "@/types/player";
+import { Player, Activity } from "@/types/player";
 import { PlayerListTable } from "./PlayerListTable";
 import { PlayerGridView } from "./PlayerGridView";
 import { usePlayerSorting } from "./PlayerListSorting";
@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerListProps {
   players: Player[];
+  activities?: Activity[];
   viewMode?: "grid" | "list";
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
@@ -16,12 +17,13 @@ interface PlayerListProps {
 
 export function PlayerList({ 
   players, 
+  activities = [],
   viewMode = "list", 
   onPlayerSelect, 
   onPlayerEdit,
   showCoaches = true
 }: PlayerListProps) {
-  const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
+  const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting(activities);
   const isMobile = useIsMobile();
   
   // Filter out coaches if showCoaches is false
@@ -42,6 +44,7 @@ export function PlayerList({
     return (
       <PlayerGridView 
         players={sortedPlayers} 
+        activities={activities}
         onPlayerSelect={onPlayerSelect} 
         onPlayerEdit={onPlayerEdit} 
       />
@@ -51,6 +54,7 @@ export function PlayerList({
   return (
     <PlayerListTable 
       players={sortedPlayers} 
+      activities={activities}
       sortField={sortField} 
       sortDirection={sortDirection} 
       toggleSort={toggleSort} 

@@ -1,11 +1,17 @@
 import React from "react";
-import { Player, Activity, PlayerGrade } from "@/types/player";
-import { MainTabs } from "@/components/tabs/MainTabs";
-import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, Player } from "@/types/player";
+import { PlayerList } from "@/components/player-list/PlayerList";
+import { PlayerDetail } from "@/components/PlayerDetail";
+import { SearchInput } from "@/components/SearchInput";
+import { GradeFilter } from "@/components/filters/GradeFilter";
+import { ViewModeToggle } from "@/components/view-mode/ViewModeToggle";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { AddPlayerDialog } from "@/components/dialogs/AddPlayerDialog";
+import { EditPlayerDialog } from "@/components/dialogs/EditPlayerDialog";
+import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
-import { PageDialogs } from "@/components/tabs/PageDialogs";
-import { MobileNavBar } from "@/components/mobile-nav/MobileNavBar";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayersPageContentProps {
   // Tab state
@@ -24,8 +30,8 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid" | "stats"; 
+  selectedGrades: string[];
+  viewMode: string;
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
@@ -50,73 +56,189 @@ interface PlayersPageContentProps {
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
-  onPlayerActivitySelect: (activity: Activity) => Promise<void>;
+  onPlayerActivitySelect: (activity: Activity) => void;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
-  onPlayerSelect?: (playerId: string) => void;
+  onPlayerSelect: (playerId: string) => void;
 }
 
-export function PlayersPageContent(props: PlayersPageContentProps) {
-  const handleActivityUpdateWrapper = async (activity: Activity): Promise<void> => {
-    await props.handleActivityUpdate(activity);
-  };
-
-  const isMobile = useIsMobile();
+export function PlayersPageContent({
+  // Tab state
+  activeTab,
+  setActiveTab,
   
-  return (
-    <>
-      <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
-        <MainTabs 
-          activeTabId={props.activeTab}
-          onTabChange={props.setActiveTab}
-          
-          // Player state
-          players={props.players}
-          selectedPlayer={props.selectedPlayer}
-          filteredPlayers={props.filteredPlayers}
-          editingPlayer={props.editingPlayer}
-          searchQuery={props.searchQuery}
-          selectedGrades={props.selectedGrades}
-          viewMode={props.viewMode}
-          setSearchQuery={props.setSearchQuery}
-          handleGradeChange={props.handleGradeChange as (grade: PlayerGrade) => void}
-          setSelectedPlayer={props.setSelectedPlayer}
-          setEditingPlayer={props.setEditingPlayer}
-          setViewMode={props.setViewMode as (mode: "list" | "grid" | "stats") => void}
-          isAddPlayerOpen={props.isAddPlayerOpen}
-          setIsAddPlayerOpen={props.setIsAddPlayerOpen}
-          handlePlayerUpdate={props.handlePlayerUpdate}
-          handleBulkPlayerUpdate={props.handleBulkPlayerUpdate}
-          handleAddPlayer={props.handleAddPlayer}
-          handleDeletePlayer={props.handleDeletePlayer}
-          
-          // Activity state
-          activities={props.activities}
-          filteredActivities={props.filteredActivities}
-          filteredHistoricalActivities={props.filteredHistoricalActivities}
-          selectedActivity={props.selectedActivity}
-          setSelectedActivity={props.setSelectedActivity}
-          editingActivity={props.editingActivity}
-          setEditingActivity={props.setEditingActivity}
-          isAddActivityOpen={props.isAddActivityOpen}
-          setIsAddActivityOpen={props.setIsAddActivityOpen}
-          selectedActivityTypes={props.selectedActivityTypes}
-          handleActivityTypeChange={props.handleActivityTypeChange}
-          handleActivityUpdate={handleActivityUpdateWrapper}
-          handleKioskUpdate={props.handleKioskUpdate}
-          handleDelete={props.handleDelete}
-          handleImportActivities={props.handleImportActivities}
-          handleClearHistorical={props.handleClearHistorical}
-          handleAddActivity={props.handleAddActivity}
-          handleMatchResultUpdate={props.handleMatchResultUpdate}
-          onPlayerActivitySelect={props.onPlayerActivitySelect}
-          onPlayerSelect={props.onPlayerSelect}
-        />
-      </div>
+  // Player data  
+  players,
+  activities,
+  filteredPlayers,
+  selectedPlayer,
+  setSelectedPlayer,
+  editingPlayer,
+  setEditingPlayer,
+  isAddPlayerOpen,
+  setIsAddPlayerOpen,
+  searchQuery,
+  setSearchQuery,
+  selectedGrades,
+  viewMode,
+  setViewMode,
+  handleGradeChange,
+  handlePlayerUpdate,
+  handleBulkPlayerUpdate,
+  handleAddPlayer,
+  handleDeletePlayer,
+  
+  // Activity data
+  filteredActivities,
+  filteredHistoricalActivities,
+  selectedActivity,
+  setSelectedActivity,
+  editingActivity,
+  setEditingActivity,
+  isAddActivityOpen,
+  setIsAddActivityOpen,
+  selectedActivityTypes,
+  handleActivityTypeChange,
+  handleActivityUpdate,
+  handleKioskUpdate,
+  handleDelete,
+  handleImportActivities,
+  handleClearHistorical,
+  handleAddActivity,
+  onPlayerActivitySelect,
+  handleMatchResultUpdate,
+  onPlayerSelect
+}: PlayersPageContentProps) {
+  
+  
+  const gradeData = players.reduce((acc, player) => {
+    if (player.positions?.includes("TRÄNARE")) return acc;
+    
+    const grade = player.grade;
+    const existingGrade = acc.find(item => item.grade === grade);
+    
+    if (existingGrade) {
+      existingGrade.players++;
+    } else if (grade) {
+      acc.push({ grade, players: 1 });
+    }
+    
+    return acc;
+  }, [] as { grade: string, players: number }[]);
+  
+  gradeData.sort((a, b) => a.grade.localeCompare(b.grade));
 
-      <MobileNavBar 
-        activeTab={props.activeTab} 
-        onTabChange={props.setActiveTab}
+  return (
+    <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="players">Spelare</TabsTrigger>
+          <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
+          <TabsTrigger value="development">Utveckling</TabsTrigger>
+          <TabsTrigger value="actions">Åtgärder</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="players">
+          {selectedPlayer ? (
+            <PlayerDetail
+              player={selectedPlayer}
+              activities={activities}
+              onClose={() => setSelectedPlayer(null)}
+              onEdit={setEditingPlayer}
+              onPlayerUpdate={handlePlayerUpdate}
+              onPlayerDelete={handleDeletePlayer}
+              onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
+              allPlayers={players}
+              onActivitySelect={onPlayerActivitySelect}
+            />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Sök spelare..."
+                    className="w-full sm:w-64"
+                  />
+                  <GradeFilter
+                    selectedGrades={selectedGrades}
+                    onGradeChange={handleGradeChange}
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                  <Button onClick={() => setIsAddPlayerOpen(true)} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Lägg till spelare
+                  </Button>
+                </div>
+              </div>
+              
+              <PlayerList
+                players={filteredPlayers}
+                activities={activities}
+                viewMode={viewMode as "grid" | "list"}
+                onPlayerSelect={setSelectedPlayer}
+                onPlayerEdit={setEditingPlayer}
+              />
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="activities">
+          <ActivityTabContent
+            activities={activities}
+            players={players}
+            selectedActivity={selectedActivity}
+            selectedActivityTypes={selectedActivityTypes}
+            filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
+            isAddActivityOpen={isAddActivityOpen}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={handleActivityUpdate}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportActivities={handleImportActivities}
+            handleClearHistoricalActivities={handleClearHistorical}
+            handleMatchResultUpdate={handleMatchResultUpdate}
+            onPlayerSelect={onPlayerSelect}
+          />
+        </TabsContent>
+        
+        <TabsContent value="development">
+          <StatisticsTabsWrapper 
+            players={players}
+            activities={activities}
+            gradeData={gradeData}
+            onActivitySelect={onPlayerActivitySelect}
+            onPlayerSelect={onPlayerSelect}
+          />
+        </TabsContent>
+        
+        <TabsContent value="actions">
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Åtgärder kommer snart...</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      <AddPlayerDialog
+        open={isAddPlayerOpen}
+        onOpenChange={setIsAddPlayerOpen}
+        onAddPlayer={handleAddPlayer}
       />
-    </>
+      
+      {editingPlayer && (
+        <EditPlayerDialog
+          player={editingPlayer}
+          open={!!editingPlayer}
+          onOpenChange={(open) => !open && setEditingPlayer(null)}
+          onPlayerUpdate={handlePlayerUpdate}
+        />
+      )}
+    </div>
   );
 }

@@ -11,23 +11,29 @@ interface PlayerMatchHistoryProps {
   allPlayers?: Player[];
 }
 
-export function PlayerMatchHistory({ player, activities, onActivitySelect, allPlayers = [] }: PlayerMatchHistoryProps) {
-  // Find activities that this player participated in and sort by date (newest first)
+export function PlayerMatchHistory({ 
+  player, 
+  activities, 
+  onActivitySelect, 
+  allPlayers = [] 
+}: PlayerMatchHistoryProps) {
+  // Filter activities where this player participated
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
-  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  );
 
   return (
     <Card className="mt-6">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Spelarhistorik</CardTitle>
+      <CardHeader>
+        <CardTitle>Spelarhistorik</CardTitle>
       </CardHeader>
       <CardContent>
         <PlayerMatchTabs 
           player={player} 
-          playerActivities={playerActivities} 
-          onActivitySelect={onActivitySelect} 
+          playerActivities={playerActivities}
+          onActivitySelect={onActivitySelect}
           allPlayers={allPlayers}
+          allActivities={activities}
         />
       </CardContent>
     </Card>
