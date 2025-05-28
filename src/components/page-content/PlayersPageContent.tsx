@@ -130,11 +130,10 @@ export function PlayersPageContent({
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="players">Spelare</TabsTrigger>
           <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
-          <TabsTrigger value="development">Utveckling</TabsTrigger>
-          <TabsTrigger value="actions">Åtgärder</TabsTrigger>
+          <TabsTrigger value="statistics">Statistik</TabsTrigger>
         </TabsList>
         
         <TabsContent value="players">
@@ -206,7 +205,7 @@ export function PlayersPageContent({
           />
         </TabsContent>
         
-        <TabsContent value="development">
+        <TabsContent value="statistics">
           <StatisticsTabsWrapper 
             players={players}
             activities={activities}
@@ -214,12 +213,6 @@ export function PlayersPageContent({
             onActivitySelect={onPlayerActivitySelect}
             onPlayerSelect={onPlayerSelect}
           />
-        </TabsContent>
-        
-        <TabsContent value="actions">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Åtgärder kommer snart...</p>
-          </div>
         </TabsContent>
       </Tabs>
       
