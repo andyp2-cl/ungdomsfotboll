@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerCombination {
@@ -57,6 +56,33 @@ const calculateGradeSynergy = (player1: Player, player2: Player): number => {
   
   // Mindre skillnad = bättre synergi
   return Math.max(0.7, 1.2 - (diff * 0.2));
+};
+
+// Helper function to determine if Hässleholms IF is playing at home based on activity name
+const isHassleholmsPlayingHome = (activity: Activity): boolean => {
+  if (!activity.name) return true; // Default to home if no name
+  
+  const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
+  const match = activity.name.match(dashPattern);
+  
+  if (match && match[1] && match[2]) {
+    const team1 = match[1].trim();
+    
+    // Check if the first team is a Hässleholms IF variation
+    const hassleholmsVariations = [
+      'Hässleholms IF',
+      'Hässleholms IF Vit',
+      'Hässleholms IF Svart',
+      'Hässleholms IF vit',
+      'Hässleholms IF svart'
+    ];
+    
+    return hassleholmsVariations.some(variation => 
+      team1.toLowerCase().includes(variation.toLowerCase())
+    );
+  }
+  
+  return true; // Default to home if can't parse
 };
 
 // Analysera alla tvåspelar-kombinationer
@@ -553,11 +579,8 @@ export const analyzeOpponentHistory = (
   
   opponentMatches.forEach(match => {
     if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      // Check if we're playing at home or away based on location
-      const locationName = match.location?.name || '';
-      const isHome = locationName.toLowerCase().includes('hemma') || 
-                     locationName.toLowerCase().includes('home') ||
-                     !locationName; // Default to home if no location specified
+      // Determine if Hässleholms IF is playing at home based on activity name
+      const isHome = isHassleholmsPlayingHome(match);
       
       const ourScore = isHome ? match.homeScore : match.awayScore;
       const theirScore = isHome ? match.awayScore : match.homeScore;
@@ -696,7 +719,8 @@ export const suggestBalancedLineup = (
             const locationName = match.location?.name || '';
             const isHome = locationName.toLowerCase().includes('hemma') || 
                            locationName.toLowerCase().includes('home') ||
-                           !locationName;
+                           !locationName; // Default to home if no location specified
+            
             const ourScore = isHome ? match.homeScore : match.awayScore;
             const theirScore = isHome ? match.awayScore : match.homeScore;
             playerGoalDiffs.push(ourScore - theirScore);
