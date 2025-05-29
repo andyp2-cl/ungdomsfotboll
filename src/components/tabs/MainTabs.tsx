@@ -1,12 +1,16 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
+import { StatisticsTabContent } from "@/components/player-management/statistics/StatisticsTabContent";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
 import { saveActiveTab } from "@/utils/storage/tabs";
+import { Button } from "@/components/ui/button";
+import { Plus, UserPlus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainTabsProps {
   tabs?: TabItem[];
@@ -60,6 +64,7 @@ export function MainTabs({
   tabs = [
     { id: "players", label: "Spelare", icon: null },
     { id: "activities", label: "Aktiviteter", icon: null },
+    { id: "statistics", label: "Statistik", icon: null },
   ],
   activeTabId,
   onTabChange,
@@ -106,12 +111,16 @@ export function MainTabs({
   onPlayerActivitySelect,
   onPlayerSelect
 }: MainTabsProps) {
+  const isMobile = useIsMobile();
   
   const handleTabChange = (value: string) => {
     // Clear selected player and activity when switching tabs
     if (value === "players") {
       setSelectedPlayer(null);
     } else if (value === "activities") {
+      setSelectedActivity(null);
+    } else if (value === "statistics") {
+      setSelectedPlayer(null);
       setSelectedActivity(null);
     }
     
@@ -136,23 +145,64 @@ export function MainTabs({
       setSelectedPlayer(null);
     }
   };
+
+  // Calculate grade distribution data for statistics
+  const gradeData = React.useMemo(() => {
+    const gradeMap = new Map<string, number>();
+    
+    players.forEach(player => {
+      const grade = player.grade;
+      gradeMap.set(grade, (gradeMap.get(grade) || 0) + 1);
+    });
+    
+    return Array.from(gradeMap.entries()).map(([grade, players]) => ({
+      grade,
+      players
+    }));
+  }, [players]);
   
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
-        <TabsList className="mb-4">
-          {tabs.map(tab => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex items-center gap-1"
-              disabled={tab.disabled}
-            >
-              {tab.icon && tab.icon}
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* Header with tabs and action buttons */}
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <TabsList className="flex-1">
+            {tabs.map(tab => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex items-center gap-1"
+                disabled={tab.disabled}
+              >
+                {tab.icon && tab.icon}
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          {/* Action buttons - always visible in consistent position */}
+          {activeTabId !== "statistics" && (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsAddPlayerOpen(true)}
+                size={isMobile ? "sm" : "default"}
+                variant="outline"
+                className={isMobile ? 'h-8 px-2' : ''}
+              >
+                <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                {isMobile ? '' : 'Lägg till spelare'}
+              </Button>
+              <Button
+                onClick={() => setIsAddActivityOpen(true)}
+                size={isMobile ? "sm" : "default"}
+                className={isMobile ? 'h-8 px-2' : ''}
+              >
+                <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                {isMobile ? '' : 'Lägg till aktivitet'}
+              </Button>
+            </div>
+          )}
+        </div>
         
         <TabsContent value="players" className="mt-0">
           <PlayerTabContent 
@@ -198,6 +248,14 @@ export function MainTabs({
             setEditingActivity={setEditingActivity}
             isAddActivityOpen={isAddActivityOpen}
             handleMatchResultUpdate={handleMatchResultUpdate}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        </TabsContent>
+        
+        <TabsContent value="statistics" className="mt-0">
+          <StatisticsTabContent 
+            players={players} 
+            activities={activities}
             onPlayerSelect={handlePlayerSelect}
           />
         </TabsContent>

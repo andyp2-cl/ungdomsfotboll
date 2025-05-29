@@ -102,9 +102,7 @@ export function ActivityTabContent({
       <ActivityTabHeader 
         activeView={activeView}
         handleViewChange={handleViewChange}
-        setIsAddActivityOpen={setIsAddActivityOpen}
         isMobile={isMobile}
-        showAddPlayerButton={true}
       />
       
       {activeView !== "statistics" && (
