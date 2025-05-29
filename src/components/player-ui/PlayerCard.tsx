@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { formatPositions, isTrainer } from "@/utils/positionUtils";
 
 interface PlayerCardProps {
   player: Player;
@@ -61,19 +62,7 @@ export function PlayerCard({
     }
   };
 
-  const formatPosition = (position: string) => {
-    if (position === 'TRÄNARE') return 'Tränare';
-    
-    let formattedPosition = position
-      .replace('MV', 'Målvakt')
-      .replace('BACK', 'Back')
-      .replace('MF', 'Mittfält')
-      .replace('ANF', 'Anfall');
-    
-    return formattedPosition;
-  };
-
-  const isCoach = player.positions?.includes('TRÄNARE');
+  const isCoach = isTrainer(player.positions);
   const winRate = getPlayerWinRate();
 
   if (compact) {
@@ -105,10 +94,7 @@ export function PlayerCard({
             </div>
             {!isCoach && player.positions && (
               <div className="text-xs text-muted-foreground">
-                {player.positions
-                  .filter(pos => pos !== 'TRÄNARE')
-                  .map(formatPosition)
-                  .join(', ')}
+                {formatPositions(player.positions, true)}
               </div>
             )}
           </div>
@@ -195,10 +181,7 @@ export function PlayerCard({
         {!isCoach && (
           <p className="text-sm text-muted-foreground">
             {player.positions && player.positions.length > 0
-              ? player.positions
-                  .filter(pos => pos !== 'TRÄNARE')
-                  .map(formatPosition)
-                  .join(', ')
+              ? formatPositions(player.positions, true)
               : 'Ingen position definierad'}
           </p>
         )}

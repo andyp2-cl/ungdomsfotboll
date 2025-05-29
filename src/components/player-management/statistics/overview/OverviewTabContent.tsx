@@ -50,7 +50,7 @@ export function OverviewTabContent({
     };
   });
   
-  // Calculate player activity data with correct property name and consistent formatting
+  // Calculate player activity data with consistent property names and position formatting
   const playerActivityData = players
     .filter(player => !isTrainer(player.positions))
     .map(player => {
@@ -64,8 +64,8 @@ export function OverviewTabContent({
         grade: player.grade,
         positions: player.positions,
         jerseyNumber: player.jerseyNumber,
-        activities: activityCount, // Fixed: use 'activities' instead of 'activityCount'
-        activityCount: activityCount // Keep both for compatibility
+        activities: activityCount, // Use consistent property name
+        activityCount: activityCount // Keep for backward compatibility
       };
     })
     .sort((a, b) => b.activities - a.activities);

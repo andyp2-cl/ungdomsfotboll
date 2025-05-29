@@ -18,7 +18,7 @@ export function formatPosition(position: string): string {
     case 'MV':
       return 'Målvakt';
     case 'BACK':
-      return 'Back';
+      return 'Försvarare';
     case 'MF':
       return 'Mittfältare';
     case 'ANF':
@@ -28,19 +28,19 @@ export function formatPosition(position: string): string {
   }
 }
 
-// Format individual position with short names for mobile/compact views
+// Format individual position with international abbreviations for mobile/compact views
 export function formatPositionShort(position: string): string {
   switch (position) {
     case 'TRÄNARE':
       return 'Tränare';
     case 'MV':
-      return 'MV';
+      return 'GK';
     case 'BACK':
-      return 'Back';
+      return 'DEF';
     case 'MF':
-      return 'MF';
+      return 'MID';
     case 'ANF':
-      return 'ANF';
+      return 'FW';
     default:
       return position;
   }

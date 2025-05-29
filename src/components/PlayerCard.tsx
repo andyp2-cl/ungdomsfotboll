@@ -73,7 +73,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
             </Badge>
           )}
           
-          {/* Add position badges */}
+          {/* Add position badges with international abbreviations */}
           {!isCoach && player.positions && player.positions.length > 0 && (
             <Badge variant="outline" className="bg-white/80">
               {formatPositions(player.positions, true)}

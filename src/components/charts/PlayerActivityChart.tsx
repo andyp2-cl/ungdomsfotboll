@@ -19,7 +19,7 @@ export function PlayerActivityChart({ data, config, onBarClick }: PlayerActivity
       ...player,
       formattedPositions: formatPositions(player.positions, true)
     }))
-    .sort((a, b) => b.activityCount - a.activityCount);
+    .sort((a, b) => (b.activities || b.activityCount || 0) - (a.activities || a.activityCount || 0));
     
   const topPlayers = processedData.slice(0, 15); // Only show top 15 players
 
@@ -70,7 +70,7 @@ export function PlayerActivityChart({ data, config, onBarClick }: PlayerActivity
           }}
         />
         <Bar 
-          dataKey="activityCount" 
+          dataKey={topPlayers[0]?.activities !== undefined ? "activities" : "activityCount"} 
           name="Aktiviteter" 
           fill="#8884d8"
           onClick={onBarClick ? handleBarClick : undefined}
