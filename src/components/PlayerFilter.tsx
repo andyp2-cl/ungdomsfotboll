@@ -12,7 +12,6 @@ export function PlayerFilter({
   onGradeChange
 }: PlayerFilterProps) {
   const grades: PlayerGrade[] = ['A', 'B', 'C', 'D'];
-  const positions = ['GK', 'DEF', 'MID', 'FW', 'Tränare'];
 
   return (
     <div className="space-y-4">
@@ -48,23 +47,6 @@ export function PlayerFilter({
               Visa alla
             </Button>
           )}
-        </div>
-      </div>
-
-      {/* Position Display Buttons */}
-      <div className="flex items-center flex-wrap gap-2">
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="self-center text-sm font-medium mr-2">Position:</span>
-          {positions.map((position) => (
-            <Button
-              key={position}
-              size="sm"
-              variant="outline"
-              className="bg-black text-white hover:bg-gray-800"
-            >
-              {position}
-            </Button>
-          ))}
         </div>
       </div>
     </div>
