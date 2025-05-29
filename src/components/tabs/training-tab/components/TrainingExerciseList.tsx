@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,86 +76,97 @@ export function TrainingExerciseList({
         {filteredExercises.length} övningar
       </div>
 
-      {/* Övningslista */}
-      <div className="grid gap-6">
+      {/* Övningslista - Nu med 3-kolumners rutnätslayout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredExercises.map(exercise => (
-          <Card key={exercise.id} className="overflow-hidden">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <CardTitle className="text-lg">{exercise.title}</CardTitle>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{exercise.category}</Badge>
+          <Card key={exercise.id} className="overflow-hidden flex flex-col h-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <CardTitle className="text-base line-clamp-2">{exercise.title}</CardTitle>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-xs">{exercise.category}</Badge>
                     <Badge 
-                      className={`text-white ${getDifficultyColor(exercise.difficulty)}`}
+                      className={`text-white text-xs ${getDifficultyColor(exercise.difficulty)}`}
                     >
                       {exercise.difficulty}
                     </Badge>
                     {exercise.duration && (
-                      <Badge variant="outline" className="flex items-center gap-1">
+                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
                         <Clock className="h-3 w-3" />
                         {exercise.duration} min
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1 flex-shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onEditExercise(exercise)}
+                    className="h-8 w-8 p-0"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onDeleteExercise(exercise.id)}
+                    className="h-8 w-8 p-0"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">{exercise.description}</p>
+            <CardContent className="space-y-3 flex-1 pt-0">
+              <p className="text-sm text-muted-foreground line-clamp-3">{exercise.description}</p>
               
-              {/* Video */}
+              {/* Video - Kompaktare för rutnätet */}
               {exercise.videoUrl && exercise.videoType && (
-                <VideoEmbed 
-                  url={exercise.videoUrl} 
-                  videoType={exercise.videoType}
-                  title={exercise.title}
-                />
+                <div className="w-full">
+                  <VideoEmbed 
+                    url={exercise.videoUrl} 
+                    videoType={exercise.videoType}
+                    title={exercise.title}
+                    className="rounded-md"
+                  />
+                </div>
               )}
               
-              {/* Taggar */}
+              {/* Taggar - Kompaktare layout */}
               {exercise.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {exercise.tags.map(tag => (
+                  {exercise.tags.slice(0, 3).map(tag => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
                   ))}
+                  {exercise.tags.length > 3 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{exercise.tags.length - 3}
+                    </Badge>
+                  )}
                 </div>
               )}
               
-              {/* Utrustning */}
+              {/* Utrustning - Kortare format */}
               {exercise.equipment.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium mb-1">Utrustning:</p>
-                  <p className="text-sm text-muted-foreground">
-                    {exercise.equipment.join(', ')}
+                  <p className="text-xs font-medium mb-1">Utrustning:</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {exercise.equipment.slice(0, 3).join(', ')}
+                    {exercise.equipment.length > 3 && '...'}
                   </p>
                 </div>
               )}
               
-              {/* Anteckningar */}
+              {/* Anteckningar - Kortare format */}
               {exercise.notes && (
                 <div>
-                  <p className="text-sm font-medium mb-1">Anteckningar:</p>
-                  <p className="text-sm text-muted-foreground">{exercise.notes}</p>
+                  <p className="text-xs font-medium mb-1">Anteckningar:</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{exercise.notes}</p>
                 </div>
               )}
             </CardContent>
