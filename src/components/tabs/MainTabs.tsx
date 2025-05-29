@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -19,12 +20,12 @@ interface MainTabsProps {
   editingPlayer: Player | null;
   searchQuery: string;
   selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid" | "stats";
+  viewMode: "list" | "grid";
   setSearchQuery: (query: string) => void;
   handleGradeChange: (grade: PlayerGrade) => void;
   setSelectedPlayer: (player: Player | null) => void;
   setEditingPlayer: (player: Player | null) => void;
-  setViewMode: (mode: "list" | "grid" | "stats") => void;
+  setViewMode: (mode: "list" | "grid") => void;
   isAddPlayerOpen: boolean;
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;

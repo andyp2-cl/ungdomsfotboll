@@ -27,7 +27,8 @@ export function PlayerDetailView({ player, activities, className }: PlayerDetail
     match.homeScore !== undefined && match.awayScore !== undefined
   );
   const wins = matchesWithResults.filter(match => 
-    match.is_win === true || match.result === "win"
+    match.isWin === true || match.result?.includes("-") && 
+    parseInt(match.result.split("-")[0]) > parseInt(match.result.split("-")[1])
   ).length;
   const winPercentage = matchesWithResults.length > 0 
     ? Math.round((wins / matchesWithResults.length) * 100) 
@@ -38,22 +39,23 @@ export function PlayerDetailView({ player, activities, className }: PlayerDetail
   let totalAssists = 0;
   let totalGrades = 0;
   let gradeCount = 0;
-  let kioskDuties = 0;
 
   matches.forEach(match => {
-    if (match.player_stats && match.player_stats[player.id]) {
-      const stats = match.player_stats[player.id];
-      totalGoals += stats.goals || 0;
-      totalAssists += stats.assists || 0;
-      if (stats.grade && stats.grade > 0) {
-        totalGrades += stats.grade;
-        gradeCount++;
+    if (match.player_stats) {
+      // Handle both new and old data structures
+      if (match.player_stats[player.id]) {
+        const stats = match.player_stats[player.id];
+        totalGoals += stats.goals || 0;
+        totalAssists += stats.assists || 0;
+        if (stats.grade && stats.grade > 0) {
+          totalGrades += stats.grade;
+          gradeCount++;
+        }
+      } else if (match.player_stats.goals && match.player_stats.assists) {
+        // Handle the newer structure
+        totalGoals += match.player_stats.goals[player.id] || 0;
+        totalAssists += match.player_stats.assists[player.id] || 0;
       }
-    }
-    
-    // Count kiosk duties
-    if (match.kiosk_assigned_player_id === player.id) {
-      kioskDuties++;
     }
   });
 
@@ -157,10 +159,6 @@ export function PlayerDetailView({ player, activities, className }: PlayerDetail
             <div className="flex justify-between">
               <span className="text-muted-foreground">Betyg snitt:</span>
               <span className="font-medium">{averageGrade}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Kioskvakter:</span>
-              <span className="font-medium">{kioskDuties}</span>
             </div>
           </CardContent>
         </Card>
