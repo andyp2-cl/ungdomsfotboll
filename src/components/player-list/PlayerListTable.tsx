@@ -28,23 +28,6 @@ export function PlayerListTable({
   onPlayerSelect, 
   onPlayerEdit 
 }: PlayerListTableProps) {
-  const formatPosition = (positions: string[] | undefined) => {
-    if (!positions || positions.length === 0) return "Ingen position";
-    
-    return positions
-      .filter(pos => pos !== 'TRÄNARE')
-      .map(position => {
-        if (position === 'TRÄNARE') return 'Tränare';
-        
-        return position
-          .replace('MV', 'Målvakt')
-          .replace('BACK', 'Back')
-          .replace('MF', 'Mittfält')
-          .replace('ANF', 'Anfall');
-      })
-      .join(', ') || "Tränare";
-  };
-
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A':
@@ -121,16 +104,6 @@ export function PlayerListTable({
             <TableHead>
               <Button 
                 variant="ghost" 
-                onClick={() => toggleSort('position')}
-                className="h-auto p-0 font-medium hover:bg-transparent"
-              >
-                Position
-                <SortIcon field="position" sortField={sortField} sortDirection={sortDirection} />
-              </Button>
-            </TableHead>
-            <TableHead>
-              <Button 
-                variant="ghost" 
                 onClick={() => toggleSort('activities')}
                 className="h-auto p-0 font-medium hover:bg-transparent"
               >
@@ -196,11 +169,6 @@ export function PlayerListTable({
                       Nivå {player.grade}
                     </Badge>
                   )}
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-muted-foreground">
-                    {formatPosition(player.positions)}
-                  </span>
                 </TableCell>
                 <TableCell>
                   {player.activities?.length || 0}
