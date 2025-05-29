@@ -145,7 +145,7 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
       <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
         {renderEmbed()}
       </div>
-      {actualVideoType !== 'youtube' && actualVideoType !== 'instagram' && (
+      {actualVideoType !== 'youtube' && (
         <p className="text-xs text-muted-foreground mt-2 capitalize">
           {actualVideoType} video
         </p>
