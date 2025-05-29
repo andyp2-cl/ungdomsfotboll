@@ -34,7 +34,6 @@ export function ActivityTabViewContent({
   onDeleteActivity,
   onKioskAssignmentUpdate,
   onMatchResultUpdate,
-  previousView,
   onAddActivity
 }: ActivityTabViewContentProps) {
   const isMobile = useIsMobile();
@@ -85,13 +84,37 @@ export function ActivityTabViewContent({
   
   // Handle view rendering based on content type
   if (content) {
-    // Explicitly log the content viewType to debug
     console.log("Content viewType:", content.viewType);
     
-    if (content.viewType === "player-detail" && content.player) {
+    // Handle player preview - both as overlay and standalone
+    if ((content.viewType === "player-detail" || content.viewType === "player-preview") && content.player) {
       console.log("Rendering PlayerPreview for:", content.player.name);
+      console.log("Show as overlay:", content.showAsOverlay);
       
-      // Use the PlayerPreview component
+      // If we have both activity and player selected, show them together
+      if (content.showAsOverlay && content.viewType === "player-preview") {
+        // Find the selected activity to render alongside the player preview
+        const selectedActivity = activities.find(a => a.id); // This should be passed differently, but for now...
+        
+        return (
+          <div className="space-y-4">
+            {/* Show the player preview first */}
+            <PlayerPreview 
+              player={content.player} 
+              activities={activities}
+              onClose={() => {
+                console.log("Closing player preview overlay");
+                onPlayerSelect("");
+              }}
+            />
+            
+            {/* The activity detail would be shown below, but we need the selected activity */}
+            {/* This is a simplified version - ideally we'd get the selected activity from the parent */}
+          </div>
+        );
+      }
+      
+      // Show player preview as standalone
       return (
         <PlayerPreview 
           player={content.player} 

@@ -51,18 +51,24 @@ export function ActivityParticipants({
     return fullName.split(' ')[0];
   };
 
-  // Handle click on a player
-  const handlePlayerClick = (playerId: string, e: React.MouseEvent) => {
+  // Handle click on a player with enhanced logging
+  const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
     // Stop propagation to prevent the activity selection from triggering
     e.stopPropagation();
     e.preventDefault();
     
-    console.log("ActivityParticipants: Player clicked:", playerId);
-    console.log("ActivityParticipants: onPlayerSelect function:", !!onPlayerSelect);
+    console.log("ActivityParticipants: Player clicked:", playerName, "ID:", playerId);
+    console.log("ActivityParticipants: onPlayerSelect function available:", !!onPlayerSelect);
+    console.log("ActivityParticipants: Event details:", e.type, e.target);
     
     if (onPlayerSelect) {
       console.log("ActivityParticipants: Calling onPlayerSelect with playerId:", playerId);
-      onPlayerSelect(playerId);
+      try {
+        onPlayerSelect(playerId);
+        console.log("ActivityParticipants: Successfully called onPlayerSelect");
+      } catch (error) {
+        console.error("ActivityParticipants: Error calling onPlayerSelect:", error);
+      }
     } else {
       console.log("ActivityParticipants: No onPlayerSelect function provided");
     }
@@ -102,14 +108,14 @@ export function ActivityParticipants({
                   key={player.id}
                   data-player-item="true"
                   className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
-                  onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
+                  onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                 >
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar 
                           className={`border border-background ${avatarSize} ${onPlayerSelect ? 'cursor-pointer' : ''}`}
-                          onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
+                          onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                         >
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="bg-muted">
@@ -129,7 +135,7 @@ export function ActivityParticipants({
                   </TooltipProvider>
                   <span 
                     className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full ${onPlayerSelect ? 'cursor-pointer' : ''}`}
-                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, e) : undefined}
+                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                   >
                     {getFirstName(player.name)}
                   </span>
