@@ -165,7 +165,8 @@ export function DevelopmentOverview({
           <CardContent>
             <DevelopmentChart 
               development={teamDevelopmentAverage} 
-              className="h-[400px]" 
+              className="h-[450px]" 
+              minimal={true}
             />
           </CardContent>
         </Card>
@@ -204,7 +205,7 @@ export function DevelopmentOverview({
             ))}
           </div>
         </CardContent>
-      </Card>
+      )}
 
       {/* Quick Actions */}
       <Card>
@@ -232,7 +233,7 @@ export function DevelopmentOverview({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

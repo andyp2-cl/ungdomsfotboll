@@ -8,6 +8,7 @@ import { Player, Activity } from "@/types/player";
 import { DevelopmentChart } from "./DevelopmentChart";
 import { PlayerProfileAnalysis } from "./PlayerProfileAnalysis";
 import { Calendar, MapPin, Users, Edit, BarChart3, User, Target } from "lucide-react";
+import { formatPositions } from "@/utils/positionUtils";
 
 interface PlayerDetailViewProps {
   player: Player;
@@ -51,11 +52,11 @@ export function PlayerDetailView({
                   {player.grade && (
                     <Badge variant="outline">{player.grade}</Badge>
                   )}
-                  {player.positions?.map((position, index) => (
-                    <Badge key={index} variant="secondary">
-                      {position}
+                  {player.positions && player.positions.length > 0 && (
+                    <Badge variant="secondary">
+                      {formatPositions(player.positions)}
                     </Badge>
-                  ))}
+                  )}
                   {player.jerseyNumber && (
                     <Badge variant="outline">#{player.jerseyNumber}</Badge>
                   )}
