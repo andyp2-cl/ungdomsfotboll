@@ -9,13 +9,15 @@ interface ActivityTabHeaderProps {
   handleViewChange: (value: string) => void;
   setIsAddActivityOpen: (isOpen: boolean) => void;
   isMobile?: boolean;
+  showAddButton?: boolean;
 }
 
 export function ActivityTabHeader({
   activeView,
   handleViewChange,
   setIsAddActivityOpen,
-  isMobile = false
+  isMobile = false,
+  showAddButton = true
 }: ActivityTabHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -33,7 +35,7 @@ export function ActivityTabHeader({
         </TabsList>
       </Tabs>
       
-      {activeView !== "statistics" && (
+      {showAddButton && activeView !== "statistics" && (
         <Button
           onClick={() => setIsAddActivityOpen(true)}
           size={isMobile ? "sm" : "default"}
