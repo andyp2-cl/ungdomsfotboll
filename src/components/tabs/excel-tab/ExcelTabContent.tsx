@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ export function ExcelTabContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
+  const iframeWrapperRef = useRef<HTMLDivElement>(null);
 
   // Load saved URL on component mount
   useEffect(() => {
@@ -33,6 +34,41 @@ export function ExcelTabContent() {
       setShowSettings(true);
     }
   }, []);
+
+  // Event handling for Mac trackpad isolation
+  useEffect(() => {
+    const wrapperElement = iframeWrapperRef.current;
+    if (!wrapperElement || !embedUrl) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      // Prevent horizontal scroll from propagating to parent
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        event.stopPropagation();
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      // Prevent touch gestures from affecting parent navigation
+      event.stopPropagation();
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      // Isolate pointer events within the iframe area
+      event.stopPropagation();
+    };
+
+    // Add event listeners
+    wrapperElement.addEventListener('wheel', handleWheel, { passive: false });
+    wrapperElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    wrapperElement.addEventListener('pointerdown', handlePointerDown, { passive: true });
+
+    // Cleanup
+    return () => {
+      wrapperElement.removeEventListener('wheel', handleWheel);
+      wrapperElement.removeEventListener('touchstart', handleTouchStart);
+      wrapperElement.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [embedUrl]);
 
   // Convert Google Sheets sharing URL to embed URL
   const convertToEmbedUrl = (url: string): string => {
@@ -113,12 +149,14 @@ export function ExcelTabContent() {
         <Card className="flex-1">
           <CardContent className="p-2">
             <div 
-              className="relative w-full excel-iframe-container" 
+              ref={iframeWrapperRef}
+              className="relative w-full excel-iframe-wrapper excel-iframe-container" 
               style={{ 
                 height: 'calc(100vh - 200px)', 
                 minHeight: '600px',
                 overflow: 'hidden',
-                overscrollBehavior: 'contain'
+                overscrollBehavior: 'none',
+                overscrollBehaviorX: 'none'
               }}
             >
               <iframe
@@ -128,9 +166,11 @@ export function ExcelTabContent() {
                 style={{ 
                   border: 'none', 
                   borderRadius: '6px',
-                  touchAction: 'auto',
+                  touchAction: 'pan-x pan-y',
                   overflowX: 'auto',
-                  overflowY: 'auto'
+                  overflowY: 'auto',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none'
                 }}
                 title="Google Sheets"
                 allow="autoplay; camera; microphone; display-capture"
