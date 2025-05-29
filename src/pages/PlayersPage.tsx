@@ -91,7 +91,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleDeletePlayer(playerId);
   };
 
-  // Create a wrapper for setViewMode to match expected signature
+  // Create a wrapper for setViewMode to handle type conversion
   const setViewModeWrapper = (mode: "grid" | "list") => {
     setViewMode(mode);
   };
@@ -116,7 +116,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         selectedGrades={selectedGrades}
-        viewMode={viewMode}
+        viewMode={viewMode === "stats" ? "list" : viewMode as "grid" | "list"}
         setViewMode={setViewModeWrapper}
         handleGradeChange={handleGradeChange}
         handlePlayerUpdate={handlePlayerUpdateWrapper}

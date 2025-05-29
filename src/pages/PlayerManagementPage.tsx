@@ -50,10 +50,8 @@ export default function PlayerManagementPage() {
     await handleDeletePlayer(playerId);
   };
 
-  // Create a wrapper for setViewMode to match expected signature
-  const setViewModeWrapper = (mode: "grid" | "list") => {
-    setViewMode(mode);
-  };
+  // Ensure viewMode is compatible with PlayersTabContent expectations
+  const compatibleViewMode: "grid" | "list" = viewMode === "stats" ? "list" : viewMode as "grid" | "list";
 
   return (
     <PageContainer isLoading={isLoading}>
@@ -65,7 +63,7 @@ export default function PlayerManagementPage() {
         selectedPositions={selectedPositions}
         activeFiltersCount={activeFiltersCount}
         selectedPlayer={selectedPlayer}
-        viewMode={viewMode}
+        viewMode={compatibleViewMode}
         filteredPlayers={filteredPlayers}
         onSearchChange={setSearchQuery}
         onGradeChange={handleGradeChange}
