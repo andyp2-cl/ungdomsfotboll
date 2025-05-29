@@ -5,6 +5,7 @@ import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabCo
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ExcelTabContent } from "@/components/tabs/excel-tab/ExcelTabContent";
 import { DevelopmentTabContent } from "@/components/tabs/development-tab/DevelopmentTabContent";
+import { TrainingTabContent } from "@/components/tabs/training-tab/TrainingTabContent";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
@@ -67,6 +68,7 @@ export function MainTabs({
     { id: "activities", label: "Aktiviteter", icon: null },
     { id: "statistics", label: "Statistik", icon: null },
     { id: "development", label: "Utveckling", icon: null },
+    { id: "training", label: "Träning", icon: null },
     { id: "excel", label: "Excel", icon: null },
   ],
   activeTabId,
@@ -125,6 +127,9 @@ export function MainTabs({
       setSelectedPlayer(null);
       setSelectedActivity(null);
     } else if (value === "development") {
+      setSelectedPlayer(null);
+      setSelectedActivity(null);
+    } else if (value === "training") {
       setSelectedPlayer(null);
       setSelectedActivity(null);
     } else if (value === "excel") {
@@ -278,6 +283,10 @@ export function MainTabs({
             activities={activities}
             onPlayerSelect={handlePlayerSelect}
           />
+        </TabsContent>
+
+        <TabsContent value="training" className="mt-0">
+          <TrainingTabContent />
         </TabsContent>
 
         <TabsContent value="excel" className="mt-0">

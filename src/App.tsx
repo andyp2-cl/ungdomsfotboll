@@ -15,8 +15,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: Infinity, // Prevent automatic refetching
-      retry: 1, // Only retry failed queries once
+      staleTime: Infinity,
+      retry: 1,
       meta: {
         onError: (error) => {
           console.error("Query error:", error);
@@ -41,6 +41,7 @@ const App = () => (
                 <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
                 <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
                 <Route path="/development" element={<PlayersPage initialTab="development" />} />
+                <Route path="/training" element={<PlayersPage initialTab="training" />} />
                 <Route path="/excel" element={<PlayersPage initialTab="excel" />} />
                 <Route path="/player-management" element={<PlayerManagementPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
