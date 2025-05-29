@@ -17,6 +17,7 @@ interface ActivityDetailProps {
   onClose: () => void;
   onPlayerSelect?: (playerId: string) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
+  onAddActivity?: (newActivity: Activity) => Promise<void>;
 }
 
 export function ActivityDetail({ 
@@ -33,7 +34,8 @@ export function ActivityDetail({
   allActivities = [],
   onClose,
   onPlayerSelect,
-  onMatchResultUpdate
+  onMatchResultUpdate,
+  onAddActivity
 }: ActivityDetailProps) {
   return (
     <ActivityDetailView
@@ -51,6 +53,7 @@ export function ActivityDetail({
       onClose={onClose}
       onPlayerSelect={onPlayerSelect}
       onMatchResultUpdate={onMatchResultUpdate}
+      onAddActivity={onAddActivity}
     />
   );
 }

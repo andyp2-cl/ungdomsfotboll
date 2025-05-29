@@ -117,7 +117,6 @@ export function PlayerDetail({
 
       <PlayerCard 
         player={player} 
-        activities={activities}
       />
 
       <PlayerMatchTabs 

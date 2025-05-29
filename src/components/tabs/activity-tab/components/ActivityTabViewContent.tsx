@@ -19,6 +19,7 @@ interface ActivityTabViewContentProps {
   onKioskAssignmentUpdate: (activityId: string, playerId?: string) => Promise<boolean>;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   previousView?: "upcoming" | "historical" | "statistics";
+  onAddActivity?: (newActivity: Activity) => Promise<void>;
 }
 
 export function ActivityTabViewContent({
@@ -33,7 +34,8 @@ export function ActivityTabViewContent({
   onDeleteActivity,
   onKioskAssignmentUpdate,
   onMatchResultUpdate,
-  previousView
+  previousView,
+  onAddActivity
 }: ActivityTabViewContentProps) {
   const isMobile = useIsMobile();
   
@@ -122,6 +124,7 @@ export function ActivityTabViewContent({
             console.log("ActivityTabViewContent: Player selected from ActivityDetail:", playerId);
             onPlayerSelect(playerId);
           }}
+          onAddActivity={onAddActivity}
         />
       );
     }
