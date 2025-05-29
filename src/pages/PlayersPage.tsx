@@ -91,11 +91,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleDeletePlayer(playerId);
   };
 
-  // Create a wrapper for setViewMode to match expected (mode: string) => void signature
-  const setViewModeWrapper = (mode: string) => {
-    if (mode === "grid" || mode === "list") {
-      setViewMode(mode as "grid" | "list");
-    }
+  // Create a wrapper for setViewMode to match expected signature
+  const setViewModeWrapper = (mode: "grid" | "list") => {
+    setViewMode(mode);
   };
 
   return (
@@ -144,7 +142,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleClearHistorical={handleClearHistorical}
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={async (activity) => {
-          await onPlayerActivitySelect(activity);
+          await handlePlayerActivitySelect(activity);
         }}
         handleMatchResultUpdate={handleMatchResult}
         onPlayerSelect={handlePlayerSelect}

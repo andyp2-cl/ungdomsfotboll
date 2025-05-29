@@ -69,13 +69,13 @@ export function PlayerDetailView({ player, activities, className }: PlayerDetail
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Compact Player Header */}
+      {/* Compact Player Header with larger image */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
+            <Avatar className="h-32 w-32">
               <AvatarImage src={player.image} alt={player.name} />
-              <AvatarFallback className="text-lg font-semibold">
+              <AvatarFallback className="text-2xl font-semibold">
                 {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
