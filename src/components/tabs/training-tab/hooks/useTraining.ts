@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TrainingExercise, TrainingSession, TrainingCategory } from "@/types/training";
 import { useToast } from "@/hooks/use-toast";

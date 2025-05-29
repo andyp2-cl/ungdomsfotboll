@@ -1,13 +1,12 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Trash2, Edit, Play, Clock, Users } from "lucide-react";
+import { Trash2, Edit, Clock } from "lucide-react";
 import { TrainingExercise, TrainingCategory, TRAINING_CATEGORIES } from "@/types/training";
-import { YouTubeEmbed } from "./YouTubeEmbed";
+import { VideoEmbed } from "./VideoEmbed";
 
 interface TrainingExerciseListProps {
   exercises: TrainingExercise[];
@@ -121,10 +120,11 @@ export function TrainingExerciseList({
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">{exercise.description}</p>
               
-              {/* YouTube video */}
-              {exercise.youtubeUrl && (
-                <YouTubeEmbed 
-                  url={exercise.youtubeUrl} 
+              {/* Video */}
+              {exercise.videoUrl && exercise.videoType && (
+                <VideoEmbed 
+                  url={exercise.videoUrl} 
+                  videoType={exercise.videoType}
                   title={exercise.title}
                 />
               )}

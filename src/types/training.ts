@@ -5,7 +5,8 @@ export interface TrainingExercise {
   description: string;
   category: TrainingCategory;
   tags: string[];
-  youtubeUrl?: string;
+  videoType?: VideoType;
+  videoUrl?: string;
   imageUrl?: string;
   duration?: number; // minuter
   difficulty: 'Lätt' | 'Medium' | 'Svår';
@@ -43,6 +44,14 @@ export type TrainingCategory =
   | 'Taktik'
   | 'Målvakt';
 
+export type VideoType = 
+  | 'youtube'
+  | 'instagram'
+  | 'tiktok'
+  | 'vimeo'
+  | 'facebook'
+  | 'generic';
+
 export const TRAINING_CATEGORIES: TrainingCategory[] = [
   'Kvadrater',
   'Färdigheter', 
@@ -53,6 +62,15 @@ export const TRAINING_CATEGORIES: TrainingCategory[] = [
   'Teknik',
   'Taktik',
   'Målvakt'
+];
+
+export const VIDEO_TYPES: { value: VideoType; label: string }[] = [
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'vimeo', label: 'Vimeo' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'generic', label: 'Annan video' }
 ];
 
 export const DIFFICULTY_LEVELS = ['Lätt', 'Medium', 'Svår'] as const;

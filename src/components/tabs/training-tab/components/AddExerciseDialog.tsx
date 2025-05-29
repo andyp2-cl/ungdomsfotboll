@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { TrainingExercise, TrainingCategory, TRAINING_CATEGORIES, DIFFICULTY_LEVELS } from "@/types/training";
+import { TrainingExercise, TrainingCategory, TRAINING_CATEGORIES, DIFFICULTY_LEVELS, VideoType, VIDEO_TYPES } from "@/types/training";
 
 interface AddExerciseDialogProps {
   open: boolean;
@@ -27,9 +27,10 @@ export function AddExerciseDialog({
     title: editingExercise?.title || '',
     description: editingExercise?.description || '',
     category: editingExercise?.category || 'Kvadrater' as TrainingCategory,
-    youtubeUrl: editingExercise?.youtubeUrl || '',
+    videoType: editingExercise?.videoType || 'youtube' as VideoType,
+    videoUrl: editingExercise?.videoUrl || '',
     duration: editingExercise?.duration?.toString() || '',
-    difficulty: editingExercise?.difficulty || 'Medium',
+    difficulty: editingExercise?.difficulty || 'Medium' as const,
     equipment: editingExercise?.equipment.join(', ') || '',
     notes: editingExercise?.notes || '',
     tags: editingExercise?.tags || []
@@ -44,9 +45,10 @@ export function AddExerciseDialog({
       title: formData.title,
       description: formData.description,
       category: formData.category,
-      youtubeUrl: formData.youtubeUrl || undefined,
+      videoType: formData.videoUrl ? formData.videoType : undefined,
+      videoUrl: formData.videoUrl || undefined,
       duration: formData.duration ? parseInt(formData.duration) : undefined,
-      difficulty: formData.difficulty as any,
+      difficulty: formData.difficulty,
       equipment: formData.equipment ? formData.equipment.split(',').map(item => item.trim()).filter(Boolean) : [],
       notes: formData.notes || undefined,
       tags: formData.tags
@@ -60,7 +62,8 @@ export function AddExerciseDialog({
       title: '',
       description: '',
       category: 'Kvadrater',
-      youtubeUrl: '',
+      videoType: 'youtube',
+      videoUrl: '',
       duration: '',
       difficulty: 'Medium',
       equipment: '',
@@ -138,14 +141,35 @@ export function AddExerciseDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="youtubeUrl">YouTube URL</Label>
-            <Input
-              id="youtubeUrl"
-              value={formData.youtubeUrl}
-              onChange={(e) => setFormData(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="videoType">Videotyp</Label>
+              <Select 
+                value={formData.videoType} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, videoType: value as VideoType }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIDEO_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="videoUrl">Video URL</Label>
+              <Input
+                id="videoUrl"
+                value={formData.videoUrl}
+                onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,7 +188,7 @@ export function AddExerciseDialog({
               <Label htmlFor="difficulty">Svårighetsgrad</Label>
               <Select 
                 value={formData.difficulty} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value as typeof DIFFICULTY_LEVELS[number] }))}
               >
                 <SelectTrigger>
                   <SelectValue />
