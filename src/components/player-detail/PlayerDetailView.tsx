@@ -1,176 +1,270 @@
 
 import React from "react";
-import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Player, Activity } from "@/types/player";
 import { DevelopmentChart } from "./DevelopmentChart";
-import { LeaguesStatsCard } from "./LeaguesStatsCard";
-import { calculateWinPercentage } from "@/utils/winCalculation";
+import { PlayerProfileAnalysis } from "./PlayerProfileAnalysis";
+import { Calendar, MapPin, Users, Edit, BarChart3, User, Target } from "lucide-react";
 
 interface PlayerDetailViewProps {
   player: Player;
   activities: Activity[];
-  className?: string;
+  onEdit?: () => void;
+  onClose?: () => void;
 }
 
-export function PlayerDetailView({ player, activities, className }: PlayerDetailViewProps) {
-  // Calculate statistics
-  const playerActivities = activities.filter(activity => 
-    activity.participants?.includes(player.id)
-  );
-  
-  const matches = playerActivities.filter(activity => activity.type === "match");
-  const cups = playerActivities.filter(activity => activity.type === "cup");
-  
-  // Use standardized win percentage calculation
-  const winPercentage = calculateWinPercentage(matches);
+export function PlayerDetailView({
+  player,
+  activities,
+  onEdit,
+  onClose
+}: PlayerDetailViewProps) {
+  // Get activities for this player
+  const playerActivities = activities
+    .filter(activity => activity.participants?.includes(player.id))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // Calculate goals and assists from player stats
-  let totalGoals = 0;
-  let totalAssists = 0;
-  let totalGrades = 0;
-  let gradeCount = 0;
-
-  matches.forEach(match => {
-    if (match.player_stats) {
-      // Handle both new and old data structures
-      if (match.player_stats[player.id]) {
-        const stats = match.player_stats[player.id];
-        totalGoals += stats.goals || 0;
-        totalAssists += stats.assists || 0;
-        if (stats.grade && stats.grade > 0) {
-          totalGrades += stats.grade;
-          gradeCount++;
-        }
-      } else if (match.player_stats.goals && match.player_stats.assists) {
-        // Handle the newer structure
-        totalGoals += match.player_stats.goals[player.id] || 0;
-        totalAssists += match.player_stats.assists[player.id] || 0;
-      }
-    }
-  });
-
-  const averageGrade = gradeCount > 0 ? (totalGrades / gradeCount).toFixed(1) : "N/A";
-
-  const formatPosition = (position: string) => {
-    if (position === 'TRÄNARE') return 'Tränare';
-    
-    let formattedPosition = position
-      .replace('MV', 'Målvakt')
-      .replace('BACK', 'Back')
-      .replace('MF', 'Mittfält')
-      .replace('ANF', 'Anfall');
-    
-    return formattedPosition;
-  };
-
-  const isCoach = player.positions?.includes('TRÄNARE');
+  const recentActivities = playerActivities.slice(0, 5);
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Compact Player Header with larger image */}
+    <div className="space-y-6">
+      {/* Header */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-32 w-32">
-              <AvatarImage src={player.image} alt={player.name} />
-              <AvatarFallback className="text-2xl font-semibold">
-                {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-xl font-bold">{player.name}</h2>
-                {player.jerseyNumber && !isCoach && (
-                  <Badge variant="outline">#{player.jerseyNumber}</Badge>
-                )}
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              {player.image && (
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted">
+                  <img 
+                    src={player.image} 
+                    alt={player.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-xl">{player.name}</CardTitle>
+                <div className="flex items-center gap-2 mt-1">
+                  {player.grade && (
+                    <Badge variant="outline">{player.grade}</Badge>
+                  )}
+                  {player.positions?.map((position, index) => (
+                    <Badge key={index} variant="secondary">
+                      {position}
+                    </Badge>
+                  ))}
+                  {player.jerseyNumber && (
+                    <Badge variant="outline">#{player.jerseyNumber}</Badge>
+                  )}
+                </div>
               </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {isCoach ? (
-                  <Badge className="bg-amber-500">Tränare</Badge>
-                ) : (
-                  <Badge>Nivå {player.grade}</Badge>
-                )}
-                
-                {!isCoach && player.positions && player.positions.length > 0 && (
-                  <Badge variant="outline">
-                    {player.positions
-                      .filter(pos => pos !== 'TRÄNARE')
-                      .map(formatPosition)
-                      .join(', ')}
-                  </Badge>
-                )}
-              </div>
+            </div>
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button onClick={onEdit} variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-1" />
+                  Redigera
+                </Button>
+              )}
+              {onClose && (
+                <Button onClick={onClose} variant="ghost" size="sm">
+                  Stäng
+                </Button>
+              )}
             </div>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
-      {/* Statistics Section - Two Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Aktivitetsstatistik</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Totalt aktiviteter:</span>
-              <span className="font-medium">{playerActivities.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Matcher:</span>
-              <span className="font-medium">{matches.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Cuper:</span>
-              <span className="font-medium">{cups.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Vinstprocent:</span>
-              <span className="font-medium">{winPercentage}%</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Development Analysis Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Översikt
+          </TabsTrigger>
+          <TabsTrigger value="development" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Utveckling
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Profil
+          </TabsTrigger>
+          <TabsTrigger value="activities" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Aktiviteter
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Prestationsstatistik</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Mål:</span>
-              <span className="font-medium">{totalGoals}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Assists:</span>
-              <span className="font-medium">{totalAssists}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Betyg snitt:</span>
-              <span className="font-medium">{averageGrade}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Basic Development Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Grundläggande utveckling</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {player.development ? (
+                  <DevelopmentChart 
+                    development={player.development} 
+                    className="h-[300px]" 
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Ingen utvecklingsdata tillgänglig
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
-      {/* Development Chart and Leagues */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {!isCoach && (
-          <DevelopmentChart 
-            development={player.development} 
-            className="h-fit"
-          />
-        )}
-        
-        <LeaguesStatsCard 
-          player={player} 
-          activities={activities}
-          className="h-fit"
-        />
-      </div>
+            {/* Activity Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Aktivitetssammanfattning
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Totala aktiviteter:</span>
+                  <span className="font-medium">{playerActivities.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Matcher:</span>
+                  <span className="font-medium">
+                    {playerActivities.filter(a => a.type === 'match').length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Cuper:</span>
+                  <span className="font-medium">
+                    {playerActivities.filter(a => a.type === 'cup').length}
+                  </span>
+                </div>
+                {recentActivities.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>Senaste aktivitet:</span>
+                    <span className="font-medium">
+                      {new Date(recentActivities[0].date).toLocaleDateString('sv-SE')}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="development" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Core Development */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Grundfärdigheter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {player.development ? (
+                  <DevelopmentChart 
+                    development={player.development} 
+                    className="h-[300px]"
+                    showExtended={false}
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Ingen utvecklingsdata tillgänglig
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Extended Development */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Detaljerad utveckling</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {player.development ? (
+                  <DevelopmentChart 
+                    development={player.development} 
+                    className="h-[300px]"
+                    showExtended={true}
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Ingen utvecklingsdata tillgänglig
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="profile" className="space-y-4">
+          {player.development ? (
+            <PlayerProfileAnalysis 
+              development={player.development}
+              positions={player.positions}
+              className="w-full"
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">
+                  Ingen utvecklingsdata tillgänglig för profilanalys
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="activities" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Senaste aktiviteter
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentActivities.length > 0 ? (
+                <div className="space-y-3">
+                  {recentActivities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{activity.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(activity.date).toLocaleDateString('sv-SE')}
+                          {activity.location?.name && (
+                            <>
+                              <MapPin className="h-3 w-3 ml-2" />
+                              {activity.location.name}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant={activity.type === 'match' ? 'default' : 'secondary'}>
+                        {activity.type === 'match' ? 'Match' : 'Cup'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Inga aktiviteter registrerade för denna spelare
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

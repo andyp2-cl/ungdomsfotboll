@@ -52,12 +52,43 @@ export interface Activity {
 }
 
 export interface PlayerDevelopment {
+  // Core original values
   technical: number;
   gameUnderstanding: number;
   passing: number;
   offensive: number;
   defensive: number;
   mentality: number;
+  
+  // New offensive values
+  shooting: number;
+  crossing: number;
+  finishing: number;
+  creativity: number;
+  
+  // New defensive values
+  tackling: number;
+  interception: number;
+  positioning: number;
+  heading: number;
+  
+  // New physical values
+  speed: number;
+  stamina: number;
+  strength: number;
+  
+  // New mental values
+  leadership: number;
+  composure: number;
+  workRate: number;
+}
+
+export interface PlayerProfile {
+  type: 'offensive' | 'defensive' | 'balanced' | 'technical' | 'physical';
+  score: number;
+  description: string;
+  strengths: string[];
+  recommendations: string[];
 }
 
 export interface Player {
@@ -69,5 +100,5 @@ export interface Player {
   jerseyNumber?: string; // Optional jersey number for the player
   image?: string; // URL to player's image
   matches?: number; // Number of matches the player has participated in
-  development?: PlayerDevelopment; // Added development data
+  development?: PlayerDevelopment; // Updated development data with new fields
 }

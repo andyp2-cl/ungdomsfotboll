@@ -197,6 +197,36 @@ export type Database = {
           },
         ]
       }
+      player_development_history: {
+        Row: {
+          created_at: string
+          development_data: Json
+          id: string
+          notes: string | null
+          player_id: string
+          recorded_at: string
+          recorded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          development_data: Json
+          id?: string
+          notes?: string | null
+          player_id: string
+          recorded_at?: string
+          recorded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          development_data?: Json
+          id?: string
+          notes?: string | null
+          player_id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           created_at: string
@@ -235,7 +265,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_player_development: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

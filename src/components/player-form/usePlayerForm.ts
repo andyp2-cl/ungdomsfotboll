@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { v4 as uuidv4 } from "uuid";
-import { Player, PlayerPosition } from "@/types/player";
+import { Player, PlayerPosition, PlayerDevelopment } from "@/types/player";
 import { formSchema, PlayerFormValues } from "./formSchema";
 
 interface UsePlayerFormProps {
@@ -19,25 +19,71 @@ export function usePlayerForm({
 }: UsePlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(initialValues?.image);
 
-  // Default development values for new players
-  const defaultDevelopment = {
+  // Complete default development values for all new fields
+  const defaultDevelopment: PlayerDevelopment = {
+    // Core original values
     technical: 1,
     gameUnderstanding: 1,
     passing: 1,
     offensive: 1,
     defensive: 1,
-    mentality: 1
+    mentality: 1,
+    
+    // New offensive values
+    shooting: 1,
+    crossing: 1,
+    finishing: 1,
+    creativity: 1,
+    
+    // New defensive values
+    tackling: 1,
+    interception: 1,
+    positioning: 1,
+    heading: 1,
+    
+    // New physical values
+    speed: 1,
+    stamina: 1,
+    strength: 1,
+    
+    // New mental values
+    leadership: 1,
+    composure: 1,
+    workRate: 1
   };
 
   // For existing players, use their development data or defaults
   const initialDevelopment = initialValues?.development 
     ? {
+        // Core original values
         technical: initialValues.development.technical ?? defaultDevelopment.technical,
         gameUnderstanding: initialValues.development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
         passing: initialValues.development.passing ?? defaultDevelopment.passing,
         offensive: initialValues.development.offensive ?? defaultDevelopment.offensive,
         defensive: initialValues.development.defensive ?? defaultDevelopment.defensive,
-        mentality: initialValues.development.mentality ?? defaultDevelopment.mentality
+        mentality: initialValues.development.mentality ?? defaultDevelopment.mentality,
+        
+        // New offensive values - inherit from existing if missing
+        shooting: initialValues.development.shooting ?? initialValues.development.offensive ?? defaultDevelopment.shooting,
+        crossing: initialValues.development.crossing ?? initialValues.development.passing ?? defaultDevelopment.crossing,
+        finishing: initialValues.development.finishing ?? initialValues.development.offensive ?? defaultDevelopment.finishing,
+        creativity: initialValues.development.creativity ?? initialValues.development.gameUnderstanding ?? defaultDevelopment.creativity,
+        
+        // New defensive values - inherit from existing if missing
+        tackling: initialValues.development.tackling ?? initialValues.development.defensive ?? defaultDevelopment.tackling,
+        interception: initialValues.development.interception ?? initialValues.development.defensive ?? defaultDevelopment.interception,
+        positioning: initialValues.development.positioning ?? initialValues.development.gameUnderstanding ?? defaultDevelopment.positioning,
+        heading: initialValues.development.heading ?? initialValues.development.defensive ?? defaultDevelopment.heading,
+        
+        // New physical values - inherit from existing if missing
+        speed: initialValues.development.speed ?? initialValues.development.technical ?? defaultDevelopment.speed,
+        stamina: initialValues.development.stamina ?? initialValues.development.mentality ?? defaultDevelopment.stamina,
+        strength: initialValues.development.strength ?? initialValues.development.defensive ?? defaultDevelopment.strength,
+        
+        // New mental values - inherit from existing if missing
+        leadership: initialValues.development.leadership ?? initialValues.development.mentality ?? defaultDevelopment.leadership,
+        composure: initialValues.development.composure ?? initialValues.development.mentality ?? defaultDevelopment.composure,
+        workRate: initialValues.development.workRate ?? initialValues.development.mentality ?? defaultDevelopment.workRate
       }
     : defaultDevelopment;
 
@@ -82,7 +128,7 @@ export function usePlayerForm({
   }, [isTrainer, form]);
 
   const handleSubmit = (data: PlayerFormValues) => {
-    // Create new player object with default development values for new players
+    // Create new player object with all development values
     const newPlayer: Player = {
       id: initialValues?.id || uuidv4(),
       name: data.name,
@@ -91,14 +137,37 @@ export function usePlayerForm({
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
-      // Always include development data, using form values for existing players or defaults for new ones
+      // Include all development data with complete field set
       development: {
+        // Core values
         technical: data.development.technical,
         gameUnderstanding: data.development.gameUnderstanding,
         passing: data.development.passing,
         offensive: data.development.offensive,
         defensive: data.development.defensive,
-        mentality: data.development.mentality
+        mentality: data.development.mentality,
+        
+        // New offensive values
+        shooting: data.development.shooting,
+        crossing: data.development.crossing,
+        finishing: data.development.finishing,
+        creativity: data.development.creativity,
+        
+        // New defensive values
+        tackling: data.development.tackling,
+        interception: data.development.interception,
+        positioning: data.development.positioning,
+        heading: data.development.heading,
+        
+        // New physical values
+        speed: data.development.speed,
+        stamina: data.development.stamina,
+        strength: data.development.strength,
+        
+        // New mental values
+        leadership: data.development.leadership,
+        composure: data.development.composure,
+        workRate: data.development.workRate
       }
     };
 
