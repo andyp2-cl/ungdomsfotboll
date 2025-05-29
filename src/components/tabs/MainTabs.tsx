@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
+import { ExcelTabContent } from "@/components/tabs/excel-tab/ExcelTabContent";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
@@ -65,6 +66,7 @@ export function MainTabs({
     { id: "players", label: "Spelare", icon: null },
     { id: "activities", label: "Aktiviteter", icon: null },
     { id: "statistics", label: "Statistik", icon: null },
+    { id: "excel", label: "Excel", icon: null },
   ],
   activeTabId,
   onTabChange,
@@ -89,7 +91,6 @@ export function MainTabs({
   handleAddPlayer,
   handleDeletePlayer,
   
-  // Activity state
   activities,
   filteredActivities,
   filteredHistoricalActivities,
@@ -122,6 +123,9 @@ export function MainTabs({
     } else if (value === "statistics") {
       setSelectedPlayer(null);
       setSelectedActivity(null);
+    } else if (value === "excel") {
+      setSelectedPlayer(null);
+      setSelectedActivity(null);
     }
     
     onTabChange(value);
@@ -146,13 +150,11 @@ export function MainTabs({
     }
   };
 
-  // Handler for activity selection from statistics tab
   const handleActivitySelect = (activity: Activity) => {
     console.log("MainTabs: Activity selected:", activity.id, activity.name);
     setSelectedActivity(activity);
   };
 
-  // Calculate grade distribution data for statistics
   const gradeData = React.useMemo(() => {
     const gradeMap = new Map<string, number>();
     
@@ -186,26 +188,28 @@ export function MainTabs({
             ))}
           </TabsList>
           
-          {/* Action buttons - always visible in consistent position */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setIsAddPlayerOpen(true)}
-              size={isMobile ? "sm" : "default"}
-              variant="outline"
-              className={isMobile ? 'h-8 px-2' : ''}
-            >
-              <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
-              {isMobile ? '' : 'Lägg till spelare'}
-            </Button>
-            <Button
-              onClick={() => setIsAddActivityOpen(true)}
-              size={isMobile ? "sm" : "default"}
-              className={isMobile ? 'h-8 px-2' : ''}
-            >
-              <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
-              {isMobile ? '' : 'Lägg till aktivitet'}
-            </Button>
-          </div>
+          {/* Action buttons - only show for non-excel tabs */}
+          {activeTabId !== "excel" && (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsAddPlayerOpen(true)}
+                size={isMobile ? "sm" : "default"}
+                variant="outline"
+                className={isMobile ? 'h-8 px-2' : ''}
+              >
+                <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                {isMobile ? '' : 'Lägg till spelare'}
+              </Button>
+              <Button
+                onClick={() => setIsAddActivityOpen(true)}
+                size={isMobile ? "sm" : "default"}
+                className={isMobile ? 'h-8 px-2' : ''}
+              >
+                <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                {isMobile ? '' : 'Lägg till aktivitet'}
+              </Button>
+            </div>
+          )}
         </div>
         
         <TabsContent value="players" className="mt-0">
@@ -264,6 +268,10 @@ export function MainTabs({
             onActivitySelect={handleActivitySelect}
             onPlayerSelect={handlePlayerSelect}
           />
+        </TabsContent>
+
+        <TabsContent value="excel" className="mt-0">
+          <ExcelTabContent />
         </TabsContent>
       </Tabs>
       
