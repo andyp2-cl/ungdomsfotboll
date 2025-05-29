@@ -32,7 +32,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
-    handleDeletePlayer, // Ensure this is properly exported from usePlayers
+    handleDeletePlayer,
     
     // Activity data
     activities,

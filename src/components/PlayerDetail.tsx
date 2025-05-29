@@ -1,16 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayerHeader } from "@/components/PlayerHeader";
-import { PlayerMatchHistory } from "@/components/player-match-history";
-import { X, Edit, Trash2 } from "lucide-react";
-import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
-import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
-import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
-import { DevelopmentChart } from "./player-detail/DevelopmentChart";
-import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { PlayerCard } from "@/components/PlayerCard";
+import { PlayerMatchTabs } from "@/components/player-match-history/PlayerMatchTabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface PlayerDetailProps {
   player: Player;
@@ -19,8 +14,8 @@ interface PlayerDetailProps {
   onEdit: (player: Player) => void;
   onPlayerUpdate: (player: Player) => void;
   onPlayerDelete?: (playerId: string) => Promise<void>;
-  onBulkUpdate?: (player: Player) => void;
-  allPlayers?: Player[];
+  onBulkUpdate: (player: Player) => void;
+  allPlayers: Player[];
   onActivitySelect?: (activity: Activity) => void;
 }
 
@@ -35,192 +30,105 @@ export function PlayerDetail({
   allPlayers,
   onActivitySelect
 }: PlayerDetailProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Get activities where this player participated
   const playerActivities = activities.filter(activity => 
     activity.participants?.includes(player.id)
   );
-  
-  const playerMatches = playerActivities.filter(activity => 
-    activity.type === "match"
-  );
 
-  // Calculate player stats including winrate
-  const playerStats = calculatePlayerStats(player, playerMatches);
-
-  const isCoach = player.positions?.includes('TRÄNARE');
-
-  const handleActivitySelect = (activity: Activity) => {
-    console.log("PlayerDetail: Activity selected:", activity.id, activity.name);
-    if (onActivitySelect) {
-      onActivitySelect(activity);
-    } else {
-      console.warn("onActivitySelect is not provided to PlayerDetail");
+  const handleDelete = async () => {
+    if (!onPlayerDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await onPlayerDelete(player.id);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting player:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
+  const handleActivitySelect = (activity: Activity) => {
+    if (onActivitySelect) {
+      onActivitySelect(activity);
+    }
   };
 
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handlePlayerUpdate = (updatedPlayer: Player) => {
-    onPlayerUpdate(updatedPlayer);
-  };
-
-  const handleClose = () => {
-    console.log("PlayerDetail: Close button clicked - calling onClose()");
-    onClose();
-  };
+  useEffect(() => {
+    console.log("PlayerDetail: Player activities count:", playerActivities.length);
+    console.log("PlayerDetail: All activities count:", activities.length);
+  }, [playerActivities.length, activities.length]);
 
   return (
-    <Card className="mb-6 relative">
-      <div className="absolute top-2 right-2 z-10 flex space-x-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={handleEditClick}
-          title="Redigera spelare"
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={onClose}
+          className="flex items-center gap-2"
         >
-          <Edit className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
+          Tillbaka
         </Button>
-        {onPlayerDelete && (
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={handleDeleteClick}
-            title={isCoach ? "Ta bort tränare" : "Ta bort spelare"}
-            className="text-red-500 hover:text-red-600 hover:bg-red-100"
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => onEdit(player)}
+            className="flex items-center gap-2"
           >
-            <Trash2 className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
+            Redigera
           </Button>
-        )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <CardHeader className="pb-0">
-        <PlayerHeader 
-          player={player}
-          onPlayerUpdate={onPlayerUpdate}
-          onBulkUpdate={onBulkUpdate}
-          allPlayers={allPlayers}
-        />
-      </CardHeader>
-      
-      <CardContent>
-        {player.image && (
-          <div className="flex justify-center mb-4">
-            <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-primary/20">
-              <img 
-                src={player.image} 
-                alt={player.name} 
-                className="h-full w-full object-cover"
-              />
-            </div>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-base">Matcher & Aktiviteter</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Totalt aktiviteter:</span>
-                    <span className="font-medium">{playerActivities.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Matcher:</span>
-                    <span className="font-medium">
-                      {playerStats.matches}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Vinster:</span>
-                    <span className="font-medium text-green-600">
-                      {playerStats.wins}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Oavgjorda:</span>
-                    <span className="font-medium text-gray-600">
-                      {playerStats.draws}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Förluster:</span>
-                    <span className="font-medium text-red-600">
-                      {playerStats.losses}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="text-muted-foreground font-medium">Winrate:</span>
-                    <span className="font-bold text-primary">
-                      {playerStats.winRate}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cuper:</span>
-                    <span className="font-medium">
-                      {playerActivities.filter(a => a.type === "cup").length}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <LeaguesStatsCard 
-              player={player}
-              activities={activities}
-              className="mt-4"
-            />
-          </div>
           
-          <div className="md:col-span-2">
-            <div className="h-48">
-              <DevelopmentChart 
-                development={player.development}
-              />
-            </div>
-          </div>
+          {onPlayerDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Ta bort
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Ta bort spelare</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Är du säker på att du vill ta bort {player.name}? Detta kan inte ångras.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                    {isDeleting ? "Tar bort..." : "Ta bort"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
-        
-        <PlayerMatchHistory 
-          player={player} 
-          activities={activities}
-          onActivitySelect={handleActivitySelect}
-          allPlayers={allPlayers}
-        />
-      </CardContent>
-      
-      <EditPlayerDialog 
-        player={player}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onPlayerUpdate={handlePlayerUpdate}
+      </div>
+
+      <PlayerCard 
+        player={player} 
+        onPlayerUpdate={onPlayerUpdate}
+        onBulkUpdate={onBulkUpdate}
+        allPlayers={allPlayers}
       />
-      
-      {onPlayerDelete && (
-        <DeletePlayerDialog
-          player={player}
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onConfirmDelete={onPlayerDelete}
-        />
-      )}
-    </Card>
+
+      <PlayerMatchTabs 
+        player={player} 
+        playerActivities={playerActivities}
+        onActivitySelect={handleActivitySelect}
+        allPlayers={allPlayers}
+        allActivities={activities}
+      />
+    </div>
   );
 }
