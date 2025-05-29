@@ -6,6 +6,7 @@ import { MatchesTabContent } from "@/components/player-management/statistics/mat
 import { GoalsTabContent } from "@/components/player-management/statistics/goals/GoalsTabContent";
 import { ParticipationTabContent } from "@/components/player-management/statistics/ParticipationTabContent";
 import { OverviewTabContent } from "@/components/player-management/statistics/overview/OverviewTabContent";
+import { CombinationsTabContent } from "@/components/player-management/statistics/combinations/CombinationsTabContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StatisticsTabContentProps {
@@ -26,12 +27,18 @@ export function StatisticsTabContent({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview">
-        <TabsList className={`w-full ${isMobile ? 'grid-cols-2 h-auto' : 'md:w-auto grid-cols-4'}`}>
+        <TabsList className={`w-full ${isMobile ? 'grid-cols-3 h-auto' : 'md:w-auto grid-cols-5'}`}>
           <TabsTrigger 
             value="overview" 
             className={isMobile ? 'text-xs px-2 py-3' : ''}
           >
             Översikt
+          </TabsTrigger>
+          <TabsTrigger 
+            value="combinations" 
+            className={isMobile ? 'text-xs px-2 py-3' : ''}
+          >
+            {isMobile ? 'Kombo' : 'Kombinationer'}
           </TabsTrigger>
           <TabsTrigger 
             value="matches" 
@@ -59,6 +66,14 @@ export function StatisticsTabContent({
             gradeData={gradeData}
             onPlayerSelect={onPlayerSelect}
             isMobile={isMobile}
+          />
+        </TabsContent>
+        
+        <TabsContent value="combinations" className="space-y-6">
+          <CombinationsTabContent
+            players={players}
+            activities={activities}
+            onPlayerSelect={onPlayerSelect}
           />
         </TabsContent>
         
