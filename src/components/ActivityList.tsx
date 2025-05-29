@@ -2,6 +2,7 @@
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityListItem } from "@/components/activity-list/ActivityListItem";
+import { ActivityListWithMonthGrouping } from "@/components/activity-list/ActivityListWithMonthGrouping";
 
 interface ActivityListProps {
   activities: Activity[];
@@ -40,6 +41,21 @@ export function ActivityList({
       <div className="text-center py-8 text-muted-foreground">
         {noResultsMessage}
       </div>
+    );
+  }
+
+  // Use month grouping for historical activities, regular list for current activities
+  if (isHistorical) {
+    return (
+      <ActivityListWithMonthGrouping
+        activities={activities}
+        players={players}
+        onSelect={onSelect}
+        onPlayerSelect={handlePlayerSelectWithLogging}
+        isHistorical={isHistorical}
+        isMobile={isMobile}
+        noResultsMessage={noResultsMessage}
+      />
     );
   }
 
