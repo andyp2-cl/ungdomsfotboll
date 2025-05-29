@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,32 +25,30 @@ export function ActivityParticipants({
   isMobile = false,
   showAll = true
 }: ActivityParticipantsProps) {
-  // Sort participants by grade
   const sortedParticipants = sortPlayersByGrade(participants);
-  
-  // Show ALL participants - remove the limiting
   const displayedParticipants = sortedParticipants;
   
-  // Group participants by grade for better visual organization
   const participantsByGrade: Record<string, Player[]> = {};
   
-  // Initialize groups for each grade level
   ['A', 'B', 'C', 'D', undefined].forEach(grade => {
     participantsByGrade[grade || 'undefined'] = [];
   });
   
-  // Populate the groups
   displayedParticipants.forEach(player => {
     const grade = player.grade || 'undefined';
     participantsByGrade[grade].push(player);
   });
   
-  // Function to get first name only
-  const getFirstName = (fullName: string) => {
+  // Function to get first name only, but keep more characters for mobile
+  const getDisplayName = (fullName: string) => {
+    if (isMobile) {
+      // On mobile, try to show a bit more of the name
+      const firstName = fullName.split(' ')[0];
+      return firstName.length > 8 ? firstName.substring(0, 7) + '.' : firstName;
+    }
     return fullName.split(' ')[0];
   };
 
-  // Single click handler for players
   const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -75,17 +72,18 @@ export function ActivityParticipants({
     );
   }
 
-  // Mobile-optimized sizing - smaller avatars and fewer columns
-  const avatarSize = isMobile ? 'h-10 w-10' : 'h-16 w-16';
-  const iconSize = isMobile ? 'h-5 w-5' : 'h-8 w-8';
-  const gridCols = isMobile ? 'grid-cols-6' : 'grid-cols-9';
+  // Improved mobile sizing - fewer columns for better name visibility
+  const avatarSize = isMobile ? 'h-9 w-9' : 'h-16 w-16';
+  const iconSize = isMobile ? 'h-4 w-4' : 'h-8 w-8';
+  const gridCols = isMobile ? 'grid-cols-4' : 'grid-cols-9'; // Reduced from 6 to 4 on mobile
+  const cardPadding = isMobile ? 'p-1' : 'p-1';
+  const gap = isMobile ? 'gap-1' : 'gap-1';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
         const playersInGrade = participantsByGrade[gradeKey];
         
-        // Skip rendering this grade group if it's empty
         if (playersInGrade.length === 0) return null;
         
         return (
@@ -96,12 +94,12 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className={`grid ${gridCols} gap-1 w-full`}>
+            <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${isMobile ? 'p-0.5' : 'p-1'} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                  className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${cardPadding} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
                   onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                 >
                   <TooltipProvider>
@@ -124,8 +122,8 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap text-center w-full ${isMobile ? 'leading-tight' : ''}`}>
-                    {getFirstName(player.name)}
+                  <span className={`text-xs text-center w-full ${isMobile ? 'leading-tight px-0.5' : ''} overflow-hidden text-ellipsis whitespace-nowrap`}>
+                    {getDisplayName(player.name)}
                   </span>
                 </div>
               ))}
