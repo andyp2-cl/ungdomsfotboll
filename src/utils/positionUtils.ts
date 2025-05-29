@@ -1,6 +1,15 @@
 
 import { PlayerPosition } from "@/types/player";
 
+// Define consistent position order for sorting
+const POSITION_ORDER = {
+  'TRÄNARE': 0,
+  'MV': 1,
+  'BACK': 2,
+  'MF': 3,
+  'ANF': 4
+};
+
 // Format individual position with full names
 export function formatPosition(position: string): string {
   switch (position) {
@@ -37,7 +46,16 @@ export function formatPositionShort(position: string): string {
   }
 }
 
-// Format multiple positions with consistent handling
+// Sort positions in consistent order
+export function sortPositions(positions: string[]): string[] {
+  return [...positions].sort((a, b) => {
+    const orderA = POSITION_ORDER[a as keyof typeof POSITION_ORDER] ?? 999;
+    const orderB = POSITION_ORDER[b as keyof typeof POSITION_ORDER] ?? 999;
+    return orderA - orderB;
+  });
+}
+
+// Format multiple positions with consistent handling and sorting
 export function formatPositions(positions: string[] | undefined, compact: boolean = false): string {
   if (!positions || positions.length === 0) {
     return 'Ingen position';
@@ -48,8 +66,10 @@ export function formatPositions(positions: string[] | undefined, compact: boolea
     return 'Tränare';
   }
   
+  // Sort positions consistently before formatting
+  const sortedPositions = sortPositions(positions);
   const formatter = compact ? formatPositionShort : formatPosition;
-  return positions.map(formatter).join(', ');
+  return sortedPositions.map(formatter).join(', ');
 }
 
 // Get positions string for display (legacy compatibility)
@@ -66,5 +86,8 @@ export function isTrainer(positions: string[] | undefined): boolean {
 export function getPrimaryPosition(positions: string[] | undefined): string {
   if (!positions || positions.length === 0) return 'Ingen position';
   if (positions.includes('TRÄNARE')) return 'Tränare';
-  return formatPosition(positions[0]);
+  
+  // Sort and return first position
+  const sortedPositions = sortPositions(positions);
+  return formatPosition(sortedPositions[0]);
 }
