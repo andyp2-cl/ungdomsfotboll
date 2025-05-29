@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Player } from "@/types/player";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EditPlayerForm } from "@/components/EditPlayerForm";
 
 interface EditPlayerDialogProps {
@@ -17,23 +16,17 @@ export function EditPlayerDialog({
   onOpenChange, 
   onPlayerUpdate 
 }: EditPlayerDialogProps) {
+  if (!player) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Redigera spelare</DialogTitle>
-        </DialogHeader>
-        {player && (
-          <EditPlayerForm 
-            player={player} 
-            onSave={(updatedPlayer) => {
-              onPlayerUpdate(updatedPlayer);
-              onOpenChange(false);
-            }}
-            onCancel={() => onOpenChange(false)}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+    <EditPlayerForm
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      onSave={(updatedPlayer) => {
+        onPlayerUpdate(updatedPlayer);
+        onOpenChange(false);
+      }}
+      initialValues={player}
+    />
   );
 }

@@ -32,7 +32,13 @@ export function useDevelopmentHistory(playerId?: string) {
         throw fetchError;
       }
 
-      setHistory(data || []);
+      // Convert Json data to PlayerDevelopment
+      const formattedHistory: DevelopmentHistoryEntry[] = (data || []).map(entry => ({
+        ...entry,
+        development_data: entry.development_data as PlayerDevelopment
+      }));
+
+      setHistory(formattedHistory);
     } catch (err) {
       console.error('Error fetching development history:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch development history');
@@ -51,7 +57,7 @@ export function useDevelopmentHistory(playerId?: string) {
         .from('player_development_history')
         .insert({
           player_id: playerIdToAdd,
-          development_data: developmentData,
+          development_data: developmentData as any, // Cast to any for Json compatibility
           notes: notes || 'Manual entry',
           recorded_at: new Date().toISOString()
         });

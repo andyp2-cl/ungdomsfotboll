@@ -1,5 +1,5 @@
 
-import { Player, PlayerDevelopment } from "@/types/player";
+import { Player, PlayerDevelopment, PlayerPosition } from "@/types/player";
 
 export interface DatabasePlayer {
   id: string;
@@ -117,9 +117,9 @@ export const formatDatabasePlayer = (dbPlayer: DatabasePlayer): Player => {
   }
   
   // Handle positions - convert legacy position field or use empty array
-  let positions: string[] = [];
+  let positions: PlayerPosition[] = [];
   if (dbPlayer.position) {
-    positions = [dbPlayer.position];
+    positions = [dbPlayer.position as PlayerPosition];
   }
   
   const formattedPlayer: Player = {

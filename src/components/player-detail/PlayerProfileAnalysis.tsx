@@ -1,210 +1,169 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlayerDevelopment, PlayerProfile, PlayerPosition } from "@/types/player";
-import { Shield, Zap, Target, Brain, Dumbbell, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PlayerDevelopment, PlayerProfile } from "@/types/player";
+import { TrendingUp, Shield, Target, Brain } from "lucide-react";
 
 interface PlayerProfileAnalysisProps {
   development: PlayerDevelopment;
-  positions?: PlayerPosition[];
+  playerName: string;
   className?: string;
 }
 
-// Position weights for different attributes
-const POSITION_WEIGHTS = {
-  MV: {
-    defensive: 1.5,
-    positioning: 1.8,
-    composure: 1.3,
-    leadership: 1.2
-  },
-  BACK: {
-    defensive: 1.4,
-    tackling: 1.5,
-    heading: 1.3,
-    speed: 1.2,
-    positioning: 1.3
-  },
-  MF: {
-    passing: 1.3,
-    gameUnderstanding: 1.4,
-    creativity: 1.2,
-    workRate: 1.3,
-    stamina: 1.2
-  },
-  ANF: {
-    offensive: 1.4,
-    shooting: 1.5,
-    finishing: 1.6,
-    speed: 1.3,
-    crossing: 1.2
-  }
-};
-
 export function PlayerProfileAnalysis({
   development,
-  positions = [],
+  playerName,
   className = ""
 }: PlayerProfileAnalysisProps) {
   
-  const calculateProfile = (): PlayerProfile => {
-    // Calculate weighted scores based on position
-    const primaryPosition = positions[0] as keyof typeof POSITION_WEIGHTS;
-    const weights = POSITION_WEIGHTS[primaryPosition] || {};
-    
-    // Core category calculations with proper fallbacks
+  const analyzePlayerProfile = (dev: PlayerDevelopment): PlayerProfile => {
+    // Default values to prevent undefined errors
+    const defaultDev = {
+      technical: 1,
+      gameUnderstanding: 1,
+      passing: 1,
+      offensive: 1,
+      defensive: 1,
+      mentality: 1,
+      shooting: 1,
+      crossing: 1,
+      finishing: 1,
+      creativity: 1,
+      tackling: 1,
+      interception: 1,
+      positioning: 1,
+      heading: 1,
+      speed: 1,
+      stamina: 1,
+      strength: 1,
+      leadership: 1,
+      composure: 1,
+      workRate: 1,
+      ...dev // Override with actual values
+    };
+
+    // Calculate category averages
     const offensiveScore = (
-      (development.offensive || 1) + 
-      (development.shooting || 1) + 
-      (development.finishing || 1) + 
-      (development.crossing || 1) +
-      (development.creativity || 1)
+      defaultDev.offensive + 
+      defaultDev.shooting + 
+      defaultDev.finishing + 
+      defaultDev.creativity +
+      defaultDev.crossing
     ) / 5;
-    
+
     const defensiveScore = (
-      (development.defensive || 1) + 
-      (development.tackling || 1) + 
-      (development.interception || 1) + 
-      (development.heading || 1) +
-      (development.positioning || 1)
+      defaultDev.defensive + 
+      defaultDev.tackling + 
+      defaultDev.interception + 
+      defaultDev.positioning +
+      defaultDev.heading
     ) / 5;
-    
+
     const technicalScore = (
-      (development.technical || 1) + 
-      (development.passing || 1) + 
-      (development.gameUnderstanding || 1) +
-      (development.creativity || 1)
-    ) / 4;
-    
-    const physicalScore = (
-      (development.speed || 1) + 
-      (development.stamina || 1) + 
-      (development.strength || 1)
+      defaultDev.technical + 
+      defaultDev.passing + 
+      defaultDev.gameUnderstanding
     ) / 3;
-    
+
+    const physicalScore = (
+      defaultDev.speed + 
+      defaultDev.stamina + 
+      defaultDev.strength
+    ) / 3;
+
     const mentalScore = (
-      (development.mentality || 1) + 
-      (development.leadership || 1) + 
-      (development.composure || 1) +
-      (development.workRate || 1)
+      defaultDev.mentality + 
+      defaultDev.leadership + 
+      defaultDev.composure +
+      defaultDev.workRate
     ) / 4;
-    
-    // Apply position weights
-    const weightedOffensive = offensiveScore * (weights.offensive || 1);
-    const weightedDefensive = defensiveScore * (weights.defensive || 1);
-    
-    // Determine profile type
-    const scoreDiff = Math.abs(weightedOffensive - weightedDefensive);
-    
-    if (scoreDiff < 1.5) {
-      return {
-        type: 'balanced',
-        score: (offensiveScore + defensiveScore) / 2,
-        description: 'Balanserad spelare',
-        strengths: getTopStrengths(development),
-        recommendations: getBalancedRecommendations(development)
-      };
-    } else if (weightedOffensive > weightedDefensive) {
-      return {
-        type: 'offensive',
-        score: offensiveScore,
-        description: 'Offensiv spelare',
-        strengths: getOffensiveStrengths(development),
-        recommendations: getOffensiveRecommendations(development)
-      };
-    } else {
-      return {
-        type: 'defensive',
-        score: defensiveScore,
-        description: 'Defensiv spelare',
-        strengths: getDefensiveStrengths(development),
-        recommendations: getDefensiveRecommendations(development)
-      };
+
+    // Determine primary profile
+    const scores = {
+      offensive: offensiveScore,
+      defensive: defensiveScore,
+      technical: technicalScore,
+      physical: physicalScore,
+      mental: mentalScore
+    };
+
+    const maxScore = Math.max(...Object.values(scores));
+    const maxKey = Object.keys(scores).find(key => scores[key as keyof typeof scores] === maxScore) as keyof typeof scores;
+
+    // Determine profile type based on highest category
+    let type: PlayerProfile['type'] = 'balanced';
+    if (offensiveScore > defensiveScore + 1) {
+      type = 'offensive';
+    } else if (defensiveScore > offensiveScore + 1) {
+      type = 'defensive';
+    } else if (technicalScore >= 7) {
+      type = 'technical';
+    } else if (physicalScore >= 7) {
+      type = 'physical';
     }
+
+    // Generate strengths
+    const strengths: string[] = [];
+    if (defaultDev.shooting >= 7) strengths.push('Skott');
+    if (defaultDev.passing >= 7) strengths.push('Passning');
+    if (defaultDev.tackling >= 7) strengths.push('Tacklingar');
+    if (defaultDev.speed >= 7) strengths.push('Snabbhet');
+    if (defaultDev.leadership >= 7) strengths.push('Ledarskap');
+    if (defaultDev.gameUnderstanding >= 7) strengths.push('Spelförståelse');
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+    if (defaultDev.shooting < 5) recommendations.push('Träna skotteknik');
+    if (defaultDev.defensive < 5) recommendations.push('Förbättra defensivt spel');
+    if (defaultDev.mentality < 5) recommendations.push('Utveckla mental styrka');
+    if (defaultDev.speed < 5) recommendations.push('Arbeta med snabbhet');
+
+    const descriptions = {
+      offensive: `${playerName} är en offensiv spelare med stark förmåga att skapa och avsluta målchanser.`,
+      defensive: `${playerName} är en defensiv spelare med god förmåga att stoppa motståndare och vinna bollar.`,
+      technical: `${playerName} är en teknisk spelare med utmärkt bollkontroll och spelförståelse.`,
+      physical: `${playerName} är en fysisk spelare med god snabbhet, styrka och uthållighet.`,
+      balanced: `${playerName} är en balanserad spelare med jämna färdigheter inom alla områden.`
+    };
+
+    return {
+      type,
+      score: maxScore,
+      description: descriptions[type],
+      strengths: strengths.slice(0, 3),
+      recommendations: recommendations.slice(0, 3)
+    };
   };
 
-  const getTopStrengths = (dev: PlayerDevelopment): string[] => {
-    const allValues = [
-      { key: 'shooting', value: dev.shooting || 1, label: 'Skott' },
-      { key: 'finishing', value: dev.finishing || 1, label: 'Avslut' },
-      { key: 'crossing', value: dev.crossing || 1, label: 'Inlägg' },
-      { key: 'tackling', value: dev.tackling || 1, label: 'Tacklingar' },
-      { key: 'interception', value: dev.interception || 1, label: 'Avbrott' },
-      { key: 'positioning', value: dev.positioning || 1, label: 'Positionering' },
-      { key: 'speed', value: dev.speed || 1, label: 'Snabbhet' },
-      { key: 'leadership', value: dev.leadership || 1, label: 'Ledarskap' },
-      { key: 'creativity', value: dev.creativity || 1, label: 'Kreativitet' }
-    ];
-    
-    return allValues
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 3)
-      .map(item => item.label);
-  };
+  const profile = analyzePlayerProfile(development);
 
-  const getOffensiveStrengths = (dev: PlayerDevelopment): string[] => {
-    const strengths = [];
-    if ((dev.shooting || 1) >= 7) strengths.push('Målskytte');
-    if ((dev.finishing || 1) >= 7) strengths.push('Avslut');
-    if ((dev.crossing || 1) >= 7) strengths.push('Inlägg');
-    if ((dev.creativity || 1) >= 7) strengths.push('Kreativitet');
-    if ((dev.speed || 1) >= 7) strengths.push('Snabbhet');
-    return strengths.slice(0, 3);
-  };
-
-  const getDefensiveStrengths = (dev: PlayerDevelopment): string[] => {
-    const strengths = [];
-    if ((dev.tackling || 1) >= 7) strengths.push('Tacklingar');
-    if ((dev.interception || 1) >= 7) strengths.push('Avbrott');
-    if ((dev.heading || 1) >= 7) strengths.push('Huvudspel');
-    if ((dev.positioning || 1) >= 7) strengths.push('Positionering');
-    if ((dev.strength || 1) >= 7) strengths.push('Styrka');
-    return strengths.slice(0, 3);
-  };
-
-  const getOffensiveRecommendations = (dev: PlayerDevelopment): string[] => {
-    const recs = [];
-    if ((dev.shooting || 1) < 6) recs.push('Träna skottteknik');
-    if ((dev.crossing || 1) < 6) recs.push('Förbättra inläggsspelet');
-    if ((dev.speed || 1) < 6) recs.push('Utveckla snabbhet');
-    return recs.slice(0, 2);
-  };
-
-  const getDefensiveRecommendations = (dev: PlayerDevelopment): string[] => {
-    const recs = [];
-    if ((dev.tackling || 1) < 6) recs.push('Träna tacklingstekniken');
-    if ((dev.positioning || 1) < 6) recs.push('Förbättra positioneringen');
-    if ((dev.interception || 1) < 6) recs.push('Utveckla avbrottsspelet');
-    return recs.slice(0, 2);
-  };
-
-  const getBalancedRecommendations = (dev: PlayerDevelopment): string[] => {
-    const recs = [];
-    if ((dev.gameUnderstanding || 1) < 6) recs.push('Utveckla spelförståelsen');
-    if ((dev.workRate || 1) < 6) recs.push('Förbättra arbetsmoralen');
-    return recs.slice(0, 2);
-  };
-
-  const profile = calculateProfile();
-
-  const getProfileIcon = (type: string) => {
+  const getProfileIcon = (type: PlayerProfile['type']) => {
     switch (type) {
       case 'offensive': return <Target className="h-4 w-4" />;
       case 'defensive': return <Shield className="h-4 w-4" />;
       case 'technical': return <Brain className="h-4 w-4" />;
-      case 'physical': return <Dumbbell className="h-4 w-4" />;
-      default: return <Star className="h-4 w-4" />;
+      default: return <TrendingUp className="h-4 w-4" />;
     }
   };
 
-  const getProfileColor = (type: string) => {
+  const getProfileColor = (type: PlayerProfile['type']) => {
     switch (type) {
-      case 'offensive': return 'bg-red-100 text-red-800 border-red-200';
-      case 'defensive': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'technical': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'physical': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'offensive': return 'bg-red-100 text-red-800';
+      case 'defensive': return 'bg-blue-100 text-blue-800';
+      case 'technical': return 'bg-purple-100 text-purple-800';
+      case 'physical': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getProfileLabel = (type: PlayerProfile['type']) => {
+    switch (type) {
+      case 'offensive': return 'Offensiv';
+      case 'defensive': return 'Defensiv';
+      case 'technical': return 'Teknisk';
+      case 'physical': return 'Fysisk';
+      default: return 'Balanserad';
     }
   };
 
@@ -213,51 +172,41 @@ export function PlayerProfileAnalysis({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {getProfileIcon(profile.type)}
-          Spelarprofil
+          Spelaranalys
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Profile Badge */}
         <div className="flex items-center gap-2">
           <Badge className={getProfileColor(profile.type)}>
-            {profile.description}
+            {getProfileLabel(profile.type)} ({profile.score.toFixed(1)}/10)
           </Badge>
-          <span className="text-sm text-muted-foreground">
-            Poäng: {profile.score.toFixed(1)}
-          </span>
         </div>
 
-        <div>
-          <h4 className="font-medium text-sm mb-2">Styrkor</h4>
-          <div className="flex flex-wrap gap-1">
-            {profile.strengths.map((strength, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {strength}
-              </Badge>
-            ))}
-          </div>
-        </div>
+        {/* Description */}
+        <p className="text-sm text-muted-foreground">{profile.description}</p>
 
-        {profile.recommendations.length > 0 && (
+        {/* Strengths */}
+        {profile.strengths.length > 0 && (
           <div>
-            <h4 className="font-medium text-sm mb-2">Utvecklingsområden</h4>
-            <div className="space-y-1">
-              {profile.recommendations.map((rec, index) => (
-                <p key={index} className="text-xs text-muted-foreground">
-                  • {rec}
-                </p>
+            <h4 className="font-medium text-sm mb-2">Styrkor</h4>
+            <div className="flex flex-wrap gap-1">
+              {profile.strengths.map((strength, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {strength}
+                </Badge>
               ))}
             </div>
           </div>
         )}
 
-        {positions.length > 0 && (
+        {/* Recommendations */}
+        {profile.recommendations.length > 0 && (
           <div>
-            <h4 className="font-medium text-sm mb-2">Föreslagna positioner</h4>
-            <div className="flex flex-wrap gap-1">
-              {positions.map((pos, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {pos}
-                </Badge>
+            <h4 className="font-medium text-sm mb-2">Utvecklingsområden</h4>
+            <div className="space-y-1">
+              {profile.recommendations.map((rec, index) => (
+                <p key={index} className="text-xs text-muted-foreground">• {rec}</p>
               ))}
             </div>
           </div>

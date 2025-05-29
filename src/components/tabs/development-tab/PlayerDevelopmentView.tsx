@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
-import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Timeline } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock } from "lucide-react";
 
 interface PlayerDevelopmentViewProps {
   players: Player[];
@@ -148,7 +148,7 @@ export function PlayerDevelopmentView({
               Nuvarande
             </TabsTrigger>
             <TabsTrigger value="timeline" className="flex items-center gap-2">
-              <Timeline className="h-4 w-4" />
+              <Clock className="h-4 w-4" />
               Historik
             </TabsTrigger>
             <TabsTrigger value="insights" className="flex items-center gap-2">
@@ -173,7 +173,8 @@ export function PlayerDevelopmentView({
                   {selectedPlayer.development ? (
                     <DevelopmentChart 
                       development={selectedPlayer.development} 
-                      className="h-[250px]" 
+                      className="h-[350px]" 
+                      minimal={true}
                     />
                   ) : (
                     <p className="text-muted-foreground text-center py-8">

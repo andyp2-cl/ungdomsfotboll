@@ -1,54 +1,62 @@
 
-import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import React from "react";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
-import { PlayerFormValues, positionOptions } from "./formSchema";
 
 interface PlayerPositionFieldProps {
-  form: UseFormReturn<PlayerFormValues>;
+  form: UseFormReturn<any>;
 }
 
 export function PlayerPositionField({ form }: PlayerPositionFieldProps) {
+  const positions = [
+    { value: 'MV', label: 'Målvakt' },
+    { value: 'BACK', label: 'Back' },
+    { value: 'MF', label: 'Mittfält' },
+    { value: 'ANF', label: 'Anfallare' },
+    { value: 'TRÄNARE', label: 'Tränare' }
+  ];
+
   return (
     <FormField
       control={form.control}
       name="positions"
       render={() => (
         <FormItem>
-          <FormLabel>Positioner</FormLabel>
-          <div className="flex flex-col space-y-2">
-            {positionOptions.map((position) => (
+          <div className="mb-4">
+            <FormLabel className="text-base">Positioner</FormLabel>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {positions.map((position) => (
               <FormField
                 key={position.value}
                 control={form.control}
                 name="positions"
-                render={({ field }) => {
-                  return (
-                    <div className="flex items-center space-x-2 py-1">
+                render={({ field }) => (
+                  <FormItem
+                    key={position.value}
+                    className="flex flex-row items-start space-x-3 space-y-0"
+                  >
+                    <FormControl>
                       <Checkbox
-                        id={`position-${position.value}`}
                         checked={field.value?.includes(position.value)}
                         onCheckedChange={(checked) => {
-                          let updatedPositions = [...(field.value || [])];
+                          const currentPositions = field.value || [];
                           if (checked) {
-                            updatedPositions.push(position.value);
+                            field.onChange([...currentPositions, position.value]);
                           } else {
-                            updatedPositions = updatedPositions.filter(
-                              (p) => p !== position.value
+                            field.onChange(
+                              currentPositions.filter((p: string) => p !== position.value)
                             );
                           }
-                          field.onChange(updatedPositions);
                         }}
                       />
-                      <label
-                        htmlFor={`position-${position.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {position.label}
-                      </label>
-                    </div>
-                  );
-                }}
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal">
+                      {position.label}
+                    </FormLabel>
+                  </FormItem>
+                )}
               />
             ))}
           </div>

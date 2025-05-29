@@ -139,7 +139,7 @@ export function EditPlayerForm({
             </div>
 
             {/* Positions */}
-            <PlayerPositionField form={form} isTrainer={isTrainer} />
+            <PlayerPositionField form={form} />
 
             {/* Development Fields */}
             {!isTrainer && <DevelopmentFields form={form} />}

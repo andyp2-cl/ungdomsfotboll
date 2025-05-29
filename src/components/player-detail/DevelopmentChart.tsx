@@ -93,17 +93,17 @@ export function DevelopmentChart({
   return (
     <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+        <RadarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
           <PolarGrid />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fontSize: minimal ? 10 : 12 }}
+            tick={{ fontSize: minimal ? 11 : 12 }}
             className="text-muted-foreground"
           />
           <PolarRadiusAxis 
             angle={0} 
             domain={[0, 10]} 
-            tick={{ fontSize: minimal ? 8 : 10 }}
+            tick={{ fontSize: minimal ? 9 : 10 }}
             className="text-muted-foreground"
           />
           <Radar
@@ -117,8 +117,8 @@ export function DevelopmentChart({
           {!minimal && (
             <Legend 
               wrapperStyle={{ 
-                fontSize: '12px',
-                paddingTop: '10px'
+                fontSize: '11px',
+                paddingTop: '5px'
               }}
             />
           )}
