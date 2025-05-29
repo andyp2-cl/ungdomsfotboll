@@ -383,3 +383,324 @@ export const suggestOptimalLineup = (
     reasoning
   };
 };
+
+// New interfaces for opponent analysis
+export interface OpponentAnalysis {
+  opponentName: string;
+  totalMatches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winRate: number;
+  averageGoalsFor: number;
+  averageGoalsAgainst: number;
+  averageGoalDifference: number;
+  goalDifferenceRange: {
+    min: number;
+    max: number;
+    variance: number;
+  };
+  recentForm: Array<{
+    date: string;
+    result: 'W' | 'D' | 'L';
+    goalDifference: number;
+  }>;
+}
+
+export interface BalancedLineupSuggestion {
+  formation: string;
+  players: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[];
+  expectedGoalDifference: number;
+  balanceScore: number; // 0-100, where 100 is perfect balance
+  confidence: number;
+  opponentAnalysis: OpponentAnalysis;
+  reasoning: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+// Extract opponent names from activities
+export const getOpponents = (activities: Activity[]): string[] => {
+  const opponents = new Set<string>();
+  
+  activities
+    .filter(a => a.type === 'match' && a.opponent)
+    .forEach(activity => {
+      if (activity.opponent) {
+        opponents.add(activity.opponent);
+      }
+    });
+  
+  return Array.from(opponents).sort();
+};
+
+// Analyze historical performance against specific opponent
+export const analyzeOpponentHistory = (
+  activities: Activity[], 
+  opponentName: string
+): OpponentAnalysis => {
+  const opponentMatches = activities.filter(
+    a => a.type === 'match' && a.opponent === opponentName
+  );
+  
+  if (opponentMatches.length === 0) {
+    return {
+      opponentName,
+      totalMatches: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      winRate: 0,
+      averageGoalsFor: 0,
+      averageGoalsAgainst: 0,
+      averageGoalDifference: 0,
+      goalDifferenceRange: { min: 0, max: 0, variance: 0 },
+      recentForm: []
+    };
+  }
+  
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+  let totalGoalsFor = 0;
+  let totalGoalsAgainst = 0;
+  const goalDifferences: number[] = [];
+  const recentForm: Array<{ date: string; result: 'W' | 'D' | 'L'; goalDifference: number }> = [];
+  
+  opponentMatches.forEach(match => {
+    if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      const isHome = match.location === 'Hemma';
+      const ourScore = isHome ? match.homeScore : match.awayScore;
+      const theirScore = isHome ? match.awayScore : match.homeScore;
+      const goalDiff = ourScore - theirScore;
+      
+      totalGoalsFor += ourScore;
+      totalGoalsAgainst += theirScore;
+      goalDifferences.push(goalDiff);
+      
+      let result: 'W' | 'D' | 'L';
+      if (goalDiff > 0) {
+        wins++;
+        result = 'W';
+      } else if (goalDiff < 0) {
+        losses++;
+        result = 'L';
+      } else {
+        draws++;
+        result = 'D';
+      }
+      
+      recentForm.push({
+        date: match.date,
+        result,
+        goalDifference: goalDiff
+      });
+    }
+  });
+  
+  // Sort recent form by date (most recent first)
+  recentForm.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  // Calculate variance in goal differences
+  const avgGoalDiff = goalDifferences.length > 0 
+    ? goalDifferences.reduce((sum, diff) => sum + diff, 0) / goalDifferences.length 
+    : 0;
+    
+  const variance = goalDifferences.length > 0
+    ? goalDifferences.reduce((sum, diff) => sum + Math.pow(diff - avgGoalDiff, 2), 0) / goalDifferences.length
+    : 0;
+  
+  return {
+    opponentName,
+    totalMatches: opponentMatches.length,
+    wins,
+    draws,
+    losses,
+    winRate: opponentMatches.length > 0 ? (wins / opponentMatches.length) * 100 : 0,
+    averageGoalsFor: opponentMatches.length > 0 ? totalGoalsFor / opponentMatches.length : 0,
+    averageGoalsAgainst: opponentMatches.length > 0 ? totalGoalsAgainst / opponentMatches.length : 0,
+    averageGoalDifference: avgGoalDiff,
+    goalDifferenceRange: {
+      min: goalDifferences.length > 0 ? Math.min(...goalDifferences) : 0,
+      max: goalDifferences.length > 0 ? Math.max(...goalDifferences) : 0,
+      variance: Math.round(variance * 100) / 100
+    },
+    recentForm: recentForm.slice(0, 5) // Last 5 matches
+  };
+};
+
+// Suggest lineup optimized for balanced/close matches
+export const suggestBalancedLineup = (
+  players: Player[],
+  activities: Activity[],
+  opponentName: string,
+  formation: string = "2-3-1",
+  targetGoalDifference: number = 1 // Target narrow win
+): BalancedLineupSuggestion => {
+  const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
+  const combinations = analyzePairCombinations(players, activities);
+  const matrix = createCombinationMatrix(players, combinations);
+  
+  // Define position requirements
+  const formationRequirements: Record<string, string[]> = {
+    "2-3-1": ["MV", "BACK", "BACK", "MF", "MF", "MF", "ANF"],
+    "3-2-1": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "ANF"],
+    "2-2-2": ["MV", "BACK", "BACK", "MF", "MF", "ANF", "ANF"]
+  };
+  
+  const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
+  
+  // Get players by position
+  const playersByPosition: Record<string, Player[]> = {};
+  requiredPositions.forEach(pos => {
+    playersByPosition[pos] = players.filter(p => 
+      p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
+    );
+  });
+  
+  const selectedPlayers: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[] = [];
+  
+  const usedPlayerIds = new Set<string>();
+  
+  // Balance-focused player selection
+  requiredPositions.forEach(position => {
+    const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
+    
+    if (availablePlayers.length === 0) {
+      // Fallback player
+      const fallbackPlayer = players.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
+      if (fallbackPlayer) {
+        selectedPlayers.push({
+          playerId: fallbackPlayer.id,
+          playerName: fallbackPlayer.name,
+          position,
+          reasoning: "Backup - ingen specialist tillgänglig"
+        });
+        usedPlayerIds.add(fallbackPlayer.id);
+      }
+      return;
+    }
+    
+    // Score players for balanced performance against this opponent
+    const scoredPlayers = availablePlayers.map(player => {
+      let balanceScore = 0;
+      let reasoning = [];
+      
+      // Check historical performance against this opponent
+      const playerOpponentMatches = activities.filter(a => 
+        a.type === 'match' && 
+        a.opponent === opponentName && 
+        a.participants?.includes(player.id)
+      );
+      
+      if (playerOpponentMatches.length > 0) {
+        // Calculate this player's impact in matches against this opponent
+        let playerGoalDiffs: number[] = [];
+        
+        playerOpponentMatches.forEach(match => {
+          if (match.homeScore !== undefined && match.awayScore !== undefined) {
+            const isHome = match.location === 'Hemma';
+            const ourScore = isHome ? match.homeScore : match.awayScore;
+            const theirScore = isHome ? match.awayScore : match.homeScore;
+            playerGoalDiffs.push(ourScore - theirScore);
+          }
+        });
+        
+        if (playerGoalDiffs.length > 0) {
+          const avgDiff = playerGoalDiffs.reduce((sum, diff) => sum + diff, 0) / playerGoalDiffs.length;
+          
+          // Reward players who create balanced results (close to target)
+          const balanceDeviation = Math.abs(avgDiff - targetGoalDifference);
+          balanceScore += Math.max(0, 20 - (balanceDeviation * 5));
+          
+          reasoning.push(`Skapar jämna matcher mot ${opponentName}`);
+        }
+      }
+      
+      // Avoid extremely high performers who might cause blowouts
+      const gradeModifier = { 'A': 5, 'B': 15, 'C': 10, 'D': 0 }; // B-players preferred for balance
+      balanceScore += gradeModifier[player.grade as keyof typeof gradeModifier] || 0;
+      
+      // Combination synergy with already selected players (but weighted for balance)
+      selectedPlayers.forEach(selected => {
+        const combination = matrix[player.id]?.[selected.playerId];
+        if (combination && combination.matchesTogether >= 2) {
+          // Prefer moderate efficiency for balance
+          const efficiencyBalance = Math.max(0, 10 - Math.abs(combination.efficiency - 1.2) * 10);
+          balanceScore += efficiencyBalance;
+        }
+      });
+      
+      // Position expertise
+      if (player.positions?.[0] === position) {
+        balanceScore += 10;
+        reasoning.push("Primär position");
+      }
+      
+      return {
+        player,
+        balanceScore,
+        reasoning: reasoning.join(", ") || "Balanserad spelare"
+      };
+    });
+    
+    // Select highest balance-scoring player
+    scoredPlayers.sort((a, b) => b.balanceScore - a.balanceScore);
+    const bestPlayer = scoredPlayers[0];
+    
+    if (bestPlayer) {
+      selectedPlayers.push({
+        playerId: bestPlayer.player.id,
+        playerName: bestPlayer.player.name,
+        position,
+        reasoning: bestPlayer.reasoning
+      });
+      usedPlayerIds.add(bestPlayer.player.id);
+    }
+  });
+  
+  // Calculate expected goal difference and balance score
+  const expectedGoalDifference = opponentAnalysis.totalMatches > 0 
+    ? Math.max(0.5, Math.min(2.5, opponentAnalysis.averageGoalDifference + 0.5)) // Slight improvement but capped
+    : 1;
+    
+  const balanceScore = Math.max(0, 100 - (Math.abs(expectedGoalDifference - targetGoalDifference) * 30));
+  
+  // Determine risk level based on variance
+  let riskLevel: 'low' | 'medium' | 'high' = 'medium';
+  if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
+  else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
+  
+  // Generate reasoning
+  const reasoning = [
+    `Optimerad för jämn vinst (${targetGoalDifference} mål) mot ${opponentName}`,
+    `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
+    `Förväntad målskillnad: ${expectedGoalDifference.toFixed(1)}`,
+    `Balanspoäng: ${balanceScore.toFixed(0)}/100`,
+    `Risknivå: ${riskLevel} (baserat på historisk variation)`
+  ];
+  
+  if (opponentAnalysis.totalMatches < 3) {
+    reasoning.push("⚠️ Begränsad historik - förslag baserat på allmän data");
+  }
+  
+  return {
+    formation,
+    players: selectedPlayers,
+    expectedGoalDifference,
+    balanceScore,
+    confidence: Math.min(100, (opponentAnalysis.totalMatches / 5) * 100),
+    opponentAnalysis,
+    reasoning,
+    riskLevel
+  };
+};

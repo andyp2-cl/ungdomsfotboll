@@ -1,11 +1,12 @@
+
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OverviewTabContent } from "./OverviewTabContent";
+import { OverviewTabContent } from "./overview/OverviewTabContent";
 import { ParticipationTabContent } from "./ParticipationTabContent";
-import { MatchesTabContent } from "./MatchesTabContent";
-import { GoalsTabContent } from "./GoalsTabContent";
-import { LeaguesTabContent } from "./LeaguesTabContent";
+import { MatchesTabContent } from "./matches/MatchesTabContent";
+import { GoalsTabContent } from "./goals/GoalsTabContent";
+import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
 import { CombinationsTabContent } from "./combinations/CombinationsTabContent";
 import { FormationTabContent } from "./formation/FormationTabContent";
 
@@ -45,11 +46,11 @@ export function StatisticsTabContent({ players, activities }: StatisticsTabConte
         </TabsContent>
 
         <TabsContent value="matches">
-          <MatchesTabContent players={players} activities={activities} />
+          <MatchesTabContent players={players} activities={activities} onPlayerSelect={handlePlayerSelect} />
         </TabsContent>
 
         <TabsContent value="goals">
-          <GoalsTabContent players={players} activities={activities} />
+          <GoalsTabContent players={players} activities={activities} onPlayerSelect={handlePlayerSelect} />
         </TabsContent>
 
         <TabsContent value="leagues">
