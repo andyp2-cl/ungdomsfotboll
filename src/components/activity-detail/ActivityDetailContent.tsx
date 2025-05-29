@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
@@ -12,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -40,6 +40,8 @@ export function ActivityDetailContent({
   allActivities = [],
   onAddActivity
 }: ActivityDetailContentProps) {
+  const { toast } = useToast();
+  
   // Calculate if activity is historical
   const isHistorical = (() => {
     const activityDate = new Date(activity.date);
@@ -63,15 +65,42 @@ export function ActivityDetailContent({
     ? allActivities.find(a => a.id === activity.cupId) 
     : undefined;
 
-  // Handle linking existing matches to this cup
+  // Handle linking existing matches to this cup with improved logging and error handling
   const handleLinkMatches = async (cupId: string, matchIds: string[]) => {
+    console.log(`ActivityDetailContent: Starting to link ${matchIds.length} matches to cup ${cupId}`);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
     // Update each match to have this cup's ID
     for (const matchId of matchIds) {
-      const match = allActivities.find(a => a.id === matchId);
-      if (match && onActivityUpdate) {
-        const updatedMatch = { ...match, cupId: cupId };
-        await onActivityUpdate(updatedMatch);
+      try {
+        console.log(`Linking match ${matchId} to cup ${cupId}`);
+        
+        const match = allActivities.find(a => a.id === matchId);
+        if (match && onActivityUpdate) {
+          const updatedMatch = { ...match, cupId: cupId };
+          await onActivityUpdate(updatedMatch);
+          successCount++;
+          console.log(`Successfully linked match ${matchId} to cup`);
+        } else {
+          console.error(`Match ${matchId} not found or onActivityUpdate not available`);
+          errorCount++;
+        }
+      } catch (error) {
+        console.error(`Error linking match ${matchId}:`, error);
+        errorCount++;
       }
+    }
+    
+    console.log(`Link operation completed. Success: ${successCount}, Errors: ${errorCount}`);
+    
+    if (errorCount > 0) {
+      toast({
+        title: "Delvis misslyckad koppling",
+        description: `${successCount} av ${matchIds.length} matcher kopplades framgångsrikt.`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -81,6 +110,11 @@ export function ActivityDetailContent({
     if (match && onActivityUpdate) {
       const updatedMatch = { ...match, cupId: undefined };
       await onActivityUpdate(updatedMatch);
+      
+      toast({
+        title: "Match frånkopplad",
+        description: `Matchen har kopplats bort från cupen.`,
+      });
     }
   };
 

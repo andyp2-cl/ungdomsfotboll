@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export function LinkExistingMatchesModal({
   const [selectedMatches, setSelectedMatches] = useState<string[]>([]);
   const [isLinking, setIsLinking] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   // Get all matches that are not already linked to any cup
   // FIXED: Exclude the cup itself and sort by date (latest first)
@@ -56,15 +58,37 @@ export function LinkExistingMatchesModal({
   const handleLinkSelectedMatches = async () => {
     if (selectedMatches.length === 0) return;
     
+    console.log(`Starting to link ${selectedMatches.length} matches to cup ${cupActivity.id}:`, selectedMatches);
+    
     setIsLinking(true);
+    let successCount = 0;
+    let errorCount = 0;
+    
     try {
       await onLinkMatches(cupActivity.id, selectedMatches);
+      successCount = selectedMatches.length;
+      console.log(`Successfully linked ${successCount} matches to cup`);
+      
+      toast({
+        title: "Matcher kopplade",
+        description: `${successCount} matcher har kopplats till cupen.`,
+      });
+      
       setSelectedMatches([]);
       setIsOpen(false);
     } catch (error) {
       console.error("Error linking matches:", error);
+      errorCount = selectedMatches.length;
+      
+      toast({
+        title: "Fel vid koppling",
+        description: `Kunde inte koppla matcherna. Försök igen.`,
+        variant: "destructive",
+      });
     } finally {
       setIsLinking(false);
+      
+      console.log(`Linking completed. Success: ${successCount}, Errors: ${errorCount}`);
     }
   };
 
