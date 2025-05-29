@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Target, TrendingUp, AlertTriangle, Info, BarChart3, Users, UserPlus } from "lucide-react";
+import { Target, TrendingUp, AlertTriangle, Info, BarChart3, Users, UserPlus, RotateCcw } from "lucide-react";
 import { FormationSelector } from "./FormationSelector";
 import { getOpponents, analyzeOpponentHistory, suggestBalancedLineup, BalancedLineupSuggestion } from "@/utils/playerCombinations";
 import { getPositionColor, getPositionLabel } from "./positionUtils";
@@ -28,6 +29,7 @@ export function BalancedMatchOptimizer({
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
   const [targetGoalDifference, setTargetGoalDifference] = useState([2]);
   const [prioritizeNewPlayers, setPrioritizeNewPlayers] = useState(true);
+  const [rotationStrength, setRotationStrength] = useState([70]); // New state for rotation strength
   const [suggestion, setSuggestion] = useState<BalancedLineupSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -45,7 +47,8 @@ export function BalancedMatchOptimizer({
         selectedOpponent, 
         selectedFormation, 
         targetGoalDifference[0],
-        prioritizeNewPlayers
+        prioritizeNewPlayers,
+        rotationStrength[0] // Pass rotation strength
       );
       setSuggestion(newSuggestion);
       setIsGenerating(false);
@@ -129,6 +132,34 @@ export function BalancedMatchOptimizer({
               <span>1 (jämnare)</span>
               <span>3 (säkrare)</span>
             </div>
+          </div>
+        </div>
+
+        {/* New Rotation Strength Parameter */}
+        <div className="p-4 border rounded-lg bg-green-50">
+          <div className="flex items-center gap-3 mb-3">
+            <RotateCcw className="h-5 w-5 text-green-500" />
+            <div>
+              <Label className="text-sm font-medium text-green-800">
+                Rotationsstyrka: {rotationStrength[0]}%
+              </Label>
+              <p className="text-xs text-green-600 mt-1">
+                Hur mycket vila påverkar urval. 100% = vila prioriteras högt, 0% = bara prestanda räknas
+              </p>
+            </div>
+          </div>
+          <Slider
+            value={rotationStrength}
+            onValueChange={setRotationStrength}
+            max={100}
+            min={0}
+            step={10}
+            className="mt-2"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>0% (bara prestanda)</span>
+            <span>50% (balanserat)</span>
+            <span>100% (vila prioriterat)</span>
           </div>
         </div>
 
@@ -259,12 +290,10 @@ export function BalancedMatchOptimizer({
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  <RotateCcw className="h-4 w-4 text-green-500" />
                   <div>
-                    <div className="text-sm text-muted-foreground">Risknivå</div>
-                    <div className={`font-bold px-2 py-1 rounded text-xs ${getRiskColor(suggestion.riskLevel)}`}>
-                      {suggestion.riskLevel === 'low' ? 'Låg' : suggestion.riskLevel === 'medium' ? 'Medel' : 'Hög'}
-                    </div>
+                    <div className="text-sm text-muted-foreground">Rotationsstyrka</div>
+                    <div className="font-bold">{rotationStrength[0]}%</div>
                   </div>
                 </div>
               </CardContent>
@@ -273,7 +302,7 @@ export function BalancedMatchOptimizer({
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-green-500" />
+                  <Users className="h-4 w-4 text-orange-500" />
                   <div>
                     <div className="text-sm text-muted-foreground">Tillförlitlighet</div>
                     <div className="font-bold">{suggestion.confidence.toFixed(0)}%</div>
