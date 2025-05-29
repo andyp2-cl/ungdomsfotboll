@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
 import { getGradeColor } from '@/utils/gradeUtils';
-import { formatPositions, isTrainer } from '@/utils/positionUtils';
+import { isTrainer } from '@/utils/positionUtils';
 
 interface PlayerAttendanceAnalyticsProps {
   players: Player[];
@@ -28,7 +28,6 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
           name: player.name,
           grade: player.grade,
           jersey: player.jerseyNumber || '',
-          positions: formatPositions(player.positions, true), // Use compact format
           attendanceRate: Math.round(attendanceRate),
           activitiesCount: participatingCount,
           totalActivities: activities.length,
@@ -76,7 +75,7 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
                   <div>
                     <div className="font-medium">{data.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {data.positions} • Nivå {data.grade}
+                      Nivå {data.grade}
                       {data.jersey && ` • #${data.jersey}`}
                     </div>
                   </div>
