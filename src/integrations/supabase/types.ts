@@ -234,6 +234,7 @@ export type Database = {
           grade: string
           id: string
           image: string | null
+          is_active: boolean
           jersey_number: string | null
           name: string
           position: string | null
@@ -244,6 +245,7 @@ export type Database = {
           grade: string
           id: string
           image?: string | null
+          is_active?: boolean
           jersey_number?: string | null
           name: string
           position?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           grade?: string
           id?: string
           image?: string | null
+          is_active?: boolean
           jersey_number?: string | null
           name?: string
           position?: string | null

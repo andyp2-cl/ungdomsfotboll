@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -22,6 +21,7 @@ export interface Player {
   createdAt?: string;
   updatedAt?: string;
   development?: DevelopmentNote[];
+  isActive?: boolean; // New field for active/inactive status
 }
 
 export interface DevelopmentNote {

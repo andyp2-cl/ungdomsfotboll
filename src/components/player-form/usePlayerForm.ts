@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -95,6 +94,7 @@ export function usePlayerForm({
       positions: initialValues?.positions || [],
       jerseyNumber: initialValues?.jerseyNumber || "",
       isTrainer: initialValues?.positions?.includes("TRÄNARE") || false,
+      isActive: initialValues?.isActive !== undefined ? initialValues.isActive : true, // Default to true
       development: initialDevelopment
     },
   });
@@ -128,7 +128,7 @@ export function usePlayerForm({
   }, [isTrainer, form]);
 
   const handleSubmit = (data: PlayerFormValues) => {
-    // Create new player object with all development values
+    // Create new player object with all development values and isActive
     const newPlayer: Player = {
       id: initialValues?.id || uuidv4(),
       name: data.name,
@@ -137,6 +137,7 @@ export function usePlayerForm({
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
+      isActive: data.isActive, // Include isActive field
       // Include all development data with complete field set
       development: {
         // Core values

@@ -61,6 +61,15 @@ const isHassleholmsPlayingHome = (activity: Activity): boolean => {
   return true; // Default to home if can't parse
 };
 
+// Helper function to filter out inactive players
+const filterActivePlayers = (players: Player[]): Player[] => {
+  return players.filter(player => {
+    // If isActive is undefined, default to true (for backward compatibility)
+    const isActive = player.isActive !== undefined ? player.isActive : true;
+    return isActive;
+  });
+};
+
 export interface PlayerCombination {
   playerIds: string[];
   playerNames: string[];
@@ -88,14 +97,18 @@ export interface CombinationMatrix {
 
 // Analysera alla tvåspelar-kombinationer
 export const analyzePairCombinations = (players: Player[], activities: Activity[]): PlayerCombination[] => {
+  // Filter out inactive players from analysis
+  const activePlayers = filterActivePlayers(players);
+  console.log(`Analyzing combinations with ${activePlayers.length} active players (${players.length - activePlayers.length} inactive players excluded)`);
+  
   const combinations: PlayerCombination[] = [];
   const matchActivities = activities.filter(a => a.type === 'match');
   
-  // Generera alla möjliga par
-  for (let i = 0; i < players.length; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      const player1 = players[i];
-      const player2 = players[j];
+  // Generera alla möjliga par från aktiva spelare
+  for (let i = 0; i < activePlayers.length; i++) {
+    for (let j = i + 1; j < activePlayers.length; j++) {
+      const player1 = activePlayers[i];
+      const player2 = activePlayers[j];
       
       // Skippa tränare
       if (player1.positions?.includes('TRÄNARE') || player2.positions?.includes('TRÄNARE')) {
@@ -166,7 +179,10 @@ export const analyzePairCombinations = (players: Player[], activities: Activity[
 export const createCombinationMatrix = (players: Player[], combinations: PlayerCombination[]): CombinationMatrix => {
   const matrix: CombinationMatrix = {};
   
-  players.forEach(player => {
+  // Only include active players in the matrix
+  const activePlayers = filterActivePlayers(players);
+  
+  activePlayers.forEach(player => {
     if (!player.positions?.includes('TRÄNARE')) {
       matrix[player.id] = {};
     }
@@ -269,11 +285,15 @@ export const suggestOptimalLineup = (
 ): LineupSuggestion => {
   console.log("🎯 Starting optimal lineup suggestion generation");
   
-  const combinations = analyzePairCombinations(players, activities);
-  const matrix = createCombinationMatrix(players, combinations);
+  // Filter out inactive players from lineup suggestions
+  const activePlayers = filterActivePlayers(players);
+  console.log(`Using ${activePlayers.length} active players for lineup (${players.length - activePlayers.length} inactive players excluded)`);
+  
+  const combinations = analyzePairCombinations(activePlayers, activities);
+  const matrix = createCombinationMatrix(activePlayers, combinations);
   
   // Use the new detailed player activity frequency calculation
-  const playerFrequency = calculateDetailedPlayerActivityFrequency(players, activities, 5);
+  const playerFrequency = calculateDetailedPlayerActivityFrequency(activePlayers, activities, 5);
   
   // Define position requirements for different formations
   const formationRequirements: Record<string, string[]> = {
@@ -284,10 +304,10 @@ export const suggestOptimalLineup = (
   
   const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
   
-  // Get players by position
+  // Get active players by position
   const playersByPosition: Record<string, Player[]> = {};
   requiredPositions.forEach(pos => {
-    playersByPosition[pos] = players.filter(p => 
+    playersByPosition[pos] = activePlayers.filter(p => 
       p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
     );
   });
@@ -306,8 +326,8 @@ export const suggestOptimalLineup = (
     const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
     
     if (availablePlayers.length === 0) {
-      // Fallback: use any available player
-      const fallbackPlayer = players.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
+      // Fallback: use any available active player
+      const fallbackPlayer = activePlayers.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
       if (fallbackPlayer) {
         selectedPlayers.push({
           playerId: fallbackPlayer.id,
@@ -424,7 +444,8 @@ export const suggestOptimalLineup = (
     `Formation ${formation} med balanserad positionsfördelning`,
     `Genomsnittlig kombinationseffektivitet: ${avgEfficiency.toFixed(2)}`,
     `Förväntad vinstprocent: ${avgWinRate.toFixed(0)}%`,
-    `Baserat på ${pairCount} kända spelarkombinationer`
+    `Baserat på ${pairCount} kända spelarkombinationer`,
+    `Använder ${activePlayers.length} aktiva spelare (${players.length - activePlayers.length} inaktiva exkluderade)`
   ];
   
   if (pairCount < 5) {
@@ -699,12 +720,16 @@ export const suggestBalancedLineup = (
     prioritizeNewPlayers
   });
   
+  // Filter out inactive players from balanced lineup suggestions
+  const activePlayers = filterActivePlayers(players);
+  console.log(`Using ${activePlayers.length} active players for balanced lineup (${players.length - activePlayers.length} inactive players excluded)`);
+  
   const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
-  const combinations = analyzePairCombinations(players, activities);
-  const matrix = createCombinationMatrix(players, combinations);
+  const combinations = analyzePairCombinations(activePlayers, activities);
+  const matrix = createCombinationMatrix(activePlayers, combinations);
   
   // Use the new detailed player activity frequency calculation
-  const playerFrequency = calculateDetailedPlayerActivityFrequency(players, activities, 5);
+  const playerFrequency = calculateDetailedPlayerActivityFrequency(activePlayers, activities, 5);
   
   // Define position requirements
   const formationRequirements: Record<string, string[]> = {
@@ -715,10 +740,10 @@ export const suggestBalancedLineup = (
   
   const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
   
-  // Get players by position
+  // Get active players by position
   const playersByPosition: Record<string, Player[]> = {};
   requiredPositions.forEach(pos => {
-    playersByPosition[pos] = players.filter(p => 
+    playersByPosition[pos] = activePlayers.filter(p => 
       p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
     );
   });
@@ -738,7 +763,7 @@ export const suggestBalancedLineup = (
     
     if (availablePlayers.length === 0) {
       // Fallback player
-      const fallbackPlayer = players.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
+      const fallbackPlayer = activePlayers.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
       if (fallbackPlayer) {
         selectedPlayers.push({
           playerId: fallbackPlayer.id,
@@ -875,8 +900,8 @@ export const suggestBalancedLineup = (
     reasoning: string;
   }[] = [];
 
-  // Get available players for bench (no goalkeepers, not already selected)
-  const availableBenchPlayers = players.filter(p => 
+  // Get available active players for bench (no goalkeepers, not already selected)
+  const availableBenchPlayers = activePlayers.filter(p => 
     !usedPlayerIds.has(p.id) && 
     !p.positions?.includes('TRÄNARE') &&
     !p.positions?.includes('MV') // No goalkeepers on bench
@@ -965,7 +990,7 @@ export const suggestBalancedLineup = (
   if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
   else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
   
-  // Generate reasoning with ENHANCED rotation info
+  // Generate reasoning with ENHANCED rotation info and inactive player info
   const reasoning = [
     `Optimerad för jämn vinst (${targetGoalDifference} mål) mot ${opponentName}`,
     `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
@@ -973,6 +998,7 @@ export const suggestBalancedLineup = (
     `Balanspoäng: ${balanceScore.toFixed(0)}/100`,
     `Risknivå: ${riskLevel} (baserat på historisk variation)`,
     `Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`,
+    `Använder ${activePlayers.length} aktiva spelare (${players.length - activePlayers.length} inaktiva exkluderade)`,
     `⚠️ FÖRSTÄRKT ROTATION: Spelare som spelat mycket nyligen får kraftigt sänkt prioritet`
   ];
   

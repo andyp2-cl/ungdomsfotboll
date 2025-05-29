@@ -90,6 +90,29 @@ export function EditPlayerForm({
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Aktiv spelare
+                        </FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          Inaktiva spelare visas inte i laguttagning
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
                 {!isTrainer && (
                   <FormField
                     control={form.control}

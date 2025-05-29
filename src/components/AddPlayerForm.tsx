@@ -9,6 +9,7 @@ import { FormButtons } from "./player-form/FormButtons";
 import { usePlayerForm } from "./player-form/usePlayerForm";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 import { useState } from "react";
 
 export interface AddPlayerFormProps {
@@ -60,6 +61,29 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
           />
           <Label htmlFor="is-trainer-add">Detta är en tränare</Label>
         </div>
+
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel className="text-sm font-medium">
+                  Aktiv spelare
+                </FormLabel>
+                <div className="text-xs text-muted-foreground">
+                  Inaktiva spelare visas inte i laguttagning
+                </div>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         {!isTrainerLocal && (
           <FormField

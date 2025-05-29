@@ -1,54 +1,48 @@
 
 import { z } from "zod";
-import { PlayerGrade, PlayerPosition } from "@/types/player";
 
-// Define position options for the form
-export const positionOptions = [
-  { value: "MV", label: "Målvakt" },
-  { value: "BACK", label: "Back" },
-  { value: "MF", label: "Mittfältare" },
-  { value: "ANF", label: "Anfallare" },
-  { value: "TRÄNARE", label: "Tränare" }
-];
+// Player development schema with all fields
+export const playerDevelopmentSchema = z.object({
+  // Core values
+  technical: z.number().min(1).max(10),
+  gameUnderstanding: z.number().min(1).max(10),
+  passing: z.number().min(1).max(10),
+  offensive: z.number().min(1).max(10),
+  defensive: z.number().min(1).max(10),
+  mentality: z.number().min(1).max(10),
+  
+  // New offensive values
+  shooting: z.number().min(1).max(10),
+  crossing: z.number().min(1).max(10),
+  finishing: z.number().min(1).max(10),
+  creativity: z.number().min(1).max(10),
+  
+  // New defensive values
+  tackling: z.number().min(1).max(10),
+  interception: z.number().min(1).max(10),
+  positioning: z.number().min(1).max(10),
+  heading: z.number().min(1).max(10),
+  
+  // New physical values
+  speed: z.number().min(1).max(10),
+  stamina: z.number().min(1).max(10),
+  strength: z.number().min(1).max(10),
+  
+  // New mental values
+  leadership: z.number().min(1).max(10),
+  composure: z.number().min(1).max(10),
+  workRate: z.number().min(1).max(10)
+});
 
-// Create a schema for player form validation with extended development fields
 export const formSchema = z.object({
-  name: z.string().min(1, { message: "Namn måste anges" }),
-  grade: z.union([z.enum(["A", "B", "C", "D"] as const), z.undefined()]),
-  positions: z.array(z.string()),
+  name: z.string().min(1, "Namn krävs"),
+  grade: z.enum(["A", "B", "C", "D"]).optional(),
+  positions: z.array(z.string()).min(1, "Minst en position krävs"),
   jerseyNumber: z.string().optional(),
   isTrainer: z.boolean().default(false),
-  development: z.object({
-    // Core original fields
-    technical: z.number().min(1).max(10).default(1),
-    gameUnderstanding: z.number().min(1).max(10).default(1),
-    passing: z.number().min(1).max(10).default(1),
-    offensive: z.number().min(1).max(10).default(1),
-    defensive: z.number().min(1).max(10).default(1),
-    mentality: z.number().min(1).max(10).default(1),
-    
-    // New offensive fields
-    shooting: z.number().min(1).max(10).default(1),
-    crossing: z.number().min(1).max(10).default(1),
-    finishing: z.number().min(1).max(10).default(1),
-    creativity: z.number().min(1).max(10).default(1),
-    
-    // New defensive fields
-    tackling: z.number().min(1).max(10).default(1),
-    interception: z.number().min(1).max(10).default(1),
-    positioning: z.number().min(1).max(10).default(1),
-    heading: z.number().min(1).max(10).default(1),
-    
-    // New physical fields
-    speed: z.number().min(1).max(10).default(1),
-    stamina: z.number().min(1).max(10).default(1),
-    strength: z.number().min(1).max(10).default(1),
-    
-    // New mental fields
-    leadership: z.number().min(1).max(10).default(1),
-    composure: z.number().min(1).max(10).default(1),
-    workRate: z.number().min(1).max(10).default(1)
-  })
+  isActive: z.boolean().default(true), // New field for active/inactive status
+  development: playerDevelopmentSchema,
 });
 
 export type PlayerFormValues = z.infer<typeof formSchema>;
+export type PlayerDevelopment = z.infer<typeof playerDevelopmentSchema>;
