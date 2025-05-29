@@ -101,4 +101,5 @@ export interface Player {
   image?: string; // URL to player's image
   matches?: number; // Number of matches the player has participated in
   development?: PlayerDevelopment; // Updated development data with new fields
+  isActive?: boolean; // New field for active/inactive status
 }
