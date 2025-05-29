@@ -86,41 +86,57 @@ export function ActivityTabViewContent({
   if (content) {
     console.log("Content viewType:", content.viewType);
     
-    // Handle player preview - both as overlay and standalone
-    if ((content.viewType === "player-detail" || content.viewType === "player-preview") && content.player) {
+    // Handle player preview - show as overlay or alongside activity
+    if (content.viewType === "player-preview" && content.player) {
       console.log("Rendering PlayerPreview for:", content.player.name);
-      console.log("Show as overlay:", content.showAsOverlay);
+      console.log("Has activity selected:", content.hasActivitySelected);
       
-      // If we have both activity and player selected, show them together
-      if (content.showAsOverlay && content.viewType === "player-preview") {
-        // Find the selected activity to render alongside the player preview
-        const selectedActivity = activities.find(a => a.id); // This should be passed differently, but for now...
-        
+      // If we also have an activity selected, show both
+      if (content.hasActivitySelected && content.selectedActivity) {
         return (
           <div className="space-y-4">
-            {/* Show the player preview first */}
+            {/* Player preview at the top */}
             <PlayerPreview 
               player={content.player} 
               activities={activities}
               onClose={() => {
-                console.log("Closing player preview overlay");
+                console.log("Closing player preview - returning to activity view");
                 onPlayerSelect("");
               }}
             />
             
-            {/* The activity detail would be shown below, but we need the selected activity */}
-            {/* This is a simplified version - ideally we'd get the selected activity from the parent */}
+            {/* Activity detail below */}
+            <ActivityDetail 
+              activity={content.selectedActivity}
+              players={players}
+              onBack={() => onActivitySelect(null)}
+              onEdit={onEditActivity}
+              onDeleteActivity={onDeleteActivity}
+              onActivityUpdate={onActivityUpdate}
+              onKioskAssignmentUpdate={onKioskAssignmentUpdate}
+              onActivitySelect={onActivitySelect}
+              relatedActivities={[]}
+              cupMatches={[]}
+              allActivities={activities}
+              onClose={() => onActivitySelect(null)}
+              onMatchResultUpdate={onMatchResultUpdate}
+              onPlayerSelect={(playerId) => {
+                console.log("ActivityTabViewContent: Player selected from ActivityDetail:", playerId);
+                onPlayerSelect(playerId);
+              }}
+              onAddActivity={onAddActivity}
+            />
           </div>
         );
       }
       
-      // Show player preview as standalone
+      // Show player preview standalone
       return (
         <PlayerPreview 
           player={content.player} 
           activities={activities}
           onClose={() => {
-            console.log("Closing player preview from ActivityTabViewContent");
+            console.log("Closing standalone player preview");
             onPlayerSelect("");
           }}
         />

@@ -51,26 +51,19 @@ export function ActivityParticipants({
     return fullName.split(' ')[0];
   };
 
-  // Handle click on a player with enhanced logging
+  // Single click handler for players
   const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
-    // Stop propagation to prevent the activity selection from triggering
     e.stopPropagation();
     e.preventDefault();
     
     console.log("ActivityParticipants: Player clicked:", playerName, "ID:", playerId);
-    console.log("ActivityParticipants: onPlayerSelect function available:", !!onPlayerSelect);
-    console.log("ActivityParticipants: Event details:", e.type, e.target);
+    console.log("ActivityParticipants: onPlayerSelect available:", !!onPlayerSelect);
     
     if (onPlayerSelect) {
-      console.log("ActivityParticipants: Calling onPlayerSelect with playerId:", playerId);
-      try {
-        onPlayerSelect(playerId);
-        console.log("ActivityParticipants: Successfully called onPlayerSelect");
-      } catch (error) {
-        console.error("ActivityParticipants: Error calling onPlayerSelect:", error);
-      }
+      console.log("ActivityParticipants: Calling onPlayerSelect");
+      onPlayerSelect(playerId);
     } else {
-      console.log("ActivityParticipants: No onPlayerSelect function provided");
+      console.log("ActivityParticipants: No onPlayerSelect handler provided");
     }
   };
 
@@ -113,10 +106,7 @@ export function ActivityParticipants({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar 
-                          className={`border border-background ${avatarSize} ${onPlayerSelect ? 'cursor-pointer' : ''}`}
-                          onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
-                        >
+                        <Avatar className={`border border-background ${avatarSize}`}>
                           <AvatarImage src={player.image} alt={player.name} />
                           <AvatarFallback className="bg-muted">
                             <UserRound className={iconSize} />
@@ -133,10 +123,7 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span 
-                    className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full ${onPlayerSelect ? 'cursor-pointer' : ''}`}
-                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
-                  >
+                  <span className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
                     {getFirstName(player.name)}
                   </span>
                 </div>

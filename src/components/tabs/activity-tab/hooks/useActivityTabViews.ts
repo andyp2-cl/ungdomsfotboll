@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Activity, Player } from "@/types/player";
 
@@ -37,7 +36,7 @@ export const useActivityTabViews = ({
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
 
-  // Handle player selection with better logging and state management
+  // Handle player selection with better state management
   const handlePlayerSelect = useCallback((playerId: string) => {
     console.log("useActivityTabViews: handlePlayerSelect called with playerId:", playerId);
     
@@ -55,11 +54,11 @@ export const useActivityTabViews = ({
     const player = players.find(p => p.id === playerId);
     if (player) {
       console.log("useActivityTabViews: Found player:", player.name);
-      console.log("useActivityTabViews: Setting local selected player state");
+      console.log("useActivityTabViews: Setting selected player for preview");
       setSelectedPlayer(player);
       
-      // Don't clear the activity when selecting a player - show both
-      console.log("useActivityTabViews: Keeping activity selection while showing player preview");
+      // Keep the activity selection - we want to show both
+      console.log("useActivityTabViews: Keeping activity selection, showing player preview");
       
       // Call external handler if provided
       if (onPlayerSelect) {
@@ -128,21 +127,23 @@ export const useActivityTabViews = ({
       };
     }
     
-    // Handle Player detail view - show as overlay/preview when we have both player and activity
+    // Priority 1: Show player preview if we have a selected player
+    // This can be shown alongside an activity or standalone
     if (selectedPlayer) {
       const playerActivities = activities.filter(activity => 
         activity.participants?.includes(selectedPlayer.id)
       );
       
       return {
-        viewType: "player-preview", // Changed from "player-detail" to distinguish from full view
+        viewType: "player-preview",
         player: selectedPlayer,
         activities: playerActivities,
-        showAsOverlay: !!selectedActivity // Show as overlay if we also have an activity selected
+        hasActivitySelected: !!selectedActivity,
+        selectedActivity: selectedActivity
       };
     }
     
-    // Handle Activity detail view
+    // Priority 2: Show activity detail if we have a selected activity (and no player)
     if (selectedActivity) {
       const relatedActivities = getRelatedActivities(selectedActivity);
       const cupMatches = getCupMatches(selectedActivity);
@@ -155,7 +156,7 @@ export const useActivityTabViews = ({
       };
     }
     
-    // Handle Activities list view
+    // Priority 3: Show activities list as default
     return {
       viewType: "activities-list",
       activities: filteredBySearchActivities,
