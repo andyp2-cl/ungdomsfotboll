@@ -16,6 +16,10 @@ import { MatchResultQuickView } from "./MatchResultQuickView";
 import { StatsSection } from "./sections/StatsSection";
 import { MatchResultSection } from "./sections/MatchResultSection";
 import { useActivityDetailActions } from "./hooks/useActivityDetailActions";
+import { CupParentLink } from "./CupParentLink";
+import { CupTabsContent } from "./CupTabsContent";
+import { MatchContentLayout } from "./MatchContentLayout";
+import { RelatedActivitiesSection } from "./RelatedActivitiesSection";
 
 export {
   ActivityDetail,
@@ -34,5 +38,9 @@ export {
   MatchResultQuickView,
   StatsSection,
   MatchResultSection,
-  useActivityDetailActions
+  useActivityDetailActions,
+  CupParentLink,
+  CupTabsContent,
+  MatchContentLayout,
+  RelatedActivitiesSection
 };
