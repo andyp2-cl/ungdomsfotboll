@@ -6,7 +6,8 @@ import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 import { KPISection } from "./KPISection";
 import { ChartSection } from "./ChartSection";
-import { isTrainer, formatPositions } from "@/utils/positionUtils";
+import { isTrainer } from "@/utils/positionUtils";
+import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -50,7 +51,10 @@ export function OverviewTabContent({
     };
   });
   
-  // Calculate player activity data with consistent property names and position formatting
+  // Calculate goal statistics for players
+  const { playerStats } = calculateGoalStats(activities, players);
+  
+  // Calculate player activity data with goals per match
   const playerActivityData = players
     .filter(player => !isTrainer(player.positions))
     .map(player => {
@@ -58,14 +62,20 @@ export function OverviewTabContent({
         activity.participants?.includes(player.id)
       ).length;
       
+      // Find goal stats for this player
+      const goalStat = playerStats.find(stat => stat.playerId === player.id);
+      const goalsPerMatch = goalStat && goalStat.matches > 0 
+        ? Number((goalStat.goals / goalStat.matches).toFixed(2))
+        : 0;
+      
       return {
         id: player.id,
         name: player.name,
         grade: player.grade,
-        positions: player.positions,
         jerseyNumber: player.jerseyNumber,
-        activities: activityCount, // Use consistent property name
-        activityCount: activityCount // Keep for backward compatibility
+        activities: activityCount,
+        activityCount: activityCount,
+        goalsPerMatch: goalsPerMatch
       };
     })
     .sort((a, b) => b.activities - a.activities);
@@ -127,6 +137,51 @@ export function OverviewTabContent({
           />
         </ChartSection>
       </div>
+
+      {/* Mål per match Section */}
+      <ChartSection
+        title="Mål per match"
+        description="Spelare med bäst målsnitt per match"
+        className="w-full"
+      >
+        <div className="h-[300px] w-full overflow-y-auto pr-4">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background">
+              <tr className="border-b text-left">
+                <th className="pb-2">Spelare</th>
+                <th className="pb-2 text-center">Matcher</th>
+                <th className="pb-2 text-center">Mål</th>
+                <th className="pb-2 text-center">Mål per match</th>
+              </tr>
+            </thead>
+            <tbody>
+              {playerStats
+                .filter(player => player.matches > 0)
+                .sort((a, b) => {
+                  const aGoalsPerMatch = a.matches > 0 ? a.goals / a.matches : 0;
+                  const bGoalsPerMatch = b.matches > 0 ? b.goals / b.matches : 0;
+                  return bGoalsPerMatch - aGoalsPerMatch;
+                })
+                .slice(0, 10)
+                .map(player => {
+                  const goalsPerMatch = player.matches > 0 ? (player.goals / player.matches).toFixed(2) : '0.00';
+                  return (
+                    <tr 
+                      key={player.playerId} 
+                      className="border-b hover:bg-accent/5 cursor-pointer"
+                      onClick={() => onPlayerSelect && onPlayerSelect(player.playerId)}
+                    >
+                      <td className="py-2">{player.name}</td>
+                      <td className="py-2 text-center">{player.matches}</td>
+                      <td className="py-2 text-center">{player.goals}</td>
+                      <td className="py-2 text-center">{goalsPerMatch}</td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      </ChartSection>
 
       {/* Attendance Analytics - Full Width */}
       <ChartSection
