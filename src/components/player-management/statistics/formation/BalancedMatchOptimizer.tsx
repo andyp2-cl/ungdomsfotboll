@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Target, TrendingUp, AlertTriangle, Info, BarChart3, Users } from "lucide-react";
+import { Target, TrendingUp, AlertTriangle, Info, BarChart3, Users, UserPlus } from "lucide-react";
 import { FormationSelector } from "./FormationSelector";
 import { getOpponents, analyzeOpponentHistory, suggestBalancedLineup, BalancedLineupSuggestion } from "@/utils/playerCombinations";
 import { getPositionColor, getPositionLabel } from "./positionUtils";
@@ -26,6 +27,7 @@ export function BalancedMatchOptimizer({
   const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
   const [targetGoalDifference, setTargetGoalDifference] = useState([1]);
+  const [prioritizeNewPlayers, setPrioritizeNewPlayers] = useState(false);
   const [suggestion, setSuggestion] = useState<BalancedLineupSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -42,7 +44,8 @@ export function BalancedMatchOptimizer({
         activities, 
         selectedOpponent, 
         selectedFormation, 
-        targetGoalDifference[0]
+        targetGoalDifference[0],
+        prioritizeNewPlayers
       );
       setSuggestion(newSuggestion);
       setIsGenerating(false);
@@ -127,6 +130,26 @@ export function BalancedMatchOptimizer({
               <span>3 (säkrare)</span>
             </div>
           </div>
+        </div>
+
+        {/* New Parameter for Prioritizing New Players */}
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+          <div className="flex items-center gap-3">
+            <UserPlus className="h-5 w-5 text-blue-500" />
+            <div>
+              <Label htmlFor="prioritize-new" className="text-sm font-medium text-blue-800">
+                Prioritera nya spelare
+              </Label>
+              <p className="text-xs text-blue-600 mt-1">
+                Ge förtur till spelare som inte spelat mot detta lag tidigare
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="prioritize-new"
+            checked={prioritizeNewPlayers}
+            onCheckedChange={setPrioritizeNewPlayers}
+          />
         </div>
 
         <Button 

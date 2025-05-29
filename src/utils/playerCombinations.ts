@@ -647,7 +647,8 @@ export const suggestBalancedLineup = (
   activities: Activity[],
   opponentName: string,
   formation: string = "2-3-1",
-  targetGoalDifference: number = 1 // Target narrow win
+  targetGoalDifference: number = 1, // Target narrow win
+  prioritizeNewPlayers: boolean = false
 ): BalancedLineupSuggestion => {
   const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
   const combinations = analyzePairCombinations(players, activities);
@@ -710,16 +711,30 @@ export const suggestBalancedLineup = (
         a.participants?.includes(player.id)
       );
       
+      // New player prioritization logic
+      if (prioritizeNewPlayers) {
+        if (playerOpponentMatches.length === 0) {
+          // Big bonus for players who never played against this opponent
+          balanceScore += 20;
+          reasoning.push("Ny mot detta lag");
+        } else if (playerOpponentMatches.length <= 2) {
+          // Neutral for players with limited experience
+          reasoning.push("Begränsad erfarenhet mot detta lag");
+        } else {
+          // Small penalty for players with lots of experience against this opponent
+          balanceScore -= 5;
+          reasoning.push("Erfaren mot detta lag");
+        }
+      }
+      
       if (playerOpponentMatches.length > 0) {
         // Calculate this player's impact in matches against this opponent
         let playerGoalDiffs: number[] = [];
         
         playerOpponentMatches.forEach(match => {
           if (match.homeScore !== undefined && match.awayScore !== undefined) {
-            const locationName = match.location?.name || '';
-            const isHome = locationName.toLowerCase().includes('hemma') || 
-                           locationName.toLowerCase().includes('home') ||
-                           !locationName; // Default to home if no location specified
+            // Use the correct home/away logic
+            const isHome = isHassleholmsPlayingHome(match);
             
             const ourScore = isHome ? match.homeScore : match.awayScore;
             const theirScore = isHome ? match.awayScore : match.homeScore;
@@ -734,11 +749,13 @@ export const suggestBalancedLineup = (
           const balanceDeviation = Math.abs(avgDiff - targetGoalDifference);
           balanceScore += Math.max(0, 20 - (balanceDeviation * 5));
           
-          reasoning.push(`Skapar jämna matcher mot ${opponentName}`);
+          if (!prioritizeNewPlayers || playerOpponentMatches.length <= 2) {
+            reasoning.push(`Skapar jämna matcher mot ${opponentName}`);
+          }
         }
       }
       
-      // Avoid extremely high performers who might cause blowouts
+      // Avoid extremely high performers who might cause blowouts (unless prioritizing new players)
       const gradeModifier = { 'A': 5, 'B': 15, 'C': 10, 'D': 0 }; // B-players preferred for balance
       balanceScore += gradeModifier[player.grade as keyof typeof gradeModifier] || 0;
       
@@ -755,7 +772,9 @@ export const suggestBalancedLineup = (
       // Position expertise
       if (player.positions?.[0] === position) {
         balanceScore += 10;
-        reasoning.push("Primär position");
+        if (reasoning.length === 0) {
+          reasoning.push("Primär position");
+        }
       }
       
       return {
@@ -800,6 +819,18 @@ export const suggestBalancedLineup = (
     `Balanspoäng: ${balanceScore.toFixed(0)}/100`,
     `Risknivå: ${riskLevel} (baserat på historisk variation)`
   ];
+  
+  if (prioritizeNewPlayers) {
+    const newPlayersCount = selectedPlayers.filter(p => 
+      activities.filter(a => 
+        a.type === 'match' && 
+        extractOpponentFromActivity(a) === opponentName && 
+        a.participants?.includes(p.playerId)
+      ).length === 0
+    ).length;
+    
+    reasoning.push(`✨ ${newPlayersCount} spelare får chans mot nytt lag`);
+  }
   
   if (opponentAnalysis.totalMatches < 3) {
     reasoning.push("⚠️ Begränsad historik - förslag baserat på allmän data");
