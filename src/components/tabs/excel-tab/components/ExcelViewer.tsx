@@ -22,147 +22,181 @@ export function ExcelViewer({
 }: ExcelViewerProps) {
   const iframeWrapperRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Detect if user is on Mac
   const isMac = isMacOS();
 
-  // Global document-level event blocking for Mac trackpad navigation
+  // Global navigation lock for Mac
   useEffect(() => {
     if (!embedUrl || !isMac) return;
 
-    const handleGlobalWheel = (event: WheelEvent) => {
-      // Only block when mouse is over iframe area
-      if (isMouseOverIframe && Math.abs(event.deltaX) > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    const handleGlobalGesture = (event: Event) => {
-      if (isMouseOverIframe) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    // Add global event listeners with highest priority
-    document.addEventListener('wheel', handleGlobalWheel, { 
-      passive: false, 
-      capture: true 
-    });
+    // Add Mac body class for CSS targeting
+    document.body.classList.add('excel-active-mac');
     
-    // Mac-specific gesture events
-    document.addEventListener('gesturestart', handleGlobalGesture, { 
-      passive: false, 
-      capture: true 
-    });
-    document.addEventListener('gesturechange', handleGlobalGesture, { 
-      passive: false, 
-      capture: true 
-    });
-    document.addEventListener('gestureend', handleGlobalGesture, { 
-      passive: false, 
-      capture: true 
-    });
+    // Create invisible overlay for gesture blocking
+    const overlay = document.createElement('div');
+    overlay.className = 'excel-navigation-blocker';
+    overlay.id = 'excel-nav-blocker';
+    document.body.appendChild(overlay);
 
-    return () => {
-      document.removeEventListener('wheel', handleGlobalWheel);
-      document.removeEventListener('gesturestart', handleGlobalGesture);
-      document.removeEventListener('gesturechange', handleGlobalGesture);
-      document.removeEventListener('gestureend', handleGlobalGesture);
+    // Aggressive global event blocking
+    const blockNavigation = (event: Event) => {
+      // Block all horizontal scroll events globally
+      if (event instanceof WheelEvent && Math.abs(event.deltaX) > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        return false;
+      }
+      
+      // Block all gesture events
+      if (event.type.includes('gesture')) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        return false;
+      }
+      
+      // Block specific Mac navigation events
+      if (event instanceof KeyboardEvent) {
+        if ((event.metaKey || event.ctrlKey) && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return false;
+        }
+      }
     };
-  }, [embedUrl, isMouseOverIframe, isMac]);
 
-  // Enhanced iframe area event handling
+    const globalEvents = [
+      'wheel',
+      'gesturestart',
+      'gesturechange', 
+      'gestureend',
+      'touchstart',
+      'touchmove',
+      'touchend',
+      'keydown',
+      'swipeleft',
+      'swiperight'
+    ];
+
+    // Add global listeners with highest priority
+    globalEvents.forEach(eventType => {
+      window.addEventListener(eventType, blockNavigation, { 
+        passive: false, 
+        capture: true 
+      });
+      document.addEventListener(eventType, blockNavigation, { 
+        passive: false, 
+        capture: true 
+      });
+    });
+
+    // Cleanup
+    return () => {
+      document.body.classList.remove('excel-active-mac');
+      const existingOverlay = document.getElementById('excel-nav-blocker');
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
+      
+      globalEvents.forEach(eventType => {
+        window.removeEventListener(eventType, blockNavigation);
+        document.removeEventListener(eventType, blockNavigation);
+      });
+    };
+  }, [embedUrl, isMac]);
+
+  // Enhanced iframe area event handling with lock mode
   useEffect(() => {
     const wrapperElement = iframeWrapperRef.current;
     if (!wrapperElement || !embedUrl) return;
 
     const handleMouseEnter = () => {
       setIsMouseOverIframe(true);
+      
+      // Activate navigation blocker overlay
+      const overlay = document.getElementById('excel-nav-blocker');
+      if (overlay) {
+        overlay.classList.add('active');
+      }
+
+      // Lock body scrolling completely on Mac
+      if (isMac) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        document.documentElement.style.overscrollBehavior = 'none';
+      }
     };
 
     const handleMouseLeave = () => {
       setIsMouseOverIframe(false);
-    };
+      
+      // Deactivate navigation blocker overlay
+      const overlay = document.getElementById('excel-nav-blocker');
+      if (overlay) {
+        overlay.classList.remove('active');
+      }
 
-    const handleWheel = (event: WheelEvent) => {
-      // Aggressively block all horizontal scrolling
-      if (Math.abs(event.deltaX) > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
+      // Unlock body scrolling on Mac
+      if (isMac) {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.documentElement.style.overscrollBehavior = '';
       }
     };
 
-    const handleTouchStart = (event: TouchEvent) => {
-      event.stopPropagation();
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      event.stopPropagation();
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      event.stopPropagation();
-    };
-
-    // Aggressive gesture prevention
-    const preventDefault = (event: Event) => {
+    // Ultra-aggressive event blocking for wrapper
+    const blockAllNavigation = (event: Event) => {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
+      return false;
     };
 
-    // Add all event listeners
+    const wrapperEvents = [
+      'wheel',
+      'scroll',
+      'touchstart',
+      'touchmove', 
+      'touchend',
+      'gesturestart',
+      'gesturechange',
+      'gestureend',
+      'swipeleft',
+      'swiperight',
+      'dragstart',
+      'drag',
+      'dragend'
+    ];
+
+    // Add all event listeners to wrapper
     wrapperElement.addEventListener('mouseenter', handleMouseEnter);
     wrapperElement.addEventListener('mouseleave', handleMouseLeave);
-    wrapperElement.addEventListener('wheel', handleWheel, { 
-      passive: false, 
-      capture: true 
-    });
-    wrapperElement.addEventListener('touchstart', handleTouchStart, { 
-      passive: false, 
-      capture: true 
-    });
-    wrapperElement.addEventListener('touchmove', handleTouchMove, { 
-      passive: false, 
-      capture: true 
-    });
-    wrapperElement.addEventListener('touchend', handleTouchEnd, { 
-      passive: false, 
-      capture: true 
-    });
     
-    // Mac gesture events
-    wrapperElement.addEventListener('gesturestart', preventDefault, { 
-      passive: false, 
-      capture: true 
-    });
-    wrapperElement.addEventListener('gesturechange', preventDefault, { 
-      passive: false, 
-      capture: true 
-    });
-    wrapperElement.addEventListener('gestureend', preventDefault, { 
-      passive: false, 
-      capture: true 
+    wrapperEvents.forEach(eventType => {
+      wrapperElement.addEventListener(eventType, blockAllNavigation, { 
+        passive: false, 
+        capture: true 
+      });
     });
 
     // Cleanup
     return () => {
       wrapperElement.removeEventListener('mouseenter', handleMouseEnter);
       wrapperElement.removeEventListener('mouseleave', handleMouseLeave);
-      wrapperElement.removeEventListener('wheel', handleWheel);
-      wrapperElement.removeEventListener('touchstart', handleTouchStart);
-      wrapperElement.removeEventListener('touchmove', handleTouchMove);
-      wrapperElement.removeEventListener('touchend', handleTouchEnd);
-      wrapperElement.removeEventListener('gesturestart', preventDefault);
-      wrapperElement.removeEventListener('gesturechange', preventDefault);
-      wrapperElement.removeEventListener('gestureend', preventDefault);
+      
+      wrapperEvents.forEach(eventType => {
+        wrapperElement.removeEventListener(eventType, blockAllNavigation);
+      });
     };
-  }, [embedUrl, setIsMouseOverIframe]);
+  }, [embedUrl, setIsMouseOverIframe, isMac]);
+
+  // Enhanced Google Sheets URL with more parameters to minimize navigation
+  const enhancedEmbedUrl = `${embedUrl}&rm=minimal&widget=true&chrome=false&embedded=true&single=true&gid=0&headers=false&gridlines=true&fvid=0&toolbar=false&navpane=false&showtabs=false`;
 
   return (
     <Card className="flex-1">
@@ -175,14 +209,16 @@ export function ExcelViewer({
             minHeight: '600px',
             overflow: 'hidden',
             overscrollBehavior: 'none',
+            touchAction: 'none',
             pointerEvents: 'auto'
           }}
         >
           <iframe
             ref={iframeRef}
-            src={embedUrl}
+            src={enhancedEmbedUrl}
             width="100%"
             height="100%"
+            scrolling="no"
             style={{ 
               border: 'none', 
               borderRadius: '6px',
@@ -215,6 +251,14 @@ export function ExcelViewer({
               Öppna i ny flik
             </Button>
           </div>
+
+          {/* Mac fallback warning */}
+          {isMac && (
+            <div className="absolute bottom-2 left-2 bg-amber-50 border border-amber-200 rounded-md p-2 text-xs text-amber-800 max-w-sm">
+              <p className="font-medium">Mac-tips:</p>
+              <p>Om horisontell scrolling ändå navigerar, använd "Öppna i ny flik" för bästa upplevelse.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

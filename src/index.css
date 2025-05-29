@@ -101,37 +101,69 @@
   }
 }
 
-/* Enhanced Excel iframe scrolling isolation for Mac trackpad */
+/* Global navigation lock for Excel tab on Mac */
+.excel-navigation-locked {
+  overscroll-behavior: none !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.excel-navigation-locked html,
+.excel-navigation-locked body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  overflow: hidden !important;
+}
+
+/* Enhanced Excel iframe container with aggressive Mac protection */
 .excel-iframe-container {
-  /* Strong scroll isolation */
-  overscroll-behavior: none;
-  overflow: hidden;
+  /* Complete scroll isolation */
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  overflow: hidden !important;
   position: relative;
+  
+  /* Disable all Mac gestures and navigation */
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
   
   /* Performance and rendering optimizations */
   will-change: transform;
   contain: layout style paint;
+  transform: translateZ(0);
   
-  /* Prevent browser navigation gestures */
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  /* Mac-specific gesture blocking */
+  -webkit-overflow-scrolling: auto !important;
 }
 
 .excel-iframe-wrapper {
-  /* Isolate all scroll interactions completely */
-  overscroll-behavior: none;
-  overflow: hidden;
+  /* Absolute positioning to prevent layout shifts */
   position: relative;
+  
+  /* Complete overscroll prevention */
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  overflow: hidden !important;
+  
+  /* Block all touch interactions except internal iframe */
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
   
   /* Enhanced rendering performance */
   transform: translateZ(0);
   contain: layout style paint;
-  
-  /* Block gesture navigation */
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  will-change: transform;
   
   /* Ensure pointer events work correctly */
   pointer-events: auto;
@@ -139,50 +171,85 @@
 
 .excel-iframe-container iframe {
   /* Enable internal scrolling while blocking external navigation */
-  overflow: auto;
+  overflow: auto !important;
   display: block;
   
-  /* Enhanced trackpad isolation for Mac */
-  touch-action: pan-x pan-y;
+  /* Specific touch handling for iframe content */
+  touch-action: pan-x pan-y !important;
   -webkit-overflow-scrolling: touch;
   
-  /* Optimized performance */
+  /* Performance optimization */
   will-change: scroll-position;
   transform: translateZ(0);
   
-  /* Ensure iframe can receive all interactions */
-  pointer-events: auto;
+  /* Ensure iframe receives interactions */
+  pointer-events: auto !important;
   
-  /* Block text selection that might interfere */
+  /* Block selection that might interfere */
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* Enhanced Webkit optimizations for Mac Safari/Chrome */
+/* Mac-specific Webkit optimizations */
 @supports (-webkit-appearance: none) {
   .excel-iframe-container,
   .excel-iframe-container iframe {
     -webkit-transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    
-    /* Additional Mac-specific optimizations */
     -webkit-perspective: 1000;
     perspective: 1000;
   }
   
-  /* Mac-specific gesture blocking */
   .excel-iframe-wrapper {
-    -webkit-user-drag: none;
-    -webkit-tap-highlight-color: transparent;
+    -webkit-user-drag: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
   }
 }
 
-/* Specific handling for Mac browser navigation prevention */
+/* Aggressive Mac browser navigation prevention */
 @media screen and (-webkit-min-device-pixel-ratio: 1) {
   .excel-iframe-container {
-    /* Aggressive overscroll prevention on Mac */
-    overscroll-behavior-x: none;
-    overscroll-behavior-y: none;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: none !important;
   }
+  
+  /* Global body lock when Excel is active on Mac */
+  body.excel-active-mac {
+    overscroll-behavior: none !important;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: none !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Invisible overlay for complete gesture blocking */
+.excel-navigation-blocker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent;
+  
+  /* Block all gestures */
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+.excel-navigation-blocker.active {
+  pointer-events: auto;
+}
+
+.excel-navigation-blocker.active .excel-iframe-container {
+  pointer-events: auto;
 }
