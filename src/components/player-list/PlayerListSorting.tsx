@@ -1,15 +1,31 @@
 
-import { useState } from "react";
+import React from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { Player, Activity } from "@/types/player";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
-// Update the SortField type to include 'winrate'
-export type SortField = 'name' | 'position' | 'grade' | 'activities' | 'winrate';
+export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch';
+
+interface SortIconProps {
+  field: SortField;
+  sortField: SortField;
+  sortDirection: 'asc' | 'desc';
+}
+
+export function SortIcon({ field, sortField, sortDirection }: SortIconProps) {
+  if (sortField !== field) {
+    return <ChevronUp className="ml-1 h-4 w-4 opacity-30" />;
+  }
+  
+  return sortDirection === 'asc' 
+    ? <ChevronUp className="ml-1 h-4 w-4" />
+    : <ChevronDown className="ml-1 h-4 w-4" />;
+}
 
 export function usePlayerSorting() {
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
+  const [sortField, setSortField] = React.useState<SortField>('name');
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
+  
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -18,59 +34,74 @@ export function usePlayerSorting() {
       setSortDirection('asc');
     }
   };
-
+  
   const sortPlayers = (players: Player[], activities: Activity[] = []) => {
     return [...players].sort((a, b) => {
-      const dirMod = sortDirection === 'asc' ? 1 : -1;
+      let valueA: any, valueB: any;
       
       switch (sortField) {
         case 'name':
-          return a.name.localeCompare(b.name) * dirMod;
-        case 'position':
-          const posA = a.positions?.[0] || '';
-          const posB = b.positions?.[0] || '';
-          return posA.localeCompare(posB) * dirMod;
+          valueA = a.name.toLowerCase();
+          valueB = b.name.toLowerCase();
+          break;
         case 'grade':
-          const gradeA = a.grade || '';
-          const gradeB = b.grade || '';
-          return gradeA.localeCompare(gradeB) * dirMod;
+          valueA = a.grade || '';
+          valueB = b.grade || '';
+          break;
         case 'activities':
-          const activitiesA = a.activities?.length || 0;
-          const activitiesB = b.activities?.length || 0;
-          return (activitiesA - activitiesB) * dirMod;
+          valueA = a.activities?.length || 0;
+          valueB = b.activities?.length || 0;
+          break;
         case 'winrate':
-          // Calculate winrate for both players
-          const playerAMatches = activities.filter(activity => 
+          // Calculate winrate for sorting
+          const aMatches = activities.filter(activity => 
             activity.type === "match" && 
             activity.participants?.includes(a.id)
           );
-          const playerBMatches = activities.filter(activity => 
+          const bMatches = activities.filter(activity => 
             activity.type === "match" && 
             activity.participants?.includes(b.id)
           );
           
-          const statsA = calculatePlayerStats(a, playerAMatches);
-          const statsB = calculatePlayerStats(b, playerBMatches);
+          valueA = aMatches.length > 0 ? calculatePlayerStats(a, aMatches).winRate : 0;
+          valueB = bMatches.length > 0 ? calculatePlayerStats(b, bMatches).winRate : 0;
+          break;
+        case 'goalsPerMatch':
+          // Calculate goals per match for sorting
+          const aMatchesGoals = activities.filter(activity => 
+            activity.type === "match" && 
+            activity.participants?.includes(a.id)
+          );
+          const bMatchesGoals = activities.filter(activity => 
+            activity.type === "match" && 
+            activity.participants?.includes(b.id)
+          );
           
-          return (statsA.winRate - statsB.winRate) * dirMod;
+          const aStats = aMatchesGoals.length > 0 ? calculatePlayerStats(a, aMatchesGoals) : { totalGoals: 0, matches: 0 };
+          const bStats = bMatchesGoals.length > 0 ? calculatePlayerStats(b, bMatchesGoals) : { totalGoals: 0, matches: 0 };
+          
+          valueA = aStats.matches > 0 ? aStats.totalGoals / aStats.matches : 0;
+          valueB = bStats.matches > 0 ? bStats.totalGoals / bStats.matches : 0;
+          break;
         default:
-          return 0;
+          valueA = '';
+          valueB = '';
       }
+      
+      if (valueA < valueB) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
     });
   };
-
-  return { sortField, sortDirection, toggleSort, sortPlayers };
-}
-
-import { ArrowDown, ArrowUp } from "lucide-react";
-
-export function SortIcon({ field, sortField, sortDirection }: { 
-  field: SortField; 
-  sortField: SortField; 
-  sortDirection: 'asc' | 'desc';
-}) {
-  if (field === sortField) {
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4 inline-block ml-1" /> : <ArrowDown className="h-4 w-4 inline-block ml-1" />;
-  }
-  return null;
+  
+  return {
+    sortField,
+    sortDirection,
+    toggleSort,
+    sortPlayers
+  };
 }

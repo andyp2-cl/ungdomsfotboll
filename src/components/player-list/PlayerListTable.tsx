@@ -75,6 +75,25 @@ export function PlayerListTable({
     return stats.winRate;
   };
 
+  // Calculate goals per match for each player
+  const getPlayerGoalsPerMatch = (player: Player) => {
+    // Filter all activities to get only matches where this player participated
+    const playerMatches = activities.filter(activity => 
+      activity.type === "match" && 
+      activity.participants?.includes(player.id)
+    );
+    
+    if (playerMatches.length === 0) {
+      return 0;
+    }
+    
+    const stats = calculatePlayerStats(player, playerMatches);
+    
+    // Calculate goals per match
+    const goalsPerMatch = stats.matches > 0 ? stats.totalGoals / stats.matches : 0;
+    return Math.round(goalsPerMatch * 100) / 100; // Round to 2 decimal places
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -121,6 +140,16 @@ export function PlayerListTable({
                 <SortIcon field="winrate" sortField={sortField} sortDirection={sortDirection} />
               </Button>
             </TableHead>
+            <TableHead>
+              <Button 
+                variant="ghost" 
+                onClick={() => toggleSort('goalsPerMatch')}
+                className="h-auto p-0 font-medium hover:bg-transparent"
+              >
+                Mål per match
+                <SortIcon field="goalsPerMatch" sortField={sortField} sortDirection={sortDirection} />
+              </Button>
+            </TableHead>
             <TableHead className="w-[120px]">Utveckling</TableHead>
             <TableHead className="w-[100px]">Åtgärder</TableHead>
           </TableRow>
@@ -129,6 +158,7 @@ export function PlayerListTable({
           {players.map((player) => {
             const isCoach = player.positions?.includes('TRÄNARE');
             const winRate = getPlayerWinRate(player);
+            const goalsPerMatch = getPlayerGoalsPerMatch(player);
             
             return (
               <TableRow 
@@ -179,6 +209,15 @@ export function PlayerListTable({
                   ) : (
                     <span className="font-medium text-primary">
                       {winRate}%
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {isCoach ? (
+                    <span className="text-muted-foreground">-</span>
+                  ) : (
+                    <span className="font-medium text-blue-600">
+                      {goalsPerMatch}
                     </span>
                   )}
                 </TableCell>
