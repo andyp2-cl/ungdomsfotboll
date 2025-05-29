@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerCombination {
@@ -212,4 +211,175 @@ export const analyzePositionCombinations = (combinations: PlayerCombination[], p
   });
   
   return positionStats;
+};
+
+// New interface for lineup suggestions
+export interface LineupSuggestion {
+  formation: string;
+  players: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[];
+  totalEfficiency: number;
+  expectedWinRate: number;
+  confidence: number;
+  reasoning: string[];
+}
+
+// Suggest optimal lineup based on formation and historical data
+export const suggestOptimalLineup = (
+  players: Player[], 
+  activities: Activity[], 
+  formation: string = "2-3-1"
+): LineupSuggestion => {
+  const combinations = analyzePairCombinations(players, activities);
+  const matrix = createCombinationMatrix(players, combinations);
+  
+  // Define position requirements for different formations
+  const formationRequirements: Record<string, string[]> = {
+    "2-3-1": ["MV", "BACK", "BACK", "MF", "MF", "MF", "ANF"],
+    "3-2-1": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "ANF"],
+    "2-2-2": ["MV", "BACK", "BACK", "MF", "MF", "ANF", "ANF"]
+  };
+  
+  const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
+  
+  // Get available players for each position
+  const playersByPosition: Record<string, Player[]> = {};
+  requiredPositions.forEach(pos => {
+    playersByPosition[pos] = players.filter(p => 
+      p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
+    );
+  });
+  
+  // Simple greedy algorithm to select best lineup
+  const selectedPlayers: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[] = [];
+  
+  const usedPlayerIds = new Set<string>();
+  
+  requiredPositions.forEach(position => {
+    const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
+    
+    if (availablePlayers.length === 0) {
+      // Fallback: use any available player
+      const fallbackPlayer = players.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
+      if (fallbackPlayer) {
+        selectedPlayers.push({
+          playerId: fallbackPlayer.id,
+          playerName: fallbackPlayer.name,
+          position,
+          reasoning: "Ingen tillgänglig specialist - använder backup"
+        });
+        usedPlayerIds.add(fallbackPlayer.id);
+      }
+      return;
+    }
+    
+    // Score players based on individual performance and combination potential
+    const scoredPlayers = availablePlayers.map(player => {
+      let score = 0;
+      let reasoning = [];
+      
+      // Individual performance (basic scoring)
+      const playerActivities = activities.filter(a => 
+        a.type === 'match' && a.participants?.includes(player.id)
+      );
+      
+      if (playerActivities.length > 0) {
+        const wins = playerActivities.filter(a => a.isWin === true).length;
+        const winRate = (wins / playerActivities.length) * 100;
+        score += winRate * 0.3; // 30% weight for individual win rate
+        reasoning.push(`${winRate.toFixed(0)}% vinster`);
+      }
+      
+      // Combination potential with already selected players
+      let combinationBonus = 0;
+      selectedPlayers.forEach(selected => {
+        const combination = matrix[player.id]?.[selected.playerId];
+        if (combination && combination.matchesTogether >= 2) {
+          combinationBonus += combination.efficiency * 10; // Boost for good combinations
+          reasoning.push(`Bra synergi med ${selected.playerName}`);
+        }
+      });
+      
+      score += combinationBonus;
+      
+      // Position expertise bonus
+      if (player.positions?.[0] === position) {
+        score += 20; // Bonus for primary position
+        reasoning.push("Primär position");
+      }
+      
+      // Grade bonus
+      const gradeBonus = { 'A': 15, 'B': 10, 'C': 5, 'D': 0 };
+      score += gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
+      
+      return {
+        player,
+        score,
+        reasoning: reasoning.join(", ") || "Grundvärdering"
+      };
+    });
+    
+    // Select highest scoring player
+    scoredPlayers.sort((a, b) => b.score - a.score);
+    const bestPlayer = scoredPlayers[0];
+    
+    if (bestPlayer) {
+      selectedPlayers.push({
+        playerId: bestPlayer.player.id,
+        playerName: bestPlayer.player.name,
+        position,
+        reasoning: bestPlayer.reasoning
+      });
+      usedPlayerIds.add(bestPlayer.player.id);
+    }
+  });
+  
+  // Calculate overall team metrics
+  let totalEfficiency = 0;
+  let totalWinRate = 0;
+  let pairCount = 0;
+  
+  for (let i = 0; i < selectedPlayers.length; i++) {
+    for (let j = i + 1; j < selectedPlayers.length; j++) {
+      const combination = matrix[selectedPlayers[i].playerId]?.[selectedPlayers[j].playerId];
+      if (combination && combination.matchesTogether >= 2) {
+        totalEfficiency += combination.efficiency;
+        totalWinRate += combination.winRate;
+        pairCount++;
+      }
+    }
+  }
+  
+  const avgEfficiency = pairCount > 0 ? totalEfficiency / pairCount : 1.0;
+  const avgWinRate = pairCount > 0 ? totalWinRate / pairCount : 50;
+  
+  // Generate reasoning
+  const reasoning = [
+    `Formation ${formation} med balanserad positionsfördelning`,
+    `Genomsnittlig kombinationseffektivitet: ${avgEfficiency.toFixed(2)}`,
+    `Förväntad vinstprocent: ${avgWinRate.toFixed(0)}%`,
+    `Baserat på ${pairCount} kända spelarkombinationer`
+  ];
+  
+  if (pairCount < 5) {
+    reasoning.push("⚠️ Begränsad data - förslag baserat på tillgänglig information");
+  }
+  
+  return {
+    formation,
+    players: selectedPlayers,
+    totalEfficiency: avgEfficiency,
+    expectedWinRate: avgWinRate,
+    confidence: Math.min(100, (pairCount / 10) * 100), // Confidence based on data availability
+    reasoning
+  };
 };
