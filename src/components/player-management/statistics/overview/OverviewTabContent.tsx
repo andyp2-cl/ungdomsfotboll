@@ -6,6 +6,7 @@ import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
 import { PlayerAttendanceAnalytics } from "@/components/charts/PlayerAttendanceAnalytics";
 import { KPISection } from "./KPISection";
 import { ChartSection } from "./ChartSection";
+import { isTrainer, formatPositions } from "@/utils/positionUtils";
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -24,7 +25,7 @@ export function OverviewTabContent({
 }: OverviewTabContentProps) {
   // Calculate activity count by grade
   const activityCountByGrade = gradeData.map(gradeInfo => {
-    const gradePlayers = players.filter(p => p.grade === gradeInfo.grade);
+    const gradePlayers = players.filter(p => p.grade === gradeInfo.grade && !isTrainer(p.positions));
     const playerIds = gradePlayers.map(p => p.id);
     
     let totalActivities = 0;
@@ -49,9 +50,9 @@ export function OverviewTabContent({
     };
   });
   
-  // Calculate player activity data with correct property name
+  // Calculate player activity data with correct property name and consistent formatting
   const playerActivityData = players
-    .filter(player => !player.positions?.includes("TRÄNARE"))
+    .filter(player => !isTrainer(player.positions))
     .map(player => {
       const activityCount = activities.filter(activity => 
         activity.participants?.includes(player.id)
@@ -61,6 +62,8 @@ export function OverviewTabContent({
         id: player.id,
         name: player.name,
         grade: player.grade,
+        positions: player.positions,
+        jerseyNumber: player.jerseyNumber,
         activities: activityCount, // Fixed: use 'activities' instead of 'activityCount'
         activityCount: activityCount // Keep both for compatibility
       };

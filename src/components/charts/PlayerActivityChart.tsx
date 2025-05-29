@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatPositions, isTrainer } from '@/utils/positionUtils';
 
 interface PlayerActivityChartProps {
   data: any[];
@@ -11,8 +12,16 @@ interface PlayerActivityChartProps {
 }
 
 export function PlayerActivityChart({ data, config, onBarClick }: PlayerActivityChartProps) {
-  const sortedData = [...data].sort((a, b) => b.activityCount - a.activityCount);
-  const topPlayers = sortedData.slice(0, 15); // Only show top 15 players
+  // Filter out trainers and add position formatting
+  const processedData = data
+    .filter(player => !isTrainer(player.positions))
+    .map(player => ({
+      ...player,
+      formattedPositions: formatPositions(player.positions, true)
+    }))
+    .sort((a, b) => b.activityCount - a.activityCount);
+    
+  const topPlayers = processedData.slice(0, 15); // Only show top 15 players
 
   const handleBarClick = (data: any) => {
     if (onBarClick && data.id) {
@@ -37,7 +46,28 @@ export function PlayerActivityChart({ data, config, onBarClick }: PlayerActivity
         />
         <Tooltip
           formatter={(value, name) => [value, 'Aktiviteter']}
-          labelFormatter={(label) => `Spelare: ${label}`}
+          labelFormatter={(label, payload) => {
+            if (payload && payload.length > 0) {
+              const data = payload[0].payload;
+              return (
+                <div>
+                  <div className="font-medium">{data.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {data.formattedPositions} • Nivå {data.grade}
+                    {data.jerseyNumber && ` • #${data.jerseyNumber}`}
+                  </div>
+                </div>
+              );
+            }
+            return `Spelare: ${label}`;
+          }}
+          contentStyle={{
+            backgroundColor: 'white',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+          }}
         />
         <Bar 
           dataKey="activityCount" 

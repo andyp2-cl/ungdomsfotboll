@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
 import { GradePieChart } from "@/components/activity-detail/match-result/GradePieChart";
+import { formatPositions, isTrainer } from "@/utils/positionUtils";
 
 interface PlayerCardProps {
   player: Player;
@@ -33,19 +34,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
     }
   };
 
-  const formatPosition = (position: string) => {
-    if (position === 'TRÄNARE') return 'Tränare';
-    
-    let formattedPosition = position
-      .replace('MV', 'Målvakt')
-      .replace('BACK', 'Back')
-      .replace('MF', 'Mittfält')
-      .replace('ANF', 'Anfall');
-    
-    return formattedPosition;
-  };
-
-  const isCoach = player.positions?.includes('TRÄNARE');
+  const isCoach = isTrainer(player.positions);
 
   // Handle click to navigate to player view
   const handleCardClick = () => {
@@ -87,10 +76,7 @@ export function PlayerCard({ player, onClick, onEdit }: PlayerCardProps) {
           {/* Add position badges */}
           {!isCoach && player.positions && player.positions.length > 0 && (
             <Badge variant="outline" className="bg-white/80">
-              {player.positions
-                .filter(pos => pos !== 'TRÄNARE')
-                .map(formatPosition)
-                .join(', ')}
+              {formatPositions(player.positions, true)}
             </Badge>
           )}
         </div>

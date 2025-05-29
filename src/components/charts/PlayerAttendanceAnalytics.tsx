@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
 import { getGradeColor } from '@/utils/gradeUtils';
+import { formatPositions, isTrainer } from '@/utils/positionUtils';
 
 interface PlayerAttendanceAnalyticsProps {
   players: Player[];
@@ -13,7 +14,7 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
   // Calculate attendance rates for each player
   const attendanceData = useMemo(() => {
     return players
-      .filter(player => !player.positions?.includes('TRÄNARE')) // Filter out trainers
+      .filter(player => !isTrainer(player.positions)) // Filter out trainers using utility
       .map(player => {
         // Count activities the player is participating in
         const participatingCount = player.activities?.length || 0;
@@ -27,6 +28,7 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
           name: player.name,
           grade: player.grade,
           jersey: player.jerseyNumber || '',
+          positions: formatPositions(player.positions, true), // Use compact format
           attendanceRate: Math.round(attendanceRate),
           activitiesCount: participatingCount,
           totalActivities: activities.length,
@@ -66,6 +68,21 @@ export function PlayerAttendanceAnalytics({ players, activities }: PlayerAttenda
                 `${value}% (${data.activitiesCount}/${data.totalActivities})`,
                 'Närvaro'
               ];
+            }}
+            labelFormatter={(label, payload) => {
+              if (payload && payload.length > 0) {
+                const data = payload[0].payload;
+                return (
+                  <div>
+                    <div className="font-medium">{data.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {data.positions} • Nivå {data.grade}
+                      {data.jersey && ` • #${data.jersey}`}
+                    </div>
+                  </div>
+                );
+              }
+              return label;
             }}
             contentStyle={{
               backgroundColor: 'white',
