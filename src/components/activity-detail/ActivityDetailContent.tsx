@@ -1,16 +1,17 @@
 
 import React from "react";
 import { Activity, Player } from "@/types/player";
-import { ActivityDetailHeader } from "./ActivityDetailHeader";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
-import { LinkExistingMatches } from "./LinkExistingMatches";
+import { LinkExistingMatchesModal } from "./LinkExistingMatchesModal";
+import { LinkedMatchesList } from "./LinkedMatchesList";
 import { ParticipantsList } from "./ParticipantsList";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ActivityDetailContentProps {
   activity: Activity;
@@ -74,60 +75,95 @@ export function ActivityDetailContent({
     }
   };
 
+  // Handle unlinking a match from this cup
+  const handleUnlinkMatch = async (matchId: string) => {
+    const match = allActivities.find(a => a.id === matchId);
+    if (match && onActivityUpdate) {
+      const updatedMatch = { ...match, cupId: undefined };
+      await onActivityUpdate(updatedMatch);
+    }
+  };
+
+  // Get linked matches for this cup
+  const linkedMatches = allActivities.filter(activity => 
+    activity.cupId === activity.id
+  );
+
   return (
     <div className="space-y-6">
-      {/* Activity header shows basic info, but not with full controls */}
-      <div className="border rounded-md p-4">
-        <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-          {activity.name}
-          {activity.cupId && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              Cupmatch
-            </Badge>
-          )}
-        </h2>
-        <p className="text-muted-foreground">
-          {new Date(activity.date).toLocaleDateString()} {activity.time && `• ${activity.time}`}
-          {activity.location && ` • ${activity.location.name}`}
-        </p>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-            {activity.type === "match" ? "Match" : "Cup"}
+      {/* If this is a cup match, show link to parent cup */}
+      {parentCup && (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <Trophy className="h-4 w-4 text-blue-600" />
+          <span className="text-sm text-blue-800">
+            Denna match är del av cupen
           </span>
-          
-          {/* If this is a cup match, show link to parent cup */}
-          {parentCup && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 text-xs"
-              onClick={() => onActivitySelect?.(parentCup)}
-            >
-              <Trophy className="h-3 w-3 mr-1" />
-              Gå till {parentCup.name}
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-7 text-xs"
+            onClick={() => onActivitySelect?.(parentCup)}
+          >
+            {parentCup.name}
+          </Button>
         </div>
-      </div>
+      )}
       
-      {/* For cup type, show link existing matches component */}
+      {/* For cup type activities, show cup-specific content */}
       {activity.type === "cup" && (
-        <LinkExistingMatches 
-          cupActivity={activity}
-          allActivities={allActivities}
-          onLinkMatches={handleLinkMatches}
-        />
+        <Tabs defaultValue="matches" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="matches">Matcher</TabsTrigger>
+            <TabsTrigger value="participants">Deltagare</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="matches" className="space-y-4">
+            <LinkedMatchesList 
+              linkedMatches={cupMatches}
+              onActivitySelect={onActivitySelect}
+              onUnlinkMatch={handleUnlinkMatch}
+            />
+            
+            <LinkExistingMatchesModal 
+              cupActivity={activity}
+              allActivities={allActivities}
+              onLinkMatches={handleLinkMatches}
+            />
+          </TabsContent>
+          
+          <TabsContent value="participants">
+            <ActivityParticipantSection 
+              activity={activity}
+              players={players}
+              updateActivity={updateActivity}
+              onPlayerSelect={onPlayerSelect}
+            />
+          </TabsContent>
+        </Tabs>
       )}
-      
-      {/* For cup type, show related matches */}
-      {activity.type === "cup" && cupMatches.length > 0 && (
-        <ActivityCupMatches 
-          cupMatches={cupMatches}
-          onActivitySelect={onActivitySelect}
-        />
+
+      {/* For match type activities, show standard content */}
+      {activity.type === "match" && (
+        <>
+          {/* Participant section */}
+          <ActivityParticipantSection 
+            activity={activity}
+            players={players}
+            updateActivity={updateActivity}
+            onPlayerSelect={onPlayerSelect}
+          />
+          
+          {/* Stats section for matches */}
+          <ActivityStatsSection 
+            activity={activity}
+            players={players}
+            participatingPlayers={participatingPlayers}
+            updateActivity={updateActivity}
+            isHistorical={isHistorical}
+          />
+        </>
       )}
-      
+
       {/* Related activities (if this is a cup match, show its parent cup) */}
       {relatedActivities.length > 0 && (
         <div className="border rounded-md p-4">
@@ -158,25 +194,6 @@ export function ActivityDetailContent({
             ))}
           </ul>
         </div>
-      )}
-
-      {/* Participant section */}
-      <ActivityParticipantSection 
-        activity={activity}
-        players={players}
-        updateActivity={updateActivity}
-        onPlayerSelect={onPlayerSelect}
-      />
-      
-      {/* Stats section for matches */}
-      {activity.type === "match" && (
-        <ActivityStatsSection 
-          activity={activity}
-          players={players}
-          participatingPlayers={participatingPlayers}
-          updateActivity={updateActivity}
-          isHistorical={isHistorical}
-        />
       )}
     </div>
   );

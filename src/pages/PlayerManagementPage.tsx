@@ -2,7 +2,7 @@
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
-import { Activity } from "@/types/player"; // Add missing Activity import
+import { Activity } from "@/types/player";
 
 interface PlayersPageProps {
   initialTab?: string;

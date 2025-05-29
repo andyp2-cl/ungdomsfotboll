@@ -2,7 +2,9 @@
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityDetailContent } from "./ActivityDetailContent";
-import { ActivityHeader } from "./ActivityHeader";
+import { ActivityDetailHeader } from "./ActivityDetailHeader";
+import { useState } from "react";
+import { DeleteActivityDialog } from "./DeleteActivityDialog";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -39,19 +41,29 @@ export function ActivityDetailView({
   onMatchResultUpdate,
   onAddActivity
 }: ActivityDetailViewProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Wrapper to handle activity updates
   const handleActivityUpdate = (updatedActivity: Activity) => {
     onActivityUpdate(updatedActivity);
   };
 
+  // Calculate if activity is historical
+  const isHistorical = (() => {
+    const activityDate = new Date(activity.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return activityDate < today;
+  })();
+
   return (
     <div className="space-y-6">
-      <ActivityHeader 
+      <ActivityDetailHeader 
         activity={activity}
-        onBack={onBack}
+        isHistorical={isHistorical}
+        onClose={onClose}
         onEdit={onEdit}
-        onDeleteActivity={onDeleteActivity}
+        onDeleteOpen={() => setIsDeleteDialogOpen(true)}
       />
       
       <ActivityDetailContent 
@@ -66,6 +78,19 @@ export function ActivityDetailView({
         allActivities={allActivities}
         onMatchResultUpdate={onMatchResultUpdate}
         onAddActivity={onAddActivity}
+      />
+
+      <DeleteActivityDialog
+        activity={activity}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={async () => {
+          const success = await onDeleteActivity(activity.id);
+          if (success) {
+            onClose();
+          }
+          setIsDeleteDialogOpen(false);
+        }}
       />
     </div>
   );

@@ -1,4 +1,6 @@
 
+import React from "react";
+import { Activity } from "@/types/player";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,35 +13,31 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface DeleteActivityDialogProps {
-  activityName: string;
+  activity: Activity;
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDelete: () => void;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
 }
 
 export function DeleteActivityDialog({
-  activityName,
+  activity,
   isOpen,
-  onOpenChange,
-  onDelete
+  onClose,
+  onConfirm
 }: DeleteActivityDialogProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Radera aktivitet</AlertDialogTitle>
+          <AlertDialogTitle>Ta bort aktivitet</AlertDialogTitle>
           <AlertDialogDescription>
-            Är du säker på att du vill radera "{activityName}"? 
-            Denna åtgärd kan inte ångras och all information kopplad till aktiviteten kommer att försvinna.
+            Är du säker på att du vill ta bort "{activity.name}"? Detta kan inte ångras.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Avbryt</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onDelete} 
-            className="bg-red-500 hover:bg-red-700"
-          >
-            Radera
+          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Ta bort
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
