@@ -1,4 +1,3 @@
-
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerCombination {
@@ -426,20 +425,26 @@ export interface BalancedLineupSuggestion {
 
 // Extract opponent names from activity names
 export const getOpponents = (activities: Activity[]): string[] => {
+  console.log('getOpponents called with activities:', activities.length);
   const opponents = new Set<string>();
   
   activities
     .filter(a => a.type === 'match' && a.name)
     .forEach(activity => {
+      console.log('Checking activity name:', activity.name);
       // Extract opponent from activity name like "Match mot FK Finja"
       const matchPattern = /^Match mot (.+)$/i;
       const match = activity.name.match(matchPattern);
       if (match && match[1]) {
-        opponents.add(match[1].trim());
+        const opponent = match[1].trim();
+        console.log('Found opponent:', opponent);
+        opponents.add(opponent);
       }
     });
   
-  return Array.from(opponents).sort();
+  const result = Array.from(opponents).sort();
+  console.log('Final opponents list:', result);
+  return result;
 };
 
 // Extract opponent name from activity name
@@ -487,9 +492,10 @@ export const analyzeOpponentHistory = (
   opponentMatches.forEach(match => {
     if (match.homeScore !== undefined && match.awayScore !== undefined) {
       // Check if we're playing at home or away based on location
-      const isHome = match.location_name?.toLowerCase().includes('hemma') || 
-                     match.location_name?.toLowerCase().includes('home') ||
-                     !match.location_name; // Default to home if no location specified
+      const locationName = match.location?.name || '';
+      const isHome = locationName.toLowerCase().includes('hemma') || 
+                     locationName.toLowerCase().includes('home') ||
+                     !locationName; // Default to home if no location specified
       
       const ourScore = isHome ? match.homeScore : match.awayScore;
       const theirScore = isHome ? match.awayScore : match.homeScore;
@@ -625,9 +631,10 @@ export const suggestBalancedLineup = (
         
         playerOpponentMatches.forEach(match => {
           if (match.homeScore !== undefined && match.awayScore !== undefined) {
-            const isHome = match.location_name?.toLowerCase().includes('hemma') || 
-                           match.location_name?.toLowerCase().includes('home') ||
-                           !match.location_name;
+            const locationName = match.location?.name || '';
+            const isHome = locationName.toLowerCase().includes('hemma') || 
+                           locationName.toLowerCase().includes('home') ||
+                           !locationName;
             const ourScore = isHome ? match.homeScore : match.awayScore;
             const theirScore = isHome ? match.awayScore : match.homeScore;
             playerGoalDiffs.push(ourScore - theirScore);

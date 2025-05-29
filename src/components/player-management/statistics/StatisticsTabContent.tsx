@@ -31,7 +31,7 @@ export function StatisticsTabContent({ players, activities }: StatisticsTabConte
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
           <TabsTrigger value="overview">Översikt</TabsTrigger>
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Mål</TabsTrigger>
