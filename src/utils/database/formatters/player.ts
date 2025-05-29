@@ -45,6 +45,30 @@ const getDefaultDevelopment = (): PlayerDevelopment => ({
   workRate: 1
 });
 
+// Helper function to safely parse positions from various formats
+const parsePositions = (positionData?: string): PlayerPosition[] => {
+  if (!positionData) return [];
+
+  try {
+    // If it starts with '[', it's probably a JSON array
+    if (positionData.startsWith('[')) {
+      const parsed = JSON.parse(positionData);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    
+    // If it contains commas, split by comma
+    if (positionData.includes(',')) {
+      return positionData.split(',').map(p => p.trim()) as PlayerPosition[];
+    }
+    
+    // Single position as string
+    return [positionData as PlayerPosition];
+  } catch (error) {
+    console.error('Error parsing position data:', positionData, error);
+    return [];
+  }
+};
+
 export const formatPlayerForDatabase = (player: Player): DatabasePlayer => {
   console.log("Formatting player for database:", player.name);
   console.log("Player image before formatting:", player.image);
@@ -67,6 +91,7 @@ export const formatPlayerForDatabase = (player: Player): DatabasePlayer => {
 export const formatDatabasePlayer = (dbPlayer: DatabasePlayer): Player => {
   console.log("Formatting database player:", dbPlayer.name);
   console.log("Database player image:", dbPlayer.image);
+  console.log("Database player position field:", dbPlayer.position);
   
   let development: PlayerDevelopment | undefined = undefined;
   
@@ -116,11 +141,9 @@ export const formatDatabasePlayer = (dbPlayer: DatabasePlayer): Player => {
     }
   }
   
-  // Handle positions - convert legacy position field or use empty array
-  let positions: PlayerPosition[] = [];
-  if (dbPlayer.position) {
-    positions = [dbPlayer.position as PlayerPosition];
-  }
+  // Handle positions - parse from legacy position field
+  const positions = parsePositions(dbPlayer.position);
+  console.log("Parsed positions:", positions);
   
   const formattedPlayer: Player = {
     id: dbPlayer.id,
@@ -133,7 +156,7 @@ export const formatDatabasePlayer = (dbPlayer: DatabasePlayer): Player => {
     activities: [] // Will be populated separately
   };
   
-  console.log("Formatted player with image:", formattedPlayer.name, formattedPlayer.image ? "has image" : "no image");
+  console.log("Formatted player with positions:", formattedPlayer.name, formattedPlayer.positions);
   
   return formattedPlayer;
 };
