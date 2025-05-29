@@ -86,10 +86,9 @@ export function ActivityListWithMonthGrouping({
       }));
   }, [activities]);
 
-  // Determine which months should be expanded by default
+  // Determine which months should be expanded by default (only current month)
   const currentMonth = format(new Date(), 'yyyy-MM');
-  const previousMonth = format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM');
-  const defaultExpandedMonths = [currentMonth, previousMonth];
+  const defaultExpandedMonths = [currentMonth];
 
   return (
     <div className="space-y-4">
