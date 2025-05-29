@@ -19,7 +19,7 @@ export function usePlayerForm({
 }: UsePlayerFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(initialValues?.image);
 
-  // Ensure development is properly initialized with required values
+  // Default development values for new players
   const defaultDevelopment = {
     technical: 1,
     gameUnderstanding: 1,
@@ -29,7 +29,7 @@ export function usePlayerForm({
     mentality: 1
   };
 
-  // Make sure all required properties exist by using the default values when properties are missing
+  // For existing players, use their development data or defaults
   const initialDevelopment = initialValues?.development 
     ? {
         technical: initialValues.development.technical ?? defaultDevelopment.technical,
@@ -82,15 +82,16 @@ export function usePlayerForm({
   }, [isTrainer, form]);
 
   const handleSubmit = (data: PlayerFormValues) => {
-    // Create new player object
+    // Create new player object with default development values for new players
     const newPlayer: Player = {
       id: initialValues?.id || uuidv4(),
       name: data.name,
-      grade: data.isTrainer ? undefined : data.grade, // Only set grade if not a trainer
-      positions: data.positions as PlayerPosition[], // Cast to PlayerPosition[] to satisfy type checking
+      grade: data.isTrainer ? undefined : data.grade,
+      positions: data.positions as PlayerPosition[],
       jerseyNumber: data.jerseyNumber || undefined,
       image: imagePreview,
       activities: initialValues?.activities || [],
+      // Always include development data, using form values for existing players or defaults for new ones
       development: {
         technical: data.development.technical,
         gameUnderstanding: data.development.gameUnderstanding,

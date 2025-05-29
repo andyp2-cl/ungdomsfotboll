@@ -6,7 +6,6 @@ import { Player } from "@/types/player";
 import { ImageUploadField } from "./player-form/ImageUploadField";
 import { PlayerPositionField } from "./player-form/PlayerPositionField";
 import { FormButtons } from "./player-form/FormButtons";
-import { DevelopmentFields } from "./player-form/DevelopmentFields";
 import { usePlayerForm } from "./player-form/usePlayerForm";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
@@ -103,10 +102,6 @@ export function AddPlayerForm({ onSave, onCancel }: AddPlayerFormProps) {
             </FormItem>
           )}
         />
-        
-        <div className="border-t pt-4">
-          <DevelopmentFields form={form} />
-        </div>
 
         <FormButtons onCancel={onCancel} />
       </form>
