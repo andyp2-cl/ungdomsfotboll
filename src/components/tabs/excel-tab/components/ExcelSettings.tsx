@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { FileSpreadsheet, Save } from "lucide-react";
+import { FileSpreadsheet, Save, Globe } from "lucide-react";
 
 interface ExcelSettingsProps {
   sheetUrl: string;
@@ -32,15 +32,17 @@ export function ExcelSettings({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5" />
-          Google Sheets Integration
+          Global Google Sheets Integration
+          <Globe className="h-4 w-4 text-blue-500" />
         </CardTitle>
         <CardDescription>
-          Ladda in en Google Sheets-fil från Google Drive för att arbeta med den direkt på sajten.
+          Ladda in en Google Sheets-fil som blir tillgänglig för alla användare på alla enheter. 
+          När du ändrar filen här påverkas alla användare automatiskt.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="sheet-url">Google Sheets URL</Label>
+          <Label htmlFor="sheet-url">Google Sheets URL (Global)</Label>
           <div className="flex gap-2">
             <Input
               id="sheet-url"
@@ -57,26 +59,37 @@ export function ExcelSettings({
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Laddar...
+                  Sparar...
                 </div>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Ladda in
+                  Spara globalt
                 </>
               )}
             </Button>
             {embedUrl && (
-              <Button onClick={onClearSheet} variant="outline">
-                Rensa
+              <Button onClick={onClearSheet} variant="outline" disabled={isLoading}>
+                Rensa globalt
               </Button>
             )}
             {embedUrl && showSettings && (
-              <Button onClick={onCancel} variant="outline">
+              <Button onClick={onCancel} variant="outline" disabled={isLoading}>
                 Avbryt
               </Button>
             )}
           </div>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className="h-4 w-4 text-blue-600" />
+            <span className="font-medium text-blue-800">Global inställning</span>
+          </div>
+          <p className="text-sm text-blue-700">
+            Denna Excel-fil kommer att vara tillgänglig för alla användare oavsett vilken enhet de använder. 
+            När filen uppdateras här påverkas alla användare omedelbart.
+          </p>
         </div>
         
         <div className="text-sm text-muted-foreground space-y-1">
@@ -85,7 +98,7 @@ export function ExcelSettings({
             <li>Öppna din Google Sheets-fil i Google Drive</li>
             <li>Klicka på "Dela" och sätt behörigheter till "Alla med länken kan redigera"</li>
             <li>Kopiera länken och klistra in den ovan</li>
-            <li>Klicka på "Ladda in" för att visa filen här</li>
+            <li>Klicka på "Spara globalt" för att göra filen tillgänglig för alla användare</li>
           </ol>
         </div>
       </CardContent>

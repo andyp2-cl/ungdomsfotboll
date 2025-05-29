@@ -5,3 +5,4 @@ export * from './players';
 export * from './activities';
 export * from './playerActivities';
 export * from './logs';
+export * from './appSettings';
