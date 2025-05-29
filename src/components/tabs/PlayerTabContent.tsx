@@ -15,13 +15,13 @@ interface PlayerTabContentProps {
   searchQuery: string;
   selectedGrades: PlayerGrade[];
   selectedPlayer: Player | null;
-  viewMode: "list" | "grid" | "stats";
+  viewMode: "list" | "grid";
   filteredPlayers: Player[];
   isAddPlayerOpen: boolean;
   setSearchQuery: (query: string) => void;
   handleGradeChange: (grade: PlayerGrade) => void;
   setSelectedPlayer: (player: Player | null) => void;
-  setViewMode: (mode: "list" | "grid" | "stats") => void;
+  setViewMode: (mode: "list" | "grid") => void;
   handlePlayerUpdate: (player: Player) => void;
   handleBulkPlayerUpdate: (players: Player[]) => void;
   handleDeletePlayer?: (playerId: string) => Promise<void>;
@@ -85,12 +85,6 @@ export function PlayerTabContent({
           onBulkUpdate={(player) => handleBulkPlayerUpdate([player])}
           allPlayers={players}
           onActivitySelect={onActivitySelect}
-        />
-      ) : viewMode === "stats" ? (
-        <TeamStatistics 
-          players={players} 
-          activities={activities}
-          onPlayerSelect={setSelectedPlayer}
         />
       ) : (
         <PlayerList 

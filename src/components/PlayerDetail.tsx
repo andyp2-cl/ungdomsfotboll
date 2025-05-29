@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import { PlayerCard } from "@/components/PlayerCard";
+import { PlayerDetailView } from "@/components/player-detail/PlayerDetailView";
 import { PlayerMatchTabs } from "@/components/player-match-history/PlayerMatchTabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -115,9 +115,9 @@ export function PlayerDetail({
         </div>
       </div>
 
-      <PlayerCard 
+      <PlayerDetailView 
         player={player}
-        onClick={() => {}}
+        activities={activities}
       />
 
       <PlayerMatchTabs 
