@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, UserCircle } from "lucide-react";
 import { SortField, SortIcon } from "./PlayerListSorting";
-import { DevelopmentChart } from "@/components/player-detail/DevelopmentChart";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { formatPositions, isTrainer } from "@/utils/positionUtils";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -120,6 +120,7 @@ export function PlayerListTable({
                 <SortIcon field="grade" sortField={sortField} sortDirection={sortDirection} />
               </Button>
             </TableHead>
+            <TableHead>Position</TableHead>
             <TableHead>
               <Button 
                 variant="ghost" 
@@ -150,13 +151,12 @@ export function PlayerListTable({
                 <SortIcon field="goalsPerMatch" sortField={sortField} sortDirection={sortDirection} />
               </Button>
             </TableHead>
-            <TableHead className="w-[120px]">Utveckling</TableHead>
             <TableHead className="w-[100px]">Åtgärder</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {players.map((player) => {
-            const isCoach = player.positions?.includes('TRÄNARE');
+            const isCoach = isTrainer(player.positions);
             const winRate = getPlayerWinRate(player);
             const goalsPerMatch = getPlayerGoalsPerMatch(player);
             
@@ -201,6 +201,17 @@ export function PlayerListTable({
                   )}
                 </TableCell>
                 <TableCell>
+                  {isCoach ? (
+                    <span className="text-muted-foreground">-</span>
+                  ) : (
+                    <span className="text-sm">
+                      {player.positions && player.positions.length > 0
+                        ? formatPositions(player.positions, true)
+                        : 'Ingen position'}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
                   {player.activities?.length || 0}
                 </TableCell>
                 <TableCell>
@@ -219,15 +230,6 @@ export function PlayerListTable({
                     <span className="font-medium text-blue-600">
                       {goalsPerMatch}
                     </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {!isCoach && (
-                    <DevelopmentChart 
-                      development={player.development}
-                      minimal={true}
-                      className="h-16 w-16"
-                    />
                   )}
                 </TableCell>
                 <TableCell>
