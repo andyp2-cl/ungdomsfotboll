@@ -167,6 +167,7 @@ export function DevelopmentOverview({
               development={teamDevelopmentAverage} 
               className="h-[450px]" 
               minimal={true}
+              hideAllLabels={true}
             />
           </CardContent>
         </Card>

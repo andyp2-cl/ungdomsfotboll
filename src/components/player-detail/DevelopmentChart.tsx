@@ -8,13 +8,15 @@ interface DevelopmentChartProps {
   className?: string;
   minimal?: boolean;
   showExtended?: boolean;
+  hideAllLabels?: boolean;
 }
 
 export function DevelopmentChart({ 
   development, 
   className = "", 
   minimal = false,
-  showExtended = false 
+  showExtended = false,
+  hideAllLabels = false
 }: DevelopmentChartProps) {
   if (!development) {
     return (
@@ -97,13 +99,13 @@ export function DevelopmentChart({
           <PolarGrid />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fontSize: minimal ? 11 : 12 }}
+            tick={hideAllLabels ? false : { fontSize: minimal ? 11 : 12 }}
             className="text-muted-foreground"
           />
           <PolarRadiusAxis 
             angle={0} 
             domain={[0, 10]} 
-            tick={{ fontSize: minimal ? 9 : 10 }}
+            tick={hideAllLabels ? false : { fontSize: minimal ? 9 : 10 }}
             className="text-muted-foreground"
           />
           <Radar
@@ -114,7 +116,7 @@ export function DevelopmentChart({
             fillOpacity={0.3}
             strokeWidth={2}
           />
-          {!minimal && (
+          {!minimal && !hideAllLabels && (
             <Legend 
               wrapperStyle={{ 
                 fontSize: '11px',
