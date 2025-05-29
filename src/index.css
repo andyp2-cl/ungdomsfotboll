@@ -99,3 +99,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Excel iframe scrolling isolation */
+.excel-iframe-container {
+  /* Prevent scroll chaining from iframe to parent */
+  overscroll-behavior: contain;
+  /* Ensure container handles overflow correctly */
+  overflow: hidden;
+}
+
+.excel-iframe-container iframe {
+  /* Allow iframe to handle its own scrolling */
+  overflow: auto;
+  /* Prevent touch scrolling from affecting parent on mobile */
+  touch-action: auto;
+  /* Ensure iframe fills container properly */
+  display: block;
+}
+
+/* Prevent body scroll when interacting with excel iframe */
+.excel-iframe-container:hover {
+  /* Optional: can add focus styles here if needed */
+}
