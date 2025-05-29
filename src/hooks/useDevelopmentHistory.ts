@@ -32,10 +32,10 @@ export function useDevelopmentHistory(playerId?: string) {
         throw fetchError;
       }
 
-      // Convert Json data to PlayerDevelopment
+      // Convert Json data to PlayerDevelopment with proper type safety
       const formattedHistory: DevelopmentHistoryEntry[] = (data || []).map(entry => ({
         ...entry,
-        development_data: entry.development_data as PlayerDevelopment
+        development_data: entry.development_data as unknown as PlayerDevelopment
       }));
 
       setHistory(formattedHistory);

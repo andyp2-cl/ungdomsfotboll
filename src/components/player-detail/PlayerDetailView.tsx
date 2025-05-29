@@ -207,7 +207,7 @@ export function PlayerDetailView({
           {player.development ? (
             <PlayerProfileAnalysis 
               development={player.development}
-              positions={player.positions}
+              playerName={player.name}
               className="w-full"
             />
           ) : (
