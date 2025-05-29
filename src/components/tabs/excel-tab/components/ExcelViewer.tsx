@@ -37,8 +37,19 @@ export function ExcelViewer({
     overlay.id = 'excel-nav-blocker';
     document.body.appendChild(overlay);
 
-    // Aggressive global event blocking
+    // Modified event blocking - allows click events but blocks navigation
     const blockNavigation = (event: Event) => {
+      // Allow click events to pass through
+      if (event.type === 'click') {
+        return;
+      }
+
+      // Check if event comes from our action buttons
+      const target = event.target as HTMLElement;
+      if (target && (target.closest('.excel-action-buttons') || target.closest('button'))) {
+        return;
+      }
+      
       // Block all horizontal scroll events globally
       if (event instanceof WheelEvent && Math.abs(event.deltaX) > 0) {
         event.preventDefault();
@@ -149,8 +160,19 @@ export function ExcelViewer({
       }
     };
 
-    // Ultra-aggressive event blocking for wrapper
+    // Modified event blocking for wrapper - excludes click events
     const blockAllNavigation = (event: Event) => {
+      // Allow click events
+      if (event.type === 'click') {
+        return;
+      }
+
+      // Allow events from buttons
+      const target = event.target as HTMLElement;
+      if (target && target.closest('button')) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -199,12 +221,14 @@ export function ExcelViewer({
   const enhancedEmbedUrl = `${embedUrl}&rm=minimal&widget=true&chrome=false&embedded=true&single=true&gid=0&headers=false&gridlines=true&fvid=0&toolbar=false&navpane=false&showtabs=false`;
 
   // Button click handlers with debug logging
-  const handleEditSettings = () => {
+  const handleEditSettings = (event: React.MouseEvent) => {
+    event.stopPropagation();
     console.log("ExcelViewer: Edit settings button clicked");
     onEditSettings();
   };
 
-  const handleOpenInNewTab = () => {
+  const handleOpenInNewTab = (event: React.MouseEvent) => {
+    event.stopPropagation();
     console.log("ExcelViewer: Open in new tab button clicked", sheetUrl);
     window.open(sheetUrl, '_blank');
   };
@@ -212,13 +236,19 @@ export function ExcelViewer({
   return (
     <Card className="flex-1">
       <CardContent className="p-2 space-y-2">
-        {/* Action buttons - moved outside iframe wrapper for better accessibility */}
-        <div className="flex justify-end gap-2" style={{ pointerEvents: 'auto', zIndex: 1000 }}>
+        {/* Action buttons - completely isolated from event blocking */}
+        <div className="excel-action-buttons flex justify-end gap-2" style={{ 
+          pointerEvents: 'auto', 
+          zIndex: 10000,
+          position: 'relative',
+          isolation: 'isolate'
+        }}>
           <Button
             variant="outline"
             size="sm"
             onClick={handleEditSettings}
-            className="pointer-events-auto"
+            style={{ pointerEvents: 'auto' }}
+            className="hover:bg-accent hover:text-accent-foreground"
           >
             <Edit className="h-3 w-3 mr-1" />
             Ändra fil
@@ -227,7 +257,8 @@ export function ExcelViewer({
             variant="outline"
             size="sm"
             onClick={handleOpenInNewTab}
-            className="pointer-events-auto"
+            style={{ pointerEvents: 'auto' }}
+            className="hover:bg-accent hover:text-accent-foreground"
           >
             <ExternalLink className="h-3 w-3 mr-1" />
             Öppna i ny flik
