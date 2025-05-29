@@ -1,24 +1,24 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, Player } from "@/types/player";
 import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { SearchInput } from "@/components/SearchInput";
-import { PlayerFilter } from "@/components/PlayerFilter";
+import { PlayerFilter } from "@/components/filters/PlayerFilter";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AddPlayerDialog } from "@/components/dialogs/AddPlayerDialog";
 import { EditPlayerDialog } from "@/components/dialogs/EditPlayerDialog";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
+import { Player, Activity, PlayerGrade } from "@/types/player";
 
 interface PlayersPageContentProps {
   // Tab state
   activeTab: string;
   setActiveTab: (tab: string) => void;
   
-  // Player data
+  // Player data  
   players: Player[];
   activities: Activity[];
   filteredPlayers: Player[];
@@ -30,10 +30,10 @@ interface PlayersPageContentProps {
   setIsAddPlayerOpen: (isOpen: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedGrades: string[];
-  viewMode: string;
+  selectedGrades: PlayerGrade[];
+  viewMode: "list" | "grid" | "stats";
   setViewMode: (mode: string) => void;
-  handleGradeChange: (grade: string) => void;
+  handleGradeChange: (grade: PlayerGrade) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
   handleBulkPlayerUpdate: (players: Player[]) => Promise<void>;
   handleAddPlayer: (player: Player) => Promise<void>;
@@ -56,7 +56,7 @@ interface PlayersPageContentProps {
   handleImportActivities: (activities: Activity[]) => Promise<boolean>;
   handleClearHistorical: () => Promise<boolean>;
   handleAddActivity: (activity: Activity) => Promise<void>;
-  onPlayerActivitySelect: (activity: Activity) => void;
+  onPlayerActivitySelect: (activity: Activity) => Promise<void>;
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerSelect: (playerId: string) => void;
 }
@@ -109,7 +109,7 @@ export function PlayersPageContent({
   onPlayerSelect
 }: PlayersPageContentProps) {
   
-  
+  // Calculate grade data for statistics
   const gradeData = players.reduce((acc, player) => {
     if (player.positions?.includes("TRÄNARE")) return acc;
     
@@ -138,7 +138,7 @@ export function PlayersPageContent({
         
         <TabsContent value="players">
           {selectedPlayer ? (
-            <PlayerDetail
+            <PlayerDetail 
               player={selectedPlayer}
               activities={activities}
               onClose={() => setSelectedPlayer(null)}
@@ -164,20 +164,25 @@ export function PlayersPageContent({
                     onGradeChange={handleGradeChange}
                   />
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button onClick={() => setIsAddPlayerOpen(true)} className="w-full sm:w-auto">
+                
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <Button 
+                    onClick={() => setIsAddPlayerOpen(true)}
+                    className="w-full sm:w-auto"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Lägg till spelare
                   </Button>
                 </div>
               </div>
               
-              <PlayerList
+              <PlayerList 
                 players={filteredPlayers}
                 activities={activities}
-                viewMode={viewMode as "grid" | "list"}
+                viewMode={viewMode}
                 onPlayerSelect={setSelectedPlayer}
                 onPlayerEdit={setEditingPlayer}
+                showCoaches={true}
               />
             </div>
           )}
@@ -211,20 +216,21 @@ export function PlayersPageContent({
             players={players}
             activities={activities}
             gradeData={gradeData}
-            onActivitySelect={onPlayerActivitySelect}
+            onActivitySelect={setSelectedActivity}
             onPlayerSelect={onPlayerSelect}
           />
         </TabsContent>
       </Tabs>
-      
-      <AddPlayerDialog
+
+      {/* Dialogs */}
+      <AddPlayerDialog 
         open={isAddPlayerOpen}
         onOpenChange={setIsAddPlayerOpen}
-        onAddPlayer={handleAddPlayer}
+        onPlayerAdd={handleAddPlayer}
       />
       
       {editingPlayer && (
-        <EditPlayerDialog
+        <EditPlayerDialog 
           player={editingPlayer}
           open={!!editingPlayer}
           onOpenChange={(open) => !open && setEditingPlayer(null)}
