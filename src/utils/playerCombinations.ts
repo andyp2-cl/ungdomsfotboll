@@ -442,6 +442,12 @@ export interface BalancedLineupSuggestion {
     position: string;
     reasoning: string;
   }[];
+  benchPlayers: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[];
   expectedGoalDifference: number;
   balanceScore: number; // 0-100, where 100 is perfect balance
   confidence: number;
@@ -680,7 +686,7 @@ export const suggestBalancedLineup = (
   
   const usedPlayerIds = new Set<string>();
   
-  // Balance-focused player selection
+  // Balance-focused player selection for starting lineup
   requiredPositions.forEach(position => {
     const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
     
@@ -798,6 +804,89 @@ export const suggestBalancedLineup = (
       usedPlayerIds.add(bestPlayer.player.id);
     }
   });
+
+  // Select 2 bench players (excluding goalkeepers)
+  const benchPlayers: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }[] = [];
+
+  // Get available players for bench (no goalkeepers, not already selected)
+  const availableBenchPlayers = players.filter(p => 
+    !usedPlayerIds.has(p.id) && 
+    !p.positions?.includes('TRÄNARE') &&
+    !p.positions?.includes('MV') // No goalkeepers on bench
+  );
+
+  // Score bench players
+  const scoredBenchPlayers = availableBenchPlayers.map(player => {
+    let benchScore = 0;
+    let reasoning = [];
+
+    // Check historical performance against this opponent
+    const playerOpponentMatches = activities.filter(a => 
+      a.type === 'match' && 
+      extractOpponentFromActivity(a) === opponentName && 
+      a.participants?.includes(player.id)
+    );
+
+    // New player prioritization logic for bench
+    if (prioritizeNewPlayers) {
+      if (playerOpponentMatches.length === 0) {
+        benchScore += 15; // Bonus for new players
+        reasoning.push("Ny mot detta lag");
+      } else if (playerOpponentMatches.length <= 2) {
+        reasoning.push("Begränsad erfarenhet");
+      }
+    }
+
+    // Versatility bonus - players who can play multiple positions
+    const positionCount = player.positions?.filter(pos => pos !== 'TRÄNARE').length || 1;
+    if (positionCount > 1) {
+      benchScore += 10;
+      reasoning.push(`Kan spela ${positionCount} positioner`);
+    }
+
+    // Grade consideration for bench
+    const gradeBonus = { 'A': 10, 'B': 12, 'C': 8, 'D': 5 }; // Slightly prefer B players for balance
+    benchScore += gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
+
+    // Combination potential with selected players
+    let combinationBonus = 0;
+    selectedPlayers.forEach(selected => {
+      const combination = matrix[player.id]?.[selected.playerId];
+      if (combination && combination.matchesTogether >= 2) {
+        combinationBonus += combination.efficiency * 5;
+      }
+    });
+    benchScore += combinationBonus;
+
+    // Primary position bonus
+    const primaryPosition = player.positions?.[0];
+    if (primaryPosition && primaryPosition !== 'MV') {
+      reasoning.push(`Primär: ${primaryPosition}`);
+    }
+
+    return {
+      player,
+      benchScore,
+      reasoning: reasoning.join(", ") || "Pålitlig reserv"
+    };
+  });
+
+  // Select top 2 bench players
+  scoredBenchPlayers.sort((a, b) => b.benchScore - a.benchScore);
+  for (let i = 0; i < Math.min(2, scoredBenchPlayers.length); i++) {
+    const benchPlayer = scoredBenchPlayers[i];
+    benchPlayers.push({
+      playerId: benchPlayer.player.id,
+      playerName: benchPlayer.player.name,
+      position: benchPlayer.player.positions?.[0] || "OKÄND",
+      reasoning: benchPlayer.reasoning
+    });
+  }
   
   // Calculate expected goal difference and balance score
   const expectedGoalDifference = opponentAnalysis.totalMatches > 0 
@@ -817,7 +906,8 @@ export const suggestBalancedLineup = (
     `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
     `Förväntad målskillnad: ${expectedGoalDifference.toFixed(1)}`,
     `Balanspoäng: ${balanceScore.toFixed(0)}/100`,
-    `Risknivå: ${riskLevel} (baserat på historisk variation)`
+    `Risknivå: ${riskLevel} (baserat på historisk variation)`,
+    `Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`
   ];
   
   if (prioritizeNewPlayers) {
@@ -828,8 +918,16 @@ export const suggestBalancedLineup = (
         a.participants?.includes(p.playerId)
       ).length === 0
     ).length;
+
+    const newBenchCount = benchPlayers.filter(p => 
+      activities.filter(a => 
+        a.type === 'match' && 
+        extractOpponentFromActivity(a) === opponentName && 
+        a.participants?.includes(p.playerId)
+      ).length === 0
+    ).length;
     
-    reasoning.push(`✨ ${newPlayersCount} spelare får chans mot nytt lag`);
+    reasoning.push(`✨ ${newPlayersCount + newBenchCount} spelare får chans mot nytt lag`);
   }
   
   if (opponentAnalysis.totalMatches < 3) {
@@ -839,6 +937,7 @@ export const suggestBalancedLineup = (
   return {
     formation,
     players: selectedPlayers,
+    benchPlayers,
     expectedGoalDifference,
     balanceScore,
     confidence: Math.min(100, (opponentAnalysis.totalMatches / 5) * 100),

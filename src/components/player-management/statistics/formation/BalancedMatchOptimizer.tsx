@@ -292,35 +292,84 @@ export function BalancedMatchOptimizer({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {suggestion.players.map((player) => (
-                  <div 
-                    key={player.playerId}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge 
-                        style={{ backgroundColor: getPositionColor(player.position as any) }}
-                        className="text-white font-medium"
+              <div className="space-y-6">
+                {/* Starting Lineup */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Startuppställning
+                  </h4>
+                  <div className="space-y-3">
+                    {suggestion.players.map((player) => (
+                      <div 
+                        key={player.playerId}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
-                        {player.position}
-                      </Badge>
-                      
-                      <div>
-                        <div className="font-medium">{player.playerName}</div>
-                        <div className="text-sm text-muted-foreground">{player.reasoning}</div>
+                        <div className="flex items-center gap-3">
+                          <Badge 
+                            style={{ backgroundColor: getPositionColor(player.position as any) }}
+                            className="text-white font-medium"
+                          >
+                            {player.position}
+                          </Badge>
+                          
+                          <div>
+                            <div className="font-medium">{player.playerName}</div>
+                            <div className="text-sm text-muted-foreground">{player.reasoning}</div>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onPlayerSelect?.(player.playerId)}
+                        >
+                          Visa profil
+                        </Button>
                       </div>
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onPlayerSelect?.(player.playerId)}
-                    >
-                      Visa profil
-                    </Button>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Bench Players */}
+                {suggestion.benchPlayers && suggestion.benchPlayers.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Bänkspelare ({suggestion.benchPlayers.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {suggestion.benchPlayers.map((player) => (
+                        <div 
+                          key={player.playerId}
+                          className="flex items-center justify-between p-3 border rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Badge 
+                              style={{ backgroundColor: getPositionColor(player.position as any) }}
+                              className="text-white font-medium opacity-80"
+                            >
+                              {player.position}
+                            </Badge>
+                            
+                            <div>
+                              <div className="font-medium">{player.playerName}</div>
+                              <div className="text-sm text-muted-foreground">{player.reasoning}</div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPlayerSelect?.(player.playerId)}
+                          >
+                            Visa profil
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
