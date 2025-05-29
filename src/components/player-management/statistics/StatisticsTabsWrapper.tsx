@@ -1,6 +1,5 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ParticipationTabContent } from "./ParticipationTabContent";
 import { FormationTabContent } from "./formation/FormationTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
@@ -39,7 +38,6 @@ export function StatisticsTabsWrapper({
       <TabsList className="mb-4 flex flex-wrap gap-1">
         <TabsTrigger value="overview">Översikt</TabsTrigger>
         <TabsTrigger value="combinations">Kombinationer</TabsTrigger>
-        <TabsTrigger value="participation">Deltagande</TabsTrigger>
         <TabsTrigger value="formation">Formation</TabsTrigger>
         <TabsTrigger value="goals">Mål</TabsTrigger>
         <TabsTrigger value="matches">Matcher</TabsTrigger>
@@ -58,13 +56,6 @@ export function StatisticsTabsWrapper({
           players={players}
           activities={activities}
           onPlayerSelect={onPlayerSelect}
-        />
-      </TabsContent>
-      
-      <TabsContent value="participation">
-        <ParticipationTabContent 
-          activities={activities} 
-          players={players} 
         />
       </TabsContent>
       
