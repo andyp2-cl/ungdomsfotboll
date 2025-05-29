@@ -95,6 +95,7 @@ export function PlayerTabContent({
       ) : (
         <PlayerList 
           players={filteredPlayers}
+          activities={activities}
           onPlayerSelect={setSelectedPlayer}
           onPlayerEdit={setEditingPlayer}
         />
