@@ -1,3 +1,4 @@
+
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerCombination {
@@ -423,7 +424,7 @@ export interface BalancedLineupSuggestion {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
-// Extract opponent names from activity names
+// Extract opponent names from activity names - UPDATED TO HANDLE ACTUAL FORMAT
 export const getOpponents = (activities: Activity[]): string[] => {
   console.log('getOpponents called with activities:', activities.length);
   const opponents = new Set<string>();
@@ -432,13 +433,45 @@ export const getOpponents = (activities: Activity[]): string[] => {
     .filter(a => a.type === 'match' && a.name)
     .forEach(activity => {
       console.log('Checking activity name:', activity.name);
-      // Extract opponent from activity name like "Match mot FK Finja"
-      const matchPattern = /^Match mot (.+)$/i;
-      const match = activity.name.match(matchPattern);
-      if (match && match[1]) {
-        const opponent = match[1].trim();
-        console.log('Found opponent:', opponent);
-        opponents.add(opponent);
+      
+      // Handle format like "Hässleholms IF - FK Finja" or "FK Finja - Hässleholms IF"
+      const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
+      const match = activity.name.match(dashPattern);
+      
+      if (match && match[1] && match[2]) {
+        const team1 = match[1].trim();
+        const team2 = match[2].trim();
+        
+        console.log('Found teams:', team1, 'vs', team2);
+        
+        // Check which team is NOT Hässleholms IF (or variations)
+        const hassleholmsVariations = [
+          'Hässleholms IF',
+          'Hässleholms IF Vit',
+          'Hässleholms IF Svart',
+          'Hässleholms IF vit',
+          'Hässleholms IF svart'
+        ];
+        
+        const isTeam1Hassleholms = hassleholmsVariations.some(variation => 
+          team1.toLowerCase().includes(variation.toLowerCase())
+        );
+        const isTeam2Hassleholms = hassleholmsVariations.some(variation => 
+          team2.toLowerCase().includes(variation.toLowerCase())
+        );
+        
+        if (isTeam1Hassleholms && !isTeam2Hassleholms) {
+          console.log('Found opponent:', team2);
+          opponents.add(team2);
+        } else if (isTeam2Hassleholms && !isTeam1Hassleholms) {
+          console.log('Found opponent:', team1);
+          opponents.add(team1);
+        } else if (!isTeam1Hassleholms && !isTeam2Hassleholms) {
+          // Neither team contains Hässleholms IF, add both as potential opponents
+          console.log('Found potential opponents:', team1, 'and', team2);
+          opponents.add(team1);
+          opponents.add(team2);
+        }
       }
     });
   
@@ -447,13 +480,42 @@ export const getOpponents = (activities: Activity[]): string[] => {
   return result;
 };
 
-// Extract opponent name from activity name
+// Extract opponent name from activity name - UPDATED TO HANDLE ACTUAL FORMAT
 const extractOpponentFromActivity = (activity: Activity): string | null => {
   if (!activity.name) return null;
   
-  const matchPattern = /^Match mot (.+)$/i;
-  const match = activity.name.match(matchPattern);
-  return match && match[1] ? match[1].trim() : null;
+  // Handle format like "Hässleholms IF - FK Finja" or "FK Finja - Hässleholms IF"
+  const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
+  const match = activity.name.match(dashPattern);
+  
+  if (match && match[1] && match[2]) {
+    const team1 = match[1].trim();
+    const team2 = match[2].trim();
+    
+    // Check which team is NOT Hässleholms IF (or variations)
+    const hassleholmsVariations = [
+      'Hässleholms IF',
+      'Hässleholms IF Vit', 
+      'Hässleholms IF Svart',
+      'Hässleholms IF vit',
+      'Hässleholms IF svart'
+    ];
+    
+    const isTeam1Hassleholms = hassleholmsVariations.some(variation => 
+      team1.toLowerCase().includes(variation.toLowerCase())
+    );
+    const isTeam2Hassleholms = hassleholmsVariations.some(variation => 
+      team2.toLowerCase().includes(variation.toLowerCase())
+    );
+    
+    if (isTeam1Hassleholms && !isTeam2Hassleholms) {
+      return team2;
+    } else if (isTeam2Hassleholms && !isTeam1Hassleholms) {
+      return team1;
+    }
+  }
+  
+  return null;
 };
 
 // Analyze historical performance against specific opponent
