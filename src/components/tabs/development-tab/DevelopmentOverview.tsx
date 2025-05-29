@@ -205,7 +205,7 @@ export function DevelopmentOverview({
             ))}
           </div>
         </CardContent>
-      )}
+      </Card>
 
       {/* Quick Actions */}
       <Card>
@@ -233,7 +233,7 @@ export function DevelopmentOverview({
             </div>
           </div>
         </CardContent>
-      </div>
+      </Card>
     </div>
   );
 }
