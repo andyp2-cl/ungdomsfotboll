@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -197,14 +198,48 @@ export function ExcelViewer({
   // Enhanced Google Sheets URL with more parameters to minimize navigation
   const enhancedEmbedUrl = `${embedUrl}&rm=minimal&widget=true&chrome=false&embedded=true&single=true&gid=0&headers=false&gridlines=true&fvid=0&toolbar=false&navpane=false&showtabs=false`;
 
+  // Button click handlers with debug logging
+  const handleEditSettings = () => {
+    console.log("ExcelViewer: Edit settings button clicked");
+    onEditSettings();
+  };
+
+  const handleOpenInNewTab = () => {
+    console.log("ExcelViewer: Open in new tab button clicked", sheetUrl);
+    window.open(sheetUrl, '_blank');
+  };
+
   return (
     <Card className="flex-1">
-      <CardContent className="p-2">
+      <CardContent className="p-2 space-y-2">
+        {/* Action buttons - moved outside iframe wrapper for better accessibility */}
+        <div className="flex justify-end gap-2" style={{ pointerEvents: 'auto', zIndex: 1000 }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEditSettings}
+            className="pointer-events-auto"
+          >
+            <Edit className="h-3 w-3 mr-1" />
+            Ändra fil
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenInNewTab}
+            className="pointer-events-auto"
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Öppna i ny flik
+          </Button>
+        </div>
+        
+        {/* Excel iframe container */}
         <div 
           ref={iframeWrapperRef}
           className="relative w-full excel-iframe-wrapper excel-iframe-container"
           style={{ 
-            height: 'calc(100vh - 200px)', 
+            height: 'calc(100vh - 240px)', 
             minHeight: '600px',
             overflow: 'hidden',
             overscrollBehavior: 'none',
@@ -230,26 +265,6 @@ export function ExcelViewer({
             allow="autoplay; camera; microphone; display-capture"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
           />
-          
-          {/* Action buttons overlay */}
-          <div className="absolute top-2 right-2 z-10 flex gap-2" style={{ pointerEvents: 'auto' }}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onEditSettings}
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              Ändra fil
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(sheetUrl, '_blank')}
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Öppna i ny flik
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>
