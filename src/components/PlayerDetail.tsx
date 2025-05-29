@@ -116,7 +116,8 @@ export function PlayerDetail({
       </div>
 
       <PlayerCard 
-        player={player} 
+        player={player}
+        onClick={() => {}}
       />
 
       <PlayerMatchTabs 

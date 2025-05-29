@@ -5,7 +5,7 @@ import { ActivityDetailHeader } from "./ActivityDetailHeader";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
 import { ActivityStatsSection } from "./ActivityStatsSection";
 import { ActivityCupMatches } from "./ActivityCupMatches";
-import { CupMatchesManager } from "@/components/cup-management/CupMatchesManager";
+import { LinkExistingMatches } from "./LinkExistingMatches";
 import { ParticipantsList } from "./ParticipantsList";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -62,22 +62,14 @@ export function ActivityDetailContent({
     ? allActivities.find(a => a.id === activity.cupId) 
     : undefined;
 
-  // Handle match result updates
-  const handleMatchResultUpdate = async (homeScore?: number, awayScore?: number) => {
-    if (onMatchResultUpdate) {
-      await onMatchResultUpdate(activity.id, homeScore, awayScore);
-    }
-  };
-
-  // Handle adding new matches to a cup
-  const handleAddMatches = async (newMatches: Omit<Activity, 'id'>[]) => {
-    if (onAddActivity) {
-      for (const match of newMatches) {
-        const fullActivity: Activity = {
-          ...match,
-          id: crypto.randomUUID(),
-        };
-        await onAddActivity(fullActivity);
+  // Handle linking existing matches to this cup
+  const handleLinkMatches = async (cupId: string, matchIds: string[]) => {
+    // Update each match to have this cup's ID
+    for (const matchId of matchIds) {
+      const match = allActivities.find(a => a.id === matchId);
+      if (match && onActivityUpdate) {
+        const updatedMatch = { ...match, cupId: cupId };
+        await onActivityUpdate(updatedMatch);
       }
     }
   };
@@ -119,13 +111,12 @@ export function ActivityDetailContent({
         </div>
       </div>
       
-      {/* For cup type, show cup matches manager */}
+      {/* For cup type, show link existing matches component */}
       {activity.type === "cup" && (
-        <CupMatchesManager 
+        <LinkExistingMatches 
           cupActivity={activity}
-          matchActivities={cupMatches}
-          onAddMatches={handleAddMatches}
-          onMatchResultUpdate={onMatchResultUpdate}
+          allActivities={allActivities}
+          onLinkMatches={handleLinkMatches}
         />
       )}
       
