@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Player, Activity } from "@/types/player";
 import { DevelopmentChart } from "./DevelopmentChart";
 import { PlayerProfileAnalysis } from "./PlayerProfileAnalysis";
+import { DevelopmentHistoryButton } from "@/components/development-tracking/DevelopmentHistoryButton";
+import { DevelopmentSummaryCard } from "@/components/development-tracking/DevelopmentSummaryCard";
+import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
 import { Calendar, MapPin, Users, Edit, BarChart3, User, Target } from "lucide-react";
 import { formatPositions } from "@/utils/positionUtils";
 
@@ -23,12 +26,18 @@ export function PlayerDetailView({
   onEdit,
   onClose
 }: PlayerDetailViewProps) {
+  const { history } = useDevelopmentHistory(player.id);
+  
   // Get activities for this player
   const playerActivities = activities
     .filter(activity => activity.participants?.includes(player.id))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const recentActivities = playerActivities.slice(0, 5);
+  
+  // Get development history for comparison
+  const previousDevelopment = history.length > 1 ? history[1].development_data : undefined;
+  const lastUpdated = history.length > 0 ? history[0].recorded_at : undefined;
 
   return (
     <div className="space-y-6">
@@ -64,6 +73,13 @@ export function PlayerDetailView({
               </div>
             </div>
             <div className="flex gap-2">
+              {player.development && (
+                <DevelopmentHistoryButton
+                  playerId={player.id}
+                  playerName={player.name}
+                  currentDevelopment={player.development}
+                />
+              )}
               {onEdit && (
                 <Button onClick={onEdit} variant="outline" size="sm">
                   <Edit className="h-4 w-4 mr-1" />
@@ -102,7 +118,7 @@ export function PlayerDetailView({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             {/* Basic Development Chart */}
             <Card>
               <CardHeader>
@@ -121,6 +137,16 @@ export function PlayerDetailView({
                 )}
               </CardContent>
             </Card>
+
+            {/* Development Summary */}
+            {player.development && (
+              <DevelopmentSummaryCard
+                playerName={player.name}
+                current={player.development}
+                previous={previousDevelopment}
+                lastUpdated={lastUpdated}
+              />
+            )}
 
             {/* Activity Summary */}
             <Card>
@@ -146,6 +172,10 @@ export function PlayerDetailView({
                   <span className="font-medium">
                     {playerActivities.filter(a => a.type === 'cup').length}
                   </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Utvecklingsposter:</span>
+                  <span className="font-medium">{history.length}</span>
                 </div>
                 {recentActivities.length > 0 && (
                   <div className="flex justify-between">
