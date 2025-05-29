@@ -40,6 +40,7 @@ const App = () => (
                 <Route path="/players" element={<PlayersPage initialTab="players" />} />
                 <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
                 <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
+                <Route path="/development" element={<PlayersPage initialTab="development" />} />
                 <Route path="/excel" element={<PlayersPage initialTab="excel" />} />
                 <Route path="/player-management" element={<PlayerManagementPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

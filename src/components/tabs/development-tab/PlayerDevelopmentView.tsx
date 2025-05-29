@@ -1,0 +1,253 @@
+
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Player, Activity } from "@/types/player";
+import { DevelopmentChart } from "@/components/player-detail/DevelopmentChart";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Calendar, Target } from "lucide-react";
+
+interface PlayerDevelopmentViewProps {
+  players: Player[];
+  activities: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
+}
+
+export function PlayerDevelopmentView({
+  players,
+  activities,
+  onPlayerSelect
+}: PlayerDevelopmentViewProps) {
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
+  
+  // Filter out trainers
+  const activePlayers = players.filter(player => 
+    !player.positions?.includes("TRÄNARE")
+  );
+
+  const selectedPlayer = activePlayers.find(p => p.id === selectedPlayerId);
+
+  // Get player's activities
+  const playerActivities = React.useMemo(() => {
+    if (!selectedPlayer) return [];
+    return activities
+      .filter(activity => activity.participants?.includes(selectedPlayer.id))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [selectedPlayer, activities]);
+
+  // Calculate development trends (simulated for now)
+  const developmentTrends = React.useMemo(() => {
+    if (!selectedPlayer?.development) return null;
+
+    // This would ideally come from historical data
+    // For now, we'll simulate some trends
+    const categories = ['technical', 'gameUnderstanding', 'passing', 'offensive', 'defensive', 'mentality'];
+    const trends: Record<string, 'up' | 'down' | 'stable'> = {};
+
+    categories.forEach(category => {
+      // Simulate trend based on current value
+      const value = selectedPlayer.development![category as keyof typeof selectedPlayer.development];
+      if (value >= 7) trends[category] = 'up';
+      else if (value <= 4) trends[category] = 'down';
+      else trends[category] = 'stable';
+    });
+
+    return trends;
+  }, [selectedPlayer]);
+
+  const categoryLabels = {
+    technical: 'Teknik',
+    gameUnderstanding: 'Spelförståelse',
+    passing: 'Passningsspel',
+    offensive: 'Offensiv',
+    defensive: 'Defensiv',
+    mentality: 'Mentalitet'
+  };
+
+  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp className="h-3 w-3 text-green-600" />;
+      case 'down':
+        return <TrendingDown className="h-3 w-3 text-red-600" />;
+      default:
+        return <div className="h-3 w-3 bg-gray-400 rounded-full" />;
+    }
+  };
+
+  const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up': return 'text-green-600';
+      case 'down': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Player Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Välj spelare</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Välj en spelare för att se utveckling" />
+            </SelectTrigger>
+            <SelectContent>
+              {activePlayers.map(player => (
+                <SelectItem key={player.id} value={player.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{player.name}</span>
+                    {player.grade && (
+                      <Badge variant="outline" className="text-xs">
+                        {player.grade}
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {selectedPlayer && (
+        <>
+          {/* Player Overview */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {selectedPlayer.name}
+                  {selectedPlayer.grade && (
+                    <Badge variant="outline">{selectedPlayer.grade}</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedPlayer.development ? (
+                  <DevelopmentChart 
+                    development={selectedPlayer.development} 
+                    className="h-[250px]" 
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Ingen utvecklingsdata tillgänglig för denna spelare
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Aktivitetshistorik
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Totala aktiviteter:</span>
+                    <span className="font-medium">{playerActivities.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Matcher:</span>
+                    <span className="font-medium">
+                      {playerActivities.filter(a => a.type === 'match').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Cuper:</span>
+                    <span className="font-medium">
+                      {playerActivities.filter(a => a.type === 'cup').length}
+                    </span>
+                  </div>
+                  {playerActivities.length > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Senaste aktivitet:</span>
+                      <span className="font-medium">
+                        {new Date(playerActivities[0].date).toLocaleDateString('sv-SE')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Development Trends */}
+          {selectedPlayer.development && developmentTrends && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Utvecklingstrender
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(categoryLabels).map(([key, label]) => {
+                    const value = selectedPlayer.development![key as keyof typeof selectedPlayer.development];
+                    const trend = developmentTrends[key];
+                    
+                    return (
+                      <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="space-y-1">
+                          <span className="text-sm font-medium">{label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold">{value}</span>
+                            {getTrendIcon(trend)}
+                          </div>
+                        </div>
+                        <div className={`text-xs ${getTrendColor(trend)}`}>
+                          {trend === 'up' ? 'Förbättring' : trend === 'down' ? 'Försämring' : 'Stabil'}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Development Goals */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Utvecklingsmål
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm mb-4">
+                Sätt utvecklingsmål för {selectedPlayer.name} och följ framsteg över tid.
+              </p>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  <strong>Föreslagna förbättringsområden:</strong>
+                </p>
+                {selectedPlayer.development && (
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(selectedPlayer.development)
+                      .filter(([_, value]) => value < 6)
+                      .sort(([, a], [, b]) => a - b)
+                      .slice(0, 3)
+                      .map(([key, value]) => (
+                        <Badge key={key} variant="outline" className="text-xs">
+                          {categoryLabels[key as keyof typeof categoryLabels]} ({value})
+                        </Badge>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
