@@ -84,9 +84,9 @@ export function ActivityDetailContent({
     }
   };
 
-  // Get linked matches for this cup
-  const linkedMatches = allActivities.filter(activity => 
-    activity.cupId === activity.id
+  // Get linked matches for this cup - FIXED: use correct activity ID
+  const linkedMatches = allActivities.filter(act => 
+    act.cupId === activity.id && act.id !== activity.id
   );
 
   return (
@@ -119,7 +119,7 @@ export function ActivityDetailContent({
           
           <TabsContent value="matches" className="space-y-4">
             <LinkedMatchesList 
-              linkedMatches={cupMatches}
+              linkedMatches={linkedMatches}
               onActivitySelect={onActivitySelect}
               onUnlinkMatch={handleUnlinkMatch}
             />
@@ -164,8 +164,8 @@ export function ActivityDetailContent({
         </>
       )}
 
-      {/* Related activities (if this is a cup match, show its parent cup) */}
-      {relatedActivities.length > 0 && (
+      {/* Related activities - ONLY show for matches, not for cups */}
+      {activity.type === "match" && relatedActivities.length > 0 && (
         <div className="border rounded-md p-4">
           <h3 className="text-lg font-semibold mb-3">Relaterade aktiviteter</h3>
           <ul className="space-y-2">

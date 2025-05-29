@@ -31,11 +31,19 @@ export function LinkExistingMatchesModal({
   const [isOpen, setIsOpen] = useState(false);
 
   // Get all matches that are not already linked to any cup
-  const availableMatches = allActivities.filter(activity => 
-    activity.type === "match" && 
-    !activity.cupId && 
-    activity.id !== cupActivity.id
-  );
+  // FIXED: Exclude the cup itself and sort by date (latest first)
+  const availableMatches = allActivities
+    .filter(activity => 
+      activity.type === "match" && 
+      !activity.cupId && 
+      activity.id !== cupActivity.id
+    )
+    .sort((a, b) => {
+      // Sort by date (latest first)
+      const dateA = new Date(a.date + (a.time ? ` ${a.time}` : ''));
+      const dateB = new Date(b.date + (b.time ? ` ${b.time}` : ''));
+      return dateB.getTime() - dateA.getTime();
+    });
 
   const handleMatchSelection = (matchId: string, checked: boolean) => {
     if (checked) {
@@ -76,7 +84,7 @@ export function LinkExistingMatchesModal({
         <DialogHeader>
           <DialogTitle>Koppla befintliga matcher till {cupActivity.name}</DialogTitle>
           <DialogDescription>
-            Välj matcher som ska kopplas till denna cup. Endast matcher som inte redan är kopplade till en annan cup visas.
+            Välj matcher som ska kopplas till denna cup. Endast matcher som inte redan är kopplade till en annan cup visas. Senaste matcher visas först.
           </DialogDescription>
         </DialogHeader>
         
