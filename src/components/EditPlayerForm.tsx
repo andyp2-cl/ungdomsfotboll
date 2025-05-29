@@ -1,284 +1,154 @@
 
-import React, { useState } from "react";
-import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { Player } from "@/types/player";
+import { usePlayerForm } from "@/components/player-form/usePlayerForm";
+import { PlayerPositionField } from "@/components/player-form/PlayerPositionField";
+import { ImageUploadField } from "@/components/player-form/ImageUploadField";
+import { DevelopmentFields } from "@/components/player-form/DevelopmentFields";
+import { FormButtons } from "@/components/player-form/FormButtons";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Save, X } from "lucide-react";
-import { ImageUploadField } from "./player-form/ImageUploadField";
-import { DevelopmentFields } from "./player-form/DevelopmentFields";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { formSchema, PlayerFormValues } from "./player-form/formSchema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface EditPlayerFormProps {
-  player: Player;
-  onSave: (updatedPlayer: Player) => void;
-  onCancel: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (player: Player) => void;
+  initialValues?: Player;
 }
 
-export function EditPlayerForm({ player, onSave, onCancel }: EditPlayerFormProps) {
-  const [isTrainer, setIsTrainer] = useState(player.positions?.includes("TRÄNARE") || false);
-  const [imagePreview, setImagePreview] = useState<string | undefined>(player.image);
-
-  // Ensure development is properly initialized with required values
-  const defaultDevelopment = {
-    technical: 1,
-    gameUnderstanding: 1,
-    passing: 1,
-    offensive: 1,
-    defensive: 1,
-    mentality: 1
-  };
-
-  // Make sure all required properties exist by using the default values when properties are missing
-  const initialDevelopment = player.development 
-    ? {
-        technical: player.development.technical ?? defaultDevelopment.technical,
-        gameUnderstanding: player.development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
-        passing: player.development.passing ?? defaultDevelopment.passing,
-        offensive: player.development.offensive ?? defaultDevelopment.offensive,
-        defensive: player.development.defensive ?? defaultDevelopment.defensive,
-        mentality: player.development.mentality ?? defaultDevelopment.mentality
-      }
-    : defaultDevelopment;
-
-  const form = useForm<PlayerFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: player.name,
-      grade: isTrainer ? undefined : player.grade,
-      positions: player.positions || [],
-      jerseyNumber: player.jerseyNumber || "",
-      isTrainer,
-      development: initialDevelopment
-    },
+export function EditPlayerForm({
+  isOpen,
+  onClose,
+  onSave,
+  initialValues
+}: EditPlayerFormProps) {
+  const {
+    form,
+    imagePreview,
+    setImagePreview,
+    handleSubmit,
+    isTrainer
+  } = usePlayerForm({
+    onSave,
+    onCancel: onClose,
+    initialValues
   });
 
-  // Handle form submission
-  const handleSubmit = (values: PlayerFormValues) => {
-    // Create updated player with form values
-    const updatedPlayer: Player = {
-      ...player,
-      name: values.name,
-      // Only set grade if not a trainer
-      grade: isTrainer ? undefined : (values.grade || "A"),
-      positions: values.positions as PlayerPosition[],
-      jerseyNumber: values.jerseyNumber || undefined,
-      image: imagePreview,
-      development: {
-        technical: values.development.technical,
-        gameUnderstanding: values.development.gameUnderstanding,
-        passing: values.development.passing,
-        offensive: values.development.offensive,
-        defensive: values.development.defensive,
-        mentality: values.development.mentality
-      }
-    };
-
-    onSave(updatedPlayer);
-  };
-
-  // Available player positions
-  const positions: { label: string; value: PlayerPosition }[] = [
-    { label: "Målvakt", value: "MV" },
-    { label: "Back", value: "BACK" },
-    { label: "Mittfältare", value: "MF" },
-    { label: "Anfallare", value: "ANF" },
-    { label: "Tränare", value: "TRÄNARE" },
-  ];
-
-  const handleTrainerChange = (checked: boolean) => {
-    setIsTrainer(checked);
-    form.setValue("isTrainer", checked);
-    
-    // If becoming a trainer, add TRÄNARE to positions and remove grade
-    if (checked) {
-      const currentPositions = form.getValues("positions") || [];
-      if (!currentPositions.includes("TRÄNARE")) {
-        form.setValue("positions", [...currentPositions, "TRÄNARE"]);
-      }
-      form.setValue("grade", undefined);
-    } else {
-      // If no longer a trainer, remove TRÄNARE from positions and set default grade
-      const currentPositions = form.getValues("positions") || [];
-      form.setValue("positions", currentPositions.filter(pos => pos !== "TRÄNARE"));
-      form.setValue("grade", "A");
-    }
-  };
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <ImageUploadField 
-          imagePreview={imagePreview} 
-          setImagePreview={setImagePreview} 
-        />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {initialValues ? "Redigera spelare" : "Lägg till ny spelare"}
+          </DialogTitle>
+        </DialogHeader>
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Namn</FormLabel>
-              <FormControl>
-                <Input placeholder="Spelarens namn" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <Form {...form}>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Namn *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ange spelarens namn" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <div className="border-t pt-4">
-          <div className="flex items-center mb-4">
-            <Checkbox 
-              id="is-trainer" 
-              checked={isTrainer}
-              onCheckedChange={handleTrainerChange}
-              className="mr-2"
-            />
-            <Label htmlFor="is-trainer">Detta är en tränare</Label>
-          </div>
-        </div>
+                <FormField
+                  control={form.control}
+                  name="isTrainer"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Tränare
+                        </FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          Är denna person en tränare?
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-        {!isTrainer && (
-          <FormField
-            control={form.control}
-            name="grade"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Nivå</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex space-x-2"
-                  >
-                    {["A", "B", "C", "D"].map((grade) => (
-                      <FormItem
-                        key={grade}
-                        className="flex items-center space-x-1 space-y-0"
-                      >
-                        <FormControl>
-                          <RadioGroupItem value={grade} id={`grade-${grade}`} />
-                        </FormControl>
-                        <Label
-                          htmlFor={`grade-${grade}`}
-                          className="font-normal cursor-pointer"
-                        >
-                          {grade}
-                        </Label>
-                      </FormItem>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <FormField
-          control={form.control}
-          name="positions"
-          render={() => (
-            <FormItem>
-              <div className="mb-2">
-                <FormLabel>Position</FormLabel>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {positions.filter(pos => isTrainer ? pos.value === "TRÄNARE" : true).map((position) => (
+                {!isTrainer && (
                   <FormField
-                    key={position.value}
                     control={form.control}
-                    name="positions"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={position.value}
-                          className="flex items-center space-x-1 space-y-0"
-                        >
+                    name="grade"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Klass</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(position.value)}
-                              onCheckedChange={(checked) => {
-                                const currentPositions = field.value || [];
-                                if (checked) {
-                                  field.onChange([...currentPositions, position.value]);
-                                } else {
-                                  field.onChange(
-                                    currentPositions.filter((val) => val !== position.value)
-                                  );
-                                }
-                              }}
-                              id={`position-${position.value}`}
-                              className="hidden"
-                            />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Välj klass" />
+                            </SelectTrigger>
                           </FormControl>
-                          <Badge
-                            variant={
-                              field.value?.includes(position.value)
-                                ? "default"
-                                : "outline"
-                            }
-                            className="px-3 py-1 cursor-pointer select-none"
-                            onClick={() => {
-                              const currentPositions = field.value || [];
-                              if (currentPositions.includes(position.value)) {
-                                field.onChange(
-                                  currentPositions.filter((val) => val !== position.value)
-                                );
-                              } else {
-                                field.onChange([...currentPositions, position.value]);
-                              }
-                            }}
-                          >
-                            {position.label}
-                          </Badge>
-                        </FormItem>
-                      );
-                    }}
+                          <SelectContent>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
+                            <SelectItem value="C">C</SelectItem>
+                            <SelectItem value="D">D</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                ))}
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="jerseyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tröjnummer</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ange tröjnummer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <FormField
-          control={form.control}
-          name="jerseyNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tröjnummer</FormLabel>
-              <FormControl>
-                <Input placeholder="t.ex. 10" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              {/* Image Upload */}
+              <ImageUploadField
+                imagePreview={imagePreview}
+                setImagePreview={setImagePreview}
+              />
+            </div>
 
-        <div className="border-t pt-4">
-          <DevelopmentFields form={form} />
-        </div>
+            {/* Positions */}
+            <PlayerPositionField form={form} isTrainer={isTrainer} />
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            <X className="h-4 w-4 mr-2" />
-            Avbryt
-          </Button>
-          <Button type="submit">
-            <Save className="h-4 w-4 mr-2" />
-            Spara
-          </Button>
-        </div>
-      </form>
-    </Form>
+            {/* Development Fields */}
+            {!isTrainer && <DevelopmentFields form={form} />}
+
+            {/* Form Buttons */}
+            <FormButtons onCancel={onClose} />
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

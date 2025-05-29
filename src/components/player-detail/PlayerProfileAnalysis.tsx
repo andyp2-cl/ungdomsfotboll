@@ -53,7 +53,7 @@ export function PlayerProfileAnalysis({
     const primaryPosition = positions[0] as keyof typeof POSITION_WEIGHTS;
     const weights = POSITION_WEIGHTS[primaryPosition] || {};
     
-    // Core category calculations
+    // Core category calculations with proper fallbacks
     const offensiveScore = (
       (development.offensive || 1) + 
       (development.shooting || 1) + 

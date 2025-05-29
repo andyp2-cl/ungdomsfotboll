@@ -1,103 +1,139 @@
 
 import { Player, PlayerDevelopment } from "@/types/player";
 
-export const formatPlayerForDatabase = (player: Player) => {
-  console.log("Formatting player for database with development data:", player.development);
-  console.log("Player image data present:", player.image ? "Yes" : "No");
+export interface DatabasePlayer {
+  id: string;
+  name: string;
+  grade: string;
+  position?: string; // Legacy field
+  jersey_number?: string;
+  image?: string;
+  development?: string;
+  created_at?: string;
+}
+
+// Default development values for all new fields
+const getDefaultDevelopment = (): PlayerDevelopment => ({
+  // Core original values
+  technical: 1,
+  gameUnderstanding: 1,
+  passing: 1,
+  offensive: 1,
+  defensive: 1,
+  mentality: 1,
   
-  try {
-    // Create a database-compatible object
-    return {
-      id: player.id,
-      name: player.name,
-      grade: player.grade,
-      position: player.positions ? JSON.stringify(player.positions) : null, // Convert positions array to JSON string
-      jersey_number: player.jerseyNumber,
-      image: player.image, // Ensure image data is stored as-is
-      // Ensure development is properly stringified for storage
-      development: player.development ? JSON.stringify(player.development) : null
-    };
-  } catch (error) {
-    console.error("Error formatting player for database:", error);
-    // Return basic player data without development if there's an error
-    return {
-      id: player.id,
-      name: player.name,
-      grade: player.grade,
-      position: player.positions ? JSON.stringify(player.positions) : null,
-      jersey_number: player.jerseyNumber,
-      image: player.image, // Still preserve image
-      development: null
-    };
-  }
+  // New offensive values
+  shooting: 1,
+  crossing: 1,
+  finishing: 1,
+  creativity: 1,
+  
+  // New defensive values
+  tackling: 1,
+  interception: 1,
+  positioning: 1,
+  heading: 1,
+  
+  // New physical values
+  speed: 1,
+  stamina: 1,
+  strength: 1,
+  
+  // New mental values
+  leadership: 1,
+  composure: 1,
+  workRate: 1
+});
+
+export const formatPlayerForDatabase = (player: Player): DatabasePlayer => {
+  console.log("Formatting player for database:", player.name);
+  console.log("Player image before formatting:", player.image);
+  
+  const formattedPlayer: DatabasePlayer = {
+    id: player.id,
+    name: player.name,
+    grade: player.grade || "A",
+    jersey_number: player.jerseyNumber,
+    image: player.image, // Preserve image data
+    development: player.development ? JSON.stringify(player.development) : undefined,
+    created_at: new Date().toISOString()
+  };
+  
+  console.log("Formatted player image:", formattedPlayer.image);
+  
+  return formattedPlayer;
 };
 
-export const formatDatabasePlayer = (dbPlayer: any): Player => {
-  let development: PlayerDevelopment | null = null;
-  let positions = [];
+export const formatDatabasePlayer = (dbPlayer: DatabasePlayer): Player => {
+  console.log("Formatting database player:", dbPlayer.name);
+  console.log("Database player image:", dbPlayer.image);
   
-  // Parse positions JSON if it exists
-  if (dbPlayer.position) {
-    try {
-      positions = typeof dbPlayer.position === 'string' 
-        ? JSON.parse(dbPlayer.position) 
-        : dbPlayer.position;
-      
-      console.log("Successfully parsed position data:", positions);
-    } catch (e) {
-      console.error("Error parsing player position data:", e);
-      positions = [];
-    }
-  }
+  let development: PlayerDevelopment | undefined = undefined;
   
-  // Parse development JSON if it exists
   if (dbPlayer.development) {
     try {
-      development = typeof dbPlayer.development === 'string' 
-        ? JSON.parse(dbPlayer.development) 
-        : dbPlayer.development;
+      const parsedDev = JSON.parse(dbPlayer.development);
+      console.log("Parsed development from database:", parsedDev);
       
-      console.log("Successfully parsed development data:", development);
-    } catch (e) {
-      console.error("Error parsing player development data:", e);
-      development = null;
+      // Ensure all required fields exist with proper defaults
+      const defaultDev = getDefaultDevelopment();
+      development = {
+        // Core original values
+        technical: parsedDev.technical ?? defaultDev.technical,
+        gameUnderstanding: parsedDev.gameUnderstanding ?? defaultDev.gameUnderstanding,
+        passing: parsedDev.passing ?? defaultDev.passing,
+        offensive: parsedDev.offensive ?? defaultDev.offensive,
+        defensive: parsedDev.defensive ?? defaultDev.defensive,
+        mentality: parsedDev.mentality ?? defaultDev.mentality,
+        
+        // New offensive values - inherit from existing if missing
+        shooting: parsedDev.shooting ?? parsedDev.offensive ?? defaultDev.shooting,
+        crossing: parsedDev.crossing ?? parsedDev.passing ?? defaultDev.crossing,
+        finishing: parsedDev.finishing ?? parsedDev.offensive ?? defaultDev.finishing,
+        creativity: parsedDev.creativity ?? parsedDev.gameUnderstanding ?? defaultDev.creativity,
+        
+        // New defensive values - inherit from existing if missing
+        tackling: parsedDev.tackling ?? parsedDev.defensive ?? defaultDev.tackling,
+        interception: parsedDev.interception ?? parsedDev.defensive ?? defaultDev.interception,
+        positioning: parsedDev.positioning ?? parsedDev.gameUnderstanding ?? defaultDev.positioning,
+        heading: parsedDev.heading ?? parsedDev.defensive ?? defaultDev.heading,
+        
+        // New physical values - inherit from existing if missing
+        speed: parsedDev.speed ?? parsedDev.technical ?? defaultDev.speed,
+        stamina: parsedDev.stamina ?? parsedDev.mentality ?? defaultDev.stamina,
+        strength: parsedDev.strength ?? parsedDev.defensive ?? defaultDev.strength,
+        
+        // New mental values - inherit from existing if missing
+        leadership: parsedDev.leadership ?? parsedDev.mentality ?? defaultDev.leadership,
+        composure: parsedDev.composure ?? parsedDev.mentality ?? defaultDev.composure,
+        workRate: parsedDev.workRate ?? parsedDev.mentality ?? defaultDev.workRate
+      };
+      
+      console.log("Final development object:", development);
+    } catch (error) {
+      console.error("Error parsing development data:", error);
+      development = getDefaultDevelopment();
     }
-  } else {
-    console.log("No development data found for player:", dbPlayer.name);
   }
   
-  // Default development values if missing or invalid
-  const defaultDevelopment = {
-    technical: 1,
-    gameUnderstanding: 1,
-    passing: 1,
-    offensive: 1,
-    defensive: 1,
-    mentality: 1
-  };
+  // Handle positions - convert legacy position field or use empty array
+  let positions: string[] = [];
+  if (dbPlayer.position) {
+    positions = [dbPlayer.position];
+  }
   
-  // Ensure all development values have defaults applied if missing
-  const completeDevelopment = development ? {
-    technical: development.technical ?? defaultDevelopment.technical,
-    gameUnderstanding: development.gameUnderstanding ?? defaultDevelopment.gameUnderstanding,
-    passing: development.passing ?? defaultDevelopment.passing,
-    offensive: development.offensive ?? defaultDevelopment.offensive,
-    defensive: development.defensive ?? defaultDevelopment.defensive,
-    mentality: development.mentality ?? defaultDevelopment.mentality
-  } : defaultDevelopment;
-  
-  // Log image data
-  console.log("Player image data from DB:", dbPlayer.image ? "Present" : "Missing");
-  
-  // Construct the player object with all necessary fields
-  return {
+  const formattedPlayer: Player = {
     id: dbPlayer.id,
     name: dbPlayer.name,
-    grade: dbPlayer.grade,
-    positions: Array.isArray(positions) ? positions : (positions ? [positions] : []),
+    grade: dbPlayer.grade === "" ? undefined : dbPlayer.grade as any,
+    positions: positions,
     jerseyNumber: dbPlayer.jersey_number,
-    image: dbPlayer.image, // Use image data directly
-    activities: [], // Activities will be populated separately
-    development: completeDevelopment
+    image: dbPlayer.image, // Preserve image data
+    development: development,
+    activities: [] // Will be populated separately
   };
+  
+  console.log("Formatted player with image:", formattedPlayer.name, formattedPlayer.image ? "has image" : "no image");
+  
+  return formattedPlayer;
 };

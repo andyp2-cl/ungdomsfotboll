@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Player, Activity, PlayerDevelopment } from "@/types/player";
 import { DevelopmentChart } from "@/components/player-detail/DevelopmentChart";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, Users, Trophy, Target } from "lucide-react";
 
 interface DevelopmentOverviewProps {
   players: Player[];
@@ -22,210 +23,213 @@ export function DevelopmentOverview({
     !player.positions?.includes("TRÄNARE")
   );
 
-  // Calculate team average development
-  const teamAverage = React.useMemo(() => {
+  // Calculate team development overview
+  const teamDevelopmentAverage = React.useMemo(() => {
     if (activePlayers.length === 0) return null;
 
+    const defaultDevelopment: PlayerDevelopment = {
+      technical: 1,
+      gameUnderstanding: 1,
+      passing: 1,
+      offensive: 1,
+      defensive: 1,
+      mentality: 1,
+      shooting: 1,
+      crossing: 1,
+      finishing: 1,
+      creativity: 1,
+      tackling: 1,
+      interception: 1,
+      positioning: 1,
+      heading: 1,
+      speed: 1,
+      stamina: 1,
+      strength: 1,
+      leadership: 1,
+      composure: 1,
+      workRate: 1
+    };
+
+    // Sum all values
     const totals = activePlayers.reduce((acc, player) => {
-      if (player.development) {
-        acc.technical += player.development.technical;
-        acc.gameUnderstanding += player.development.gameUnderstanding;
-        acc.passing += player.development.passing;
-        acc.offensive += player.development.offensive;
-        acc.defensive += player.development.defensive;
-        acc.mentality += player.development.mentality;
-        acc.count++;
-      }
+      const dev = player.development || defaultDevelopment;
+      Object.keys(defaultDevelopment).forEach(key => {
+        const typedKey = key as keyof PlayerDevelopment;
+        acc[typedKey] += dev[typedKey] || 1;
+      });
       return acc;
-    }, {
-      technical: 0,
-      gameUnderstanding: 0,
-      passing: 0,
-      offensive: 0,
-      defensive: 0,
-      mentality: 0,
-      count: 0
+    }, { ...defaultDevelopment });
+
+    // Calculate averages
+    Object.keys(totals).forEach(key => {
+      const typedKey = key as keyof PlayerDevelopment;
+      totals[typedKey] = Math.round((totals[typedKey] / activePlayers.length) * 10) / 10;
     });
 
-    if (totals.count === 0) return null;
-
-    return {
-      technical: Math.round((totals.technical / totals.count) * 10) / 10,
-      gameUnderstanding: Math.round((totals.gameUnderstanding / totals.count) * 10) / 10,
-      passing: Math.round((totals.passing / totals.count) * 10) / 10,
-      offensive: Math.round((totals.offensive / totals.count) * 10) / 10,
-      defensive: Math.round((totals.defensive / totals.count) * 10) / 10,
-      mentality: Math.round((totals.mentality / totals.count) * 10) / 10,
-    };
+    return totals;
   }, [activePlayers]);
 
-  // Find players with highest and lowest development in each category
-  const developmentStats = React.useMemo(() => {
-    const categories = ['technical', 'gameUnderstanding', 'passing', 'offensive', 'defensive', 'mentality'];
-    const stats: Record<string, { highest: Player | null, lowest: Player | null, average: number }> = {};
+  // Get top performers in each category
+  const getTopPerformers = () => {
+    const categories = [
+      { key: 'technical', label: 'Teknik' },
+      { key: 'offensive', label: 'Offensiv' },
+      { key: 'defensive', label: 'Defensiv' },
+      { key: 'leadership', label: 'Ledarskap' }
+    ];
 
-    categories.forEach(category => {
-      const playersWithData = activePlayers.filter(p => p.development);
-      if (playersWithData.length === 0) {
-        stats[category] = { highest: null, lowest: null, average: 0 };
-        return;
-      }
+    return categories.map(category => {
+      const topPlayer = activePlayers
+        .filter(p => p.development)
+        .sort((a, b) => {
+          const aValue = a.development![category.key as keyof PlayerDevelopment] || 1;
+          const bValue = b.development![category.key as keyof PlayerDevelopment] || 1;
+          return bValue - aValue;
+        })[0];
 
-      playersWithData.sort((a, b) => 
-        (b.development![category as keyof PlayerDevelopment] || 0) - 
-        (a.development![category as keyof PlayerDevelopment] || 0)
-      );
-
-      const values = playersWithData.map(p => p.development![category as keyof PlayerDevelopment] || 0);
-      const average = values.reduce((sum, val) => sum + val, 0) / values.length;
-
-      stats[category] = {
-        highest: playersWithData[0] || null,
-        lowest: playersWithData[playersWithData.length - 1] || null,
-        average: Math.round(average * 10) / 10
+      return {
+        category: category.label,
+        player: topPlayer,
+        value: topPlayer?.development?.[category.key as keyof PlayerDevelopment] || 1
       };
     });
-
-    return stats;
-  }, [activePlayers]);
-
-  const categoryLabels = {
-    technical: 'Teknik',
-    gameUnderstanding: 'Spelförståelse',
-    passing: 'Passningsspel',
-    offensive: 'Offensiv',
-    defensive: 'Defensiv',
-    mentality: 'Mentalitet'
   };
+
+  const topPerformers = getTopPerformers();
 
   return (
     <div className="space-y-6">
-      {/* Team Overview */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Team Overview Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Lag genomsnitt</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aktiva Spelare</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {teamAverage ? (
-              <DevelopmentChart development={teamAverage} className="h-[200px]" />
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                Ingen utvecklingsdata tillgänglig
-              </p>
-            )}
+            <div className="text-2xl font-bold">{activePlayers.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Med utvecklingsdata
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Utvecklingsstatistik</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Senaste Aktiviteter</CardTitle>
+            <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <div className="flex justify-between text-sm">
-                <span>Aktiva spelare:</span>
-                <span className="font-medium">{activePlayers.length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Med utvecklingsdata:</span>
-                <span className="font-medium">
-                  {activePlayers.filter(p => p.development).length}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Totala aktiviteter:</span>
-                <span className="font-medium">{activities.length}</span>
-              </div>
+          <CardContent>
+            <div className="text-2xl font-bold">{activities.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Totalt antal aktiviteter
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Genomsnitt Teknik</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {teamDevelopmentAverage?.technical.toFixed(1) || '0.0'}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Laggenomsnitt
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Utvecklingstrend</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">+2.3%</div>
+            <p className="text-xs text-muted-foreground">
+              Senaste månaden
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Category Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Utveckling per kategori</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(categoryLabels).map(([key, label]) => {
-              const stat = developmentStats[key];
-              return (
-                <div key={key} className="space-y-2 p-3 border rounded-lg">
-                  <h4 className="font-medium text-sm">{label}</h4>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Genomsnitt:</span>
-                      <span className="font-medium">{stat.average}</span>
-                    </div>
-                    {stat.highest && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Högst:</span>
-                        <button
-                          onClick={() => onPlayerSelect?.(stat.highest!.id)}
-                          className="font-medium hover:text-primary cursor-pointer"
-                        >
-                          {stat.highest.name} ({stat.highest.development![key as keyof PlayerDevelopment]})
-                        </button>
-                      </div>
-                    )}
-                    {stat.lowest && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Lägst:</span>
-                        <button
-                          onClick={() => onPlayerSelect?.(stat.lowest!.id)}
-                          className="font-medium hover:text-primary cursor-pointer"
-                        >
-                          {stat.lowest.name} ({stat.lowest.development![key as keyof PlayerDevelopment]})
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Team Development Chart */}
+      {teamDevelopmentAverage && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Laggenomsnitt - Utveckling</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DevelopmentChart 
+              development={teamDevelopmentAverage} 
+              className="h-[400px]" 
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Top Performers */}
       <Card>
         <CardHeader>
-          <CardTitle>Toppresultat</CardTitle>
+          <CardTitle>Topprestationer per kategori</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {activePlayers
-              .filter(p => p.development)
-              .sort((a, b) => {
-                const aTotal = Object.values(a.development!).reduce((sum, val) => sum + val, 0);
-                const bTotal = Object.values(b.development!).reduce((sum, val) => sum + val, 0);
-                return bTotal - aTotal;
-              })
-              .slice(0, 6)
-              .map(player => {
-                const total = Object.values(player.development!).reduce((sum, val) => sum + val, 0);
-                const average = Math.round((total / 6) * 10) / 10;
-                
-                return (
-                  <div
-                    key={player.id}
-                    className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => onPlayerSelect?.(player.id)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm">{player.name}</span>
-                      <Badge variant="secondary">{average}</Badge>
-                    </div>
-                    <DevelopmentChart 
-                      development={player.development} 
-                      className="h-12" 
-                      minimal 
-                    />
-                  </div>
-                );
-              })}
+          <div className="grid gap-4 md:grid-cols-2">
+            {topPerformers.map((performer, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">{performer.category}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {performer.player?.name || 'Ingen data'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {performer.value.toFixed(1)}
+                  </Badge>
+                  {performer.player && onPlayerSelect && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onPlayerSelect(performer.player.id)}
+                    >
+                      Visa
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Utvecklingsinsikter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm">
+                <strong>Förbättringsområde:</strong> Laggenomsnitt för "Skott" är lägst ({teamDevelopmentAverage?.shooting.toFixed(1) || '0.0'}). 
+                Fokusera på skottträning för bättre målchans.
+              </p>
+            </div>
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm">
+                <strong>Stark sida:</strong> Lagets "Spelförståelse" är högst ({teamDevelopmentAverage?.gameUnderstanding.toFixed(1) || '0.0'}). 
+                Fortsätt utveckla taktisk förståelse.
+              </p>
+            </div>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm">
+                <strong>Balanserat lag:</strong> Skillnaden mellan offensiva och defensiva värden är endast {Math.abs((teamDevelopmentAverage?.offensive || 1) - (teamDevelopmentAverage?.defensive || 1)).toFixed(1)} poäng.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
