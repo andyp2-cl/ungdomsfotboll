@@ -62,14 +62,14 @@ export function DevelopmentChart({ development, className, minimal = false }: De
     );
   }
 
-  // Full card version for player detail pages - made to match LeaguesStatsCard size
+  // Full card version for player detail pages - now half the original size
   return (
     <Card className={className}>
-      <CardHeader className="py-3">
-        <CardTitle className="text-base">Utveckling</CardTitle>
+      <CardHeader className="py-2">
+        <CardTitle className="text-sm">Utveckling</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-24 w-full mb-2">
+      <CardContent className="pb-2">
+        <div className="h-[150px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
               <PolarGrid />
@@ -84,16 +84,6 @@ export function DevelopmentChart({ development, className, minimal = false }: De
               />
             </RadarChart>
           </ResponsiveContainer>
-        </div>
-        <div className="space-y-2">
-          {chartData.map((item, index) => (
-            <div key={item.subject} className="flex justify-between items-center">
-              <span className="text-muted-foreground text-sm">
-                {item.subject}:
-              </span>
-              <span className="font-medium">{item.value}/10</span>
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>
