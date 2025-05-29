@@ -284,7 +284,7 @@ export const suggestOptimalLineup = (
   
   const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
   
-  // Get available players for each position
+  // Get players by position
   const playersByPosition: Record<string, Player[]> = {};
   requiredPositions.forEach(pos => {
     playersByPosition[pos] = players.filter(p => 
@@ -732,7 +732,7 @@ export const suggestBalancedLineup = (
   
   const usedPlayerIds = new Set<string>();
   
-  // Balance-focused player selection with rotation and randomization
+  // Balance-focused player selection with STRONG rotation emphasis
   requiredPositions.forEach(position => {
     const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
     
@@ -751,7 +751,7 @@ export const suggestBalancedLineup = (
       return;
     }
     
-    // Score players with rotation logic and randomization
+    // Score players with STRENGTHENED rotation logic
     const scoredPlayers = availablePlayers.map(player => {
       let balanceScore = 0;
       const stats = playerFrequency[player.id];
@@ -776,15 +776,16 @@ export const suggestBalancedLineup = (
         }
       }
       
-      // Rotation logic using new detailed stats
+      // STRENGTHENED rotation logic using new detailed stats
       if (stats) {
-        // Higher rest factor = played more recently = lower priority for starting
-        const rotationBonus = (1 - stats.restFactor) * 15; // Up to 15 points bonus
-        balanceScore += rotationBonus;
+        // MUCH stronger penalty for recent play: Higher rest factor = played more recently = MUCH lower priority
+        // Scale from +30 points (not played recently) to -45 points (played very recently)
+        const rotationScore = (1 - stats.restFactor) * 50 - 20; // Range: +30 to -45
+        balanceScore += rotationScore;
         
         console.log(`🔄 ${player.name} balanced rotation analysis:`, {
           restFactor: stats.restFactor.toFixed(2),
-          rotationBonus: rotationBonus.toFixed(1),
+          rotationScore: rotationScore.toFixed(1),
           lastPlayed: stats.lastPlayedDate,
           recentMatches: stats.recentMatches
         });
@@ -810,34 +811,34 @@ export const suggestBalancedLineup = (
           
           // Reward players who create balanced results (close to target)
           const balanceDeviation = Math.abs(avgDiff - targetGoalDifference);
-          balanceScore += Math.max(0, 20 - (balanceDeviation * 5));
+          balanceScore += Math.max(0, 15 - (balanceDeviation * 4)); // Reduced from 20
         }
       }
       
-      // Avoid extremely high performers who might cause blowouts (unless prioritizing new players)
-      const gradeModifier = { 'A': 5, 'B': 15, 'C': 10, 'D': 0 }; // B-players preferred for balance
+      // REDUCED grade modifiers to let rotation dominate
+      const gradeModifier = { 'A': 3, 'B': 8, 'C': 5, 'D': 0 }; // Reduced from higher values
       balanceScore += gradeModifier[player.grade as keyof typeof gradeModifier] || 0;
       
-      // Combination synergy with already selected players (but weighted for balance)
+      // REDUCED combination synergy to let rotation dominate
       selectedPlayers.forEach(selected => {
         const combination = matrix[player.id]?.[selected.playerId];
         if (combination && combination.matchesTogether >= 2) {
-          // Prefer moderate efficiency for balance
-          const efficiencyBalance = Math.max(0, 10 - Math.abs(combination.efficiency - 1.2) * 10);
+          // Prefer moderate efficiency for balance, but with reduced weight
+          const efficiencyBalance = Math.max(0, 5 - Math.abs(combination.efficiency - 1.2) * 5); // Reduced from 10
           balanceScore += efficiencyBalance;
         }
       });
       
-      // Position expertise
+      // Position expertise - reduced importance
       if (player.positions?.[0] === position) {
-        balanceScore += 10;
+        balanceScore += 8; // Reduced from 10
       }
       
       // Generate reasoning using new detailed stats
       const reasoning = generatePlayerSelectionReasoning(player, stats, prioritizeNewPlayers);
       
-      // Add controlled randomization to prevent same lineups
-      const finalScore = addRandomVariation(balanceScore, 0.25); // 25% variation
+      // REDUCED randomization to make rotation more predictable
+      const finalScore = addRandomVariation(balanceScore, 0.15); // Reduced from 0.25
       
       return {
         player,
@@ -881,7 +882,7 @@ export const suggestBalancedLineup = (
     !p.positions?.includes('MV') // No goalkeepers on bench
   );
 
-  // Score bench players with rotation logic
+  // Score bench players with STRENGTHENED rotation logic
   const scoredBenchPlayers = availableBenchPlayers.map(player => {
     let benchScore = 0;
     const stats = playerFrequency[player.id];
@@ -900,28 +901,29 @@ export const suggestBalancedLineup = (
       }
     }
 
-    // Rotation logic for bench using new detailed stats
+    // STRENGTHENED rotation logic for bench using new detailed stats
     if (stats) {
-      const rotationBonus = (1 - stats.restFactor) * 12; // Up to 12 points for bench
-      benchScore += rotationBonus;
+      // Same strong rotation logic as starters
+      const rotationScore = (1 - stats.restFactor) * 40 - 15; // Range: +25 to -35
+      benchScore += rotationScore;
     }
 
     // Versatility bonus - players who can play multiple positions
     const positionCount = player.positions?.filter(pos => pos !== 'TRÄNARE').length || 1;
     if (positionCount > 1) {
-      benchScore += 10;
+      benchScore += 8; // Reduced from 10
     }
 
-    // Grade consideration for bench
-    const gradeBonus = { 'A': 10, 'B': 12, 'C': 8, 'D': 5 }; // Slightly prefer B players for balance
+    // REDUCED grade consideration for bench
+    const gradeBonus = { 'A': 5, 'B': 7, 'C': 4, 'D': 2 }; // Reduced values
     benchScore += gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
 
-    // Combination potential with selected players
+    // REDUCED combination potential with selected players
     let combinationBonus = 0;
     selectedPlayers.forEach(selected => {
       const combination = matrix[player.id]?.[selected.playerId];
       if (combination && combination.matchesTogether >= 2) {
-        combinationBonus += combination.efficiency * 5;
+        combinationBonus += combination.efficiency * 3; // Reduced from 5
       }
     });
     benchScore += combinationBonus;
@@ -929,8 +931,8 @@ export const suggestBalancedLineup = (
     // Generate reasoning using new detailed stats
     const reasoning = generatePlayerSelectionReasoning(player, stats, prioritizeNewPlayers);
 
-    // Add randomization for bench selection too
-    const finalScore = addRandomVariation(benchScore, 0.3); // 30% variation for more bench variety
+    // REDUCED randomization for bench selection
+    const finalScore = addRandomVariation(benchScore, 0.2); // Reduced from 0.3
 
     return {
       player,
@@ -963,14 +965,15 @@ export const suggestBalancedLineup = (
   if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
   else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
   
-  // Generate reasoning with rotation info
+  // Generate reasoning with ENHANCED rotation info
   const reasoning = [
     `Optimerad för jämn vinst (${targetGoalDifference} mål) mot ${opponentName}`,
     `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
     `Förväntad målskillnad: ${expectedGoalDifference.toFixed(1)}`,
     `Balanspoäng: ${balanceScore.toFixed(0)}/100`,
     `Risknivå: ${riskLevel} (baserat på historisk variation)`,
-    `Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`
+    `Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`,
+    `⚠️ FÖRSTÄRKT ROTATION: Spelare som spelat mycket nyligen får kraftigt sänkt prioritet`
   ];
   
   // Count rotated players (those with low recent activity)
@@ -980,7 +983,17 @@ export const suggestBalancedLineup = (
   }).length;
   
   if (rotatedPlayersCount > 0) {
-    reasoning.push(`🔄 ${rotatedPlayersCount} spelare får chans efter vila`);
+    reasoning.push(`🔄 ${rotatedPlayersCount} spelare får chans efter vila (förstärkt rotationslogik)`);
+  }
+  
+  // Count players who played very recently
+  const recentPlayersCount = selectedPlayers.filter(p => {
+    const freq = playerFrequency[p.playerId];
+    return freq && freq.recentMatches >= 4;
+  }).length;
+  
+  if (recentPlayersCount > 0) {
+    reasoning.push(`⚠️ ${recentPlayersCount} spelare spelade nyligen - överväg rotation`);
   }
   
   if (prioritizeNewPlayers) {
