@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -188,28 +187,26 @@ export function MainTabs({
             ))}
           </TabsList>
           
-          {/* Action buttons - only show for non-excel tabs */}
-          {activeTabId !== "excel" && (
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setIsAddPlayerOpen(true)}
-                size={isMobile ? "sm" : "default"}
-                variant="outline"
-                className={isMobile ? 'h-8 px-2' : ''}
-              >
-                <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
-                {isMobile ? '' : 'Lägg till spelare'}
-              </Button>
-              <Button
-                onClick={() => setIsAddActivityOpen(true)}
-                size={isMobile ? "sm" : "default"}
-                className={isMobile ? 'h-8 px-2' : ''}
-              >
-                <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
-                {isMobile ? '' : 'Lägg till aktivitet'}
-              </Button>
-            </div>
-          )}
+          {/* Action buttons - now always visible for consistency */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsAddPlayerOpen(true)}
+              size={isMobile ? "sm" : "default"}
+              variant="outline"
+              className={isMobile ? 'h-8 px-2' : ''}
+            >
+              <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+              {isMobile ? '' : 'Lägg till spelare'}
+            </Button>
+            <Button
+              onClick={() => setIsAddActivityOpen(true)}
+              size={isMobile ? "sm" : "default"}
+              className={isMobile ? 'h-8 px-2' : ''}
+            >
+              <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+              {isMobile ? '' : 'Lägg till aktivitet'}
+            </Button>
+          </div>
         </div>
         
         <TabsContent value="players" className="mt-0">
