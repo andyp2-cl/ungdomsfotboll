@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +14,11 @@ export function ExcelTabContent() {
   const [embedUrl, setEmbedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isCaptureMode, setIsCaptureMode] = useState(false);
   const { toast } = useToast();
   const iframeWrapperRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Load saved URL on component mount
+  // Load saved URL on component mount - no toast message
   useEffect(() => {
     const savedUrl = localStorage.getItem(STORAGE_KEY);
     if (savedUrl) {
@@ -26,142 +26,64 @@ export function ExcelTabContent() {
       const convertedUrl = convertToEmbedUrl(savedUrl);
       if (convertedUrl) {
         setEmbedUrl(convertedUrl);
-        toast({
-          title: "Excel-fil laddad",
-          description: "Din sparade Google Sheets-fil har laddats automatiskt",
-        });
       }
     } else {
       setShowSettings(true);
     }
   }, []);
 
-  // Enhanced event handling for complete Mac trackpad isolation
+  // Simplified event handling for Mac trackpad isolation
   useEffect(() => {
     const wrapperElement = iframeWrapperRef.current;
     if (!wrapperElement || !embedUrl) return;
 
-    const preventDefault = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-    };
-
     const handleWheel = (event: WheelEvent) => {
-      // Completely prevent horizontal scroll from affecting parent
+      // Prevent horizontal scroll from affecting parent
       if (Math.abs(event.deltaX) > 0) {
-        event.preventDefault();
         event.stopPropagation();
-        event.stopImmediatePropagation();
       }
-      // Also prevent vertical scroll bubbling
-      event.stopPropagation();
     };
 
     const handleTouchStart = (event: TouchEvent) => {
       event.stopPropagation();
-      event.stopImmediatePropagation();
-      setIsCaptureMode(true);
-      document.body.classList.add('excel-iframe-active');
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      setTimeout(() => {
-        setIsCaptureMode(false);
-        document.body.classList.remove('excel-iframe-active');
-      }, 100);
     };
 
     const handleTouchMove = (event: TouchEvent) => {
       event.stopPropagation();
-      event.stopImmediatePropagation();
     };
 
-    const handlePointerDown = (event: PointerEvent) => {
+    const handleTouchEnd = (event: TouchEvent) => {
       event.stopPropagation();
-      event.stopImmediatePropagation();
-      setIsCaptureMode(true);
-      document.body.classList.add('excel-iframe-active');
     };
 
-    const handlePointerUp = (event: PointerEvent) => {
+    // Mac-specific gesture prevention
+    const preventDefault = (event: Event) => {
+      event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
-      setTimeout(() => {
-        setIsCaptureMode(false);
-        document.body.classList.remove('excel-iframe-active');
-      }, 100);
     };
 
-    const handleMouseEnter = () => {
-      setIsCaptureMode(true);
-      document.body.classList.add('excel-iframe-active');
-    };
-
-    const handleMouseLeave = () => {
-      setIsCaptureMode(false);
-      document.body.classList.remove('excel-iframe-active');
-    };
-
-    // Gesture event handlers for Mac
-    const handleGestureStart = preventDefault;
-    const handleGestureChange = preventDefault;
-    const handleGestureEnd = preventDefault;
-
-    // Add all event listeners with aggressive prevention
+    // Add simplified event listeners
     wrapperElement.addEventListener('wheel', handleWheel, { passive: false, capture: true });
     wrapperElement.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-    wrapperElement.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
     wrapperElement.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    wrapperElement.addEventListener('pointerdown', handlePointerDown, { passive: false, capture: true });
-    wrapperElement.addEventListener('pointerup', handlePointerUp, { passive: false, capture: true });
-    wrapperElement.addEventListener('mouseenter', handleMouseEnter, { passive: true });
-    wrapperElement.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    wrapperElement.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
     
-    // Mac-specific gesture events
-    wrapperElement.addEventListener('gesturestart', handleGestureStart, { passive: false, capture: true });
-    wrapperElement.addEventListener('gesturechange', handleGestureChange, { passive: false, capture: true });
-    wrapperElement.addEventListener('gestureend', handleGestureEnd, { passive: false, capture: true });
-
-    // Document-level prevention when iframe is active
-    const handleDocumentWheel = (event: WheelEvent) => {
-      if (isCaptureMode) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-
-    const handleDocumentTouchMove = (event: TouchEvent) => {
-      if (isCaptureMode) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-
-    document.addEventListener('wheel', handleDocumentWheel, { passive: false });
-    document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
+    // Mac gesture events
+    wrapperElement.addEventListener('gesturestart', preventDefault, { passive: false, capture: true });
+    wrapperElement.addEventListener('gesturechange', preventDefault, { passive: false, capture: true });
+    wrapperElement.addEventListener('gestureend', preventDefault, { passive: false, capture: true });
 
     // Cleanup
     return () => {
       wrapperElement.removeEventListener('wheel', handleWheel);
       wrapperElement.removeEventListener('touchstart', handleTouchStart);
-      wrapperElement.removeEventListener('touchend', handleTouchEnd);
       wrapperElement.removeEventListener('touchmove', handleTouchMove);
-      wrapperElement.removeEventListener('pointerdown', handlePointerDown);
-      wrapperElement.removeEventListener('pointerup', handlePointerUp);
-      wrapperElement.removeEventListener('mouseenter', handleMouseEnter);
-      wrapperElement.removeEventListener('mouseleave', handleMouseLeave);
-      wrapperElement.removeEventListener('gesturestart', handleGestureStart);
-      wrapperElement.removeEventListener('gesturechange', handleGestureChange);
-      wrapperElement.removeEventListener('gestureend', handleGestureEnd);
-      
-      document.removeEventListener('wheel', handleDocumentWheel);
-      document.removeEventListener('touchmove', handleDocumentTouchMove);
-      document.body.classList.remove('excel-iframe-active');
+      wrapperElement.removeEventListener('touchend', handleTouchEnd);
+      wrapperElement.removeEventListener('gesturestart', preventDefault);
+      wrapperElement.removeEventListener('gesturechange', preventDefault);
+      wrapperElement.removeEventListener('gestureend', preventDefault);
     };
-  }, [embedUrl, isCaptureMode]);
+  }, [embedUrl]);
 
   // Convert Google Sheets sharing URL to embed URL
   const convertToEmbedUrl = (url: string): string => {
@@ -172,7 +94,6 @@ export function ExcelTabContent() {
       
       if (match && match[1]) {
         const sheetId = match[1];
-        // Enhanced URL with better isolation parameters
         return `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing&rm=minimal&widget=true&chrome=false&embedded=true&single=true&gid=0`;
       }
       
@@ -225,9 +146,7 @@ export function ExcelTabContent() {
     setSheetUrl("");
     setEmbedUrl("");
     setShowSettings(true);
-    setIsCaptureMode(false);
     localStorage.removeItem(STORAGE_KEY);
-    document.body.classList.remove('excel-iframe-active');
     toast({
       title: "Rensad",
       description: "Excel-filen har tagits bort",
@@ -240,21 +159,18 @@ export function ExcelTabContent() {
 
   return (
     <div className="space-y-4 h-full">
-      {/* Excel Sheet Display with enhanced isolation */}
+      {/* Excel Sheet Display with simplified isolation */}
       {embedUrl && (
         <Card className="flex-1">
           <CardContent className="p-2">
             <div 
               ref={iframeWrapperRef}
-              className={`relative w-full excel-iframe-wrapper excel-iframe-container ${isCaptureMode ? 'capture-mode' : ''}`}
+              className="relative w-full excel-iframe-wrapper excel-iframe-container"
               style={{ 
                 height: 'calc(100vh - 200px)', 
                 minHeight: '600px',
                 overflow: 'hidden',
-                overscrollBehavior: 'none',
-                overscrollBehaviorX: 'none',
-                overscrollBehaviorY: 'none',
-                touchAction: 'none'
+                overscrollBehavior: 'none'
               }}
             >
               <iframe
@@ -267,10 +183,7 @@ export function ExcelTabContent() {
                   borderRadius: '6px',
                   touchAction: 'pan-x pan-y',
                   overflowX: 'auto',
-                  overflowY: 'auto',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  pointerEvents: 'auto'
+                  overflowY: 'auto'
                 }}
                 title="Google Sheets"
                 allow="autoplay; camera; microphone; display-capture"
