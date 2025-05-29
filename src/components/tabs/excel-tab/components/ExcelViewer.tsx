@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -251,14 +250,6 @@ export function ExcelViewer({
               Öppna i ny flik
             </Button>
           </div>
-
-          {/* Mac fallback warning */}
-          {isMac && (
-            <div className="absolute bottom-2 left-2 bg-amber-50 border border-amber-200 rounded-md p-2 text-xs text-amber-800 max-w-sm">
-              <p className="font-medium">Mac-tips:</p>
-              <p>Om horisontell scrolling ändå navigerar, använd "Öppna i ny flik" för bästa upplevelse.</p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
