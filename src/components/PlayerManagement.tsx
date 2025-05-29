@@ -126,6 +126,7 @@ export function PlayerManagement({
           <StatisticsTabContent 
             players={players} 
             activities={activities}
+            gradeData={gradeData}
             onPlayerSelect={handlePlayerIdSelect}
           />
         </TabsContent>

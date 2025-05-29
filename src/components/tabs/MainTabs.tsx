@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -253,6 +254,7 @@ export function MainTabs({
           <StatisticsTabContent 
             players={players} 
             activities={activities}
+            gradeData={gradeData}
             onPlayerSelect={handlePlayerSelect}
           />
         </TabsContent>
