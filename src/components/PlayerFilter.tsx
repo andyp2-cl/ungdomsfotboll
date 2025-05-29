@@ -43,7 +43,7 @@ export function PlayerFilter({
   return (
     <div className="space-y-4">
       {/* Grade Filters */}
-      <div className="flex items-center mb-4 flex-wrap gap-2">
+      <div className="flex items-center flex-wrap gap-2">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="self-center text-sm font-medium mr-2">Filtrera nivå:</span>
           {grades.map((grade) => (
@@ -99,42 +99,41 @@ export function PlayerFilter({
         </div>
       </div>
 
-      {/* Position Filters */}
-      {onPositionChange && (
-        <div className="flex items-center flex-wrap gap-2">
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="self-center text-sm font-medium mr-2">Filtrera position:</span>
-            {positions.map((position) => (
-              <Button
-                key={position}
-                size="sm"
-                variant={selectedPositions.includes(position) ? "default" : "outline"}
-                onClick={() => onPositionChange(position)}
-                className={selectedPositions.includes(position) 
-                  ? 'bg-black hover:bg-gray-800 text-white' 
-                  : ''}
-              >
-                {positionLabels[position]}
-              </Button>
-            ))}
-            {selectedPositions.length > 0 && (
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                onClick={() => {
-                  positions.forEach(p => {
-                    if (selectedPositions.includes(p)) {
-                      onPositionChange(p);
-                    }
-                  });
-                }}
-              >
-                Visa alla
-              </Button>
-            )}
-          </div>
+      {/* Position Filters - Always render but disable if no handler */}
+      <div className="flex items-center flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="self-center text-sm font-medium mr-2">Filtrera position:</span>
+          {positions.map((position) => (
+            <Button
+              key={position}
+              size="sm"
+              variant={selectedPositions.includes(position) ? "default" : "outline"}
+              onClick={() => onPositionChange?.(position)}
+              disabled={!onPositionChange}
+              className={selectedPositions.includes(position) 
+                ? 'bg-black hover:bg-gray-800 text-white' 
+                : ''}
+            >
+              {positionLabels[position]}
+            </Button>
+          ))}
+          {selectedPositions.length > 0 && onPositionChange && (
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => {
+                positions.forEach(p => {
+                  if (selectedPositions.includes(p)) {
+                    onPositionChange(p);
+                  }
+                });
+              }}
+            >
+              Visa alla
+            </Button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
