@@ -1,8 +1,8 @@
 
 import React from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, Clock, BarChart3 } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Plus } from "lucide-react";
 
 interface ActivityTabHeaderProps {
   activeView: "upcoming" | "historical" | "statistics";
@@ -18,45 +18,31 @@ export function ActivityTabHeader({
   isMobile = false
 }: ActivityTabHeaderProps) {
   return (
-    <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'}`}>
-      <div className={isMobile ? 'w-full overflow-x-auto pb-2' : ''}>
-        <ToggleGroup 
-          type="single" 
-          value={activeView} 
-          onValueChange={handleViewChange}
-          className={`justify-start ${isMobile ? 'w-full flex' : ''}`}
-        >
-          <ToggleGroupItem 
-            value="upcoming" 
-            aria-label="Kommande aktiviteter"
-            className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}
-          >
-            <Calendar className={isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />
-            {isMobile ? 'Kommande' : 'Kommande aktiviteter'}
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="historical" 
-            aria-label="Historiska aktiviteter"
-            className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}
-          >
-            <Clock className={isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />
-            {isMobile ? 'Historik' : 'Historiska aktiviteter'}
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="statistics" 
-            aria-label="Statistik"
-            className={isMobile ? 'flex-1 py-1.5 px-2 text-xs' : ''}
-          >
-            <BarChart3 className={isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />
-            {isMobile ? 'Statistik' : 'Statistik'}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
+    <div className="flex items-center justify-between gap-4">
+      <Tabs value={activeView} onValueChange={handleViewChange} className="flex-1">
+        <TabsList className={`grid w-full grid-cols-3 ${isMobile ? 'h-8' : ''}`}>
+          <TabsTrigger value="upcoming" className={isMobile ? 'text-xs px-2' : ''}>
+            {isMobile ? 'Kommande' : 'Kommande'}
+          </TabsTrigger>
+          <TabsTrigger value="historical" className={isMobile ? 'text-xs px-2' : ''}>
+            {isMobile ? 'Historik' : 'Historiska'}
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className={isMobile ? 'text-xs px-2' : ''}>
+            {isMobile ? 'Stats' : 'Statistik'}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       
-      <Button onClick={() => setIsAddActivityOpen(true)} className={isMobile ? 'w-full' : ''}>
-        <Plus className="h-4 w-4 mr-2" />
-        Lägg till aktivitet
-      </Button>
+      {activeView !== "statistics" && (
+        <Button
+          onClick={() => setIsAddActivityOpen(true)}
+          size={isMobile ? "sm" : "default"}
+          className={isMobile ? 'h-8 px-2' : ''}
+        >
+          <Plus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+          {isMobile ? '' : 'Lägg till'}
+        </Button>
+      )}
     </div>
   );
 }

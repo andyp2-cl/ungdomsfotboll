@@ -75,9 +75,10 @@ export function ActivityParticipants({
     );
   }
 
-  // Maintain aspect ratio while using full width - make avatars square and larger
-  const avatarSize = isMobile ? 'h-14 w-14' : 'h-16 w-16';
-  const iconSize = isMobile ? 'h-7 w-7' : 'h-8 w-8';
+  // Mobile-optimized sizing - smaller avatars and fewer columns
+  const avatarSize = isMobile ? 'h-10 w-10' : 'h-16 w-16';
+  const iconSize = isMobile ? 'h-5 w-5' : 'h-8 w-8';
+  const gridCols = isMobile ? 'grid-cols-6' : 'grid-cols-9';
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -90,17 +91,17 @@ export function ActivityParticipants({
         return (
           <div key={gradeKey} className="flex flex-col gap-1">
             {gradeKey !== 'undefined' && (
-              <Badge variant="outline" className="self-start mr-1 mb-1">
+              <Badge variant="outline" className={`self-start mr-1 ${isMobile ? 'mb-0.5 text-xs px-1.5 py-0.5' : 'mb-1'}`}>
                 {gradeKey}
               </Badge>
             )}
             
-            <div className="grid grid-cols-9 gap-1 w-full">
+            <div className={`grid ${gridCols} gap-1 w-full`}>
               {playersInGrade.map((player) => (
                 <div 
                   key={player.id}
                   data-player-item="true"
-                  className={`flex flex-col items-center gap-0.5 border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                  className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${isMobile ? 'p-0.5' : 'p-1'} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
                   onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                 >
                   <TooltipProvider>
@@ -123,7 +124,7 @@ export function ActivityParticipants({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className={`${isMobile ? 'text-xs' : 'text-xs'} overflow-hidden text-ellipsis whitespace-nowrap text-center w-full`}>
+                  <span className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap text-center w-full ${isMobile ? 'leading-tight' : ''}`}>
                     {getFirstName(player.name)}
                   </span>
                 </div>

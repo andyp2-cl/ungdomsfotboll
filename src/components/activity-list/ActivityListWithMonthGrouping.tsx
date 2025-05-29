@@ -91,20 +91,20 @@ export function ActivityListWithMonthGrouping({
   const defaultExpandedMonths = [currentMonth];
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-${isMobile ? '2' : '4'}`}>
       <Accordion type="multiple" defaultValue={defaultExpandedMonths} className="w-full">
         {monthGroups.map((monthGroup) => (
-          <AccordionItem key={monthGroup.monthKey} value={monthGroup.monthKey} className="border rounded-lg mb-4">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <AccordionItem key={monthGroup.monthKey} value={monthGroup.monthKey} className={`border rounded-lg ${isMobile ? 'mb-2' : 'mb-4'}`}>
+            <AccordionTrigger className={`${isMobile ? 'px-3 py-2' : 'px-4 py-3'} hover:no-underline`}>
               <div className="flex items-center justify-between w-full">
-                <span className="font-semibold text-left">{monthGroup.monthLabel}</span>
-                <span className="text-sm text-muted-foreground mr-4">
+                <span className={`font-semibold text-left ${isMobile ? 'text-sm' : ''}`}>{monthGroup.monthLabel}</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground mr-4`}>
                   {monthGroup.activities.length} aktivitet{monthGroup.activities.length !== 1 ? 'er' : ''}
                 </span>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="space-y-3">
+            <AccordionContent className={`${isMobile ? 'px-3 pb-3' : 'px-4 pb-4'}`}>
+              <div className={`space-y-${isMobile ? '2' : '3'}`}>
                 {monthGroup.activities.map((activity) => (
                   <ActivityListItem
                     key={activity.id}

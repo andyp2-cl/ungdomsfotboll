@@ -99,7 +99,7 @@ export function ActivityListItem({
       return "Igår";
     } else {
       return date.toLocaleDateString('sv-SE', { 
-        weekday: 'short', 
+        weekday: isMobile ? 'short' : 'short', 
         month: 'short', 
         day: 'numeric' 
       });
@@ -114,51 +114,51 @@ export function ActivityListItem({
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
       onClick={handleClick}
     >
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+        <div className={`space-y-${isMobile ? '2' : '3'}`}>
           {/* Header with title and badges */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base truncate">{activity.name}</h3>
+              <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} truncate`}>{activity.name}</h3>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <CupMatchBadge activity={activity} />
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <CupMatchBadge activity={activity} isMobile={isMobile} />
               {activity.type === 'match' && actualIsHistorical && (
-                <Badge variant="outline" className="text-sm">
-                  <Trophy className="h-4 w-4 mr-1" />
-                  <span className={`${resultTextColor} text-lg font-bold`}>{formatResult(activity)}</span>
+                <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'}`}>
+                  <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                  <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
                 </Badge>
               )}
             </div>
           </div>
 
-          {/* Meta information */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          {/* Meta information - more compact on mobile */}
+          <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
             <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
+              <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
               <span>{formatDate(activity.date)}</span>
             </div>
             
             {activity.time && (
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
+                <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 <span>{activity.time}</span>
               </div>
             )}
             
             {activity.location?.name && (
               <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span className="truncate">{activity.location.name}</span>
+                <MapPin className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span className={`truncate ${isMobile ? 'max-w-20' : ''}`}>{activity.location.name}</span>
               </div>
             )}
             
             <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{participatingPlayers.length} deltagare</span>
+              <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              <span>{participatingPlayers.length}</span>
             </div>
 
-            {league && (
+            {league && !isMobile && (
               <div className="flex items-center gap-1">
                 <Award className="h-4 w-4" />
                 <span>{getCleanLeagueName(league)}</span>
@@ -166,16 +166,18 @@ export function ActivityListItem({
             )}
           </div>
 
-          {/* Participants preview - removed maxShow to show all players */}
+          {/* Participants preview - optimized for mobile */}
           <ActivityParticipants 
             participants={participatingPlayers} 
             onPlayerSelect={onPlayerSelect}
             isMobile={isMobile}
           />
 
-          {/* Match report summary for historical activities */}
+          {/* Match report summary for historical activities - more compact on mobile */}
           {actualIsHistorical && (
-            <MatchReportSummary activity={activity} />
+            <div className={isMobile ? 'text-xs' : ''}>
+              <MatchReportSummary activity={activity} />
+            </div>
           )}
         </div>
       </CardContent>
