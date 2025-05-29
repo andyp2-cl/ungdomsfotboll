@@ -1,29 +1,5 @@
 import { Player, Activity } from "@/types/player";
-
-export interface PlayerCombination {
-  playerIds: string[];
-  playerNames: string[];
-  matchesTogether: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  winRate: number;
-  totalGoals: number;
-  totalAssists: number;
-  combinationEfficiency: number;
-  positionSynergy: number;
-  averagePerformance: number;
-}
-
-export interface CombinationMatrix {
-  [playerId: string]: {
-    [otherPlayerId: string]: {
-      efficiency: number;
-      matchesTogether: number;
-      winRate: number;
-    };
-  };
-}
+import { calculateDetailedPlayerActivityFrequency, generatePlayerSelectionReasoning, PlayerActivityStats } from "./playerActivityAnalysis";
 
 // Beräkna positionssynergi mellan två spelare
 const calculatePositionSynergy = (player1: Player, player2: Player): number => {
@@ -83,6 +59,31 @@ const isHassleholmsPlayingHome = (activity: Activity): boolean => {
   }
   
   return true; // Default to home if can't parse
+};
+
+export interface PlayerCombination {
+  playerIds: string[];
+  playerNames: string[];
+  matchesTogether: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winRate: number;
+  totalGoals: number;
+  totalAssists: number;
+  combinationEfficiency: number;
+  positionSynergy: number;
+  averagePerformance: number;
+}
+
+export interface CombinationMatrix {
+  [playerId: string]: {
+    [otherPlayerId: string]: {
+      efficiency: number;
+      matchesTogether: number;
+      winRate: number;
+    };
+  };
 };
 
 // Analysera alla tvåspelar-kombinationer
@@ -240,7 +241,6 @@ export const analyzePositionCombinations = (combinations: PlayerCombination[], p
   return positionStats;
 };
 
-// New interface for lineup suggestions
 export interface LineupSuggestion {
   formation: string;
   players: {
@@ -255,44 +255,6 @@ export interface LineupSuggestion {
   reasoning: string[];
 }
 
-// NEW: Calculate player activity frequency for rotation logic
-const calculatePlayerActivityFrequency = (
-  players: Player[], 
-  activities: Activity[], 
-  recentMatchCount: number = 5
-): Record<string, { recentMatches: number; totalMatches: number; restFactor: number }> => {
-  const playerStats: Record<string, { recentMatches: number; totalMatches: number; restFactor: number }> = {};
-  
-  // Sort activities by date (most recent first)
-  const sortedActivities = activities
-    .filter(a => a.type === 'match' && a.date)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  
-  const recentActivities = sortedActivities.slice(0, recentMatchCount);
-  
-  players.forEach(player => {
-    const totalMatches = activities.filter(a => 
-      a.type === 'match' && a.participants?.includes(player.id)
-    ).length;
-    
-    const recentMatches = recentActivities.filter(a => 
-      a.participants?.includes(player.id)
-    ).length;
-    
-    // Calculate rest factor: higher value = needs more rest = lower priority
-    const restFactor = recentMatches / Math.max(1, recentMatchCount);
-    
-    playerStats[player.id] = {
-      recentMatches,
-      totalMatches,
-      restFactor
-    };
-  });
-  
-  return playerStats;
-};
-
-// NEW: Add controlled randomization
 const addRandomVariation = (score: number, variationStrength: number = 0.2): number => {
   // Add random variation of ±20% by default
   const randomFactor = 1 + (Math.random() - 0.5) * 2 * variationStrength;
@@ -305,8 +267,13 @@ export const suggestOptimalLineup = (
   activities: Activity[], 
   formation: string = "2-3-1"
 ): LineupSuggestion => {
+  console.log("🎯 Starting optimal lineup suggestion generation");
+  
   const combinations = analyzePairCombinations(players, activities);
   const matrix = createCombinationMatrix(players, combinations);
+  
+  // Use the new detailed player activity frequency calculation
+  const playerFrequency = calculateDetailedPlayerActivityFrequency(players, activities, 5);
   
   // Define position requirements for different formations
   const formationRequirements: Record<string, string[]> = {
@@ -356,7 +323,10 @@ export const suggestOptimalLineup = (
     // Score players based on individual performance and combination potential
     const scoredPlayers = availablePlayers.map(player => {
       let score = 0;
-      let reasoning = [];
+      const stats = playerFrequency[player.id];
+      
+      // Use the new detailed reasoning generation
+      const reasoning = generatePlayerSelectionReasoning(player, stats);
       
       // Individual performance (basic scoring)
       const playerActivities = activities.filter(a => 
@@ -367,7 +337,20 @@ export const suggestOptimalLineup = (
         const wins = playerActivities.filter(a => a.isWin === true).length;
         const winRate = (wins / playerActivities.length) * 100;
         score += winRate * 0.3; // 30% weight for individual win rate
-        reasoning.push(`${winRate.toFixed(0)}% vinster`);
+      }
+      
+      // Rotation priority based on new stats
+      if (stats) {
+        // Bonus for players who haven't played recently (lower rest factor = higher bonus)
+        const rotationBonus = (1 - stats.restFactor) * 25; // Up to 25 points bonus
+        score += rotationBonus;
+        
+        console.log(`📊 ${player.name} rotation analysis:`, {
+          restFactor: stats.restFactor.toFixed(2),
+          rotationBonus: rotationBonus.toFixed(1),
+          lastPlayed: stats.lastPlayedDate,
+          recentMatches: stats.recentMatches
+        });
       }
       
       // Combination potential with already selected players
@@ -376,7 +359,6 @@ export const suggestOptimalLineup = (
         const combination = matrix[player.id]?.[selected.playerId];
         if (combination && combination.matchesTogether >= 2) {
           combinationBonus += combination.efficiency * 10; // Boost for good combinations
-          reasoning.push(`Bra synergi med ${selected.playerName}`);
         }
       });
       
@@ -385,7 +367,6 @@ export const suggestOptimalLineup = (
       // Position expertise bonus
       if (player.positions?.[0] === position) {
         score += 20; // Bonus for primary position
-        reasoning.push("Primär position");
       }
       
       // Grade bonus
@@ -395,7 +376,7 @@ export const suggestOptimalLineup = (
       return {
         player,
         score,
-        reasoning: reasoning.join(", ") || "Grundvärdering"
+        reasoning
       };
     });
     
@@ -411,6 +392,11 @@ export const suggestOptimalLineup = (
         reasoning: bestPlayer.reasoning
       });
       usedPlayerIds.add(bestPlayer.player.id);
+      
+      console.log(`✅ Selected ${bestPlayer.player.name} for ${position}:`, {
+        score: bestPlayer.score.toFixed(1),
+        reasoning: bestPlayer.reasoning
+      });
     }
   });
   
@@ -445,6 +431,13 @@ export const suggestOptimalLineup = (
     reasoning.push("⚠️ Begränsad data - förslag baserat på tillgänglig information");
   }
   
+  console.log("🎯 Optimal lineup suggestion completed", {
+    selectedPlayersCount: selectedPlayers.length,
+    avgEfficiency,
+    avgWinRate,
+    confidence: Math.min(100, (pairCount / 10) * 100)
+  });
+  
   return {
     formation,
     players: selectedPlayers,
@@ -455,7 +448,6 @@ export const suggestOptimalLineup = (
   };
 };
 
-// New interfaces for opponent analysis
 export interface OpponentAnalysis {
   opponentName: string;
   totalMatches: number;
@@ -700,12 +692,19 @@ export const suggestBalancedLineup = (
   targetGoalDifference: number = 1, // Target narrow win
   prioritizeNewPlayers: boolean = false
 ): BalancedLineupSuggestion => {
+  console.log("🎯 Starting balanced lineup suggestion generation", {
+    opponentName,
+    formation,
+    targetGoalDifference,
+    prioritizeNewPlayers
+  });
+  
   const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
   const combinations = analyzePairCombinations(players, activities);
   const matrix = createCombinationMatrix(players, combinations);
   
-  // NEW: Get player activity frequency for rotation logic
-  const playerFrequency = calculatePlayerActivityFrequency(players, activities, 5);
+  // Use the new detailed player activity frequency calculation
+  const playerFrequency = calculateDetailedPlayerActivityFrequency(players, activities, 5);
   
   // Define position requirements
   const formationRequirements: Record<string, string[]> = {
@@ -733,7 +732,7 @@ export const suggestBalancedLineup = (
   
   const usedPlayerIds = new Set<string>();
   
-  // ENHANCED: Balance-focused player selection with rotation and randomization
+  // Balance-focused player selection with rotation and randomization
   requiredPositions.forEach(position => {
     const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
     
@@ -752,10 +751,10 @@ export const suggestBalancedLineup = (
       return;
     }
     
-    // ENHANCED: Score players with rotation logic and randomization
+    // Score players with rotation logic and randomization
     const scoredPlayers = availablePlayers.map(player => {
       let balanceScore = 0;
-      let reasoning = [];
+      const stats = playerFrequency[player.id];
       
       // Check historical performance against this opponent
       const playerOpponentMatches = activities.filter(a => 
@@ -769,29 +768,26 @@ export const suggestBalancedLineup = (
         if (playerOpponentMatches.length === 0) {
           // Big bonus for players who never played against this opponent
           balanceScore += 20;
-          reasoning.push("Ny mot detta lag");
         } else if (playerOpponentMatches.length <= 2) {
           // Neutral for players with limited experience
-          reasoning.push("Begränsad erfarenhet mot detta lag");
         } else {
           // Small penalty for players with lots of experience against this opponent
           balanceScore -= 5;
-          reasoning.push("Erfaren mot detta lag");
         }
       }
       
-      // NEW: Rotation logic - favor players who haven't played recently
-      const frequency = playerFrequency[player.id];
-      if (frequency) {
+      // Rotation logic using new detailed stats
+      if (stats) {
         // Higher rest factor = played more recently = lower priority for starting
-        const rotationBonus = (1 - frequency.restFactor) * 15; // Up to 15 points bonus
+        const rotationBonus = (1 - stats.restFactor) * 15; // Up to 15 points bonus
         balanceScore += rotationBonus;
         
-        if (frequency.recentMatches === 0) {
-          reasoning.push("Vila - inte spelat nyligen");
-        } else if (frequency.recentMatches <= 2) {
-          reasoning.push("Begränsad speltid nyligen");
-        }
+        console.log(`🔄 ${player.name} balanced rotation analysis:`, {
+          restFactor: stats.restFactor.toFixed(2),
+          rotationBonus: rotationBonus.toFixed(1),
+          lastPlayed: stats.lastPlayedDate,
+          recentMatches: stats.recentMatches
+        });
       }
       
       if (playerOpponentMatches.length > 0) {
@@ -815,10 +811,6 @@ export const suggestBalancedLineup = (
           // Reward players who create balanced results (close to target)
           const balanceDeviation = Math.abs(avgDiff - targetGoalDifference);
           balanceScore += Math.max(0, 20 - (balanceDeviation * 5));
-          
-          if (!prioritizeNewPlayers || playerOpponentMatches.length <= 2) {
-            reasoning.push(`Skapar jämna matcher mot ${opponentName}`);
-          }
         }
       }
       
@@ -839,18 +831,18 @@ export const suggestBalancedLineup = (
       // Position expertise
       if (player.positions?.[0] === position) {
         balanceScore += 10;
-        if (reasoning.length === 0) {
-          reasoning.push("Primär position");
-        }
       }
       
-      // NEW: Add controlled randomization to prevent same lineups
+      // Generate reasoning using new detailed stats
+      const reasoning = generatePlayerSelectionReasoning(player, stats, prioritizeNewPlayers);
+      
+      // Add controlled randomization to prevent same lineups
       const finalScore = addRandomVariation(balanceScore, 0.25); // 25% variation
       
       return {
         player,
         balanceScore: finalScore,
-        reasoning: reasoning.join(", ") || "Balanserad spelare"
+        reasoning
       };
     });
     
@@ -866,10 +858,15 @@ export const suggestBalancedLineup = (
         reasoning: bestPlayer.reasoning
       });
       usedPlayerIds.add(bestPlayer.player.id);
+      
+      console.log(`✅ Selected ${bestPlayer.player.name} for balanced ${position}:`, {
+        balanceScore: bestPlayer.balanceScore.toFixed(1),
+        reasoning: bestPlayer.reasoning
+      });
     }
   });
 
-  // ENHANCED: Select bench players with rotation and variation
+  // Select bench players with rotation and variation
   const benchPlayers: {
     playerId: string;
     playerName: string;
@@ -884,10 +881,10 @@ export const suggestBalancedLineup = (
     !p.positions?.includes('MV') // No goalkeepers on bench
   );
 
-  // ENHANCED: Score bench players with rotation logic
+  // Score bench players with rotation logic
   const scoredBenchPlayers = availableBenchPlayers.map(player => {
     let benchScore = 0;
-    let reasoning = [];
+    const stats = playerFrequency[player.id];
 
     // Check historical performance against this opponent
     const playerOpponentMatches = activities.filter(a => 
@@ -900,28 +897,19 @@ export const suggestBalancedLineup = (
     if (prioritizeNewPlayers) {
       if (playerOpponentMatches.length === 0) {
         benchScore += 15; // Bonus for new players
-        reasoning.push("Ny mot detta lag");
-      } else if (playerOpponentMatches.length <= 2) {
-        reasoning.push("Begränsad erfarenhet");
       }
     }
 
-    // NEW: Rotation logic for bench
-    const frequency = playerFrequency[player.id];
-    if (frequency) {
-      const rotationBonus = (1 - frequency.restFactor) * 12; // Up to 12 points for bench
+    // Rotation logic for bench using new detailed stats
+    if (stats) {
+      const rotationBonus = (1 - stats.restFactor) * 12; // Up to 12 points for bench
       benchScore += rotationBonus;
-      
-      if (frequency.recentMatches === 0) {
-        reasoning.push("Vila - inte spelat nyligen");
-      }
     }
 
     // Versatility bonus - players who can play multiple positions
     const positionCount = player.positions?.filter(pos => pos !== 'TRÄNARE').length || 1;
     if (positionCount > 1) {
       benchScore += 10;
-      reasoning.push(`Kan spela ${positionCount} positioner`);
     }
 
     // Grade consideration for bench
@@ -938,19 +926,16 @@ export const suggestBalancedLineup = (
     });
     benchScore += combinationBonus;
 
-    // Primary position bonus
-    const primaryPosition = player.positions?.[0];
-    if (primaryPosition && primaryPosition !== 'MV') {
-      reasoning.push(`Primär: ${primaryPosition}`);
-    }
+    // Generate reasoning using new detailed stats
+    const reasoning = generatePlayerSelectionReasoning(player, stats, prioritizeNewPlayers);
 
-    // NEW: Add randomization for bench selection too
+    // Add randomization for bench selection too
     const finalScore = addRandomVariation(benchScore, 0.3); // 30% variation for more bench variety
 
     return {
       player,
       benchScore: finalScore,
-      reasoning: reasoning.join(", ") || "Pålitlig reserv"
+      reasoning
     };
   });
 
@@ -978,7 +963,7 @@ export const suggestBalancedLineup = (
   if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
   else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
   
-  // ENHANCED: Generate reasoning with rotation info
+  // Generate reasoning with rotation info
   const reasoning = [
     `Optimerad för jämn vinst (${targetGoalDifference} mål) mot ${opponentName}`,
     `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
@@ -1021,6 +1006,14 @@ export const suggestBalancedLineup = (
   if (opponentAnalysis.totalMatches < 3) {
     reasoning.push("⚠️ Begränsad historik - förslag baserat på allmän data");
   }
+  
+  console.log("🎯 Balanced lineup suggestion completed", {
+    selectedPlayersCount: selectedPlayers.length,
+    benchPlayersCount: benchPlayers.length,
+    expectedGoalDifference,
+    balanceScore,
+    confidence: Math.min(100, (opponentAnalysis.totalMatches / 5) * 100)
+  });
   
   return {
     formation,
