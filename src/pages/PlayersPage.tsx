@@ -94,7 +94,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
     if (mode === "grid" || mode === "list") {
-      setViewMode(mode);
+      setViewMode(mode as "grid" | "list");
     }
   };
 

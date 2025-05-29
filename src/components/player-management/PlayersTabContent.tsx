@@ -53,6 +53,11 @@ export function PlayersTabContent({
     onPlayerSelect(player);
   };
 
+  // Handle bulk update (for single player, just call onPlayerUpdate)
+  const handleBulkUpdate = (player: Player) => {
+    onPlayerUpdate(player);
+  };
+
   return (
     <div className="space-y-6">
       <PlayerManagementHeader
@@ -82,6 +87,7 @@ export function PlayersTabContent({
           }}
           onEdit={onEditPlayerClick}
           onPlayerUpdate={onPlayerUpdate}
+          onBulkUpdate={handleBulkUpdate}
           allPlayers={players}
         />
       ) : (

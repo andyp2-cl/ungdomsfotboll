@@ -117,9 +117,7 @@ export function PlayerDetail({
 
       <PlayerCard 
         player={player} 
-        onPlayerUpdate={onPlayerUpdate}
-        onBulkUpdate={onBulkUpdate}
-        allPlayers={allPlayers}
+        activities={activities}
       />
 
       <PlayerMatchTabs 
