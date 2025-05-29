@@ -26,8 +26,8 @@ export function BalancedMatchOptimizer({
 }: BalancedMatchOptimizerProps) {
   const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
-  const [targetGoalDifference, setTargetGoalDifference] = useState([1]);
-  const [prioritizeNewPlayers, setPrioritizeNewPlayers] = useState(false);
+  const [targetGoalDifference, setTargetGoalDifference] = useState([2]);
+  const [prioritizeNewPlayers, setPrioritizeNewPlayers] = useState(true);
   const [suggestion, setSuggestion] = useState<BalancedLineupSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -303,29 +303,19 @@ export function BalancedMatchOptimizer({
                     {suggestion.players.map((player) => (
                       <div 
                         key={player.playerId}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <Badge 
-                            style={{ backgroundColor: getPositionColor(player.position as any) }}
-                            className="text-white font-medium"
-                          >
-                            {player.position}
-                          </Badge>
-                          
-                          <div>
-                            <div className="font-medium">{player.playerName}</div>
-                            <div className="text-sm text-muted-foreground">{player.reasoning}</div>
-                          </div>
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onPlayerSelect?.(player.playerId)}
+                        <Badge 
+                          style={{ backgroundColor: getPositionColor(player.position as any) }}
+                          className="text-white font-medium"
                         >
-                          Visa profil
-                        </Button>
+                          {player.position}
+                        </Badge>
+                        
+                        <div>
+                          <div className="font-medium">{player.playerName}</div>
+                          <div className="text-sm text-muted-foreground">{player.reasoning}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -342,29 +332,19 @@ export function BalancedMatchOptimizer({
                       {suggestion.benchPlayers.map((player) => (
                         <div 
                           key={player.playerId}
-                          className="flex items-center justify-between p-3 border rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-3 p-3 border rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
-                            <Badge 
-                              style={{ backgroundColor: getPositionColor(player.position as any) }}
-                              className="text-white font-medium opacity-80"
-                            >
-                              {player.position}
-                            </Badge>
-                            
-                            <div>
-                              <div className="font-medium">{player.playerName}</div>
-                              <div className="text-sm text-muted-foreground">{player.reasoning}</div>
-                            </div>
-                          </div>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onPlayerSelect?.(player.playerId)}
+                          <Badge 
+                            style={{ backgroundColor: getPositionColor(player.position as any) }}
+                            className="text-white font-medium opacity-80"
                           >
-                            Visa profil
-                          </Button>
+                            {player.position}
+                          </Badge>
+                          
+                          <div>
+                            <div className="font-medium">{player.playerName}</div>
+                            <div className="text-sm text-muted-foreground">{player.reasoning}</div>
+                          </div>
                         </div>
                       ))}
                     </div>
