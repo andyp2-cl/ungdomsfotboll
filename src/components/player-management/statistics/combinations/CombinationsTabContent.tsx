@@ -3,21 +3,34 @@ import React, { useMemo, useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { analyzePairCombinations, createCombinationMatrix, analyzePositionCombinations } from "@/utils/playerCombinations";
 import { CombinationsList } from "./CombinationsList";
-import { CombinationMatrix } from "./CombinationMatrix";
 import { ExtendedCombinationMatrix } from "./ExtendedCombinationMatrix";
 import { PlayerSelectionControls } from "./PlayerSelectionControls";
 import { CustomHeatmap } from "./CustomHeatmap";
 import { PositionSynergyChart } from "./PositionSynergyChart";
 import { PlayerPartnerAnalysis } from "./PlayerPartnerAnalysis";
-import { Users, Network, TrendingUp, Target, Zap } from "lucide-react";
+import { Users, Network, TrendingUp, Target, Zap, Info } from "lucide-react";
 
 interface CombinationsTabContentProps {
   players: Player[];
   activities: Activity[];
   onPlayerSelect?: (playerId: string) => void;
 }
+
+const HelpTooltip = ({ content }: { content: string }) => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        <p>{content}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 export function CombinationsTabContent({ players, activities, onPlayerSelect }: CombinationsTabContentProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -56,13 +69,33 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
 
   return (
     <div className="space-y-6">
+      {/* Help Section */}
+      <Card className="bg-muted/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Förklaring av värden
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div><strong>Kombinationseffektivitet:</strong> Ett sammansatt mått baserat på vinst%, mål/assists och positionssynergi. Högre värde = bättre kombination.</div>
+          <div><strong>Positionssynergi:</strong> Hur väl spelarnas positioner kompletterar varandra (1.0-1.4 skala).</div>
+          <div><strong>Vinst%:</strong> Procent av matcher som denna kombination har vunnit tillsammans.</div>
+          <div><strong>Mål + Assists:</strong> Totalt antal mål och assists för båda spelarna i gemensamma matcher.</div>
+          <div><strong>Antal matcher:</strong> Hur många matcher spelarna har spelat tillsammans (minst 2 krävs för analys).</div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Analyserade par</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Analyserade par</p>
+                  <HelpTooltip content="Antal spelarkombinationer som har spelat minst 2 matcher tillsammans" />
+                </div>
                 <p className="text-2xl font-bold">{combinations.length}</p>
               </div>
             </div>
@@ -74,7 +107,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Bästa effektivitet</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Bästa effektivitet</p>
+                  <HelpTooltip content="Högsta kombinationseffektivitet bland alla spelarkombinationer" />
+                </div>
                 <p className="text-2xl font-bold">
                   {topCombinations[0]?.combinationEfficiency.toFixed(2) || "0"}
                 </p>
@@ -88,7 +124,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-orange-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Genomsnittlig vinst%</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Genomsnittlig vinst%</p>
+                  <HelpTooltip content="Genomsnittlig vinstprocent för alla spelarkombinationer" />
+                </div>
                 <p className="text-2xl font-bold">
                   {combinations.length > 0 
                     ? Math.round(combinations.reduce((sum, c) => sum + c.winRate, 0) / combinations.length)
@@ -104,7 +143,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Valda för heatmap</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Valda för heatmap</p>
+                  <HelpTooltip content="Antal spelare som valts för heatmap-visualisering" />
+                </div>
                 <p className="text-2xl font-bold">{selectedPlayersForHeatmap.length}</p>
               </div>
             </div>
@@ -113,10 +155,9 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
       </div>
 
       <Tabs defaultValue="top-combinations">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="top-combinations">Topp kombinationer</TabsTrigger>
-          <TabsTrigger value="matrix">Standard matris</TabsTrigger>
-          <TabsTrigger value="full-matrix">Alla spelare</TabsTrigger>
+          <TabsTrigger value="matrix">Matris</TabsTrigger>
           <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
           <TabsTrigger value="positions">Positionssynergi</TabsTrigger>
           <TabsTrigger value="individual">Individuell analys</TabsTrigger>
@@ -125,7 +166,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <TabsContent value="top-combinations" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Bästa spelarkombinationer</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Bästa spelarkombinationer
+                <HelpTooltip content="Kombinationer rankade efter kombinationseffektivitet - ett sammansatt mått som tar hänsyn till vinster, mål/assists och positionssynergi" />
+              </CardTitle>
               <CardDescription>
                 Rankade efter kombinationseffektivitet baserat på vinster, mål/assists och positionssynergi
               </CardDescription>
@@ -142,25 +186,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <TabsContent value="matrix" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Standard kompatibilitetsmatris</CardTitle>
-              <CardDescription>
-                Visar hur bra olika spelare fungerar tillsammans (första 12 spelarna)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CombinationMatrix 
-                matrix={combinationMatrix} 
-                players={activePlayers.slice(0, 12)}
-                onPlayerSelect={onPlayerSelect}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="full-matrix" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Utökad kompatibilitetsmatris</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Kompatibilitetsmatris
+                <HelpTooltip content="Visar kombinationseffektivitet mellan alla spelare. Kryssa i spelare för att inkludera dem i heatmap-analysen" />
+              </CardTitle>
               <CardDescription>
                 Visar alla spelare med möjlighet att välja specifika spelare för heatmap-analys
               </CardDescription>
@@ -188,7 +217,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
           
           <Card>
             <CardHeader>
-              <CardTitle>Anpassad heatmap</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Anpassad heatmap
+                <HelpTooltip content="Interaktiv heatmap som visar kombinationseffektivitet för valda spelare med färgkodning baserad på prestanda" />
+              </CardTitle>
               <CardDescription>
                 Interaktiv heatmap som visar kombinationseffektivitet för valda spelare
               </CardDescription>
@@ -207,7 +239,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <TabsContent value="positions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Positionssynergi</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Positionssynergi
+                <HelpTooltip content="Analys av vilka positionskombinationer som historiskt fungerar bäst tillsammans" />
+              </CardTitle>
               <CardDescription>
                 Analys av vilka positionskombinationer som fungerar bäst
               </CardDescription>
@@ -224,7 +259,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <TabsContent value="individual" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Individuell spelaranalys</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Individuell spelaranalys
+                <HelpTooltip content="Välj en spelare för att se deras mest framgångsrika partners baserat på kombinationseffektivitet" />
+              </CardTitle>
               <CardDescription>
                 Välj en spelare för att se deras bästa partners
               </CardDescription>

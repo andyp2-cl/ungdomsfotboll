@@ -3,7 +3,8 @@ import React from "react";
 import { PlayerCombination } from "@/utils/playerCombinations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, TrendingUp, Target, Users } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trophy, TrendingUp, Target, Users, Info } from "lucide-react";
 
 interface CombinationsListProps {
   combinations: PlayerCombination[];
@@ -23,6 +24,14 @@ export function CombinationsList({ combinations, onPlayerSelect }: CombinationsL
     if (winRate >= 50) return "text-blue-600";
     if (winRate >= 30) return "text-yellow-600";
     return "text-red-600";
+  };
+
+  const getEfficiencyLabel = (efficiency: number) => {
+    if (efficiency >= 1.5) return "Utmärkt";
+    if (efficiency >= 1.2) return "Bra";
+    if (efficiency >= 1.0) return "OK";
+    if (efficiency >= 0.8) return "Svag";
+    return "Dålig";
   };
 
   return (
@@ -52,34 +61,88 @@ export function CombinationsList({ combinations, onPlayerSelect }: CombinationsL
                   <span className="font-semibold text-lg">
                     {combo.playerNames[0]} & {combo.playerNames[1]}
                   </span>
-                  <Badge
-                    className={`${getEfficiencyColor(combo.combinationEfficiency)} text-white`}
-                  >
-                    {combo.combinationEfficiency}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge className={`${getEfficiencyColor(combo.combinationEfficiency)} text-white cursor-help`}>
+                          {combo.combinationEfficiency} ({getEfficiencyLabel(combo.combinationEfficiency)})
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Kombinationseffektivitet: {combo.combinationEfficiency}</p>
+                        <p>Baserat på vinst%, mål/assists och positionssynergi</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {combo.matchesTogether} matcher
-                  </span>
-                  <span className={`flex items-center gap-1 font-medium ${getWinRateColor(combo.winRate)}`}>
-                    <TrendingUp className="h-4 w-4" />
-                    {combo.winRate}% vinster
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Target className="h-4 w-4" />
-                    {combo.totalGoals}M + {combo.totalAssists}A
-                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          <Users className="h-4 w-4" />
+                          {combo.matchesTogether} matcher
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Antal matcher spelat tillsammans</p>
+                        <p>Vinster: {combo.wins}, Oavgjort: {combo.draws}, Förluster: {combo.losses}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className={`flex items-center gap-1 font-medium ${getWinRateColor(combo.winRate)} cursor-help`}>
+                          <TrendingUp className="h-4 w-4" />
+                          {combo.winRate}% vinster
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Vinstprocent när de spelar tillsammans</p>
+                        <p>{combo.wins} vinster av {combo.matchesTogether} matcher</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          <Target className="h-4 w-4" />
+                          {combo.totalGoals}M + {combo.totalAssists}A
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Totalt mål och assists för båda spelarna</p>
+                        <p>Genomsnitt per match: {combo.averagePerformance}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="text-right text-sm">
-                <div className="text-muted-foreground">Synergi</div>
-                <div className="font-medium">{combo.positionSynergy}</div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help">
+                        <div className="text-muted-foreground flex items-center gap-1">
+                          Synergi <Info className="h-3 w-3" />
+                        </div>
+                        <div className="font-medium">{combo.positionSynergy}</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Positionssynergi (1.0-1.4)</p>
+                      <p>Hur väl spelarnas positioner kompletterar varandra</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               
               <div className="flex flex-col gap-1">
