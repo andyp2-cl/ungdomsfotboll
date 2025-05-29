@@ -62,15 +62,33 @@ export function PlayerListTable({
 
   // Calculate winrate for each player
   const getPlayerWinRate = (player: Player) => {
+    console.log(`Calculating winrate for ${player.name}:`, {
+      playerId: player.id,
+      totalActivities: activities.length,
+      activities: activities.map(a => ({ id: a.id, type: a.type, participants: a.participants }))
+    });
+    
     // Filter all activities to get only matches where this player participated
     const playerMatches = activities.filter(activity => 
       activity.type === "match" && 
       activity.participants?.includes(player.id)
     );
     
-    if (playerMatches.length === 0) return 0;
+    console.log(`${player.name} matches:`, playerMatches.length, playerMatches.map(m => ({ 
+      id: m.id, 
+      name: m.name, 
+      isWin: m.isWin, 
+      homeScore: m.homeScore, 
+      awayScore: m.awayScore 
+    })));
+    
+    if (playerMatches.length === 0) {
+      console.log(`${player.name} has no matches`);
+      return 0;
+    }
     
     const stats = calculatePlayerStats(player, playerMatches);
+    console.log(`${player.name} stats:`, stats);
     return stats.winRate;
   };
 
@@ -201,7 +219,7 @@ export function PlayerListTable({
                     <DevelopmentChart 
                       development={player.development}
                       minimal={true}
-                      className="h-8 w-8"
+                      className="h-16 w-16"
                     />
                   )}
                 </TableCell>
