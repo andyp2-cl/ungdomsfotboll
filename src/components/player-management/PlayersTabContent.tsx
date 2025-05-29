@@ -72,9 +72,6 @@ export function PlayersTabContent({
       <PlayerFilter 
         selectedGrades={selectedGrades} 
         onGradeChange={onGradeChange}
-        selectedPositions={selectedPositions}
-        onPositionChange={onPositionChange}
-        activeFiltersCount={activeFiltersCount}
       />
       
       {selectedPlayer ? (
