@@ -97,7 +97,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
-    if (mode === "grid" || mode === "list" || mode === "stats") {
+    if (mode === "grid" || mode === "list") {
       setViewMode(mode);
     }
   };
@@ -107,9 +107,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleMatchResult(activityId, homeScore, awayScore);
   };
 
-  // Add wrapper for handlePlayerActivitySelect
-  const handlePlayerActivitySelectWrapper = (activity: Activity): void => {
-    handlePlayerActivitySelect(activity);
+  // Add wrapper for handlePlayerActivitySelect to return Promise<void>
+  const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
+    await handlePlayerActivitySelect(activity);
   };
 
   return (

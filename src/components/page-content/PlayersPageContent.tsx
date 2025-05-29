@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { SearchInput } from "@/components/SearchInput";
-import { PlayerFilter } from "@/components/filters/PlayerFilter";
+import { PlayerFilter } from "@/components/PlayerFilter";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AddPlayerDialog } from "@/components/dialogs/AddPlayerDialog";
@@ -31,7 +31,7 @@ interface PlayersPageContentProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid" | "stats";
+  viewMode: "list" | "grid";
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: PlayerGrade) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
