@@ -8,8 +8,6 @@ import { ActivityTabHeader } from "./components/ActivityTabHeader";
 import { ActivityTabSearch } from "./components/ActivityTabSearch";
 import { ActivityTabViewContent } from "./components/ActivityTabViewContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
 interface ActivityTabContentProps {
   activities: Activity[];
@@ -101,26 +99,12 @@ export function ActivityTabContent({
 
   return (
     <div className="space-y-6">
-      {/* Move the add button to the top for better visibility */}
-      {activeView !== "statistics" && (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setIsAddActivityOpen(true)}
-            size={isMobile ? "default" : "default"}
-            className={`${isMobile ? 'w-full' : ''} bg-primary hover:bg-primary/90`}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Lägg till aktivitet
-          </Button>
-        </div>
-      )}
-      
       <ActivityTabHeader 
         activeView={activeView}
         handleViewChange={handleViewChange}
         setIsAddActivityOpen={setIsAddActivityOpen}
         isMobile={isMobile}
-        showAddButton={false}
+        showAddPlayerButton={true}
       />
       
       {activeView !== "statistics" && (
