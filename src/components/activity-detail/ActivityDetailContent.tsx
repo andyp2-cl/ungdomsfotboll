@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityParticipantSection } from "./ActivityParticipantSection";
@@ -6,6 +7,7 @@ import { ActivityCupMatches } from "./ActivityCupMatches";
 import { LinkExistingMatchesModal } from "./LinkExistingMatchesModal";
 import { LinkedMatchesList } from "./LinkedMatchesList";
 import { ParticipantsList } from "./ParticipantsList";
+import { MatchReportSection } from "./MatchReportSection";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,8 +58,8 @@ export function ActivityDetailContent({
   );
 
   // Handle direct updates to the activity
-  const updateActivity = (updatedActivity: Activity) => {
-    onActivityUpdate(updatedActivity);
+  const updateActivity = async (updatedActivity: Activity) => {
+    await onActivityUpdate(updatedActivity);
   };
 
   // For cup matches, find the parent cup
@@ -195,6 +197,15 @@ export function ActivityDetailContent({
             updateActivity={updateActivity}
             isHistorical={isHistorical}
           />
+
+          {/* Match report section for historical matches */}
+          {isHistorical && (
+            <MatchReportSection 
+              activity={activity}
+              updateActivity={updateActivity}
+              isHistorical={isHistorical}
+            />
+          )}
         </>
       )}
 
