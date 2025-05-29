@@ -4,7 +4,6 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { Activity } from "@/types/player";
 
 interface PlayersPageProps {
   initialTab?: string;

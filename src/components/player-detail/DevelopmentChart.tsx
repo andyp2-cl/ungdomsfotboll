@@ -44,7 +44,7 @@ export function DevelopmentChart({ development, className, minimal = false }: De
   // If we're rendering a minimal version (for tables/lists), just show the chart without any labels
   if (minimal) {
     return (
-      <div className={className || "h-36 w-36"}>
+      <div className={className || "h-16 w-16"}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
             <PolarGrid />
@@ -62,14 +62,14 @@ export function DevelopmentChart({ development, className, minimal = false }: De
     );
   }
 
-  // Full card version for player detail pages
+  // Full card version for player detail pages - now half the original size
   return (
     <Card className={className}>
-      <CardHeader className="py-3">
-        <CardTitle className="text-base">Utveckling</CardTitle>
+      <CardHeader className="py-2">
+        <CardTitle className="text-sm">Utveckling</CardTitle>
       </CardHeader>
-      <CardContent className="pb-4">
-        <div className="h-[300px]">
+      <CardContent className="pb-2">
+        <div className="h-[150px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
               <PolarGrid />

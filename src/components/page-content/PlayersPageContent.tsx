@@ -26,7 +26,7 @@ interface PlayersPageContentProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid"; // Remove "stats" option
+  viewMode: "list" | "grid";
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;

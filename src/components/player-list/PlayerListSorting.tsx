@@ -1,9 +1,10 @@
 
 import { useState } from "react";
-import { Player } from "@/types/player";
+import { Player, Activity } from "@/types/player";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
-// Update the SortField type to include 'activities'
-export type SortField = 'name' | 'position' | 'grade' | 'activities';
+// Update the SortField type to include 'winrate'
+export type SortField = 'name' | 'position' | 'grade' | 'activities' | 'winrate';
 
 export function usePlayerSorting() {
   const [sortField, setSortField] = useState<SortField>('name');
@@ -18,7 +19,7 @@ export function usePlayerSorting() {
     }
   };
 
-  const sortPlayers = (players: Player[]) => {
+  const sortPlayers = (players: Player[], activities: Activity[] = []) => {
     return [...players].sort((a, b) => {
       const dirMod = sortDirection === 'asc' ? 1 : -1;
       
@@ -37,6 +38,21 @@ export function usePlayerSorting() {
           const activitiesA = a.activities?.length || 0;
           const activitiesB = b.activities?.length || 0;
           return (activitiesA - activitiesB) * dirMod;
+        case 'winrate':
+          // Calculate winrate for both players
+          const playerAMatches = activities.filter(activity => 
+            activity.type === "match" && 
+            activity.participants?.includes(a.id)
+          );
+          const playerBMatches = activities.filter(activity => 
+            activity.type === "match" && 
+            activity.participants?.includes(b.id)
+          );
+          
+          const statsA = calculatePlayerStats(a, playerAMatches);
+          const statsB = calculatePlayerStats(b, playerBMatches);
+          
+          return (statsA.winRate - statsB.winRate) * dirMod;
         default:
           return 0;
       }

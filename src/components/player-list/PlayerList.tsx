@@ -12,7 +12,7 @@ interface PlayerListProps {
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
   showCoaches?: boolean;
-  activities?: Activity[]; // Add activities prop
+  activities?: Activity[];
 }
 
 export function PlayerList({ 
@@ -34,8 +34,8 @@ export function PlayerList({
         return !player.positions.includes('TRÄNARE');
       });
     
-  // Apply sorting
-  const sortedPlayers = sortPlayers(filteredPlayers);
+  // Apply sorting with activities for winrate calculation
+  const sortedPlayers = sortPlayers(filteredPlayers, activities);
 
   // Force grid view on mobile devices
   const effectiveViewMode = isMobile ? "grid" : viewMode;
@@ -54,6 +54,7 @@ export function PlayerList({
   return (
     <PlayerListTable 
       players={sortedPlayers} 
+      activities={activities}
       sortField={sortField} 
       sortDirection={sortDirection} 
       toggleSort={toggleSort} 
