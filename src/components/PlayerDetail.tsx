@@ -10,7 +10,6 @@ import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
 import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
 import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
 import { DevelopmentChart } from "./player-detail/DevelopmentChart";
-import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
 interface PlayerDetailProps {
   player: Player;
@@ -45,10 +44,6 @@ export function PlayerDetail({
   const playerMatches = playerActivities.filter(activity => 
     activity.type === "match"
   );
-
-  // Calculate player statistics including win ratio
-  const playerStats = calculatePlayerStats(player, playerMatches);
-  const winRatio = playerStats.matches > 0 ? Math.round((playerStats.wins / playerStats.matches) * 100) : 0;
 
   const isCoach = player.positions?.includes('TRÄNARE');
 
@@ -147,12 +142,6 @@ export function PlayerDetail({
                     <span className="text-muted-foreground">Matcher:</span>
                     <span className="font-medium">
                       {playerMatches.length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Vinstratio:</span>
-                    <span className="font-medium text-green-600">
-                      {winRatio}%
                     </span>
                   </div>
                   <div className="flex justify-between">

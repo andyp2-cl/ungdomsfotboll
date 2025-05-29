@@ -1,14 +1,16 @@
 
+import React from "react";
+import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, X } from "lucide-react";
-import { Activity } from "@/types/player";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface HeaderActionButtonsProps {
   onEdit?: (activity: Activity) => void;
   currentActivity: Activity;
   onDeleteActivity?: (activityId: string) => Promise<boolean>;
   isDeleteDialogOpen: boolean;
-  setIsDeleteDialogOpen: (open: boolean) => void;
+  setIsDeleteDialogOpen: (isOpen: boolean) => void;
   handleClose: () => void;
 }
 
@@ -20,49 +22,28 @@ export function HeaderActionButtons({
   setIsDeleteDialogOpen,
   handleClose
 }: HeaderActionButtonsProps) {
-  
-  const handleEditClick = () => {
-    console.log("Edit button clicked for activity:", currentActivity.id, currentActivity.name);
-    if (onEdit) {
-      console.log("Calling onEdit with activity:", currentActivity);
-      onEdit(currentActivity);
-    } else {
-      console.error("onEdit function is not provided");
-    }
-  };
-
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex gap-2">
       {onEdit && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleEditClick}
-          className="flex items-center gap-2"
-        >
-          <Edit className="h-4 w-4" />
-          Redigera
+        <Button variant="outline" size="icon" onClick={() => onEdit(currentActivity)}>
+          <Edit className="h-5 w-5" />
         </Button>
       )}
-      
       {onDeleteActivity && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsDeleteDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          Ta bort
-        </Button>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </AlertDialogTrigger>
+        </AlertDialog>
       )}
-      
-      <Button
-        variant="outline"
-        size="sm"
+      <Button 
+        variant="ghost" 
+        size="icon" 
         onClick={handleClose}
       >
-        <X className="h-4 w-4" />
+        <X className="h-5 w-5" />
       </Button>
     </div>
   );

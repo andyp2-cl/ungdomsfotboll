@@ -54,7 +54,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     handleAddActivity,
     handlePlayerActivitySelect,
     handleMatchResult,
-    handlePlayerSelect,
     
     // Loading state
     isLoading
@@ -97,8 +96,8 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
-    if (mode === "grid" || mode === "list") {
-      setViewMode(mode as "grid" | "list");
+    if (mode === "grid" || mode === "list" || mode === "stats") {
+      setViewMode(mode);
     }
   };
 
@@ -107,9 +106,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     await handleMatchResult(activityId, homeScore, awayScore);
   };
 
-  // Add wrapper for handlePlayerActivitySelect to return Promise<void>
+  // Add wrapper for handlePlayerActivitySelect
   const handlePlayerActivitySelectWrapper = async (activity: Activity): Promise<void> => {
-    await handlePlayerActivitySelect(activity);
+    handlePlayerActivitySelect(activity);
   };
 
   return (
@@ -159,7 +158,6 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleAddActivity={handleAddActivity}
         onPlayerActivitySelect={handlePlayerActivitySelectWrapper}
         handleMatchResultUpdate={handleMatchResultUpdateWrapper}
-        onPlayerSelect={handlePlayerSelect}
       />
     </PageContainer>
   );
