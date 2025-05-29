@@ -10,6 +10,7 @@ interface PlayerStats {
   draws: number;
   losses: number;
   matches: number;
+  winRate: number; // Add winrate percentage
 }
 
 export const calculatePlayerStats = (player: Player, matches: Activity[]): PlayerStats => {
@@ -20,9 +21,15 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
   let wins = 0;
   let draws = 0;
   let losses = 0;
-  const matchCount = matches.length;
+  
+  // Filter out future matches - only count completed matches
+  const completedMatches = matches.filter(match => 
+    new Date(match.date) <= new Date()
+  );
+  
+  const matchCount = completedMatches.length;
 
-  matches.forEach(match => {
+  completedMatches.forEach(match => {
     // Count goals and assists
     const goals = match.player_stats?.goals?.[player.id] || 0;
     const assists = match.player_stats?.assists?.[player.id] || 0;
@@ -47,6 +54,9 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     }
   });
 
+  // Calculate winrate as percentage
+  const winRate = matchCount > 0 ? Math.round((wins / matchCount) * 100) : 0;
+
   return {
     totalGoals,
     totalAssists,
@@ -55,6 +65,7 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     wins,
     draws,
     losses,
-    matches: matchCount
+    matches: matchCount,
+    winRate
   };
 };

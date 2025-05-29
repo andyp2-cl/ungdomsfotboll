@@ -1,10 +1,10 @@
 
 import React from "react";
-import { Player } from "@/types/player";
+import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
-import { getPositionsString } from "@/components/player-list/PlayerFormatting";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
 interface PlayerCardProps {
   player: Player;
@@ -12,7 +12,8 @@ interface PlayerCardProps {
   onEdit?: () => void;
   action?: React.ReactNode;
   compact?: boolean;
-  showStats?: boolean 
+  showStats?: boolean;
+  activities?: Activity[]; // Add activities prop to calculate winrate
 }
 
 export function PlayerCard({ 
@@ -21,12 +22,28 @@ export function PlayerCard({
   onEdit, 
   action, 
   compact = false,
-  showStats = false 
+  showStats = false,
+  activities = []
 }: PlayerCardProps) {
   // Get real activity count that excludes kiosk duty assignments
   const getActivityCount = () => {
     if (!player.activities) return 0;
     return player.activities.length;
+  };
+
+  // Calculate winrate from player's matches
+  const getPlayerWinRate = () => {
+    if (!activities.length) return 0;
+    
+    const playerMatches = activities.filter(activity => 
+      activity.type === "match" && 
+      activity.participants?.includes(player.id)
+    );
+    
+    if (playerMatches.length === 0) return 0;
+    
+    const stats = calculatePlayerStats(player, playerMatches);
+    return stats.winRate;
   };
 
   const getGradeColor = (grade: string) => {
@@ -57,6 +74,7 @@ export function PlayerCard({
   };
 
   const isCoach = player.positions?.includes('TRÄNARE');
+  const winRate = getPlayerWinRate();
 
   if (compact) {
     return (
@@ -149,8 +167,17 @@ export function PlayerCard({
           )}
         </div>
         
+        {/* Show winrate badge for non-coaches */}
+        {!isCoach && winRate > 0 && (
+          <div className="absolute top-2 left-2">
+            <Badge variant="outline" className="bg-white/90 text-primary border-primary">
+              {winRate}% vinster
+            </Badge>
+          </div>
+        )}
+        
         {action && (
-          <div className="absolute top-2 left-2" onClick={e => e.stopPropagation()}>
+          <div className="absolute bottom-2 left-2" onClick={e => e.stopPropagation()}>
             {action}
           </div>
         )}

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { MainTabs } from "@/components/tabs/MainTabs";
@@ -25,7 +26,7 @@ interface PlayersPageContentProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedGrades: PlayerGrade[];
-  viewMode: "list" | "grid" | "stats"; 
+  viewMode: "list" | "grid"; // Remove "stats" option
   setViewMode: (mode: string) => void;
   handleGradeChange: (grade: string) => void;
   handlePlayerUpdate: (player: Player) => Promise<void>;
@@ -81,7 +82,7 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
           handleGradeChange={props.handleGradeChange as (grade: PlayerGrade) => void}
           setSelectedPlayer={props.setSelectedPlayer}
           setEditingPlayer={props.setEditingPlayer}
-          setViewMode={props.setViewMode as (mode: "list" | "grid" | "stats") => void}
+          setViewMode={props.setViewMode as (mode: "list" | "grid") => void}
           isAddPlayerOpen={props.isAddPlayerOpen}
           setIsAddPlayerOpen={props.setIsAddPlayerOpen}
           handlePlayerUpdate={props.handlePlayerUpdate}

@@ -10,6 +10,7 @@ import { EditPlayerDialog } from "./dialogs/EditPlayerDialog";
 import { DeletePlayerDialog } from "./dialogs/DeletePlayerDialog";
 import { LeaguesStatsCard } from "./player-detail/LeaguesStatsCard";
 import { DevelopmentChart } from "./player-detail/DevelopmentChart";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
 interface PlayerDetailProps {
   player: Player;
@@ -44,6 +45,9 @@ export function PlayerDetail({
   const playerMatches = playerActivities.filter(activity => 
     activity.type === "match"
   );
+
+  // Calculate player stats including winrate
+  const playerStats = calculatePlayerStats(player, playerMatches);
 
   const isCoach = player.positions?.includes('TRÄNARE');
 
@@ -141,7 +145,31 @@ export function PlayerDetail({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Matcher:</span>
                     <span className="font-medium">
-                      {playerMatches.length}
+                      {playerStats.matches}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Vinster:</span>
+                    <span className="font-medium text-green-600">
+                      {playerStats.wins}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Oavgjorda:</span>
+                    <span className="font-medium text-gray-600">
+                      {playerStats.draws}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Förluster:</span>
+                    <span className="font-medium text-red-600">
+                      {playerStats.losses}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="text-muted-foreground font-medium">Winrate:</span>
+                    <span className="font-bold text-primary">
+                      {playerStats.winRate}%
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -162,9 +190,11 @@ export function PlayerDetail({
           </div>
           
           <div className="md:col-span-2">
-            <DevelopmentChart 
-              development={player.development}
-            />
+            <div className="h-48">
+              <DevelopmentChart 
+                development={player.development}
+              />
+            </div>
           </div>
         </div>
         

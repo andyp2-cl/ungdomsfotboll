@@ -1,3 +1,4 @@
+
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
@@ -93,7 +94,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
 
   // Create a wrapper for setViewMode to match expected (mode: string) => void signature
   const setViewModeWrapper = (mode: string) => {
-    if (mode === "grid" || mode === "list" || mode === "stats") {
+    if (mode === "grid" || mode === "list") {
       setViewMode(mode);
     }
   };

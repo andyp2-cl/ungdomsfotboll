@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Player } from "@/types/player";
+import { Player, Activity } from "@/types/player";
 import { PlayerListTable } from "./PlayerListTable";
 import { PlayerGridView } from "./PlayerGridView";
 import { usePlayerSorting } from "./PlayerListSorting";
@@ -12,6 +12,7 @@ interface PlayerListProps {
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
   showCoaches?: boolean;
+  activities?: Activity[]; // Add activities prop
 }
 
 export function PlayerList({ 
@@ -19,7 +20,8 @@ export function PlayerList({
   viewMode = "list", 
   onPlayerSelect, 
   onPlayerEdit,
-  showCoaches = true
+  showCoaches = true,
+  activities = []
 }: PlayerListProps) {
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
@@ -43,7 +45,8 @@ export function PlayerList({
       <PlayerGridView 
         players={sortedPlayers} 
         onPlayerSelect={onPlayerSelect} 
-        onPlayerEdit={onPlayerEdit} 
+        onPlayerEdit={onPlayerEdit}
+        activities={activities}
       />
     );
   }
