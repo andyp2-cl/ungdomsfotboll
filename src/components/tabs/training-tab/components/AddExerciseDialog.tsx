@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ interface AddExerciseDialogProps {
   editingExercise?: TrainingExercise | null;
 }
 
+type DifficultyLevel = typeof DIFFICULTY_LEVELS[number];
+
 export function AddExerciseDialog({
   open,
   onOpenChange,
@@ -29,7 +32,7 @@ export function AddExerciseDialog({
     videoType: 'youtube' as VideoType,
     videoUrl: '',
     duration: '',
-    difficulty: 'Medium' as const,
+    difficulty: 'Medium' as DifficultyLevel,
     equipment: '',
     notes: '',
     tags: [] as string[]
@@ -218,7 +221,7 @@ export function AddExerciseDialog({
               <Label htmlFor="difficulty">Svårighetsgrad</Label>
               <Select 
                 value={formData.difficulty} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value as typeof DIFFICULTY_LEVELS[number] }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value as DifficultyLevel }))}
               >
                 <SelectTrigger>
                   <SelectValue />
