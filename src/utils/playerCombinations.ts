@@ -1,3 +1,4 @@
+
 import { Player, Activity } from "@/types/player";
 
 export interface PlayerCombination {
@@ -423,19 +424,31 @@ export interface BalancedLineupSuggestion {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
-// Extract opponent names from activities
+// Extract opponent names from activity names
 export const getOpponents = (activities: Activity[]): string[] => {
   const opponents = new Set<string>();
   
   activities
-    .filter(a => a.type === 'match' && a.opponent)
+    .filter(a => a.type === 'match' && a.name)
     .forEach(activity => {
-      if (activity.opponent) {
-        opponents.add(activity.opponent);
+      // Extract opponent from activity name like "Match mot FK Finja"
+      const matchPattern = /^Match mot (.+)$/i;
+      const match = activity.name.match(matchPattern);
+      if (match && match[1]) {
+        opponents.add(match[1].trim());
       }
     });
   
   return Array.from(opponents).sort();
+};
+
+// Extract opponent name from activity name
+const extractOpponentFromActivity = (activity: Activity): string | null => {
+  if (!activity.name) return null;
+  
+  const matchPattern = /^Match mot (.+)$/i;
+  const match = activity.name.match(matchPattern);
+  return match && match[1] ? match[1].trim() : null;
 };
 
 // Analyze historical performance against specific opponent
@@ -444,7 +457,7 @@ export const analyzeOpponentHistory = (
   opponentName: string
 ): OpponentAnalysis => {
   const opponentMatches = activities.filter(
-    a => a.type === 'match' && a.opponent === opponentName
+    a => a.type === 'match' && extractOpponentFromActivity(a) === opponentName
   );
   
   if (opponentMatches.length === 0) {
@@ -473,7 +486,11 @@ export const analyzeOpponentHistory = (
   
   opponentMatches.forEach(match => {
     if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      const isHome = match.location === 'Hemma';
+      // Check if we're playing at home or away based on location
+      const isHome = match.location_name?.toLowerCase().includes('hemma') || 
+                     match.location_name?.toLowerCase().includes('home') ||
+                     !match.location_name; // Default to home if no location specified
+      
       const ourScore = isHome ? match.homeScore : match.awayScore;
       const theirScore = isHome ? match.awayScore : match.homeScore;
       const goalDiff = ourScore - theirScore;
@@ -598,7 +615,7 @@ export const suggestBalancedLineup = (
       // Check historical performance against this opponent
       const playerOpponentMatches = activities.filter(a => 
         a.type === 'match' && 
-        a.opponent === opponentName && 
+        extractOpponentFromActivity(a) === opponentName && 
         a.participants?.includes(player.id)
       );
       
@@ -608,7 +625,9 @@ export const suggestBalancedLineup = (
         
         playerOpponentMatches.forEach(match => {
           if (match.homeScore !== undefined && match.awayScore !== undefined) {
-            const isHome = match.location === 'Hemma';
+            const isHome = match.location_name?.toLowerCase().includes('hemma') || 
+                           match.location_name?.toLowerCase().includes('home') ||
+                           !match.location_name;
             const ourScore = isHome ? match.homeScore : match.awayScore;
             const theirScore = isHome ? match.awayScore : match.homeScore;
             playerGoalDiffs.push(ourScore - theirScore);

@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTabContent } from "./overview/OverviewTabContent";
-import { ParticipationTabContent } from "./ParticipationTabContent";
 import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
@@ -20,16 +19,20 @@ export function StatisticsTabContent({ players, activities }: StatisticsTabConte
 
   const handlePlayerSelect = (playerId: string) => {
     setSelectedPlayer(playerId);
-    // You could add navigation logic here if needed
     console.log('Selected player:', playerId);
   };
+
+  // Calculate grade data for OverviewTabContent
+  const gradeData = ['A', 'B', 'C', 'D'].map(grade => ({
+    grade,
+    players: players.filter(p => p.grade === grade && !p.positions?.includes('TRÄNARE')).length
+  }));
 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
           <TabsTrigger value="overview">Översikt</TabsTrigger>
-          <TabsTrigger value="participation">Deltagande</TabsTrigger>
           <TabsTrigger value="matches">Matcher</TabsTrigger>
           <TabsTrigger value="goals">Mål</TabsTrigger>
           <TabsTrigger value="leagues">Serier</TabsTrigger>
@@ -38,11 +41,7 @@ export function StatisticsTabContent({ players, activities }: StatisticsTabConte
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTabContent players={players} activities={activities} />
-        </TabsContent>
-
-        <TabsContent value="participation">
-          <ParticipationTabContent players={players} activities={activities} />
+          <OverviewTabContent players={players} activities={activities} gradeData={gradeData} />
         </TabsContent>
 
         <TabsContent value="matches">
