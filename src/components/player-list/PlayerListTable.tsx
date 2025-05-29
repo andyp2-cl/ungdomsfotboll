@@ -62,6 +62,7 @@ export function PlayerListTable({
 
   // Calculate winrate for each player
   const getPlayerWinRate = (player: Player) => {
+    // Filter all activities to get only matches where this player participated
     const playerMatches = activities.filter(activity => 
       activity.type === "match" && 
       activity.participants?.includes(player.id)
@@ -200,7 +201,7 @@ export function PlayerListTable({
                     <DevelopmentChart 
                       development={player.development}
                       minimal={true}
-                      className="h-16 w-16"
+                      className="h-8 w-8"
                     />
                   )}
                 </TableCell>
