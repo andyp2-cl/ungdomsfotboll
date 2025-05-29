@@ -1,5 +1,6 @@
 
 import { Player, Activity } from "@/types/player";
+import { calculateWinPercentage } from "@/utils/winCalculation";
 
 interface PlayerStats {
   totalGoals: number;
@@ -10,7 +11,7 @@ interface PlayerStats {
   draws: number;
   losses: number;
   matches: number;
-  winRate: number; // Add winrate percentage
+  winRate: number;
 }
 
 export const calculatePlayerStats = (player: Player, matches: Activity[]): PlayerStats => {
@@ -40,22 +41,26 @@ export const calculatePlayerStats = (player: Player, matches: Activity[]): Playe
     if (goals > 0) matchesWithGoals++;
     if (assists > 0) matchesWithAssists++;
     
-    // First check if scores are equal (draw)
-    if (match.homeScore !== undefined && match.awayScore !== undefined && 
-        match.homeScore === match.awayScore) {
-      draws++;
-    }
-    // Then check explicit win/loss status
-    else if (match.isWin === true) {
-      wins++;
-    } 
-    else if (match.isWin === false) {
-      losses++;
+    // Use standardized win calculation
+    if (typeof match.isWin === 'boolean') {
+      if (match.isWin === true) {
+        wins++;
+      } else {
+        losses++;
+      }
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      if (match.homeScore === match.awayScore) {
+        draws++;
+      } else if (match.homeScore > match.awayScore) {
+        wins++;
+      } else {
+        losses++;
+      }
     }
   });
 
-  // Calculate winrate as percentage
-  const winRate = matchCount > 0 ? Math.round((wins / matchCount) * 100) : 0;
+  // Use the standardized win percentage calculation
+  const winRate = calculateWinPercentage(completedMatches);
 
   return {
     totalGoals,

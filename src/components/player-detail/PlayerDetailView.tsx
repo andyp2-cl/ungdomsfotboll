@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DevelopmentChart } from "./DevelopmentChart";
 import { LeaguesStatsCard } from "./LeaguesStatsCard";
+import { calculateWinPercentage } from "@/utils/winCalculation";
 
 interface PlayerDetailViewProps {
   player: Player;
@@ -22,17 +23,8 @@ export function PlayerDetailView({ player, activities, className }: PlayerDetail
   const matches = playerActivities.filter(activity => activity.type === "match");
   const cups = playerActivities.filter(activity => activity.type === "cup");
   
-  // Calculate win percentage
-  const matchesWithResults = matches.filter(match => 
-    match.homeScore !== undefined && match.awayScore !== undefined
-  );
-  const wins = matchesWithResults.filter(match => 
-    match.isWin === true || match.result?.includes("-") && 
-    parseInt(match.result.split("-")[0]) > parseInt(match.result.split("-")[1])
-  ).length;
-  const winPercentage = matchesWithResults.length > 0 
-    ? Math.round((wins / matchesWithResults.length) * 100) 
-    : 0;
+  // Use standardized win percentage calculation
+  const winPercentage = calculateWinPercentage(matches);
 
   // Calculate goals and assists from player stats
   let totalGoals = 0;

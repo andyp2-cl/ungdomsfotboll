@@ -143,7 +143,9 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
         handleImportActivities={handleImportActivities}
         handleClearHistorical={handleClearHistorical}
         handleAddActivity={handleAddActivity}
-        onPlayerActivitySelect={handlePlayerActivitySelect}
+        onPlayerActivitySelect={async (activity) => {
+          await onPlayerActivitySelect(activity);
+        }}
         handleMatchResultUpdate={handleMatchResult}
         onPlayerSelect={handlePlayerSelect}
       />
