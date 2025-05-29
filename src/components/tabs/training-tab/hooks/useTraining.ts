@@ -14,26 +14,42 @@ export function useTraining() {
   // Ladda data från localStorage
   useEffect(() => {
     try {
+      console.log('Loading training data from localStorage...');
       const savedExercises = localStorage.getItem(TRAINING_STORAGE_KEY);
       const savedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY);
       
       if (savedExercises) {
-        setExercises(JSON.parse(savedExercises));
+        const parsedExercises = JSON.parse(savedExercises);
+        console.log('Loaded exercises:', parsedExercises.length, 'items');
+        setExercises(parsedExercises);
+      } else {
+        console.log('No saved exercises found in localStorage');
       }
       
       if (savedSessions) {
-        setSessions(JSON.parse(savedSessions));
+        const parsedSessions = JSON.parse(savedSessions);
+        console.log('Loaded sessions:', parsedSessions.length, 'items');
+        setSessions(parsedSessions);
+      } else {
+        console.log('No saved sessions found in localStorage');
       }
     } catch (error) {
       console.error("Error loading training data:", error);
+      toast({
+        title: "Fel vid laddning",
+        description: "Kunde inte ladda träningsdata.",
+        variant: "destructive"
+      });
     }
   }, []);
 
   // Spara övningar till localStorage
   const saveExercises = (newExercises: TrainingExercise[]) => {
     try {
+      console.log('Saving exercises to localStorage:', newExercises.length, 'items');
       localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(newExercises));
       setExercises(newExercises);
+      console.log('Exercises saved successfully');
     } catch (error) {
       console.error("Error saving exercises:", error);
       toast({
@@ -47,8 +63,10 @@ export function useTraining() {
   // Spara sessioner till localStorage
   const saveSessions = (newSessions: TrainingSession[]) => {
     try {
+      console.log('Saving sessions to localStorage:', newSessions.length, 'items');
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(newSessions));
       setSessions(newSessions);
+      console.log('Sessions saved successfully');
     } catch (error) {
       console.error("Error saving sessions:", error);
       toast({
@@ -60,6 +78,7 @@ export function useTraining() {
   };
 
   const addExercise = (exercise: Omit<TrainingExercise, 'id' | 'createdAt' | 'updatedAt'>) => {
+    console.log('Adding new exercise:', exercise.title);
     const newExercise: TrainingExercise = {
       ...exercise,
       id: crypto.randomUUID(),
@@ -77,6 +96,7 @@ export function useTraining() {
   };
 
   const updateExercise = (updatedExercise: TrainingExercise) => {
+    console.log('Updating exercise:', updatedExercise.title, 'ID:', updatedExercise.id);
     const newExercises = exercises.map(ex => 
       ex.id === updatedExercise.id 
         ? { ...updatedExercise, updatedAt: new Date().toISOString() }
@@ -91,6 +111,7 @@ export function useTraining() {
   };
 
   const deleteExercise = (exerciseId: string) => {
+    console.log('Deleting exercise with ID:', exerciseId);
     const exercise = exercises.find(ex => ex.id === exerciseId);
     const newExercises = exercises.filter(ex => ex.id !== exerciseId);
     saveExercises(newExercises);

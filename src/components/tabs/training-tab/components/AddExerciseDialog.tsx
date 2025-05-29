@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +12,8 @@ import { TrainingExercise, TrainingCategory, TRAINING_CATEGORIES, DIFFICULTY_LEV
 interface AddExerciseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddExercise: (exercise: Omit<TrainingExercise, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  editingExercise?: TrainingExercise;
+  onAddExercise: (exercise: Omit<TrainingExercise, 'id' | 'createdAt' | 'updatedAt'> | TrainingExercise) => void;
+  editingExercise?: TrainingExercise | null;
 }
 
 export function AddExerciseDialog({
@@ -24,24 +23,57 @@ export function AddExerciseDialog({
   editingExercise
 }: AddExerciseDialogProps) {
   const [formData, setFormData] = useState({
-    title: editingExercise?.title || '',
-    description: editingExercise?.description || '',
-    category: editingExercise?.category || 'Kvadrater' as TrainingCategory,
-    videoType: editingExercise?.videoType || 'youtube' as VideoType,
-    videoUrl: editingExercise?.videoUrl || '',
-    duration: editingExercise?.duration?.toString() || '',
-    difficulty: editingExercise?.difficulty || 'Medium' as const,
-    equipment: editingExercise?.equipment.join(', ') || '',
-    notes: editingExercise?.notes || '',
-    tags: editingExercise?.tags || []
+    title: '',
+    description: '',
+    category: 'Kvadrater' as TrainingCategory,
+    videoType: 'youtube' as VideoType,
+    videoUrl: '',
+    duration: '',
+    difficulty: 'Medium' as const,
+    equipment: '',
+    notes: '',
+    tags: [] as string[]
   });
   
   const [newTag, setNewTag] = useState('');
 
+  // Uppdatera formuläret när editingExercise ändras
+  useEffect(() => {
+    if (editingExercise) {
+      console.log('Loading exercise for editing:', editingExercise);
+      setFormData({
+        title: editingExercise.title || '',
+        description: editingExercise.description || '',
+        category: editingExercise.category || 'Kvadrater',
+        videoType: editingExercise.videoType || 'youtube',
+        videoUrl: editingExercise.videoUrl || '',
+        duration: editingExercise.duration?.toString() || '',
+        difficulty: editingExercise.difficulty || 'Medium',
+        equipment: editingExercise.equipment.join(', ') || '',
+        notes: editingExercise.notes || '',
+        tags: editingExercise.tags || []
+      });
+    } else if (open) {
+      // Återställ formulär för ny övning
+      setFormData({
+        title: '',
+        description: '',
+        category: 'Kvadrater',
+        videoType: 'youtube',
+        videoUrl: '',
+        duration: '',
+        difficulty: 'Medium',
+        equipment: '',
+        notes: '',
+        tags: []
+      });
+    }
+  }, [editingExercise, open]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const exercise = {
+    const exerciseData = {
       title: formData.title,
       description: formData.description,
       category: formData.category,
@@ -53,23 +85,21 @@ export function AddExerciseDialog({
       notes: formData.notes || undefined,
       tags: formData.tags
     };
+
+    if (editingExercise) {
+      // Om vi redigerar, skicka med ID och timestamps
+      onAddExercise({
+        ...exerciseData,
+        id: editingExercise.id,
+        createdAt: editingExercise.createdAt,
+        updatedAt: new Date().toISOString()
+      } as TrainingExercise);
+    } else {
+      // Ny övning
+      onAddExercise(exerciseData);
+    }
     
-    onAddExercise(exercise);
     onOpenChange(false);
-    
-    // Återställ formulär
-    setFormData({
-      title: '',
-      description: '',
-      category: 'Kvadrater',
-      videoType: 'youtube',
-      videoUrl: '',
-      duration: '',
-      difficulty: 'Medium',
-      equipment: '',
-      notes: '',
-      tags: []
-    });
   };
 
   const addTag = () => {

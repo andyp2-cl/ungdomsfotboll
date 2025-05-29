@@ -7,10 +7,12 @@ import { AddExerciseDialog } from "./components/AddExerciseDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, PlayCircle, Calendar } from "lucide-react";
 import { useTraining } from "./hooks/useTraining";
+import { TrainingExercise } from "@/types/training";
 
 export function TrainingTabContent() {
   const [activeSubTab, setActiveSubTab] = useState("exercises");
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<TrainingExercise | null>(null);
   
   const {
     exercises,
@@ -24,6 +26,20 @@ export function TrainingTabContent() {
     updateSession,
     deleteSession
   } = useTraining();
+
+  const handleEditExercise = (exercise: TrainingExercise) => {
+    setEditingExercise(exercise);
+  };
+
+  const handleExerciseUpdate = (updatedExercise: TrainingExercise) => {
+    updateExercise(updatedExercise);
+    setEditingExercise(null);
+  };
+
+  const handleAddExercise = (exercise: Omit<TrainingExercise, 'id' | 'createdAt' | 'updatedAt'>) => {
+    addExercise(exercise);
+    setIsAddExerciseOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -52,7 +68,7 @@ export function TrainingTabContent() {
             exercises={exercises}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
-            onEditExercise={updateExercise}
+            onEditExercise={handleEditExercise}
             onDeleteExercise={deleteExercise}
           />
         </TabsContent>
@@ -68,10 +84,19 @@ export function TrainingTabContent() {
         </TabsContent>
       </Tabs>
 
+      {/* Add Exercise Dialog */}
       <AddExerciseDialog
         open={isAddExerciseOpen}
         onOpenChange={setIsAddExerciseOpen}
-        onAddExercise={addExercise}
+        onAddExercise={handleAddExercise}
+      />
+
+      {/* Edit Exercise Dialog */}
+      <AddExerciseDialog
+        open={editingExercise !== null}
+        onOpenChange={(open) => !open && setEditingExercise(null)}
+        onAddExercise={handleExerciseUpdate}
+        editingExercise={editingExercise}
       />
     </div>
   );

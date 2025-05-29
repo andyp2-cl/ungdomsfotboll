@@ -2,6 +2,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { VideoType } from "@/types/training";
+import { ExternalLink, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface VideoEmbedProps {
   url: string;
@@ -24,6 +26,8 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
   const actualVideoType = videoType || detectVideoType(url);
 
   const getEmbedUrl = (url: string, type: VideoType): string | null => {
+    console.log('Processing video URL:', url, 'Type:', type);
+    
     switch (type) {
       case 'youtube':
         const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -36,16 +40,18 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
         return vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}` : null;
       
       case 'instagram':
-        // Instagram använder ett annat format för embeds
-        return url.replace('/p/', '/embed/p/').replace('/reel/', '/embed/reel/');
+        // Instagram embeds fungerar ofta inte p.g.a. CORS-policy
+        return null;
       
       case 'tiktok':
         // TikTok embeds kräver speciell hantering
-        return url.replace('/video/', '/embed/v2/');
+        const tiktokRegex = /tiktok\.com\/.*\/video\/(\d+)/;
+        const tiktokMatch = url.match(tiktokRegex);
+        return tiktokMatch ? `https://www.tiktok.com/embed/v2/${tiktokMatch[1]}` : null;
       
       case 'facebook':
         // Facebook video embeds
-        return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}`;
+        return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=500&show_text=false&height=280&appId`;
       
       default:
         return url;
@@ -54,10 +60,36 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
 
   const embedUrl = getEmbedUrl(url, actualVideoType);
 
-  if (!embedUrl) {
+  // Specialhantering för Instagram och andra problematiska plattformar
+  if (actualVideoType === 'instagram' || !embedUrl) {
     return (
       <Card className={`p-4 ${className}`}>
-        <p className="text-muted-foreground">Ogiltig video URL för {actualVideoType}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <div>
+              <p className="text-sm font-medium">
+                {actualVideoType === 'instagram' 
+                  ? 'Instagram-video' 
+                  : 'Extern video'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {actualVideoType === 'instagram' 
+                  ? 'Instagram tillåter inte inbäddning. Klicka för att öppna i ny flik.' 
+                  : 'Kan inte bäddas in. Öppna extern länk.'}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(url, '_blank')}
+            className="flex items-center gap-1"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Öppna
+          </Button>
+        </div>
       </Card>
     );
   }
@@ -67,7 +99,8 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
       title: title || "Video",
       className: "absolute top-0 left-0 w-full h-full rounded-lg",
       frameBorder: "0",
-      allowFullScreen: true
+      allowFullScreen: true,
+      loading: "lazy" as const
     };
 
     switch (actualVideoType) {
@@ -77,14 +110,6 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
           <iframe
             src={embedUrl}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            {...commonProps}
-          />
-        );
-      
-      case 'instagram':
-        return (
-          <iframe
-            src={embedUrl}
             {...commonProps}
           />
         );
@@ -120,7 +145,7 @@ export function VideoEmbed({ url, videoType, title, className = "" }: VideoEmbed
       <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
         {renderEmbed()}
       </div>
-      {actualVideoType !== 'youtube' && (
+      {actualVideoType !== 'youtube' && actualVideoType !== 'instagram' && (
         <p className="text-xs text-muted-foreground mt-2 capitalize">
           {actualVideoType} video
         </p>
