@@ -3,10 +3,8 @@ import { useState } from "react";
 import { Activity, Player, PlayerGrade } from "@/types/player";
 import { SearchInput } from "@/components/SearchInput";
 import { PlayerFilter } from "@/components/PlayerFilter";
-import { Plus } from "lucide-react";
 import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import { Button } from "@/components/ui/button";
 import { TeamStatistics } from "@/components/TeamStatistics";
 
 interface PlayerTabContentProps {
@@ -64,13 +62,6 @@ export function PlayerTabContent({
             selectedGrades={selectedGrades} 
             onGradeChange={handleGradeChange}
           />
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setIsAddPlayerOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Lägg till
-          </Button>
         </div>
       </div>
       
