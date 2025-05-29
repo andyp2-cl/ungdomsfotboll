@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 import { ActivityTabContent } from "@/components/tabs/activity-tab/ActivityTabContent";
-import { StatisticsTabContent } from "@/components/player-management/statistics/StatisticsTabContent";
+import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
@@ -146,6 +146,12 @@ export function MainTabs({
     }
   };
 
+  // Handler for activity selection from statistics tab
+  const handleActivitySelect = (activity: Activity) => {
+    console.log("MainTabs: Activity selected:", activity.id, activity.name);
+    setSelectedActivity(activity);
+  };
+
   // Calculate grade distribution data for statistics
   const gradeData = React.useMemo(() => {
     const gradeMap = new Map<string, number>();
@@ -251,10 +257,11 @@ export function MainTabs({
         </TabsContent>
         
         <TabsContent value="statistics" className="mt-0">
-          <StatisticsTabContent 
+          <StatisticsTabsWrapper 
             players={players} 
             activities={activities}
             gradeData={gradeData}
+            onActivitySelect={handleActivitySelect}
             onPlayerSelect={handlePlayerSelect}
           />
         </TabsContent>
