@@ -6,9 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { analyzePairCombinations, createCombinationMatrix, analyzePositionCombinations } from "@/utils/playerCombinations";
 import { CombinationsList } from "./CombinationsList";
 import { CombinationMatrix } from "./CombinationMatrix";
+import { ExtendedCombinationMatrix } from "./ExtendedCombinationMatrix";
+import { PlayerSelectionControls } from "./PlayerSelectionControls";
+import { CustomHeatmap } from "./CustomHeatmap";
 import { PositionSynergyChart } from "./PositionSynergyChart";
 import { PlayerPartnerAnalysis } from "./PlayerPartnerAnalysis";
-import { Users, Network, TrendingUp, Target } from "lucide-react";
+import { Users, Network, TrendingUp, Target, Zap } from "lucide-react";
 
 interface CombinationsTabContentProps {
   players: Player[];
@@ -18,6 +21,7 @@ interface CombinationsTabContentProps {
 
 export function CombinationsTabContent({ players, activities, onPlayerSelect }: CombinationsTabContentProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [selectedPlayersForHeatmap, setSelectedPlayersForHeatmap] = useState<string[]>([]);
 
   const combinations = useMemo(() => {
     return analyzePairCombinations(players, activities);
@@ -33,6 +37,22 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
 
   const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE'));
   const topCombinations = combinations.slice(0, 10);
+
+  const handlePlayerToggle = (playerId: string) => {
+    setSelectedPlayersForHeatmap(prev => 
+      prev.includes(playerId) 
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedPlayersForHeatmap(activePlayers.map(p => p.id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedPlayersForHeatmap([]);
+  };
 
   return (
     <div className="space-y-6">
@@ -82,10 +102,10 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Network className="h-5 w-5 text-purple-500" />
+              <Zap className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Positionskombinationer</p>
-                <p className="text-2xl font-bold">{Object.keys(positionAnalysis).length}</p>
+                <p className="text-sm text-muted-foreground">Valda för heatmap</p>
+                <p className="text-2xl font-bold">{selectedPlayersForHeatmap.length}</p>
               </div>
             </div>
           </CardContent>
@@ -93,9 +113,11 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
       </div>
 
       <Tabs defaultValue="top-combinations">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="top-combinations">Topp kombinationer</TabsTrigger>
-          <TabsTrigger value="matrix">Kompatibilitetsmatris</TabsTrigger>
+          <TabsTrigger value="matrix">Standard matris</TabsTrigger>
+          <TabsTrigger value="full-matrix">Alla spelare</TabsTrigger>
+          <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
           <TabsTrigger value="positions">Positionssynergi</TabsTrigger>
           <TabsTrigger value="individual">Individuell analys</TabsTrigger>
         </TabsList>
@@ -120,15 +142,62 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
         <TabsContent value="matrix" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Kompatibilitetsmatris</CardTitle>
+              <CardTitle>Standard kompatibilitetsmatris</CardTitle>
               <CardDescription>
-                Visar hur bra olika spelare fungerar tillsammans
+                Visar hur bra olika spelare fungerar tillsammans (första 12 spelarna)
               </CardDescription>
             </CardHeader>
             <CardContent>
               <CombinationMatrix 
                 matrix={combinationMatrix} 
+                players={activePlayers.slice(0, 12)}
+                onPlayerSelect={onPlayerSelect}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="full-matrix" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Utökad kompatibilitetsmatris</CardTitle>
+              <CardDescription>
+                Visar alla spelare med möjlighet att välja specifika spelare för heatmap-analys
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExtendedCombinationMatrix 
+                matrix={combinationMatrix} 
                 players={activePlayers}
+                selectedPlayers={selectedPlayersForHeatmap}
+                onPlayerToggle={handlePlayerToggle}
+                onPlayerSelect={onPlayerSelect}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="heatmap" className="space-y-4">
+          <PlayerSelectionControls
+            players={activePlayers}
+            selectedPlayers={selectedPlayersForHeatmap}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
+            onTogglePlayer={handlePlayerToggle}
+          />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Anpassad heatmap</CardTitle>
+              <CardDescription>
+                Interaktiv heatmap som visar kombinationseffektivitet för valda spelare
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomHeatmap 
+                matrix={combinationMatrix} 
+                players={activePlayers}
+                selectedPlayerIds={selectedPlayersForHeatmap}
                 onPlayerSelect={onPlayerSelect}
               />
             </CardContent>
