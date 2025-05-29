@@ -126,10 +126,10 @@ export function ActivityDetailContent({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* If this is a cup match, show link to parent cup */}
       {parentCup && (
-        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
           <Trophy className="h-4 w-4 text-blue-600" />
           <span className="text-sm text-blue-800">
             Denna match är del av cupen
@@ -148,12 +148,12 @@ export function ActivityDetailContent({
       {/* For cup type activities, show cup-specific content */}
       {activity.type === "cup" && (
         <Tabs defaultValue="matches" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="matches">Matcher</TabsTrigger>
-            <TabsTrigger value="participants">Deltagare</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-9">
+            <TabsTrigger value="matches" className="text-sm">Matcher</TabsTrigger>
+            <TabsTrigger value="participants" className="text-sm">Deltagare</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="matches" className="space-y-4">
+          <TabsContent value="matches" className="space-y-3 mt-3">
             <LinkedMatchesList 
               linkedMatches={linkedMatches}
               onActivitySelect={onActivitySelect}
@@ -167,7 +167,7 @@ export function ActivityDetailContent({
             />
           </TabsContent>
           
-          <TabsContent value="participants">
+          <TabsContent value="participants" className="mt-3">
             <ActivityParticipantSection 
               activity={activity}
               players={players}
@@ -178,27 +178,34 @@ export function ActivityDetailContent({
         </Tabs>
       )}
 
-      {/* For match type activities, show standard content */}
+      {/* For match type activities, show optimized grid layout */}
       {activity.type === "match" && (
-        <>
-          {/* Participant section */}
-          <ActivityParticipantSection 
-            activity={activity}
-            players={players}
-            updateActivity={updateActivity}
-            onPlayerSelect={onPlayerSelect}
-          />
-          
-          {/* Stats section for matches */}
-          <ActivityStatsSection 
-            activity={activity}
-            players={players}
-            participatingPlayers={participatingPlayers}
-            updateActivity={updateActivity}
-            isHistorical={isHistorical}
-          />
+        <div className="space-y-4">
+          {/* Main content grid - responsive layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left column - Participants */}
+            <div className="space-y-3">
+              <ActivityParticipantSection 
+                activity={activity}
+                players={players}
+                updateActivity={updateActivity}
+                onPlayerSelect={onPlayerSelect}
+              />
+            </div>
+            
+            {/* Right column - Stats */}
+            <div className="space-y-3">
+              <ActivityStatsSection 
+                activity={activity}
+                players={players}
+                participatingPlayers={participatingPlayers}
+                updateActivity={updateActivity}
+                isHistorical={isHistorical}
+              />
+            </div>
+          </div>
 
-          {/* Match report section for historical matches */}
+          {/* Match report section - full width for historical matches */}
           {isHistorical && (
             <MatchReportSection 
               activity={activity}
@@ -206,21 +213,21 @@ export function ActivityDetailContent({
               isHistorical={isHistorical}
             />
           )}
-        </>
+        </div>
       )}
 
       {/* Related activities - ONLY show for matches, not for cups */}
       {activity.type === "match" && relatedActivities.length > 0 && (
-        <div className="border rounded-md p-4">
-          <h3 className="text-lg font-semibold mb-3">Relaterade aktiviteter</h3>
-          <ul className="space-y-2">
+        <div className="border rounded-md p-3">
+          <h3 className="text-base font-semibold mb-2">Relaterade aktiviteter</h3>
+          <ul className="space-y-1">
             {relatedActivities.map(activity => (
               <li 
                 key={activity.id}
                 onClick={() => onActivitySelect?.(activity)}
                 className="cursor-pointer hover:bg-gray-50 p-2 rounded-md flex items-center justify-between"
               >
-                <div>
+                <div className="text-sm">
                   {activity.name} - {new Date(activity.date).toLocaleDateString()}
                   {activity.homeScore !== undefined && activity.awayScore !== undefined && (
                     <span className="ml-2 font-medium">
@@ -231,9 +238,9 @@ export function ActivityDetailContent({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="h-7"
+                  className="h-6 w-6 p-0"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-3 w-3" />
                 </Button>
               </li>
             ))}
