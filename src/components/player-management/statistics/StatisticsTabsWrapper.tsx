@@ -6,6 +6,7 @@ import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
 import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
+import { CombinationsTabContent } from "./combinations/CombinationsTabContent";
 import { Activity, Player } from "@/types/player";
 
 interface StatisticsTabsWrapperProps {
@@ -37,6 +38,7 @@ export function StatisticsTabsWrapper({
     <Tabs defaultValue="overview" className="w-full">
       <TabsList className="mb-4 flex flex-wrap gap-1">
         <TabsTrigger value="overview">Översikt</TabsTrigger>
+        <TabsTrigger value="combinations">Kombinationer</TabsTrigger>
         <TabsTrigger value="participation">Deltagande</TabsTrigger>
         <TabsTrigger value="formation">Formation</TabsTrigger>
         <TabsTrigger value="goals">Mål</TabsTrigger>
@@ -48,6 +50,14 @@ export function StatisticsTabsWrapper({
         <OverviewTabContent 
           activities={activities} 
           players={players} 
+        />
+      </TabsContent>
+      
+      <TabsContent value="combinations">
+        <CombinationsTabContent 
+          players={players}
+          activities={activities}
+          onPlayerSelect={onPlayerSelect}
         />
       </TabsContent>
       
