@@ -255,6 +255,50 @@ export interface LineupSuggestion {
   reasoning: string[];
 }
 
+// NEW: Calculate player activity frequency for rotation logic
+const calculatePlayerActivityFrequency = (
+  players: Player[], 
+  activities: Activity[], 
+  recentMatchCount: number = 5
+): Record<string, { recentMatches: number; totalMatches: number; restFactor: number }> => {
+  const playerStats: Record<string, { recentMatches: number; totalMatches: number; restFactor: number }> = {};
+  
+  // Sort activities by date (most recent first)
+  const sortedActivities = activities
+    .filter(a => a.type === 'match' && a.date)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  const recentActivities = sortedActivities.slice(0, recentMatchCount);
+  
+  players.forEach(player => {
+    const totalMatches = activities.filter(a => 
+      a.type === 'match' && a.participants?.includes(player.id)
+    ).length;
+    
+    const recentMatches = recentActivities.filter(a => 
+      a.participants?.includes(player.id)
+    ).length;
+    
+    // Calculate rest factor: higher value = needs more rest = lower priority
+    const restFactor = recentMatches / Math.max(1, recentMatchCount);
+    
+    playerStats[player.id] = {
+      recentMatches,
+      totalMatches,
+      restFactor
+    };
+  });
+  
+  return playerStats;
+};
+
+// NEW: Add controlled randomization
+const addRandomVariation = (score: number, variationStrength: number = 0.2): number => {
+  // Add random variation of ±20% by default
+  const randomFactor = 1 + (Math.random() - 0.5) * 2 * variationStrength;
+  return score * randomFactor;
+};
+
 // Suggest optimal lineup based on formation and historical data
 export const suggestOptimalLineup = (
   players: Player[], 
@@ -647,7 +691,7 @@ export const analyzeOpponentHistory = (
   };
 };
 
-// Suggest lineup optimized for balanced/close matches
+// ENHANCED: Suggest lineup optimized for balanced/close matches with rotation and randomization
 export const suggestBalancedLineup = (
   players: Player[],
   activities: Activity[],
@@ -659,6 +703,9 @@ export const suggestBalancedLineup = (
   const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
   const combinations = analyzePairCombinations(players, activities);
   const matrix = createCombinationMatrix(players, combinations);
+  
+  // NEW: Get player activity frequency for rotation logic
+  const playerFrequency = calculatePlayerActivityFrequency(players, activities, 5);
   
   // Define position requirements
   const formationRequirements: Record<string, string[]> = {
@@ -686,7 +733,7 @@ export const suggestBalancedLineup = (
   
   const usedPlayerIds = new Set<string>();
   
-  // Balance-focused player selection for starting lineup
+  // ENHANCED: Balance-focused player selection with rotation and randomization
   requiredPositions.forEach(position => {
     const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
     
@@ -705,7 +752,7 @@ export const suggestBalancedLineup = (
       return;
     }
     
-    // Score players for balanced performance against this opponent
+    // ENHANCED: Score players with rotation logic and randomization
     const scoredPlayers = availablePlayers.map(player => {
       let balanceScore = 0;
       let reasoning = [];
@@ -730,6 +777,20 @@ export const suggestBalancedLineup = (
           // Small penalty for players with lots of experience against this opponent
           balanceScore -= 5;
           reasoning.push("Erfaren mot detta lag");
+        }
+      }
+      
+      // NEW: Rotation logic - favor players who haven't played recently
+      const frequency = playerFrequency[player.id];
+      if (frequency) {
+        // Higher rest factor = played more recently = lower priority for starting
+        const rotationBonus = (1 - frequency.restFactor) * 15; // Up to 15 points bonus
+        balanceScore += rotationBonus;
+        
+        if (frequency.recentMatches === 0) {
+          reasoning.push("Vila - inte spelat nyligen");
+        } else if (frequency.recentMatches <= 2) {
+          reasoning.push("Begränsad speltid nyligen");
         }
       }
       
@@ -783,9 +844,12 @@ export const suggestBalancedLineup = (
         }
       }
       
+      // NEW: Add controlled randomization to prevent same lineups
+      const finalScore = addRandomVariation(balanceScore, 0.25); // 25% variation
+      
       return {
         player,
-        balanceScore,
+        balanceScore: finalScore,
         reasoning: reasoning.join(", ") || "Balanserad spelare"
       };
     });
@@ -805,7 +869,7 @@ export const suggestBalancedLineup = (
     }
   });
 
-  // Select 2 bench players (excluding goalkeepers)
+  // ENHANCED: Select bench players with rotation and variation
   const benchPlayers: {
     playerId: string;
     playerName: string;
@@ -820,7 +884,7 @@ export const suggestBalancedLineup = (
     !p.positions?.includes('MV') // No goalkeepers on bench
   );
 
-  // Score bench players
+  // ENHANCED: Score bench players with rotation logic
   const scoredBenchPlayers = availableBenchPlayers.map(player => {
     let benchScore = 0;
     let reasoning = [];
@@ -839,6 +903,17 @@ export const suggestBalancedLineup = (
         reasoning.push("Ny mot detta lag");
       } else if (playerOpponentMatches.length <= 2) {
         reasoning.push("Begränsad erfarenhet");
+      }
+    }
+
+    // NEW: Rotation logic for bench
+    const frequency = playerFrequency[player.id];
+    if (frequency) {
+      const rotationBonus = (1 - frequency.restFactor) * 12; // Up to 12 points for bench
+      benchScore += rotationBonus;
+      
+      if (frequency.recentMatches === 0) {
+        reasoning.push("Vila - inte spelat nyligen");
       }
     }
 
@@ -869,9 +944,12 @@ export const suggestBalancedLineup = (
       reasoning.push(`Primär: ${primaryPosition}`);
     }
 
+    // NEW: Add randomization for bench selection too
+    const finalScore = addRandomVariation(benchScore, 0.3); // 30% variation for more bench variety
+
     return {
       player,
-      benchScore,
+      benchScore: finalScore,
       reasoning: reasoning.join(", ") || "Pålitlig reserv"
     };
   });
@@ -900,7 +978,7 @@ export const suggestBalancedLineup = (
   if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
   else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
   
-  // Generate reasoning
+  // ENHANCED: Generate reasoning with rotation info
   const reasoning = [
     `Optimerad för jämn vinst (${targetGoalDifference} mål) mot ${opponentName}`,
     `Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
@@ -909,6 +987,16 @@ export const suggestBalancedLineup = (
     `Risknivå: ${riskLevel} (baserat på historisk variation)`,
     `Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`
   ];
+  
+  // Count rotated players (those with low recent activity)
+  const rotatedPlayersCount = selectedPlayers.filter(p => {
+    const freq = playerFrequency[p.playerId];
+    return freq && freq.recentMatches <= 2;
+  }).length;
+  
+  if (rotatedPlayersCount > 0) {
+    reasoning.push(`🔄 ${rotatedPlayersCount} spelare får chans efter vila`);
+  }
   
   if (prioritizeNewPlayers) {
     const newPlayersCount = selectedPlayers.filter(p => 
