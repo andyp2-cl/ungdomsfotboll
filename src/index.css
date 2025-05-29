@@ -101,49 +101,88 @@
   }
 }
 
-/* Simplified Excel iframe scrolling isolation */
+/* Enhanced Excel iframe scrolling isolation for Mac trackpad */
 .excel-iframe-container {
-  /* Basic scroll isolation */
+  /* Strong scroll isolation */
   overscroll-behavior: none;
   overflow: hidden;
   position: relative;
   
-  /* Performance optimizations */
+  /* Performance and rendering optimizations */
   will-change: transform;
   contain: layout style paint;
+  
+  /* Prevent browser navigation gestures */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .excel-iframe-wrapper {
-  /* Isolate scroll interactions */
+  /* Isolate all scroll interactions completely */
   overscroll-behavior: none;
   overflow: hidden;
   position: relative;
   
-  /* Smooth rendering */
+  /* Enhanced rendering performance */
   transform: translateZ(0);
   contain: layout style paint;
+  
+  /* Block gesture navigation */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  
+  /* Ensure pointer events work correctly */
+  pointer-events: auto;
 }
 
 .excel-iframe-container iframe {
-  /* Enable internal scrolling */
+  /* Enable internal scrolling while blocking external navigation */
   overflow: auto;
   display: block;
   
-  /* Trackpad isolation */
+  /* Enhanced trackpad isolation for Mac */
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
   
-  /* Smooth performance */
+  /* Optimized performance */
   will-change: scroll-position;
   transform: translateZ(0);
+  
+  /* Ensure iframe can receive all interactions */
+  pointer-events: auto;
+  
+  /* Block text selection that might interfere */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* Webkit optimizations for Mac */
+/* Enhanced Webkit optimizations for Mac Safari/Chrome */
 @supports (-webkit-appearance: none) {
   .excel-iframe-container,
   .excel-iframe-container iframe {
     -webkit-transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    
+    /* Additional Mac-specific optimizations */
+    -webkit-perspective: 1000;
+    perspective: 1000;
+  }
+  
+  /* Mac-specific gesture blocking */
+  .excel-iframe-wrapper {
+    -webkit-user-drag: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Specific handling for Mac browser navigation prevention */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+  .excel-iframe-container {
+    /* Aggressive overscroll prevention on Mac */
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
   }
 }
