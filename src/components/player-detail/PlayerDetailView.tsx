@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Player, Activity } from "@/types/player";
 import { DevelopmentChart } from "./DevelopmentChart";
 import { PlayerProfileAnalysis } from "./PlayerProfileAnalysis";
+import { LeaguesStatsCard } from "./LeaguesStatsCard";
 import { DevelopmentHistoryButton } from "@/components/development-tracking/DevelopmentHistoryButton";
 import { DevelopmentSummaryCard } from "@/components/development-tracking/DevelopmentSummaryCard";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
@@ -118,7 +119,7 @@ export function PlayerDetailView({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Basic Development Chart */}
             <Card>
               <CardHeader>
@@ -148,15 +149,22 @@ export function PlayerDetailView({
               />
             )}
 
+            {/* Leagues Statistics Card */}
+            <LeaguesStatsCard 
+              player={player}
+              activities={activities}
+              className="md:col-span-1"
+            />
+
             {/* Activity Summary */}
-            <Card>
+            <Card className="md:col-span-2 lg:col-span-3">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Aktivitetssammanfattning
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="flex justify-between">
                   <span>Totala aktiviteter:</span>
                   <span className="font-medium">{playerActivities.length}</span>
@@ -178,7 +186,7 @@ export function PlayerDetailView({
                   <span className="font-medium">{history.length}</span>
                 </div>
                 {recentActivities.length > 0 && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between md:col-span-2 lg:col-span-4">
                     <span>Senaste aktivitet:</span>
                     <span className="font-medium">
                       {new Date(recentActivities[0].date).toLocaleDateString('sv-SE')}
@@ -231,6 +239,25 @@ export function PlayerDetailView({
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Add Leagues Stats in Development tab as well */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <LeaguesStatsCard 
+              player={player}
+              activities={activities}
+              className="md:col-span-1"
+            />
+            
+            {/* Development Summary in development tab */}
+            {player.development && (
+              <DevelopmentSummaryCard
+                playerName={player.name}
+                current={player.development}
+                previous={previousDevelopment}
+                lastUpdated={lastUpdated}
+              />
+            )}
           </div>
         </TabsContent>
 
