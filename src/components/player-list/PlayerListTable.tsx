@@ -4,10 +4,11 @@ import { Player, Activity } from "@/types/player";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 import { SortField, SortIcon } from "./PlayerListSorting";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatPositions, isTrainer } from "@/utils/positionUtils";
+import { PlayerFormDisplay } from "./PlayerFormDisplay";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -151,7 +152,7 @@ export function PlayerListTable({
                 <SortIcon field="goalsPerMatch" sortField={sortField} sortDirection={sortDirection} />
               </Button>
             </TableHead>
-            <TableHead className="w-[100px]">Åtgärder</TableHead>
+            <TableHead className="w-[120px]">Form</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -233,18 +234,7 @@ export function PlayerListTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  {onPlayerEdit && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPlayerEdit(player);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <PlayerFormDisplay player={player} activities={activities} />
                 </TableCell>
               </TableRow>
             );
