@@ -581,19 +581,40 @@ export function suggestOptimalLineup(
   formation: string, 
   opponent?: string
 ): LineupSuggestion {
+  console.log("suggestOptimalLineup: Starting with", players.length, "total players");
+  
   const combinations = analyzePairCombinations(players, activities);
+  console.log("suggestOptimalLineup: Found", combinations.length, "player combinations");
+  
   const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE') && p.isActive !== false);
+  console.log("suggestOptimalLineup: Found", activePlayers.length, "active field players");
+  
+  // Debug player positions
+  const positionCounts = activePlayers.reduce((acc, player) => {
+    const pos = player.positions?.[0] || 'UNKNOWN';
+    acc[pos] = (acc[pos] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  console.log("suggestOptimalLineup: Position distribution:", positionCounts);
   
   // Get formation requirements
   const formationPositions = getFormationPositions(formation);
+  console.log("suggestOptimalLineup: Formation", formation, "requires positions:", formationPositions);
+  
   let gradeStrategy = "";
   let targetAverageGrade: number | undefined;
 
   // Smart level adjustment based on opponent history
   if (opponent) {
-    const gradeAnalysis = analyzeOpponentGradeHistory(activities, opponent, players);
-    targetAverageGrade = gradeAnalysis.averageGrade + gradeAnalysis.recommendedGradeAdjustment;
-    gradeStrategy = gradeAnalysis.reasoning;
+    try {
+      const gradeAnalysis = analyzeOpponentGradeHistory(activities, opponent, players);
+      targetAverageGrade = gradeAnalysis.averageGrade + gradeAnalysis.recommendedGradeAdjustment;
+      gradeStrategy = gradeAnalysis.reasoning;
+      console.log("suggestOptimalLineup: Target grade for opponent", opponent, ":", targetAverageGrade);
+    } catch (error) {
+      console.error("suggestOptimalLineup: Error analyzing opponent grade history:", error);
+      gradeStrategy = "Kunde inte analysera motståndarhistorik";
+    }
   }
 
   // Score players for each position
@@ -604,37 +625,59 @@ export function suggestOptimalLineup(
     reasoning: string;
   }> = [];
 
-  formationPositions.forEach(position => {
-    const positionPlayers = activePlayers.filter(p => 
-      p.positions?.includes(position as PlayerPosition)
+  const selectedPlayerIds = new Set<string>();
+
+  formationPositions.forEach((position, index) => {
+    console.log(`suggestOptimalLineup: Finding player for position ${index + 1}/${formationPositions.length}: ${position}`);
+    
+    // First try to find players for exact position
+    let positionPlayers = activePlayers.filter(p => 
+      p.positions?.includes(position as PlayerPosition) && !selectedPlayerIds.has(p.id)
     );
+    
+    console.log(`suggestOptimalLineup: Found ${positionPlayers.length} players for position ${position}`);
+
+    // If no exact match found, try similar positions
+    if (positionPlayers.length === 0) {
+      const similarPositions = getSimilarPositions(position);
+      positionPlayers = activePlayers.filter(p => 
+        p.positions?.some(pos => similarPositions.includes(pos)) && !selectedPlayerIds.has(p.id)
+      );
+      console.log(`suggestOptimalLineup: Found ${positionPlayers.length} players for similar positions to ${position}`);
+    }
+    
+    // Final fallback: any available player
+    if (positionPlayers.length === 0) {
+      positionPlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
+      console.log(`suggestOptimalLineup: Using fallback - ${positionPlayers.length} available players for ${position}`);
+    }
 
     if (positionPlayers.length === 0) {
-      // Fallback to any player if no one plays this position
-      const fallbackPlayer = activePlayers.find(p => !lineupPlayers.some(lp => lp.playerId === p.id));
-      if (fallbackPlayer) {
-        lineupPlayers.push({
-          playerId: fallbackPlayer.id,
-          playerName: fallbackPlayer.name,
-          position,
-          reasoning: `Backup för ${position} (ingen specialist tillgänglig)`
-        });
-      }
+      console.warn(`suggestOptimalLineup: No players available for position ${position}`);
       return;
     }
 
     // Score players based on grade, combinations, and target grade
     const scoredPlayers = positionPlayers
-      .filter(p => !lineupPlayers.some(lp => lp.playerId === p.id))
       .map(player => {
         let score = getGradePoints(player.grade || 'C');
+        let reasons: string[] = [`Nivå ${player.grade || 'C'}`];
         
         // Adjust score based on target grade if we have opponent analysis
         if (targetAverageGrade) {
           const playerGrade = gradeToNumeric(player.grade || 'C');
           const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
           // Prefer players closer to target grade
-          score += Math.max(0, 10 - (gradeDifference * 5));
+          const gradeBonus = Math.max(0, 10 - (gradeDifference * 5));
+          score += gradeBonus;
+          
+          if (gradeDifference < 0.5) {
+            reasons.push("perfekt nivå för motståndare");
+          } else if (playerGrade > targetAverageGrade) {
+            reasons.push("högre nivå för säkrare vinst");
+          } else {
+            reasons.push("lägre nivå för jämnare match");
+          }
         }
 
         // Add combination bonus
@@ -643,52 +686,71 @@ export function suggestOptimalLineup(
           ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
           : 1.0;
         score += avgEfficiency * 5;
+        
+        if (avgEfficiency > 1.2) {
+          reasons.push("stark kombination");
+        }
 
-        return { player, score };
+        // Position match bonus
+        if (player.positions?.includes(position as PlayerPosition)) {
+          score += 5;
+          reasons.push(`specialist ${position.toLowerCase()}`);
+        }
+
+        return { 
+          player, 
+          score,
+          reasoning: reasons.join(", ")
+        };
       })
       .sort((a, b) => b.score - a.score);
 
     if (scoredPlayers.length > 0) {
-      const selectedPlayer = scoredPlayers[0].player;
-      let reasoning = `Bäst för ${position} (Nivå ${selectedPlayer.grade || 'C'})`;
+      const selectedPlayer = scoredPlayers[0];
+      console.log(`suggestOptimalLineup: Selected ${selectedPlayer.player.name} for ${position} (score: ${selectedPlayer.score})`);
       
-      if (targetAverageGrade) {
-        const playerGrade = gradeToNumeric(selectedPlayer.grade || 'C');
-        if (Math.abs(playerGrade - targetAverageGrade) < 0.5) {
-          reasoning += ` - matchar målnivå perfekt`;
-        } else if (playerGrade > targetAverageGrade) {
-          reasoning += ` - högre nivå för säkrare vinst`;
-        } else {
-          reasoning += ` - lägre nivå för jämnare match`;
-        }
-      }
-
       lineupPlayers.push({
-        playerId: selectedPlayer.id,
-        playerName: selectedPlayer.name,
+        playerId: selectedPlayer.player.id,
+        playerName: selectedPlayer.player.name,
         position,
-        reasoning
+        reasoning: selectedPlayer.reasoning
       });
+      
+      selectedPlayerIds.add(selectedPlayer.player.id);
     }
   });
 
+  console.log(`suggestOptimalLineup: Final lineup has ${lineupPlayers.length} players`);
+
   // Calculate metrics
-  const totalEfficiency = lineupPlayers.length > 0 ? Math.random() * 0.5 + 1.2 : 1.0;
+  const totalEfficiency = lineupPlayers.length > 0 ? 
+    Math.min(2.0, Math.max(1.0, 1.2 + (lineupPlayers.length / formationPositions.length) * 0.3)) : 
+    1.0;
+  
   const expectedWinRate = Math.min(95, Math.max(30, totalEfficiency * 50 + Math.random() * 20));
-  const confidence = Math.min(95, lineupPlayers.length * 15 + Math.random() * 20);
+  const confidence = Math.min(95, Math.max(20, lineupPlayers.length * 12 + combinations.length * 2));
 
   const reasoning = [
-    `Formation ${formation} med ${lineupPlayers.length} spelare`,
+    `Formation ${formation} med ${lineupPlayers.length}/${formationPositions.length} spelare`,
     targetAverageGrade ? `Smart nivåjustering: ${gradeStrategy}` : 'Optimerad för bästa individuell prestanda',
     `Förväntad effektivitet: ${totalEfficiency.toFixed(2)}`,
     `Tillförlitlighet baserat på ${combinations.length} analyserade kombinationer`
   ];
 
+  // Add warnings if lineup is incomplete
+  if (lineupPlayers.length < formationPositions.length) {
+    reasoning.push(`⚠️ Varning: Endast ${lineupPlayers.length} av ${formationPositions.length} positioner fyllda`);
+  }
+
+  if (activePlayers.length < 7) {
+    reasoning.push(`⚠️ Varning: Endast ${activePlayers.length} aktiva spelare tillgängliga`);
+  }
+
   if (targetAverageGrade) {
     const actualAverageGrade = lineupPlayers.reduce((sum, lp) => {
       const player = players.find(p => p.id === lp.playerId);
       return sum + (player ? gradeToNumeric(player.grade || 'C') : 2.5);
-    }, 0) / lineupPlayers.length;
+    }, 0) / (lineupPlayers.length || 1);
 
     reasoning.push(`Genomsnittsnivå: ${numericToGrade(actualAverageGrade)} (mål: ${numericToGrade(targetAverageGrade)})`);
   }
@@ -703,6 +765,18 @@ export function suggestOptimalLineup(
     recommendedAverageGrade: targetAverageGrade,
     gradeStrategy
   };
+}
+
+// Helper function to get similar positions for fallback
+function getSimilarPositions(position: string): PlayerPosition[] {
+  const similarityMap: Record<string, PlayerPosition[]> = {
+    'MV': [], // Goalkeepers are unique
+    'BACK': ['MF'], // Defenders can play midfield
+    'MF': ['BACK', 'ANF'], // Midfielders are versatile
+    'ANF': ['MF'], // Forwards can play midfield
+  };
+  
+  return similarityMap[position] || [];
 }
 
 // Enhanced balanced lineup suggestion with rotation strength and smart level evaluation
@@ -829,7 +903,10 @@ export function suggestBalancedLineup(
       availablePlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
     }
 
-    if (availablePlayers.length === 0) return; // No more players available
+    if (availablePlayers.length === 0) {
+      console.warn(`suggestBalancedLineup: No players available for position ${position}`);
+      return;
+    }
 
     // Score players for this position
     const scoredPlayers = availablePlayers

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { RefreshCw, Users, TrendingUp, Target, Info, Lightbulb, Brain } from "lucide-react";
+import { RefreshCw, Users, TrendingUp, Target, Info, Lightbulb, Brain, AlertTriangle } from "lucide-react";
 import { FormationSelector } from "./FormationSelector";
 import { FormationField } from "./FormationField";
 import { suggestOptimalLineup, LineupSuggestion, getOpponents, analyzeOpponentGradeHistory } from "@/utils/playerCombinations";
@@ -26,18 +27,45 @@ export function OptimalLineupSuggestion({
   const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [suggestion, setSuggestion] = useState<LineupSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const opponents = getOpponents(activities);
+  
+  // Filter active field players for validation
+  const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE') && p.isActive !== false);
 
   const handleGenerateSuggestion = async () => {
     setIsGenerating(true);
+    setError(null);
     
-    // Add small delay for UX
-    setTimeout(() => {
-      const newSuggestion = suggestOptimalLineup(players, activities, selectedFormation, selectedOpponent);
-      setSuggestion(newSuggestion);
+    try {
+      // Validate we have enough players
+      if (activePlayers.length === 0) {
+        throw new Error("Inga aktiva spelare tillgängliga för lineup-förslag");
+      }
+      
+      if (activePlayers.length < 7) {
+        console.warn("Less than 7 active players available");
+      }
+      
+      // Add small delay for UX
+      setTimeout(() => {
+        try {
+          const newSuggestion = suggestOptimalLineup(players, activities, selectedFormation, selectedOpponent);
+          setSuggestion(newSuggestion);
+          setError(null);
+        } catch (err) {
+          console.error("Error generating lineup suggestion:", err);
+          setError(err instanceof Error ? err.message : "Ett fel uppstod vid generering av lineup-förslag");
+          setSuggestion(null);
+        }
+        setIsGenerating(false);
+      }, 500);
+    } catch (err) {
+      console.error("Error in handleGenerateSuggestion:", err);
+      setError(err instanceof Error ? err.message : "Ett fel uppstod vid generering av lineup-förslag");
       setIsGenerating(false);
-    }, 500);
+    }
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -64,6 +92,19 @@ export function OptimalLineupSuggestion({
           <Lightbulb className="h-5 w-5 text-blue-500" />
           <h3 className="text-lg font-semibold">Optimal Startelva</h3>
         </div>
+        
+        {/* Player availability warning */}
+        {activePlayers.length < 7 && (
+          <div className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <span className="font-medium text-yellow-800">Varning: Få aktiva spelare</span>
+            </div>
+            <p className="text-sm text-yellow-700">
+              Endast {activePlayers.length} aktiva fältspelare tillgängliga. En full lineup kräver 7 spelare.
+            </p>
+          </div>
+        )}
         
         <div className="p-4 border rounded-lg bg-blue-50">
           <div className="flex items-center gap-2 mb-2">
@@ -105,7 +146,7 @@ export function OptimalLineupSuggestion({
           <div className="flex items-end">
             <Button 
               onClick={handleGenerateSuggestion}
-              disabled={isGenerating}
+              disabled={isGenerating || activePlayers.length === 0}
               className="w-full"
             >
               {isGenerating ? (
@@ -124,8 +165,21 @@ export function OptimalLineupSuggestion({
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <Card className="border-red-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="font-medium">Fel vid generering av lineup</span>
+            </div>
+            <p className="text-sm text-red-600 mt-1">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Grade Strategy Analysis (if opponent selected) */}
-      {selectedOpponent && gradeAnalysis && (
+      {selectedOpponent && gradeAnalysis && !error && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -158,7 +212,7 @@ export function OptimalLineupSuggestion({
       )}
 
       {/* Formation Visualization */}
-      {selectedFormation && (
+      {selectedFormation && !error && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Formation: {selectedFormation}</CardTitle>
@@ -302,7 +356,7 @@ export function OptimalLineupSuggestion({
       )}
 
       {/* Empty State */}
-      {!suggestion && !isGenerating && (
+      {!suggestion && !isGenerating && !error && (
         <Card>
           <CardContent className="p-8 text-center">
             <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -310,6 +364,11 @@ export function OptimalLineupSuggestion({
             <p className="text-sm text-muted-foreground mb-4">
               Välj en formation och klicka på "Generera optimal lineup" för att få förslag baserat på historiska data.
             </p>
+            {activePlayers.length === 0 && (
+              <p className="text-sm text-red-600">
+                Inga aktiva spelare tillgängliga. Kontrollera att spelare är markerade som aktiva.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
