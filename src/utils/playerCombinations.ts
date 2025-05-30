@@ -696,13 +696,9 @@ export function suggestBalancedLineup(
     reasoning: string;
   }> = [];
 
-  const benchPlayers: Array<{
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }> = [];
+  const selectedPlayerIds = new Set<string>(); // Track selected players to prevent duplicates
 
+  // Select starting lineup
   formationPositions.forEach(position => {
     const positionPlayers = activePlayers.filter(p => 
       p.positions?.includes(position as PlayerPosition)
@@ -712,7 +708,7 @@ export function suggestBalancedLineup(
 
     // Score players for this position with enhanced criteria
     const scoredPlayers = positionPlayers
-      .filter(p => !lineupPlayers.some(lp => lp.playerId === p.id))
+      .filter(p => !selectedPlayerIds.has(p.id)) // Prevent duplicates
       .map(player => {
         let score = 0;
         let reasons: string[] = [];
@@ -776,18 +772,84 @@ export function suggestBalancedLineup(
         position,
         reasoning: selectedPlayer.reasons
       });
-
-      // Add remaining players to bench
-      scoredPlayers.slice(1, 3).forEach(benchPlayer => {
-        benchPlayers.push({
-          playerId: benchPlayer.player.id,
-          playerName: benchPlayer.player.name,
-          position,
-          reasoning: `Bänk: ${benchPlayer.reasons}`
-        });
-      });
+      selectedPlayerIds.add(selectedPlayer.player.id); // Mark as selected
     }
   });
+
+  // Create bench players from all remaining players (not position-specific)
+  const remainingPlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
+  
+  const benchPlayers: Array<{
+    playerId: string;
+    playerName: string;
+    position: string;
+    reasoning: string;
+  }> = [];
+
+  // Score all remaining players for bench
+  const scoredBenchPlayers = remainingPlayers.map(player => {
+    let score = 0;
+    let reasons: string[] = [];
+    
+    // Get player's primary position
+    const primaryPosition = player.positions?.[0] || 'MITTFÄLT';
+
+    // Grade-based scoring
+    const gradePoints = getGradePoints(player.grade || 'C');
+    score += gradePoints;
+
+    // Rotation factor
+    const hasPlayedRecently = recentParticipants.has(player.id);
+    if (!hasPlayedRecently) {
+      const rotationBonus = (rotationStrength / 100) * 10;
+      score += rotationBonus;
+      reasons.push("vila prioriterad");
+    }
+
+    // New player bonus
+    const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
+      match.participants?.some(participantId => participantId === player.id)
+    );
+    
+    if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
+      score += 5;
+      reasons.push("ny mot laget");
+    }
+
+    // Combination effectiveness
+    const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
+    const avgEfficiency = playerCombinations.length > 0 
+      ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
+      : 1.0;
+    score += avgEfficiency * 2;
+
+    return { 
+      player, 
+      primaryPosition,
+      score, 
+      reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade || 'C'}, bänk` 
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  // Select top bench players with position diversity
+  const positionCounts: Record<string, number> = {};
+  const maxBenchPlayers = Math.min(6, scoredBenchPlayers.length); // Limit bench size
+
+  for (let i = 0; i < scoredBenchPlayers.length && benchPlayers.length < maxBenchPlayers; i++) {
+    const benchCandidate = scoredBenchPlayers[i];
+    const position = benchCandidate.primaryPosition;
+    
+    // Prefer position diversity on bench (max 2 per position)
+    if ((positionCounts[position] || 0) < 2) {
+      benchPlayers.push({
+        playerId: benchCandidate.player.id,
+        playerName: benchCandidate.player.name,
+        position: position,
+        reasoning: `Bänk: ${benchCandidate.reasons}`
+      });
+      positionCounts[position] = (positionCounts[position] || 0) + 1;
+    }
+  }
 
   // Calculate balance metrics
   const expectedGoalDifference = Math.max(0.5, targetGoalDifference + (Math.random() - 0.5));
