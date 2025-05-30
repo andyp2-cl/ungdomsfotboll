@@ -36,8 +36,8 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
              (activity.homeScore !== undefined && activity.awayScore !== undefined) ||
              (activity.result && activity.result.includes('-'));
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4); // Take last 4 historical matches with results
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort oldest first
+    .slice(-4); // Take last 4 historical matches with results
 
   if (playerMatches.length === 0) {
     return <span className="text-muted-foreground text-sm">Inga matcher</span>;
@@ -66,7 +66,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
 
   const results = playerMatches.map(getMatchResult);
 
-  // Pad with empty spaces if less than 4 matches
+  // Pad with empty spaces if less than 4 matches (add at beginning so empty slots are on the left)
   while (results.length < 4) {
     results.unshift(''); // Add empty strings at the beginning to show older positions as empty
   }
@@ -76,7 +76,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
       case 'W': return 'text-green-600 bg-green-100';
       case 'D': return 'text-gray-900 bg-gray-100';
       case 'L': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-400 bg-gray-50'; // Handle empty strings and any other cases
+      default: return 'text-gray-400 bg-gray-50'; // Handle empty strings
     }
   };
 
