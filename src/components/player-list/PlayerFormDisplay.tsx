@@ -76,7 +76,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
       case 'W': return 'text-green-600 bg-green-100';
       case 'D': return 'text-gray-900 bg-gray-100';
       case 'L': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-400 bg-gray-50';
+      default: return 'text-gray-400 bg-gray-50'; // Handle empty strings and any other cases
     }
   };
 
@@ -85,9 +85,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
       {results.map((result, index) => (
         <div
           key={index}
-          className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center ${
-            result ? getResultColor(result) : 'bg-gray-50 text-gray-300'
-          }`}
+          className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center ${getResultColor(result)}`}
         >
           {result || '-'}
         </div>
