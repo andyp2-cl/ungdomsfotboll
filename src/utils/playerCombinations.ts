@@ -1,15 +1,10 @@
 
 import { Player, Activity, PlayerPosition } from "@/types/player";
 
-// Extended Activity interface for our utility functions
+// Extended Activity interface for our utility functions (without conflicting participants override)
 interface ExtendedActivity extends Activity {
   opponent?: string;
   goalDifference?: number;
-  participants?: Array<{
-    playerId: string;
-    goals?: number;
-    assists?: number;
-  }>;
 }
 
 // Interface for player combination analysis
@@ -160,7 +155,6 @@ function calculateGoalDifference(activity: Activity): number {
 // Helper function to get opponent name from activity
 function getOpponentName(activity: Activity): string | undefined {
   // Try to extract opponent from activity name if not directly available
-  // This is a fallback since the Activity type doesn't have opponent field
   if (activity.name && activity.name.includes('vs')) {
     const parts = activity.name.split('vs');
     if (parts.length > 1) {
@@ -221,8 +215,7 @@ export function analyzePairCombinations(players: Player[], activities: Activity[
           combo.losses++;
         }
 
-        // For now, we'll use basic stats since the participant structure is simpler
-        // Goals and assists would need to be extracted from activity.player_stats if available
+        // Extract goals and assists from player_stats if available
         if (activity.player_stats) {
           const stats = activity.player_stats as any;
           if (stats.goals && typeof stats.goals === 'object') {
