@@ -1,1123 +1,849 @@
 import { Player, Activity } from "@/types/player";
-import { calculateDetailedPlayerActivityFrequency, generatePlayerSelectionReasoning, PlayerActivityStats } from "./playerActivityAnalysis";
+import { calculateDetailedPlayerActivityFrequency, generatePlayerSelectionReasoning } from "./playerActivityAnalysis";
 
-// Beräkna positionssynergi mellan två spelare
-const calculatePositionSynergy = (player1: Player, player2: Player): number => {
-  const pos1 = player1.positions?.[0];
-  const pos2 = player2.positions?.[0];
-  
-  if (!pos1 || !pos2) return 1.0;
-  
-  // Definiera synergi-poäng för olika positionskombinationer
-  const synergyMap: Record<string, Record<string, number>> = {
-    'MV': { 'BACK': 1.2, 'MF': 1.0, 'ANF': 0.8 },
-    'BACK': { 'MV': 1.2, 'BACK': 1.1, 'MF': 1.3, 'ANF': 1.0 },
-    'MF': { 'MV': 1.0, 'BACK': 1.3, 'MF': 1.2, 'ANF': 1.4 },
-    'ANF': { 'MV': 0.8, 'BACK': 1.0, 'MF': 1.4, 'ANF': 1.1 }
-  };
-  
-  return synergyMap[pos1]?.[pos2] || 1.0;
-};
-
-// Beräkna betygsynergi mellan två spelare
-const calculateGradeSynergy = (player1: Player, player2: Player): number => {
-  const grade1 = player1.grade;
-  const grade2 = player2.grade;
-  
-  if (!grade1 || !grade2) return 1.0;
-  
-  // A-spelare fungerar bra med alla, B med B och C, etc.
-  const gradeValues: Record<string, number> = { 'A': 4, 'B': 3, 'C': 2, 'D': 1 };
-  const diff = Math.abs(gradeValues[grade1] - gradeValues[grade2]);
-  
-  // Mindre skillnad = bättre synergi
-  return Math.max(0.7, 1.2 - (diff * 0.2));
-};
-
-// Helper function to determine if Hässleholms IF is playing at home based on activity name
-const isHassleholmsPlayingHome = (activity: Activity): boolean => {
-  if (!activity.name) return true; // Default to home if no name
-  
-  const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
-  const match = activity.name.match(dashPattern);
-  
-  if (match && match[1] && match[2]) {
-    const team1 = match[1].trim();
-    
-    // Check if the first team is a Hässleholms IF variation
-    const hassleholmsVariations = [
-      'Hässleholms IF',
-      'Hässleholms IF Vit',
-      'Hässleholms IF Svart',
-      'Hässleholms IF vit',
-      'Hässleholms IF svart'
-    ];
-    
-    return hassleholmsVariations.some(variation => 
-      team1.toLowerCase().includes(variation.toLowerCase())
-    );
-  }
-  
-  return true; // Default to home if can't parse
-};
-
-// Helper function to filter out inactive players
-const filterActivePlayers = (players: Player[]): Player[] => {
-  return players.filter(player => {
-    // If isActive is undefined, default to true (for backward compatibility)
-    const isActive = player.isActive !== undefined ? player.isActive : true;
-    return isActive;
-  });
-};
-
-export interface PlayerCombination {
-  playerIds: string[];
-  playerNames: string[];
-  matchesTogether: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  winRate: number;
-  totalGoals: number;
-  totalAssists: number;
-  combinationEfficiency: number;
-  positionSynergy: number;
-  averagePerformance: number;
+// Interface for player in a lineup suggestion
+export interface SuggestedPlayer {
+  playerId: string;
+  playerName: string;
+  position: string;
+  reasoning: string;
 }
 
-export interface CombinationMatrix {
-  [playerId: string]: {
-    [otherPlayerId: string]: {
-      efficiency: number;
-      matchesTogether: number;
-      winRate: number;
-    };
-  };
-};
-
-// Analysera alla tvåspelar-kombinationer
-export const analyzePairCombinations = (players: Player[], activities: Activity[]): PlayerCombination[] => {
-  // Filter out inactive players from analysis
-  const activePlayers = filterActivePlayers(players);
-  console.log(`Analyzing combinations with ${activePlayers.length} active players (${players.length - activePlayers.length} inactive players excluded)`);
-  
-  const combinations: PlayerCombination[] = [];
-  const matchActivities = activities.filter(a => a.type === 'match');
-  
-  // Generera alla möjliga par från aktiva spelare
-  for (let i = 0; i < activePlayers.length; i++) {
-    for (let j = i + 1; j < activePlayers.length; j++) {
-      const player1 = activePlayers[i];
-      const player2 = activePlayers[j];
-      
-      // Skippa tränare
-      if (player1.positions?.includes('TRÄNARE') || player2.positions?.includes('TRÄNARE')) {
-        continue;
-      }
-      
-      // Hitta matcher där båda spelarna deltog
-      const sharedMatches = matchActivities.filter(activity => 
-        activity.participants?.includes(player1.id) && 
-        activity.participants?.includes(player2.id)
-      );
-      
-      if (sharedMatches.length < 2) continue; // Kräv minst 2 matcher tillsammans
-      
-      let wins = 0;
-      let draws = 0;
-      let losses = 0;
-      let totalGoals = 0;
-      let totalAssists = 0;
-      
-      sharedMatches.forEach(match => {
-        // Räkna resultat
-        if (match.isWin === true) wins++;
-        else if (match.isWin === false) losses++;
-        else if (match.homeScore !== undefined && match.awayScore !== undefined && 
-                 match.homeScore === match.awayScore) draws++;
-        
-        // Räkna mål och assists för båda spelarna
-        if (match.player_stats?.goals) {
-          totalGoals += (match.player_stats.goals[player1.id] || 0);
-          totalGoals += (match.player_stats.goals[player2.id] || 0);
-        }
-        if (match.player_stats?.assists) {
-          totalAssists += (match.player_stats.assists[player1.id] || 0);
-          totalAssists += (match.player_stats.assists[player2.id] || 0);
-        }
-      });
-      
-      const winRate = sharedMatches.length > 0 ? (wins / sharedMatches.length) * 100 : 0;
-      const positionSynergy = calculatePositionSynergy(player1, player2);
-      const gradeSynergy = calculateGradeSynergy(player1, player2);
-      
-      // Beräkna kombinationseffektivitet
-      const goalAssistBonus = (totalGoals + totalAssists) / sharedMatches.length;
-      const combinationEfficiency = (winRate / 100) * positionSynergy * gradeSynergy * (1 + goalAssistBonus * 0.1);
-      
-      combinations.push({
-        playerIds: [player1.id, player2.id],
-        playerNames: [player1.name, player2.name],
-        matchesTogether: sharedMatches.length,
-        wins,
-        draws,
-        losses,
-        winRate: Math.round(winRate),
-        totalGoals,
-        totalAssists,
-        combinationEfficiency: Math.round(combinationEfficiency * 100) / 100,
-        positionSynergy: Math.round(positionSynergy * 100) / 100,
-        averagePerformance: Math.round(((totalGoals + totalAssists) / sharedMatches.length) * 100) / 100
-      });
-    }
-  }
-  
-  return combinations.sort((a, b) => b.combinationEfficiency - a.combinationEfficiency);
-};
-
-// Skapa en kompatibilitetsmatris för alla spelare
-export const createCombinationMatrix = (players: Player[], combinations: PlayerCombination[]): CombinationMatrix => {
-  const matrix: CombinationMatrix = {};
-  
-  // Only include active players in the matrix
-  const activePlayers = filterActivePlayers(players);
-  
-  activePlayers.forEach(player => {
-    if (!player.positions?.includes('TRÄNARE')) {
-      matrix[player.id] = {};
-    }
-  });
-  
-  combinations.forEach(combo => {
-    const [player1Id, player2Id] = combo.playerIds;
-    
-    if (matrix[player1Id] && matrix[player2Id]) {
-      matrix[player1Id][player2Id] = {
-        efficiency: combo.combinationEfficiency,
-        matchesTogether: combo.matchesTogether,
-        winRate: combo.winRate
-      };
-      
-      matrix[player2Id][player1Id] = {
-        efficiency: combo.combinationEfficiency,
-        matchesTogether: combo.matchesTogether,
-        winRate: combo.winRate
-      };
-    }
-  });
-  
-  return matrix;
-};
-
-// Hitta bästa kombinationer för en specifik spelare
-export const getBestPartnersForPlayer = (playerId: string, combinations: PlayerCombination[]): PlayerCombination[] => {
-  return combinations
-    .filter(combo => combo.playerIds.includes(playerId))
-    .slice(0, 5); // Top 5 partners
-};
-
-// Analysera positionsspecifika kombinationer
-export const analyzePositionCombinations = (combinations: PlayerCombination[], players: Player[]) => {
-  const positionStats: Record<string, {
-    averageEfficiency: number;
-    bestCombination: PlayerCombination | null;
-    count: number;
-  }> = {};
-  
-  combinations.forEach(combo => {
-    const [player1, player2] = combo.playerIds.map(id => players.find(p => p.id === id));
-    if (!player1 || !player2) return;
-    
-    const pos1 = player1.positions?.[0];
-    const pos2 = player2.positions?.[0];
-    if (!pos1 || !pos2) return;
-    
-    const positionKey = [pos1, pos2].sort().join('-');
-    
-    if (!positionStats[positionKey]) {
-      positionStats[positionKey] = {
-        averageEfficiency: 0,
-        bestCombination: null,
-        count: 0
-      };
-    }
-    
-    positionStats[positionKey].averageEfficiency = 
-      (positionStats[positionKey].averageEfficiency * positionStats[positionKey].count + combo.combinationEfficiency) /
-      (positionStats[positionKey].count + 1);
-    
-    if (!positionStats[positionKey].bestCombination || 
-        combo.combinationEfficiency > positionStats[positionKey].bestCombination.combinationEfficiency) {
-      positionStats[positionKey].bestCombination = combo;
-    }
-    
-    positionStats[positionKey].count++;
-  });
-  
-  return positionStats;
-};
-
+// Interface for lineup suggestion result
 export interface LineupSuggestion {
+  players: SuggestedPlayer[];
+  benchPlayers?: SuggestedPlayer[];
   formation: string;
-  players: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[];
   totalEfficiency: number;
   expectedWinRate: number;
   confidence: number;
   reasoning: string[];
 }
 
-const addRandomVariation = (score: number, variationStrength: number = 0.2): number => {
-  // Add random variation of ±20% by default
-  const randomFactor = 1 + (Math.random() - 0.5) * 2 * variationStrength;
-  return score * randomFactor;
-};
+// Interface for balanced lineup suggestion
+export interface BalancedLineupSuggestion extends LineupSuggestion {
+  expectedGoalDifference: number;
+  balanceScore: number;
+  opponentAnalysis?: any;
+}
 
-// Suggest optimal lineup based on formation and historical data
-export const suggestOptimalLineup = (
-  players: Player[], 
-  activities: Activity[], 
-  formation: string = "2-3-1"
-): LineupSuggestion => {
-  console.log("🎯 Starting optimal lineup suggestion generation");
-  
-  // Filter out inactive players from lineup suggestions
-  const activePlayers = filterActivePlayers(players);
-  console.log(`Using ${activePlayers.length} active players for lineup (${players.length - activePlayers.length} inactive players excluded)`);
-  
-  const combinations = analyzePairCombinations(activePlayers, activities);
-  const matrix = createCombinationMatrix(activePlayers, combinations);
-  
-  // Use the new detailed player activity frequency calculation
-  const playerFrequency = calculateDetailedPlayerActivityFrequency(activePlayers, activities, 5);
-  
-  // Define position requirements for different formations
-  const formationRequirements: Record<string, string[]> = {
-    "2-3-1": ["MV", "BACK", "BACK", "MF", "MF", "MF", "ANF"],
-    "3-2-1": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "ANF"],
-    "2-2-2": ["MV", "BACK", "BACK", "MF", "MF", "ANF", "ANF"]
-  };
-  
-  const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
-  
-  // Get active players by position
-  const playersByPosition: Record<string, Player[]> = {};
-  requiredPositions.forEach(pos => {
-    playersByPosition[pos] = activePlayers.filter(p => 
-      p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
-    );
-  });
-  
-  // Simple greedy algorithm to select best lineup
-  const selectedPlayers: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[] = [];
-  
-  const usedPlayerIds = new Set<string>();
-  
-  requiredPositions.forEach(position => {
-    const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
-    
-    if (availablePlayers.length === 0) {
-      // Fallback: use any available active player
-      const fallbackPlayer = activePlayers.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
-      if (fallbackPlayer) {
-        selectedPlayers.push({
-          playerId: fallbackPlayer.id,
-          playerName: fallbackPlayer.name,
-          position,
-          reasoning: "Ingen tillgänglig specialist - använder backup"
-        });
-        usedPlayerIds.add(fallbackPlayer.id);
-      }
-      return;
-    }
-    
-    // Score players based on individual performance and combination potential
-    const scoredPlayers = availablePlayers.map(player => {
-      let score = 0;
-      const stats = playerFrequency[player.id];
-      
-      // Use the new detailed reasoning generation
-      const reasoning = generatePlayerSelectionReasoning(player, stats);
-      
-      // Individual performance (basic scoring)
-      const playerActivities = activities.filter(a => 
-        a.type === 'match' && a.participants?.includes(player.id)
-      );
-      
-      if (playerActivities.length > 0) {
-        const wins = playerActivities.filter(a => a.isWin === true).length;
-        const winRate = (wins / playerActivities.length) * 100;
-        score += winRate * 0.3; // 30% weight for individual win rate
-      }
-      
-      // Rotation priority based on new stats
-      if (stats) {
-        // Bonus for players who haven't played recently (lower rest factor = higher bonus)
-        const rotationBonus = (1 - stats.restFactor) * 25; // Up to 25 points bonus
-        score += rotationBonus;
-        
-        console.log(`📊 ${player.name} rotation analysis:`, {
-          restFactor: stats.restFactor.toFixed(2),
-          rotationBonus: rotationBonus.toFixed(1),
-          lastPlayed: stats.lastPlayedDate,
-          recentMatches: stats.recentMatches
-        });
-      }
-      
-      // Combination potential with already selected players
-      let combinationBonus = 0;
-      selectedPlayers.forEach(selected => {
-        const combination = matrix[player.id]?.[selected.playerId];
-        if (combination && combination.matchesTogether >= 2) {
-          combinationBonus += combination.efficiency * 10; // Boost for good combinations
-        }
-      });
-      
-      score += combinationBonus;
-      
-      // Position expertise bonus
-      if (player.positions?.[0] === position) {
-        score += 20; // Bonus for primary position
-      }
-      
-      // Grade bonus
-      const gradeBonus = { 'A': 15, 'B': 10, 'C': 5, 'D': 0 };
-      score += gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
-      
-      return {
-        player,
-        score,
-        reasoning
-      };
-    });
-    
-    // Select highest scoring player
-    scoredPlayers.sort((a, b) => b.score - a.score);
-    const bestPlayer = scoredPlayers[0];
-    
-    if (bestPlayer) {
-      selectedPlayers.push({
-        playerId: bestPlayer.player.id,
-        playerName: bestPlayer.player.name,
-        position,
-        reasoning: bestPlayer.reasoning
-      });
-      usedPlayerIds.add(bestPlayer.player.id);
-      
-      console.log(`✅ Selected ${bestPlayer.player.name} for ${position}:`, {
-        score: bestPlayer.score.toFixed(1),
-        reasoning: bestPlayer.reasoning
-      });
-    }
-  });
-  
-  // Calculate overall team metrics
-  let totalEfficiency = 0;
-  let totalWinRate = 0;
-  let pairCount = 0;
-  
-  for (let i = 0; i < selectedPlayers.length; i++) {
-    for (let j = i + 1; j < selectedPlayers.length; j++) {
-      const combination = matrix[selectedPlayers[i].playerId]?.[selectedPlayers[j].playerId];
-      if (combination && combination.matchesTogether >= 2) {
-        totalEfficiency += combination.efficiency;
-        totalWinRate += combination.winRate;
-        pairCount++;
-      }
-    }
-  }
-  
-  const avgEfficiency = pairCount > 0 ? totalEfficiency / pairCount : 1.0;
-  const avgWinRate = pairCount > 0 ? totalWinRate / pairCount : 50;
-  
-  // Generate reasoning
-  const reasoning = [
-    `Formation ${formation} med balanserad positionsfördelning`,
-    `Genomsnittlig kombinationseffektivitet: ${avgEfficiency.toFixed(2)}`,
-    `Förväntad vinstprocent: ${avgWinRate.toFixed(0)}%`,
-    `Baserat på ${pairCount} kända spelarkombinationer`,
-    `Använder ${activePlayers.length} aktiva spelare (${players.length - activePlayers.length} inaktiva exkluderade)`
-  ];
-  
-  if (pairCount < 5) {
-    reasoning.push("⚠️ Begränsad data - förslag baserat på tillgänglig information");
-  }
-  
-  console.log("🎯 Optimal lineup suggestion completed", {
-    selectedPlayersCount: selectedPlayers.length,
-    avgEfficiency,
-    avgWinRate,
-    confidence: Math.min(100, (pairCount / 10) * 100)
-  });
-  
-  return {
-    formation,
-    players: selectedPlayers,
-    totalEfficiency: avgEfficiency,
-    expectedWinRate: avgWinRate,
-    confidence: Math.min(100, (pairCount / 10) * 100), // Confidence based on data availability
-    reasoning
-  };
-};
-
+// Interface for opponent match analysis
 export interface OpponentAnalysis {
-  opponentName: string;
   totalMatches: number;
   wins: number;
-  draws: number;
   losses: number;
+  draws: number;
   winRate: number;
-  averageGoalsFor: number;
-  averageGoalsAgainst: number;
   averageGoalDifference: number;
   goalDifferenceRange: {
     min: number;
     max: number;
     variance: number;
   };
-  recentForm: Array<{
+  recentForm: {
     date: string;
     result: 'W' | 'D' | 'L';
     goalDifference: number;
-  }>;
+  }[];
 }
 
-export interface BalancedLineupSuggestion {
-  formation: string;
-  players: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[];
-  benchPlayers: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[];
-  expectedGoalDifference: number;
-  balanceScore: number; // 0-100, where 100 is perfect balance
-  confidence: number;
-  opponentAnalysis: OpponentAnalysis;
-  reasoning: string[];
-  riskLevel: 'low' | 'medium' | 'high';
+// New interface for historical lineup analysis
+export interface OpponentHistoricalAnalysis {
+  averageGrade: number;
+  gradeDistribution: Record<string, number>;
+  lastMatchResult: {
+    goalDifference: number;
+    ourGrade: number;
+    wasWin: boolean;
+  } | null;
+  recommendedGradeAdjustment: number; // -1 = go lower, 0 = same, +1 = go higher
+  reasoning: string;
 }
 
-// Extract opponent names from activity names - UPDATED TO HANDLE ACTUAL FORMAT
+// Get unique opponents from activities
 export const getOpponents = (activities: Activity[]): string[] => {
-  console.log('getOpponents called with activities:', activities.length);
-  const opponents = new Set<string>();
+  const opponentSet = new Set<string>();
   
-  activities
-    .filter(a => a.type === 'match' && a.name)
-    .forEach(activity => {
-      console.log('Checking activity name:', activity.name);
-      
-      // Handle format like "Hässleholms IF - FK Finja" or "FK Finja - Hässleholms IF"
-      const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
-      const match = activity.name.match(dashPattern);
-      
-      if (match && match[1] && match[2]) {
-        const team1 = match[1].trim();
-        const team2 = match[2].trim();
-        
-        console.log('Found teams:', team1, 'vs', team2);
-        
-        // Check which team is NOT Hässleholms IF (or variations)
-        const hassleholmsVariations = [
-          'Hässleholms IF',
-          'Hässleholms IF Vit', 
-          'Hässleholms IF Svart',
-          'Hässleholms IF vit',
-          'Hässleholms IF svart'
-        ];
-        
-        const isTeam1Hassleholms = hassleholmsVariations.some(variation => 
-          team1.toLowerCase().includes(variation.toLowerCase())
-        );
-        const isTeam2Hassleholms = hassleholmsVariations.some(variation => 
-          team2.toLowerCase().includes(variation.toLowerCase())
-        );
-        
-        if (isTeam1Hassleholms && !isTeam2Hassleholms) {
-          console.log('Found opponent:', team2);
-          opponents.add(team2);
-        } else if (isTeam2Hassleholms && !isTeam1Hassleholms) {
-          console.log('Found opponent:', team1);
-          opponents.add(team1);
-        } else if (!isTeam1Hassleholms && !isTeam2Hassleholms) {
-          // Neither team contains Hässleholms IF, add both as potential opponents
-          console.log('Found potential opponents:', team1, 'and', team2);
-          opponents.add(team1);
-          opponents.add(team2);
-        }
+  activities.forEach(activity => {
+    if (activity.type === 'match' && activity.name) {
+      // Extract opponent name from activity name
+      const parts = activity.name.split(/\s+vs\.?\s+|\s+mot\s+/i);
+      if (parts.length > 1) {
+        // Take the second part as opponent name
+        opponentSet.add(parts[1].trim());
+      } else {
+        // If no "vs" or "mot" pattern, just use the whole name
+        opponentSet.add(activity.name.trim());
       }
-    });
-  
-  const result = Array.from(opponents).sort();
-  console.log('Final opponents list:', result);
-  return result;
-};
-
-// Extract opponent name from activity name - UPDATED TO HANDLE ACTUAL FORMAT
-const extractOpponentFromActivity = (activity: Activity): string | null => {
-  if (!activity.name) return null;
-  
-  // Handle format like "Hässleholms IF - FK Finja" or "FK Finja - Hässleholms IF"
-  const dashPattern = /^(.+?)\s*-\s*(.+?)$/;
-  const match = activity.name.match(dashPattern);
-  
-  if (match && match[1] && match[2]) {
-    const team1 = match[1].trim();
-    const team2 = match[2].trim();
-    
-    // Check which team is NOT Hässleholms IF (or variations)
-    const hassleholmsVariations = [
-      'Hässleholms IF',
-      'Hässleholms IF Vit', 
-      'Hässleholms IF Svart',
-      'Hässleholms IF vit',
-      'Hässleholms IF svart'
-    ];
-    
-    const isTeam1Hassleholms = hassleholmsVariations.some(variation => 
-      team1.toLowerCase().includes(variation.toLowerCase())
-    );
-    const isTeam2Hassleholms = hassleholmsVariations.some(variation => 
-      team2.toLowerCase().includes(variation.toLowerCase())
-    );
-    
-    if (isTeam1Hassleholms && !isTeam2Hassleholms) {
-      return team2;
-    } else if (isTeam2Hassleholms && !isTeam1Hassleholms) {
-      return team1;
     }
-  }
+  });
   
-  return null;
+  return Array.from(opponentSet).sort();
 };
 
-// Analyze historical performance against specific opponent
-export const analyzeOpponentHistory = (
-  activities: Activity[], 
-  opponentName: string
-): OpponentAnalysis => {
-  const opponentMatches = activities.filter(
-    a => a.type === 'match' && extractOpponentFromActivity(a) === opponentName
+// Analyze opponent match history
+export const analyzeOpponentHistory = (activities: Activity[], opponent: string): OpponentAnalysis => {
+  // Find all matches against this opponent
+  const opponentMatches = activities.filter(activity => 
+    activity.type === 'match' && 
+    activity.name.toLowerCase().includes(opponent.toLowerCase())
   );
   
   if (opponentMatches.length === 0) {
     return {
-      opponentName,
       totalMatches: 0,
       wins: 0,
-      draws: 0,
       losses: 0,
+      draws: 0,
       winRate: 0,
-      averageGoalsFor: 0,
-      averageGoalsAgainst: 0,
       averageGoalDifference: 0,
       goalDifferenceRange: { min: 0, max: 0, variance: 0 },
       recentForm: []
     };
   }
   
-  let wins = 0;
-  let draws = 0;
-  let losses = 0;
-  let totalGoalsFor = 0;
-  let totalGoalsAgainst = 0;
-  const goalDifferences: number[] = [];
-  const recentForm: Array<{ date: string; result: 'W' | 'D' | 'L'; goalDifference: number }> = [];
+  // Sort by date (newest first)
+  const sortedMatches = [...opponentMatches].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   
-  opponentMatches.forEach(match => {
-    if (match.homeScore !== undefined && match.awayScore !== undefined) {
-      // Determine if Hässleholms IF is playing at home based on activity name
-      const isHome = isHassleholmsPlayingHome(match);
-      
-      const ourScore = isHome ? match.homeScore : match.awayScore;
-      const theirScore = isHome ? match.awayScore : match.homeScore;
-      const goalDiff = ourScore - theirScore;
-      
-      totalGoalsFor += ourScore;
-      totalGoalsAgainst += theirScore;
-      goalDifferences.push(goalDiff);
-      
-      let result: 'W' | 'D' | 'L';
-      if (goalDiff > 0) {
+  // Calculate stats
+  let wins = 0;
+  let losses = 0;
+  let draws = 0;
+  const goalDifferences: number[] = [];
+  
+  sortedMatches.forEach(match => {
+    let goalDifference = 0;
+    let result: 'W' | 'D' | 'L' = 'D';
+    
+    // Determine result and goal difference
+    if (match.isWin === true) {
+      wins++;
+      result = 'W';
+      goalDifference = match.homeScore && match.awayScore ? 
+        match.homeScore - match.awayScore : 1;
+    } else if (match.isWin === false) {
+      // Check if it's a draw by comparing scores
+      if (match.homeScore !== undefined && match.awayScore !== undefined) {
+        if (match.homeScore === match.awayScore) {
+          draws++;
+          result = 'D';
+          goalDifference = 0;
+        } else {
+          losses++;
+          result = 'L';
+          goalDifference = match.homeScore - match.awayScore;
+        }
+      } else {
+        losses++;
+        result = 'L';
+        goalDifference = -1;
+      }
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      goalDifference = match.homeScore - match.awayScore;
+      if (goalDifference > 0) {
         wins++;
         result = 'W';
-      } else if (goalDiff < 0) {
+      } else if (goalDifference < 0) {
         losses++;
         result = 'L';
       } else {
         draws++;
         result = 'D';
       }
+    }
+    
+    goalDifferences.push(goalDifference);
+  });
+  
+  // Calculate average goal difference
+  const averageGoalDifference = goalDifferences.length > 0 ?
+    goalDifferences.reduce((sum, diff) => sum + diff, 0) / goalDifferences.length : 0;
+  
+  // Calculate variance
+  const variance = goalDifferences.length > 0 ?
+    goalDifferences.reduce((sum, diff) => sum + Math.pow(diff - averageGoalDifference, 2), 0) / goalDifferences.length : 0;
+  
+  // Get min and max goal differences
+  const minGoalDiff = Math.min(...(goalDifferences.length > 0 ? goalDifferences : [0]));
+  const maxGoalDiff = Math.max(...(goalDifferences.length > 0 ? goalDifferences : [0]));
+  
+  // Get recent form (last 5 matches)
+  const recentForm = sortedMatches.slice(0, 5).map(match => {
+    let result: 'W' | 'D' | 'L' = 'D';
+    let goalDifference = 0;
+    
+    if (match.isWin === true) {
+      result = 'W';
+      goalDifference = match.homeScore && match.awayScore ? 
+        match.homeScore - match.awayScore : 1;
+    } else if (match.isWin === false) {
+      if (match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore === match.awayScore) {
+        result = 'D';
+        goalDifference = 0;
+      } else {
+        result = 'L';
+        goalDifference = match.homeScore && match.awayScore ? 
+          match.homeScore - match.awayScore : -1;
+      }
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      goalDifference = match.homeScore - match.awayScore;
+      result = goalDifference > 0 ? 'W' : goalDifference < 0 ? 'L' : 'D';
+    }
+    
+    return {
+      date: new Date(match.date).toLocaleDateString('sv-SE'),
+      result,
+      goalDifference
+    };
+  });
+  
+  return {
+    totalMatches: opponentMatches.length,
+    wins,
+    losses,
+    draws,
+    winRate: (wins / opponentMatches.length) * 100,
+    averageGoalDifference,
+    goalDifferenceRange: {
+      min: minGoalDiff,
+      max: maxGoalDiff,
+      variance
+    },
+    recentForm
+  };
+};
+
+// Get positions for a formation
+export const getFormationPositions = (formation: string): string[] => {
+  // Default formation is 2-3-1
+  const defaultPositions = ['Goalkeeper', 'RightBack', 'LeftBack', 'RightMid', 'CenterMid', 'LeftMid', 'Forward'];
+  
+  switch (formation) {
+    case '2-3-1':
+      return defaultPositions;
+    case '3-2-1':
+      return ['Goalkeeper', 'RightBack', 'CenterBack', 'LeftBack', 'RightMid', 'LeftMid', 'Forward'];
+    case '2-2-2':
+      return ['Goalkeeper', 'RightBack', 'LeftBack', 'RightMid', 'LeftMid', 'RightForward', 'LeftForward'];
+    case '3-3':
+      return ['Goalkeeper', 'RightBack', 'CenterBack', 'LeftBack', 'RightMid', 'CenterMid', 'LeftMid'];
+    case '2-1-3':
+      return ['Goalkeeper', 'RightBack', 'LeftBack', 'CenterMid', 'RightForward', 'CenterForward', 'LeftForward'];
+    default:
+      return defaultPositions;
+  }
+};
+
+// Calculate compatibility between players
+export const calculatePlayerCompatibility = (
+  player1: Player,
+  player2: Player,
+  activities: Activity[]
+): number => {
+  // Find activities where both players participated
+  const sharedActivities = activities.filter(activity => 
+    activity.participants?.includes(player1.id) && 
+    activity.participants?.includes(player2.id)
+  );
+  
+  if (sharedActivities.length === 0) {
+    return 0.5; // Neutral compatibility if no shared activities
+  }
+  
+  // Calculate win rate in shared activities
+  const wins = sharedActivities.filter(activity => activity.isWin === true).length;
+  const winRate = wins / sharedActivities.length;
+  
+  // Calculate compatibility score (0-1)
+  const baseCompatibility = winRate;
+  
+  // Bonus for playing together frequently
+  const frequencyBonus = Math.min(0.2, sharedActivities.length / 10);
+  
+  // Bonus for complementary positions
+  const positionBonus = arePositionsComplementary(player1.positions, player2.positions) ? 0.1 : 0;
+  
+  return Math.min(1, baseCompatibility + frequencyBonus + positionBonus);
+};
+
+// Check if positions are complementary
+const arePositionsComplementary = (
+  positions1: string[] | undefined, 
+  positions2: string[] | undefined
+): boolean => {
+  if (!positions1 || !positions2) return false;
+  
+  const defensePositions = ['Goalkeeper', 'RightBack', 'CenterBack', 'LeftBack'];
+  const offensePositions = ['RightForward', 'CenterForward', 'LeftForward', 'Forward'];
+  
+  const isPlayer1Defense = positions1.some(pos => defensePositions.includes(pos));
+  const isPlayer2Defense = positions2.some(pos => defensePositions.includes(pos));
+  
+  const isPlayer1Offense = positions1.some(pos => offensePositions.includes(pos));
+  const isPlayer2Offense = positions2.some(pos => offensePositions.includes(pos));
+  
+  // Complementary if one is defense and one is offense
+  return (isPlayer1Defense && isPlayer2Offense) || (isPlayer1Offense && isPlayer2Defense);
+};
+
+// Find the best combination of players for positions
+export const findBestCombination = (
+  players: Player[],
+  positions: string[],
+  scorePlayerFn: (player: Player, position: string) => number
+): LineupSuggestion => {
+  // Map to store best player for each position
+  const bestPlayers: Record<string, { player: Player; score: number; reasoning: string }> = {};
+  
+  // Map to store bench players
+  const benchPlayers: { player: Player; score: number; position: string; reasoning: string }[] = [];
+  
+  // For each position, find the best player
+  positions.forEach(position => {
+    let bestScore = -1;
+    let bestPlayer: Player | null = null;
+    
+    players.forEach(player => {
+      // Skip players already assigned to a position
+      if (Object.values(bestPlayers).some(bp => bp.player.id === player.id)) {
+        return;
+      }
       
-      recentForm.push({
-        date: match.date,
-        result,
-        goalDifference: goalDiff
+      const score = scorePlayerFn(player, position);
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestPlayer = player;
+      }
+    });
+    
+    if (bestPlayer) {
+      // Generate reasoning for this selection
+      const reasoning = `Bäst lämpad för ${position} baserat på position och prestanda`;
+      
+      bestPlayers[position] = {
+        player: bestPlayer,
+        score: bestScore,
+        reasoning
+      };
+    }
+  });
+  
+  // Find bench players (next best players not in starting lineup)
+  const startingPlayerIds = Object.values(bestPlayers).map(bp => bp.player.id);
+  const availablePlayers = players.filter(p => !startingPlayerIds.includes(p.id));
+  
+  // For each available player, find their best position
+  availablePlayers.forEach(player => {
+    let bestPositionScore = -1;
+    let bestPosition = '';
+    
+    positions.forEach(position => {
+      const score = scorePlayerFn(player, position);
+      if (score > bestPositionScore) {
+        bestPositionScore = score;
+        bestPosition = position;
+      }
+    });
+    
+    if (bestPosition) {
+      const reasoning = `Backup för ${bestPosition}`;
+      
+      benchPlayers.push({
+        player,
+        score: bestPositionScore,
+        position: bestPosition,
+        reasoning
       });
     }
   });
   
-  // Sort recent form by date (most recent first)
-  recentForm.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Sort bench players by score
+  benchPlayers.sort((a, b) => b.score - a.score);
   
-  // Calculate variance in goal differences
-  const avgGoalDiff = goalDifferences.length > 0 
-    ? goalDifferences.reduce((sum, diff) => sum + diff, 0) / goalDifferences.length 
-    : 0;
-    
-  const variance = goalDifferences.length > 0
-    ? goalDifferences.reduce((sum, diff) => sum + Math.pow(diff - avgGoalDiff, 2), 0) / goalDifferences.length
-    : 0;
+  // Calculate total efficiency
+  const totalEfficiency = Object.values(bestPlayers)
+    .reduce((sum, bp) => sum + bp.score, 0) / positions.length;
   
-  return {
-    opponentName,
-    totalMatches: opponentMatches.length,
-    wins,
-    draws,
-    losses,
-    winRate: opponentMatches.length > 0 ? (wins / opponentMatches.length) * 100 : 0,
-    averageGoalsFor: opponentMatches.length > 0 ? totalGoalsFor / opponentMatches.length : 0,
-    averageGoalsAgainst: opponentMatches.length > 0 ? totalGoalsAgainst / opponentMatches.length : 0,
-    averageGoalDifference: avgGoalDiff,
-    goalDifferenceRange: {
-      min: goalDifferences.length > 0 ? Math.min(...goalDifferences) : 0,
-      max: goalDifferences.length > 0 ? Math.max(...goalDifferences) : 0,
-      variance: Math.round(variance * 100) / 100
-    },
-    recentForm: recentForm.slice(0, 5) // Last 5 matches
+  // Calculate expected win rate based on efficiency
+  const expectedWinRate = Math.min(95, Math.round(totalEfficiency * 70 + 30));
+  
+  // Calculate confidence based on data availability
+  const confidence = Math.min(90, Math.round(totalEfficiency * 50 + 40));
+  
+  // Create result object
+  const result: LineupSuggestion = {
+    players: Object.entries(bestPlayers).map(([position, data]) => ({
+      playerId: data.player.id,
+      playerName: data.player.name,
+      position,
+      reasoning: data.reasoning
+    })),
+    benchPlayers: benchPlayers.slice(0, 5).map(bp => ({
+      playerId: bp.player.id,
+      playerName: bp.player.name,
+      position: bp.position,
+      reasoning: bp.reasoning
+    })),
+    formation: positions.length === 7 ? '2-3-1' : `${positions.length}-?`,
+    totalEfficiency,
+    expectedWinRate,
+    confidence,
+    reasoning: [
+      `Lineup optimerad för maximal prestanda`,
+      `Förväntad vinstchans: ${expectedWinRate}%`,
+      `Baserat på spelarnas positioner och historiska prestanda`,
+      `Totalt ${positions.length} spelare i startelvan`
+    ]
   };
+  
+  return result;
 };
 
-// Calculate rotation score based on recent play with configurable strength
-const calculateRotationScore = (
-  player: Player, 
-  stats: PlayerActivityStats | undefined, 
-  rotationStrength: number = 100
-): { score: number; details: string } => {
-  if (!stats) {
-    return { score: 0, details: "Ingen matchhistorik" };
+// Enhanced function to analyze opponent's historical data and suggest grade adjustments
+export const analyzeOpponentGradeHistory = (
+  activities: Activity[],
+  opponent: string,
+  players: Player[]
+): OpponentHistoricalAnalysis => {
+  // Find all matches against this opponent
+  const opponentMatches = activities
+    .filter(activity => 
+      activity.type === 'match' && 
+      activity.name.toLowerCase().includes(opponent.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (opponentMatches.length === 0) {
+    return {
+      averageGrade: 2.5, // Default B/C level
+      gradeDistribution: {},
+      lastMatchResult: null,
+      recommendedGradeAdjustment: 0,
+      reasoning: "Ingen tidigare data mot detta lag - använder standardnivå"
+    };
   }
-  
-  let rotationScore = 0;
-  let details = "";
-  
-  // Check days since last played with CORRECTED calculation
-  if (stats.lastPlayedDate) {
-    const lastPlayedDate = new Date(stats.lastPlayedDate);
-    const now = new Date();
-    const daysSinceLastPlayed = Math.floor((now.getTime() - lastPlayedDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Helper function to convert grade to numeric value
+  const gradeToNumber = (grade: string): number => {
+    switch (grade?.toUpperCase()) {
+      case 'A': return 4;
+      case 'B': return 3;
+      case 'C': return 2;
+      case 'D': return 1;
+      default: return 2.5;
+    }
+  };
+
+  // Helper function to convert numeric value back to grade
+  const numberToGrade = (num: number): string => {
+    if (num >= 3.5) return 'A';
+    if (num >= 2.5) return 'B';
+    if (num >= 1.5) return 'C';
+    return 'D';
+  };
+
+  // Analyze the last match for specific recommendations
+  const lastMatch = opponentMatches[0];
+  let lastMatchResult = null;
+  let recommendedGradeAdjustment = 0;
+  let reasoning = "";
+
+  if (lastMatch && lastMatch.participants) {
+    // Calculate average grade of our players in the last match
+    const lastMatchPlayers = players.filter(p => 
+      lastMatch.participants?.includes(p.id)
+    );
     
-    if (daysSinceLastPlayed <= 0) {
-      rotationScore = -40; // Played today
-      details = `Spelade idag - stark nedprioritering`;
-    } else if (daysSinceLastPlayed === 1) {
-      rotationScore = -30; // Played yesterday  
-      details = `Spelade igår (${daysSinceLastPlayed} dag sedan) - nedprioritering`;
-    } else if (daysSinceLastPlayed === 2) {
-      rotationScore = -15; // Played 2 days ago
-      details = `Spelade förrgår (${daysSinceLastPlayed} dagar sedan) - mindre nedprioritering`;
-    } else if (daysSinceLastPlayed <= 4) {
-      rotationScore = 0; // Neutral
-      details = `Spelade för ${daysSinceLastPlayed} dagar sedan - neutral`;
-    } else if (daysSinceLastPlayed <= 6) {
-      rotationScore = 10; // Could use some play
-      details = `Spelade för ${daysSinceLastPlayed} dagar sedan - behöver speltid`;
+    const lastMatchGrades = lastMatchPlayers.map(p => gradeToNumber(p.grade));
+    const ourLastGrade = lastMatchGrades.length > 0 
+      ? lastMatchGrades.reduce((a, b) => a + b, 0) / lastMatchGrades.length 
+      : 2.5;
+
+    // Determine goal difference and result
+    let goalDifference = 0;
+    let wasWin = false;
+
+    if (lastMatch.homeScore !== undefined && lastMatch.awayScore !== undefined) {
+      goalDifference = lastMatch.homeScore - lastMatch.awayScore;
+      wasWin = goalDifference > 0;
+    } else if (lastMatch.isWin !== undefined) {
+      wasWin = lastMatch.isWin;
+      // Estimate goal difference from result text if available
+      if (lastMatch.result) {
+        const scoreMatch = lastMatch.result.match(/(\d+)-(\d+)/);
+        if (scoreMatch) {
+          goalDifference = parseInt(scoreMatch[1]) - parseInt(scoreMatch[2]);
+        }
+      }
+    }
+
+    lastMatchResult = {
+      goalDifference,
+      ourGrade: ourLastGrade,
+      wasWin
+    };
+
+    // Smart grade adjustment logic
+    if (wasWin && Math.abs(goalDifference) >= 5) {
+      // Won by large margin - suggest lower grade for more even match
+      recommendedGradeAdjustment = -1;
+      reasoning = `Förra matchen vann vi med ${goalDifference} mål med nivå ${numberToGrade(ourLastGrade)}-snitt. Föreslår lägre nivå för jämnare match.`;
+    } else if (wasWin && Math.abs(goalDifference) <= 2) {
+      // Won narrowly - keep similar or slightly higher
+      recommendedGradeAdjustment = 0;
+      reasoning = `Förra matchen vann vi knappt (${goalDifference} mål) med nivå ${numberToGrade(ourLastGrade)}-snitt. Behåller liknande nivå.`;
+    } else if (!wasWin) {
+      // Lost - suggest higher grade for better chances
+      recommendedGradeAdjustment = 1;
+      reasoning = `Förra matchen förlorade vi med ${Math.abs(goalDifference)} mål med nivå ${numberToGrade(ourLastGrade)}-snitt. Föreslår högre nivå för säkrare vinst.`;
     } else {
-      rotationScore = 20; // Needs play time
-      details = `Spelade för ${daysSinceLastPlayed} dagar sedan - behöver verkligen speltid`;
+      // Moderate win - keep similar level
+      recommendedGradeAdjustment = 0;
+      reasoning = `Förra matchen vann vi med ${goalDifference} mål med nivå ${numberToGrade(ourLastGrade)}-snitt. Behåller liknande nivå.`;
     }
   }
-  
-  // Additional penalty for playing many recent matches
-  if (stats.recentMatches >= 4) {
-    rotationScore -= 10;
-    details += ` + ${stats.recentMatches} av 5 senaste matcher - extra vila behövs`;
-  } else if (stats.recentMatches >= 3) {
-    rotationScore -= 5;
-    details += ` + ${stats.recentMatches} av 5 senaste matcher - mindre vila behövs`;
-  } else if (stats.recentMatches <= 1) {
-    rotationScore += 5;
-    details += ` + endast ${stats.recentMatches} av 5 senaste matcher - extra bonus`;
-  }
-  
-  // Apply rotation strength multiplier
-  const finalScore = rotationScore * (rotationStrength / 100);
-  
-  return { 
-    score: finalScore, 
-    details: `${details} (${rotationScore}→${finalScore.toFixed(1)} med ${rotationStrength}% rotationsstyrka)`
+
+  // Calculate overall historical grade distribution
+  const allGrades: number[] = [];
+  const gradeDistribution: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
+
+  opponentMatches.forEach(match => {
+    if (match.participants) {
+      const matchPlayers = players.filter(p => match.participants?.includes(p.id));
+      matchPlayers.forEach(player => {
+        const gradeNum = gradeToNumber(player.grade);
+        allGrades.push(gradeNum);
+        gradeDistribution[player.grade || 'C']++;
+      });
+    }
+  });
+
+  const averageGrade = allGrades.length > 0 
+    ? allGrades.reduce((a, b) => a + b, 0) / allGrades.length 
+    : 2.5;
+
+  return {
+    averageGrade,
+    gradeDistribution,
+    lastMatchResult,
+    recommendedGradeAdjustment,
+    reasoning: reasoning || `Historiskt snitt mot detta lag: nivå ${numberToGrade(averageGrade)}`
   };
 };
 
-// ENHANCED: Suggest lineup optimized for balanced/close matches with SOFT rotation logic
+// Enhanced balanced lineup suggestion with grade-based strategy
 export const suggestBalancedLineup = (
   players: Player[],
   activities: Activity[],
-  opponentName: string,
-  formation: string = "2-3-1",
-  targetGoalDifference: number = 1, // Target narrow win
+  opponent: string,
+  formation: string,
+  targetGoalDifference: number = 2,
   prioritizeNewPlayers: boolean = false,
-  rotationStrength: number = 70 // New parameter: 0-100% rotation strength
+  rotationStrength: number = 70
 ): BalancedLineupSuggestion => {
-  console.log("🎯 Starting balanced lineup with SOFT rotation logic", {
-    opponentName,
-    formation,
-    targetGoalDifference,
-    prioritizeNewPlayers,
-    rotationStrength
-  });
+  // Get opponent analysis including grade recommendations
+  const opponentAnalysis = analyzeOpponentGradeHistory(activities, opponent, players);
   
-  // Filter out inactive players from balanced lineup suggestions
-  const activePlayers = filterActivePlayers(players);
-  console.log(`Using ${activePlayers.length} active players for balanced lineup (${players.length - activePlayers.length} inactive players excluded)`);
+  // Get formation positions
+  const positions = getFormationPositions(formation);
   
-  const opponentAnalysis = analyzeOpponentHistory(activities, opponentName);
-  const combinations = analyzePairCombinations(activePlayers, activities);
-  const matrix = createCombinationMatrix(activePlayers, combinations);
+  // Filter active players only
+  const activePlayers = players.filter(player => player.isActive !== false);
   
-  // Use the new detailed player activity frequency calculation
-  const playerFrequency = calculateDetailedPlayerActivityFrequency(activePlayers, activities, 5);
+  // Calculate activity frequency for rotation
+  const activityStats = calculateDetailedPlayerActivityFrequency(activePlayers, activities);
   
-  // Define position requirements
-  const formationRequirements: Record<string, string[]> = {
-    "2-3-1": ["MV", "BACK", "BACK", "MF", "MF", "MF", "ANF"],
-    "3-2-1": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "ANF"],
-    "2-2-2": ["MV", "BACK", "BACK", "MF", "MF", "ANF", "ANF"]
-  };
-  
-  const requiredPositions = formationRequirements[formation] || formationRequirements["2-3-1"];
-  
-  // Get active players by position (NO HARD FILTER - all active players available)
-  const playersByPosition: Record<string, Player[]> = {};
-  requiredPositions.forEach(pos => {
-    playersByPosition[pos] = activePlayers.filter(p => 
-      p.positions?.includes(pos as any) && !p.positions?.includes('TRÄNARE')
-    );
-  });
-  
-  const selectedPlayers: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[] = [];
-  
-  const usedPlayerIds = new Set<string>();
-  
-  // SOFT rotation selection with point-based prioritization
-  requiredPositions.forEach(position => {
-    const availablePlayers = playersByPosition[position]?.filter(p => !usedPlayerIds.has(p.id)) || [];
+  // Helper function to convert grade to numeric value with strategic adjustment
+  const gradeToNumber = (grade: string): number => {
+    const baseValue = {
+      'A': 4,
+      'B': 3, 
+      'C': 2,
+      'D': 1
+    }[grade?.toUpperCase()] || 2;
     
-    if (availablePlayers.length === 0) {
-      // Fallback player
-      const fallbackPlayer = activePlayers.find(p => !usedPlayerIds.has(p.id) && !p.positions?.includes('TRÄNARE'));
-      if (fallbackPlayer) {
-        selectedPlayers.push({
-          playerId: fallbackPlayer.id,
-          playerName: fallbackPlayer.name,
-          position,
-          reasoning: "Backup - ingen specialist tillgänglig"
-        });
-        usedPlayerIds.add(fallbackPlayer.id);
-      }
-      return;
+    // Apply strategic adjustment based on opponent history
+    return baseValue + (opponentAnalysis.recommendedGradeAdjustment * 0.5);
+  };
+
+  // Enhanced player scoring with grade strategy
+  const scorePlayer = (player: Player, position: string): number => {
+    let score = 0;
+    
+    // Base grade score with strategic adjustment
+    const gradeScore = gradeToNumber(player.grade || 'C') * 3;
+    score += gradeScore;
+    
+    // Position compatibility
+    if (player.positions?.includes(position)) {
+      score += 8;
+    } else if (player.positions?.some(pos => 
+      (position.includes('Back') && pos.includes('Back')) ||
+      (position.includes('Mid') && pos.includes('Mid')) ||
+      (position.includes('Forward') && pos.includes('Forward'))
+    )) {
+      score += 4;
     }
     
-    // Score players with SOFT rotation logic
-    const scoredPlayers = availablePlayers.map(player => {
-      let totalScore = 0;
-      const stats = playerFrequency[player.id];
-      const scoreBreakdown: string[] = [];
-      
-      // 1. ROTATION SCORE (primary factor based on strength setting)
-      const rotationResult = calculateRotationScore(player, stats, rotationStrength);
-      totalScore += rotationResult.score;
-      scoreBreakdown.push(`Rotation: ${rotationResult.score.toFixed(1)} (${rotationResult.details})`);
-      
-      // 2. NEW PLAYER PRIORITIZATION
-      if (prioritizeNewPlayers) {
-        const playerOpponentMatches = activities.filter(a => 
-          a.type === 'match' && 
-          extractOpponentFromActivity(a) === opponentName && 
-          a.participants?.includes(player.id)
-        );
-        
-        if (playerOpponentMatches.length === 0) {
-          const newPlayerBonus = targetGoalDifference <= 1 ? 8 : 5;
-          totalScore += newPlayerBonus;
-          scoreBreakdown.push(`Ny mot detta lag: +${newPlayerBonus}`);
-        }
-      }
-      
-      // 3. GOAL DIFFERENCE MATCHING (enhanced logic)
-      const playerOpponentMatches = activities.filter(a => 
-        a.type === 'match' && 
-        extractOpponentFromActivity(a) === opponentName && 
-        a.participants?.includes(player.id)
+    // Historical performance against this opponent
+    const playerOpponentMatches = activities.filter(activity =>
+      activity.type === 'match' &&
+      activity.name.toLowerCase().includes(opponent.toLowerCase()) &&
+      activity.participants?.includes(player.id)
+    );
+    
+    if (playerOpponentMatches.length > 0) {
+      const wins = playerOpponentMatches.filter(match => match.isWin === true).length;
+      const winRate = wins / playerOpponentMatches.length;
+      score += winRate * 4; // Bonus for players who've performed well against this opponent
+    } else if (prioritizeNewPlayers) {
+      score += 3; // Bonus for players who haven't faced this opponent
+    }
+    
+    // Rest/rotation factor (scaled by rotationStrength parameter)
+    const playerStats = activityStats[player.id];
+    if (playerStats) {
+      const restBonus = (1 - playerStats.restFactor) * (rotationStrength / 100) * 4;
+      score += restBonus;
+    }
+    
+    return score;
+  };
+
+  const suggestion = findBestCombination(activePlayers, positions, scorePlayer);
+  
+  // Enhanced reasoning with opponent-specific strategy
+  const reasoning = [
+    opponentAnalysis.reasoning,
+    `Formation: ${formation} med ${suggestion.players.length} spelare`,
+    `Målet är ${targetGoalDifference} måls vinst för balanserad match`,
+    rotationStrength > 50 
+      ? `Prioriterar vila (${rotationStrength}% viktning)`
+      : `Fokuserar på prestanda (${rotationStrength}% viktning)`,
+    prioritizeNewPlayers 
+      ? "Prioriterar spelare som inte mött detta lag tidigare"
+      : "Baserat på historisk prestanda mot motståndaren"
+  ];
+
+  // Calculate expected goal difference based on grade adjustment
+  const baseExpectedDifference = targetGoalDifference;
+  const adjustedExpectedDifference = baseExpectedDifference + (opponentAnalysis.recommendedGradeAdjustment * 1.5);
+
+  return {
+    ...suggestion,
+    expectedGoalDifference: Math.max(0.5, adjustedExpectedDifference),
+    reasoning,
+    opponentAnalysis, // Add this for display in UI
+    confidence: suggestion.confidence * (opponentAnalysis.lastMatchResult ? 1.1 : 0.9), // Higher confidence if we have historical data
+    balanceScore: 70 // Default balance score
+  };
+};
+
+// Enhanced optimal lineup with opponent awareness
+export const suggestOptimalLineup = (
+  players: Player[],
+  activities: Activity[],
+  formation: string,
+  opponent?: string
+): LineupSuggestion => {
+  // Get formation positions
+  const positions = getFormationPositions(formation);
+  
+  // Filter active players only
+  const activePlayers = players.filter(player => player.isActive !== false);
+  
+  // Calculate activity frequency for rotation
+  const activityStats = calculateDetailedPlayerActivityFrequency(activePlayers, activities);
+  
+  // Get opponent analysis if opponent is specified
+  const opponentAnalysis = opponent ? analyzeOpponentGradeHistory(activities, opponent, players) : null;
+  
+  // Enhanced player scoring with opponent-specific adjustments
+  const scorePlayer = (player: Player, position: string): number => {
+    let score = 0;
+    
+    // Base grade score with potential strategic adjustment
+    let gradeMultiplier = 1;
+    if (opponentAnalysis) {
+      gradeMultiplier += opponentAnalysis.recommendedGradeAdjustment * 0.3;
+    }
+    
+    const gradeScore = ({
+      'A': 15,
+      'B': 10,
+      'C': 5,
+      'D': 0
+    }[player.grade?.toUpperCase()] || 5) * gradeMultiplier;
+    
+    score += gradeScore;
+    
+    // Position compatibility
+    if (player.positions?.includes(position)) {
+      score += 10;
+    } else if (player.positions?.some(pos => 
+      (position.includes('Back') && pos.includes('Back')) ||
+      (position.includes('Mid') && pos.includes('Mid')) ||
+      (position.includes('Forward') && pos.includes('Forward'))
+    )) {
+      score += 5;
+    }
+    
+    // Historical performance
+    const playerMatches = activities.filter(activity =>
+      activity.type === 'match' &&
+      activity.participants?.includes(player.id)
+    );
+    
+    if (playerMatches.length > 0) {
+      const wins = playerMatches.filter(match => match.isWin === true).length;
+      const winRate = wins / playerMatches.length;
+      score += winRate * 5;
+    }
+    
+    // Opponent-specific performance if opponent is specified
+    if (opponent) {
+      const playerOpponentMatches = activities.filter(activity =>
+        activity.type === 'match' &&
+        activity.name.toLowerCase().includes(opponent.toLowerCase()) &&
+        activity.participants?.includes(player.id)
       );
       
       if (playerOpponentMatches.length > 0) {
-        let playerGoalDiffs: number[] = [];
-        
-        playerOpponentMatches.forEach(match => {
-          if (match.homeScore !== undefined && match.awayScore !== undefined) {
-            const isHome = isHassleholmsPlayingHome(match);
-            const ourScore = isHome ? match.homeScore : match.awayScore;
-            const theirScore = isHome ? match.awayScore : match.homeScore;
-            playerGoalDiffs.push(ourScore - theirScore);
-          }
-        });
-        
-        if (playerGoalDiffs.length > 0) {
-          const avgDiff = playerGoalDiffs.reduce((sum, diff) => sum + diff, 0) / playerGoalDiffs.length;
-          const diffFromTarget = Math.abs(avgDiff - targetGoalDifference);
-          const goalDifferenceBonus = Math.max(0, 5 - (diffFromTarget * 2)); // Max 5 points
-          totalScore += goalDifferenceBonus;
-          scoreBreakdown.push(`Målskillnadsmatch: +${goalDifferenceBonus.toFixed(1)} (historisk: ${avgDiff.toFixed(1)}, mål: ${targetGoalDifference})`);
-        }
+        const wins = playerOpponentMatches.filter(match => match.isWin === true).length;
+        const winRate = wins / playerOpponentMatches.length;
+        score += winRate * 8; // Higher bonus for opponent-specific performance
       }
-      
-      // 4. POSITION EXPERTISE (small bonus)
-      if (player.positions?.[0] === position) {
-        totalScore += 3;
-        scoreBreakdown.push(`Primärposition: +3`);
-      }
-      
-      // 5. GRADE BONUS (small impact)
-      const gradeBonus = { 'A': 2, 'B': 1.5, 'C': 1, 'D': 0.5 };
-      const bonus = gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
-      totalScore += bonus;
-      scoreBreakdown.push(`Betyg ${player.grade}: +${bonus}`);
-      
-      // 6. COMBINATION SYNERGY (minimal impact)
-      let combinationBonus = 0;
-      selectedPlayers.forEach(selected => {
-        const combination = matrix[player.id]?.[selected.playerId];
-        if (combination && combination.matchesTogether >= 2) {
-          combinationBonus += combination.efficiency * 0.5; // Very small impact
-        }
-      });
-      if (combinationBonus > 0) {
-        totalScore += combinationBonus;
-        scoreBreakdown.push(`Synergi: +${combinationBonus.toFixed(1)}`);
-      }
-      
-      // Generate detailed reasoning
-      const reasoning = `${player.name}: Total ${totalScore.toFixed(1)} (${scoreBreakdown.join(', ')})`;
-      
-      return {
-        player,
-        totalScore,
-        reasoning: rotationResult.details,
-        scoreBreakdown: scoreBreakdown,
-        detailedReasoning: reasoning
-      };
-    });
+    }
     
-    // Select highest scoring player
-    scoredPlayers.sort((a, b) => b.totalScore - a.totalScore);
-    const bestPlayer = scoredPlayers[0];
+    // Rest factor (less important for optimal lineup)
+    const playerStats = activityStats[player.id];
+    if (playerStats) {
+      const restBonus = (1 - playerStats.restFactor) * 2;
+      score += restBonus;
+    }
     
-    if (bestPlayer) {
-      selectedPlayers.push({
-        playerId: bestPlayer.player.id,
-        playerName: bestPlayer.player.name,
-        position,
-        reasoning: bestPlayer.reasoning
-      });
-      usedPlayerIds.add(bestPlayer.player.id);
-      
-      console.log(`✅ Selected ${bestPlayer.player.name} for ${position}:`, {
-        totalScore: bestPlayer.totalScore.toFixed(1),
-        breakdown: bestPlayer.scoreBreakdown,
-        reasoning: bestPlayer.reasoning
-      });
-      
-      // Log if a recently played player was selected despite soft rotation
-      const stats = playerFrequency[bestPlayer.player.id];
-      if (stats?.lastPlayedDate) {
-        const lastPlayedDate = new Date(stats.lastPlayedDate);
-        const now = new Date();
-        const daysSinceLastPlayed = Math.floor((now.getTime() - lastPlayedDate.getTime()) / (1000 * 60 * 60 * 24));
+    return score;
+  };
+
+  const suggestion = findBestCombination(activePlayers, positions, scorePlayer);
+  
+  // Enhanced reasoning
+  const reasoning = [
+    `Optimal lineup för formation ${formation}`,
+    opponent && opponentAnalysis 
+      ? opponentAnalysis.reasoning
+      : "Baserat på spelarkvalitet och vila",
+    `Totalt ${suggestion.players.length} spelare valda`,
+    "Optimerad för högsta möjliga prestanda"
+  ];
+
+  return {
+    ...suggestion,
+    reasoning
+  };
+};
+
+// Calculate player combinations efficiency
+export const calculateCombinationEfficiency = (
+  players: Player[],
+  activities: Activity[]
+): { combination: string; efficiency: number; matches: number; winRate: number }[] => {
+  // Get all player combinations that have played together
+  const combinations: Record<string, { wins: number; matches: number; players: string[] }> = {};
+  
+  // Filter match activities
+  const matchActivities = activities.filter(activity => activity.type === 'match');
+  
+  // For each match, record player combinations
+  matchActivities.forEach(match => {
+    if (!match.participants || match.participants.length < 2) return;
+    
+    // Get player IDs for this match
+    const playerIds = match.participants;
+    
+    // Generate all possible pairs
+    for (let i = 0; i < playerIds.length; i++) {
+      for (let j = i + 1; j < playerIds.length; j++) {
+        const player1 = playerIds[i];
+        const player2 = playerIds[j];
         
-        if (daysSinceLastPlayed <= 1) {
-          console.warn(`⚠️ Selected recently played player ${bestPlayer.player.name} (${daysSinceLastPlayed} dag sedan) - may need stronger rotation`);
+        // Create a unique key for this pair
+        const key = [player1, player2].sort().join('-');
+        
+        if (!combinations[key]) {
+          combinations[key] = { wins: 0, matches: 0, players: [player1, player2] };
+        }
+        
+        combinations[key].matches++;
+        
+        // Count as win if match was won
+        if (match.isWin === true) {
+          combinations[key].wins++;
         }
       }
     }
   });
-
-  // Select bench players with same SOFT rotation logic
-  const benchPlayers: {
-    playerId: string;
-    playerName: string;
-    position: string;
-    reasoning: string;
-  }[] = [];
-
-  // Get available active players for bench (no goalkeepers, not already selected)
-  let availableBenchPlayers = activePlayers.filter(p => 
-    !usedPlayerIds.has(p.id) && 
-    !p.positions?.includes('TRÄNARE') &&
-    !p.positions?.includes('MV') // No goalkeepers on bench
-  );
-
-  // Score bench players with SOFT rotation logic
-  const scoredBenchPlayers = availableBenchPlayers.map(player => {
-    let benchScore = 0;
-    const stats = playerFrequency[player.id];
-
-    // Apply same rotation logic as starters
-    const rotationResult = calculateRotationScore(player, stats, rotationStrength);
-    benchScore += rotationResult.score;
-
-    // New player bonus for bench
-    if (prioritizeNewPlayers) {
-      const playerOpponentMatches = activities.filter(a => 
-        a.type === 'match' && 
-        extractOpponentFromActivity(a) === opponentName && 
-        a.participants?.includes(player.id)
-      );
-      
-      if (playerOpponentMatches.length === 0) {
-        benchScore += 5;
-      }
-    }
-
-    // Minimal other factors
-    const positionCount = player.positions?.filter(pos => pos !== 'TRÄNARE').length || 1;
-    if (positionCount > 1) {
-      benchScore += 1; // Versatility bonus
-    }
-
-    const gradeBonus = { 'A': 1, 'B': 0.5, 'C': 0.5, 'D': 0 };
-    benchScore += gradeBonus[player.grade as keyof typeof gradeBonus] || 0;
-
+  
+  // Convert to array and calculate efficiency
+  const result = Object.entries(combinations).map(([key, data]) => {
+    const winRate = data.matches > 0 ? (data.wins / data.matches) * 100 : 0;
+    
+    // Get player names
+    const playerNames = data.players.map(id => {
+      const player = players.find(p => p.id === id);
+      return player ? player.name : 'Unknown';
+    });
+    
     return {
-      player,
-      benchScore,
-      reasoning: rotationResult.details
+      combination: playerNames.join(' & '),
+      efficiency: winRate,
+      matches: data.matches,
+      winRate
     };
   });
+  
+  // Sort by efficiency and filter for minimum matches
+  return result
+    .filter(item => item.matches >= 3)
+    .sort((a, b) => b.efficiency - a.efficiency);
+};
 
-  // Select top 2 bench players
-  scoredBenchPlayers.sort((a, b) => b.benchScore - a.benchScore);
-  for (let i = 0; i < Math.min(2, scoredBenchPlayers.length); i++) {
-    const benchPlayer = scoredBenchPlayers[i];
-    benchPlayers.push({
-      playerId: benchPlayer.player.id,
-      playerName: benchPlayer.player.name,
-      position: benchPlayer.player.positions?.[0] || "OKÄND",
-      reasoning: benchPlayer.reasoning
-    });
+// Calculate player synergy matrix
+export const calculatePlayerSynergyMatrix = (
+  players: Player[],
+  activities: Activity[]
+): { player1: string; player2: string; synergy: number; matches: number }[] => {
+  const synergyMatrix: { player1: string; player2: string; synergy: number; matches: number }[] = [];
+  
+  // For each pair of players, calculate synergy
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      const player1 = players[i];
+      const player2 = players[j];
+      
+      const compatibility = calculatePlayerCompatibility(player1, player2, activities);
+      
+      // Find matches where both players participated
+      const sharedMatches = activities.filter(activity => 
+        activity.type === 'match' &&
+        activity.participants?.includes(player1.id) && 
+        activity.participants?.includes(player2.id)
+      );
+      
+      synergyMatrix.push({
+        player1: player1.name,
+        player2: player2.name,
+        synergy: compatibility,
+        matches: sharedMatches.length
+      });
+    }
   }
   
-  // Calculate expected goal difference and balance score
-  const expectedGoalDifference = opponentAnalysis.totalMatches > 0 
-    ? Math.max(0.5, Math.min(2.5, opponentAnalysis.averageGoalDifference + 0.5)) // Slight improvement but capped
-    : targetGoalDifference; // Use target if no history
-    
-  const balanceScore = Math.max(0, 100 - (Math.abs(expectedGoalDifference - targetGoalDifference) * 30));
-  
-  // Determine risk level based on variance
-  let riskLevel: 'low' | 'medium' | 'high' = 'medium';
-  if (opponentAnalysis.goalDifferenceRange.variance < 1) riskLevel = 'low';
-  else if (opponentAnalysis.goalDifferenceRange.variance > 3) riskLevel = 'high';
-  
-  // Generate reasoning with SOFT rotation info
-  const reasoning = [
-    `🔄 MJUK ROTATION: Nyligen spelade spelare får sänkt prioritet (${rotationStrength}% rotationsstyrka)`,
-    `🎯 Optimerad för målskillnad ${targetGoalDifference} mål mot ${opponentName}`,
-    `📊 Historisk genomsnittlig målskillnad: ${opponentAnalysis.averageGoalDifference.toFixed(1)}`,
-    `📈 Förväntad målskillnad: ${expectedGoalDifference.toFixed(1)}`,
-    `⚖️ Balanspoäng: ${balanceScore.toFixed(0)}/100`,
-    `⚠️ Risknivå: ${riskLevel} (baserat på historisk variation)`,
-    `👥 Inkluderar ${benchPlayers.length} bänkspelare (ej målvakter)`,
-    `✅ Använder ${activePlayers.length} aktiva spelare (${players.length - activePlayers.length} inaktiva exkluderade)`
-  ];
-  
-  // Count recently played players who were still selected
-  const recentlyPlayedSelected = selectedPlayers.filter(p => {
-    const freq = playerFrequency[p.playerId];
-    if (!freq?.lastPlayedDate) return false;
-    
-    const lastPlayedDate = new Date(freq.lastPlayedDate);
-    const now = new Date();
-    const daysSinceLastPlayed = Math.floor((now.getTime() - lastPlayedDate.getTime()) / (1000 * 60 * 60 * 24));
-    return daysSinceLastPlayed <= 1;
-  }).length;
-  
-  if (recentlyPlayedSelected > 0) {
-    reasoning.push(`⚠️ ${recentlyPlayedSelected} spelare som spelade senaste 1-2 dagarna valdes ändå - överväg starkare rotation`);
-  }
-  
-  // Count well-rested players selected
-  const wellRestedSelected = selectedPlayers.filter(p => {
-    const freq = playerFrequency[p.playerId];
-    if (!freq?.lastPlayedDate) return true;
-    
-    const lastPlayedDate = new Date(freq.lastPlayedDate);
-    const now = new Date();
-    const daysSinceLastPlayed = Math.floor((now.getTime() - lastPlayedDate.getTime()) / (1000 * 60 * 60 * 24));
-    return daysSinceLastPlayed >= 3;
-  }).length;
-  
-  if (wellRestedSelected > 0) {
-    reasoning.push(`✅ ${wellRestedSelected} spelare som vilat 3+ dagar fick chans`);
-  }
-  
-  if (prioritizeNewPlayers) {
-    const newPlayersSelected = selectedPlayers.filter(p => 
-      activities.filter(a => 
-        a.type === 'match' && 
-        extractOpponentFromActivity(a) === opponentName && 
-        a.participants?.includes(p.playerId)
-      ).length === 0
-    ).length;
-    
-    reasoning.push(`✨ ${newPlayersSelected} spelare får chans mot nytt lag`);
-  }
-  
-  if (opponentAnalysis.totalMatches < 3) {
-    reasoning.push("⚠️ Begränsad historik - förslag baserat på allmän data");
-  }
-  
-  console.log("🎯 SOFT rotation balanced lineup completed", {
-    selectedPlayersCount: selectedPlayers.length,
-    benchPlayersCount: benchPlayers.length,
-    expectedGoalDifference,
-    balanceScore,
-    confidence: Math.min(100, (opponentAnalysis.totalMatches / 5) * 100),
-    recentlyPlayedSelected,
-    wellRestedSelected,
-    rotationStrength
-  });
-  
-  return {
-    formation,
-    players: selectedPlayers,
-    benchPlayers,
-    expectedGoalDifference,
-    balanceScore,
-    confidence: Math.min(100, (opponentAnalysis.totalMatches / 5) * 100),
-    opponentAnalysis,
-    reasoning,
-    riskLevel
-  };
+  // Sort by synergy and filter for minimum matches
+  return synergyMatrix
+    .filter(item => item.matches >= 2)
+    .sort((a, b) => b.synergy - a.synergy);
 };

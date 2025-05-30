@@ -1,14 +1,14 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { RefreshCw, Users, TrendingUp, Target, Info, Lightbulb } from "lucide-react";
+import { RefreshCw, Users, TrendingUp, Target, Info, Lightbulb, Brain } from "lucide-react";
 import { FormationSelector } from "./FormationSelector";
 import { FormationField } from "./FormationField";
-import { suggestOptimalLineup, LineupSuggestion } from "@/utils/playerCombinations";
+import { suggestOptimalLineup, LineupSuggestion, getOpponents, analyzeOpponentGradeHistory } from "@/utils/playerCombinations";
 import { getPositionColor, getPositionLabel } from "./positionUtils";
 
 interface OptimalLineupSuggestionProps {
@@ -23,15 +23,18 @@ export function OptimalLineupSuggestion({
   onPlayerSelect 
 }: OptimalLineupSuggestionProps) {
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
+  const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [suggestion, setSuggestion] = useState<LineupSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const opponents = getOpponents(activities);
 
   const handleGenerateSuggestion = async () => {
     setIsGenerating(true);
     
     // Add small delay for UX
     setTimeout(() => {
-      const newSuggestion = suggestOptimalLineup(players, activities, selectedFormation);
+      const newSuggestion = suggestOptimalLineup(players, activities, selectedFormation, selectedOpponent);
       setSuggestion(newSuggestion);
       setIsGenerating(false);
     }, 500);
@@ -51,6 +54,8 @@ export function OptimalLineupSuggestion({
     return "Mycket låg";
   };
 
+  const gradeAnalysis = selectedOpponent ? analyzeOpponentGradeHistory(activities, selectedOpponent, players) : null;
+
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
@@ -67,17 +72,34 @@ export function OptimalLineupSuggestion({
           </div>
           <p className="text-sm text-blue-700">
             Algoritmen analyserar historiska kombinationer, individuell prestanda och positionssynergi 
-            för att föreslå den optimala startelvan baserat på vald formation.
+            för att föreslå den optimala startelvan. Välj motståndare för smart nivåjustering.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Välj formation</label>
             <FormationSelector 
               selectedFormation={selectedFormation}
               onFormationChange={setSelectedFormation}
             />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2">Motståndare (valfritt)</label>
+            <Select value={selectedOpponent} onValueChange={setSelectedOpponent}>
+              <SelectTrigger>
+                <SelectValue placeholder="Välj motståndare..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Ingen specifik motståndare</SelectItem>
+                {opponents.map((opponent) => (
+                  <SelectItem key={opponent} value={opponent}>
+                    {opponent}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex items-end">
@@ -101,6 +123,39 @@ export function OptimalLineupSuggestion({
           </div>
         </div>
       </div>
+
+      {/* Grade Strategy Analysis (if opponent selected) */}
+      {selectedOpponent && gradeAnalysis && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="h-4 w-4 text-purple-500" />
+              Nivåstrategi mot {selectedOpponent}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-3 border rounded-lg bg-purple-50">
+              <p className="text-sm text-purple-700 font-medium mb-2">
+                Smart nivåjustering aktiverad
+              </p>
+              <p className="text-sm text-purple-600">
+                {gradeAnalysis.reasoning}
+              </p>
+              {gradeAnalysis.recommendedGradeAdjustment !== 0 && (
+                <div className="mt-2">
+                  <Badge className={
+                    gradeAnalysis.recommendedGradeAdjustment > 0 
+                      ? "bg-red-100 text-red-700" 
+                      : "bg-green-100 text-green-700"
+                  }>
+                    {gradeAnalysis.recommendedGradeAdjustment > 0 ? '⬆ Högre nivå rekommenderas' : '⬇ Lägre nivå rekommenderas'}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Formation Visualization */}
       {selectedFormation && (
