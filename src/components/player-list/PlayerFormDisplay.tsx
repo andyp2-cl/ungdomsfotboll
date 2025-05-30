@@ -16,14 +16,28 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
     return <span className="text-muted-foreground">-</span>;
   }
 
-  // Get player's matches sorted by date (most recent first)
+  // Get player's historical matches with results only
+  const today = new Date();
   const playerMatches = activities
-    .filter(activity => 
-      activity.type === "match" && 
-      activity.participants?.includes(player.id)
-    )
+    .filter(activity => {
+      // Only include matches where this player participated
+      if (activity.type !== "match" || !activity.participants?.includes(player.id)) {
+        return false;
+      }
+      
+      // Only include historical matches (before today)
+      const matchDate = new Date(activity.date);
+      if (matchDate >= today) {
+        return false;
+      }
+      
+      // Only include matches with results
+      return activity.isWin !== undefined || 
+             (activity.homeScore !== undefined && activity.awayScore !== undefined) ||
+             (activity.result && activity.result.includes('-'));
+    })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4); // Take last 4 matches
+    .slice(0, 4); // Take last 4 historical matches with results
 
   if (playerMatches.length === 0) {
     return <span className="text-muted-foreground text-sm">Inga matcher</span>;
@@ -54,7 +68,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
 
   // Pad with empty spaces if less than 4 matches
   while (results.length < 4) {
-    results.push(''); // Empty string for no result
+    results.unshift(''); // Add empty strings at the beginning to show older positions as empty
   }
 
   const getResultColor = (result: string) => {
