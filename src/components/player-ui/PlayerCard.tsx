@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserCircle } from "lucide-react";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatPositions, isTrainer } from "@/utils/positionUtils";
+import { PlayerStatusIndicator } from "@/components/player-status/PlayerStatusIndicator";
 
 interface PlayerCardProps {
   player: Player;
@@ -64,49 +65,61 @@ export function PlayerCard({
 
   const isCoach = isTrainer(player.positions);
   const winRate = getPlayerWinRate();
+  const isActive = player.isActive !== undefined ? player.isActive : true;
 
   if (compact) {
     return (
       <div 
-        className={`flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
+        className={`flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors ${
+          onSelect ? 'cursor-pointer' : ''
+        } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
         onClick={onSelect}
       >
         <div className="flex items-center gap-2">
-          {player.image ? (
-            <img 
-              src={player.image} 
-              alt={player.name} 
-              className="h-12 w-12 rounded-full object-cover"
-              loading="lazy"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <UserCircle className="h-12 w-12 text-muted-foreground" />
-          )}
+          <div className={!isActive ? 'grayscale opacity-70' : ''}>
+            {player.image ? (
+              <img 
+                src={player.image} 
+                alt={player.name} 
+                className="h-12 w-12 rounded-full object-cover"
+                loading="lazy"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <UserCircle className="h-12 w-12 text-muted-foreground" />
+            )}
+          </div>
           <div>
-            <div className="font-medium text-sm flex items-center">
+            <div className={`font-medium text-sm flex items-center ${!isActive ? 'text-gray-500' : ''}`}>
               {player.name}
               {player.jerseyNumber && !isCoach && (
-                <span className="ml-1 text-xs bg-gray-200 text-gray-800 px-1 py-0.5 rounded-full">
+                <span className={`ml-1 text-xs px-1 py-0.5 rounded-full ${
+                  !isActive ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-800'
+                }`}>
                   #{player.jerseyNumber}
                 </span>
               )}
             </div>
             {!isCoach && player.positions && (
-              <div className="text-xs text-muted-foreground">
+              <div className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
                 {formatPositions(player.positions, true)}
               </div>
             )}
+            <PlayerStatusIndicator player={player} size="sm" />
           </div>
         </div>
         
         <div className="flex items-center gap-2">
           {isCoach ? (
-            <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+            <Badge variant="outline" className={`text-xs ${
+              !isActive ? 'border-gray-300 text-gray-500' : 'border-amber-300 text-amber-700'
+            }`}>
               Tränare
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className={`text-xs ${
+              !isActive ? 'border-gray-300 text-gray-500' : ''
+            }`}>
               Nivå {player.grade}
             </Badge>
           )}
@@ -123,31 +136,39 @@ export function PlayerCard({
 
   return (
     <Card 
-      className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${isCoach ? 'border-amber-300' : ''}`}
+      className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${
+        isCoach ? 'border-amber-300' : ''
+      } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
       onClick={onSelect}
     >
       <div className="aspect-[3/2] bg-muted relative">
-        {player.image ? (
-          <img 
-            src={player.image} 
-            alt={player.name} 
-            className="w-full h-full object-cover"
-            loading="lazy"
-            crossOrigin="anonymous"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <UserCircle className="h-20 w-20 text-muted-foreground/50" />
-          </div>
-        )}
+        <div className={!isActive ? 'grayscale opacity-70' : ''}>
+          {player.image ? (
+            <img 
+              src={player.image} 
+              alt={player.name} 
+              className="w-full h-full object-cover"
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <UserCircle className="h-20 w-20 text-muted-foreground/50" />
+            </div>
+          )}
+        </div>
         
         <div className="absolute top-2 right-2">
           {isCoach ? (
-            <Badge className="bg-amber-500 hover:bg-amber-600">
+            <Badge className={`${
+              !isActive ? 'bg-gray-400 hover:bg-gray-500' : 'bg-amber-500 hover:bg-amber-600'
+            }`}>
               Tränare
             </Badge>
           ) : (
-            <Badge className={getGradeColor(player.grade || '')}>
+            <Badge className={`${
+              !isActive ? 'bg-gray-400 hover:bg-gray-500' : getGradeColor(player.grade || '')
+            }`}>
               Nivå {player.grade}
             </Badge>
           )}
@@ -156,7 +177,11 @@ export function PlayerCard({
         {/* Show winrate badge for non-coaches */}
         {!isCoach && winRate > 0 && (
           <div className="absolute top-2 left-2">
-            <Badge variant="outline" className="bg-white/90 text-primary border-primary">
+            <Badge variant="outline" className={`${
+              !isActive 
+                ? 'bg-gray-100 text-gray-500 border-gray-300' 
+                : 'bg-white/90 text-primary border-primary'
+            }`}>
               {winRate}% vinster
             </Badge>
           </div>
@@ -170,32 +195,37 @@ export function PlayerCard({
       </div>
       
       <CardContent className="p-3">
-        <h3 className="font-semibold truncate">
+        <h3 className={`font-semibold truncate ${!isActive ? 'text-gray-500' : ''}`}>
           {player.name}
           {player.jerseyNumber && !isCoach && (
-            <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
+            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+              !isActive ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-800'
+            }`}>
               #{player.jerseyNumber}
             </span>
           )}
         </h3>
         {!isCoach && (
-          <p className="text-sm text-muted-foreground">
+          <p className={`text-sm ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
             {player.positions && player.positions.length > 0
               ? formatPositions(player.positions, true)
               : 'Ingen position definierad'}
           </p>
         )}
+        <div className="mt-1">
+          <PlayerStatusIndicator player={player} size="sm" />
+        </div>
       </CardContent>
       
       <CardFooter className="p-3 pt-0 flex justify-between">
-        <span className="text-xs text-muted-foreground">
+        <span className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
           {getActivityCount() === 0
             ? "Inga aktiviteter"
             : `${getActivityCount()} aktiviteter`}
         </span>
         
         {showStats && player.matches !== undefined && (
-          <span className="text-xs text-muted-foreground">
+          <span className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
             {player.matches} matcher
           </span>
         )}

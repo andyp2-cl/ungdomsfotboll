@@ -67,11 +67,12 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
   const results = playerMatches.map(getMatchResult);
 
   // Pad with empty spaces if less than 4 matches (add at beginning so empty slots are on the left)
-  while (results.length < 4) {
-    results.unshift(''); // Add empty strings at the beginning to show older positions as empty
+  const paddedResults: (string | 'W' | 'D' | 'L')[] = [...results];
+  while (paddedResults.length < 4) {
+    paddedResults.unshift(''); // Add empty strings at the beginning to show older positions as empty
   }
 
-  const getResultColor = (result: 'W' | 'D' | 'L' | '') => {
+  const getResultColor = (result: 'W' | 'D' | 'L' | string) => {
     switch (result) {
       case 'W': return 'text-green-600 bg-green-100';
       case 'D': return 'text-gray-900 bg-gray-100';
@@ -82,7 +83,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
 
   return (
     <div className="flex gap-1">
-      {results.map((result, index) => (
+      {paddedResults.map((result, index) => (
         <div
           key={index}
           className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center ${getResultColor(result)}`}

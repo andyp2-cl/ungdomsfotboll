@@ -9,6 +9,7 @@ import { SortField, SortIcon } from "./PlayerListSorting";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatPositions, isTrainer } from "@/utils/positionUtils";
 import { PlayerFormDisplay } from "./PlayerFormDisplay";
+import { PlayerStatusIndicator } from "@/components/player-status/PlayerStatusIndicator";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -160,43 +161,57 @@ export function PlayerListTable({
             const isCoach = isTrainer(player.positions);
             const winRate = getPlayerWinRate(player);
             const goalsPerMatch = getPlayerGoalsPerMatch(player);
+            const isActive = player.isActive !== undefined ? player.isActive : true;
             
             return (
               <TableRow 
                 key={player.id} 
-                className="cursor-pointer hover:bg-muted/50"
+                className={`cursor-pointer hover:bg-muted/50 ${
+                  !isActive ? 'opacity-60 bg-gray-50/50' : ''
+                }`}
                 onClick={() => onPlayerSelect(player)}
               >
                 <TableCell>
-                  {player.image ? (
-                    <img 
-                      src={player.image} 
-                      alt={player.name}
-                      className="h-12 w-12 rounded-full object-cover"
-                      loading="lazy"
-                      crossOrigin="anonymous"
-                    />
-                  ) : (
-                    <UserCircle className="h-12 w-12 text-muted-foreground" />
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium">
-                    {player.name}
-                    {player.jerseyNumber && !isCoach && (
-                      <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full">
-                        #{player.jerseyNumber}
-                      </span>
+                  <div className={!isActive ? 'grayscale opacity-70' : ''}>
+                    {player.image ? (
+                      <img 
+                        src={player.image} 
+                        alt={player.name}
+                        className="h-12 w-12 rounded-full object-cover"
+                        loading="lazy"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <UserCircle className="h-12 w-12 text-muted-foreground" />
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
+                  <div className={`font-medium ${!isActive ? 'text-gray-500' : ''}`}>
+                    {player.name}
+                    {player.jerseyNumber && !isCoach && (
+                      <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                        !isActive ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-800'
+                      }`}>
+                        #{player.jerseyNumber}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    <PlayerStatusIndicator player={player} size="sm" />
+                  </div>
+                </TableCell>
+                <TableCell>
                   {isCoach ? (
-                    <Badge className="bg-amber-500 hover:bg-amber-600">
+                    <Badge className={`${
+                      !isActive ? 'bg-gray-400 hover:bg-gray-500' : 'bg-amber-500 hover:bg-amber-600'
+                    }`}>
                       Tränare
                     </Badge>
                   ) : (
-                    <Badge className={getGradeColor(player.grade || '')}>
+                    <Badge className={`${
+                      !isActive ? 'bg-gray-400 hover:bg-gray-500' : getGradeColor(player.grade || '')
+                    }`}>
                       Nivå {player.grade}
                     </Badge>
                   )}
@@ -205,21 +220,23 @@ export function PlayerListTable({
                   {isCoach ? (
                     <span className="text-muted-foreground">-</span>
                   ) : (
-                    <span className="text-sm">
+                    <span className={`text-sm ${!isActive ? 'text-gray-500' : ''}`}>
                       {player.positions && player.positions.length > 0
                         ? formatPositions(player.positions, true)
                         : 'Ingen position'}
                     </span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className={!isActive ? 'text-gray-500' : ''}>
                   {player.activities?.length || 0}
                 </TableCell>
                 <TableCell>
                   {isCoach ? (
                     <span className="text-muted-foreground">-</span>
                   ) : (
-                    <span className="font-medium text-primary">
+                    <span className={`font-medium ${
+                      !isActive ? 'text-gray-500' : 'text-primary'
+                    }`}>
                       {winRate}%
                     </span>
                   )}
@@ -228,13 +245,17 @@ export function PlayerListTable({
                   {isCoach ? (
                     <span className="text-muted-foreground">-</span>
                   ) : (
-                    <span className="font-medium text-blue-600">
+                    <span className={`font-medium ${
+                      !isActive ? 'text-gray-500' : 'text-blue-600'
+                    }`}>
                       {goalsPerMatch}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <PlayerFormDisplay player={player} activities={activities} />
+                  <div className={!isActive ? 'opacity-60' : ''}>
+                    <PlayerFormDisplay player={player} activities={activities} />
+                  </div>
                 </TableCell>
               </TableRow>
             );
