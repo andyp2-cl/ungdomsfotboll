@@ -112,31 +112,31 @@ function getGradePoints(grade: string): number {
   }
 }
 
-// Calculate position synergy between two positions
+// Calculate position synergy between two positions (updated with standardized position names)
 function calculatePositionSynergy(pos1: string, pos2: string): number {
   const synergyMap: Record<string, Record<string, number>> = {
-    'MÅLVAKT': {
+    'MV': {
       'BACK': 1.3,
-      'MITTFÄLT': 1.1,
-      'FORWARD': 1.0,
+      'MF': 1.1,
+      'ANF': 1.0,
     },
     'BACK': {
-      'MÅLVAKT': 1.3,
+      'MV': 1.3,
       'BACK': 1.2,
-      'MITTFÄLT': 1.4,
-      'FORWARD': 1.1,
+      'MF': 1.4,
+      'ANF': 1.1,
     },
-    'MITTFÄLT': {
-      'MÅLVAKT': 1.1,
+    'MF': {
+      'MV': 1.1,
       'BACK': 1.4,
-      'MITTFÄLT': 1.2,
-      'FORWARD': 1.3,
+      'MF': 1.2,
+      'ANF': 1.3,
     },
-    'FORWARD': {
-      'MÅLVAKT': 1.0,
+    'ANF': {
+      'MV': 1.0,
       'BACK': 1.1,
-      'MITTFÄLT': 1.3,
-      'FORWARD': 1.1,
+      'MF': 1.3,
+      'ANF': 1.1,
     },
   };
 
@@ -205,8 +205,8 @@ export function analyzePairCombinations(players: Player[], activities: Activity[
         const key = [player1.id, player2.id].sort().join('-');
         
         if (!combinations.has(key)) {
-          const pos1 = player1.positions?.[0] || 'MITTFÄLT';
-          const pos2 = player2.positions?.[0] || 'MITTFÄLT';
+          const pos1 = player1.positions?.[0] || 'MF';
+          const pos2 = player2.positions?.[0] || 'MF';
           
           combinations.set(key, {
             playerIds: [player1.id, player2.id],
@@ -313,8 +313,8 @@ export function analyzePositionCombinations(combinations: PlayerCombination[], p
     
     if (!player1 || !player2) return;
     
-    const pos1 = player1.positions?.[0] || 'MITTFÄLT';
-    const pos2 = player2.positions?.[0] || 'MITTFÄLT';
+    const pos1 = player1.positions?.[0] || 'MF';
+    const pos2 = player2.positions?.[0] || 'MF';
     const positionKey = [pos1, pos2].sort().join('-');
     
     if (!positionAnalysis[positionKey]) {
@@ -531,7 +531,7 @@ export function suggestOptimalLineup(
   opponent?: string
 ): LineupSuggestion {
   const combinations = analyzePairCombinations(players, activities);
-  const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE'));
+  const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE') && p.isActive !== false);
   
   // Get formation requirements
   const formationPositions = getFormationPositions(formation);
@@ -665,7 +665,8 @@ export function suggestBalancedLineup(
   rotationStrength: number = 70
 ): BalancedLineupSuggestion {
   const combinations = analyzePairCombinations(players, activities);
-  const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE'));
+  // Filter out inactive players and trainers
+  const activePlayers = players.filter(p => !p.positions?.includes('TRÄNARE') && p.isActive !== false);
   const opponentHistory = analyzeOpponentHistory(activities, opponent);
   const gradeAnalysis = analyzeOpponentGradeHistory(activities, opponent, players);
   
@@ -812,7 +813,7 @@ export function suggestBalancedLineup(
     // Score remaining players for any position
     const scoredPlayers = availablePlayers
       .map(player => {
-        const scoring = scorePlayerForPosition(player, 'MITTFÄLT'); // Use midfield as default
+        const scoring = scorePlayerForPosition(player, 'MF'); // Use midfield as default
         return { 
           player, 
           score: scoring.score,
@@ -823,7 +824,7 @@ export function suggestBalancedLineup(
 
     if (scoredPlayers.length > 0) {
       const selectedPlayer = scoredPlayers[0];
-      const primaryPosition = selectedPlayer.player.positions?.[0] || 'MITTFÄLT';
+      const primaryPosition = selectedPlayer.player.positions?.[0] || 'MF';
       
       lineupPlayers.push({
         playerId: selectedPlayer.player.id,
@@ -835,7 +836,7 @@ export function suggestBalancedLineup(
     }
   }
 
-  // Create bench players - limit to 2-3 players maximum
+  // Create bench players - exactly 2 players
   const remainingPlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
   
   const benchPlayers: Array<{
@@ -845,13 +846,13 @@ export function suggestBalancedLineup(
     reasoning: string;
   }> = [];
 
-  // Score remaining players for bench (max 3 players)
-  const maxBenchPlayers = Math.min(3, remainingPlayers.length);
+  // Score remaining players for bench (exactly 2 players)
+  const maxBenchPlayers = 2;
   
   if (remainingPlayers.length > 0) {
     const scoredBenchPlayers = remainingPlayers
       .map(player => {
-        const scoring = scorePlayerForPosition(player, player.positions?.[0] || 'MITTFÄLT');
+        const scoring = scorePlayerForPosition(player, player.positions?.[0] || 'MF');
         return { 
           player, 
           score: scoring.score,
@@ -862,7 +863,7 @@ export function suggestBalancedLineup(
       .slice(0, maxBenchPlayers);
 
     scoredBenchPlayers.forEach(benchPlayer => {
-      const primaryPosition = benchPlayer.player.positions?.[0] || 'MITTFÄLT';
+      const primaryPosition = benchPlayer.player.positions?.[0] || 'MF';
       benchPlayers.push({
         playerId: benchPlayer.player.id,
         playerName: benchPlayer.player.name,
@@ -909,15 +910,15 @@ export function suggestBalancedLineup(
   };
 }
 
-// Helper function to get position requirements for formations
+// Helper function to get position requirements for formations (updated with standardized position names)
 function getFormationPositions(formation: string): string[] {
   const formations: Record<string, string[]> = {
-    "2-3-1": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "FORWARD"],
-    "3-2-1": ["MÅLVAKT", "BACK", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "FORWARD"],
-    "2-2-2": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
-    "3-3": ["MÅLVAKT", "BACK", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
-    "2-4": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
-    "1-3-2": ["MÅLVAKT", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "FORWARD", "FORWARD"],
+    "2-3-1": ["MV", "BACK", "BACK", "MF", "MF", "MF", "ANF"],
+    "3-2-1": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "ANF"],
+    "2-2-2": ["MV", "BACK", "BACK", "MF", "MF", "MF", "MF"],
+    "3-3": ["MV", "BACK", "BACK", "BACK", "MF", "MF", "MF"],
+    "2-4": ["MV", "BACK", "BACK", "MF", "MF", "MF", "MF"],
+    "1-3-2": ["MV", "BACK", "MF", "MF", "MF", "ANF", "ANF"],
   };
   
   return formations[formation] || formations["2-3-1"];
