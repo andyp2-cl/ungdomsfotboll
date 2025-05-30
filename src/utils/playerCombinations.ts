@@ -1,4 +1,5 @@
 import { Player, Activity, PlayerPosition } from "@/types/player";
+import { calculateWinStatus } from "@/utils/winCalculation";
 
 // Extended Activity interface for our utility functions (without conflicting participants override)
 interface ExtendedActivity extends Activity {
@@ -143,10 +144,32 @@ function calculatePositionSynergy(pos1: string, pos2: string): number {
   return synergyMap[pos1]?.[pos2] || 1.0;
 }
 
-// Helper function to calculate goal difference from activity
+// Helper function to determine if Hässleholms IF was the home team
+function isHomeMatch(activity: Activity): boolean {
+  // Common pattern: "Team A - Team B" where Team A is the home team
+  const nameParts = activity.name.split(' - ');
+  
+  // Check if Hässleholms IF is mentioned in the first part (home)
+  if (nameParts.length === 2) {
+    return nameParts[0].toLowerCase().includes('hässleholms if');
+  }
+  
+  // For names without the standard format, check if it starts with Hässleholms IF
+  return activity.name.toLowerCase().startsWith('hässleholms if');
+}
+
+// Helper function to calculate goal difference from Hässleholms IF's perspective
 function calculateGoalDifference(activity: Activity): number {
   if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
-    return activity.homeScore - activity.awayScore;
+    const isHome = isHomeMatch(activity);
+    
+    if (isHome) {
+      // If Hässleholms IF is home team, positive difference means we scored more
+      return activity.homeScore - activity.awayScore;
+    } else {
+      // If Hässleholms IF is away team, positive difference means we scored more
+      return activity.awayScore - activity.homeScore;
+    }
   }
   return 0;
 }
@@ -359,7 +382,7 @@ export function getOpponents(activities: Activity[]): string[] {
   return Array.from(opponents).sort();
 }
 
-// Analyze opponent match history
+// Analyze opponent match history - UPDATED to use isWin field correctly
 export function analyzeOpponentHistory(activities: Activity[], opponent: string) {
   const opponentMatches = activities.filter(activity => {
     const activityOpponent = getOpponentName(activity);
@@ -379,9 +402,22 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
     };
   }
 
-  const wins = opponentMatches.filter(m => m.result === 'WIN').length;
-  const draws = opponentMatches.filter(m => m.result === 'DRAW').length;
-  const losses = opponentMatches.filter(m => m.result === 'LOSS').length;
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+
+  // Count wins, draws, and losses using the isWin field or fallback to calculation
+  opponentMatches.forEach(match => {
+    const winStatus = calculateWinStatus(match);
+    
+    if (winStatus === true) {
+      wins++;
+    } else if (winStatus === false) {
+      losses++;
+    } else {
+      draws++; // undefined means draw
+    }
+  });
   
   const goalDifferences = opponentMatches
     .map(m => calculateGoalDifference(m))
@@ -398,11 +434,24 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
   const recentForm = opponentMatches
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5)
-    .map(match => ({
-      date: match.date,
-      result: match.result || 'UNKNOWN',
-      goalDifference: calculateGoalDifference(match),
-    }));
+    .map(match => {
+      const winStatus = calculateWinStatus(match);
+      let result: string;
+      
+      if (winStatus === true) {
+        result = 'WIN';
+      } else if (winStatus === false) {
+        result = 'LOSS';
+      } else {
+        result = 'DRAW';
+      }
+      
+      return {
+        date: match.date,
+        result,
+        goalDifference: calculateGoalDifference(match),
+      };
+    });
 
   return {
     totalMatches: opponentMatches.length,
@@ -420,7 +469,7 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
   };
 }
 
-// New function: Analyze opponent grade history for smart level strategy
+// New function: Analyze opponent grade history for smart level strategy - UPDATED to use isWin field
 export function analyzeOpponentGradeHistory(
   activities: Activity[], 
   opponent: string, 
@@ -469,10 +518,12 @@ export function analyzeOpponentGradeHistory(
         .map(player => gradeToNumeric(player.grade || 'C'));
 
       if (recentGrades.length > 0) {
+        const winStatus = calculateWinStatus(match);
+        
         lastMatchResult = {
           ourGrade: recentGrades.reduce((sum, grade) => sum + grade, 0) / recentGrades.length,
           goalDifference: calculateGoalDifference(match),
-          wasWin: match.result === 'WIN'
+          wasWin: winStatus === true
         };
       }
     }
