@@ -1,6 +1,17 @@
 
 import { Player, Activity, PlayerPosition } from "@/types/player";
 
+// Extended Activity interface for our utility functions
+interface ExtendedActivity extends Activity {
+  opponent?: string;
+  goalDifference?: number;
+  participants?: Array<{
+    playerId: string;
+    goals?: number;
+    assists?: number;
+  }>;
+}
+
 // Interface for player combination analysis
 export interface PlayerCombination {
   playerIds: string[];
@@ -138,6 +149,27 @@ function calculatePositionSynergy(pos1: string, pos2: string): number {
   return synergyMap[pos1]?.[pos2] || 1.0;
 }
 
+// Helper function to calculate goal difference from activity
+function calculateGoalDifference(activity: Activity): number {
+  if (activity.homeScore !== undefined && activity.awayScore !== undefined) {
+    return activity.homeScore - activity.awayScore;
+  }
+  return 0;
+}
+
+// Helper function to get opponent name from activity
+function getOpponentName(activity: Activity): string | undefined {
+  // Try to extract opponent from activity name if not directly available
+  // This is a fallback since the Activity type doesn't have opponent field
+  if (activity.name && activity.name.includes('vs')) {
+    const parts = activity.name.split('vs');
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+  }
+  return undefined;
+}
+
 // Analyze player combinations from activities
 export function analyzePairCombinations(players: Player[], activities: Activity[]): PlayerCombination[] {
   const combinations = new Map<string, PlayerCombination>();
@@ -146,7 +178,7 @@ export function analyzePairCombinations(players: Player[], activities: Activity[
     if (!activity.participants || activity.participants.length < 2) return;
 
     const activePlayers = activity.participants
-      .map(p => players.find(player => player.id === p.playerId))
+      .map(participantId => players.find(player => player.id === participantId))
       .filter((p): p is Player => p !== undefined && !p.positions?.includes('TRÄNARE'));
 
     // Analyze all pairs in this activity
@@ -189,17 +221,16 @@ export function analyzePairCombinations(players: Player[], activities: Activity[
           combo.losses++;
         }
 
-        // Add goals and assists for both players
-        const p1Participant = activity.participants.find(p => p.playerId === player1.id);
-        const p2Participant = activity.participants.find(p => p.playerId === player2.id);
-        
-        if (p1Participant) {
-          combo.totalGoals += p1Participant.goals || 0;
-          combo.totalAssists += p1Participant.assists || 0;
-        }
-        if (p2Participant) {
-          combo.totalGoals += p2Participant.goals || 0;
-          combo.totalAssists += p2Participant.assists || 0;
+        // For now, we'll use basic stats since the participant structure is simpler
+        // Goals and assists would need to be extracted from activity.player_stats if available
+        if (activity.player_stats) {
+          const stats = activity.player_stats as any;
+          if (stats.goals && typeof stats.goals === 'object') {
+            combo.totalGoals += (stats.goals[player1.id] || 0) + (stats.goals[player2.id] || 0);
+          }
+          if (stats.assists && typeof stats.assists === 'object') {
+            combo.totalAssists += (stats.assists[player1.id] || 0) + (stats.assists[player2.id] || 0);
+          }
         }
       }
     }
@@ -210,7 +241,7 @@ export function analyzePairCombinations(players: Player[], activities: Activity[
     .filter(combo => combo.matchesTogether >= 2)
     .map(combo => {
       combo.winRate = Math.round((combo.wins / combo.matchesTogether) * 100);
-      combo.averagePerformance = Number((combo.totalGoals + combo.totalAssists) / combo.matchesTogether).toFixed(1);
+      combo.averagePerformance = Number(((combo.totalGoals + combo.totalAssists) / combo.matchesTogether).toFixed(1));
       
       // Calculate combination efficiency (weighted score)
       const winRateScore = combo.winRate / 100; // 0-1
@@ -305,8 +336,9 @@ export function getOpponents(activities: Activity[]): string[] {
   const opponents = new Set<string>();
   
   activities.forEach(activity => {
-    if (activity.opponent && activity.opponent.trim() !== '') {
-      opponents.add(activity.opponent.trim());
+    const opponent = getOpponentName(activity);
+    if (opponent && opponent.trim() !== '') {
+      opponents.add(opponent.trim());
     }
   });
   
@@ -315,9 +347,10 @@ export function getOpponents(activities: Activity[]): string[] {
 
 // Analyze opponent match history
 export function analyzeOpponentHistory(activities: Activity[], opponent: string) {
-  const opponentMatches = activities.filter(
-    activity => activity.opponent?.toLowerCase() === opponent.toLowerCase()
-  );
+  const opponentMatches = activities.filter(activity => {
+    const activityOpponent = getOpponentName(activity);
+    return activityOpponent?.toLowerCase() === opponent.toLowerCase();
+  });
 
   if (opponentMatches.length === 0) {
     return {
@@ -337,7 +370,7 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
   const losses = opponentMatches.filter(m => m.result === 'LOSS').length;
   
   const goalDifferences = opponentMatches
-    .map(m => m.goalDifference || 0)
+    .map(m => calculateGoalDifference(m))
     .filter(diff => diff !== undefined);
   
   const averageGoalDifference = goalDifferences.length > 0 
@@ -354,7 +387,7 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
     .map(match => ({
       date: match.date,
       result: match.result || 'UNKNOWN',
-      goalDifference: match.goalDifference || 0,
+      goalDifference: calculateGoalDifference(match),
     }));
 
   return {
@@ -379,9 +412,10 @@ export function analyzeOpponentGradeHistory(
   opponent: string, 
   players: Player[]
 ): OpponentLevelAnalysis {
-  const opponentMatches = activities.filter(
-    activity => activity.opponent?.toLowerCase() === opponent.toLowerCase()
-  );
+  const opponentMatches = activities.filter(activity => {
+    const activityOpponent = getOpponentName(activity);
+    return activityOpponent?.toLowerCase() === opponent.toLowerCase();
+  });
 
   if (opponentMatches.length === 0) {
     return {
@@ -401,9 +435,9 @@ export function analyzeOpponentGradeHistory(
     if (!match.participants) return;
 
     const ourGrades = match.participants
-      .map(p => players.find(player => player.id === p.playerId))
+      .map(participantId => players.find(player => player.id === participantId))
       .filter((player): player is Player => player !== undefined && !player.positions?.includes('TRÄNARE'))
-      .map(player => gradeToNumeric(player.grade));
+      .map(player => gradeToNumeric(player.grade || 'C'));
 
     if (ourGrades.length > 0) {
       const matchAverageGrade = ourGrades.reduce((sum, grade) => sum + grade, 0) / ourGrades.length;
@@ -416,14 +450,14 @@ export function analyzeOpponentGradeHistory(
     // Get the most recent match result
     if (!lastMatchResult || new Date(match.date) > new Date(lastMatchResult.ourGrade.toString())) {
       const recentGrades = match.participants
-        .map(p => players.find(player => player.id === p.playerId))
+        .map(participantId => players.find(player => player.id === participantId))
         .filter((player): player is Player => player !== undefined && !player.positions?.includes('TRÄNARE'))
-        .map(player => gradeToNumeric(player.grade));
+        .map(player => gradeToNumeric(player.grade || 'C'));
 
       if (recentGrades.length > 0) {
         lastMatchResult = {
           ourGrade: recentGrades.reduce((sum, grade) => sum + grade, 0) / recentGrades.length,
-          goalDifference: match.goalDifference || 0,
+          goalDifference: calculateGoalDifference(match),
           wasWin: match.result === 'WIN'
         };
       }
@@ -528,11 +562,11 @@ export function suggestOptimalLineup(
     const scoredPlayers = positionPlayers
       .filter(p => !lineupPlayers.some(lp => lp.playerId === p.id))
       .map(player => {
-        let score = getGradePoints(player.grade);
+        let score = getGradePoints(player.grade || 'C');
         
         // Adjust score based on target grade if we have opponent analysis
         if (targetAverageGrade) {
-          const playerGrade = gradeToNumeric(player.grade);
+          const playerGrade = gradeToNumeric(player.grade || 'C');
           const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
           // Prefer players closer to target grade
           score += Math.max(0, 10 - (gradeDifference * 5));
@@ -551,10 +585,10 @@ export function suggestOptimalLineup(
 
     if (scoredPlayers.length > 0) {
       const selectedPlayer = scoredPlayers[0].player;
-      let reasoning = `Bäst för ${position} (Nivå ${selectedPlayer.grade})`;
+      let reasoning = `Bäst för ${position} (Nivå ${selectedPlayer.grade || 'C'})`;
       
       if (targetAverageGrade) {
-        const playerGrade = gradeToNumeric(selectedPlayer.grade);
+        const playerGrade = gradeToNumeric(selectedPlayer.grade || 'C');
         if (Math.abs(playerGrade - targetAverageGrade) < 0.5) {
           reasoning += ` - matchar målnivå perfekt`;
         } else if (playerGrade > targetAverageGrade) {
@@ -588,7 +622,7 @@ export function suggestOptimalLineup(
   if (targetAverageGrade) {
     const actualAverageGrade = lineupPlayers.reduce((sum, lp) => {
       const player = players.find(p => p.id === lp.playerId);
-      return sum + (player ? gradeToNumeric(player.grade) : 2.5);
+      return sum + (player ? gradeToNumeric(player.grade || 'C') : 2.5);
     }, 0) / lineupPlayers.length;
 
     reasoning.push(`Genomsnittsnivå: ${numericToGrade(actualAverageGrade)} (mål: ${numericToGrade(targetAverageGrade)})`);
@@ -629,13 +663,16 @@ export function suggestBalancedLineup(
   
   // Get recent participants against this opponent for rotation
   const recentOpponentMatches = activities
-    .filter(a => a.opponent?.toLowerCase() === opponent.toLowerCase())
+    .filter(a => {
+      const activityOpponent = getOpponentName(a);
+      return activityOpponent?.toLowerCase() === opponent.toLowerCase();
+    })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
   
   const recentParticipants = new Set<string>();
   recentOpponentMatches.forEach(match => {
-    match.participants?.forEach(p => recentParticipants.add(p.playerId));
+    match.participants?.forEach(participantId => recentParticipants.add(participantId));
   });
 
   const lineupPlayers: Array<{
@@ -667,8 +704,8 @@ export function suggestBalancedLineup(
         let reasons: string[] = [];
 
         // Grade-based scoring with target adjustment
-        const gradePoints = getGradePoints(player.grade);
-        const playerGrade = gradeToNumeric(player.grade);
+        const gradePoints = getGradePoints(player.grade || 'C');
+        const playerGrade = gradeToNumeric(player.grade || 'C');
         const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
         const gradeScore = gradePoints + Math.max(0, 10 - (gradeDifference * 3));
         score += gradeScore;
@@ -689,7 +726,7 @@ export function suggestBalancedLineup(
 
         // New player prioritization
         const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
-          match.participants?.some(p => p.playerId === player.id)
+          match.participants?.some(participantId => participantId === player.id)
         );
         
         if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
@@ -711,7 +748,7 @@ export function suggestBalancedLineup(
         return { 
           player, 
           score, 
-          reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade}` 
+          reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade || 'C'}` 
         };
       })
       .sort((a, b) => b.score - a.score);
