@@ -1,4 +1,3 @@
-
 import { Player, Activity, PlayerPosition } from "@/types/player";
 
 // Extended Activity interface for our utility functions (without conflicting participants override)
@@ -155,10 +154,32 @@ function calculateGoalDifference(activity: Activity): number {
 // Helper function to get opponent name from activity
 function getOpponentName(activity: Activity): string | undefined {
   // Try to extract opponent from activity name if not directly available
-  if (activity.name && activity.name.includes('vs')) {
-    const parts = activity.name.split('vs');
-    if (parts.length > 1) {
-      return parts[1].trim();
+  if (activity.name) {
+    // First try to handle " - " separator (primary format)
+    if (activity.name.includes(' - ')) {
+      const parts = activity.name.split(' - ');
+      if (parts.length > 1) {
+        // Take the second part and clean it up
+        let opponent = parts[1].trim();
+        
+        // Remove common prefixes that might be in the opponent name
+        opponent = opponent.replace(/^(Hässleholms IF|IF)\s+/i, '').trim();
+        
+        return opponent;
+      }
+    }
+    
+    // Fallback to "vs" separator
+    if (activity.name.includes('vs')) {
+      const parts = activity.name.split('vs');
+      if (parts.length > 1) {
+        let opponent = parts[1].trim();
+        
+        // Remove common prefixes
+        opponent = opponent.replace(/^(Hässleholms IF|IF)\s+/i, '').trim();
+        
+        return opponent;
+      }
     }
   }
   return undefined;
