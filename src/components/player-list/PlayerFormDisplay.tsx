@@ -71,7 +71,7 @@ export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps
     results.unshift(''); // Add empty strings at the beginning to show older positions as empty
   }
 
-  const getResultColor = (result: string) => {
+  const getResultColor = (result: 'W' | 'D' | 'L' | '') => {
     switch (result) {
       case 'W': return 'text-green-600 bg-green-100';
       case 'D': return 'text-gray-900 bg-gray-100';
