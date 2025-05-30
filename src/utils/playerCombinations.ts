@@ -698,72 +698,100 @@ export function suggestBalancedLineup(
 
   const selectedPlayerIds = new Set<string>(); // Track selected players to prevent duplicates
 
-  // Select starting lineup
+  // Function to score a player for a position
+  const scorePlayerForPosition = (player: Player, targetPosition: string) => {
+    let score = 0;
+    let reasons: string[] = [];
+
+    // Position match bonus
+    if (player.positions?.includes(targetPosition as PlayerPosition)) {
+      score += 20; // High bonus for exact position match
+      reasons.push(`specialist ${targetPosition.toLowerCase()}`);
+    } else {
+      // Check if player can play this position (some flexibility)
+      const canPlay = player.positions && player.positions.length > 0;
+      if (canPlay) {
+        score += 5; // Small bonus for any position
+        reasons.push(`kan spela ${targetPosition.toLowerCase()}`);
+      }
+    }
+
+    // Grade-based scoring with target adjustment
+    const gradePoints = getGradePoints(player.grade || 'C');
+    const playerGrade = gradeToNumeric(player.grade || 'C');
+    const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
+    const gradeScore = gradePoints + Math.max(0, 10 - (gradeDifference * 3));
+    score += gradeScore;
+
+    // Rotation factor (based on rotationStrength parameter)
+    const hasPlayedRecently = recentParticipants.has(player.id);
+    if (!hasPlayedRecently) {
+      const rotationBonus = (rotationStrength / 100) * 15;
+      score += rotationBonus;
+      if (rotationStrength > 50) {
+        reasons.push("vila prioriterad");
+      }
+    } else if (rotationStrength > 70) {
+      const rotationPenalty = (rotationStrength / 100) * 10;
+      score -= rotationPenalty;
+      reasons.push("spelade nyligen");
+    }
+
+    // New player prioritization
+    const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
+      match.participants?.some(participantId => participantId === player.id)
+    );
+    
+    if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
+      score += 8;
+      reasons.push("ny mot detta lag");
+    }
+
+    // Combination effectiveness
+    const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
+    const avgEfficiency = playerCombinations.length > 0 
+      ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
+      : 1.0;
+    score += avgEfficiency * 3;
+
+    if (avgEfficiency > 1.2) {
+      reasons.push("stark kombination");
+    }
+
+    return { 
+      score, 
+      reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade || 'C'}` 
+    };
+  };
+
+  // Select starting lineup - ensure we get exactly 7 players
   formationPositions.forEach(position => {
-    const positionPlayers = activePlayers.filter(p => 
+    // First try to find players for exact position
+    let availablePlayers = activePlayers.filter(p => 
+      !selectedPlayerIds.has(p.id) && 
       p.positions?.includes(position as PlayerPosition)
     );
 
-    if (positionPlayers.length === 0) return;
+    // If no exact match found, use any available player as fallback
+    if (availablePlayers.length === 0) {
+      availablePlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
+    }
 
-    // Score players for this position with enhanced criteria
-    const scoredPlayers = positionPlayers
-      .filter(p => !selectedPlayerIds.has(p.id)) // Prevent duplicates
+    if (availablePlayers.length === 0) return; // No more players available
+
+    // Score players for this position
+    const scoredPlayers = availablePlayers
       .map(player => {
-        let score = 0;
-        let reasons: string[] = [];
-
-        // Grade-based scoring with target adjustment
-        const gradePoints = getGradePoints(player.grade || 'C');
-        const playerGrade = gradeToNumeric(player.grade || 'C');
-        const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
-        const gradeScore = gradePoints + Math.max(0, 10 - (gradeDifference * 3));
-        score += gradeScore;
-
-        // Rotation factor (based on rotationStrength parameter)
-        const hasPlayedRecently = recentParticipants.has(player.id);
-        if (!hasPlayedRecently) {
-          const rotationBonus = (rotationStrength / 100) * 15; // 0-15 bonus based on rotation strength
-          score += rotationBonus;
-          if (rotationStrength > 50) {
-            reasons.push("vila prioriterad");
-          }
-        } else if (rotationStrength > 70) {
-          const rotationPenalty = (rotationStrength / 100) * 10; // 0-10 penalty
-          score -= rotationPenalty;
-          reasons.push("spelade nyligen");
-        }
-
-        // New player prioritization
-        const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
-          match.participants?.some(participantId => participantId === player.id)
-        );
-        
-        if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
-          score += 8;
-          reasons.push("ny mot detta lag");
-        }
-
-        // Combination effectiveness
-        const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
-        const avgEfficiency = playerCombinations.length > 0 
-          ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
-          : 1.0;
-        score += avgEfficiency * 3;
-
-        if (avgEfficiency > 1.2) {
-          reasons.push("stark kombination");
-        }
-
+        const scoring = scorePlayerForPosition(player, position);
         return { 
           player, 
-          score, 
-          reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade || 'C'}` 
+          score: scoring.score,
+          reasons: scoring.reasons
         };
       })
       .sort((a, b) => b.score - a.score);
 
-    // Select player for starting lineup
+    // Select the best player for this position
     if (scoredPlayers.length > 0) {
       const selectedPlayer = scoredPlayers[0];
       lineupPlayers.push({
@@ -772,11 +800,42 @@ export function suggestBalancedLineup(
         position,
         reasoning: selectedPlayer.reasons
       });
-      selectedPlayerIds.add(selectedPlayer.player.id); // Mark as selected
+      selectedPlayerIds.add(selectedPlayer.player.id);
     }
   });
 
-  // Create bench players from all remaining players (not position-specific)
+  // Ensure we have exactly 7 players in starting lineup
+  while (lineupPlayers.length < 7) {
+    const availablePlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
+    if (availablePlayers.length === 0) break;
+
+    // Score remaining players for any position
+    const scoredPlayers = availablePlayers
+      .map(player => {
+        const scoring = scorePlayerForPosition(player, 'MITTFÄLT'); // Use midfield as default
+        return { 
+          player, 
+          score: scoring.score,
+          reasons: scoring.reasons
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    if (scoredPlayers.length > 0) {
+      const selectedPlayer = scoredPlayers[0];
+      const primaryPosition = selectedPlayer.player.positions?.[0] || 'MITTFÄLT';
+      
+      lineupPlayers.push({
+        playerId: selectedPlayer.player.id,
+        playerName: selectedPlayer.player.name,
+        position: primaryPosition,
+        reasoning: `${selectedPlayer.reasons} (reserv)`
+      });
+      selectedPlayerIds.add(selectedPlayer.player.id);
+    }
+  }
+
+  // Create bench players - limit to 2-3 players maximum
   const remainingPlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
   
   const benchPlayers: Array<{
@@ -786,69 +845,31 @@ export function suggestBalancedLineup(
     reasoning: string;
   }> = [];
 
-  // Score all remaining players for bench
-  const scoredBenchPlayers = remainingPlayers.map(player => {
-    let score = 0;
-    let reasons: string[] = [];
-    
-    // Get player's primary position
-    const primaryPosition = player.positions?.[0] || 'MITTFÄLT';
+  // Score remaining players for bench (max 3 players)
+  const maxBenchPlayers = Math.min(3, remainingPlayers.length);
+  
+  if (remainingPlayers.length > 0) {
+    const scoredBenchPlayers = remainingPlayers
+      .map(player => {
+        const scoring = scorePlayerForPosition(player, player.positions?.[0] || 'MITTFÄLT');
+        return { 
+          player, 
+          score: scoring.score,
+          reasons: scoring.reasons
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, maxBenchPlayers);
 
-    // Grade-based scoring
-    const gradePoints = getGradePoints(player.grade || 'C');
-    score += gradePoints;
-
-    // Rotation factor
-    const hasPlayedRecently = recentParticipants.has(player.id);
-    if (!hasPlayedRecently) {
-      const rotationBonus = (rotationStrength / 100) * 10;
-      score += rotationBonus;
-      reasons.push("vila prioriterad");
-    }
-
-    // New player bonus
-    const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
-      match.participants?.some(participantId => participantId === player.id)
-    );
-    
-    if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
-      score += 5;
-      reasons.push("ny mot laget");
-    }
-
-    // Combination effectiveness
-    const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
-    const avgEfficiency = playerCombinations.length > 0 
-      ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
-      : 1.0;
-    score += avgEfficiency * 2;
-
-    return { 
-      player, 
-      primaryPosition,
-      score, 
-      reasons: reasons.length > 0 ? reasons.join(", ") : `nivå ${player.grade || 'C'}, bänk` 
-    };
-  }).sort((a, b) => b.score - a.score);
-
-  // Select top bench players with position diversity
-  const positionCounts: Record<string, number> = {};
-  const maxBenchPlayers = Math.min(6, scoredBenchPlayers.length); // Limit bench size
-
-  for (let i = 0; i < scoredBenchPlayers.length && benchPlayers.length < maxBenchPlayers; i++) {
-    const benchCandidate = scoredBenchPlayers[i];
-    const position = benchCandidate.primaryPosition;
-    
-    // Prefer position diversity on bench (max 2 per position)
-    if ((positionCounts[position] || 0) < 2) {
+    scoredBenchPlayers.forEach(benchPlayer => {
+      const primaryPosition = benchPlayer.player.positions?.[0] || 'MITTFÄLT';
       benchPlayers.push({
-        playerId: benchCandidate.player.id,
-        playerName: benchCandidate.player.name,
-        position: position,
-        reasoning: `Bänk: ${benchCandidate.reasons}`
+        playerId: benchPlayer.player.id,
+        playerName: benchPlayer.player.name,
+        position: primaryPosition,
+        reasoning: `Bänk: ${benchPlayer.reasons}`
       });
-      positionCounts[position] = (positionCounts[position] || 0) + 1;
-    }
+    });
   }
 
   // Calculate balance metrics
@@ -865,6 +886,7 @@ export function suggestBalancedLineup(
 
   const reasoning = [
     `Formation ${formation} optimerad mot ${opponent}`,
+    `Startuppställning: ${lineupPlayers.length} spelare, Bänk: ${benchPlayers.length} spelare`,
     `Målsättning: ${targetGoalDifference} mål framåt för balanserad match`,
     gradeAnalysis.reasoning,
     `Rotationsstyrka: ${rotationStrength}% - ${rotationStrength > 70 ? 'vila prioriteras högt' : rotationStrength > 30 ? 'balanserat' : 'prestanda prioriteras'}`,
@@ -892,7 +914,7 @@ function getFormationPositions(formation: string): string[] {
   const formations: Record<string, string[]> = {
     "2-3-1": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "FORWARD"],
     "3-2-1": ["MÅLVAKT", "BACK", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "FORWARD"],
-    "2-2-2": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "FORWARD", "FORWARD"],
+    "2-2-2": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
     "3-3": ["MÅLVAKT", "BACK", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
     "2-4": ["MÅLVAKT", "BACK", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT"],
     "1-3-2": ["MÅLVAKT", "BACK", "MITTFÄLT", "MITTFÄLT", "MITTFÄLT", "FORWARD", "FORWARD"],
