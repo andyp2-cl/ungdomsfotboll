@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +9,12 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { suggestBalancedLineup, getOpponents, BalancedLineupSuggestion } from "@/utils/playerCombinations";
-import { Users, Target, TrendingUp, Scale, AlertCircle, RefreshCw, Bench } from "lucide-react";
+import { Users, Target, TrendingUp, Scale, AlertCircle, RefreshCw, Users2 } from "lucide-react";
 
 interface BalancedMatchOptimizerProps {
   players: Player[];
   activities: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 const formations = [
@@ -26,7 +26,7 @@ const formations = [
   { value: "1-3-2", label: "1-3-2 (Ultra offensiv)" },
 ];
 
-export function BalancedMatchOptimizer({ players, activities }: BalancedMatchOptimizerProps) {
+export function BalancedMatchOptimizer({ players, activities, onPlayerSelect }: BalancedMatchOptimizerProps) {
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
   const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [targetGoalDifference, setTargetGoalDifference] = useState([2]);
@@ -331,7 +331,7 @@ export function BalancedMatchOptimizer({ players, activities }: BalancedMatchOpt
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Bench className="h-5 w-5" />
+                  <Users2 className="h-5 w-5" />
                   Bänkspelare
                 </CardTitle>
               </CardHeader>

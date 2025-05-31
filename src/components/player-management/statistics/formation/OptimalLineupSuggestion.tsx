@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { Users, TrendingUp, Target, Star, Trophy, AlertCircle, RefreshCw } from 
 interface OptimalLineupSuggestionProps {
   players: Player[];
   activities: Activity[];
+  onPlayerSelect?: (playerId: string) => void;
 }
 
 const formations = [
@@ -23,7 +23,7 @@ const formations = [
   { value: "1-3-2", label: "1-3-2 (Ultra offensiv)" },
 ];
 
-export function OptimalLineupSuggestion({ players, activities }: OptimalLineupSuggestionProps) {
+export function OptimalLineupSuggestion({ players, activities, onPlayerSelect }: OptimalLineupSuggestionProps) {
   const [selectedFormation, setSelectedFormation] = useState("2-3-1");
   const [selectedOpponent, setSelectedOpponent] = useState<string>("");
   const [suggestion, setSuggestion] = useState<LineupSuggestion | null>(null);

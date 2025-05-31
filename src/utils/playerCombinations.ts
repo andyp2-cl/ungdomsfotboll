@@ -3,10 +3,10 @@ import { calculateWinStatus } from "@/utils/winCalculation";
 import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
 
 // Extended Activity interface for our utility functions (without conflicting participants override)
-interface ExtendedActivity extends Activity {
+interface ExtendedActivity extends Omit<Activity, 'participants'> {
   opponent?: string;
   goalDifference?: number;
-  participants?: string[]; // Add this to work with both data sources
+  participants?: string[]; // Make this optional to avoid conflict
 }
 
 // Interface for player combination analysis
