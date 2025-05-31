@@ -1,3 +1,4 @@
+
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { calculateWinStatus } from "@/utils/winCalculation";
 import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
@@ -221,6 +222,69 @@ async function getActivityParticipants(activityId: string): Promise<string[]> {
   }
 }
 
+// IMPROVED: Enhanced combination efficiency calculation
+function calculateEnhancedCombinationEfficiency(combo: PlayerCombination): number {
+  console.log(`Calculating efficiency for ${combo.playerNames.join(' & ')}: ${combo.matchesTogether} matches, ${combo.wins}W/${combo.draws}D/${combo.losses}L, ${combo.totalGoals}G/${combo.totalAssists}A`);
+  
+  // Base performance per match (goals + assists per game)
+  const averageProductionPerMatch = (combo.totalGoals + combo.totalAssists) / combo.matchesTogether;
+  
+  // Performance score - removed artificial cap, now scales based on actual production
+  let performanceScore = Math.min(2.0, averageProductionPerMatch * 0.5); // Cap at 2.0 for very high producers
+  console.log(`Base performance score: ${performanceScore} (avg production: ${averageProductionPerMatch})`);
+  
+  // Volume bonus - reward combinations that have played many matches together
+  const volumeBonus = Math.log(combo.matchesTogether + 1) / 10; // Logarithmic scaling
+  console.log(`Volume bonus: ${volumeBonus} (matches: ${combo.matchesTogether})`);
+  
+  // High-production bonus - extra reward for exceptional total production
+  let productionBonus = 0;
+  const totalProduction = combo.totalGoals + combo.totalAssists;
+  if (totalProduction >= 20) {
+    productionBonus = 0.3; // Major bonus for 20+ combined goals/assists
+  } else if (totalProduction >= 10) {
+    productionBonus = 0.2; // Good bonus for 10+ combined goals/assists
+  } else if (totalProduction >= 5) {
+    productionBonus = 0.1; // Small bonus for 5+ combined goals/assists
+  }
+  console.log(`Production bonus: ${productionBonus} (total: ${totalProduction})`);
+  
+  // Win rate score (0-1)
+  const winRateScore = combo.winRate / 100;
+  console.log(`Win rate score: ${winRateScore} (win rate: ${combo.winRate}%)`);
+  
+  // Consistency bonus - reward combinations with high win rates
+  let consistencyBonus = 0;
+  if (combo.winRate >= 80 && combo.matchesTogether >= 5) {
+    consistencyBonus = 0.2; // High consistency bonus
+  } else if (combo.winRate >= 70 && combo.matchesTogether >= 3) {
+    consistencyBonus = 0.1; // Medium consistency bonus
+  }
+  console.log(`Consistency bonus: ${consistencyBonus}`);
+  
+  // Position synergy score (normalized from 1.0-1.4 to 0-1)
+  const synergyScore = Math.min(1.0, (combo.positionSynergy - 1.0) / 0.4);
+  console.log(`Synergy score: ${synergyScore} (raw synergy: ${combo.positionSynergy})`);
+  
+  // IMPROVED WEIGHTED CALCULATION:
+  // Performance: 50% (up from 30%)
+  // Win Rate: 35% (up from 50%) 
+  // Position Synergy: 15% (down from 20%)
+  // Plus bonuses for volume, production, and consistency
+  const efficiency = (
+    (performanceScore * 0.50) + 
+    (winRateScore * 0.35) + 
+    (synergyScore * 0.15) +
+    volumeBonus +
+    productionBonus +
+    consistencyBonus
+  );
+  
+  console.log(`Final efficiency for ${combo.playerNames.join(' & ')}: ${efficiency.toFixed(3)} (performance: ${performanceScore * 0.50}, winRate: ${winRateScore * 0.35}, synergy: ${synergyScore * 0.15}, volume: ${volumeBonus}, production: ${productionBonus}, consistency: ${consistencyBonus})`);
+  
+  return Number(efficiency.toFixed(3));
+}
+
 // Analyze player combinations from activities - FIXED VERSION
 export async function analyzePairCombinations(players: Player[], activities: Activity[]): Promise<PlayerCombination[]> {
   console.log("analyzePairCombinations: Starting analysis with", players.length, "players and", activities.length, "activities");
@@ -308,23 +372,15 @@ export async function analyzePairCombinations(players: Player[], activities: Act
     }
   }
 
-  // Calculate final metrics
+  // Calculate final metrics with IMPROVED efficiency calculation
   const result = Array.from(combinations.values())
     .filter(combo => combo.matchesTogether >= 2)
     .map(combo => {
       combo.winRate = Math.round((combo.wins / combo.matchesTogether) * 100);
       combo.averagePerformance = Number(((combo.totalGoals + combo.totalAssists) / combo.matchesTogether).toFixed(1));
       
-      // Calculate combination efficiency (weighted score)
-      const winRateScore = combo.winRate / 100; // 0-1
-      const performanceScore = Math.min((combo.totalGoals + combo.totalAssists) / (combo.matchesTogether * 2), 1); // 0-1
-      const synergyScore = (combo.positionSynergy - 1) / 0.4; // Normalize 1-1.4 to 0-1
-      
-      combo.combinationEfficiency = Number((
-        (winRateScore * 0.5) + 
-        (performanceScore * 0.3) + 
-        (synergyScore * 0.2)
-      ).toFixed(2));
+      // Use the enhanced efficiency calculation
+      combo.combinationEfficiency = calculateEnhancedCombinationEfficiency(combo);
       
       console.log(`Combination ${combo.playerNames.join(' & ')}: ${combo.matchesTogether} matches, ${combo.wins}W/${combo.draws}D/${combo.losses}L, ${combo.totalGoals}G/${combo.totalAssists}A, efficiency: ${combo.combinationEfficiency}`);
       
