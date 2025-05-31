@@ -1,4 +1,3 @@
-
 import { Player, Activity, PlayerPosition } from "@/types/player";
 import { calculateWinStatus } from "@/utils/winCalculation";
 import { fetchPlayerActivities } from "@/lib/supabase/playerActivities";
@@ -873,7 +872,7 @@ function getSimilarPositions(position: string): PlayerPosition[] {
   return similarityMap[position] || [];
 }
 
-// Enhanced balanced lineup suggestion with rotation strength and smart level evaluation
+// Enhanced balanced lineup suggestion with smart level evaluation
 export async function suggestBalancedLineup(
   players: Player[], 
   activities: Activity[], 
@@ -892,8 +891,28 @@ export async function suggestBalancedLineup(
   // Get formation requirements
   const formationPositions = getFormationPositions(formation);
   
-  // Calculate target grade based on opponent analysis
-  const targetAverageGrade = gradeAnalysis.averageGrade + gradeAnalysis.recommendedGradeAdjustment;
+  // IMPROVED: Calculate target grade with stronger balance focus
+  let targetAverageGrade = gradeAnalysis.averageGrade + gradeAnalysis.recommendedGradeAdjustment;
+  let balanceStrategy = gradeAnalysis.reasoning;
+  
+  // ENHANCED: More aggressive grade adjustment for big wins/losses
+  if (gradeAnalysis.lastMatchResult) {
+    const { goalDifference, wasWin } = gradeAnalysis.lastMatchResult;
+    
+    if (wasWin && goalDifference >= 5) {
+      // Big win - significantly lower level for balanced match
+      targetAverageGrade = Math.max(1.5, targetAverageGrade - 1.0); // More aggressive reduction
+      balanceStrategy = `Förra matchen vann ni stort med ${goalDifference} mål. Kraftigt lägre nivå för jämnare match.`;
+    } else if (wasWin && goalDifference >= 3) {
+      // Comfortable win - moderately lower level
+      targetAverageGrade = Math.max(1.8, targetAverageGrade - 0.7);
+      balanceStrategy = `Förra matchen vann ni bekvämt med ${goalDifference} mål. Lägre nivå för mer balanserad match.`;
+    } else if (wasWin && goalDifference >= 2) {
+      // Narrow win - slightly lower level to maintain balance
+      targetAverageGrade = Math.max(2.0, targetAverageGrade - 0.3);
+      balanceStrategy = `Förra matchen var jämn vinst (${goalDifference} mål). Något lägre nivå för att behålla balansen.`;
+    }
+  }
   
   // Get recent participants against this opponent for rotation
   const recentOpponentMatches = activities
@@ -917,7 +936,7 @@ export async function suggestBalancedLineup(
 
   const selectedPlayerIds = new Set<string>(); // Track selected players to prevent duplicates
 
-  // Function to score a player for a position
+  // IMPROVED: Function to score a player for a position with better balance focus
   const scorePlayerForPosition = (player: Player, targetPosition: string) => {
     let score = 0;
     let reasons: string[] = [];
@@ -935,11 +954,28 @@ export async function suggestBalancedLineup(
       }
     }
 
-    // Grade-based scoring with target adjustment
-    const gradePoints = getGradePoints(player.grade || 'C');
+    // ENHANCED: Grade-based scoring with stronger balance focus
     const playerGrade = gradeToNumeric(player.grade || 'C');
     const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
-    const gradeScore = gradePoints + Math.max(0, 10 - (gradeDifference * 3));
+    
+    // Prioritize players closer to target grade more strongly
+    let gradeScore: number;
+    if (gradeDifference <= 0.3) {
+      gradeScore = 25; // Perfect grade match gets high score
+      reasons.push("perfekt nivå för balanserad match");
+    } else if (gradeDifference <= 0.6) {
+      gradeScore = 15; // Close grade match
+      reasons.push("bra nivå för balanserad match");
+    } else if (playerGrade > targetAverageGrade) {
+      // Player is too high level - penalize more for balance
+      gradeScore = Math.max(0, 8 - (gradeDifference * 5));
+      reasons.push("för hög nivå för balanserad match");
+    } else {
+      // Player is too low level - moderate penalty
+      gradeScore = Math.max(2, 10 - (gradeDifference * 3));
+      reasons.push("låg nivå, kan behövas för balans");
+    }
+    
     score += gradeScore;
 
     // Rotation factor (based on rotationStrength parameter)
@@ -967,15 +1003,17 @@ export async function suggestBalancedLineup(
       reasons.push("ny mot detta lag");
     }
 
-    // Combination effectiveness
+    // BALANCED: Combination effectiveness (reduced weight for balance focus)
     const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
     const avgEfficiency = playerCombinations.length > 0 
       ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
       : 1.0;
-    score += avgEfficiency * 3;
+    
+    // Reduced combination weight for balance
+    score += avgEfficiency * 2; // Reduced from 3 to 2
 
     if (avgEfficiency > 1.2) {
-      reasons.push("stark kombination");
+      reasons.push("bra kombination");
     }
 
     return { 
@@ -991,7 +1029,7 @@ export async function suggestBalancedLineup(
       !selectedPlayerIds.has(p.id) && 
       p.positions?.includes(position as PlayerPosition)
     );
-
+    
     // If no exact match found, use any available player as fallback
     if (availablePlayers.length === 0) {
       availablePlayers = activePlayers.filter(p => !selectedPlayerIds.has(p.id));
@@ -1095,10 +1133,10 @@ export async function suggestBalancedLineup(
     });
   }
 
-  // Calculate balance metrics
-  const expectedGoalDifference = Math.max(0.5, targetGoalDifference + (Math.random() - 0.5));
+  // Calculate balance metrics with improved focus
+  const expectedGoalDifference = Math.max(0.5, targetGoalDifference - 0.5); // Slightly more conservative
   const balanceScore = Math.min(100, Math.max(20, 
-    75 + (targetGoalDifference - Math.abs(expectedGoalDifference - targetGoalDifference)) * 10
+    80 - Math.abs(expectedGoalDifference - targetGoalDifference) * 15 // Better balance scoring
   ));
   
   const confidence = Math.min(95, Math.max(40, 
@@ -1108,10 +1146,10 @@ export async function suggestBalancedLineup(
   ));
 
   const reasoning = [
-    `Formation ${formation} optimerad mot ${opponent}`,
+    `Formation ${formation} optimerad för balanserad match mot ${opponent}`,
     `Startuppställning: ${lineupPlayers.length} spelare, Bänk: ${benchPlayers.length} spelare`,
     `Målsättning: ${targetGoalDifference} mål framåt för balanserad match`,
-    gradeAnalysis.reasoning,
+    balanceStrategy, // Use the enhanced balance strategy
     `Rotationsstyrka: ${rotationStrength}% - ${rotationStrength > 70 ? 'vila prioriteras högt' : rotationStrength > 30 ? 'balanserat' : 'prestanda prioriteras'}`,
     prioritizeNewPlayers ? 'Prioriterar spelare som inte mött detta lag tidigare' : 'Fokuserar på beprövade kombinationer',
     `Baserat på ${opponentHistory.totalMatches} tidigare matcher mot ${opponent}`
