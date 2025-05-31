@@ -1,10 +1,10 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { analyzePairCombinations, createCombinationMatrix, analyzePositionCombinations } from "@/utils/playerCombinations";
+import { analyzePairCombinations, createCombinationMatrix, analyzePositionCombinations, PlayerCombination } from "@/utils/playerCombinations";
 import { CombinationsList } from "./CombinationsList";
 import { ExtendedCombinationMatrix } from "./ExtendedCombinationMatrix";
 import { PlayerSelectionControls } from "./PlayerSelectionControls";
@@ -35,16 +35,41 @@ const HelpTooltip = ({ content }: { content: string }) => (
 export function CombinationsTabContent({ players, activities, onPlayerSelect }: CombinationsTabContentProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [selectedPlayersForHeatmap, setSelectedPlayersForHeatmap] = useState<string[]>([]);
+  const [combinations, setCombinations] = useState<PlayerCombination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const combinations = useMemo(() => {
-    return analyzePairCombinations(players, activities);
+  // Load combinations asynchronously
+  useEffect(() => {
+    const loadCombinations = async () => {
+      setIsLoading(true);
+      try {
+        console.log("CombinationsTabContent: Loading combinations...");
+        const result = await analyzePairCombinations(players, activities);
+        console.log("CombinationsTabContent: Loaded", result.length, "combinations");
+        setCombinations(result);
+      } catch (error) {
+        console.error("CombinationsTabContent: Error loading combinations:", error);
+        setCombinations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (players.length > 0 && activities.length > 0) {
+      loadCombinations();
+    } else {
+      setCombinations([]);
+      setIsLoading(false);
+    }
   }, [players, activities]);
 
   const combinationMatrix = useMemo(() => {
+    if (combinations.length === 0) return {};
     return createCombinationMatrix(players, combinations);
   }, [players, combinations]);
 
   const positionAnalysis = useMemo(() => {
+    if (combinations.length === 0) return {};
     return analyzePositionCombinations(combinations, players);
   }, [combinations, players]);
 
@@ -66,6 +91,17 @@ export function CombinationsTabContent({ players, activities, onPlayerSelect }: 
   const handleDeselectAll = () => {
     setSelectedPlayersForHeatmap([]);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Analyserar spelarkombinationer...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
