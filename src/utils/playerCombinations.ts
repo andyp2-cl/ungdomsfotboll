@@ -905,7 +905,7 @@ export async function suggestBalancedLineup(
     
     if (wasWin && goalDifference >= 5) {
       // Big win - significantly lower level for balanced match
-      targetAverageGrade = Math.max(1.5, targetAverageGrade - 1.0); // More aggressive reduction
+      targetAverageGrade = Math.max(1.5, targetAverageGrade - 1.0);
       balanceStrategy = `Förra matchen vann ni stort med ${goalDifference} mål. Kraftigt lägre nivå för jämnare match.`;
     } else if (wasWin && goalDifference >= 3) {
       // Comfortable win - moderately lower level
@@ -917,6 +917,11 @@ export async function suggestBalancedLineup(
       balanceStrategy = `Förra matchen var jämn vinst (${goalDifference} mål). Något lägre nivå för att behålla balansen.`;
     }
   }
+  
+  // Determine if we want higher level players based on strategy
+  const wantsHigherLevel = gradeAnalysis.recommendedGradeAdjustment > 0;
+  
+  console.log(`suggestBalancedLineup: Target grade: ${targetAverageGrade}, wants higher level: ${wantsHigherLevel}, strategy: ${balanceStrategy}`);
   
   // Get recent participants against this opponent for rotation
   const recentOpponentMatches = activities
@@ -940,90 +945,95 @@ export async function suggestBalancedLineup(
 
   const selectedPlayerIds = new Set<string>(); // Track selected players to prevent duplicates
 
-  // IMPROVED: Function to score a player for a position with FIXED balance focus for draws
+  // FIXED: Function to score a player for a position with corrected logic for draws
   const scorePlayerForPosition = (player: Player, targetPosition: string) => {
     let score = 0;
     let reasons: string[] = [];
 
     // Position match bonus
     if (player.positions?.includes(targetPosition as PlayerPosition)) {
-      score += 20; // High bonus for exact position match
+      score += 20;
       reasons.push(`specialist ${targetPosition.toLowerCase()}`);
     } else {
-      // Check if player can play this position (some flexibility)
       const canPlay = player.positions && player.positions.length > 0;
       if (canPlay) {
-        score += 5; // Small bonus for any position
+        score += 5;
         reasons.push(`kan spela ${targetPosition.toLowerCase()}`);
       }
     }
 
-    // FIXED: Grade-based scoring with corrected balance logic
+    // FIXED: Grade-based scoring - prioritize A-players when we want higher level
     const playerGrade = gradeToNumeric(player.grade || 'C');
-    const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
     
-    // FIXED: For draws and losses, we want HIGHER level players to win
-    let gradeScore: number;
-    if (gradeDifference <= 0.2) {
-      gradeScore = 25; // Perfect grade match gets high score
-      reasons.push("perfekt nivå för målet");
-    } else if (gradeDifference <= 0.5) {
-      gradeScore = 20; // Close grade match
-      reasons.push("bra nivå för målet");
+    if (wantsHigherLevel) {
+      // FIXED: When we want higher level (like after a draw), prioritize A-players heavily
+      if (playerGrade >= 3.5) { // A-level players
+        score += 40; // Very high bonus for A-players
+        reasons.push("A-nivå för stark match");
+      } else if (playerGrade >= 2.5) { // B-level players
+        score += 20; // Medium bonus for B-players
+        reasons.push("B-nivå för balanserad match");
+      } else {
+        score += 5; // Low score for C/D players when we want higher level
+        reasons.push(`nivå ${player.grade || 'C'} (lägre än önskat)`);
+      }
     } else {
-      // FIXED: Check if we want higher or lower level based on last result
-      const wantsHigherLevel = gradeAnalysis.recommendedGradeAdjustment > 0;
+      // When we want lower level (after big wins), prioritize based on target grade
+      const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
       
-      if (wantsHigherLevel && playerGrade > targetAverageGrade) {
-        // We want higher level and this player is higher - bonus
-        gradeScore = 18;
-        reasons.push("högre nivå för bättre resultat");
-      } else if (!wantsHigherLevel && playerGrade < targetAverageGrade) {
-        // We want lower level and this player is lower - bonus  
-        gradeScore = 18;
+      if (gradeDifference <= 0.2) {
+        score += 25;
+        reasons.push("perfekt nivå för målet");
+      } else if (gradeDifference <= 0.5) {
+        score += 20;
+        reasons.push("bra nivå för målet");
+      } else if (playerGrade < targetAverageGrade) {
+        // Player is lower level than target - good for balanced match after big win
+        score += 18;
         reasons.push("lägre nivå för balanserad match");
       } else {
-        // Player doesn't match our level strategy
-        gradeScore = Math.max(5, 15 - (gradeDifference * 8));
+        // Player is higher level than target
+        score += Math.max(5, 15 - (gradeDifference * 8));
         reasons.push(`nivå ${player.grade || 'C'}`);
       }
     }
-    
-    score += gradeScore;
 
-    // Rotation factor (based on rotationStrength parameter)
+    // Rotation factor (reduced impact when we prioritize level)
     const hasPlayedRecently = recentParticipants.has(player.id);
     if (!hasPlayedRecently) {
-      const rotationBonus = (rotationStrength / 100) * 15;
+      const rotationBonus = wantsHigherLevel ? 
+        (rotationStrength / 100) * 8 : // Reduced rotation impact when we want higher level
+        (rotationStrength / 100) * 15;
       score += rotationBonus;
-      if (rotationStrength > 50) {
+      if (rotationStrength > 50 && !wantsHigherLevel) {
         reasons.push("vila prioriterad");
       }
-    } else if (rotationStrength > 70) {
+    } else if (rotationStrength > 70 && !wantsHigherLevel) {
       const rotationPenalty = (rotationStrength / 100) * 10;
       score -= rotationPenalty;
       reasons.push("spelade nyligen");
     }
 
-    // New player prioritization
+    // New player prioritization (reduced when we want higher level)
     const hasPlayedAgainstOpponent = recentOpponentMatches.some(match =>
-      // This would need to check player_activities in real usage
       false // Placeholder - would need actual implementation
     );
     
     if (prioritizeNewPlayers && !hasPlayedAgainstOpponent) {
-      score += 8;
-      reasons.push("ny mot detta lag");
+      const newPlayerBonus = wantsHigherLevel ? 4 : 8; // Reduced when we want higher level
+      score += newPlayerBonus;
+      if (!wantsHigherLevel) {
+        reasons.push("ny mot detta lag");
+      }
     }
 
-    // BALANCED: Combination effectiveness (reduced weight for balance focus)
+    // Combination effectiveness (reduced weight for balance focus)
     const playerCombinations = combinations.filter(c => c.playerIds.includes(player.id));
     const avgEfficiency = playerCombinations.length > 0 
       ? playerCombinations.reduce((sum, c) => sum + c.combinationEfficiency, 0) / playerCombinations.length 
       : 1.0;
     
-    // Reduced combination weight for balance
-    score += avgEfficiency * 2; // Reduced from 3 to 2
+    score += avgEfficiency * 2;
 
     if (avgEfficiency > 1.2) {
       reasons.push("bra kombination");
@@ -1068,6 +1078,8 @@ export async function suggestBalancedLineup(
     // Select the best player for this position
     if (scoredPlayers.length > 0) {
       const selectedPlayer = scoredPlayers[0];
+      console.log(`suggestBalancedLineup: Selected ${selectedPlayer.player.name} (${selectedPlayer.player.grade}) for ${position} (score: ${selectedPlayer.score})`);
+      
       lineupPlayers.push({
         playerId: selectedPlayer.player.id,
         playerName: selectedPlayer.player.name,
@@ -1147,9 +1159,9 @@ export async function suggestBalancedLineup(
   }
 
   // Calculate balance metrics with improved focus
-  const expectedGoalDifference = Math.max(0.5, targetGoalDifference - 0.5); // Slightly more conservative
+  const expectedGoalDifference = Math.max(0.5, targetGoalDifference - 0.5);
   const balanceScore = Math.min(100, Math.max(20, 
-    80 - Math.abs(expectedGoalDifference - targetGoalDifference) * 15 // Better balance scoring
+    80 - Math.abs(expectedGoalDifference - targetGoalDifference) * 15
   ));
   
   const confidence = Math.min(95, Math.max(40, 
@@ -1162,7 +1174,7 @@ export async function suggestBalancedLineup(
     `Formation ${formation} optimerad för balanserad match mot ${opponent}`,
     `Startuppställning: ${lineupPlayers.length} spelare, Bänk: ${benchPlayers.length} spelare`,
     `Målsättning: ${targetGoalDifference} mål framåt för balanserad match`,
-    balanceStrategy, // Use the enhanced balance strategy
+    balanceStrategy,
     `Rotationsstyrka: ${rotationStrength}% - ${rotationStrength > 70 ? 'vila prioriteras högt' : rotationStrength > 30 ? 'balanserat' : 'prestanda prioriteras'}`,
     prioritizeNewPlayers ? 'Prioriterar spelare som inte mött detta lag tidigare' : 'Fokuserar på beprövade kombinationer',
     `Baserat på ${opponentHistory.totalMatches} tidigare matcher mot ${opponent}`
