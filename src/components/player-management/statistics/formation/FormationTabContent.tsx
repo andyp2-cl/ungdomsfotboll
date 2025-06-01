@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UsersRound, Target, Scale } from "lucide-react";
+import { UsersRound, Scale } from "lucide-react";
 import { PositionPlayerLists } from './PositionPlayerLists';
-import { OptimalLineupSuggestion } from './OptimalLineupSuggestion';
 import { BalancedMatchOptimizer } from './BalancedMatchOptimizer';
 import { getFieldPlayers } from './positionUtils';
 
@@ -26,10 +25,6 @@ export function FormationTabContent({ players, activities, onPlayerSelect }: For
             <UsersRound className="h-4 w-4" />
             Spelare per position
           </TabsTrigger>
-          <TabsTrigger value="optimal" className="flex items-center gap-1">
-            <Target className="h-4 w-4" />
-            Optimal lineup
-          </TabsTrigger>
           <TabsTrigger value="balanced" className="flex items-center gap-1">
             <Scale className="h-4 w-4" />
             Balanserad match
@@ -38,14 +33,6 @@ export function FormationTabContent({ players, activities, onPlayerSelect }: For
         
         <TabsContent value="players">
           <PositionPlayerLists players={fieldPlayers} />
-        </TabsContent>
-        
-        <TabsContent value="optimal">
-          <OptimalLineupSuggestion 
-            players={fieldPlayers}
-            activities={activities}
-            onPlayerSelect={onPlayerSelect}
-          />
         </TabsContent>
         
         <TabsContent value="balanced">

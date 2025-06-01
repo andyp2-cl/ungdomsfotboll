@@ -564,7 +564,7 @@ export function analyzeOpponentHistory(activities: Activity[], opponent: string)
   };
 }
 
-// New function: Analyze opponent grade history for smart level strategy - UPDATED to use isWin field
+// New function: Analyze opponent grade history for smart level strategy - UPDATED with fixed draw logic
 export function analyzeOpponentGradeHistory(
   activities: Activity[], 
   opponent: string, 
@@ -626,7 +626,7 @@ export function analyzeOpponentGradeHistory(
     ? gradeHistory.reduce((sum, grade) => sum + grade, 0) / gradeHistory.length
     : 2.5;
 
-  // Determine recommended grade adjustment based on results
+  // FIXED: Determine recommended grade adjustment based on results
   let recommendedGradeAdjustment = 0;
   let reasoning = "";
 
@@ -635,23 +635,27 @@ export function analyzeOpponentGradeHistory(
 
     if (wasWin && goalDifference >= 5) {
       // Big win - suggest lower level for balanced match
-      recommendedGradeAdjustment = -0.5;
-      reasoning = `Förra matchen vann ni med ${goalDifference} mål. Föreslår lägre nivå för jämnare match.`;
+      recommendedGradeAdjustment = -0.8;
+      reasoning = `Förra matchen vann ni stort med ${goalDifference} mål. Kraftigt lägre nivå för jämnare match.`;
     } else if (wasWin && goalDifference >= 3) {
-      // Comfortable win - suggest slightly lower level
-      recommendedGradeAdjustment = -0.25;
-      reasoning = `Förra matchen vann ni bekvämt med ${goalDifference} mål. Kan prova något lägre nivå.`;
+      // Comfortable win - suggest moderately lower level
+      recommendedGradeAdjustment = -0.5;
+      reasoning = `Förra matchen vann ni bekvämt med ${goalDifference} mål. Lägre nivå för mer balanserad match.`;
     } else if (wasWin && goalDifference <= 2) {
-      // Narrow win - maintain or slightly increase level
-      recommendedGradeAdjustment = 0.1;
-      reasoning = `Förra matchen var jämn (${goalDifference} mål). Föreslår att hålla eller höja nivån något.`;
+      // Narrow win - slightly lower level to maintain balance
+      recommendedGradeAdjustment = -0.2;
+      reasoning = `Förra matchen var en knapp vinst (${goalDifference} mål). Något lägre nivå för att behålla balansen.`;
+    } else if (!wasWin && goalDifference === 0) {
+      // FIXED: Draw - increase level to aim for win next time
+      recommendedGradeAdjustment = 0.4;
+      reasoning = `Förra matchen slutade oavgjort. Föreslår högre nivå för att sikta på vinst nästa gång.`;
     } else if (!wasWin && goalDifference >= -2) {
       // Narrow loss - increase level moderately
-      recommendedGradeAdjustment = 0.3;
+      recommendedGradeAdjustment = 0.5;
       reasoning = `Förra matchen förlorade ni knappt (${Math.abs(goalDifference)} mål). Föreslår högre nivå för säkrare vinst.`;
     } else if (!wasWin) {
       // Clear loss - increase level significantly
-      recommendedGradeAdjustment = 0.5;
+      recommendedGradeAdjustment = 0.7;
       reasoning = `Förra matchen förlorade ni tydligt (${Math.abs(goalDifference)} mål). Föreslår märkbart högre nivå.`;
     }
   } else {
@@ -936,7 +940,7 @@ export async function suggestBalancedLineup(
 
   const selectedPlayerIds = new Set<string>(); // Track selected players to prevent duplicates
 
-  // IMPROVED: Function to score a player for a position with better balance focus
+  // IMPROVED: Function to score a player for a position with FIXED balance focus for draws
   const scorePlayerForPosition = (player: Player, targetPosition: string) => {
     let score = 0;
     let reasons: string[] = [];
@@ -954,26 +958,35 @@ export async function suggestBalancedLineup(
       }
     }
 
-    // ENHANCED: Grade-based scoring with stronger balance focus
+    // FIXED: Grade-based scoring with corrected balance logic
     const playerGrade = gradeToNumeric(player.grade || 'C');
     const gradeDifference = Math.abs(playerGrade - targetAverageGrade);
     
-    // Prioritize players closer to target grade more strongly
+    // FIXED: For draws and losses, we want HIGHER level players to win
     let gradeScore: number;
-    if (gradeDifference <= 0.3) {
+    if (gradeDifference <= 0.2) {
       gradeScore = 25; // Perfect grade match gets high score
-      reasons.push("perfekt nivå för balanserad match");
-    } else if (gradeDifference <= 0.6) {
-      gradeScore = 15; // Close grade match
-      reasons.push("bra nivå för balanserad match");
-    } else if (playerGrade > targetAverageGrade) {
-      // Player is too high level - penalize more for balance
-      gradeScore = Math.max(0, 8 - (gradeDifference * 5));
-      reasons.push("för hög nivå för balanserad match");
+      reasons.push("perfekt nivå för målet");
+    } else if (gradeDifference <= 0.5) {
+      gradeScore = 20; // Close grade match
+      reasons.push("bra nivå för målet");
     } else {
-      // Player is too low level - moderate penalty
-      gradeScore = Math.max(2, 10 - (gradeDifference * 3));
-      reasons.push("låg nivå, kan behövas för balans");
+      // FIXED: Check if we want higher or lower level based on last result
+      const wantsHigherLevel = gradeAnalysis.recommendedGradeAdjustment > 0;
+      
+      if (wantsHigherLevel && playerGrade > targetAverageGrade) {
+        // We want higher level and this player is higher - bonus
+        gradeScore = 18;
+        reasons.push("högre nivå för bättre resultat");
+      } else if (!wantsHigherLevel && playerGrade < targetAverageGrade) {
+        // We want lower level and this player is lower - bonus  
+        gradeScore = 18;
+        reasons.push("lägre nivå för balanserad match");
+      } else {
+        // Player doesn't match our level strategy
+        gradeScore = Math.max(5, 15 - (gradeDifference * 8));
+        reasons.push(`nivå ${player.grade || 'C'}`);
+      }
     }
     
     score += gradeScore;
