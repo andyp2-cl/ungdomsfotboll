@@ -5,6 +5,7 @@ import { GoalsTabContent } from "./goals/GoalsTabContent";
 import { OverviewTabContent } from "./tabs/OverviewTabContent";
 import { MatchesTabContent } from "./matches/MatchesTabContent";
 import { LeaguesTabContent } from "./leagues/LeaguesTabContent";
+import { CupsTabContent } from "./cups/CupsTabContent";
 import { CombinationsTabContent } from "./combinations/CombinationsTabContent";
 import { Activity, Player } from "@/types/player";
 
@@ -42,6 +43,7 @@ export function StatisticsTabsWrapper({
         <TabsTrigger value="goals">Mål</TabsTrigger>
         <TabsTrigger value="matches">Matcher</TabsTrigger>
         <TabsTrigger value="leagues">Ligor</TabsTrigger>
+        <TabsTrigger value="cups">Cuper</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview">
@@ -85,6 +87,15 @@ export function StatisticsTabsWrapper({
       
       <TabsContent value="leagues">
         <LeaguesTabContent 
+          activities={activities} 
+          players={players}
+          onActivitySelect={handleActivitySelectWithLogging}
+          onPlayerSelect={onPlayerSelect}
+        />
+      </TabsContent>
+      
+      <TabsContent value="cups">
+        <CupsTabContent 
           activities={activities} 
           players={players}
           onActivitySelect={handleActivitySelectWithLogging}
