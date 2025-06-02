@@ -22,7 +22,7 @@ export function ParticipantActionButtons({
   isOpen,
   setIsOpen
 }: ParticipantActionButtonsProps) {
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   
   return (
     <div className={`flex flex-wrap gap-2 ${isAddingPlayers && isMobile ? 'hidden' : ''}`}>

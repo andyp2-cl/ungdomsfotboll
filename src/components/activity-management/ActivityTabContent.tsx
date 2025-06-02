@@ -43,7 +43,7 @@ export function ActivityTabContent({
   onMatchResultUpdate,
   cupMatches
 }: ActivityTabContentProps) {
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
 
   return (
     <div className="grid grid-cols-1 gap-6">
