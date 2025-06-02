@@ -72,7 +72,7 @@ export default function PlayerManagementPage() {
         onPlayerUpdate={handlePlayerUpdateWrapper}
         onAddPlayerClick={() => setIsAddPlayerOpen(true)}
         onEditPlayerClick={setEditingPlayer}
-        isMobile={isMobile.isMobile}
+        isMobile={isMobile}
       />
     </PageContainer>
   );

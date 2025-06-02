@@ -37,7 +37,7 @@ export function ParticipantsSection({
   onAddPlayers,
   players
 }: ParticipantsSectionProps) {
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
 
   // Sort participants by grade (A, B, C, D)
   const sortedParticipants = sortPlayersByGrade(participatingPlayers);

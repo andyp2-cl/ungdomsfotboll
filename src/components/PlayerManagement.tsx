@@ -43,7 +43,7 @@ export function PlayerManagement({
   onAddPlayerClick,
   onEditPlayerClick,
 }: PlayerManagementProps) {
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"players" | "statistics" | "analytics">("players");
   const [selectedPositions, setSelectedPositions] = useState<PlayerPosition[]>([]);
   
@@ -115,7 +115,7 @@ export function PlayerManagement({
             selectedPositions={selectedPositions}
             activeFiltersCount={activeFiltersCount}
             selectedPlayer={selectedPlayer}
-            viewMode="list"
+            viewMode={viewMode}
             filteredPlayers={filteredPlayers}
             onSearchChange={onSearchChange}
             onGradeChange={onGradeChange}

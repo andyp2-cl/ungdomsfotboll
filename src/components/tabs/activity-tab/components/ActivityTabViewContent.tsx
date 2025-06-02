@@ -36,7 +36,7 @@ export function ActivityTabViewContent({
   onMatchResultUpdate,
   onAddActivity
 }: ActivityTabViewContentProps) {
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
   
   // Get content from renderContent
   const content = renderContent();

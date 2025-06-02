@@ -34,7 +34,7 @@ export function CupsList({
   const [expandedCups, setExpandedCups] = useState<Set<string>>(
     new Set(cups.slice(0, 2).map(cup => cup.id)) // Expand first 2 cups by default
   );
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
 
   const toggleCup = (cupId: string) => {
     setExpandedCups(prev => {

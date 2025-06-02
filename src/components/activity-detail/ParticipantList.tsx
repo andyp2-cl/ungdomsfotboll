@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ export function ParticipantList({
   onRemovePlayer,
   isMobile = false
 }: ParticipantListProps) {
-  const { isMobile: isMobileDevice } = useIsMobile();
+  const isMobileDevice = useIsMobile();
   
   // We're now using the shared sortPlayersByGrade function
   // Note: This is actually redundant since the participants are already sorted

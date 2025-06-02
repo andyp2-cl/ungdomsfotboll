@@ -61,17 +61,11 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
     await props.handleActivityUpdate(activity);
   };
 
-  const { isMobile, isTouchDevice } = useIsMobile();
+  const isMobile = useIsMobile();
   
   return (
-    <div className={cn(
-      "min-h-screen",
-      isTouchDevice && "touch-manipulation"
-    )}>
-      <div className={cn(
-        "mb-4",
-        isMobile ? "pb-20" : "pb-4" // Extra padding for mobile nav
-      )}>
+    <>
+      <div className={`mb-4 ${isMobile ? 'pb-16' : ''}`}>
         <MainTabs 
           activeTabId={props.activeTab}
           onTabChange={props.setActiveTab}
@@ -120,17 +114,10 @@ export function PlayersPageContent(props: PlayersPageContentProps) {
         />
       </div>
 
-      {isMobile && (
-        <MobileNavBar 
-          activeTab={props.activeTab} 
-          onTabChange={props.setActiveTab}
-        />
-      )}
-    </div>
+      <MobileNavBar 
+        activeTab={props.activeTab} 
+        onTabChange={props.setActiveTab}
+      />
+    </>
   );
-}
-
-// Helper function for className concatenation
-function cn(...classes: (string | undefined | false)[]): string {
-  return classes.filter(Boolean).join(' ');
 }

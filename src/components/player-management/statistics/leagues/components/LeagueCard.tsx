@@ -27,7 +27,7 @@ interface LeagueCardProps {
 const COLORS = ['#16a34a', '#9F9EA1', '#dc2626'];
 
 export function LeagueCard({ league, players, onActivitySelect, onPlayerSelect }: LeagueCardProps) {
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
 
   // Format league name correctly

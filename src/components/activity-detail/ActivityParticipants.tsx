@@ -18,7 +18,7 @@ export function ActivityParticipants({
   updateActivity,
   onPlayerSelect 
 }: ActivityParticipantsProps) {
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
   
   // Filter participants
   const participantPlayers = activity.participants 
