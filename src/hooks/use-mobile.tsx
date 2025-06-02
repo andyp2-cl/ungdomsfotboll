@@ -1,43 +1,71 @@
 
 import * as React from "react"
 
-// Standard mobile breakpoint at 768px (tablet/mobile)
+// Enhanced mobile breakpoints for better device detection
 const MOBILE_BREAKPOINT = 768
+const TABLET_BREAKPOINT = 1024
+const TOUCH_BREAKPOINT = 1200
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isTablet, setIsTablet] = React.useState<boolean>(false)
+  const [isTouchDevice, setIsTouchDevice] = React.useState<boolean>(false)
 
   React.useEffect(() => {
-    // Function to check if the device is mobile based on screen width
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    const checkDeviceType = () => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      
+      // Enhanced mobile detection
+      setIsMobile(width < MOBILE_BREAKPOINT)
+      setIsTablet(width >= MOBILE_BREAKPOINT && width < TABLET_BREAKPOINT)
+      
+      // Touch device detection
+      const hasTouchScreen = 'ontouchstart' in window || 
+                           navigator.maxTouchPoints > 0 ||
+                           (navigator as any).msMaxTouchPoints > 0
+      
+      setIsTouchDevice(hasTouchScreen || width < TOUCH_BREAKPOINT)
     }
 
     // Initial check
-    checkMobile()
+    checkDeviceType()
 
-    // Create a media query list
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    
-    // Add event listener for media query changes
-    const handleMediaChange = () => {
-      checkMobile()
+    // Debounced resize handler for better performance
+    let timeoutId: NodeJS.Timeout
+    const debouncedResize = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(checkDeviceType, 150)
     }
+
+    // Create media query listeners for better performance
+    const mobileQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const tabletQuery = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px) and (max-width: ${TABLET_BREAKPOINT - 1}px)`)
     
-    // Add event listener for window resize (for browsers that don't support matchMedia)
-    window.addEventListener("resize", checkMobile)
+    const handleMediaChange = () => checkDeviceType()
     
-    // Use the newer event listener pattern
-    mql.addEventListener("change", handleMediaChange)
+    // Modern event listener pattern
+    mobileQuery.addEventListener("change", handleMediaChange)
+    tabletQuery.addEventListener("change", handleMediaChange)
+    window.addEventListener("resize", debouncedResize)
+    window.addEventListener("orientationchange", checkDeviceType)
     
-    // Cleanup event listeners on component unmount
     return () => {
-      window.removeEventListener("resize", checkMobile)
-      mql.removeEventListener("change", handleMediaChange)
+      clearTimeout(timeoutId)
+      mobileQuery.removeEventListener("change", handleMediaChange)
+      tabletQuery.removeEventListener("change", handleMediaChange)
+      window.removeEventListener("resize", debouncedResize)
+      window.removeEventListener("orientationchange", checkDeviceType)
     }
   }, [])
 
-  // Return boolean or false if undefined (fallback)
-  return !!isMobile
+  return {
+    isMobile: !!isMobile,
+    isTablet,
+    isTouchDevice,
+    isDesktop: !isMobile && !isTablet
+  }
 }
 
+// Legacy export for backward compatibility
+export { useIsMobile as default }

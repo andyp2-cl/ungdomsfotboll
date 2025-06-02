@@ -36,47 +36,32 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -99,6 +84,113 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Enhanced mobile support */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Safe area support for modern mobile devices */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Mobile-optimized touch interactions */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+  
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+  
+  .touch-none {
+    touch-action: none;
+  }
+  
+  /* Enhanced button styles for mobile */
+  .mobile-button {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+    @apply active:scale-95 transition-transform duration-150;
+  }
+  
+  /* Better scroll behavior on mobile */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Improved focus states for mobile */
+  .mobile-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  
+  /* Card improvements for mobile */
+  .mobile-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    @apply active:shadow-md transition-shadow duration-200;
+  }
+  
+  /* Input improvements for mobile */
+  .mobile-input {
+    @apply min-h-[44px] text-base;
+    @apply focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+  
+  /* Modal improvements for mobile */
+  .mobile-modal {
+    @apply max-h-[85vh] overflow-y-auto;
+    @apply rounded-t-xl md:rounded-lg;
+  }
+}
+
+/* Enhanced responsive typography */
+@layer components {
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl;
+  }
 }
 
 /* Global navigation lock for Excel tab on Mac */
@@ -120,72 +212,47 @@
 
 /* Enhanced Excel iframe container with aggressive Mac protection */
 .excel-iframe-container {
-  /* Complete scroll isolation */
   overscroll-behavior: none !important;
   overscroll-behavior-x: none !important;
   overscroll-behavior-y: none !important;
   overflow: hidden !important;
   position: relative;
-  
-  /* Disable all Mac gestures and navigation */
   touch-action: none !important;
   -webkit-touch-callout: none !important;
   -webkit-user-select: none !important;
   user-select: none !important;
   -webkit-user-drag: none !important;
-  
-  /* Performance and rendering optimizations */
   will-change: transform;
   contain: layout style paint;
   transform: translateZ(0);
-  
-  /* Mac-specific gesture blocking */
   -webkit-overflow-scrolling: auto !important;
 }
 
 .excel-iframe-wrapper {
-  /* Absolute positioning to prevent layout shifts */
   position: relative;
-  
-  /* Complete overscroll prevention */
   overscroll-behavior: none !important;
   overscroll-behavior-x: none !important;
   overscroll-behavior-y: none !important;
   overflow: hidden !important;
-  
-  /* Block all touch interactions except internal iframe */
   touch-action: none !important;
   -webkit-touch-callout: none !important;
   -webkit-user-select: none !important;
   user-select: none !important;
   -webkit-user-drag: none !important;
-  
-  /* Enhanced rendering performance */
   transform: translateZ(0);
   contain: layout style paint;
   will-change: transform;
-  
-  /* Ensure pointer events work correctly */
   pointer-events: auto;
 }
 
 .excel-iframe-container iframe {
-  /* Enable internal scrolling while blocking external navigation */
   overflow: auto !important;
   display: block;
-  
-  /* Specific touch handling for iframe content */
   touch-action: pan-x pan-y !important;
   -webkit-overflow-scrolling: touch;
-  
-  /* Performance optimization */
   will-change: scroll-position;
   transform: translateZ(0);
-  
-  /* Ensure iframe receives interactions */
   pointer-events: auto !important;
-  
-  /* Block selection that might interfere */
   -webkit-user-select: none;
   user-select: none;
 }
@@ -215,7 +282,6 @@
     overscroll-behavior-y: none !important;
   }
   
-  /* Global body lock when Excel is active on Mac */
   body.excel-active-mac {
     overscroll-behavior: none !important;
     overscroll-behavior-x: none !important;
@@ -227,7 +293,6 @@
   }
 }
 
-/* Invisible overlay for complete gesture blocking */
 .excel-navigation-blocker {
   position: fixed;
   top: 0;
@@ -237,8 +302,6 @@
   z-index: 9999;
   pointer-events: none;
   background: transparent;
-  
-  /* Block all gestures */
   touch-action: none !important;
   -webkit-touch-callout: none !important;
   -webkit-user-select: none !important;
