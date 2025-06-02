@@ -115,7 +115,7 @@ export function PlayerManagement({
             selectedPositions={selectedPositions}
             activeFiltersCount={activeFiltersCount}
             selectedPlayer={selectedPlayer}
-            viewMode={viewMode}
+            viewMode="list"
             filteredPlayers={filteredPlayers}
             onSearchChange={onSearchChange}
             onGradeChange={onGradeChange}
