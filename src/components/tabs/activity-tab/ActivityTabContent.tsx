@@ -52,7 +52,7 @@ export function ActivityTabContent({
 }: ActivityTabContentProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   
   // Use the correct useActivityTabViews hook from hooks directory
   const { 
