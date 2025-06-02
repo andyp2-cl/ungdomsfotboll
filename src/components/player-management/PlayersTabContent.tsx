@@ -4,7 +4,7 @@ import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Activity } from "@/types/player";
 import { PlayerFilter } from "@/components/PlayerFilter";
 import { PlayerManagementHeader } from "./PlayerManagementHeader";
-import { PlayersListContent } from "./PlayersListContent";
+import { PlayerList } from "@/components/player-list/PlayerList";
 import { PlayerDetail } from "@/components/PlayerDetail";
 
 interface PlayersTabContentProps {
@@ -47,9 +47,9 @@ export function PlayersTabContent({
   isMobile
 }: PlayersTabContentProps) {
   
-  // Handle player selection from player card
-  const handlePlayerCardClick = (player: Player) => {
-    console.log("PlayersTabContent: Player card clicked:", player.name);
+  // Handle player selection from player list
+  const handlePlayerSelect = (player: Player) => {
+    console.log("PlayersTabContent: Player selected:", player.name);
     onPlayerSelect(player);
   };
 
@@ -88,13 +88,13 @@ export function PlayersTabContent({
           allPlayers={players}
         />
       ) : (
-        <PlayersListContent 
-          filteredPlayers={filteredPlayers}
-          viewMode={viewMode}
-          selectedPositions={selectedPositions}
-          onPlayerSelect={handlePlayerCardClick}
+        <PlayerList 
+          players={filteredPlayers}
+          activities={activities}
+          viewMode="list"
+          onPlayerSelect={handlePlayerSelect}
           onPlayerEdit={onEditPlayerClick}
-          isMobile={isMobile}
+          showCoaches={true}
         />
       )}
     </div>
