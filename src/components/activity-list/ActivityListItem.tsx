@@ -8,6 +8,8 @@ import { ActivityMeta } from "./ActivityMeta";
 import { ActivityParticipants } from "./ActivityParticipants";
 import { CupMatchBadge } from "./CupMatchBadge";
 import { MatchReportSummary } from "./MatchReportSummary";
+import { ActivityStatsWidget } from "./components/ActivityStatsWidget";
+import { GoalAssistDisplay } from "./components/GoalAssistDisplay";
 import { formatResult, getResultTextColor } from "./utils/result-utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
@@ -111,72 +113,89 @@ export function ActivityListItem({
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
+      className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20 hover:border-l-primary/40"
       onClick={handleClick}
     >
       <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
-        <div className={`space-y-${isMobile ? '2' : '3'}`}>
-          {/* Header with title and badges */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} truncate`}>{activity.name}</h3>
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[1fr,auto]'} gap-4`}>
+          {/* Main content */}
+          <div className={`space-y-${isMobile ? '2' : '3'}`}>
+            {/* Header with title and badges */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} truncate`}>{activity.name}</h3>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <CupMatchBadge activity={activity} isMobile={isMobile} />
+                {activity.type === 'match' && actualIsHistorical && (
+                  <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'}`}>
+                    <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                    <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
+                  </Badge>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <CupMatchBadge activity={activity} isMobile={isMobile} />
-              {activity.type === 'match' && actualIsHistorical && (
-                <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'}`}>
-                  <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
-                  <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
-                </Badge>
+
+            {/* Meta information - more compact on mobile */}
+            <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+              <div className="flex items-center gap-1">
+                <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span>{formatDate(activity.date)}</span>
+              </div>
+              
+              {activity.location?.name && (
+                <div className="flex items-center gap-1">
+                  <MapPin className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <span className={`truncate ${isMobile ? 'max-w-20' : ''}`}>{activity.location.name}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1">
+                <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span>{participatingPlayers.length}</span>
+              </div>
+
+              {league && !isMobile && (
+                <div className="flex items-center gap-1">
+                  <Award className="h-4 w-4" />
+                  <span>{getCleanLeagueName(league)}</span>
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Meta information - more compact on mobile */}
-          <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-            <div className="flex items-center gap-1">
-              <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              <span>{formatDate(activity.date)}</span>
-            </div>
-            
-            {activity.time && (
-              <div className="flex items-center gap-1">
-                <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                <span>{activity.time}</span>
-              </div>
-            )}
-            
-            {activity.location?.name && (
-              <div className="flex items-center gap-1">
-                <MapPin className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                <span className={`truncate ${isMobile ? 'max-w-20' : ''}`}>{activity.location.name}</span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-1">
-              <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              <span>{participatingPlayers.length}</span>
-            </div>
+            {/* Participants preview - optimized for mobile */}
+            <ActivityParticipants 
+              participants={participatingPlayers} 
+              onPlayerSelect={onPlayerSelect}
+              isMobile={isMobile}
+            />
 
-            {league && !isMobile && (
-              <div className="flex items-center gap-1">
-                <Award className="h-4 w-4" />
-                <span>{getCleanLeagueName(league)}</span>
+            {/* Goals and assists display for historical matches */}
+            {actualIsHistorical && activity.type === 'match' && (
+              <GoalAssistDisplay 
+                activity={activity} 
+                players={players} 
+                compact={isMobile}
+              />
+            )}
+
+            {/* Match report summary for historical activities - more compact on mobile */}
+            {actualIsHistorical && (
+              <div className={isMobile ? 'text-xs' : ''}>
+                <MatchReportSummary activity={activity} />
               </div>
             )}
           </div>
 
-          {/* Participants preview - optimized for mobile */}
-          <ActivityParticipants 
-            participants={participatingPlayers} 
-            onPlayerSelect={onPlayerSelect}
-            isMobile={isMobile}
-          />
-
-          {/* Match report summary for historical activities - more compact on mobile */}
-          {actualIsHistorical && (
-            <div className={isMobile ? 'text-xs' : ''}>
-              <MatchReportSummary activity={activity} />
+          {/* Stats widget - right side on desktop, integrated on mobile */}
+          {!isMobile && (
+            <div className="flex-shrink-0">
+              <ActivityStatsWidget 
+                activity={activity}
+                participants={participatingPlayers}
+                isHistorical={actualIsHistorical}
+                isMobile={isMobile}
+              />
             </div>
           )}
         </div>
