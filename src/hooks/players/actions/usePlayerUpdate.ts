@@ -20,8 +20,6 @@ export function usePlayerUpdate(
       
       // Find the existing player to compare development changes
       const existingPlayer = players.find(p => p.id === updatedPlayer.id);
-      const developmentChanged = existingPlayer && 
-        JSON.stringify(existingPlayer.development) !== JSON.stringify(updatedPlayer.development);
       
       // Important: Make a deep copy of the player to ensure image data is properly preserved
       const playerForUpdate = {
@@ -43,15 +41,15 @@ export function usePlayerUpdate(
         await savePlayers(updatedPlayers);
         console.log("Players saved successfully after update");
         
-        // Automatically save development history if development changed
-        if (developmentChanged && updatedPlayer.development) {
+        // Try to save development history with improved logic (only significant changes)
+        if (updatedPlayer.development && existingPlayer?.development) {
           try {
             await addHistoryEntry(
               updatedPlayer.id, 
-              updatedPlayer.development, 
+              updatedPlayer.development,
               "Automatisk sparning vid spelaruppdatering"
             );
-            console.log("Development history saved automatically");
+            console.log("Development history checked for significant changes");
           } catch (historyError) {
             console.error("Failed to save development history:", historyError);
             // Don't fail the whole update if history saving fails
@@ -73,7 +71,7 @@ export function usePlayerUpdate(
       
       toast({
         title: "Spelaren uppdaterad",
-        description: `${playerForUpdate.name} har uppdaterats.${developmentChanged ? ' Utvecklingshistorik sparad.' : ''}`,
+        description: `${playerForUpdate.name} har uppdaterats.`,
       });
       
       return true; // Return success status
@@ -93,20 +91,9 @@ export function usePlayerUpdate(
       // Create a map of the current players by ID
       const playerMap = new Map(players.map(player => [player.id, player]));
       
-      // Track development changes for history
-      const developmentChanges: { player: Player; oldDev?: any }[] = [];
-      
       // Update the map with the new player data
       updatedPlayers.forEach(player => {
         if (playerMap.has(player.id)) {
-          const existingPlayer = playerMap.get(player.id);
-          const developmentChanged = existingPlayer && 
-            JSON.stringify(existingPlayer.development) !== JSON.stringify(player.development);
-          
-          if (developmentChanged) {
-            developmentChanges.push({ player, oldDev: existingPlayer?.development });
-          }
-          
           playerMap.set(player.id, player);
         }
       });
@@ -117,21 +104,6 @@ export function usePlayerUpdate(
       // Update the state and save to storage
       setPlayers(newPlayers);
       await savePlayers(newPlayers);
-      
-      // Save development history for changed players
-      for (const { player } of developmentChanges) {
-        if (player.development) {
-          try {
-            await addHistoryEntry(
-              player.id, 
-              player.development, 
-              "Automatisk sparning vid bulk-uppdatering"
-            );
-          } catch (historyError) {
-            console.error(`Failed to save development history for ${player.name}:`, historyError);
-          }
-        }
-      }
       
       // Update selected player if it was one of the updated ones
       setSelectedPlayer(prevSelected => {

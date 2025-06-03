@@ -6,11 +6,14 @@ import { Player, Activity } from "@/types/player";
 import { DevelopmentChart } from "@/components/player-detail/DevelopmentChart";
 import { DevelopmentTimeline } from "@/components/development-timeline/DevelopmentTimeline";
 import { DevelopmentInsights } from "@/components/development-insights/DevelopmentInsights";
+import { DevelopmentComparison } from "@/components/development-tracking/DevelopmentComparison";
+import { DevelopmentSummaryCard } from "@/components/development-tracking/DevelopmentSummaryCard";
+import { DevelopmentHistoryButton } from "@/components/development-tracking/DevelopmentHistoryButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
-import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock, GitCompare } from "lucide-react";
 
 interface PlayerDevelopmentViewProps {
   players: Player[];
@@ -54,8 +57,9 @@ export function PlayerDevelopmentView({
     })).reverse(); // Show oldest first for timeline
   }, [history]);
 
-  // Get previous development for insights
+  // Get previous development for insights and comparison
   const previousDevelopment = history.length > 1 ? history[1].development_data : undefined;
+  const lastUpdated = history.length > 0 ? history[0].recorded_at : undefined;
 
   // Calculate development trends
   const developmentTrends = React.useMemo(() => {
@@ -142,10 +146,14 @@ export function PlayerDevelopmentView({
 
       {selectedPlayer && (
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="current" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Nuvarande
+            </TabsTrigger>
+            <TabsTrigger value="comparison" className="flex items-center gap-2">
+              <GitCompare className="h-4 w-4" />
+              Jämförelse
             </TabsTrigger>
             <TabsTrigger value="timeline" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -162,10 +170,20 @@ export function PlayerDevelopmentView({
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {selectedPlayer.name}
-                    {selectedPlayer.grade && (
-                      <Badge variant="outline">{selectedPlayer.grade}</Badge>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {selectedPlayer.name}
+                      {selectedPlayer.grade && (
+                        <Badge variant="outline">{selectedPlayer.grade}</Badge>
+                      )}
+                    </div>
+                    {selectedPlayer.development && (
+                      <DevelopmentHistoryButton
+                        playerId={selectedPlayer.id}
+                        playerName={selectedPlayer.name}
+                        currentDevelopment={selectedPlayer.development}
+                        previousDevelopment={previousDevelopment}
+                      />
                     )}
                   </CardTitle>
                 </CardHeader>
@@ -184,79 +202,62 @@ export function PlayerDevelopmentView({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Aktivitetshistorik
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Totala aktiviteter:</span>
-                      <span className="font-medium">{playerActivities.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Matcher:</span>
-                      <span className="font-medium">
-                        {playerActivities.filter(a => a.type === 'match').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Cuper:</span>
-                      <span className="font-medium">
-                        {playerActivities.filter(a => a.type === 'cup').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Utvecklingsposter:</span>
-                      <span className="font-medium">{history.length}</span>
-                    </div>
-                    {playerActivities.length > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span>Senaste aktivitet:</span>
-                        <span className="font-medium">
-                          {new Date(playerActivities[0].date).toLocaleDateString('sv-SE')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <DevelopmentSummaryCard
+                playerName={selectedPlayer.name}
+                current={selectedPlayer.development}
+                previous={previousDevelopment}
+                lastUpdated={lastUpdated}
+              />
             </div>
 
-            {/* Development Trends */}
-            {selectedPlayer.development && developmentTrends && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Utvecklingstrender
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(categoryLabels).map(([key, label]) => {
-                      const value = selectedPlayer.development![key as keyof typeof selectedPlayer.development];
-                      const trend = developmentTrends[key];
-                      
-                      return (
-                        <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-1">
-                            <span className="text-sm font-medium">{label}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold">{value}</span>
-                              {getTrendIcon(trend)}
-                            </div>
-                          </div>
-                          <div className={`text-xs ${getTrendColor(trend)}`}>
-                            {trend === 'up' ? 'Förbättring' : trend === 'down' ? 'Försämring' : 'Stabil'}
-                          </div>
-                        </div>
-                      );
-                    })}
+            {/* Activity Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Aktivitetshistorik
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-2xl font-bold">{playerActivities.length}</div>
+                    <div className="text-sm text-muted-foreground">Totala aktiviteter</div>
                   </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-2xl font-bold">
+                      {playerActivities.filter(a => a.type === 'match').length}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Matcher</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-2xl font-bold">
+                      {playerActivities.filter(a => a.type === 'cup').length}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Cuper</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-2xl font-bold">{history.length}</div>
+                    <div className="text-sm text-muted-foreground">Utvecklingsposter</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="comparison" className="space-y-4">
+            {selectedPlayer.development ? (
+              <DevelopmentComparison
+                current={selectedPlayer.development}
+                previous={previousDevelopment}
+                playerName={selectedPlayer.name}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-8">
+                  <p className="text-muted-foreground text-center">
+                    Ingen utvecklingsdata tillgänglig för jämförelse.
+                  </p>
                 </CardContent>
               </Card>
             )}

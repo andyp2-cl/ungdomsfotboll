@@ -32,7 +32,6 @@ export function useDevelopmentHistory(playerId?: string) {
         throw fetchError;
       }
 
-      // Convert Json data to PlayerDevelopment with proper type safety
       const formattedHistory: DevelopmentHistoryEntry[] = (data || []).map(entry => ({
         ...entry,
         development_data: entry.development_data as unknown as PlayerDevelopment
@@ -47,18 +46,43 @@ export function useDevelopmentHistory(playerId?: string) {
     }
   };
 
+  // Check if development has significant changes (at least 0.5 points in any category)
+  const hasSignificantChange = (current: PlayerDevelopment, previous: PlayerDevelopment): boolean => {
+    const categories = [
+      'technical', 'gameUnderstanding', 'passing', 'offensive', 'defensive', 'mentality',
+      'shooting', 'crossing', 'finishing', 'creativity', 'tackling', 'interception',
+      'positioning', 'heading', 'speed', 'stamina', 'strength', 'leadership', 'composure', 'workRate'
+    ];
+
+    return categories.some(category => {
+      const currentValue = current[category as keyof PlayerDevelopment] || 1;
+      const previousValue = previous[category as keyof PlayerDevelopment] || 1;
+      return Math.abs(currentValue - previousValue) >= 0.5;
+    });
+  };
+
   const addHistoryEntry = async (
     playerIdToAdd: string, 
     developmentData: PlayerDevelopment, 
-    notes?: string
+    notes?: string,
+    forceAdd: boolean = false
   ) => {
     try {
+      // Check if we should add this entry automatically
+      if (!forceAdd) {
+        const latestEntry = history[0];
+        if (latestEntry && !hasSignificantChange(developmentData, latestEntry.development_data)) {
+          console.log('No significant development change, skipping automatic history save');
+          return;
+        }
+      }
+
       const { error: insertError } = await supabase
         .from('player_development_history')
         .insert({
           player_id: playerIdToAdd,
-          development_data: developmentData as any, // Cast to any for Json compatibility
-          notes: notes || 'Manual entry',
+          development_data: developmentData as any,
+          notes: notes || (forceAdd ? 'Manuell sparning' : 'Automatisk sparning vid betydande förändring'),
           recorded_at: new Date().toISOString()
         });
 
@@ -76,6 +100,14 @@ export function useDevelopmentHistory(playerId?: string) {
     }
   };
 
+  const addManualHistoryEntry = async (
+    playerIdToAdd: string, 
+    developmentData: PlayerDevelopment, 
+    notes?: string
+  ) => {
+    return addHistoryEntry(playerIdToAdd, developmentData, notes, true);
+  };
+
   useEffect(() => {
     if (playerId) {
       fetchHistory(playerId);
@@ -87,6 +119,8 @@ export function useDevelopmentHistory(playerId?: string) {
     isLoading,
     error,
     fetchHistory,
-    addHistoryEntry
+    addHistoryEntry,
+    addManualHistoryEntry,
+    hasSignificantChange
   };
 }
