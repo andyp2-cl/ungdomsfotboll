@@ -7,6 +7,7 @@ interface CupWithMatches {
   id: string;
   name: string;
   year: number;
+  date: string;
   matches: Activity[];
   wins: number;
   draws: number;
@@ -62,6 +63,7 @@ const getCupsWithMatches = (
       id: cupActivity.id,
       name: cupActivity.name,
       year,
+      date: cupActivity.date,
       matches: relatedMatches,
       wins,
       draws,
@@ -103,10 +105,16 @@ const getCupsWithMatches = (
       year = parseInt(yearMatch[1]);
     }
     
+    // Use the earliest match date as the cup date
+    const earliestMatch = relatedMatches.sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )[0];
+    
     cupsWithMatches.push({
       id: `orphaned-${cupName}`,
       name: cupName,
       year,
+      date: earliestMatch?.date || new Date().toISOString().split('T')[0],
       matches: relatedMatches,
       wins,
       draws,
@@ -114,12 +122,11 @@ const getCupsWithMatches = (
     });
   });
   
-  // Sort by year (newest first) and then by name
+  // Sort by date (newest first)
   return cupsWithMatches.sort((a, b) => {
-    if (a.year !== b.year) {
-      return b.year - a.year;
-    }
-    return a.name.localeCompare(b.name);
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateB.getTime() - dateA.getTime();
   });
 };
 

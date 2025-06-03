@@ -12,6 +12,7 @@ interface CupWithMatches {
   id: string;
   name: string;
   year: number;
+  date: string;
   matches: Activity[];
   wins: number;
   draws: number;
@@ -53,6 +54,11 @@ export function CupsList({
     return total > 0 ? Math.round((wins / total) * 100) : 0;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('sv-SE');
+  };
+
   return (
     <div className="space-y-4">
       {cups.map((cup) => {
@@ -77,7 +83,7 @@ export function CupsList({
                         <CardTitle className="text-left text-lg">{cup.name}</CardTitle>
                         <div className="flex items-center gap-2 mt-1">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{cup.year}</span>
+                          <span className="text-sm text-muted-foreground">{formatDate(cup.date)}</span>
                         </div>
                       </div>
                     </div>
