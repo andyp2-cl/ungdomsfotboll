@@ -20,6 +20,10 @@ export function DevelopmentTabContent({
 }: DevelopmentTabContentProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -47,6 +51,7 @@ export function DevelopmentTabContent({
             players={players}
             activities={activities}
             onPlayerSelect={onPlayerSelect}
+            onTabChange={handleTabChange}
           />
         </TabsContent>
 

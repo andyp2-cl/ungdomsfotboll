@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,18 +10,23 @@ import { DevelopmentInsightsCard } from "@/components/development-tracking/Devel
 import { QuickActionsCard } from "@/components/development-tracking/QuickActionsCard";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
 import { TrendingUp, Users, Trophy, Target, AlertTriangle, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface DevelopmentOverviewProps {
   players: Player[];
   activities: Activity[];
   onPlayerSelect?: (playerId: string) => void;
+  onTabChange?: (tab: string) => void;
 }
 
 export function DevelopmentOverview({
   players,
   activities,
-  onPlayerSelect
+  onPlayerSelect,
+  onTabChange
 }: DevelopmentOverviewProps) {
+  const { toast } = useToast();
+  
   // Filter out trainers
   const activePlayers = players.filter(player => 
     !player.positions?.includes("TRÄNARE")
@@ -171,7 +175,25 @@ export function DevelopmentOverview({
 
   const handleQuickAction = (action: string) => {
     console.log("Quick action:", action);
-    // Implement navigation or actions based on the action type
+    
+    switch (action) {
+      case "set-goals":
+        toast({
+          title: "Utvecklingsmål",
+          description: "Funktionen för att sätta utvecklingsmål kommer snart. Använd individuell vy för att se spelarnas nuvarande utveckling.",
+        });
+        break;
+      case "filter-by-grade":
+        toast({
+          title: "Filtrera per nivå",
+          description: "Gå till individuell vy för att filtrera spelare per nivå och se deras utveckling.",
+        });
+        // Navigate to individual tab where filtering is available
+        onTabChange?.("individual");
+        break;
+      default:
+        console.log("Unhandled action:", action);
+    }
   };
 
   const getKPIColor = (value: number, type: 'percentage' | 'score' | 'trend') => {
@@ -284,7 +306,10 @@ export function DevelopmentOverview({
       )}
 
       {/* Quick Actions */}
-      <QuickActionsCard onActionClick={handleQuickAction} />
+      <QuickActionsCard 
+        onActionClick={handleQuickAction}
+        onTabChange={onTabChange}
+      />
     </div>
   );
 }

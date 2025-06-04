@@ -14,36 +14,49 @@ import {
 
 interface QuickActionsCardProps {
   onActionClick: (action: string) => void;
+  onTabChange?: (tab: string) => void;
   className?: string;
 }
 
-export function QuickActionsCard({ onActionClick, className = "" }: QuickActionsCardProps) {
+export function QuickActionsCard({ onActionClick, onTabChange, className = "" }: QuickActionsCardProps) {
   const actions = [
     {
       id: "view-all-players",
       label: "Visa alla spelare",
       icon: Users,
-      description: "Detaljerad vy av alla spelares utveckling"
+      description: "Detaljerad vy av alla spelares utveckling",
+      action: () => onTabChange?.("individual")
     },
     {
       id: "development-comparison",
       label: "Jämför utveckling",
       icon: BarChart3,
-      description: "Jämför olika spelares utveckling"
+      description: "Jämför olika spelares utveckling",
+      action: () => onTabChange?.("comparison")
     },
     {
       id: "set-goals",
       label: "Sätt utvecklingsmål",
       icon: Target,
-      description: "Definiera utvecklingsmål för spelare"
+      description: "Definiera utvecklingsmål för spelare",
+      action: () => onActionClick("set-goals")
     },
     {
       id: "filter-by-grade",
       label: "Filtrera per nivå",
       icon: Filter,
-      description: "Se utveckling för specifika spelarnivåer"
+      description: "Se utveckling för specifika spelarnivåer",
+      action: () => onActionClick("filter-by-grade")
     }
   ];
+
+  const handleActionClick = (action: typeof actions[0]) => {
+    if (action.action) {
+      action.action();
+    } else {
+      onActionClick(action.id);
+    }
+  };
 
   return (
     <Card className={className}>
@@ -59,8 +72,8 @@ export function QuickActionsCard({ onActionClick, className = "" }: QuickActions
             <Button
               key={action.id}
               variant="outline"
-              className="h-auto p-3 flex flex-col items-start gap-2"
-              onClick={() => onActionClick(action.id)}
+              className="h-auto p-3 flex flex-col items-start gap-2 hover:bg-accent/50 transition-colors"
+              onClick={() => handleActionClick(action)}
             >
               <div className="flex items-center gap-2 w-full">
                 <action.icon className="h-4 w-4" />
