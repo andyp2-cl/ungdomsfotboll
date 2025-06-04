@@ -8,6 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PlayerStatisticsCard } from "./PlayerStatisticsCard";
+import { PlayerDevelopmentCard } from "./PlayerDevelopmentCard";
+import { RecentMatchesCard } from "./RecentMatchesCard";
 
 interface PlayerPreviewProps {
   player: Player;
@@ -15,23 +18,8 @@ interface PlayerPreviewProps {
   onClose: () => void;
 }
 
-interface DevelopmentNote {
-  date: string;
-  note: string;
-}
-
 export function PlayerPreview({ player, activities = [], onClose }: PlayerPreviewProps) {
   const isMobile = useIsMobile();
-  
-  // Filter activities this player has participated in
-  const playerActivities = activities.filter(
-    activity => activity.participants?.includes(player.id)
-  );
-  
-  // Check if development exists and is an array
-  const developmentNotes: DevelopmentNote[] = Array.isArray(player.development) 
-    ? player.development 
-    : [];
   
   return (
     <Card className={`relative ${isMobile ? 'fixed inset-x-0 bottom-0 top-16 z-50 rounded-b-none' : 'w-full mb-6'}`}>
@@ -44,89 +32,54 @@ export function PlayerPreview({ player, activities = [], onClose }: PlayerPrevie
         <X className="h-4 w-4" />
       </Button>
       
-      <CardHeader className={`${isMobile ? 'py-3 px-4' : ''} pb-0 flex flex-row items-center gap-3`}>
-        <Avatar className="h-16 w-16 border shadow">
-          <AvatarImage src={player.image} alt={player.name} />
-          <AvatarFallback className="bg-muted">
-            <UserCircle className="h-8 w-8" />
-          </AvatarFallback>
-        </Avatar>
-        
-        <div>
-          <h2 className="text-xl font-bold">{player.name}</h2>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {player.grade && (
-              <Badge variant="outline">{player.grade}</Badge>
-            )}
-            {player.positions?.map(position => (
-              <Badge key={position} variant="secondary">{position}</Badge>
-            ))}
+      <CardHeader className={`${isMobile ? 'py-3 px-4' : ''} pb-0`}>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-20 w-20 border-2 shadow-lg">
+            <AvatarImage src={player.image} alt={player.name} />
+            <AvatarFallback className="bg-muted">
+              <UserCircle className="h-10 w-10" />
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold">{player.name}</h2>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {player.grade && (
+                <Badge variant="outline" className="bg-primary/10 text-primary">{player.grade}</Badge>
+              )}
+              {player.positions?.map(position => (
+                <Badge key={position} variant="secondary">{position}</Badge>
+              ))}
+              {player.jerseyNumber && (
+                <Badge variant="outline">#{player.jerseyNumber}</Badge>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
       
-      <ScrollArea className={isMobile ? 'h-[calc(100%-130px)]' : ''}>
-        <CardContent className={`${isMobile ? 'px-4 py-3' : ''}`}>
-          <div className="space-y-4">
-            <div className="border rounded-md p-4">
-              <h3 className="font-medium mb-2">Spelarinformation</h3>
-              <dl className="space-y-2">
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Deltagit i</dt>
-                  <dd className="font-medium">{playerActivities.length} aktiviteter</dd>
-                </div>
-                {player.jerseyNumber && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Tröjnummer</dt>
-                    <dd className="font-medium">#{player.jerseyNumber}</dd>
-                  </div>
-                )}
-                {player.grade && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Nivå</dt>
-                    <dd className="font-medium">{player.grade}</dd>
-                  </div>
-                )}
-              </dl>
+      <ScrollArea className={isMobile ? 'h-[calc(100%-150px)]' : 'max-h-[70vh]'}>
+        <CardContent className={`${isMobile ? 'px-4 py-3' : 'p-6'}`}>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Statistics Card */}
+            <div className="md:col-span-1">
+              <PlayerStatisticsCard player={player} activities={activities} />
             </div>
             
-            {playerActivities.length > 0 && (
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Senaste aktiviteter</h3>
-                <div className="space-y-2">
-                  {playerActivities.slice(0, 5).map(activity => (
-                    <div key={activity.id} className="p-2 bg-muted/50 rounded-md">
-                      <p className="font-medium">{activity.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(activity.date).toLocaleDateString('sv-SE')}
-                        {activity.time && `, ${activity.time}`}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Development Card */}
+            <div className="md:col-span-1">
+              <PlayerDevelopmentCard player={player} />
+            </div>
             
-            {developmentNotes.length > 0 && (
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Utveckling</h3>
-                <div className="space-y-2">
-                  {developmentNotes.map((dev, index) => (
-                    <div key={index} className="p-2 border-l-2 border-primary">
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(dev.date).toLocaleDateString('sv-SE')}
-                      </p>
-                      <p>{dev.note}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Recent Matches Card - Full width */}
+            <div className="md:col-span-2">
+              <RecentMatchesCard player={player} activities={activities} />
+            </div>
           </div>
         </CardContent>
       </ScrollArea>
       
-      <CardFooter className={`${isMobile ? 'px-4 py-3 mt-auto border-t' : ''}`}>
+      <CardFooter className={`${isMobile ? 'px-4 py-3 mt-auto border-t' : 'p-6 pt-0'}`}>
         <Button 
           variant="outline" 
           onClick={onClose}
