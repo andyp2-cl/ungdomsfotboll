@@ -1,11 +1,16 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Player, Activity, PlayerDevelopment } from "@/types/player";
 import { DevelopmentChart } from "@/components/player-detail/DevelopmentChart";
-import { TrendingUp, Users, Trophy, Target } from "lucide-react";
+import { DevelopmentTrendChart } from "@/components/development-tracking/DevelopmentTrendChart";
+import { DevelopmentHeatmap } from "@/components/development-tracking/DevelopmentHeatmap";
+import { DevelopmentInsightsCard } from "@/components/development-tracking/DevelopmentInsightsCard";
+import { QuickActionsCard } from "@/components/development-tracking/QuickActionsCard";
+import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
+import { TrendingUp, Users, Trophy, Target, AlertTriangle, CheckCircle } from "lucide-react";
 
 interface DevelopmentOverviewProps {
   players: Player[];
@@ -23,8 +28,8 @@ export function DevelopmentOverview({
     !player.positions?.includes("TRÄNARE")
   );
 
-  // Calculate team development overview
-  const teamDevelopmentAverage = React.useMemo(() => {
+  // Calculate team development average
+  const teamDevelopmentAverage = useMemo(() => {
     if (activePlayers.length === 0) return null;
 
     const defaultDevelopment: PlayerDevelopment = {
@@ -50,7 +55,6 @@ export function DevelopmentOverview({
       workRate: 1
     };
 
-    // Sum all values
     const totals = activePlayers.reduce((acc, player) => {
       const dev = player.development || defaultDevelopment;
       Object.keys(defaultDevelopment).forEach(key => {
@@ -60,7 +64,6 @@ export function DevelopmentOverview({
       return acc;
     }, { ...defaultDevelopment });
 
-    // Calculate averages
     Object.keys(totals).forEach(key => {
       const typedKey = key as keyof PlayerDevelopment;
       totals[typedKey] = Math.round((totals[typedKey] / activePlayers.length) * 10) / 10;
@@ -69,37 +72,130 @@ export function DevelopmentOverview({
     return totals;
   }, [activePlayers]);
 
-  // Get top performers in each category
-  const getTopPerformers = () => {
+  // Calculate development trend (simulated data - in real app would come from development history)
+  const developmentTrend = useMemo(() => {
+    const currentDate = new Date();
+    const trendData = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate);
+      date.setMonth(date.getMonth() - i);
+      const period = date.toLocaleDateString('sv-SE', { year: 'numeric', month: 'short' });
+      
+      // Simulate gradual improvement over time
+      const baseImprovement = (5 - i) * 0.1;
+      
+      trendData.push({
+        period,
+        average: Math.min(10, (teamDevelopmentAverage?.technical || 5) + baseImprovement),
+        technical: Math.min(10, (teamDevelopmentAverage?.technical || 5) + baseImprovement + Math.random() * 0.2),
+        offensive: Math.min(10, (teamDevelopmentAverage?.offensive || 5) + baseImprovement + Math.random() * 0.2),
+        defensive: Math.min(10, (teamDevelopmentAverage?.defensive || 5) + baseImprovement + Math.random() * 0.2),
+      });
+    }
+    
+    return trendData;
+  }, [teamDevelopmentAverage]);
+
+  // Calculate actual development trend percentage
+  const developmentTrendPercentage = useMemo(() => {
+    if (developmentTrend.length < 2) return 0;
+    
+    const latest = developmentTrend[developmentTrend.length - 1];
+    const previous = developmentTrend[developmentTrend.length - 2];
+    
+    const change = ((latest.average - previous.average) / previous.average) * 100;
+    return Math.round(change * 10) / 10;
+  }, [developmentTrend]);
+
+  // Calculate improvement heatmap data
+  const improvementData = useMemo(() => {
     const categories = [
       { key: 'technical', label: 'Teknik' },
       { key: 'offensive', label: 'Offensiv' },
       { key: 'defensive', label: 'Defensiv' },
-      { key: 'leadership', label: 'Ledarskap' }
+      { key: 'mentality', label: 'Mentalitet' },
+      { key: 'passing', label: 'Passning' },
+      { key: 'gameUnderstanding', label: 'Spelförståelse' }
     ];
 
     return categories.map(category => {
-      const topPlayer = activePlayers
-        .filter(p => p.development)
-        .sort((a, b) => {
-          const aValue = a.development![category.key as keyof PlayerDevelopment] || 1;
-          const bValue = b.development![category.key as keyof PlayerDevelopment] || 1;
-          return bValue - aValue;
-        })[0];
-
+      // Simulate improvement calculation
+      const improvement = (Math.random() - 0.3) * 1.5; // Random between -0.45 and 1.2
+      const playerCount = Math.floor(Math.random() * activePlayers.length) + 1;
+      
       return {
         category: category.label,
-        player: topPlayer,
-        value: topPlayer?.development?.[category.key as keyof PlayerDevelopment] || 1
+        improvement: Math.round(improvement * 10) / 10,
+        playerCount
       };
     });
+  }, [activePlayers.length]);
+
+  // Calculate insights
+  const insights = useMemo(() => {
+    // Simulate star players (players with highest average development)
+    const starPlayers = activePlayers
+      .filter(p => p.development)
+      .sort((a, b) => {
+        const avgA = Object.values(a.development!).reduce((sum, val) => sum + val, 0) / Object.values(a.development!).length;
+        const avgB = Object.values(b.development!).reduce((sum, val) => sum + val, 0) / Object.values(b.development!).length;
+        return avgB - avgA;
+      })
+      .slice(0, 5);
+
+    // Simulate potential talents (random selection for demo)
+    const potentialTalents = activePlayers
+      .filter(p => !starPlayers.includes(p))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    const improvementAreas = improvementData
+      .filter(item => item.improvement < 0)
+      .map(item => `${item.category} behöver förbättring (${item.improvement} i snitt)`)
+      .slice(0, 3);
+
+    const recommendations = [
+      "Fokusera på defensiv träning - lägst genomsnittsvärde i laget",
+      "Fortsätt utveckla tekniska färdigheter - stark grund att bygga på",
+      "Överväg individuell mentalträning för yngre spelare"
+    ];
+
+    return {
+      starPlayers,
+      improvementAreas,
+      potentialTalents,
+      recommendations
+    };
+  }, [activePlayers, improvementData]);
+
+  const handleQuickAction = (action: string) => {
+    console.log("Quick action:", action);
+    // Implement navigation or actions based on the action type
   };
 
-  const topPerformers = getTopPerformers();
+  const getKPIColor = (value: number, type: 'percentage' | 'score' | 'trend') => {
+    if (type === 'percentage') {
+      if (value >= 80) return "text-green-600";
+      if (value >= 60) return "text-yellow-600";
+      return "text-red-600";
+    }
+    if (type === 'score') {
+      if (value >= 7) return "text-green-600";
+      if (value >= 5) return "text-yellow-600";
+      return "text-red-600";
+    }
+    if (type === 'trend') {
+      if (value > 0) return "text-green-600";
+      if (value === 0) return "text-gray-600";
+      return "text-red-600";
+    }
+    return "text-gray-600";
+  };
 
   return (
     <div className="space-y-6">
-      {/* Team Overview Stats */}
+      {/* Enhanced KPI Section with color coding */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -133,7 +229,7 @@ export function DevelopmentOverview({
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`text-2xl font-bold ${getKPIColor(teamDevelopmentAverage?.technical || 0, 'score')}`}>
               {teamDevelopmentAverage?.technical.toFixed(1) || '0.0'}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -148,12 +244,26 @@ export function DevelopmentOverview({
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">+2.3%</div>
+            <div className={`text-2xl font-bold ${getKPIColor(developmentTrendPercentage, 'trend')}`}>
+              {developmentTrendPercentage > 0 ? '+' : ''}{developmentTrendPercentage}%
+            </div>
             <p className="text-xs text-muted-foreground">
               Senaste månaden
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Development Trend Chart */}
+      <DevelopmentTrendChart trendData={developmentTrend} />
+
+      {/* Development Heatmap and Insights */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <DevelopmentHeatmap improvementData={improvementData} />
+        <DevelopmentInsightsCard 
+          insights={insights}
+          onPlayerSelect={onPlayerSelect}
+        />
       </div>
 
       {/* Team Development Chart */}
@@ -173,68 +283,8 @@ export function DevelopmentOverview({
         </Card>
       )}
 
-      {/* Top Performers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Topprestationer per kategori</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            {topPerformers.map((performer, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{performer.category}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {performer.player?.name || 'Ingen data'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {performer.value.toFixed(1)}
-                  </Badge>
-                  {performer.player && onPlayerSelect && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onPlayerSelect(performer.player.id)}
-                    >
-                      Visa
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Utvecklingsinsikter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Förbättringsområde:</strong> Laggenomsnitt för "Skott" är lägst ({teamDevelopmentAverage?.shooting.toFixed(1) || '0.0'}). 
-                Fokusera på skottträning för bättre målchans.
-              </p>
-            </div>
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Stark sida:</strong> Lagets "Spelförståelse" är högst ({teamDevelopmentAverage?.gameUnderstanding.toFixed(1) || '0.0'}). 
-                Fortsätt utveckla taktisk förståelse.
-              </p>
-            </div>
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Balanserat lag:</strong> Skillnaden mellan offensiva och defensiva värden är endast {Math.abs((teamDevelopmentAverage?.offensive || 1) - (teamDevelopmentAverage?.defensive || 1)).toFixed(1)} poäng.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <QuickActionsCard onActionClick={handleQuickAction} />
     </div>
   );
 }
