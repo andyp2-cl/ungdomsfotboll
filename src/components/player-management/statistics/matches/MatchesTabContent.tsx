@@ -184,10 +184,10 @@ export function MatchesTabContent({
                         <div className="text-sm text-muted-foreground flex items-center gap-2">
                           <Calendar className="h-3 w-3" />
                           {formatDate(match.date)}
-                          {match.locationDescription && (
+                          {match.location_description && (
                             <>
                               <MapPin className="h-3 w-3" />
-                              {match.locationDescription}
+                              {match.location_description}
                             </>
                           )}
                         </div>
