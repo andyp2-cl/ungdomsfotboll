@@ -22,7 +22,7 @@ export function MatchesTabContent({
   onActivitySelect,
   onPlayerSelect 
 }: MatchesTabContentProps) {
-  const [selectedView, setSelectedView] = useState<"overview" | "home-away" | "history">("overview");
+  const [selectedView, setSelectedView] = useState<"overview" | "home-away">("overview");
 
   // Filter match activities to only include historical matches (date is in the past)
   const historicalMatchActivities = activities.filter(activity => {
@@ -63,11 +63,11 @@ export function MatchesTabContent({
     return { homeStats: home, awayStats: away };
   }, [historicalMatchActivities]);
 
-  // Calculate recent form (last 10 matches)
+  // Calculate recent form (last 5 matches)
   const recentForm = React.useMemo(() => {
     return historicalMatchActivities
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 10)
+      .slice(0, 5)
       .map(match => ({
         ...match,
         result: match.isWin === true ? 'W' : match.isWin === false ? 'L' : 'D'
@@ -99,11 +99,10 @@ export function MatchesTabContent({
         <TabsList className="w-full md:w-auto">
           <TabsTrigger value="overview">Översikt</TabsTrigger>
           <TabsTrigger value="home-away">Hemma/Borta</TabsTrigger>
-          <TabsTrigger value="history">Matchhistorik</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <MatchStatsCard 
               activities={historicalMatchActivities} 
               className="col-span-1"
@@ -111,6 +110,7 @@ export function MatchesTabContent({
             
             <MatchResultChart 
               matchStats={matchStats}
+              className="col-span-1"
             />
             
             <DetailedMatchStats 
@@ -122,32 +122,96 @@ export function MatchesTabContent({
             />
           </div>
 
-          {/* Recent Form */}
+          {/* Recent Form - Improved design */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5" />
-                Senaste formen (10 matcher)
+                Senaste formen ({recentForm.length} matcher)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-3 flex-wrap">
                 {recentForm.map((match, index) => (
                   <div
                     key={match.id}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-105 transition-transform ${
+                    className="flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
+                    title={`${match.name} - ${formatDate(match.date)}`}
+                    onClick={() => onActivitySelect?.(match)}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
                       match.result === 'W' 
                         ? 'bg-green-500' 
                         : match.result === 'L' 
                           ? 'bg-red-500'
                           : 'bg-gray-500'
-                    }`}
-                    title={`${match.name} - ${formatDate(match.date)}`}
-                    onClick={() => onActivitySelect?.(match)}
-                  >
-                    {match.result}
+                    }`}>
+                      {match.result}
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="font-medium">{match.homeScore}-{match.awayScore}</div>
+                      <div className="text-muted-foreground">{formatDate(match.date)}</div>
+                    </div>
                   </div>
                 ))}
+              </div>
+              {recentForm.length === 0 && (
+                <div className="text-muted-foreground text-center py-4">
+                  Inga matcher att visa ännu
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent Matches List - Top 10 most recent */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Senaste matcherna</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {historicalMatchActivities
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, 10)
+                  .map(match => (
+                    <div 
+                      key={match.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => onActivitySelect?.(match)}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{match.name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(match.date)}
+                          {match.locationDescription && (
+                            <>
+                              <MapPin className="h-3 w-3" />
+                              {match.locationDescription}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {match.homeScore !== undefined && match.awayScore !== undefined && (
+                          <div className="font-mono text-lg font-bold">
+                            {match.homeScore}-{match.awayScore}
+                          </div>
+                        )}
+                        <Badge 
+                          variant={match.isWin === true ? "default" : match.isWin === false ? "destructive" : "secondary"}
+                          className="min-w-[60px] justify-center"
+                        >
+                          {match.isWin === true ? "Vinst" : match.isWin === false ? "Förlust" : "Oavgjort"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                {historicalMatchActivities.length === 0 && (
+                  <div className="text-muted-foreground text-center py-8">
+                    Inga matcher att visa ännu
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -235,53 +299,6 @@ export function MatchesTabContent({
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Komplett matchhistorik</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {historicalMatchActivities
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map(match => (
-                    <div 
-                      key={match.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 cursor-pointer transition-colors"
-                      onClick={() => onActivitySelect?.(match)}
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">{match.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(match.date)}
-                          {match.location_name && (
-                            <>
-                              <MapPin className="h-3 w-3" />
-                              {match.location_name}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {match.homeScore !== undefined && match.awayScore !== undefined && (
-                          <Badge variant="outline" className="font-mono">
-                            {match.homeScore}-{match.awayScore}
-                          </Badge>
-                        )}
-                        <Badge 
-                          variant={match.isWin === true ? "default" : match.isWin === false ? "destructive" : "secondary"}
-                        >
-                          {match.isWin === true ? "Vinst" : match.isWin === false ? "Förlust" : "Oavgjort"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

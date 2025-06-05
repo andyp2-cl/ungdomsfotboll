@@ -11,9 +11,10 @@ interface MatchResultChartProps {
     draws: number;
     losses: number;
   };
+  className?: string;
 }
 
-export function MatchResultChart({ matchStats }: MatchResultChartProps) {
+export function MatchResultChart({ matchStats, className = "" }: MatchResultChartProps) {
   // Create data for the chart
   const data = [
     { name: "Vinster", value: matchStats.wins, color: "#16a34a" },
@@ -40,7 +41,7 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
   // Skip rendering if no data or if all values are 0
   if (data.length === 0 || matchStats.total === 0) {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle>Matchresultat</CardTitle>
         </CardHeader>
@@ -52,7 +53,7 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Matchresultat</CardTitle>
       </CardHeader>
@@ -64,19 +65,17 @@ export function MatchResultChart({ matchStats }: MatchResultChartProps) {
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={4}
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={2}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value) => [`${value} matcher`, '']}
+                formatter={(value, name) => [`${value} matcher`, name]}
               />
               <Legend />
             </PieChart>
