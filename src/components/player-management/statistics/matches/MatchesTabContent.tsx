@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -184,10 +183,10 @@ export function MatchesTabContent({
                         <div className="text-sm text-muted-foreground flex items-center gap-2">
                           <Calendar className="h-3 w-3" />
                           {formatDate(match.date)}
-                          {match.location_description && (
+                          {match.location?.description && (
                             <>
                               <MapPin className="h-3 w-3" />
-                              {match.location_description}
+                              {match.location.description}
                             </>
                           )}
                         </div>
