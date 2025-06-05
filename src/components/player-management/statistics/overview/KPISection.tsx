@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { Users, Calendar, TrendingUp, Trophy } from "lucide-react";
+import { Users, Calendar, TrendingUp, Trophy, Target, Award } from "lucide-react";
 import { KPICard } from "./KPICard";
 
 interface KPISectionProps {
@@ -14,6 +14,14 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
   // Calculate KPI values
   const totalPlayers = players.filter(p => !p.positions?.includes("TRÄNARE")).length;
   const totalActivities = activities.length;
+  const matchActivities = activities.filter(a => a.type === "match");
+  
+  // Calculate total goals scored by team
+  const totalGoals = matchActivities.reduce((sum, match) => sum + (match.homeScore || 0), 0);
+  
+  // Calculate win rate
+  const wins = matchActivities.filter(match => match.isWin === true).length;
+  const winRate = matchActivities.length > 0 ? Math.round((wins / matchActivities.length) * 100) : 0;
   
   // Calculate average attendance
   const totalParticipations = players
@@ -46,7 +54,12 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
     current.average > max.average ? current : max
   );
 
-  const gridCols = isMobile ? "grid-cols-2" : "grid-cols-4";
+  // Calculate goals per match
+  const goalsPerMatch = matchActivities.length > 0 
+    ? (totalGoals / matchActivities.length).toFixed(1)
+    : "0.0";
+
+  const gridCols = isMobile ? "grid-cols-2" : "grid-cols-3 lg:grid-cols-6";
 
   return (
     <div className={`grid ${gridCols} gap-4 mb-6`}>
@@ -55,24 +68,42 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
         value={totalPlayers}
         icon={Users}
         description="Aktiva spelare"
+        className="hover:shadow-md transition-shadow"
       />
       <KPICard
-        title="Totalt antal aktiviteter"
-        value={totalActivities}
+        title="Antal matcher"
+        value={matchActivities.length}
         icon={Calendar}
-        description="Genomförda aktiviteter"
+        description="Genomförda matcher"
+        className="hover:shadow-md transition-shadow"
+      />
+      <KPICard
+        title="Vinstprocent"
+        value={`${winRate}%`}
+        icon={Trophy}
+        description={`${wins} vinster av ${matchActivities.length}`}
+        className="hover:shadow-md transition-shadow"
+      />
+      <KPICard
+        title="Mål gjorda"
+        value={totalGoals}
+        icon={Target}
+        description={`${goalsPerMatch} per match`}
+        className="hover:shadow-md transition-shadow"
       />
       <KPICard
         title="Genomsnittlig närvaro"
         value={`${averageAttendance}%`}
         icon={TrendingUp}
         description="Av alla aktiviteter"
+        className="hover:shadow-md transition-shadow"
       />
       <KPICard
         title="Mest aktiva nivå"
         value={mostActiveGrade.grade}
-        icon={Trophy}
+        icon={Award}
         description={`${Math.round(mostActiveGrade.average * 10) / 10} aktiviteter/spelare`}
+        className="hover:shadow-md transition-shadow"
       />
     </div>
   );

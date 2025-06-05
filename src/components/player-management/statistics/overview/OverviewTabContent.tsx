@@ -80,6 +80,34 @@ export function OverviewTabContent({
     })
     .sort((a, b) => b.activities - a.activities);
 
+  // Calculate team trends data
+  const monthlyData = React.useMemo(() => {
+    const months = new Map<string, { matches: number; goals: number; wins: number }>();
+    
+    activities.filter(a => a.type === "match").forEach(activity => {
+      const date = new Date(activity.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!months.has(monthKey)) {
+        months.set(monthKey, { matches: 0, goals: 0, wins: 0 });
+      }
+      
+      const data = months.get(monthKey)!;
+      data.matches++;
+      data.goals += activity.homeScore || 0;
+      if (activity.isWin === true) data.wins++;
+    });
+    
+    return Array.from(months.entries())
+      .map(([month, data]) => ({
+        month,
+        ...data,
+        winRate: data.matches > 0 ? Math.round((data.wins / data.matches) * 100) : 0
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-6); // Last 6 months
+  }, [activities]);
+
   const gradeChartConfig = {
     average: {
       label: "Genomsnitt per spelare",
@@ -107,7 +135,7 @@ export function OverviewTabContent({
 
   return (
     <div className="space-y-6">
-      {/* KPI Section */}
+      {/* Enhanced KPI Section */}
       <KPISection 
         players={players} 
         activities={activities} 
@@ -138,43 +166,74 @@ export function OverviewTabContent({
         </ChartSection>
       </div>
 
-      {/* Mål per match Section */}
+      {/* Team Performance Trends */}
       <ChartSection
-        title="Mål per match"
-        description="Spelare med bäst målsnitt per match"
+        title="Lagprestationer över tid"
+        description="Utveckling av vinstprocent och målproduktion"
         className="w-full"
       >
-        <div className="h-[300px] w-full overflow-y-auto pr-4">
+        <div className="h-[300px] w-full">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            {monthlyData.map(data => (
+              <div key={data.month} className="bg-muted/50 rounded-lg p-3 text-center">
+                <div className="text-sm font-medium">{data.month}</div>
+                <div className="text-xs text-muted-foreground">
+                  {data.matches} matcher
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {data.winRate}%
+                </div>
+                <div className="text-xs text-blue-600">
+                  {data.goals} mål
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ChartSection>
+
+      {/* Goals per match leaderboard */}
+      <ChartSection
+        title="Målskyttar - Mål per match"
+        description="Spelare med bäst målsnitt per match (min 3 matcher)"
+        className="w-full"
+      >
+        <div className="h-[300px] w-full overflow-y-auto">
           <table className="w-full">
-            <thead className="sticky top-0 bg-background">
-              <tr className="border-b text-left">
-                <th className="pb-2">Spelare</th>
-                <th className="pb-2 text-center">Matcher</th>
-                <th className="pb-2 text-center">Mål</th>
-                <th className="pb-2 text-center">Mål per match</th>
+            <thead className="sticky top-0 bg-background border-b">
+              <tr className="text-left">
+                <th className="pb-2 font-medium">Spelare</th>
+                <th className="pb-2 text-center font-medium">Matcher</th>
+                <th className="pb-2 text-center font-medium">Mål</th>
+                <th className="pb-2 text-center font-medium">Mål/match</th>
               </tr>
             </thead>
             <tbody>
               {playerStats
-                .filter(player => player.matches > 0)
+                .filter(player => player.matches >= 3)
                 .sort((a, b) => {
                   const aGoalsPerMatch = a.matches > 0 ? a.goals / a.matches : 0;
                   const bGoalsPerMatch = b.matches > 0 ? b.goals / b.matches : 0;
                   return bGoalsPerMatch - aGoalsPerMatch;
                 })
                 .slice(0, 10)
-                .map(player => {
+                .map((player, index) => {
                   const goalsPerMatch = player.matches > 0 ? (player.goals / player.matches).toFixed(2) : '0.00';
                   return (
                     <tr 
                       key={player.playerId} 
-                      className="border-b hover:bg-accent/5 cursor-pointer"
+                      className="border-b hover:bg-accent/5 cursor-pointer transition-colors"
                       onClick={() => onPlayerSelect && onPlayerSelect(player.playerId)}
                     >
-                      <td className="py-2">{player.name}</td>
+                      <td className="py-2 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </span>
+                        {player.name}
+                      </td>
                       <td className="py-2 text-center">{player.matches}</td>
-                      <td className="py-2 text-center">{player.goals}</td>
-                      <td className="py-2 text-center">{goalsPerMatch}</td>
+                      <td className="py-2 text-center font-semibold text-green-600">{player.goals}</td>
+                      <td className="py-2 text-center font-bold text-primary">{goalsPerMatch}</td>
                     </tr>
                   );
                 })}
