@@ -5,7 +5,7 @@ import { MatchStatsCard } from "./MatchStatsCard";
 import { MatchResultChart } from "./MatchResultChart";
 import { DetailedMatchStats } from "./DetailedMatchStats";
 import { RecentFormCard } from "./RecentFormCard";
-import { RecentMatchesList } from "./RecentMatchesList";
+import { HistoricalMatchesTable } from "./HistoricalMatchesTable";
 
 interface MatchOverviewTabProps {
   historicalMatchActivities: Activity[];
@@ -46,7 +46,7 @@ export function MatchOverviewTab({
           activities={historicalMatchActivities}
           players={players}
           onActivitySelect={onActivitySelect}
-          onPlayerSelect={undefined}
+          onPlayerSelect={onPlayerSelect}
           className="col-span-1"
         />
       </div>
@@ -56,10 +56,13 @@ export function MatchOverviewTab({
         onActivitySelect={onActivitySelect}
       />
 
-      <RecentMatchesList 
-        historicalMatchActivities={historicalMatchActivities}
-        onActivitySelect={onActivitySelect}
-      />
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold mb-3">Alla matcher</h3>
+        <HistoricalMatchesTable 
+          historicalMatches={historicalMatchActivities} 
+          onActivitySelect={onActivitySelect}
+        />
+      </div>
     </div>
   );
 }

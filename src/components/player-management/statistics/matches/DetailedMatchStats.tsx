@@ -1,6 +1,7 @@
 
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Activity, Player } from "@/types/player";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
@@ -68,29 +69,51 @@ export function DetailedMatchStats({
     }
   };
 
+  // Split stats into top 5 and the rest
+  const topFiveStats = playerStats.slice(0, 5);
+  const remainingStats = playerStats.slice(5);
+
+  const renderPlayerRow = (player: any, index: number) => (
+    <div 
+      key={index}
+      className={`flex justify-between items-center p-3 rounded-md ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''}`}
+      onClick={onPlayerSelect ? () => handlePlayerClick(player) : undefined}
+    >
+      <span className="font-medium">{player.name}</span>
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{player.goals}</span> mål
+        </div>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{player.matches}</span> matcher
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
         <CardTitle>Spelare med flest mål</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {playerStats.slice(0, 10).map((player, index) => (
-          <div 
-            key={index}
-            className={`flex justify-between items-center p-3 rounded-md ${onPlayerSelect ? 'cursor-pointer hover:bg-muted' : ''}`}
-            onClick={onPlayerSelect ? () => handlePlayerClick(player) : undefined}
-          >
-            <span className="font-medium">{player.name}</span>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{player.goals}</span> mål
-              </div>
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{player.matches}</span> matcher
-              </div>
-            </div>
+        {/* Top 5 players shown directly */}
+        {topFiveStats.map((player, index) => renderPlayerRow(player, index))}
+
+        {/* If there are more than 5 players, show the rest in a ScrollArea */}
+        {remainingStats.length > 0 && (
+          <div className="mt-4 border-t pt-2">
+            <ScrollArea className="h-[150px] pr-4">
+              {remainingStats.map((player, index) => renderPlayerRow(player, index + 5))}
+            </ScrollArea>
           </div>
-        ))}
+        )}
+
+        {playerStats.length === 0 && (
+          <div className="py-4 text-center text-muted-foreground">
+            Ingen måldata tillgänglig
+          </div>
+        )}
       </CardContent>
     </Card>
   );

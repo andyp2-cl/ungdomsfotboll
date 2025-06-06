@@ -8,3 +8,4 @@ export * from './RecentMatchesList';
 export * from './HomeAwayStats';
 export * from './MatchOverviewTab';
 export * from './HomeAwayTab';
+export * from './HistoricalMatchesTable';
