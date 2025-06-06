@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, MapPin } from "lucide-react";
+import { CalendarIcon, MapPin, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -44,6 +44,9 @@ export function HistoricalMatchesTable({
     direction: 'descending'
   });
 
+  // State for expanded row
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
   // Define table columns
   const columns: Column[] = [
     {
@@ -66,7 +69,13 @@ export function HistoricalMatchesTable({
       key: 'league_id',
       label: 'Liga',
       sortable: true,
-      formatter: (value) => value ? <Badge variant="outline">Liga</Badge> : null
+      formatter: (value, activity) => {
+        if (!value) return null;
+        // In a real application, you would fetch the league name from a league service
+        // For now, we'll use a placeholder text
+        const leagueName = activity.leagueName || "Serie / Division";
+        return <Badge variant="outline">{leagueName}</Badge>;
+      }
     },
     {
       key: 'result',
@@ -162,9 +171,53 @@ export function HistoricalMatchesTable({
 
   // Handle row click
   const handleRowClick = (activity: Activity) => {
-    if (onActivitySelect) {
-      onActivitySelect(activity);
+    if (expandedRowId === activity.id) {
+      setExpandedRowId(null);
+    } else {
+      setExpandedRowId(activity.id);
+      if (onActivitySelect) {
+        onActivitySelect(activity);
+      }
     }
+  };
+
+  // Render expanded row content
+  const renderExpandedContent = (activity: Activity) => {
+    return (
+      <div className="p-4 bg-muted/30 rounded-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium mb-2">Matchdetaljer</h4>
+            {activity.matchReport && (
+              <div className="text-sm mb-2">{activity.matchReport}</div>
+            )}
+            {!activity.matchReport && (
+              <div className="text-sm text-muted-foreground">Ingen matchrapport tillgänglig</div>
+            )}
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Laguppställning</h4>
+            <div className="text-sm text-muted-foreground">
+              {activity.participants && activity.participants.length > 0 ? 
+                `${activity.participants.length} spelare deltog` : 
+                'Ingen deltagardata tillgänglig'}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onActivitySelect) onActivitySelect(activity);
+            }}
+          >
+            Visa detaljer
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   if (historicalMatches.length === 0) {
@@ -177,52 +230,69 @@ export function HistoricalMatchesTable({
 
   return (
     <div className={cn("border rounded-md", className)}>
-      <ScrollArea className={cn("w-full", maxHeight ? `max-h-[${maxHeight}]` : "")}>
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              {columns.map((column) => (
-                <TableHead 
-                  key={column.key}
-                  className={cn(
-                    column.sortable && "cursor-pointer hover:bg-muted/50",
-                    "whitespace-nowrap"
-                  )}
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-1">
-                    {column.label}
-                    {column.sortable && sortConfig.key === column.key && (
-                      <span className="ml-1">
-                        {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedMatches.map((match) => (
-              <TableRow 
-                key={match.id}
-                className={cn(
-                  "cursor-pointer hover:bg-muted/50",
-                  onActivitySelect && "cursor-pointer"
-                )}
-                onClick={() => handleRowClick(match)}
-              >
+      <ScrollArea className={`w-full ${maxHeight ? `h-[${maxHeight}]` : ""}`}>
+        <div className="min-w-full">
+          <Table>
+            <TableHeader className="bg-background sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="w-10"></TableHead> {/* Expansion column */}
                 {columns.map((column) => (
-                  <TableCell key={`${match.id}-${column.key}`} className="whitespace-nowrap py-2">
-                    {column.formatter 
-                      ? column.formatter((match as any)[column.key], match)
-                      : (match as any)[column.key]}
-                  </TableCell>
+                  <TableHead 
+                    key={column.key}
+                    className={cn(
+                      column.sortable && "cursor-pointer hover:bg-muted/50",
+                      "whitespace-nowrap"
+                    )}
+                    onClick={() => column.sortable && handleSort(column.key)}
+                  >
+                    <div className="flex items-center gap-1">
+                      {column.label}
+                      {column.sortable && sortConfig.key === column.key && (
+                        <span className="ml-1">
+                          {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sortedMatches.map((match) => (
+                <React.Fragment key={match.id}>
+                  <TableRow 
+                    className={cn(
+                      "cursor-pointer hover:bg-muted/50",
+                      expandedRowId === match.id && "bg-muted/30"
+                    )}
+                    onClick={() => handleRowClick(match)}
+                  >
+                    <TableCell className="w-10">
+                      {expandedRowId === match.id ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
+                      }
+                    </TableCell>
+                    {columns.map((column) => (
+                      <TableCell key={`${match.id}-${column.key}`} className="whitespace-nowrap py-2">
+                        {column.formatter 
+                          ? column.formatter((match as any)[column.key], match)
+                          : (match as any)[column.key]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {expandedRowId === match.id && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 1} className="p-0 border-t-0">
+                        {renderExpandedContent(match)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </ScrollArea>
     </div>
   );

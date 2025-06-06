@@ -69,10 +69,6 @@ export function DetailedMatchStats({
     }
   };
 
-  // Split stats into top 5 and the rest
-  const topFiveStats = playerStats.slice(0, 5);
-  const remainingStats = playerStats.slice(5);
-
   const renderPlayerRow = (player: any, index: number) => (
     <div 
       key={index}
@@ -96,24 +92,18 @@ export function DetailedMatchStats({
       <CardHeader>
         <CardTitle>Spelare med flest mål</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {/* Top 5 players shown directly */}
-        {topFiveStats.map((player, index) => renderPlayerRow(player, index))}
-
-        {/* If there are more than 5 players, show the rest in a ScrollArea */}
-        {remainingStats.length > 0 && (
-          <div className="mt-4 border-t pt-2">
-            <ScrollArea className="h-[150px] pr-4">
-              {remainingStats.map((player, index) => renderPlayerRow(player, index + 5))}
-            </ScrollArea>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[280px]">
+          <div className="p-6 space-y-2">
+            {playerStats.map((player, index) => renderPlayerRow(player, index))}
+            
+            {playerStats.length === 0 && (
+              <div className="py-4 text-center text-muted-foreground">
+                Ingen måldata tillgänglig
+              </div>
+            )}
           </div>
-        )}
-
-        {playerStats.length === 0 && (
-          <div className="py-4 text-center text-muted-foreground">
-            Ingen måldata tillgänglig
-          </div>
-        )}
+        </ScrollArea>
       </CardContent>
     </Card>
   );

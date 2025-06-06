@@ -58,10 +58,13 @@ export function MatchOverviewTab({
 
       <div className="mt-6">
         <h3 className="text-xl font-semibold mb-3">Alla matcher</h3>
-        <HistoricalMatchesTable 
-          historicalMatches={historicalMatchActivities} 
-          onActivitySelect={onActivitySelect}
-        />
+        <div className="h-[500px] overflow-hidden">
+          <HistoricalMatchesTable 
+            historicalMatches={historicalMatchActivities} 
+            onActivitySelect={onActivitySelect}
+            maxHeight="480px"
+          />
+        </div>
       </div>
     </div>
   );
