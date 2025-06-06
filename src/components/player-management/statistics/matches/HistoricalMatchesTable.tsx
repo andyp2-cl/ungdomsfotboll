@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, MapPin, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Column {
   key: string;
@@ -27,13 +28,15 @@ interface HistoricalMatchesTableProps {
   onActivitySelect?: (activity: Activity) => void;
   className?: string;
   maxHeight?: string;
+  players?: Player[];
 }
 
 export function HistoricalMatchesTable({
   historicalMatches,
   onActivitySelect,
   className = "",
-  maxHeight = "400px"
+  maxHeight = "400px",
+  players = []
 }: HistoricalMatchesTableProps) {
   // State for sorting
   const [sortConfig, setSortConfig] = useState<{
@@ -71,10 +74,10 @@ export function HistoricalMatchesTable({
       sortable: true,
       formatter: (value, activity) => {
         if (!value) return null;
-        // In a real application, you would fetch the league name from a league service
-        // For now, we'll use a placeholder text
-        const leagueName = activity.leagueName || "Serie / Division";
-        return <Badge variant="outline">{leagueName}</Badge>;
+        // Use the leagueId to show specific league information
+        // For now we'll use a placeholder or whatever data is available
+        const leagueInfo = activity.leagueId ? `League ${activity.leagueId}` : "Serie / Division";
+        return <Badge variant="outline">{leagueInfo}</Badge>;
       }
     },
     {
@@ -181,8 +184,18 @@ export function HistoricalMatchesTable({
     }
   };
 
-  // Render expanded row content
+  // Find player by ID
+  const getPlayerById = (playerId: string) => {
+    return players.find(player => player.id === playerId);
+  };
+
+  // Render expanded row content with player details
   const renderExpandedContent = (activity: Activity) => {
+    // Get the participants who played in this match
+    const participantPlayers = activity.participants?.map(playerId => 
+      getPlayerById(playerId)
+    ).filter(Boolean) || [];
+
     return (
       <div className="p-4 bg-muted/30 rounded-md">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,11 +210,25 @@ export function HistoricalMatchesTable({
           </div>
           <div>
             <h4 className="font-medium mb-2">Laguppställning</h4>
-            <div className="text-sm text-muted-foreground">
-              {activity.participants && activity.participants.length > 0 ? 
-                `${activity.participants.length} spelare deltog` : 
-                'Ingen deltagardata tillgänglig'}
-            </div>
+            {participantPlayers.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {participantPlayers.map(player => (
+                  <div key={player?.id} className="flex items-center gap-2 bg-muted/50 p-1.5 rounded-md">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={player?.image} alt={player?.name} />
+                      <AvatarFallback>{player?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{player?.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                {activity.participants && activity.participants.length > 0 ? 
+                  `${activity.participants.length} spelare deltog` : 
+                  'Ingen deltagardata tillgänglig'}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-end mt-4">
@@ -230,7 +257,7 @@ export function HistoricalMatchesTable({
 
   return (
     <div className={cn("border rounded-md", className)}>
-      <ScrollArea className={`w-full ${maxHeight ? `h-[${maxHeight}]` : ""}`}>
+      <ScrollArea className="w-full h-[500px]">
         <div className="min-w-full">
           <Table>
             <TableHeader className="bg-background sticky top-0 z-10">

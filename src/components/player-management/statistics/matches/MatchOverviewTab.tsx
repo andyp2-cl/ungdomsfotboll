@@ -4,7 +4,6 @@ import { Activity, Player } from "@/types/player";
 import { MatchStatsCard } from "./MatchStatsCard";
 import { MatchResultChart } from "./MatchResultChart";
 import { DetailedMatchStats } from "./DetailedMatchStats";
-import { RecentFormCard } from "./RecentFormCard";
 import { HistoricalMatchesTable } from "./HistoricalMatchesTable";
 
 interface MatchOverviewTabProps {
@@ -51,20 +50,13 @@ export function MatchOverviewTab({
         />
       </div>
 
-      <RecentFormCard 
-        recentForm={recentForm}
-        onActivitySelect={onActivitySelect}
-      />
-
       <div className="mt-6">
         <h3 className="text-xl font-semibold mb-3">Alla matcher</h3>
-        <div className="h-[500px] overflow-hidden">
-          <HistoricalMatchesTable 
-            historicalMatches={historicalMatchActivities} 
-            onActivitySelect={onActivitySelect}
-            maxHeight="480px"
-          />
-        </div>
+        <HistoricalMatchesTable 
+          historicalMatches={historicalMatchActivities} 
+          onActivitySelect={onActivitySelect}
+          players={players}
+        />
       </div>
     </div>
   );
