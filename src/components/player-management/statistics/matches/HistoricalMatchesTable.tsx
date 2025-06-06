@@ -50,6 +50,14 @@ export function HistoricalMatchesTable({
   // State for expanded row
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
+  // Map to convert league IDs to user-friendly names
+  const leagueMapping: Record<string, string> = {
+    "ff3ff744-b580-4b63-80b2-81fd221cf4b5": "2013 A1",
+    "d357e856-7bcb-4fa5-96ef-0cfb596978b4": "2014 A1",
+    "5ba8c989-c9a2-41bc-8fd7-d3a7669a1c86": "2014 A2",
+    "7f764d0c-967b-407c-8aa6-225477a6b560": "2014 B1"
+  };
+
   // Define table columns
   const columns: Column[] = [
     {
@@ -74,10 +82,9 @@ export function HistoricalMatchesTable({
       sortable: true,
       formatter: (value, activity) => {
         if (!value) return null;
-        // Use the leagueId to show specific league information
-        // For now we'll use a placeholder or whatever data is available
-        const leagueInfo = activity.leagueId ? `League ${activity.leagueId}` : "Serie / Division";
-        return <Badge variant="outline">{leagueInfo}</Badge>;
+        // Use the mapping to convert league_id to user-friendly format
+        const leagueName = leagueMapping[value] || `Liga ${value.substring(0, 8)}`;
+        return <Badge variant="outline">{leagueName}</Badge>;
       }
     },
     {
