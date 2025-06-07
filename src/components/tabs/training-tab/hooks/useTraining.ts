@@ -1,10 +1,23 @@
-
 import { useState, useEffect } from "react";
 import { TrainingExercise, TrainingSession, TrainingCategory } from "@/types/training";
 import { useToast } from "@/hooks/use-toast";
 
 const TRAINING_STORAGE_KEY = "football-training-data";
 const SESSIONS_STORAGE_KEY = "football-training-sessions";
+
+// Backup data in case localStorage gets corrupted
+const getDefaultExercises = (): TrainingExercise[] => [
+  {
+    id: "default-1",
+    title: "Passningsövning",
+    description: "Grundläggande passningsövning i par",
+    category: "TEKNISK",
+    duration: 15,
+    equipment: ["Bollar", "Koner"],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
 
 export function useTraining() {
   const [exercises, setExercises] = useState<TrainingExercise[]>([]);
@@ -15,69 +28,124 @@ export function useTraining() {
   // Ladda data från localStorage
   useEffect(() => {
     try {
-      console.log('Loading training data from localStorage...');
+      console.log('=== TRAINING DATA RECOVERY ATTEMPT ===');
       console.log('Available localStorage keys:', Object.keys(localStorage));
       
+      // Check for alternative storage keys that might exist
+      const allKeys = Object.keys(localStorage);
+      const potentialExerciseKeys = allKeys.filter(key => 
+        key.toLowerCase().includes('training') || 
+        key.toLowerCase().includes('exercise')
+      );
+      
+      console.log('Potential training-related keys found:', potentialExerciseKeys);
+      
+      // Try to load from primary key
       const savedExercises = localStorage.getItem(TRAINING_STORAGE_KEY);
       const savedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY);
       
-      console.log('Raw saved exercises:', savedExercises);
-      console.log('Raw saved sessions:', savedSessions);
+      console.log('Primary storage key data:', {
+        exercises: savedExercises ? savedExercises.substring(0, 100) + '...' : 'null',
+        sessions: savedSessions ? savedSessions.substring(0, 100) + '...' : 'null'
+      });
+      
+      // Try to recover exercises
+      let recoveredExercises: TrainingExercise[] = [];
       
       if (savedExercises && savedExercises !== 'undefined' && savedExercises !== 'null') {
         try {
           const parsedExercises = JSON.parse(savedExercises);
-          console.log('Parsed exercises:', parsedExercises);
-          if (Array.isArray(parsedExercises)) {
-            console.log('Loaded exercises:', parsedExercises.length, 'items');
-            setExercises(parsedExercises);
-          } else {
-            console.log('Parsed exercises is not an array, resetting to empty array');
-            setExercises([]);
+          if (Array.isArray(parsedExercises) && parsedExercises.length > 0) {
+            console.log('Successfully recovered', parsedExercises.length, 'exercises from primary storage');
+            recoveredExercises = parsedExercises;
           }
         } catch (parseError) {
-          console.error('Error parsing exercises JSON:', parseError);
-          console.log('Resetting exercises to empty array due to parse error');
-          setExercises([]);
-          // Rensa korrupt data
-          localStorage.removeItem(TRAINING_STORAGE_KEY);
+          console.error('Failed to parse exercises from primary storage:', parseError);
         }
-      } else {
-        console.log('No saved exercises found in localStorage');
-        setExercises([]);
       }
+      
+      // If no exercises found in primary storage, try alternative keys
+      if (recoveredExercises.length === 0) {
+        console.log('No exercises in primary storage, checking alternative keys...');
+        
+        for (const key of potentialExerciseKeys) {
+          try {
+            const data = localStorage.getItem(key);
+            if (data) {
+              const parsed = JSON.parse(data);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                // Check if this looks like exercise data
+                const firstItem = parsed[0];
+                if (firstItem && (firstItem.title || firstItem.category || firstItem.duration)) {
+                  console.log(`Found potential exercise data in key "${key}":`, parsed.length, 'items');
+                  recoveredExercises = parsed;
+                  
+                  // Restore to primary key
+                  localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(parsed));
+                  console.log('Restored exercises to primary storage key');
+                  break;
+                }
+              }
+            }
+          } catch (error) {
+            console.log(`Failed to parse data from key "${key}":`, error);
+          }
+        }
+      }
+      
+      // If still no exercises, check if we should provide defaults
+      if (recoveredExercises.length === 0) {
+        console.log('No exercises found anywhere. Using default exercises.');
+        recoveredExercises = getDefaultExercises();
+        localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(recoveredExercises));
+        
+        toast({
+          title: "Träningsövningar återställda",
+          description: "Inga sparade övningar hittades. Standardövningar har lagts till.",
+        });
+      } else {
+        toast({
+          title: "Träningsövningar hittade",
+          description: `${recoveredExercises.length} övningar har återställts.`,
+        });
+      }
+      
+      setExercises(recoveredExercises);
+      
+      // Try to recover sessions
+      let recoveredSessions: TrainingSession[] = [];
       
       if (savedSessions && savedSessions !== 'undefined' && savedSessions !== 'null') {
         try {
           const parsedSessions = JSON.parse(savedSessions);
-          console.log('Parsed sessions:', parsedSessions);
           if (Array.isArray(parsedSessions)) {
-            console.log('Loaded sessions:', parsedSessions.length, 'items');
-            setSessions(parsedSessions);
-          } else {
-            console.log('Parsed sessions is not an array, resetting to empty array');
-            setSessions([]);
+            console.log('Recovered', parsedSessions.length, 'sessions');
+            recoveredSessions = parsedSessions;
           }
         } catch (parseError) {
-          console.error('Error parsing sessions JSON:', parseError);
-          console.log('Resetting sessions to empty array due to parse error');
-          setSessions([]);
-          // Rensa korrupt data
-          localStorage.removeItem(SESSIONS_STORAGE_KEY);
+          console.error('Failed to parse sessions:', parseError);
         }
-      } else {
-        console.log('No saved sessions found in localStorage');
-        setSessions([]);
       }
+      
+      setSessions(recoveredSessions);
+      
+      console.log('=== RECOVERY COMPLETE ===');
+      console.log('Final state:', {
+        exercises: recoveredExercises.length,
+        sessions: recoveredSessions.length
+      });
+      
     } catch (error) {
-      console.error("Error loading training data:", error);
+      console.error("Critical error during training data recovery:", error);
       toast({
         title: "Fel vid laddning",
-        description: "Kunde inte ladda träningsdata.",
+        description: "Kunde inte ladda träningsdata. Kontrollera konsolen för mer information.",
         variant: "destructive"
       });
-      // Säkerställ att vi har tomma arrayer vid fel
-      setExercises([]);
+      
+      // Ensure we have some exercises
+      const defaultExercises = getDefaultExercises();
+      setExercises(defaultExercises);
       setSessions([]);
     }
   }, [toast]);
@@ -86,7 +154,7 @@ export function useTraining() {
   const saveExercises = (newExercises: TrainingExercise[]) => {
     try {
       console.log('Saving exercises to localStorage:', newExercises.length, 'items');
-      console.log('Exercises to save:', newExercises);
+      console.log('Exercise sample:', newExercises[0]);
       
       if (!Array.isArray(newExercises)) {
         console.error('Attempted to save non-array as exercises:', newExercises);
@@ -95,12 +163,20 @@ export function useTraining() {
       
       const serialized = JSON.stringify(newExercises);
       localStorage.setItem(TRAINING_STORAGE_KEY, serialized);
+      
+      // Create backup with timestamp
+      const backupKey = `${TRAINING_STORAGE_KEY}_backup_${Date.now()}`;
+      localStorage.setItem(backupKey, serialized);
+      
       setExercises(newExercises);
       console.log('Exercises saved successfully');
       
-      // Verifiera att data sparades korrekt
+      // Verify save
       const verification = localStorage.getItem(TRAINING_STORAGE_KEY);
-      console.log('Verification - saved data:', verification);
+      if (verification) {
+        const verified = JSON.parse(verification);
+        console.log('Save verification successful:', verified.length, 'exercises');
+      }
     } catch (error) {
       console.error("Error saving exercises:", error);
       toast({
@@ -115,7 +191,6 @@ export function useTraining() {
   const saveSessions = (newSessions: TrainingSession[]) => {
     try {
       console.log('Saving sessions to localStorage:', newSessions.length, 'items');
-      console.log('Sessions to save:', newSessions);
       
       if (!Array.isArray(newSessions)) {
         console.error('Attempted to save non-array as sessions:', newSessions);
@@ -126,10 +201,6 @@ export function useTraining() {
       localStorage.setItem(SESSIONS_STORAGE_KEY, serialized);
       setSessions(newSessions);
       console.log('Sessions saved successfully');
-      
-      // Verifiera att data sparades korrekt
-      const verification = localStorage.getItem(SESSIONS_STORAGE_KEY);
-      console.log('Verification - saved sessions data:', verification);
     } catch (error) {
       console.error("Error saving sessions:", error);
       toast({

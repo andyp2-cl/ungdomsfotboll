@@ -4,7 +4,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { Player, Activity } from "@/types/player";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
-export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form';
+export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form' | 'development';
 
 interface SortIconProps {
   field: SortField;
@@ -21,6 +21,39 @@ export function SortIcon({ field, sortField, sortDirection }: SortIconProps) {
     ? <ChevronUp className="ml-1 h-4 w-4" />
     : <ChevronDown className="ml-1 h-4 w-4" />;
 }
+
+// Function to calculate development spider value
+const calculateDevelopmentValue = (player: Player): number => {
+  if (!player.development) return 0;
+  
+  const development = player.development;
+  const attributes = [
+    development.technical || 1,
+    development.gameUnderstanding || 1,
+    development.passing || 1,
+    development.offensive || 1,
+    development.defensive || 1,
+    development.mentality || 1,
+    development.shooting || 1,
+    development.crossing || 1,
+    development.finishing || 1,
+    development.creativity || 1,
+    development.tackling || 1,
+    development.interception || 1,
+    development.positioning || 1,
+    development.heading || 1,
+    development.speed || 1,
+    development.stamina || 1,
+    development.strength || 1,
+    development.leadership || 1,
+    development.composure || 1,
+    development.workRate || 1
+  ];
+  
+  const sum = attributes.reduce((acc, val) => acc + val, 0);
+  const average = sum / attributes.length;
+  return Math.round(average * 10) / 10; // Round to 1 decimal place
+};
 
 export function usePlayerSorting() {
   const [sortField, setSortField] = React.useState<SortField>('name');
@@ -77,6 +110,11 @@ export function usePlayerSorting() {
           const bGoalsPerMatch = bStatsGoals.matches > 0 ? bStatsGoals.totalGoals / bStatsGoals.matches : 0;
           comparison = aGoalsPerMatch - bGoalsPerMatch;
           break;
+        case 'development':
+          const aDevelopment = calculateDevelopmentValue(a);
+          const bDevelopment = calculateDevelopmentValue(b);
+          comparison = aDevelopment - bDevelopment;
+          break;
         default:
           comparison = 0;
       }
@@ -89,6 +127,7 @@ export function usePlayerSorting() {
     sortField,
     sortDirection,
     toggleSort,
-    sortPlayers
+    sortPlayers,
+    calculateDevelopmentValue
   };
 }
