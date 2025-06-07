@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, ShieldCheck, Target, TrendingUp } from "lucide-react";
 import { Activity } from "@/types/player";
+import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 interface MatchStatsCardProps {
   activities: Activity[];
@@ -17,10 +18,33 @@ export function MatchStatsCard({ activities, className = "" }: MatchStatsCardPro
       wins: activities.filter(a => a.isWin === true).length,
       draws: activities.filter(a => a.homeScore === a.awayScore).length,
       losses: activities.filter(a => a.isWin === false && a.homeScore !== a.awayScore).length,
-      goalsScored: activities.reduce((sum, a) => sum + (a.homeScore || 0), 0),
-      goalsConceded: activities.reduce((sum, a) => sum + (a.awayScore || 0), 0),
-      cleanSheets: activities.filter(a => (a.awayScore === 0)).length
+      goalsScored: 0,
+      goalsConceded: 0,
+      cleanSheets: 0
     };
+    
+    // Calculate goals scored, conceded, and clean sheets based on home/away logic
+    activities.forEach(activity => {
+      const isHome = isHomeMatch(activity);
+      const homeScore = activity.homeScore || 0;
+      const awayScore = activity.awayScore || 0;
+      
+      if (isHome) {
+        // Hässleholms IF is playing at home
+        stats.goalsScored += homeScore;
+        stats.goalsConceded += awayScore;
+        if (awayScore === 0) {
+          stats.cleanSheets++;
+        }
+      } else {
+        // Hässleholms IF is playing away
+        stats.goalsScored += awayScore;
+        stats.goalsConceded += homeScore;
+        if (homeScore === 0) {
+          stats.cleanSheets++;
+        }
+      }
+    });
     
     // Calculate additional stats
     const winRate = stats.total > 0 ? Math.round((stats.wins / stats.total) * 100) : 0;
