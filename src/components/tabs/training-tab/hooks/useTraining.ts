@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { TrainingExercise, TrainingSession, TrainingCategory } from "@/types/training";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,7 @@ const getDefaultExercises = (): TrainingExercise[] => [
     id: "default-1",
     title: "Passningsövning",
     description: "Grundläggande passningsövning i par",
-    category: "TEKNISK",
+    category: "Teknik",
     duration: 15,
     equipment: ["Bollar", "Koner"],
     createdAt: new Date().toISOString(),

@@ -3,12 +3,12 @@ import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SortField, SortIcon, usePlayerSorting } from "./PlayerListSorting";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatPositions, isTrainer } from "@/utils/positionUtils";
-import { PlayerStatusIndicator } from "@/components/player-status/PlayerStatusIndicator";
+import { PlayerFormDisplay } from "./PlayerFormDisplay";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -136,8 +136,16 @@ export function PlayerListTable({
                 <SortIcon field="development" sortField={sortField} sortDirection={sortDirection} />
               </Button>
             </TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[100px]">Åtgärder</TableHead>
+            <TableHead>
+              <Button 
+                variant="ghost" 
+                className="h-auto p-0 font-semibold justify-start"
+                onClick={() => toggleSort('form')}
+              >
+                Form
+                <SortIcon field="form" sortField={sortField} sortDirection={sortDirection} />
+              </Button>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -231,22 +239,7 @@ export function PlayerListTable({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <PlayerStatusIndicator player={player} size="sm" />
-                </TableCell>
-                <TableCell>
-                  {onPlayerEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPlayerEdit(player);
-                      }}
-                      disabled={!isActive}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <PlayerFormDisplay player={player} activities={activities} />
                 </TableCell>
               </TableRow>
             );

@@ -68,6 +68,52 @@ export function usePlayerSorting() {
     }
   };
 
+  // Helper function to calculate form score for sorting
+  const calculateFormScore = (player: Player, activities: Activity[]): number => {
+    const today = new Date();
+    const playerMatches = activities
+      .filter(activity => {
+        if (activity.type !== "match" || !activity.participants?.includes(player.id)) {
+          return false;
+        }
+        const matchDate = new Date(activity.date);
+        if (matchDate >= today) {
+          return false;
+        }
+        return activity.isWin !== undefined || 
+               (activity.homeScore !== undefined && activity.awayScore !== undefined) ||
+               (activity.result && activity.result.includes('-'));
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-4);
+
+    if (playerMatches.length === 0) return 0;
+
+    // Calculate form score: Win = 3, Draw = 1, Loss = 0
+    let formScore = 0;
+    playerMatches.forEach(match => {
+      if (match.isWin === true) {
+        formScore += 3;
+      } else if (match.isWin === false) {
+        if (match.homeScore !== undefined && match.awayScore !== undefined) {
+          if (match.homeScore === match.awayScore) {
+            formScore += 1; // Draw
+          }
+          // Loss = 0, no addition needed
+        }
+      } else if (match.homeScore !== undefined && match.awayScore !== undefined) {
+        if (match.homeScore > match.awayScore) {
+          formScore += 3; // Win
+        } else if (match.homeScore === match.awayScore) {
+          formScore += 1; // Draw
+        }
+        // Loss = 0, no addition needed
+      }
+    });
+
+    return formScore;
+  };
+
   const sortPlayers = (players: Player[], activities: Activity[] = []) => {
     return [...players].sort((a, b) => {
       let comparison = 0;
@@ -114,6 +160,11 @@ export function usePlayerSorting() {
           const aDevelopment = calculateDevelopmentValue(a);
           const bDevelopment = calculateDevelopmentValue(b);
           comparison = aDevelopment - bDevelopment;
+          break;
+        case 'form':
+          const aForm = calculateFormScore(a, activities);
+          const bForm = calculateFormScore(b, activities);
+          comparison = aForm - bForm;
           break;
         default:
           comparison = 0;
