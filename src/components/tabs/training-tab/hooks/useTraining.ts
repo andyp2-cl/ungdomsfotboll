@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TrainingExercise, TrainingSession, TrainingCategory } from "@/types/training";
 import { useToast } from "@/hooks/use-toast";
@@ -101,16 +100,6 @@ export function useTraining() {
         console.log('No exercises found anywhere. Using default exercises.');
         recoveredExercises = getDefaultExercises();
         localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(recoveredExercises));
-        
-        toast({
-          title: "Träningsövningar återställda",
-          description: "Inga sparade övningar hittades. Standardövningar har lagts till.",
-        });
-      } else {
-        toast({
-          title: "Träningsövningar hittade",
-          description: `${recoveredExercises.length} övningar har återställts.`,
-        });
       }
       
       setExercises(recoveredExercises);
