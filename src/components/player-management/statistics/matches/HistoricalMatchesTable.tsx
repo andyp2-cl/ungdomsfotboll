@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { 
@@ -58,6 +57,23 @@ export function HistoricalMatchesTable({
     "7f764d0c-967b-407c-8aa6-225477a6b560": "2014 B1"
   };
 
+  // Filter to only show matches that are actually historical (past date or have results)
+  const actualHistoricalMatches = historicalMatches.filter(match => {
+    const matchDate = new Date(match.date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Set to end of today to include matches from today
+    
+    // Include if match date is in the past OR if it has results
+    return matchDate < today || 
+           match.homeScore !== undefined || 
+           match.awayScore !== undefined || 
+           match.isWin !== undefined ||
+           match.matchReport;
+  });
+
+  console.log("HistoricalMatchesTable: Total matches provided:", historicalMatches.length);
+  console.log("HistoricalMatchesTable: Actual historical matches:", actualHistoricalMatches.length);
+
   // Define table columns
   const columns: Column[] = [
     {
@@ -98,7 +114,10 @@ export function HistoricalMatchesTable({
           activity.isWin === false ? "text-red-600" : 
           "text-yellow-600"
         )}>
-          {activity.homeScore}-{activity.awayScore}
+          {activity.homeScore !== undefined && activity.awayScore !== undefined 
+            ? `${activity.homeScore}-${activity.awayScore}`
+            : 'Inget resultat'
+          }
         </div>
       )
     },
@@ -120,13 +139,13 @@ export function HistoricalMatchesTable({
       key: 'homeScore',
       label: 'Mål gjorda',
       sortable: true,
-      formatter: (value) => <span className="font-medium">{value || 0}</span>
+      formatter: (value) => <span className="font-medium">{value !== undefined ? value : '-'}</span>
     },
     {
       key: 'awayScore',
       label: 'Mål insläppta',
       sortable: true,
-      formatter: (value) => <span className="font-medium">{value || 0}</span>
+      formatter: (value) => <span className="font-medium">{value !== undefined ? value : '-'}</span>
     },
     {
       key: 'matchReport',
@@ -150,7 +169,7 @@ export function HistoricalMatchesTable({
 
   // Get sorted data
   const sortedMatches = React.useMemo(() => {
-    const sortableMatches = [...historicalMatches];
+    const sortableMatches = [...actualHistoricalMatches];
     
     if (sortConfig.key) {
       sortableMatches.sort((a: any, b: any) => {
@@ -177,7 +196,7 @@ export function HistoricalMatchesTable({
     }
     
     return sortableMatches;
-  }, [historicalMatches, sortConfig]);
+  }, [actualHistoricalMatches, sortConfig]);
 
   // Handle row click
   const handleRowClick = (activity: Activity) => {
@@ -254,10 +273,10 @@ export function HistoricalMatchesTable({
     );
   };
 
-  if (historicalMatches.length === 0) {
+  if (sortedMatches.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        Inga matcher att visa
+        Inga historiska matcher att visa
       </div>
     );
   }

@@ -15,6 +15,8 @@ const getDefaultExercises = (): TrainingExercise[] => [
     category: "Teknik",
     duration: 15,
     equipment: ["Bollar", "Koner"],
+    tags: ["pass", "teknik"],
+    difficulty: "Lätt",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
