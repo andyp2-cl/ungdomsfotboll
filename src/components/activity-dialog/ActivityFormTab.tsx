@@ -1,17 +1,18 @@
 
 import React, { useState } from "react";
-import { Activity, ActivityType } from "@/types/player";
+import { Activity, ActivityType, Player } from "@/types/player";
 import { AddActivityForm } from "@/components/AddActivityForm";
 import { CupMatch, CupMatchesForm } from "@/components/CupMatchesForm";
 import { generateFootballFieldUrl } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
 
 interface ActivityFormTabProps {
+  players: Player[];
   onAddActivity: (activity: Activity) => void;
   onClose: () => void;
 }
 
-export function ActivityFormTab({ onAddActivity, onClose }: ActivityFormTabProps) {
+export function ActivityFormTab({ players, onAddActivity, onClose }: ActivityFormTabProps) {
   const [showCupMatches, setShowCupMatches] = useState(false);
   const [cupMatches, setCupMatches] = useState<CupMatch[]>([]);
   const [cupDate, setCupDate] = useState("");
@@ -73,6 +74,7 @@ export function ActivityFormTab({ onAddActivity, onClose }: ActivityFormTabProps
   return (
     <>
       <AddActivityForm 
+        players={players}
         onSave={handleActivityFormSave}
         onCancel={onClose}
         onTypeChange={handleActivityTypeChange}

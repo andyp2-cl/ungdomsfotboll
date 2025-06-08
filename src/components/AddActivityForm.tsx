@@ -90,9 +90,7 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
       time: formData.time,
       type: formData.type,
       location: formData.location.name ? formData.location : undefined,
-      participants: selectedPlayerIds,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      participants: selectedPlayerIds
     };
     
     onSave(activity);
