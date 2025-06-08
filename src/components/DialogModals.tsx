@@ -19,6 +19,7 @@ interface DialogModalsProps {
   onActivityUpdate: (activity: Activity) => void;
   onAddPlayer: (player: Player) => void;
   onAddActivity: (activity: Activity) => void;
+  players: Player[];
 }
 
 export function DialogModals({
@@ -33,7 +34,8 @@ export function DialogModals({
   onPlayerUpdate,
   onActivityUpdate,
   onAddPlayer,
-  onAddActivity
+  onAddActivity,
+  players
 }: DialogModalsProps) {
   return (
     <>
@@ -61,6 +63,7 @@ export function DialogModals({
         open={isAddActivityOpen}
         onOpenChange={onAddActivityOpenChange}
         onAddActivity={onAddActivity}
+        players={players}
       />
     </>
   );

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarPlus, FileText, Upload } from "lucide-react";
@@ -13,12 +13,14 @@ interface AddActivityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddActivity: (activity: Activity) => void;
+  players: Player[];
 }
 
 export function AddActivityDialog({ 
   open, 
   onOpenChange, 
-  onAddActivity 
+  onAddActivity,
+  players
 }: AddActivityDialogProps) {
   const [activeTab, setActiveTab] = useState<"form" | "text" | "import">("form");
 
@@ -56,6 +58,7 @@ export function AddActivityDialog({
           
           <TabsContent value="form">
             <ActivityFormTab 
+              players={players}
               onAddActivity={onAddActivity}
               onClose={() => onOpenChange(false)}
             />
