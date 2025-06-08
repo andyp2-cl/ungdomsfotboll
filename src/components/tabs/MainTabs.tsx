@@ -307,6 +307,7 @@ export function MainTabs({
         handleActivityUpdate={handleActivityUpdate}
         handleAddPlayer={handleAddPlayer}
         handleAddActivity={handleAddActivity}
+        players={players}
       />
     </>
   );

@@ -15,6 +15,7 @@ interface PageDialogsProps {
   handleActivityUpdate: (activity: Activity) => void;
   handleAddPlayer: (player: Player) => void;
   handleAddActivity: (activity: Activity) => void;
+  players: Player[];
 }
 
 export function PageDialogs({
@@ -29,7 +30,8 @@ export function PageDialogs({
   handlePlayerUpdate,
   handleActivityUpdate,
   handleAddPlayer,
-  handleAddActivity
+  handleAddActivity,
+  players
 }: PageDialogsProps) {
   return (
     <DialogModals 
@@ -45,6 +47,7 @@ export function PageDialogs({
       onActivityUpdate={handleActivityUpdate}
       onAddPlayer={handleAddPlayer}
       onAddActivity={handleAddActivity}
+      players={players}
     />
   );
 }
