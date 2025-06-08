@@ -74,7 +74,7 @@ export function HistoricalMatchesTable({
   console.log("HistoricalMatchesTable: Total matches provided:", historicalMatches.length);
   console.log("HistoricalMatchesTable: Actual historical matches:", actualHistoricalMatches.length);
 
-  // Define table columns
+  // Define table columns - removed "Mål gjorda" and "Mål insläppta" columns
   const columns: Column[] = [
     {
       key: 'date',
@@ -134,18 +134,6 @@ export function HistoricalMatchesTable({
           )}
         </div>
       )
-    },
-    {
-      key: 'homeScore',
-      label: 'Mål gjorda',
-      sortable: true,
-      formatter: (value) => <span className="font-medium">{value !== undefined ? value : '-'}</span>
-    },
-    {
-      key: 'awayScore',
-      label: 'Mål insläppta',
-      sortable: true,
-      formatter: (value) => <span className="font-medium">{value !== undefined ? value : '-'}</span>
     },
     {
       key: 'matchReport',
