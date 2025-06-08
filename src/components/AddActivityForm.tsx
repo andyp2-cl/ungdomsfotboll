@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Activity, Player } from "@/types/player";
+import { Activity, Player, ActivityType } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +13,26 @@ interface AddActivityFormProps {
   players: Player[];
   onSave: (activity: Activity) => void;
   onCancel: () => void;
+  onTypeChange?: (type: ActivityType) => void;
+  onDateChange?: (date: string) => void;
 }
 
-export function AddActivityForm({ players, onSave, onCancel }: AddActivityFormProps) {
-  const [formData, setFormData] = useState({
+export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDateChange }: AddActivityFormProps) {
+  const [formData, setFormData] = useState<{
+    name: string;
+    date: string;
+    time: string;
+    type: ActivityType;
+    location: {
+      name: string;
+      description: string;
+      gpsLink: string;
+    };
+  }>({
     name: "",
     date: "",
     time: "",
-    type: "training" as const,
+    type: "training",
     location: {
       name: "",
       description: "",
@@ -52,6 +64,20 @@ export function AddActivityForm({ players, onSave, onCancel }: AddActivityFormPr
 
   const handleSelectNone = () => {
     setSelectedPlayerIds([]);
+  };
+
+  const handleTypeChange = (newType: ActivityType) => {
+    setFormData(prev => ({ ...prev, type: newType }));
+    if (onTypeChange) {
+      onTypeChange(newType);
+    }
+  };
+
+  const handleDateChange = (newDate: string) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
+    if (onDateChange) {
+      onDateChange(newDate);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -94,9 +120,7 @@ export function AddActivityForm({ players, onSave, onCancel }: AddActivityFormPr
               <Label htmlFor="type">Typ</Label>
               <Select 
                 value={formData.type} 
-                onValueChange={(value: "training" | "match" | "cup") => 
-                  setFormData(prev => ({ ...prev, type: value }))
-                }
+                onValueChange={handleTypeChange}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -115,7 +139,7 @@ export function AddActivityForm({ players, onSave, onCancel }: AddActivityFormPr
                 id="date"
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                onChange={(e) => handleDateChange(e.target.value)}
                 required
               />
             </div>
