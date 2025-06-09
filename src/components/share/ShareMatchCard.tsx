@@ -65,9 +65,9 @@ export function ShareMatchCard({
       onClick={handleShare}
       disabled={isSharing}
       className={className}
+      title="Dela matchkort som bild"
     >
-      <Share className="h-4 w-4 mr-1" />
-      {isSharing ? 'Delar...' : 'Dela'}
+      <Share className="h-4 w-4" />
     </Button>
   );
 }

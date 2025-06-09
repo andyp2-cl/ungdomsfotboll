@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,6 +47,12 @@ export function ActivityParticipants({
   // Check if current activity is upcoming
   const isUpcomingActivity = currentActivity && new Date(currentActivity.date) > new Date();
   
+  // Debug logging
+  console.log("ActivityParticipants: currentActivity date:", currentActivity?.date);
+  console.log("ActivityParticipants: current date:", new Date().toISOString());
+  console.log("ActivityParticipants: isUpcomingActivity:", isUpcomingActivity);
+  console.log("ActivityParticipants: allActivities count:", allActivities.length);
+  
   // Function to get first name only, but keep more characters for mobile
   const getDisplayName = (fullName: string) => {
     if (isMobile) {
@@ -88,9 +93,6 @@ export function ActivityParticipants({
   const cardPadding = isMobile ? 'p-1' : 'p-1';
   const gap = isMobile ? 'gap-1' : 'gap-1';
 
-  console.log("ActivityParticipants: isUpcomingActivity:", isUpcomingActivity);
-  console.log("ActivityParticipants: allActivities length:", allActivities.length);
-
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
@@ -108,12 +110,13 @@ export function ActivityParticipants({
             
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
-                // Calculate weekly match count for upcoming activities
-                const weeklyMatchCount = isUpcomingActivity && allActivities.length > 0 
-                  ? getWeeklyMatchCount(player.id, allActivities) 
-                  : 0;
+                // Calculate weekly match count for upcoming activities only
+                let weeklyMatchCount = 0;
                 
-                console.log(`Player ${player.name}: weeklyMatchCount = ${weeklyMatchCount}`);
+                if (isUpcomingActivity && allActivities.length > 0) {
+                  weeklyMatchCount = getWeeklyMatchCount(player.id, allActivities);
+                  console.log(`Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}`);
+                }
                 
                 return (
                   <div 
@@ -134,7 +137,7 @@ export function ActivityParticipants({
                             </Avatar>
                             {/* Weekly match count badge - only show for 2+ matches */}
                             {weeklyMatchCount >= 2 && (
-                              <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background z-10">
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background z-10">
                                 {weeklyMatchCount}
                               </div>
                             )}
