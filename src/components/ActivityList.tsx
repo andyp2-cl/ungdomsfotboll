@@ -12,6 +12,7 @@ interface ActivityListProps {
   isHistorical?: boolean;
   isMobile?: boolean;
   noResultsMessage?: string;
+  allActivities?: Activity[]; // Add this prop for weekly match calculations
 }
 
 export function ActivityList({ 
@@ -21,7 +22,8 @@ export function ActivityList({
   onPlayerSelect,
   isHistorical = false,
   isMobile = false,
-  noResultsMessage = "Inga aktiviteter att visa"
+  noResultsMessage = "Inga aktiviteter att visa",
+  allActivities = [] // Add default value
 }: ActivityListProps) {
   console.log("ActivityList: Received onPlayerSelect function:", !!onPlayerSelect);
   
@@ -55,6 +57,7 @@ export function ActivityList({
         isHistorical={isHistorical}
         isMobile={isMobile}
         noResultsMessage={noResultsMessage}
+        allActivities={allActivities}
       />
     );
   }
@@ -70,6 +73,7 @@ export function ActivityList({
           onPlayerSelect={handlePlayerSelectWithLogging}
           isHistorical={isHistorical}
           isMobile={isMobile}
+          allActivities={allActivities}
         />
       ))}
     </div>

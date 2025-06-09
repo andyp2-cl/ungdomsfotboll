@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,6 +88,9 @@ export function ActivityParticipants({
   const cardPadding = isMobile ? 'p-1' : 'p-1';
   const gap = isMobile ? 'gap-1' : 'gap-1';
 
+  console.log("ActivityParticipants: isUpcomingActivity:", isUpcomingActivity);
+  console.log("ActivityParticipants: allActivities length:", allActivities.length);
+
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
@@ -109,6 +113,8 @@ export function ActivityParticipants({
                   ? getWeeklyMatchCount(player.id, allActivities) 
                   : 0;
                 
+                console.log(`Player ${player.name}: weeklyMatchCount = ${weeklyMatchCount}`);
+                
                 return (
                   <div 
                     key={player.id}
@@ -128,7 +134,7 @@ export function ActivityParticipants({
                             </Avatar>
                             {/* Weekly match count badge - only show for 2+ matches */}
                             {weeklyMatchCount >= 2 && (
-                              <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background">
+                              <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background z-10">
                                 {weeklyMatchCount}
                               </div>
                             )}

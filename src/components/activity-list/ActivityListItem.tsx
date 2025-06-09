@@ -134,20 +134,20 @@ export function ActivityListItem({
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <CupMatchBadge activity={activity} isMobile={isMobile} />
+                {/* Share button for matches - moved before result badge */}
+                {activity.type === 'match' && (
+                  <ShareMatchCard 
+                    targetElementId={cardId}
+                    size={isMobile ? "sm" : "icon"}
+                    variant="ghost"
+                    className={isMobile ? "" : "h-8 w-8"}
+                  />
+                )}
                 {activity.type === 'match' && actualIsHistorical && (
                   <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'}`}>
                     <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                     <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
                   </Badge>
-                )}
-                {/* Share button for matches */}
-                {activity.type === 'match' && !isMobile && (
-                  <ShareMatchCard 
-                    targetElementId={cardId}
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
-                  />
                 )}
               </div>
             </div>
@@ -176,16 +176,6 @@ export function ActivityListItem({
                   <Award className="h-4 w-4" />
                   <span>{getCleanLeagueName(league)}</span>
                 </div>
-              )}
-
-              {/* Mobile share button */}
-              {activity.type === 'match' && isMobile && (
-                <ShareMatchCard 
-                  targetElementId={cardId}
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto"
-                />
               )}
             </div>
 
