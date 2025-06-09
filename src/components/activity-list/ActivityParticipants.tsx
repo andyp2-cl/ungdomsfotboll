@@ -5,6 +5,7 @@ import { UserRound } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { getWeeklyMatchCount } from "@/utils/weeklyMatchUtils";
 
 interface ActivityParticipantsProps {
   participants: Player[];
@@ -14,6 +15,8 @@ interface ActivityParticipantsProps {
   maxShow?: number;
   isMobile?: boolean;
   showAll?: boolean;
+  allActivities?: any[]; // For calculating weekly match counts
+  currentActivity?: any; // Current activity to determine if it's upcoming
 }
 
 export function ActivityParticipants({
@@ -23,7 +26,9 @@ export function ActivityParticipants({
   maxDisplayed = 100,
   maxShow = 100,
   isMobile = false,
-  showAll = true
+  showAll = true,
+  allActivities = [],
+  currentActivity
 }: ActivityParticipantsProps) {
   const sortedParticipants = sortPlayersByGrade(participants);
   const displayedParticipants = sortedParticipants;
@@ -38,6 +43,9 @@ export function ActivityParticipants({
     const grade = player.grade || 'undefined';
     participantsByGrade[grade].push(player);
   });
+  
+  // Check if current activity is upcoming
+  const isUpcomingActivity = currentActivity && new Date(currentActivity.date) > new Date();
   
   // Function to get first name only, but keep more characters for mobile
   const getDisplayName = (fullName: string) => {
@@ -95,38 +103,56 @@ export function ActivityParticipants({
             )}
             
             <div className={`grid ${gridCols} ${gap} w-full`}>
-              {playersInGrade.map((player) => (
-                <div 
-                  key={player.id}
-                  data-player-item="true"
-                  className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${cardPadding} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
-                  onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
-                >
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Avatar className={`border border-background ${avatarSize}`}>
-                          <AvatarImage src={player.image} alt={player.name} />
-                          <AvatarFallback className="bg-muted">
-                            <UserRound className={iconSize} />
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div>
-                          <p>{player.name}</p>
-                          {player.grade && (
-                            <Badge variant="outline" className="mt-1">{player.grade}</Badge>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className={`text-xs text-center w-full ${isMobile ? 'leading-tight px-0.5' : ''} overflow-hidden text-ellipsis whitespace-nowrap`}>
-                    {getDisplayName(player.name)}
-                  </span>
-                </div>
-              ))}
+              {playersInGrade.map((player) => {
+                // Calculate weekly match count for upcoming activities
+                const weeklyMatchCount = isUpcomingActivity && allActivities.length > 0 
+                  ? getWeeklyMatchCount(player.id, allActivities) 
+                  : 0;
+                
+                return (
+                  <div 
+                    key={player.id}
+                    data-player-item="true"
+                    className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${cardPadding} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <Avatar className={`border border-background ${avatarSize}`}>
+                              <AvatarImage src={player.image} alt={player.name} />
+                              <AvatarFallback className="bg-muted">
+                                <UserRound className={iconSize} />
+                              </AvatarFallback>
+                            </Avatar>
+                            {/* Weekly match count badge - only show for 2+ matches */}
+                            {weeklyMatchCount >= 2 && (
+                              <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background">
+                                {weeklyMatchCount}
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div>
+                            <p>{player.name}</p>
+                            {player.grade && (
+                              <Badge variant="outline" className="mt-1">{player.grade}</Badge>
+                            )}
+                            {weeklyMatchCount >= 2 && (
+                              <p className="text-xs mt-1">{weeklyMatchCount} matcher denna vecka</p>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className={`text-xs text-center w-full ${isMobile ? 'leading-tight px-0.5' : ''} overflow-hidden text-ellipsis whitespace-nowrap`}>
+                      {getDisplayName(player.name)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

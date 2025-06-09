@@ -10,6 +10,7 @@ import { CupMatchBadge } from "./CupMatchBadge";
 import { MatchReportSummary } from "./MatchReportSummary";
 import { ActivityStatsWidget } from "./components/ActivityStatsWidget";
 import { GoalAssistDisplay } from "./components/GoalAssistDisplay";
+import { ShareMatchCard } from "@/components/share/ShareMatchCard";
 import { formatResult, getResultTextColor } from "./utils/result-utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ interface ActivityListItemProps {
   onPlayerSelect?: (playerId: string) => void;
   isHistorical?: boolean;
   isMobile?: boolean;
+  allActivities?: Activity[]; // For weekly match calculations
 }
 
 export function ActivityListItem({ 
@@ -31,7 +33,8 @@ export function ActivityListItem({
   onSelect,
   onPlayerSelect,
   isHistorical = false,
-  isMobile = false
+  isMobile = false,
+  allActivities = []
 }: ActivityListItemProps) {
   const actualIsHistorical = isHistorical || new Date(activity.date) < new Date();
   const participatingPlayers = players.filter(player => 
@@ -111,8 +114,12 @@ export function ActivityListItem({
   // Get the color class for the result text
   const resultTextColor = getResultTextColor(activity);
 
+  // Generate unique ID for this activity card for sharing
+  const cardId = `activity-card-${activity.id}`;
+
   return (
     <Card 
+      id={cardId}
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20 hover:border-l-primary/40"
       onClick={handleClick}
     >
@@ -132,6 +139,15 @@ export function ActivityListItem({
                     <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                     <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
                   </Badge>
+                )}
+                {/* Share button for matches */}
+                {activity.type === 'match' && !isMobile && (
+                  <ShareMatchCard 
+                    targetElementId={cardId}
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                  />
                 )}
               </div>
             </div>
@@ -161,6 +177,16 @@ export function ActivityListItem({
                   <span>{getCleanLeagueName(league)}</span>
                 </div>
               )}
+
+              {/* Mobile share button */}
+              {activity.type === 'match' && isMobile && (
+                <ShareMatchCard 
+                  targetElementId={cardId}
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto"
+                />
+              )}
             </div>
 
             {/* Participants preview - optimized for mobile */}
@@ -168,6 +194,8 @@ export function ActivityListItem({
               participants={participatingPlayers} 
               onPlayerSelect={onPlayerSelect}
               isMobile={isMobile}
+              allActivities={allActivities}
+              currentActivity={activity}
             />
 
             {/* Goals and assists display for historical matches */}

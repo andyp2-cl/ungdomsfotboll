@@ -26,24 +26,17 @@ export function MatchReportSection({
   const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
   const [isSaving, setIsSaving] = useState(false);
   
-  // Check if match should be considered historical - either past date OR has results
+  // Check if match should be considered historical - only check date
   const isMatchHistorical = () => {
     const matchDate = new Date(activity.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start of today
     
-    // Match is historical if:
-    // 1. Date is before today
-    // 2. OR has any results (homeScore, awayScore, isWin)
-    // 3. OR already has match report
-    return matchDate < today || 
-           activity.homeScore !== undefined || 
-           activity.awayScore !== undefined || 
-           activity.isWin !== undefined ||
-           activity.matchReport;
+    // Match is historical if date is before today
+    return matchDate < today;
   };
   
-  // Only show for matches that are historical or have results
+  // Show for all historical matches, regardless of results
   if (!isMatchHistorical()) return null;
   
   const handleSave = async () => {

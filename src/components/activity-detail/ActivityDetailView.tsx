@@ -56,8 +56,11 @@ export function ActivityDetailView({
     return activityDate < today;
   })();
 
+  // Generate unique ID for sharing
+  const targetElementId = `activity-detail-${activity.id}`;
+
   return (
-    <div className="space-y-6">
+    <div id={targetElementId} className="space-y-6">
       <ActivityDetailHeader 
         activity={activity}
         isHistorical={isHistorical}

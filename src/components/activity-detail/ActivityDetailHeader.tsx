@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, ChevronLeft, Edit, MapPin, MoreVertical, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { ShareMatchCard } from "@/components/share/ShareMatchCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,8 @@ export function ActivityDetailHeader({ activity, isHistorical, onClose, onEdit, 
     }
   };
 
+  const targetElementId = `activity-detail-${activity.id}`;
+
   return (
     <CardHeader className={isMobile ? "pb-2 space-y-2" : "pb-2"}>
       <div className="flex items-center justify-between">
@@ -71,26 +74,37 @@ export function ActivityDetailHeader({ activity, isHistorical, onClose, onEdit, 
           <span>Tillbaka</span>
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">Åtgärder</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {onEdit && (
-              <DropdownMenuItem onClick={() => onEdit(activity)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Redigera
+        <div className="flex items-center gap-1">
+          {/* Share button for matches */}
+          {activity.type === 'match' && (
+            <ShareMatchCard 
+              targetElementId={targetElementId}
+              size="sm"
+              variant="outline"
+            />
+          )}
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+                <span className="sr-only">Åtgärder</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={() => onEdit(activity)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Redigera
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={onDeleteOpen} className="text-destructive">
+                <Trash className="h-4 w-4 mr-2" />
+                Ta bort
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={onDeleteOpen} className="text-destructive">
-              <Trash className="h-4 w-4 mr-2" />
-              Ta bort
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <CardTitle className={isMobile ? "text-xl" : "text-2xl"}>{activity.name}</CardTitle>
