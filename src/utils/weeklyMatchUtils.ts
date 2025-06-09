@@ -15,22 +15,20 @@ export function getWeeklyMatchCount(playerId: string, activities: Activity[]): n
   console.log(`WeeklyMatchUtils: Week range: ${startOfWeek.toISOString()} to ${endOfWeek.toISOString()}`);
   console.log(`WeeklyMatchUtils: Total activities to check: ${activities.length}`);
 
-  // Count upcoming matches for this player in the current week
+  // Count ALL matches for this player in the current week (both past and future)
   const weeklyMatches = activities.filter(activity => {
     const activityDate = new Date(activity.date);
     const isMatch = activity.type === 'match';
     const hasPlayer = activity.participants?.includes(playerId);
-    const isUpcoming = activityDate >= now;
     const isInWeek = activityDate >= startOfWeek && activityDate <= endOfWeek;
     
     console.log(`WeeklyMatchUtils: Activity ${activity.name} (${activity.date})`);
     console.log(`  - isMatch: ${isMatch}`);
     console.log(`  - hasPlayer: ${hasPlayer}`);
-    console.log(`  - isUpcoming: ${isUpcoming}`);
     console.log(`  - isInWeek: ${isInWeek}`);
     console.log(`  - activityDate: ${activityDate.toISOString()}`);
     
-    const matches = isMatch && hasPlayer && isUpcoming && isInWeek;
+    const matches = isMatch && hasPlayer && isInWeek;
     console.log(`  - matches criteria: ${matches}`);
     
     return matches;

@@ -44,14 +44,19 @@ export function ActivityParticipants({
     participantsByGrade[grade].push(player);
   });
   
-  // Check if current activity is upcoming
-  const isUpcomingActivity = currentActivity && new Date(currentActivity.date) > new Date();
+  // Check if current activity is upcoming - more lenient check
+  const currentDate = new Date();
+  const activityDate = currentActivity ? new Date(currentActivity.date) : null;
+  const isUpcomingActivity = activityDate && activityDate >= currentDate;
   
-  // Debug logging
-  console.log("ActivityParticipants: currentActivity date:", currentActivity?.date);
-  console.log("ActivityParticipants: current date:", new Date().toISOString());
-  console.log("ActivityParticipants: isUpcomingActivity:", isUpcomingActivity);
-  console.log("ActivityParticipants: allActivities count:", allActivities.length);
+  // Enhanced debugging
+  console.log("ActivityParticipants: Enhanced Debug Info");
+  console.log("- currentActivity:", currentActivity?.name, currentActivity?.date);
+  console.log("- current date:", currentDate.toISOString());
+  console.log("- activity date:", activityDate?.toISOString());
+  console.log("- isUpcomingActivity:", isUpcomingActivity);
+  console.log("- allActivities count:", allActivities.length);
+  console.log("- participants count:", participants.length);
   
   // Function to get first name only, but keep more characters for mobile
   const getDisplayName = (fullName: string) => {
@@ -110,13 +115,16 @@ export function ActivityParticipants({
             
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
-                // Calculate weekly match count for upcoming activities only
+                // Always calculate weekly match count when we have activities data
                 let weeklyMatchCount = 0;
                 
-                if (isUpcomingActivity && allActivities.length > 0) {
+                if (allActivities.length > 0) {
                   weeklyMatchCount = getWeeklyMatchCount(player.id, allActivities);
-                  console.log(`Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}`);
+                  console.log(`ActivityParticipants: Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}, isUpcoming = ${isUpcomingActivity}`);
                 }
+                
+                // Show badge for 2+ matches regardless of upcoming status for now
+                const shouldShowBadge = weeklyMatchCount >= 2;
                 
                 return (
                   <div 
@@ -135,9 +143,9 @@ export function ActivityParticipants({
                                 <UserRound className={iconSize} />
                               </AvatarFallback>
                             </Avatar>
-                            {/* Weekly match count badge - only show for 2+ matches */}
-                            {weeklyMatchCount >= 2 && (
-                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-background z-10">
+                            {/* Weekly match count badge - show for 2+ matches */}
+                            {shouldShowBadge && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white shadow-lg z-20">
                                 {weeklyMatchCount}
                               </div>
                             )}
@@ -149,8 +157,8 @@ export function ActivityParticipants({
                             {player.grade && (
                               <Badge variant="outline" className="mt-1">{player.grade}</Badge>
                             )}
-                            {weeklyMatchCount >= 2 && (
-                              <p className="text-xs mt-1">{weeklyMatchCount} matcher denna vecka</p>
+                            {shouldShowBadge && (
+                              <p className="text-xs mt-1 text-red-600 font-semibold">{weeklyMatchCount} matcher denna vecka</p>
                             )}
                           </div>
                         </TooltipContent>
