@@ -5,7 +5,7 @@ import { UserRound } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
-import { getWeeklyMatchCount } from "@/utils/weeklyMatchUtils";
+import { getWeeklyMatchCountForActivity } from "@/utils/weeklyMatchUtils";
 
 interface ActivityParticipantsProps {
   participants: Player[];
@@ -114,16 +114,13 @@ export function ActivityParticipants({
             
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
-                // Calculate weekly match count when we have activities data
+                // Räkna matcher för spelaren under samma vecka som denna aktivitet
                 let weeklyMatchCount = 0;
-                
-                if (allActivities.length > 0) {
-                  weeklyMatchCount = getWeeklyMatchCount(player.id, allActivities);
-                  console.log(`ActivityParticipants: Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}`);
+                if (allActivities.length > 0 && currentActivity) {
+                  weeklyMatchCount = getWeeklyMatchCountForActivity(player.id, allActivities, currentActivity);
                 }
-                
-                // Show badge for 2+ matches - remove the upcoming restriction for now
-                const shouldShowBadge = weeklyMatchCount >= 2;
+                // Visa badge endast för kommande matcher och om spelaren har 2+ matcher samma vecka
+                const shouldShowBadge = isUpcomingActivity && weeklyMatchCount >= 2;
                 
                 console.log(`ActivityParticipants: Player ${player.name}: shouldShowBadge = ${shouldShowBadge} (weeklyMatchCount: ${weeklyMatchCount})`);
                 
@@ -144,7 +141,7 @@ export function ActivityParticipants({
                                 <UserRound className={iconSize} />
                               </AvatarFallback>
                             </Avatar>
-                            {/* Weekly match count badge - show for 2+ matches */}
+                            {/* Weekly match count badge - show for 2+ matches, only for upcoming */}
                             {shouldShowBadge && (
                               <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white shadow-lg z-20">
                                 {weeklyMatchCount}

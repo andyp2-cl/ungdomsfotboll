@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 
 export function getWeeklyMatchCount(playerId: string, activities: Activity[]): number {
@@ -44,5 +43,29 @@ export function getWeeklyMatchCount(playerId: string, activities: Activity[]): n
     console.log(`  - ${match.name} on ${match.date}`);
   });
 
+  return weeklyMatches.length;
+}
+
+// Ny funktion: räkna matcher för spelare under samma vecka som en given aktivitet
+export function getWeeklyMatchCountForActivity(playerId: string, activities: Activity[], referenceActivity: Activity): number {
+  const refDate = new Date(referenceActivity.date);
+  // Start of week (Monday)
+  const startOfWeek = new Date(refDate);
+  const dayOfWeek = refDate.getDay();
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  startOfWeek.setDate(refDate.getDate() - daysToSubtract);
+  startOfWeek.setHours(0, 0, 0, 0);
+  // End of week (Sunday)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  const weeklyMatches = activities.filter(activity => {
+    const activityDate = new Date(activity.date);
+    const isMatch = activity.type === 'match';
+    const hasPlayer = activity.participants?.includes(playerId);
+    const isInWeek = activityDate >= startOfWeek && activityDate <= endOfWeek;
+    return isMatch && hasPlayer && isInWeek;
+  });
   return weeklyMatches.length;
 }
