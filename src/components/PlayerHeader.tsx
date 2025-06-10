@@ -1,8 +1,7 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom"; // Tas bort, behövs ej
 import { useLocation } from "react-router-dom";
-import { Breadcrumb } from "@/components/Breadcrumb";
+// import { Breadcrumb } from "@/components/Breadcrumb"; // Tas bort
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
@@ -22,19 +21,9 @@ export function PlayerHeader({
   onBulkUpdate, 
   allPlayers 
 }: PlayerHeaderProps = {}) {
-  const location = useLocation();
+  // const location = useLocation(); // Behövs ej längre
   
-  // Determine which breadcrumb items to show based on the current path
-  const getBreadcrumbItems = () => {
-    if (location.pathname === "/players") {
-      return [{ label: "Spelare" }];
-    } else if (location.pathname === "/activities") {
-      return [{ label: "Matcher" }];
-    }
-    return [];
-  };
-  
-  // If we have a player, show player-specific header
+  // Om vi har en spelare, visa spelarspecifik header
   if (player) {
     return (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -53,16 +42,25 @@ export function PlayerHeader({
     );
   }
   
-  // Default header with breadcrumbs
+  // Förbättrad header med logotyp och gradienttext
   return (
     <div className="mb-6">
-      <div className="flex justify-between items-center mb-2">
-        <Link to="/" className="text-4xl font-bold text-[#006633] hover:text-[#005522] transition-colors">
+      <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 justify-center md:justify-start">
+        <img src="/hif-logo.png" alt="Hässleholms IF" className="h-20 w-20 md:h-24 md:w-24 drop-shadow-xl" style={{background: 'white', borderRadius: '50%', border: '2px solid #006633'}} />
+        <span
+          className="text-4xl md:text-5xl font-extrabold tracking-tight"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            background: 'linear-gradient(90deg, #006633 0%, #00b36b 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.04em',
+            textShadow: '2px 2px 8px rgba(0,0,0,0.08)'
+          }}
+        >
           HIF P2014
-        </Link>
+        </span>
       </div>
-      
-      <Breadcrumb items={getBreadcrumbItems()} />
     </div>
   );
 }

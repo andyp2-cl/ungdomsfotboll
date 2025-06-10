@@ -129,12 +129,12 @@ export function ActivityListItem({
             {/* Header with title and badges */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} truncate`}>{activity.name}</h3>
+                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} whitespace-normal`}>{activity.name}</h3>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <CupMatchBadge activity={activity} isMobile={isMobile} />
                 {activity.type === 'match' && actualIsHistorical && (
-                  <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'}`}>
+                  <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'} whitespace-nowrap`}>
                     <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                     <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
                   </Badge>
@@ -153,25 +153,25 @@ export function ActivityListItem({
 
             {/* Meta information - more compact on mobile */}
             <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 whitespace-nowrap">
                 <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 <span>{formatDate(activity.date)}</span>
               </div>
               
               {activity.location?.name && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 whitespace-nowrap">
                   <MapPin className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                  <span className={`truncate ${isMobile ? 'max-w-20' : ''}`}>{activity.location.name}</span>
+                  <span className="whitespace-normal">{activity.location.name}</span>
                 </div>
               )}
               
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 whitespace-nowrap">
                 <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 <span>{participatingPlayers.length}</span>
               </div>
 
               {league && !isMobile && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 whitespace-nowrap">
                   <Award className="h-4 w-4" />
                   <span>{getCleanLeagueName(league)}</span>
                 </div>
