@@ -9,21 +9,31 @@ export async function shareMatchCardAsImage(elementId: string): Promise<boolean>
       return false;
     }
 
-    // Create canvas from the element with optimized settings
+    // Wait a moment for any dynamic content to settle
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Get the actual rendered dimensions
+    const rect = element.getBoundingClientRect();
+    
+    // Create canvas from the element with settings optimized for text
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 2, // Good balance between quality and performance
+      scale: 2, // Good balance between quality and file size
       useCORS: true,
       allowTaint: true,
-      // Remove manual height/width to let html2canvas calculate automatically
-      logging: false, // Disable logging for cleaner output
-      // Add some padding around the element
+      logging: false,
+      // Use the actual element dimensions with some padding
+      width: Math.ceil(rect.width) + 20,
+      height: Math.ceil(rect.height) + 20,
       x: 0,
       y: 0,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
+      // Ensure we capture the full element
+      foreignObjectRendering: true,
+      // Add some extra space around the element
+      windowWidth: Math.ceil(rect.width) + 40,
+      windowHeight: Math.ceil(rect.height) + 40
     });
 
     // Convert canvas to blob
