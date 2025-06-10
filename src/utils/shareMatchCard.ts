@@ -9,16 +9,21 @@ export async function shareMatchCardAsImage(elementId: string): Promise<boolean>
       return false;
     }
 
-    // Create canvas from the element with better settings for text rendering
+    // Create canvas from the element with optimized settings
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 3, // Increased scale for better quality and text rendering
+      scale: 2, // Good balance between quality and performance
       useCORS: true,
       allowTaint: true,
-      height: element.scrollHeight + 40, // Add extra padding to prevent text cutoff
-      width: element.scrollWidth + 20,
+      // Remove manual height/width to let html2canvas calculate automatically
+      logging: false, // Disable logging for cleaner output
+      // Add some padding around the element
+      x: 0,
+      y: 0,
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
     });
 
     // Convert canvas to blob

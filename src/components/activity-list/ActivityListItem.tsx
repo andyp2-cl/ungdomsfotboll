@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
@@ -122,7 +121,6 @@ export function ActivityListItem({
       id={cardId}
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20 hover:border-l-primary/40"
       onClick={handleClick}
-      style={{ padding: '4px' }} // Add extra padding for better screenshot rendering
     >
       <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
         <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[1fr,auto]'} gap-4`}>
