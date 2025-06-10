@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { StatisticsTabsWrapper } from "@/components/player-management/statistics/StatisticsTabsWrapper";
 import { ActivityList } from "@/components/ActivityList";
@@ -170,6 +169,7 @@ export function ActivityTabViewContent({
     
     if (content.viewType === "activities-list") {
       console.log("ActivityTabViewContent: Rendering ActivityList with onPlayerSelect:", !!onPlayerSelect);
+      console.log("ActivityTabViewContent: Passing allActivities with length:", activities.length);
       return (
         <ActivityList 
           activities={content.activities}
@@ -182,6 +182,7 @@ export function ActivityTabViewContent({
           isHistorical={activeView === "historical"}
           isMobile={isMobile}
           noResultsMessage={content.searchQuery ? `Inga matcher hittades för "${content.searchQuery}"` : "Inga aktiviteter hittades"}
+          allActivities={activities}
         />
       );
     }

@@ -12,6 +12,7 @@ interface ActivityListProps {
   isHistorical?: boolean;
   isMobile?: boolean;
   noResultsMessage?: string;
+  allActivities?: Activity[]; // Add this for weekly match calculations
 }
 
 export function ActivityList({ 
@@ -21,8 +22,11 @@ export function ActivityList({
   onPlayerSelect,
   isHistorical = false, 
   isMobile,
-  noResultsMessage = "Inga aktiviteter hittades" 
+  noResultsMessage = "Inga aktiviteter hittades",
+  allActivities = [] // Add default value
 }: ActivityListProps) {
+  console.log("ActivityList component: allActivities length =", allActivities.length);
+  
   if (activities.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -45,6 +49,7 @@ export function ActivityList({
               onPlayerSelect={onPlayerSelect}
               isHistorical={isHistorical}
               isMobile={isMobile}
+              allActivities={allActivities}
             />
           ))}
         </div>

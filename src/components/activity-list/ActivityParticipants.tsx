@@ -44,12 +44,11 @@ export function ActivityParticipants({
     participantsByGrade[grade].push(player);
   });
   
-  // Check if current activity is upcoming - more lenient check
+  // Check if current activity is upcoming
   const currentDate = new Date();
   const activityDate = currentActivity ? new Date(currentActivity.date) : null;
   const isUpcomingActivity = activityDate && activityDate >= currentDate;
   
-  // Enhanced debugging
   console.log("ActivityParticipants: Enhanced Debug Info");
   console.log("- currentActivity:", currentActivity?.name, currentActivity?.date);
   console.log("- current date:", currentDate.toISOString());
@@ -115,16 +114,18 @@ export function ActivityParticipants({
             
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
-                // Always calculate weekly match count when we have activities data
+                // Calculate weekly match count when we have activities data
                 let weeklyMatchCount = 0;
                 
                 if (allActivities.length > 0) {
                   weeklyMatchCount = getWeeklyMatchCount(player.id, allActivities);
-                  console.log(`ActivityParticipants: Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}, isUpcoming = ${isUpcomingActivity}`);
+                  console.log(`ActivityParticipants: Player ${player.name} (${player.id}): weeklyMatchCount = ${weeklyMatchCount}`);
                 }
                 
-                // Show badge for 2+ matches regardless of upcoming status for now
+                // Show badge for 2+ matches - remove the upcoming restriction for now
                 const shouldShowBadge = weeklyMatchCount >= 2;
+                
+                console.log(`ActivityParticipants: Player ${player.name}: shouldShowBadge = ${shouldShowBadge} (weeklyMatchCount: ${weeklyMatchCount})`);
                 
                 return (
                   <div 

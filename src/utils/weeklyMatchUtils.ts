@@ -3,16 +3,21 @@ import { Activity } from "@/types/player";
 
 export function getWeeklyMatchCount(playerId: string, activities: Activity[]): number {
   const now = new Date();
+  
+  // Calculate start of week (Monday)
   const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay()); // Start of current week (Sunday)
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days to Monday
+  startOfWeek.setDate(now.getDate() - daysToSubtract);
   startOfWeek.setHours(0, 0, 0, 0);
   
+  // Calculate end of week (Sunday)
   const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6); // End of current week (Saturday)
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Add 6 days to get to Sunday
   endOfWeek.setHours(23, 59, 59, 999);
 
   console.log(`WeeklyMatchUtils: Checking for player ${playerId}`);
-  console.log(`WeeklyMatchUtils: Week range: ${startOfWeek.toISOString()} to ${endOfWeek.toISOString()}`);
+  console.log(`WeeklyMatchUtils: Week range (Monday-Sunday): ${startOfWeek.toISOString()} to ${endOfWeek.toISOString()}`);
   console.log(`WeeklyMatchUtils: Total activities to check: ${activities.length}`);
 
   // Count ALL matches for this player in the current week (both past and future)
