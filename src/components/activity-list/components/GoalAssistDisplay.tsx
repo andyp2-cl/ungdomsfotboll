@@ -14,11 +14,10 @@ export function GoalAssistDisplay({ activity, players, compact = false }: GoalAs
   const goals = activity.player_stats?.goals || {};
   const assists = activity.player_stats?.assists || {};
   
-  // Get top scorers and assisters
+  // Get ALL scorers and assisters (removed the slice limit)
   const topScorers = Object.entries(goals)
     .filter(([_, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, compact ? 2 : 3)
     .map(([playerId, count]) => ({
       player: players.find(p => p.id === playerId),
       count
@@ -28,7 +27,6 @@ export function GoalAssistDisplay({ activity, players, compact = false }: GoalAs
   const topAssisters = Object.entries(assists)
     .filter(([_, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, compact ? 2 : 3)
     .map(([playerId, count]) => ({
       player: players.find(p => p.id === playerId),
       count
