@@ -13,6 +13,7 @@ import { saveActiveTab } from "@/utils/storage/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TeamSelectionTabContent } from "./team-selection-tab/TeamSelectionTabContent";
 
 interface MainTabsProps {
   tabs?: TabItem[];
@@ -178,6 +179,94 @@ export function MainTabs({
     }));
   }, [players]);
   
+  const renderTabContent = () => {
+    switch (activeTabId) {
+      case "players":
+        return (
+          <PlayerTabContent 
+            players={players}
+            activities={activities}
+            selectedPlayer={selectedPlayer}
+            filteredPlayers={filteredPlayers}
+            searchQuery={searchQuery}
+            selectedGrades={selectedGrades}
+            viewMode={viewMode}
+            isAddPlayerOpen={isAddPlayerOpen}
+            setSearchQuery={setSearchQuery}
+            handleGradeChange={handleGradeChange}
+            setSelectedPlayer={setSelectedPlayer}
+            setViewMode={setViewMode}
+            handlePlayerUpdate={handlePlayerUpdate}
+            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+            handleDeletePlayer={handleDeletePlayer}
+            setIsAddPlayerOpen={setIsAddPlayerOpen}
+            setEditingPlayer={setEditingPlayer}
+            onActivitySelect={async (activity) => {
+              await onPlayerActivitySelect(activity);
+            }}
+          />
+        );
+      case "activities":
+        return (
+          <ActivityTabContent 
+            players={players}
+            activities={activities}
+            filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
+            selectedActivity={selectedActivity}
+            selectedActivityTypes={selectedActivityTypes}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={handleActivityUpdate}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportedActivities={handleImportActivities}
+            handleClearHistoricalActivities={handleClearHistorical}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            isAddActivityOpen={isAddActivityOpen}
+            handleMatchResultUpdate={handleMatchResultUpdate}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        );
+      case "statistics":
+        return (
+          <StatisticsTabsWrapper 
+            players={players} 
+            activities={activities}
+            gradeData={gradeData}
+            onActivitySelect={handleActivitySelect}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        );
+      case "development":
+        return (
+          <DevelopmentTabContent 
+            players={players} 
+            activities={activities}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        );
+      case "training":
+        return (
+          <TrainingTabContent />
+        );
+      case "excel":
+        return (
+          <ExcelTabContent />
+        );
+      case "team-selection":
+        return (
+          <TeamSelectionTabContent
+            players={players}
+            activities={activities}
+            onPlayerUpdate={onPlayerUpdate}
+            onActivityUpdate={onActivityUpdate}
+          />
+        );
+    }
+  };
+
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
@@ -219,79 +308,7 @@ export function MainTabs({
           </div>
         </div>
         
-        <TabsContent value="players" className="mt-0">
-          <PlayerTabContent 
-            players={players}
-            activities={activities}
-            selectedPlayer={selectedPlayer}
-            filteredPlayers={filteredPlayers}
-            searchQuery={searchQuery}
-            selectedGrades={selectedGrades}
-            viewMode={viewMode}
-            isAddPlayerOpen={isAddPlayerOpen}
-            setSearchQuery={setSearchQuery}
-            handleGradeChange={handleGradeChange}
-            setSelectedPlayer={setSelectedPlayer}
-            setViewMode={setViewMode}
-            handlePlayerUpdate={handlePlayerUpdate}
-            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-            handleDeletePlayer={handleDeletePlayer}
-            setIsAddPlayerOpen={setIsAddPlayerOpen}
-            setEditingPlayer={setEditingPlayer}
-            onActivitySelect={async (activity) => {
-              await onPlayerActivitySelect(activity);
-            }}
-          />
-        </TabsContent>
-        
-        <TabsContent value="activities" className="mt-0">
-          <ActivityTabContent 
-            players={players}
-            activities={activities}
-            filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
-            selectedActivity={selectedActivity}
-            selectedActivityTypes={selectedActivityTypes}
-            handleActivityTypeChange={handleActivityTypeChange}
-            setSelectedActivity={setSelectedActivity}
-            handleActivityUpdate={handleActivityUpdate}
-            handleKioskAssignmentUpdate={handleKioskUpdate}
-            handleDeleteActivity={handleDelete}
-            handleImportedActivities={handleImportActivities}
-            handleClearHistoricalActivities={handleClearHistorical}
-            setIsAddActivityOpen={setIsAddActivityOpen}
-            setEditingActivity={setEditingActivity}
-            isAddActivityOpen={isAddActivityOpen}
-            handleMatchResultUpdate={handleMatchResultUpdate}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        </TabsContent>
-        
-        <TabsContent value="statistics" className="mt-0">
-          <StatisticsTabsWrapper 
-            players={players} 
-            activities={activities}
-            gradeData={gradeData}
-            onActivitySelect={handleActivitySelect}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        </TabsContent>
-
-        <TabsContent value="development" className="mt-0">
-          <DevelopmentTabContent 
-            players={players} 
-            activities={activities}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        </TabsContent>
-
-        <TabsContent value="training" className="mt-0">
-          <TrainingTabContent />
-        </TabsContent>
-
-        <TabsContent value="excel" className="mt-0">
-          <ExcelTabContent />
-        </TabsContent>
+        {renderTabContent()}
       </Tabs>
       
       <PageDialogs 

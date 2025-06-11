@@ -1,4 +1,3 @@
-
 export interface TrainingExercise {
   id: string;
   title: string;
@@ -74,3 +73,52 @@ export const VIDEO_TYPES: { value: VideoType; label: string }[] = [
 ];
 
 export const DIFFICULTY_LEVELS = ['Lätt', 'Medium', 'Svår'] as const;
+
+export interface TrainingStats {
+  id: string;
+  playerId: string;
+  trainingDate: string;
+  trainingType?: string;
+  attendance: boolean;
+  performanceScore?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlayerTrainingOverview {
+  playerId: string;
+  playerName: string;
+  totalTrainings: number;
+  totalMatches: number;
+  trainingMatchRatio: number;
+  averagePerformance?: number;
+  lastTrainingDate?: string;
+}
+
+export interface TeamSelectionData {
+  upcomingMatches: Activity[];
+  playerStats: PlayerTrainingOverview[];
+  conflicts: MatchConflict[];
+}
+
+export interface MatchConflict {
+  playerId: string;
+  playerName: string;
+  conflictingMatches: Activity[];
+  reason: 'same_day' | 'overbooked' | 'rest_needed';
+}
+
+export interface LeaguePriority {
+  leagueId: string;
+  leagueName: string;
+  priority: 'A' | 'B' | 'C' | 'D';
+  description: string;
+}
+
+export const LEAGUE_PRIORITIES: LeaguePriority[] = [
+  { leagueId: '2013-a', leagueName: '2013 A', priority: 'A', description: 'Högsta prioritet' },
+  { leagueId: '2014-a1', leagueName: '2014 A1', priority: 'A', description: 'Högsta prioritet' },
+  { leagueId: '2014-a2', leagueName: '2014 A2', priority: 'B', description: 'Hög prioritet' },
+  { leagueId: '2014-b1', leagueName: '2014 B1', priority: 'C', description: 'Medium prioritet för C,D spelare' }
+];
