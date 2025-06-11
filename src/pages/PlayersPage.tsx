@@ -1,11 +1,9 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Player, Activity } from "@/types/player";
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { PlayerHeader } from "@/components/PlayerHeader";
 import { MainTabs } from "@/components/tabs/MainTabs";
-import { PlayerDialog } from "@/components/player-ui/PlayerDialog";
-import { AddPlayerDialog } from "@/components/player-ui/AddPlayerDialog";
-import { PullToRefresh } from "react-js-pull-to-refresh";
 import { usePlayers } from "@/hooks/players/usePlayers";
 import { useActivities } from "@/hooks/activities/useActivities";
 import { toast } from "@/hooks/use-toast";
@@ -45,7 +43,7 @@ export default function PlayersPage({ initialTab = "players" }: PlayersPageProps
     handleDeletePlayer,
     isMobile
   } = usePlayers();
-  const { activities, handleActivityUpdate, handleRefresh } = useActivities();
+  const { activities, handleActivityUpdate } = useActivities();
 
   const tabItems: TabItem[] = [
     {
@@ -97,54 +95,68 @@ export default function PlayersPage({ initialTab = "players" }: PlayersPageProps
     navigate(`/activities/${activity.id}`);
   };
 
+  const handlePlayerSelect = (playerId: string) => {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayer(player);
+    }
+  };
+
+  // Ensure viewMode is compatible
+  const compatibleViewMode: "list" | "grid" = viewMode === "stats" ? "list" : viewMode as "list" | "grid";
+
   return (
     <PageContainer isLoading={isLoading}>
-      <PullToRefresh onRefresh={handleRefresh}>
-        <div className="flex flex-col min-h-screen">
-          <PlayerHeader />
+      <div className="flex flex-col min-h-screen">
+        <PlayerHeader />
+        
+        <MainTabs 
+          tabs={tabItems}
+          activeTabId={activeTab}
+          onTabChange={setActiveTab}
+          players={players}
+          activities={activities}
+          searchQuery={searchQuery}
+          selectedGrades={selectedGrades}
+          selectedPositions={selectedPositions}
+          activeFiltersCount={activeFiltersCount}
+          selectedPlayer={selectedPlayer}
+          viewMode={compatibleViewMode}
+          filteredPlayers={filteredPlayers}
+          onSearchChange={setSearchQuery}
+          onGradeChange={handleGradeChange}
+          onPositionChange={handlePositionChange}
+          onPlayerSelect={setSelectedPlayer}
+          onPlayerUpdate={handlePlayerUpdate}
+          onAddPlayerClick={() => setIsAddPlayerOpen(true)}
+          onEditPlayerClick={setEditingPlayer}
+          isMobile={isMobile}
+          onActivitySelect={setSelectedActivity}
+          onActivityUpdate={handleActivityUpdate}
+          onBulkPlayerUpdate={handleBulkPlayerUpdate}
+          onViewModeChange={setViewMode}
           
-          <MainTabs 
-            tabs={tabItems}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            players={players}
-            activities={activities}
-            searchQuery={searchQuery}
-            selectedGrades={selectedGrades}
-            selectedPositions={selectedPositions}
-            activeFiltersCount={activeFiltersCount}
-            selectedPlayer={selectedPlayer}
-            viewMode={viewMode}
-            filteredPlayers={filteredPlayers}
-            onSearchChange={setSearchQuery}
-            onGradeChange={handleGradeChange}
-            onPositionChange={handlePositionChange}
-            onPlayerSelect={setSelectedPlayer}
-            onPlayerUpdate={handlePlayerUpdate}
-            onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-            onEditPlayerClick={setEditingPlayer}
-            isMobile={isMobile}
-            onActivitySelect={setSelectedActivity}
-            onActivityUpdate={handleActivityUpdate}
-            onBulkPlayerUpdate={handleBulkPlayerUpdate}
-            onViewModeChange={setViewMode}
-          />
-
-          <PlayerDialog
-            isOpen={!!selectedPlayer || !!editingPlayer}
-            player={selectedPlayer || editingPlayer}
-            onClose={handleClosePlayerDialog}
-            onPlayerUpdate={handlePlayerUpdate}
-            onDeletePlayer={handleDeletePlayer}
-          />
-
-          <AddPlayerDialog
-            isOpen={isAddPlayerOpen}
-            onClose={() => setIsAddPlayerOpen(false)}
-            onAddPlayer={handleAddPlayer}
-          />
-        </div>
-      </PullToRefresh>
+          // Activity props
+          filteredActivities={activities}
+          filteredHistoricalActivities={activities.filter(a => new Date(a.date) < new Date())}
+          selectedActivity={selectedActivity}
+          setSelectedActivity={setSelectedActivity}
+          editingActivity={null}
+          setEditingActivity={() => {}}
+          isAddActivityOpen={false}
+          setIsAddActivityOpen={() => {}}
+          selectedActivityTypes={[]}
+          handleActivityTypeChange={() => {}}
+          handleKioskUpdate={async () => true}
+          handleDelete={async () => true}
+          handleImportActivities={async () => true}
+          handleClearHistorical={async () => true}
+          handleAddActivity={async () => {}}
+          handleMatchResultUpdate={async () => {}}
+          onPlayerActivitySelect={async () => {}}
+          onPlayerSelect={handlePlayerSelect}
+        />
+      </div>
     </PageContainer>
   );
 }

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -6,6 +7,7 @@ import { StatisticsTabsWrapper } from "@/components/player-management/statistics
 import { ExcelTabContent } from "@/components/tabs/excel-tab/ExcelTabContent";
 import { DevelopmentTabContent } from "@/components/tabs/development-tab/DevelopmentTabContent";
 import { TrainingTabContent } from "@/components/tabs/training-tab/TrainingTabContent";
+import { TeamSelectionTabContent } from "./team-selection-tab/TeamSelectionTabContent";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
@@ -13,7 +15,6 @@ import { saveActiveTab } from "@/utils/storage/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { TeamSelectionTabContent } from "./team-selection-tab/TeamSelectionTabContent";
 
 interface MainTabsProps {
   tabs?: TabItem[];
@@ -27,6 +28,7 @@ interface MainTabsProps {
   editingPlayer: Player | null;
   searchQuery: string;
   selectedGrades: PlayerGrade[];
+  selectedPositions?: any[];
   viewMode: "list" | "grid";
   setSearchQuery: (query: string) => void;
   handleGradeChange: (grade: PlayerGrade) => void;
@@ -61,6 +63,20 @@ interface MainTabsProps {
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => Promise<void>;
   onPlayerSelect?: (playerId: string) => void;
+  
+  // Optional props for compatibility
+  activeFiltersCount?: number;
+  onSearchChange?: (query: string) => void;
+  onGradeChange?: (grade: PlayerGrade) => void;
+  onPositionChange?: (position: any) => void;
+  onPlayerUpdate?: (player: Player) => Promise<void>;
+  onAddPlayerClick?: () => void;
+  onEditPlayerClick?: (player: Player) => void;
+  isMobile?: boolean;
+  onActivitySelect?: (activity: Activity) => void;
+  onActivityUpdate?: (activity: Activity) => Promise<void>;
+  onBulkPlayerUpdate?: (players: Player[]) => Promise<void>;
+  onViewModeChange?: (mode: "list" | "grid") => void;
 }
 
 export function MainTabs({
@@ -260,8 +276,8 @@ export function MainTabs({
           <TeamSelectionTabContent
             players={players}
             activities={activities}
-            onPlayerUpdate={onPlayerUpdate}
-            onActivityUpdate={onActivityUpdate}
+            onPlayerUpdate={handlePlayerUpdate}
+            onActivityUpdate={handleActivityUpdate}
           />
         );
     }

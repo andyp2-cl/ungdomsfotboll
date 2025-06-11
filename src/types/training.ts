@@ -1,3 +1,6 @@
+
+import { Activity } from '@/types/player';
+
 export interface TrainingExercise {
   id: string;
   title: string;
