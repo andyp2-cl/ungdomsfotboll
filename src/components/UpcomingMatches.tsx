@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Match } from "@/types/match";
 import { Player } from "@/types/player";
-
 interface UpcomingMatchesProps {
   matches: Match[];
   players: Player[];
@@ -12,22 +11,19 @@ interface UpcomingMatchesProps {
   onPlayerRemoval: (matchId: string, playerId: string) => void;
   renderExtraActions?: (match: Match) => React.ReactNode;
 }
-
-export function UpcomingMatches({ 
-  matches, 
-  players, 
-  onPlayerAssignment, 
-  onPlayerRemoval, 
+export function UpcomingMatches({
+  matches,
+  players,
+  onPlayerAssignment,
+  onPlayerRemoval,
   renderExtraActions
 }: UpcomingMatchesProps) {
   const getLeagueBadgeColor = (league: string) => {
     return "bg-gray-500";
   };
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
-        <CardTitle>Kommande matcher</CardTitle>
+        <CardTitle className="text-base">Kommande matcher</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -43,8 +39,7 @@ export function UpcomingMatches({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {matches.map((match) => (
-              <TableRow key={match.id}>
+            {matches.map(match => <TableRow key={match.id}>
                 <TableCell>{new Date(match.date).toLocaleDateString('sv-SE')}</TableCell>
                 <TableCell>{match.time}</TableCell>
                 <TableCell>{match.opponent}</TableCell>
@@ -56,29 +51,18 @@ export function UpcomingMatches({
                 <TableCell>{match.location}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {match.players.map((playerId) => {
-                      const player = players.find(p => p.id === playerId);
-                      return player ? (
-                        <Badge 
-                          key={playerId}
-                          variant="outline"
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => onPlayerRemoval(match.id, playerId)}
-                        >
+                    {match.players.map(playerId => {
+                  const player = players.find(p => p.id === playerId);
+                  return player ? <Badge key={playerId} variant="outline" className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground" onClick={() => onPlayerRemoval(match.id, playerId)}>
                           {player.name}
-                        </Badge>
-                      ) : null;
-                    })}
+                        </Badge> : null;
+                })}
                   </div>
                 </TableCell>
-                {renderExtraActions && (
-                  <TableCell>{renderExtraActions(match)}</TableCell>
-                )}
-              </TableRow>
-            ))}
+                {renderExtraActions && <TableCell>{renderExtraActions(match)}</TableCell>}
+              </TableRow>)}
           </TableBody>
         </Table>
       </CardContent>
-    </Card>
-  );
-} 
+    </Card>;
+}

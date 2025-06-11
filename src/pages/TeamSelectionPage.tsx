@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { getActiveTab } from "@/utils/storage/tabs";
-
 interface TrainingStats {
   playerId: string;
   playerName: string;
@@ -20,7 +19,6 @@ interface TrainingStats {
   matchesPlayed: number;
   trainingMatchRatio: number;
 }
-
 export default function TeamSelectionPage() {
   const [trainingStats, setTrainingStats] = useState<TrainingStats[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -35,22 +33,25 @@ export default function TeamSelectionPage() {
     filteredActivities,
     activities,
     isLoading,
-    handleActivityUpdate,
+    handleActivityUpdate
   } = useActivities([], () => {}); // tomma arrays tills vidare
 
   // Filtrera ut kommande matcher
   const now = new Date();
-  const upcomingMatches = filteredActivities.filter(
-    (a: any) => a.type === 'match' && new Date(a.date) >= now
-  );
+  const upcomingMatches = filteredActivities.filter((a: any) => a.type === 'match' && new Date(a.date) >= now);
 
   // Hämta spelare
-  const { players } = usePlayers();
+  const {
+    players
+  } = usePlayers();
 
   // Hämta ligor vid mount
   useEffect(() => {
     async function fetchLeagues() {
-      const { data, error } = await supabase.from("leagues").select("*");
+      const {
+        data,
+        error
+      } = await supabase.from("leagues").select("*");
       if (data) {
         setLeagues(data);
         const map: Record<string, string> = {};
@@ -104,20 +105,13 @@ export default function TeamSelectionPage() {
   }
 
   // Sort leagues in the order: 2014 B1, 2013 A, 2014 A1, 2014 A2
-  const leagueSortOrder = [
-    '2014 B1',
-    '2013 A',
-    '2014 A1',
-    '2014 A2',
-  ];
+  const leagueSortOrder = ['2014 B1', '2013 A', '2014 A1', '2014 A2'];
 
   // Mappa Activity till Match
   const mappedUpcomingMatches = upcomingMatches.map((a: any) => {
     // Hämta liganamn från map
     let leagueName = '';
-    if (a.leagueId && leagueMap[a.leagueId]) leagueName = leagueMap[a.leagueId];
-    else if (a.league_id && leagueMap[a.league_id]) leagueName = leagueMap[a.league_id];
-    else leagueName = a.leagueId || a.league_id || '';
+    if (a.leagueId && leagueMap[a.leagueId]) leagueName = leagueMap[a.leagueId];else if (a.league_id && leagueMap[a.league_id]) leagueName = leagueMap[a.league_id];else leagueName = a.leagueId || a.league_id || '';
     return {
       id: a.id,
       date: a.date,
@@ -126,9 +120,10 @@ export default function TeamSelectionPage() {
       location: a.location?.name || '',
       league: getPrettyLeagueName(leagueName),
       players: a.participants || [],
-      requiredPlayers: 11, // Just nu default, kan hämtas från Activity om det finns
-      status: (a.status as 'scheduled' | 'completed' | 'cancelled') || 'scheduled',
-      rawActivity: a, // Spara originalet för vidare användning
+      requiredPlayers: 11,
+      // Just nu default, kan hämtas från Activity om det finns
+      status: a.status as 'scheduled' | 'completed' | 'cancelled' || 'scheduled',
+      rawActivity: a // Spara originalet för vidare användning
     };
   });
 
@@ -147,14 +142,17 @@ export default function TeamSelectionPage() {
     // Beräkna trainingMatchRatio för varje spelare
     const statsWithRatio = stats.map(s => ({
       ...s,
-      trainingMatchRatio: s.trainingSessions > 0 ? (s.matchesPlayed / s.trainingSessions) : 99
+      trainingMatchRatio: s.trainingSessions > 0 ? s.matchesPlayed / s.trainingSessions : 99
     }));
     setTrainingStats(statsWithRatio);
     localStorage.setItem('trainingStats', JSON.stringify(statsWithRatio));
   };
 
   // State för lagförslag
-  const [suggestedLineup, setSuggestedLineup] = useState<{matchId: string, playerIds: string[]} | null>(null);
+  const [suggestedLineup, setSuggestedLineup] = useState<{
+    matchId: string;
+    playerIds: string[];
+  } | null>(null);
   const [showLineupFor, setShowLineupFor] = useState<string | null>(null);
 
   // State för "lägg till spelare"-popup
@@ -233,28 +231,37 @@ export default function TeamSelectionPage() {
       const ratioB = statB && statB.trainingSessions > 0 ? statB.matchesPlayed / statB.trainingSessions : 0;
       return ratioB - ratioA;
     });
-    setSuggestedLineup({ matchId: match.id, playerIds: sorted.slice(0, match.requiredPlayers).map(p => p.id) });
+    setSuggestedLineup({
+      matchId: match.id,
+      playerIds: sorted.slice(0, match.requiredPlayers).map(p => p.id)
+    });
   };
 
   // Testfunktion för prioritering
   function testLeaguePrioritySort() {
-    const testLeagues = [
-      "2014 B1",
-      "2014 B1 (C)",
-      "2014 A1",
-      "2014 A2",
-      "2013 A",
-      "2014 C"
-    ];
-    const testPlayers = [
-      { name: "Acke", grade: "A" },
-      { name: "Bosse", grade: "B" },
-      { name: "Calle", grade: "C" },
-      { name: "Doris", grade: "D" },
-      { name: "Egon", grade: undefined },
-      { name: "Fia", grade: "c" },
-      { name: "Gunnar", grade: "d" },
-    ];
+    const testLeagues = ["2014 B1", "2014 B1 (C)", "2014 A1", "2014 A2", "2013 A", "2014 C"];
+    const testPlayers = [{
+      name: "Acke",
+      grade: "A"
+    }, {
+      name: "Bosse",
+      grade: "B"
+    }, {
+      name: "Calle",
+      grade: "C"
+    }, {
+      name: "Doris",
+      grade: "D"
+    }, {
+      name: "Egon",
+      grade: undefined
+    }, {
+      name: "Fia",
+      grade: "c"
+    }, {
+      name: "Gunnar",
+      grade: "d"
+    }];
     testLeagues.forEach(league => {
       const prio = getLeaguePriorityArray(league);
       const sorted = [...testPlayers].sort((a, b) => {
@@ -328,26 +335,22 @@ export default function TeamSelectionPage() {
     const activities = await getStoredActivities();
     const now = new Date();
     const leagueMapLocal = leagueMap; // använd senaste leagueMap
-    const mappedUpcomingMatches = activities
-      .filter((a: any) => a.type === 'match' && new Date(a.date) >= now)
-      .map((a: any) => {
-        let leagueName = '';
-        if (a.leagueId && leagueMapLocal[a.leagueId]) leagueName = leagueMapLocal[a.leagueId];
-        else if (a.league_id && leagueMapLocal[a.league_id]) leagueName = leagueMapLocal[a.league_id];
-        else leagueName = a.leagueId || a.league_id || '';
-        return {
-          id: a.id,
-          date: a.date,
-          time: a.time || '',
-          opponent: extractOpponent(a.name || ''),
-          location: a.location?.name || '',
-          league: getPrettyLeagueName(leagueName),
-          players: a.participants || [],
-          requiredPlayers: 11,
-          status: (a.status as 'scheduled' | 'completed' | 'cancelled') || 'scheduled',
-          rawActivity: a,
-        };
-      });
+    const mappedUpcomingMatches = activities.filter((a: any) => a.type === 'match' && new Date(a.date) >= now).map((a: any) => {
+      let leagueName = '';
+      if (a.leagueId && leagueMapLocal[a.leagueId]) leagueName = leagueMapLocal[a.leagueId];else if (a.league_id && leagueMapLocal[a.league_id]) leagueName = leagueMapLocal[a.league_id];else leagueName = a.leagueId || a.league_id || '';
+      return {
+        id: a.id,
+        date: a.date,
+        time: a.time || '',
+        opponent: extractOpponent(a.name || ''),
+        location: a.location?.name || '',
+        league: getPrettyLeagueName(leagueName),
+        players: a.participants || [],
+        requiredPlayers: 11,
+        status: a.status as 'scheduled' | 'completed' | 'cancelled' || 'scheduled',
+        rawActivity: a
+      };
+    });
     const sorted = mappedUpcomingMatches.slice().sort((a, b) => {
       const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
       const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
@@ -355,35 +358,25 @@ export default function TeamSelectionPage() {
     });
     setSortedMatches(sorted);
   };
-
   const handlePlayerAssignment = async (matchId: string, playerId: string) => {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
-
-    setSortedMatches(prevMatches =>
-      prevMatches.map(m =>
-        m.id === matchId
-          ? { ...m, players: [...m.players, playerId] }
-          : m
-      )
-    );
-
-    const { error } = await supabase
-      .from('player_activities')
-      .insert({
-        id: crypto.randomUUID(),
-        player_id: playerId,
-        activity_id: matchId
-      });
-
+    setSortedMatches(prevMatches => prevMatches.map(m => m.id === matchId ? {
+      ...m,
+      players: [...m.players, playerId]
+    } : m));
+    const {
+      error
+    } = await supabase.from('player_activities').insert({
+      id: crypto.randomUUID(),
+      player_id: playerId,
+      activity_id: matchId
+    });
     if (error) {
-      setSortedMatches(prevMatches =>
-        prevMatches.map(m =>
-          m.id === matchId
-            ? { ...m, players: m.players.filter(id => id !== playerId) }
-            : m
-        )
-      );
+      setSortedMatches(prevMatches => prevMatches.map(m => m.id === matchId ? {
+        ...m,
+        players: m.players.filter(id => id !== playerId)
+      } : m));
       toast({
         title: "Kunde inte lägga till spelare",
         description: error.message,
@@ -391,39 +384,26 @@ export default function TeamSelectionPage() {
       });
       return;
     }
-
     toast({
       title: "Spelare tillagd",
       description: "Spelaren har lagts till i matchen"
     });
   };
-
   const handlePlayerRemoval = async (matchId: string, playerId: string) => {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
-
-    setSortedMatches(prevMatches =>
-      prevMatches.map(m =>
-        m.id === matchId
-          ? { ...m, players: m.players.filter(id => id !== playerId) }
-          : m
-      )
-    );
-
-    const { error } = await supabase
-      .from('player_activities')
-      .delete()
-      .eq('activity_id', matchId)
-      .eq('player_id', playerId);
-
+    setSortedMatches(prevMatches => prevMatches.map(m => m.id === matchId ? {
+      ...m,
+      players: m.players.filter(id => id !== playerId)
+    } : m));
+    const {
+      error
+    } = await supabase.from('player_activities').delete().eq('activity_id', matchId).eq('player_id', playerId);
     if (error) {
-      setSortedMatches(prevMatches =>
-        prevMatches.map(m =>
-          m.id === matchId
-            ? { ...m, players: [...m.players, playerId] }
-            : m
-        )
-      );
+      setSortedMatches(prevMatches => prevMatches.map(m => m.id === matchId ? {
+        ...m,
+        players: [...m.players, playerId]
+      } : m));
       toast({
         title: "Kunde inte ta bort spelare",
         description: error.message,
@@ -431,7 +411,6 @@ export default function TeamSelectionPage() {
       });
       return;
     }
-
     toast({
       title: "Spelare borttagen",
       description: "Spelaren har tagits bort från matchen"
@@ -490,7 +469,6 @@ export default function TeamSelectionPage() {
     if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
-
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -502,14 +480,11 @@ export default function TeamSelectionPage() {
 
   // --- Spara och återställ aktiv tab ---
   const [activeTabId, setActiveTabId] = useState(() => getActiveTab() || 'team-selection');
-
   useEffect(() => {
     localStorage.setItem('activeTabId', activeTabId);
   }, [activeTabId]);
-
-  return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Laguttagning</h1>
+  return <div className="container mx-auto p-6">
+      <h1 className="font-bold mb-6 text-lg">Laguttagning</h1>
       
       <div className="grid gap-6">
         {/* Kompakt träningsstatistik överst */}
@@ -517,44 +492,25 @@ export default function TeamSelectionPage() {
           <TrainingStatsUpload onStatsUploaded={handleStatsUploaded} />
         </div>
 
-        {warnings.length > 0 && (
-          <Alert variant="destructive">
+        {warnings.length > 0 && <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <ul>
-                {warnings.map((warning, index) => (
-                  <li key={index}>{warning}</li>
-                ))}
+                {warnings.map((warning, index) => <li key={index}>{warning}</li>)}
               </ul>
             </AlertDescription>
-          </Alert>
-        )}
+          </Alert>}
 
-        <UpcomingMatches
-          matches={sortedMatches}
-          players={players}
-          onPlayerAssignment={handlePlayerAssignment}
-          onPlayerRemoval={handlePlayerRemoval}
-          renderExtraActions={(match) => (
-            <button
-              onClick={() => setAddPlayerMatchId(match.id)}
-              className="p-1 hover:bg-muted rounded-full"
-            >
+        <UpcomingMatches matches={sortedMatches} players={players} onPlayerAssignment={handlePlayerAssignment} onPlayerRemoval={handlePlayerRemoval} renderExtraActions={match => <button onClick={() => setAddPlayerMatchId(match.id)} className="p-1 hover:bg-muted rounded-full">
               <Plus className="h-4 w-4" />
-            </button>
-          )}
-        />
+            </button>} />
 
         {/* Popup för att lägga till spelare med rekommendationer */}
-        {addPlayerMatchId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        {addPlayerMatchId && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-background p-6 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Lägg till spelare</h2>
-                <button
-                  onClick={() => setAddPlayerMatchId(null)}
-                  className="p-1 hover:bg-muted rounded-full"
-                >
+                <button onClick={() => setAddPlayerMatchId(null)} className="p-1 hover:bg-muted rounded-full">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -571,97 +527,89 @@ export default function TeamSelectionPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {players
-                      .map(player => {
-                        const stat = trainingStats.find(s => s.playerId === player.id || s.playerName === player.name);
-                        const isAlreadyAdded = sortedMatches
-                          .find(m => m.id === addPlayerMatchId)
-                          ?.players.includes(player.id);
-                        if (!stat || isAlreadyAdded) return null;
+                    {players.map(player => {
+                  const stat = trainingStats.find(s => s.playerId === player.id || s.playerName === player.name);
+                  const isAlreadyAdded = sortedMatches.find(m => m.id === addPlayerMatchId)?.players.includes(player.id);
+                  if (!stat || isAlreadyAdded) return null;
 
-                        // Aktiviteter totalt
-                        const playerActivities = activities.filter(a => a.participants && a.participants.includes(player.id));
-                        const activityCount = playerActivities.length;
-                        // Ratio
-                        const ratio = stat.trainingSessions > 0 ? (stat.matchesPlayed / stat.trainingSessions) : 0;
-                        // Matcher denna vecka
-                        const match = sortedMatches.find(m => m.id === addPlayerMatchId);
-                        let weekCount = 0;
-                        if (match) {
-                          const refDate = new Date(match.date);
-                          const startOfWeek = new Date(refDate);
-                          const dayOfWeek = refDate.getDay();
-                          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                          startOfWeek.setDate(refDate.getDate() - daysToSubtract);
-                          startOfWeek.setHours(0, 0, 0, 0);
-                          const endOfWeek = new Date(startOfWeek);
-                          endOfWeek.setDate(startOfWeek.getDate() + 6);
-                          endOfWeek.setHours(23, 59, 59, 999);
-                          weekCount = activities.filter(a => {
-                            const d = new Date(a.date);
-                            return a.type === 'match' && a.participants?.includes(player.id) && d >= startOfWeek && d <= endOfWeek;
-                          }).length;
-                        }
-                        // Filtrera bort spelare med 2 eller fler aktiviteter denna vecka
-                        if (weekCount >= 2) return null;
-                        return {
-                          player,
-                          stat,
-                          activityCount,
-                          ratio,
-                          weekCount
-                        };
-                      })
-                      .filter(Boolean)
-                      .sort((a, b) => {
-                        // Sortera på nivå först (A först), därefter på träningsratio (högst först)
-                        const gradeOrder = (grade) => {
-                          if (!grade) return 99;
-                          if (grade.toUpperCase() === 'A') return 0;
-                          if (grade.toUpperCase() === 'B') return 1;
-                          if (grade.toUpperCase() === 'C') return 2;
-                          return 99;
-                        };
-                        const gradeA = gradeOrder(a.player.grade);
-                        const gradeB = gradeOrder(b.player.grade);
-                        if (gradeA !== gradeB) return gradeA - gradeB;
-                        return b.ratio - a.ratio;
-                      })
-                      .map(({ player, stat, activityCount, ratio, weekCount }) => (
-                        <tr key={player.id} className="bg-muted hover:bg-accent cursor-pointer rounded-lg text-sm h-8">
+                  // Aktiviteter totalt
+                  const playerActivities = activities.filter(a => a.participants && a.participants.includes(player.id));
+                  const activityCount = playerActivities.length;
+                  // Ratio
+                  const ratio = stat.trainingSessions > 0 ? stat.matchesPlayed / stat.trainingSessions : 0;
+                  // Matcher denna vecka
+                  const match = sortedMatches.find(m => m.id === addPlayerMatchId);
+                  let weekCount = 0;
+                  if (match) {
+                    const refDate = new Date(match.date);
+                    const startOfWeek = new Date(refDate);
+                    const dayOfWeek = refDate.getDay();
+                    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                    startOfWeek.setDate(refDate.getDate() - daysToSubtract);
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    endOfWeek.setHours(23, 59, 59, 999);
+                    weekCount = activities.filter(a => {
+                      const d = new Date(a.date);
+                      return a.type === 'match' && a.participants?.includes(player.id) && d >= startOfWeek && d <= endOfWeek;
+                    }).length;
+                  }
+                  // Filtrera bort spelare med 2 eller fler aktiviteter denna vecka
+                  if (weekCount >= 2) return null;
+                  return {
+                    player,
+                    stat,
+                    activityCount,
+                    ratio,
+                    weekCount
+                  };
+                }).filter(Boolean).sort((a, b) => {
+                  // Sortera på nivå först (A först), därefter på träningsratio (högst först)
+                  const gradeOrder = grade => {
+                    if (!grade) return 99;
+                    if (grade.toUpperCase() === 'A') return 0;
+                    if (grade.toUpperCase() === 'B') return 1;
+                    if (grade.toUpperCase() === 'C') return 2;
+                    return 99;
+                  };
+                  const gradeA = gradeOrder(a.player.grade);
+                  const gradeB = gradeOrder(b.player.grade);
+                  if (gradeA !== gradeB) return gradeA - gradeB;
+                  return b.ratio - a.ratio;
+                }).map(({
+                  player,
+                  stat,
+                  activityCount,
+                  ratio,
+                  weekCount
+                }) => <tr key={player.id} className="bg-muted hover:bg-accent cursor-pointer rounded-lg text-sm h-8">
                           <td className="px-3 py-1 font-medium whitespace-nowrap">{player.name}</td>
                           <td className="px-3 py-1 whitespace-nowrap">{player.grade || '-'}</td>
                           <td className="px-3 py-1 whitespace-nowrap">{activityCount}</td>
                           <td className="px-3 py-1 whitespace-nowrap">{ratio > 0 ? ratio.toFixed(2) : '-'}</td>
                           <td className="px-3 py-1 whitespace-nowrap">{weekCount}</td>
                           <td className="px-3 py-1 text-right">
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                const match = sortedMatches.find(m => m.id === addPlayerMatchId);
-                                if (match) {
-                                  handlePlayerAssignment(match.id, player.id);
-                                }
-                                setAddPlayerMatchId(null);
-                              }}
-                              className="p-1 hover:bg-primary/10 rounded-full"
-                              title="Lägg till spelare"
-                            >
+                            <button onClick={e => {
+                      e.stopPropagation();
+                      const match = sortedMatches.find(m => m.id === addPlayerMatchId);
+                      if (match) {
+                        handlePlayerAssignment(match.id, player.id);
+                      }
+                      setAddPlayerMatchId(null);
+                    }} className="p-1 hover:bg-primary/10 rounded-full" title="Lägg till spelare">
                               <Plus className="h-4 w-4" />
                             </button>
                           </td>
-                        </tr>
-                      ))}
+                        </tr>)}
                   </tbody>
                 </table>
               </div>
             </div>
-          </div>
-        )}
+          </div>}
 
         {/* Närvarostatistik längst ner */}
-        {sortedTrainingStats.length > 0 && (
-          <div className="overflow-x-auto mt-8">
+        {sortedTrainingStats.length > 0 && <div className="overflow-x-auto mt-8">
             <h2 className="text-xl font-semibold mb-2">Närvarostatistik</h2>
             <table className="min-w-full text-sm border mt-2">
               <thead>
@@ -676,29 +624,25 @@ export default function TeamSelectionPage() {
               </thead>
               <tbody>
                 {sortedTrainingStats.map(stat => {
-                  const player = players.find(p => p.name === stat.playerName);
-                  let activityCount = 0;
-                  if (player && Array.isArray(player.activities) && player.activities.length > 0) {
-                    activityCount = player.activities.length;
-                  } else {
-                    activityCount = activities.filter(a => a.participants && a.participants.includes(stat.playerId)).length;
-                  }
-                  return (
-                    <tr key={stat.playerId}>
+              const player = players.find(p => p.name === stat.playerName);
+              let activityCount = 0;
+              if (player && Array.isArray(player.activities) && player.activities.length > 0) {
+                activityCount = player.activities.length;
+              } else {
+                activityCount = activities.filter(a => a.participants && a.participants.includes(stat.playerId)).length;
+              }
+              return <tr key={stat.playerId}>
                       <td className="border px-2 py-1">{stat.playerName}</td>
                       <td className="border px-2 py-1 text-center">{player?.grade || '-'}</td>
                       <td className="border px-2 py-1 text-center">{stat.trainingSessions}</td>
                       <td className="border px-2 py-1 text-center">{stat.matchesPlayed}</td>
                       <td className="border px-2 py-1 text-center">{stat.trainingMatchRatio != null ? stat.trainingMatchRatio.toFixed(2) : '-'}</td>
                       <td className="border px-2 py-1 text-center">{activityCount}</td>
-                    </tr>
-                  );
-                })}
+                    </tr>;
+            })}
               </tbody>
             </table>
-          </div>
-        )}
+          </div>}
       </div>
-    </div>
-  );
+    </div>;
 }
