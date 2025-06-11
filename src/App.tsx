@@ -7,6 +7,7 @@ import PasswordProtection from "./components/PasswordProtection";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
 import PlayerManagementPage from "./pages/PlayerManagementPage";
+import TeamSelectionPage from "./pages/TeamSelectionPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/training" element={<PlayersPage initialTab="training" />} />
                 <Route path="/excel" element={<PlayersPage initialTab="excel" />} />
                 <Route path="/player-management" element={<PlayerManagementPage />} />
+                <Route path="/team-selection" element={<TeamSelectionPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>
