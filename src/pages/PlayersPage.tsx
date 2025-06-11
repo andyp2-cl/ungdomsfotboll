@@ -1,162 +1,152 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Player, Activity } from "@/types/player";
 import { PageContainer } from "@/components/page-containers/PageContainer";
-import { PlayerHeader } from "@/components/PlayerHeader";
-import { MainTabs } from "@/components/tabs/MainTabs";
-import { usePlayers } from "@/hooks/players/usePlayers";
-import { useActivities } from "@/hooks/activities/useActivities";
-import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { TabItem } from "@/types/tabs";
-import { Users, Calendar, BarChart3, TrendingUp, Dumbbell, FileSpreadsheet } from "lucide-react";
+import { usePlayers } from "@/hooks/usePlayers";
+import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 interface PlayersPageProps {
   initialTab?: string;
 }
 
-export default function PlayersPage({ initialTab = "players" }: PlayersPageProps) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
+  const location = useLocation();
   const {
+    // Tab state
+    activeTab,
+    setActiveTab,
+    
+    // Player data
     players,
-    isLoading,
-    searchQuery,
-    setSearchQuery,
-    selectedGrades,
-    selectedPositions,
+    filteredPlayers,
     selectedPlayer,
     setSelectedPlayer,
     editingPlayer,
     setEditingPlayer,
     isAddPlayerOpen,
     setIsAddPlayerOpen,
+    searchQuery,
+    setSearchQuery,
+    selectedGrades,
     viewMode,
     setViewMode,
-    filteredPlayers,
     handleGradeChange,
-    handlePositionChange,
     handlePlayerUpdate,
     handleBulkPlayerUpdate,
     handleAddPlayer,
     handleDeletePlayer,
-    isMobile
-  } = usePlayers();
-  const { activities, handleActivityUpdate } = useActivities();
+    
+    // Activity data
+    activities,
+    filteredActivities,
+    filteredHistoricalActivities,
+    selectedActivity,
+    setSelectedActivity,
+    editingActivity,
+    setEditingActivity,
+    isAddActivityOpen,
+    setIsAddActivityOpen,
+    selectedActivityTypes,
+    handleActivityTypeChange,
+    handleActivityUpdate,
+    handleKioskUpdate,
+    handleDelete,
+    handleImportActivities,
+    handleClearHistorical,
+    handleAddActivity,
+    handlePlayerActivitySelect,
+    handleMatchResult,
+    handlePlayerSelect,
+    
+    // Loading state
+    isLoading
+  } = usePlayers(initialTab);
 
-  const tabItems: TabItem[] = [
-    {
-      id: "players",
-      label: "Spelare",
-      icon: <Users className="h-4 w-4" />
-    },
-    {
-      id: "activities", 
-      label: "Aktiviteter",
-      icon: <Calendar className="h-4 w-4" />
-    },
-    {
-      id: "statistics",
-      label: "Statistik", 
-      icon: <BarChart3 className="h-4 w-4" />
-    },
-    {
-      id: "development",
-      label: "Utveckling",
-      icon: <TrendingUp className="h-4 w-4" />
-    },
-    {
-      id: "team-selection",
-      label: "Laguttagning",
-      icon: <Users className="h-4 w-4" />
-    },
-    {
-      id: "training",
-      label: "Träning",
-      icon: <Dumbbell className="h-4 w-4" />
-    },
-    {
-      id: "excel",
-      label: "Excel",
-      icon: <FileSpreadsheet className="h-4 w-4" />
+  // Check for selected activity in location state
+  useEffect(() => {
+    if (location.state?.selectedActivityId) {
+      console.log("Found selectedActivityId in location state:", location.state.selectedActivityId);
+      const activity = activities.find(a => a.id === location.state.selectedActivityId);
+      if (activity) {
+        console.log("Setting selected activity:", activity.name);
+        setSelectedActivity(activity);
+      }
     }
-  ];
+  }, [location.state, activities, setSelectedActivity]);
 
-  const activeFiltersCount = selectedGrades.length + selectedPositions.length;
-
-  const handleClosePlayerDialog = useCallback(() => {
-    setEditingPlayer(undefined);
-    setSelectedPlayer(undefined);
-  }, [setEditingPlayer, setSelectedPlayer]);
-
-  const handleActivitySelect = (activity: Activity) => {
-    setSelectedActivity(activity);
-    navigate(`/activities/${activity.id}`);
+  // Converting Promise<boolean> to Promise<void> for player update functions
+  const handlePlayerUpdateWrapper = async (player: any) => {
+    await handlePlayerUpdate(player);
+  };
+  
+  const handleBulkPlayerUpdateWrapper = async (players: any[]) => {
+    await handleBulkPlayerUpdate(players);
+  };
+  
+  const handleAddPlayerWrapper = async (player: any) => {
+    await handleAddPlayer(player);
   };
 
-  const handlePlayerSelect = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSelectedPlayer(player);
-    }
+  const handleDeletePlayerWrapper = async (playerId: string) => {
+    await handleDeletePlayer(playerId);
   };
 
-  // Ensure viewMode is compatible
-  const compatibleViewMode: "list" | "grid" = viewMode === "stats" ? "list" : viewMode as "list" | "grid";
+  // Create a wrapper for setViewMode to handle type conversion
+  const setViewModeWrapper = (mode: "grid" | "list") => {
+    setViewMode(mode);
+  };
 
   return (
     <PageContainer isLoading={isLoading}>
-      <div className="flex flex-col min-h-screen">
-        <PlayerHeader />
+      <PlayersPageContent 
+        // Tab state
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         
-        <MainTabs 
-          tabs={tabItems}
-          activeTabId={activeTab}
-          onTabChange={setActiveTab}
-          players={players}
-          activities={activities}
-          searchQuery={searchQuery}
-          selectedGrades={selectedGrades}
-          selectedPositions={selectedPositions}
-          activeFiltersCount={activeFiltersCount}
-          selectedPlayer={selectedPlayer}
-          viewMode={compatibleViewMode}
-          filteredPlayers={filteredPlayers}
-          onSearchChange={setSearchQuery}
-          onGradeChange={handleGradeChange}
-          onPositionChange={handlePositionChange}
-          onPlayerSelect={setSelectedPlayer}
-          onPlayerUpdate={handlePlayerUpdate}
-          onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-          onEditPlayerClick={setEditingPlayer}
-          isMobile={isMobile}
-          onActivitySelect={setSelectedActivity}
-          onActivityUpdate={handleActivityUpdate}
-          onBulkPlayerUpdate={handleBulkPlayerUpdate}
-          onViewModeChange={setViewMode}
-          
-          // Activity props
-          filteredActivities={activities}
-          filteredHistoricalActivities={activities.filter(a => new Date(a.date) < new Date())}
-          selectedActivity={selectedActivity}
-          setSelectedActivity={setSelectedActivity}
-          editingActivity={null}
-          setEditingActivity={() => {}}
-          isAddActivityOpen={false}
-          setIsAddActivityOpen={() => {}}
-          selectedActivityTypes={[]}
-          handleActivityTypeChange={() => {}}
-          handleKioskUpdate={async () => true}
-          handleDelete={async () => true}
-          handleImportActivities={async () => true}
-          handleClearHistorical={async () => true}
-          handleAddActivity={async () => {}}
-          handleMatchResultUpdate={async () => {}}
-          onPlayerActivitySelect={async () => {}}
-          onPlayerSelect={handlePlayerSelect}
-        />
-      </div>
+        // Player data
+        players={players}
+        activities={activities}
+        filteredPlayers={filteredPlayers}
+        selectedPlayer={selectedPlayer}
+        setSelectedPlayer={setSelectedPlayer}
+        editingPlayer={editingPlayer}
+        setEditingPlayer={setEditingPlayer}
+        isAddPlayerOpen={isAddPlayerOpen}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedGrades={selectedGrades}
+        viewMode={viewMode === "stats" ? "list" : viewMode as "grid" | "list"}
+        setViewMode={setViewModeWrapper}
+        handleGradeChange={handleGradeChange}
+        handlePlayerUpdate={handlePlayerUpdateWrapper}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdateWrapper}
+        handleAddPlayer={handleAddPlayerWrapper}
+        handleDeletePlayer={handleDeletePlayerWrapper}
+        
+        // Activity data
+        filteredActivities={filteredActivities}
+        filteredHistoricalActivities={filteredHistoricalActivities}
+        selectedActivity={selectedActivity}
+        setSelectedActivity={setSelectedActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        isAddActivityOpen={isAddActivityOpen}
+        setIsAddActivityOpen={setIsAddActivityOpen}
+        selectedActivityTypes={selectedActivityTypes}
+        handleActivityTypeChange={handleActivityTypeChange}
+        handleActivityUpdate={handleActivityUpdate}
+        handleKioskUpdate={handleKioskUpdate}
+        handleDelete={handleDelete}
+        handleImportActivities={handleImportActivities}
+        handleClearHistorical={handleClearHistorical}
+        handleAddActivity={handleAddActivity}
+        onPlayerActivitySelect={async (activity) => {
+          await handlePlayerActivitySelect(activity);
+        }}
+        handleMatchResultUpdate={handleMatchResult}
+        onPlayerSelect={handlePlayerSelect}
+      />
     </PageContainer>
   );
 }

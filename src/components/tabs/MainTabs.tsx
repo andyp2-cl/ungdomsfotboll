@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
@@ -7,7 +6,6 @@ import { StatisticsTabsWrapper } from "@/components/player-management/statistics
 import { ExcelTabContent } from "@/components/tabs/excel-tab/ExcelTabContent";
 import { DevelopmentTabContent } from "@/components/tabs/development-tab/DevelopmentTabContent";
 import { TrainingTabContent } from "@/components/tabs/training-tab/TrainingTabContent";
-import { TeamSelectionTabContent } from "./team-selection-tab/TeamSelectionTabContent";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
@@ -28,7 +26,6 @@ interface MainTabsProps {
   editingPlayer: Player | null;
   searchQuery: string;
   selectedGrades: PlayerGrade[];
-  selectedPositions?: any[];
   viewMode: "list" | "grid";
   setSearchQuery: (query: string) => void;
   handleGradeChange: (grade: PlayerGrade) => void;
@@ -63,20 +60,6 @@ interface MainTabsProps {
   handleMatchResultUpdate: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
   onPlayerActivitySelect: (activity: Activity) => Promise<void>;
   onPlayerSelect?: (playerId: string) => void;
-  
-  // Optional props for compatibility
-  activeFiltersCount?: number;
-  onSearchChange?: (query: string) => void;
-  onGradeChange?: (grade: PlayerGrade) => void;
-  onPositionChange?: (position: any) => void;
-  onPlayerUpdate?: (player: Player) => Promise<void>;
-  onAddPlayerClick?: () => void;
-  onEditPlayerClick?: (player: Player) => void;
-  isMobile?: boolean;
-  onActivitySelect?: (activity: Activity) => void;
-  onActivityUpdate?: (activity: Activity) => Promise<void>;
-  onBulkPlayerUpdate?: (players: Player[]) => Promise<void>;
-  onViewModeChange?: (mode: "list" | "grid") => void;
 }
 
 export function MainTabs({
@@ -195,94 +178,6 @@ export function MainTabs({
     }));
   }, [players]);
   
-  const renderTabContent = () => {
-    switch (activeTabId) {
-      case "players":
-        return (
-          <PlayerTabContent 
-            players={players}
-            activities={activities}
-            selectedPlayer={selectedPlayer}
-            filteredPlayers={filteredPlayers}
-            searchQuery={searchQuery}
-            selectedGrades={selectedGrades}
-            viewMode={viewMode}
-            isAddPlayerOpen={isAddPlayerOpen}
-            setSearchQuery={setSearchQuery}
-            handleGradeChange={handleGradeChange}
-            setSelectedPlayer={setSelectedPlayer}
-            setViewMode={setViewMode}
-            handlePlayerUpdate={handlePlayerUpdate}
-            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
-            handleDeletePlayer={handleDeletePlayer}
-            setIsAddPlayerOpen={setIsAddPlayerOpen}
-            setEditingPlayer={setEditingPlayer}
-            onActivitySelect={async (activity) => {
-              await onPlayerActivitySelect(activity);
-            }}
-          />
-        );
-      case "activities":
-        return (
-          <ActivityTabContent 
-            players={players}
-            activities={activities}
-            filteredActivities={filteredActivities}
-            filteredHistoricalActivities={filteredHistoricalActivities}
-            selectedActivity={selectedActivity}
-            selectedActivityTypes={selectedActivityTypes}
-            handleActivityTypeChange={handleActivityTypeChange}
-            setSelectedActivity={setSelectedActivity}
-            handleActivityUpdate={handleActivityUpdate}
-            handleKioskAssignmentUpdate={handleKioskUpdate}
-            handleDeleteActivity={handleDelete}
-            handleImportedActivities={handleImportActivities}
-            handleClearHistoricalActivities={handleClearHistorical}
-            setIsAddActivityOpen={setIsAddActivityOpen}
-            setEditingActivity={setEditingActivity}
-            isAddActivityOpen={isAddActivityOpen}
-            handleMatchResultUpdate={handleMatchResultUpdate}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        );
-      case "statistics":
-        return (
-          <StatisticsTabsWrapper 
-            players={players} 
-            activities={activities}
-            gradeData={gradeData}
-            onActivitySelect={handleActivitySelect}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        );
-      case "development":
-        return (
-          <DevelopmentTabContent 
-            players={players} 
-            activities={activities}
-            onPlayerSelect={handlePlayerSelect}
-          />
-        );
-      case "training":
-        return (
-          <TrainingTabContent />
-        );
-      case "excel":
-        return (
-          <ExcelTabContent />
-        );
-      case "team-selection":
-        return (
-          <TeamSelectionTabContent
-            players={players}
-            activities={activities}
-            onPlayerUpdate={handlePlayerUpdate}
-            onActivityUpdate={handleActivityUpdate}
-          />
-        );
-    }
-  };
-
   return (
     <>
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
@@ -324,7 +219,79 @@ export function MainTabs({
           </div>
         </div>
         
-        {renderTabContent()}
+        <TabsContent value="players" className="mt-0">
+          <PlayerTabContent 
+            players={players}
+            activities={activities}
+            selectedPlayer={selectedPlayer}
+            filteredPlayers={filteredPlayers}
+            searchQuery={searchQuery}
+            selectedGrades={selectedGrades}
+            viewMode={viewMode}
+            isAddPlayerOpen={isAddPlayerOpen}
+            setSearchQuery={setSearchQuery}
+            handleGradeChange={handleGradeChange}
+            setSelectedPlayer={setSelectedPlayer}
+            setViewMode={setViewMode}
+            handlePlayerUpdate={handlePlayerUpdate}
+            handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+            handleDeletePlayer={handleDeletePlayer}
+            setIsAddPlayerOpen={setIsAddPlayerOpen}
+            setEditingPlayer={setEditingPlayer}
+            onActivitySelect={async (activity) => {
+              await onPlayerActivitySelect(activity);
+            }}
+          />
+        </TabsContent>
+        
+        <TabsContent value="activities" className="mt-0">
+          <ActivityTabContent 
+            players={players}
+            activities={activities}
+            filteredActivities={filteredActivities}
+            filteredHistoricalActivities={filteredHistoricalActivities}
+            selectedActivity={selectedActivity}
+            selectedActivityTypes={selectedActivityTypes}
+            handleActivityTypeChange={handleActivityTypeChange}
+            setSelectedActivity={setSelectedActivity}
+            handleActivityUpdate={handleActivityUpdate}
+            handleKioskAssignmentUpdate={handleKioskUpdate}
+            handleDeleteActivity={handleDelete}
+            handleImportedActivities={handleImportActivities}
+            handleClearHistoricalActivities={handleClearHistorical}
+            setIsAddActivityOpen={setIsAddActivityOpen}
+            setEditingActivity={setEditingActivity}
+            isAddActivityOpen={isAddActivityOpen}
+            handleMatchResultUpdate={handleMatchResultUpdate}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        </TabsContent>
+        
+        <TabsContent value="statistics" className="mt-0">
+          <StatisticsTabsWrapper 
+            players={players} 
+            activities={activities}
+            gradeData={gradeData}
+            onActivitySelect={handleActivitySelect}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        </TabsContent>
+
+        <TabsContent value="development" className="mt-0">
+          <DevelopmentTabContent 
+            players={players} 
+            activities={activities}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        </TabsContent>
+
+        <TabsContent value="training" className="mt-0">
+          <TrainingTabContent />
+        </TabsContent>
+
+        <TabsContent value="excel" className="mt-0">
+          <ExcelTabContent />
+        </TabsContent>
       </Tabs>
       
       <PageDialogs 

@@ -263,42 +263,6 @@ export type Database = {
         }
         Relationships: []
       }
-      training_stats: {
-        Row: {
-          attendance: boolean
-          created_at: string
-          id: string
-          notes: string | null
-          performance_score: number | null
-          player_id: string
-          training_date: string
-          training_type: string | null
-          updated_at: string
-        }
-        Insert: {
-          attendance?: boolean
-          created_at?: string
-          id?: string
-          notes?: string | null
-          performance_score?: number | null
-          player_id: string
-          training_date: string
-          training_type?: string | null
-          updated_at?: string
-        }
-        Update: {
-          attendance?: boolean
-          created_at?: string
-          id?: string
-          notes?: string | null
-          performance_score?: number | null
-          player_id?: string
-          training_date?: string
-          training_type?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
