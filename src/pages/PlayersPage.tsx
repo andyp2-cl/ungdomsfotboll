@@ -1,8 +1,7 @@
-
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/usePlayers";
 import { PlayersPageContent } from "@/components/page-content/PlayersPageContent";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 interface PlayersPageProps {
@@ -11,6 +10,9 @@ interface PlayersPageProps {
 
 export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   const location = useLocation();
+  const navigate = useNavigate();
+  // Sätt initial tab från URL-path
+  const urlTab = location.pathname.replace("/", "") || "players";
   const {
     // Tab state
     activeTab,
@@ -60,7 +62,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
     
     // Loading state
     isLoading
-  } = usePlayers(initialTab);
+  } = usePlayers(urlTab);
 
   // Check for selected activity in location state
   useEffect(() => {
@@ -73,6 +75,12 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       }
     }
   }, [location.state, activities, setSelectedActivity]);
+
+  // När tab ändras, navigera till rätt route
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    navigate(`/${tabId}`);
+  };
 
   // Converting Promise<boolean> to Promise<void> for player update functions
   const handlePlayerUpdateWrapper = async (player: any) => {
@@ -101,7 +109,7 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
       <PlayersPageContent 
         // Tab state
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         
         // Player data
         players={players}

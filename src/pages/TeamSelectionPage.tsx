@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import { TrainingStatsUpload } from "@/components/TrainingStatsUpload";
 import { UpcomingMatches } from "@/components/UpcomingMatches";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Plus } from "lucide-react";
-import { Player } from "@/types/player";
+import { AlertCircle, Plus, X } from "lucide-react";
+import { Player, Activity } from "@/types/player";
 import { Match } from "@/types/match";
 import { useActivities } from "@/hooks/activities";
 import { usePlayers } from "@/hooks/players";
 import { supabase } from "@/lib/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import { getStoredActivities } from "@/utils/storage/activity/fetch";
+import { getActiveTab } from "@/utils/storage/tabs";
 
 interface TrainingStats {
   playerId: string;
@@ -24,6 +28,7 @@ export default function TeamSelectionPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [leagues, setLeagues] = useState<any[]>([]);
   const [leagueMap, setLeagueMap] = useState<Record<string, string>>({});
+  const [sortedMatches, setSortedMatches] = useState<Match[]>([]);
 
   // Hämta aktiviteter och spelare via hook
   const {
@@ -126,6 +131,16 @@ export default function TeamSelectionPage() {
       rawActivity: a, // Spara originalet för vidare användning
     };
   });
+
+  // Initiera sortedMatches endast vid första mount
+  useEffect(() => {
+    const sorted = mappedUpcomingMatches.slice().sort((a, b) => {
+      const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+      return dateA.getTime() - dateB.getTime();
+    });
+    setSortedMatches(sorted);
+  }, [mappedUpcomingMatches]);
 
   // Spara träningsstatistik till localStorage när ny fil laddas upp
   const handleStatsUploaded = (stats: TrainingStats[]) => {
@@ -309,28 +324,118 @@ export default function TeamSelectionPage() {
   };
 
   // Lägg till/tar bort spelare till/från match och spara till aktiviteter
+  const fetchAndSetMatches = async () => {
+    const activities = await getStoredActivities();
+    const now = new Date();
+    const leagueMapLocal = leagueMap; // använd senaste leagueMap
+    const mappedUpcomingMatches = activities
+      .filter((a: any) => a.type === 'match' && new Date(a.date) >= now)
+      .map((a: any) => {
+        let leagueName = '';
+        if (a.leagueId && leagueMapLocal[a.leagueId]) leagueName = leagueMapLocal[a.leagueId];
+        else if (a.league_id && leagueMapLocal[a.league_id]) leagueName = leagueMapLocal[a.league_id];
+        else leagueName = a.leagueId || a.league_id || '';
+        return {
+          id: a.id,
+          date: a.date,
+          time: a.time || '',
+          opponent: extractOpponent(a.name || ''),
+          location: a.location?.name || '',
+          league: getPrettyLeagueName(leagueName),
+          players: a.participants || [],
+          requiredPlayers: 11,
+          status: (a.status as 'scheduled' | 'completed' | 'cancelled') || 'scheduled',
+          rawActivity: a,
+        };
+      });
+    const sorted = mappedUpcomingMatches.slice().sort((a, b) => {
+      const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+      return dateA.getTime() - dateB.getTime();
+    });
+    setSortedMatches(sorted);
+  };
+
   const handlePlayerAssignment = async (matchId: string, playerId: string) => {
-    // Hitta rätt aktivitet (match)
-    const activity = activities.find((a: any) => a.id === matchId);
-    if (!activity) return;
-    // Kontrollera om spelaren redan är tilldelad till en match samma dag
-    const matchDate = activity.date;
-    const sameDayMatches = activities.filter((a: any) => a.date === matchDate && a.id !== matchId && a.type === 'match');
-    const playerAlreadyAssigned = sameDayMatches.some((m: any) => m.participants?.includes(playerId));
-    if (playerAlreadyAssigned) {
-      setWarnings(prev => [...prev, `${players.find(p => p.id === playerId)?.name} är redan tilldelad till en match denna dag`]);
+    const match = sortedMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    setSortedMatches(prevMatches =>
+      prevMatches.map(m =>
+        m.id === matchId
+          ? { ...m, players: [...m.players, playerId] }
+          : m
+      )
+    );
+
+    const { error } = await supabase
+      .from('player_activities')
+      .insert({
+        id: crypto.randomUUID(),
+        player_id: playerId,
+        activity_id: matchId
+      });
+
+    if (error) {
+      setSortedMatches(prevMatches =>
+        prevMatches.map(m =>
+          m.id === matchId
+            ? { ...m, players: m.players.filter(id => id !== playerId) }
+            : m
+        )
+      );
+      toast({
+        title: "Kunde inte lägga till spelare",
+        description: error.message,
+        variant: "destructive"
+      });
       return;
     }
-    // Lägg till spelare
-    const updatedActivity = { ...activity, participants: [...(activity.participants || []), playerId] };
-    await handleActivityUpdate(updatedActivity);
+
+    toast({
+      title: "Spelare tillagd",
+      description: "Spelaren har lagts till i matchen"
+    });
   };
 
   const handlePlayerRemoval = async (matchId: string, playerId: string) => {
-    const activity = activities.find((a: any) => a.id === matchId);
-    if (!activity) return;
-    const updatedActivity = { ...activity, participants: (activity.participants || []).filter((id: string) => id !== playerId) };
-    await handleActivityUpdate(updatedActivity);
+    const match = sortedMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    setSortedMatches(prevMatches =>
+      prevMatches.map(m =>
+        m.id === matchId
+          ? { ...m, players: m.players.filter(id => id !== playerId) }
+          : m
+      )
+    );
+
+    const { error } = await supabase
+      .from('player_activities')
+      .delete()
+      .eq('activity_id', matchId)
+      .eq('player_id', playerId);
+
+    if (error) {
+      setSortedMatches(prevMatches =>
+        prevMatches.map(m =>
+          m.id === matchId
+            ? { ...m, players: [...m.players, playerId] }
+            : m
+        )
+      );
+      toast({
+        title: "Kunde inte ta bort spelare",
+        description: error.message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Spelare borttagen",
+      description: "Spelaren har tagits bort från matchen"
+    });
   };
 
   // Prioriteringslogik för A-B-C-D
@@ -395,19 +500,22 @@ export default function TeamSelectionPage() {
     }
   };
 
-  // Sortera matcher i datum/tid-ordning (tidigaste först)
-  const sortedMatches = mappedUpcomingMatches.slice().sort((a, b) => {
-    const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
-    const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
-    return dateA.getTime() - dateB.getTime();
-  });
+  // --- Spara och återställ aktiv tab ---
+  const [activeTabId, setActiveTabId] = useState(() => getActiveTab() || 'team-selection');
+
+  useEffect(() => {
+    localStorage.setItem('activeTabId', activeTabId);
+  }, [activeTabId]);
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Laguttagning</h1>
       
       <div className="grid gap-6">
-        <TrainingStatsUpload onStatsUploaded={handleStatsUploaded} />
+        {/* Kompakt träningsstatistik överst */}
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <TrainingStatsUpload onStatsUploaded={handleStatsUploaded} />
+        </div>
 
         {warnings.length > 0 && (
           <Alert variant="destructive">
@@ -427,158 +535,170 @@ export default function TeamSelectionPage() {
           players={players}
           onPlayerAssignment={handlePlayerAssignment}
           onPlayerRemoval={handlePlayerRemoval}
-          renderExtraActions={match => (
+          renderExtraActions={(match) => (
             <button
-              className="ml-2 p-2 rounded-full bg-gray-100 hover:bg-green-100 border border-gray-300 transition-colors"
               onClick={() => setAddPlayerMatchId(match.id)}
-              title="Lägg till spelare"
+              className="p-1 hover:bg-muted rounded-full"
             >
-              <Plus className="w-5 h-5 text-green-700" />
+              <Plus className="h-4 w-4" />
             </button>
           )}
         />
-      </div>
 
-      {/* Närvarostatistik längst ner */}
-      {sortedTrainingStats.length > 0 && (
-        <div className="overflow-x-auto mt-8">
-          <h2 className="text-xl font-semibold mb-2">Närvarostatistik</h2>
-          <table className="min-w-full text-sm border mt-2">
-            <thead>
-              <tr>
-                <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('playerName')}>Namn</th>
-                <th className="border px-2 py-1">Nivå</th>
-                <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingSessions')}>Träning Kallad</th>
-                <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('matchesPlayed')}>Träning Deltagit</th>
-                <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingMatchRatio')}>Träningsratio</th>
-                <th className="border px-2 py-1">Aktiviteter</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTrainingStats.map(stat => {
-                const player = players.find(p => p.name === stat.playerName);
-                // Räkna antal aktiviteter: använd player.activities om den finns, annars räkna på activities/participants
-                let activityCount = 0;
-                if (player && Array.isArray(player.activities) && player.activities.length > 0) {
-                  activityCount = player.activities.length;
-                } else {
-                  activityCount = activities.filter(a => a.participants && a.participants.includes(stat.playerId)).length;
-                }
-                return (
-                  <tr key={stat.playerId}>
-                    <td className="border px-2 py-1">{stat.playerName}</td>
-                    <td className="border px-2 py-1 text-center">{player?.grade || '-'}</td>
-                    <td className="border px-2 py-1 text-center">{stat.trainingSessions}</td>
-                    <td className="border px-2 py-1 text-center">{stat.matchesPlayed}</td>
-                    <td className="border px-2 py-1 text-center">{stat.trainingMatchRatio != null ? stat.trainingMatchRatio.toFixed(2) : '-'}</td>
-                    <td className="border px-2 py-1 text-center">{activityCount}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* Popup för att lägga till spelare med rekommendationer */}
+        {addPlayerMatchId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background p-6 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Lägg till spelare</h2>
+                <button
+                  onClick={() => setAddPlayerMatchId(null)}
+                  className="p-1 hover:bg-muted rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left w-48">Namn</th>
+                      <th className="px-4 py-2 text-left w-24">Nivå</th>
+                      <th className="px-4 py-2 text-left w-24">Aktiviteter</th>
+                      <th className="px-4 py-2 text-left w-32">Träningsratio</th>
+                      <th className="px-4 py-2 text-left w-24">Denna vecka</th>
+                      <th className="px-4 py-2 w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {players
+                      .map(player => {
+                        const stat = trainingStats.find(s => s.playerId === player.id || s.playerName === player.name);
+                        const isAlreadyAdded = sortedMatches
+                          .find(m => m.id === addPlayerMatchId)
+                          ?.players.includes(player.id);
+                        if (!stat || isAlreadyAdded) return null;
 
-      {/* Visa lagförslag om det finns */}
-      {showLineupFor && suggestedLineup && suggestedLineup.matchId === showLineupFor && (
-        <div className="mt-4 p-4 border rounded bg-gray-50">
-          <h3 className="font-semibold mb-2">Föreslaget lag</h3>
-          <ul>
-            {suggestedLineup.playerIds.map(pid => {
-              const player = players.find(p => p.id === pid);
-              return (
-                <li key={pid} className="mb-2">
-                  <span className="font-medium">{player?.name || pid}</span>
-                  <span className="block text-xs text-muted-foreground mt-1">{player ? getPlayerReasoning(player, sortedMatches.find(m => m.id === showLineupFor)) : ''}</span>
-                </li>
-              );
-            })}
-          </ul>
-          <button className="mt-2 px-3 py-1 bg-gray-300 rounded" onClick={() => setShowLineupFor(null)}>Stäng</button>
-        </div>
-      )}
-
-      {/* Popup för att lägga till spelare med rekommendationer */}
-      {addPlayerMatchId && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-4xl w-full relative">
-            <button
-              className="absolute top-2 right-2 px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-              onClick={() => setAddPlayerMatchId(null)}
-              aria-label="Stäng"
-            >
-              ✕
-            </button>
-            <h3 className="font-semibold mb-4 text-xl">Rekommenderade spelare</h3>
-            <div className="max-h-96 overflow-y-auto pr-2">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr>
-                    <th className="px-2 py-1 text-left font-semibold w-48">Namn</th>
-                    <th className="px-2 py-1 text-left font-semibold w-16">Nivå</th>
-                    <th className="px-2 py-1 text-left font-semibold w-24">Aktiviteter</th>
-                    <th className="px-2 py-1 text-left font-semibold w-32">Träningsratio</th>
-                    <th className="px-2 py-1 text-left font-semibold w-32">Veckans aktiviteter</th>
-                    <th className="px-2 py-1 w-24"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getRecommendedPlayers(sortedMatches.find(m => m.id === addPlayerMatchId)).map(player => {
-                    const alreadyInMatch = sortedMatches.find(m => m.id === addPlayerMatchId)?.players.includes(player.id);
-                    let stat = trainingStats.find(s => s.playerId === player.id || s.playerName === player.name);
-                    const playerActivities = activities.filter(a => a.participants && a.participants.includes(player.id));
-                    const activityCount = playerActivities.length;
-                    let ratio = stat && stat.trainingSessions > 0 ? stat.matchesPlayed / stat.trainingSessions : 99;
-                    // Räkna matcher denna vecka
-                    const match = sortedMatches.find(m => m.id === addPlayerMatchId);
-                    let weekCount = 0;
-                    if (match) {
-                      const refDate = new Date(match.date);
-                      const startOfWeek = new Date(refDate);
-                      const dayOfWeek = refDate.getDay();
-                      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                      startOfWeek.setDate(refDate.getDate() - daysToSubtract);
-                      startOfWeek.setHours(0, 0, 0, 0);
-                      const endOfWeek = new Date(startOfWeek);
-                      endOfWeek.setDate(startOfWeek.getDate() + 6);
-                      endOfWeek.setHours(23, 59, 59, 999);
-                      weekCount = activities.filter(a => {
-                        const d = new Date(a.date);
-                        return a.type === 'match' && a.participants?.includes(player.id) && d >= startOfWeek && d <= endOfWeek;
-                      }).length;
-                    }
-                    // Visa bara spelare med 0 eller 1 matcher denna vecka
-                    if (weekCount >= 2) return null;
-                    return (
-                      <tr key={player.id} className="border-b last:border-b-0">
-                        <td className="px-2 py-1 w-48 whitespace-nowrap font-medium">{player.name}</td>
-                        <td className="px-2 py-1 w-16 whitespace-nowrap">{player.grade || '-'}</td>
-                        <td className="px-2 py-1 w-24 whitespace-nowrap">{activityCount}</td>
-                        <td className="px-2 py-1 w-32 whitespace-nowrap">{ratio !== null && ratio !== undefined ? ratio.toFixed(2) : '-'}</td>
-                        <td className="px-2 py-1 w-32 whitespace-nowrap">{weekCount}</td>
-                        <td className="px-2 py-1 w-24">
-                          <button
-                            className={`px-3 py-1 rounded text-sm font-semibold transition-colors duration-150 ${alreadyInMatch ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
-                            onClick={async () => {
-                              if (alreadyInMatch) return;
-                              await handlePlayerAssignment(addPlayerMatchId, player.id);
-                              setAddPlayerMatchId(null);
-                            }}
-                            disabled={alreadyInMatch}
-                          >
-                            {alreadyInMatch ? 'Redan med' : 'Lägg till'}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        // Aktiviteter totalt
+                        const playerActivities = activities.filter(a => a.participants && a.participants.includes(player.id));
+                        const activityCount = playerActivities.length;
+                        // Ratio
+                        const ratio = stat.trainingSessions > 0 ? (stat.matchesPlayed / stat.trainingSessions) : 0;
+                        // Matcher denna vecka
+                        const match = sortedMatches.find(m => m.id === addPlayerMatchId);
+                        let weekCount = 0;
+                        if (match) {
+                          const refDate = new Date(match.date);
+                          const startOfWeek = new Date(refDate);
+                          const dayOfWeek = refDate.getDay();
+                          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                          startOfWeek.setDate(refDate.getDate() - daysToSubtract);
+                          startOfWeek.setHours(0, 0, 0, 0);
+                          const endOfWeek = new Date(startOfWeek);
+                          endOfWeek.setDate(startOfWeek.getDate() + 6);
+                          endOfWeek.setHours(23, 59, 59, 999);
+                          weekCount = activities.filter(a => {
+                            const d = new Date(a.date);
+                            return a.type === 'match' && a.participants?.includes(player.id) && d >= startOfWeek && d <= endOfWeek;
+                          }).length;
+                        }
+                        // Filtrera bort spelare med 2 eller fler aktiviteter denna vecka
+                        if (weekCount >= 2) return null;
+                        return {
+                          player,
+                          stat,
+                          activityCount,
+                          ratio,
+                          weekCount
+                        };
+                      })
+                      .filter(Boolean)
+                      .sort((a, b) => {
+                        // Sortera på nivå först (A först), därefter på träningsratio (högst först)
+                        const gradeOrder = (grade) => {
+                          if (!grade) return 99;
+                          if (grade.toUpperCase() === 'A') return 0;
+                          if (grade.toUpperCase() === 'B') return 1;
+                          if (grade.toUpperCase() === 'C') return 2;
+                          return 99;
+                        };
+                        const gradeA = gradeOrder(a.player.grade);
+                        const gradeB = gradeOrder(b.player.grade);
+                        if (gradeA !== gradeB) return gradeA - gradeB;
+                        return b.ratio - a.ratio;
+                      })
+                      .map(({ player, stat, activityCount, ratio, weekCount }) => (
+                        <tr key={player.id} className="bg-muted hover:bg-accent cursor-pointer rounded-lg text-sm h-8">
+                          <td className="px-3 py-1 font-medium whitespace-nowrap">{player.name}</td>
+                          <td className="px-3 py-1 whitespace-nowrap">{player.grade || '-'}</td>
+                          <td className="px-3 py-1 whitespace-nowrap">{activityCount}</td>
+                          <td className="px-3 py-1 whitespace-nowrap">{ratio > 0 ? ratio.toFixed(2) : '-'}</td>
+                          <td className="px-3 py-1 whitespace-nowrap">{weekCount}</td>
+                          <td className="px-3 py-1 text-right">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                const match = sortedMatches.find(m => m.id === addPlayerMatchId);
+                                if (match) {
+                                  handlePlayerAssignment(match.id, player.id);
+                                }
+                                setAddPlayerMatchId(null);
+                              }}
+                              className="p-1 hover:bg-primary/10 rounded-full"
+                              title="Lägg till spelare"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Närvarostatistik längst ner */}
+        {sortedTrainingStats.length > 0 && (
+          <div className="overflow-x-auto mt-8">
+            <h2 className="text-xl font-semibold mb-2">Närvarostatistik</h2>
+            <table className="min-w-full text-sm border mt-2">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('playerName')}>Namn</th>
+                  <th className="border px-2 py-1">Nivå</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingSessions')}>Träning Kallad</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('matchesPlayed')}>Träning Deltagit</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingMatchRatio')}>Träningsratio</th>
+                  <th className="border px-2 py-1">Aktiviteter</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTrainingStats.map(stat => {
+                  const player = players.find(p => p.name === stat.playerName);
+                  let activityCount = 0;
+                  if (player && Array.isArray(player.activities) && player.activities.length > 0) {
+                    activityCount = player.activities.length;
+                  } else {
+                    activityCount = activities.filter(a => a.participants && a.participants.includes(stat.playerId)).length;
+                  }
+                  return (
+                    <tr key={stat.playerId}>
+                      <td className="border px-2 py-1">{stat.playerName}</td>
+                      <td className="border px-2 py-1 text-center">{player?.grade || '-'}</td>
+                      <td className="border px-2 py-1 text-center">{stat.trainingSessions}</td>
+                      <td className="border px-2 py-1 text-center">{stat.matchesPlayed}</td>
+                      <td className="border px-2 py-1 text-center">{stat.trainingMatchRatio != null ? stat.trainingMatchRatio.toFixed(2) : '-'}</td>
+                      <td className="border px-2 py-1 text-center">{activityCount}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

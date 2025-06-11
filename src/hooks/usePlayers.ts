@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Player, Activity, PlayerGrade } from "@/types/player";
@@ -9,7 +8,11 @@ import { useActivities } from "@/hooks/activities";
 export function usePlayers(initialTab?: string) {
   // Get tab from location or storage
   const location = useLocation();
-  const pathTab = location.pathname === "/activities" ? "activities" : "players";
+  const validTabs = [
+    "players", "activities", "statistics", "development", "training", "excel", "team-selection"
+  ];
+  const urlTab = location.pathname.replace("/", "");
+  const pathTab = validTabs.includes(urlTab) ? urlTab : "players";
   const storedTab = getActiveTab();
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || storedTab);
   

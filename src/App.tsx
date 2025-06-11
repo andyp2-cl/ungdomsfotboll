@@ -43,7 +43,7 @@ const App = () => (
                 <Route path="/training" element={<PlayersPage initialTab="training" />} />
                 <Route path="/excel" element={<PlayersPage initialTab="excel" />} />
                 <Route path="/player-management" element={<PlayerManagementPage />} />
-                <Route path="/team-selection" element={<TeamSelectionPage />} />
+                <Route path="/team-selection" element={<PlayersPage initialTab="team-selection" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>

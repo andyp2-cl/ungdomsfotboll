@@ -70,7 +70,7 @@ export function MainTabs({
     { id: "statistics", label: "Statistik", icon: null },
     { id: "development", label: "Utveckling", icon: null },
     { id: "training", label: "Träning", icon: null },
-    { id: "team-selection", label: "Laguttagning", icon: <Users className="h-4 w-4" /> },
+    { id: "team-selection", label: "Laguttagning", icon: null },
     { id: "excel", label: "Excel", icon: null },
   ],
   activeTabId,
