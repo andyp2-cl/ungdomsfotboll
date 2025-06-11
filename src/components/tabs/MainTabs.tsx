@@ -6,12 +6,13 @@ import { StatisticsTabsWrapper } from "@/components/player-management/statistics
 import { ExcelTabContent } from "@/components/tabs/excel-tab/ExcelTabContent";
 import { DevelopmentTabContent } from "@/components/tabs/development-tab/DevelopmentTabContent";
 import { TrainingTabContent } from "@/components/tabs/training-tab/TrainingTabContent";
+import TeamSelectionPage from "@/pages/TeamSelectionPage";
 import { PageDialogs } from "./PageDialogs";
 import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
 import { saveActiveTab } from "@/utils/storage/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainTabsProps {
@@ -69,6 +70,7 @@ export function MainTabs({
     { id: "statistics", label: "Statistik", icon: null },
     { id: "development", label: "Utveckling", icon: null },
     { id: "training", label: "Träning", icon: null },
+    { id: "team-selection", label: "Laguttagning", icon: <Users className="h-4 w-4" /> },
     { id: "excel", label: "Excel", icon: null },
   ],
   activeTabId,
@@ -133,6 +135,9 @@ export function MainTabs({
       setSelectedPlayer(null);
       setSelectedActivity(null);
     } else if (value === "excel") {
+      setSelectedPlayer(null);
+      setSelectedActivity(null);
+    } else if (value === "team-selection") {
       setSelectedPlayer(null);
       setSelectedActivity(null);
     }
@@ -287,6 +292,10 @@ export function MainTabs({
 
         <TabsContent value="training" className="mt-0">
           <TrainingTabContent />
+        </TabsContent>
+
+        <TabsContent value="team-selection" className="mt-0">
+          <TeamSelectionPage />
         </TabsContent>
 
         <TabsContent value="excel" className="mt-0">
