@@ -1,82 +1,125 @@
 
-import React from "react";
-import { Activity, Player } from "@/types/player";
+import React, { useState } from "react";
 import { ActivityListItem } from "./ActivityListItem";
-import { format, parseISO } from "date-fns";
-import { sv } from "date-fns/locale";
+import { Activity } from "@/types/player";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ActivityListWithMonthGroupingProps {
   activities: Activity[];
-  players: Player[];
-  onSelect?: (activity: Activity) => void;
-  onPlayerSelect?: (playerId: string) => void;
-  isHistorical?: boolean;
-  isMobile?: boolean;
-  noResultsMessage?: string;
-  allActivities?: Activity[]; // Add this prop
+  onActivitySelect: (activity: Activity) => void;
+  selectedActivityId?: string;
+  showParticipants?: boolean;
 }
 
 export function ActivityListWithMonthGrouping({
   activities,
-  players,
-  onSelect,
-  onPlayerSelect,
-  isHistorical = false,
-  isMobile = false,
-  noResultsMessage = "Inga aktiviteter att visa",
-  allActivities = [] // Add default value
+  onActivitySelect,
+  selectedActivityId,
+  showParticipants = true
 }: ActivityListWithMonthGroupingProps) {
-  if (activities.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        {noResultsMessage}
-      </div>
-    );
-  }
-
-  // Group activities by month
+  // Gruppera aktiviteter per månad
   const groupedActivities = activities.reduce((groups, activity) => {
-    const date = parseISO(activity.date);
-    const monthKey = format(date, "yyyy-MM");
-    const monthLabel = format(date, "MMMM yyyy", { locale: sv });
+    const date = new Date(activity.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthName = date.toLocaleDateString('sv-SE', { 
+      year: 'numeric', 
+      month: 'long' 
+    });
     
     if (!groups[monthKey]) {
       groups[monthKey] = {
-        label: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
-        activities: []
+        name: monthName,
+        activities: [],
+        date: date
       };
     }
     
     groups[monthKey].activities.push(activity);
     return groups;
-  }, {} as Record<string, { label: string; activities: Activity[] }>);
+  }, {} as Record<string, { name: string; activities: Activity[]; date: Date }>);
 
-  // Sort months in descending order (newest first)
-  const sortedMonths = Object.entries(groupedActivities).sort(([a], [b]) => b.localeCompare(a));
+  // Sortera månader med nyaste först
+  const sortedMonths = Object.entries(groupedActivities)
+    .sort(([, a], [, b]) => b.date.getTime() - a.date.getTime());
+
+  // Bestäm vilka månader som ska vara expanderade som standard
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(
+    new Set([currentMonth])
+  );
+
+  const toggleMonth = (monthKey: string) => {
+    const newExpanded = new Set(expandedMonths);
+    if (newExpanded.has(monthKey)) {
+      newExpanded.delete(monthKey);
+    } else {
+      newExpanded.add(monthKey);
+    }
+    setExpandedMonths(newExpanded);
+  };
+
+  if (activities.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Inga aktiviteter hittades
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {sortedMonths.map(([monthKey, { label, activities: monthActivities }]) => (
-        <div key={monthKey} className="space-y-3">
-          <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'} text-muted-foreground border-b pb-1`}>
-            {label}
-          </h3>
-          <div className="space-y-3">
-            {monthActivities.map((activity) => (
-              <ActivityListItem
-                key={activity.id}
-                activity={activity}
-                players={players}
-                onSelect={onSelect}
-                onPlayerSelect={onPlayerSelect}
-                isHistorical={isHistorical}
-                isMobile={isMobile}
-                allActivities={allActivities}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="space-y-4">
+      {sortedMonths.map(([monthKey, monthData]) => {
+        const isExpanded = expandedMonths.has(monthKey);
+        const activityCount = monthData.activities.length;
+        
+        return (
+          <Collapsible
+            key={monthKey}
+            open={isExpanded}
+            onOpenChange={() => toggleMonth(monthKey)}
+          >
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-between p-4 h-auto text-left hover:bg-muted/50 border border-border rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <span className="font-semibold text-lg">
+                      {monthData.name}
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    ({activityCount} aktivitet{activityCount !== 1 ? 'er' : ''})
+                  </span>
+                </div>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="space-y-2 pl-4">
+                {monthData.activities
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map(activity => (
+                    <ActivityListItem
+                      key={activity.id}
+                      activity={activity}
+                      onClick={() => onActivitySelect(activity)}
+                      isSelected={selectedActivityId === activity.id}
+                      showParticipants={showParticipants}
+                    />
+                  ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
     </div>
   );
 }

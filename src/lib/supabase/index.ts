@@ -6,3 +6,4 @@ export * from './activities';
 export * from './playerActivities';
 export * from './logs';
 export * from './appSettings';
+export * from './trainingUploads';
