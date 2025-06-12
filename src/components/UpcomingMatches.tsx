@@ -56,7 +56,7 @@ export function UpcomingMatches({
               <TableHead>Plats</TableHead>
               <TableHead>Spelare</TableHead>
               <TableHead>Antal</TableHead>
-              {renderExtraActions && <TableHead>Åtgärder</TableHead>}
+              <TableHead>Åtgärder</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,22 +91,21 @@ export function UpcomingMatches({
                 <TableCell>
                   {getPlayerCountDisplay(match)}
                 </TableCell>
-                {renderExtraActions && (
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {onMultiPlayerAdd && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onMultiPlayerAdd(match.id)}
-                          className="p-1 h-8 w-8"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                )}
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    {onMultiPlayerAdd && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onMultiPlayerAdd(match.id)}
+                        className="p-1 h-8 w-8"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {renderExtraActions && renderExtraActions(match)}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

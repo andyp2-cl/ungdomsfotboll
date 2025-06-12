@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { ActivityListItem } from "./ActivityListItem";
-import { Activity } from "@/types/player";
+import { Activity, Player } from "@/types/player";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,26 @@ interface ActivityListWithMonthGroupingProps {
   activities: Activity[];
   onActivitySelect: (activity: Activity) => void;
   selectedActivityId?: string;
-  showParticipants?: boolean;
+  players?: Player[];
+  onSelect?: (activity: Activity) => void;
+  onPlayerSelect?: (playerId: string) => void;
+  isHistorical?: boolean;
+  isMobile?: boolean;
+  noResultsMessage?: string;
+  allActivities?: Activity[];
 }
 
 export function ActivityListWithMonthGrouping({
   activities,
   onActivitySelect,
   selectedActivityId,
-  showParticipants = true
+  players = [],
+  onSelect,
+  onPlayerSelect,
+  isHistorical = false,
+  isMobile = false,
+  noResultsMessage = "Inga aktiviteter hittades",
+  allActivities = []
 }: ActivityListWithMonthGroupingProps) {
   // Gruppera aktiviteter per månad
   const groupedActivities = activities.reduce((groups, activity) => {
@@ -63,10 +75,18 @@ export function ActivityListWithMonthGrouping({
   if (activities.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        Inga aktiviteter hittades
+        {noResultsMessage}
       </div>
     );
   }
+
+  const handleActivityClick = (activity: Activity) => {
+    if (onActivitySelect) {
+      onActivitySelect(activity);
+    } else if (onSelect) {
+      onSelect(activity);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -110,8 +130,13 @@ export function ActivityListWithMonthGrouping({
                     <ActivityListItem
                       key={activity.id}
                       activity={activity}
-                      onClick={() => onActivitySelect(activity)}
-                      showParticipants={showParticipants}
+                      players={players}
+                      onClick={() => handleActivityClick(activity)}
+                      onSelect={onSelect}
+                      onPlayerSelect={onPlayerSelect}
+                      isHistorical={isHistorical}
+                      isMobile={isMobile}
+                      allActivities={allActivities}
                     />
                   ))}
               </div>
