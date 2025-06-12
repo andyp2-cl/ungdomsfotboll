@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { CupSelector } from "./add-players/CupSelector";
@@ -9,28 +8,50 @@ import { AlertCircle, Check, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { getWeeklyMatchCountForActivity } from "@/utils/weeklyMatchUtils";
 
 interface AddPlayersToActivityProps {
   activity: Activity;
   players: Player[];
   onAddPlayers: (playerIds: string[]) => void;
   currentParticipantIds: string[];
+  allActivities: Activity[];
 }
 
 export function AddPlayersToActivity({ 
   activity, 
   players, 
   onAddPlayers, 
-  currentParticipantIds 
+  currentParticipantIds,
+  allActivities
 }: AddPlayersToActivityProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [selectedCup, setSelectedCup] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const isMobile = useIsMobile();
   
-  // Filter out players who are already participating and sort alphabetically
+  // Enrich players with stats for the table view
   const availablePlayers = players
     .filter(player => !currentParticipantIds.includes(player.id))
+    .map(player => {
+      const playerActivities = allActivities.filter(a => a.participants?.includes(player.id));
+      const activitiesCount = playerActivities.length;
+      const trainingRatio = typeof player.trainingRatio === 'number' ? player.trainingRatio : 0;
+      const thisWeekCount = getWeeklyMatchCountForActivity(player.id, allActivities, activity);
+      const matchDate = new Date(activity.date).toDateString();
+      const hasSameDayMatch = allActivities.some(a =>
+        a.type === 'match' &&
+        new Date(a.date).toDateString() === matchDate &&
+        a.participants?.includes(player.id)
+      );
+      return {
+        ...player,
+        activitiesCount,
+        trainingRatio,
+        thisWeekCount,
+        hasSameDayMatch
+      };
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
   
   // Get selected players data

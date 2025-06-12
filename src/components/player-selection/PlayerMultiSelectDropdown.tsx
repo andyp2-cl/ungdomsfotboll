@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,14 +7,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Player } from "@/types/player";
 import { Check, Plus, X } from "lucide-react";
+import { getWeeklyMatchCountForActivity } from "@/utils/weeklyMatchUtils";
 
 interface PlayerMultiSelectDropdownProps {
   players: Player[];
   selectedPlayerIds: string[];
-  onSelectionChange: (selectedIds: string[]) => void;
+  onSelectionChange: (playerIds: string[]) => void;
   excludePlayerIds?: string[];
   placeholder?: string;
   maxHeight?: string;
+  allActivities?: any[]; // For calculating weekly match counts
+  currentActivity?: any; // Current activity to determine if it's upcoming
 }
 
 export function PlayerMultiSelectDropdown({
@@ -24,12 +26,31 @@ export function PlayerMultiSelectDropdown({
   onSelectionChange,
   excludePlayerIds = [],
   placeholder = "Välj spelare...",
-  maxHeight = "300px"
+  maxHeight = "300px",
+  allActivities = [],
+  currentActivity
 }: PlayerMultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const availablePlayers = players.filter(player => 
+  // Sort players by grade (A, B, C, D) and then by training ratio
+  const sortedPlayers = [...players].sort((a, b) => {
+    // First sort by grade
+    const gradeOrder = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    const gradeA = a.grade || 'D';
+    const gradeB = b.grade || 'D';
+    
+    if (gradeOrder[gradeA] !== gradeOrder[gradeB]) {
+      return gradeOrder[gradeA] - gradeOrder[gradeB];
+    }
+    
+    // Then sort by training ratio (higher value first)
+    const ratioA = a.trainingRatio || 0;
+    const ratioB = b.trainingRatio || 0;
+    return ratioB - ratioA;
+  });
+
+  const availablePlayers = sortedPlayers.filter(player => 
     !excludePlayerIds.includes(player.id)
   );
 
@@ -106,54 +127,64 @@ export function PlayerMultiSelectDropdown({
               </Button>
             </div>
           </div>
-          <ScrollArea style={{ maxHeight }}>
+          <ScrollArea className="max-h-[300px]">
             <div className="p-2">
-              {filteredPlayers.map(player => (
-                <div
-                  key={player.id}
-                  className="flex items-center space-x-2 py-2 px-2 hover:bg-accent rounded cursor-pointer"
-                  onClick={() => handlePlayerToggle(player.id)}
-                >
-                  <Checkbox
-                    checked={selectedPlayerIds.includes(player.id)}
-                    onChange={() => handlePlayerToggle(player.id)}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{player.name}</div>
-                    {player.grade && (
-                      <div className="text-sm text-muted-foreground">
-                        Nivå: {player.grade}
+              {filteredPlayers.map(player => {
+                // Calculate weekly match count if we have the necessary data
+                let weeklyMatchCount = 0;
+                if (allActivities.length > 0 && currentActivity) {
+                  weeklyMatchCount = getWeeklyMatchCountForActivity(player.id, allActivities, currentActivity);
+                }
+
+                return (
+                  <div key={player.id} className="flex items-center space-x-2 p-2 hover:bg-accent rounded-md">
+                    <Checkbox 
+                      checked={selectedPlayerIds.includes(player.id)}
+                      onCheckedChange={() => handlePlayerToggle(player.id)}
+                      id={`player-${player.id}`}
+                    />
+                    <label 
+                      htmlFor={`player-${player.id}`}
+                      className="flex-grow cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{player.name}</span>
+                        <div className="flex items-center gap-2">
+                          {player.grade && (
+                            <Badge variant="outline" className="text-xs">
+                              {player.grade}
+                            </Badge>
+                          )}
+                          {weeklyMatchCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              Denna vecka {weeklyMatchCount}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    </label>
                   </div>
-                  {selectedPlayerIds.includes(player.id) && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                </div>
-              ))}
-              {filteredPlayers.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  Inga spelare hittades
-                </div>
-              )}
+                );
+              })}
             </div>
           </ScrollArea>
         </PopoverContent>
       </Popover>
-      
-      {selectedPlayers.length > 0 && (
+      {selectedPlayerIds.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {selectedPlayers.map(player => (
             <Badge
               key={player.id}
               variant="secondary"
-              className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+              className="flex items-center gap-1"
             >
               {player.name}
-              <X 
-                className="h-3 w-3 ml-1" 
+              <button
                 onClick={() => removePlayer(player.id)}
-              />
+                className="ml-1 hover:bg-accent rounded-full p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </Badge>
           ))}
         </div>
