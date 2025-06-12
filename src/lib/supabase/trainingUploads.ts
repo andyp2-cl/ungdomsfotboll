@@ -5,7 +5,7 @@ export interface TrainingUpload {
   id: string;
   filename: string;
   upload_date: string;
-  stats_data: any[];
+  stats_data: any;
   uploaded_by?: string;
   created_at: string;
   updated_at: string;

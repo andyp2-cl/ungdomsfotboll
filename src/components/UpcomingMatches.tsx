@@ -31,13 +31,11 @@ export function UpcomingMatches({
 
   const getPlayerCountDisplay = (match: Match) => {
     const currentCount = match.players.length;
-    const required = match.requiredPlayers || 11;
-    const isComplete = currentCount >= required;
     
     return (
-      <div className={`flex items-center gap-1 ${isComplete ? 'text-green-600' : 'text-orange-600'}`}>
+      <div className="flex items-center gap-1 text-foreground">
         <Users className="h-4 w-4" />
-        <span className="font-medium">{currentCount}/{required}</span>
+        <span className="font-medium">{currentCount}</span>
       </div>
     );
   };
@@ -96,7 +94,6 @@ export function UpcomingMatches({
                 {renderExtraActions && (
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {renderExtraActions(match)}
                       {onMultiPlayerAdd && (
                         <Button
                           variant="ghost"

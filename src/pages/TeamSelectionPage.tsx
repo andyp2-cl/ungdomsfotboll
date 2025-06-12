@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { TrainingStatsUpload } from "@/components/TrainingStatsUpload";
 import { UpcomingMatches } from "@/components/UpcomingMatches";
-import { PlayerMultiSelectDropdown } from "@/components/player-selection/PlayerMultiSelectDropdown";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertCircle, Plus, X } from "lucide-react";
 import { Player, Activity } from "@/types/player";
 import { Match } from "@/types/match";
@@ -234,6 +236,14 @@ export default function TeamSelectionPage() {
     setSelectedPlayerIds([]);
   };
 
+  const handlePlayerToggle = (playerId: string) => {
+    setSelectedPlayerIds(prev => 
+      prev.includes(playerId)
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
+  };
+
   const handleMultiPlayerSave = async () => {
     if (!multiSelectDialog.matchId || selectedPlayerIds.length === 0) {
       setMultiSelectDialog({ open: false, matchId: null });
@@ -284,6 +294,29 @@ export default function TeamSelectionPage() {
     ? sortedMatches.find(m => m.id === multiSelectDialog.matchId)
     : null;
 
+  const availablePlayers = players.filter(player => 
+    !currentMatch?.players.includes(player.id)
+  );
+
+  // Beräkna aktiviteter denna vecka för varje spelare
+  const getThisWeekActivities = (playerId: string) => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    
+    return activities.filter(activity => {
+      const activityDate = new Date(activity.date);
+      return activityDate >= startOfWeek && 
+             activityDate < endOfWeek && 
+             activity.participants && 
+             activity.participants.includes(playerId);
+    }).length;
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="font-bold mb-6 text-lg">Laguttagning</h1>
@@ -312,36 +345,58 @@ export default function TeamSelectionPage() {
           onPlayerAssignment={handlePlayerAssignment}
           onPlayerRemoval={handlePlayerRemoval}
           onMultiPlayerAdd={handleMultiPlayerAdd}
-          renderExtraActions={match => (
-            <button
-              onClick={() => handleMultiPlayerAdd(match.id)}
-              className="p-1 hover:bg-muted rounded-full"
-              title="Lägg till flera spelare"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          )}
         />
 
         {/* Multi-select dialog */}
         <Dialog open={multiSelectDialog.open} onOpenChange={(open) => 
           setMultiSelectDialog({ open, matchId: multiSelectDialog.matchId })
         }>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 Lägg till spelare - {currentMatch?.opponent}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <PlayerMultiSelectDropdown
-                players={players}
-                selectedPlayerIds={selectedPlayerIds}
-                onSelectionChange={setSelectedPlayerIds}
-                excludePlayerIds={currentMatch?.players || []}
-                placeholder="Välj spelare att lägga till..."
-              />
-              <div className="flex justify-end gap-2">
+            <div className="space-y-4 overflow-hidden">
+              <div className="overflow-auto max-h-[60vh]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Namn</TableHead>
+                      <TableHead>Nivå</TableHead>
+                      <TableHead>Aktiviteter</TableHead>
+                      <TableHead>Träningsratio</TableHead>
+                      <TableHead>Denna vecka</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {availablePlayers.map(player => {
+                      const stats = trainingStats.find(s => s.playerName === player.name);
+                      const thisWeekActivities = getThisWeekActivities(player.id);
+                      
+                      return (
+                        <TableRow key={player.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedPlayerIds.includes(player.id)}
+                              onCheckedChange={() => handlePlayerToggle(player.id)}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{player.name}</TableCell>
+                          <TableCell>{player.grade}</TableCell>
+                          <TableCell>{stats?.trainingSessions || '-'}</TableCell>
+                          <TableCell>
+                            {stats?.trainingMatchRatio ? stats.trainingMatchRatio.toFixed(2) : '-'}
+                          </TableCell>
+                          <TableCell>{thisWeekActivities}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button 
                   variant="outline" 
                   onClick={() => setMultiSelectDialog({ open: false, matchId: null })}
@@ -352,7 +407,7 @@ export default function TeamSelectionPage() {
                   onClick={handleMultiPlayerSave}
                   disabled={selectedPlayerIds.length === 0}
                 >
-                  Lägg till {selectedPlayerIds.length} spelare
+                  Bekräfta ({selectedPlayerIds.length} spelare)
                 </Button>
               </div>
             </div>

@@ -111,7 +111,6 @@ export function ActivityListWithMonthGrouping({
                       key={activity.id}
                       activity={activity}
                       onClick={() => onActivitySelect(activity)}
-                      isSelected={selectedActivityId === activity.id}
                       showParticipants={showParticipants}
                     />
                   ))}
