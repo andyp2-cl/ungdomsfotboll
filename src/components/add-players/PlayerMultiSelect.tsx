@@ -1,10 +1,10 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 interface PlayerMultiSelectProps {
   availablePlayers: Player[];
@@ -23,84 +23,64 @@ export function PlayerMultiSelect({
   onAddPlayers,
   isProcessing = false
 }: PlayerMultiSelectProps) {
-  // Sort and enrich players
-  const gradeOrder = ['A', 'B', 'C', 'D'];
-  const players = availablePlayers
-    .map(player => {
-      let reason = '';
-      let disabled = false;
-      if (player.isActive === false) {
-        reason = 'Inaktiv';
-        disabled = true;
-      } else if (player.thisWeekCount >= 2) {
-        reason = '2 matcher denna vecka';
-        disabled = true;
-      } else if (player.hasSameDayMatch) {
-        reason = 'Match samma dag';
-        disabled = true;
-      }
-      return {
-        ...player,
-        reason,
-        disabled
-      };
-    })
-    .sort((a, b) => {
-      const gradeA = gradeOrder.indexOf(a.grade);
-      const gradeB = gradeOrder.indexOf(b.grade);
-      if (gradeA !== gradeB) return gradeA - gradeB;
-      return (b.trainingRatio || 0) - (a.trainingRatio || 0);
-    });
-
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-medium">Välj spelare att lägga till</h4>
-      <div className="border rounded-md p-2 h-96 overflow-y-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12"></TableHead>
-              <TableHead>Namn</TableHead>
-              <TableHead>Nivå</TableHead>
-              <TableHead>Aktiviteter</TableHead>
-              <TableHead>Träningsratio</TableHead>
-              <TableHead>Denna vecka</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {players.map(player => (
-              <TableRow key={player.id}>
-                <TableCell>
-                  <input
-                    type="checkbox"
-                    checked={selectedPlayerIds.includes(player.id)}
-                    onChange={() => onPlayerToggle(player.id)}
-                    disabled={player.disabled}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{player.name}</TableCell>
-                <TableCell>{player.grade}</TableCell>
-                <TableCell>{player.activitiesCount}</TableCell>
-                <TableCell>{typeof player.trainingRatio === 'number' ? player.trainingRatio.toFixed(2) : '-'}</TableCell>
-                <TableCell>{player.thisWeekCount}</TableCell>
-                <TableCell>
-                  {player.disabled && (
-                    <span className="bg-gray-200 text-gray-700 rounded px-2 py-0.5 text-xs" title={player.reason}>{player.reason}</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      
+      <div className="border rounded-md p-2 h-48 overflow-y-auto">
+        <div className="space-y-1">
+          {availablePlayers.map(player => (
+            <div key={player.id} className="flex items-center space-x-2 p-1.5 hover:bg-accent rounded-md">
+              <Checkbox 
+                checked={selectedPlayerIds.includes(player.id)} 
+                onCheckedChange={() => onPlayerToggle(player.id)}
+                id={`player-${player.id}`}
+                className="mr-1"
+              />
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={player.image} alt={player.name} />
+                <AvatarFallback className="bg-muted">
+                  <UserCircle className="h-5 w-5 text-gray-400" />
+                </AvatarFallback>
+              </Avatar>
+              <label 
+                htmlFor={`player-${player.id}`} 
+                className="flex-grow cursor-pointer"
+              >
+                {player.name}
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
-      <button 
+      
+      {selectedPlayers.length > 0 && (
+        <div className="p-2 border rounded-md bg-muted/50">
+          <p className="text-sm font-medium">Valda spelare ({selectedPlayers.length}):</p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {selectedPlayers.map(player => (
+              <div key={player.id} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                {player.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <Button 
         onClick={onAddPlayers} 
         disabled={selectedPlayerIds.length === 0 || isProcessing}
-        className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+        variant="default" 
+        className="w-full sticky bottom-0"
+        size="lg"
       >
+        {isProcessing ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4 mr-2" />
+        )}
         Lägg till {selectedPlayerIds.length} spelare
-      </button>
+      </Button>
     </div>
   );
 }

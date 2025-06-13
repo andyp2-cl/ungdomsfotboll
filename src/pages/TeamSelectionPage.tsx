@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { TrainingStatsUpload } from "@/components/TrainingStatsUpload";
 import { UpcomingMatches } from "@/components/UpcomingMatches";
@@ -16,34 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { getActiveTab } from "@/utils/storage/tabs";
-import { getLatestTrainingUpload, saveTrainingUpload } from "@/lib/supabase/trainingUploads";
-import { PlayerMultiSelectDropdown } from "@/components/player-selection/PlayerMultiSelectDropdown";
-import { DialogFooter } from "@/components/ui/dialog";
-import { getWeeklyMatchCountForActivity } from "@/utils/weeklyMatchUtils";
-import { getAvailablePlayers } from "@/utils/playerAvailability";
-import Papa from "papaparse";
+import { getLatestTrainingUpload } from "@/lib/supabase/trainingUploads";
 
 interface TrainingStats {
   playerId: string;
   playerName: string;
-  level?: string;
-  activities?: number;
   trainingSessions: number;
   matchesPlayed: number;
-  trainingMatchRatio?: number;
-  attendanceRatio?: number;
-}
-
-function parseCSV(csvText: string) {
-  // Simple CSV parser for demonstration (replace with papaparse or similar for production)
-  const lines = csvText.trim().split(/\r?\n/);
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim());
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => { obj[h] = values[i]; });
-    return obj;
-  });
+  trainingMatchRatio: number;
 }
 
 export default function TeamSelectionPage() {
@@ -59,21 +40,16 @@ export default function TeamSelectionPage() {
     matchId: string | null;
   }>({ open: false, matchId: null });
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [csvError, setCsvError] = useState<string | null>(null);
 
   const {
     filteredActivities,
-    activities: activitiesFromHook,
+    activities,
     isLoading,
     handleActivityUpdate
   } = useActivities([], () => {});
 
   const {
-    players: playersFromHook
+    players
   } = usePlayers();
 
   useEffect(() => {
@@ -95,46 +71,6 @@ export default function TeamSelectionPage() {
       }
     }
     fetchLeagues();
-  }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      const { data: playerDataRaw } = await supabase.from('players').select('*');
-      const { data: activityDataRaw } = await supabase.from('activities').select('*');
-
-      // Map players
-      const playerData: Player[] = (playerDataRaw || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        grade: (p.grade || 'D') as 'A' | 'B' | 'C' | 'D',
-        positions: p.position ? [p.position] : [],
-        jerseyNumber: p.jersey_number,
-        image: p.image,
-        isActive: p.is_active,
-        trainingRatio: p.training_ratio,
-        activities: p.activities || [],
-        // ...add other fields as needed
-      }));
-
-      // Map activities
-      const activityData: Activity[] = (activityDataRaw || []).map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        date: a.date,
-        type: a.type,
-        time: a.time,
-        location: a.location_name ? { name: a.location_name, description: a.location_description, gpsLink: a.location_gps_link } : undefined,
-        participants: a.participants || [],
-        leagueId: a.league_id || a.leagueId || '',
-        // ...add other fields as needed
-      }));
-
-      setPlayers(playerData);
-      setActivities(activityData);
-      setLoading(false);
-    }
-    fetchData();
   }, []);
 
   // Ladda träningsstatistik från Supabase vid sidladdning
@@ -172,13 +108,8 @@ export default function TeamSelectionPage() {
   }
 
   const now = new Date();
-  const twoWeeksFromNow = new Date(now);
-  twoWeeksFromNow.setDate(now.getDate() + 14);
-
   const upcomingMatches = filteredActivities.filter((a: any) => 
-    a.type === 'match' && 
-    new Date(a.date) >= now && 
-    new Date(a.date) <= twoWeeksFromNow
+    a.type === 'match' && new Date(a.date) >= now
   );
 
   const mappedUpcomingMatches = upcomingMatches.map((a: any) => {
@@ -201,9 +132,6 @@ export default function TeamSelectionPage() {
     };
   });
 
-  // Filtrera bort inaktiva spelare
-  const activePlayers = playersFromHook.filter(player => player.isActive !== false);
-
   useEffect(() => {
     const sorted = mappedUpcomingMatches.slice().sort((a, b) => {
       const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
@@ -224,35 +152,6 @@ export default function TeamSelectionPage() {
   const handlePlayerAssignment = async (matchId: string, playerId: string) => {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
-
-    // Kontrollera om spelaren är aktiv
-    const player = players.find(p => p.id === playerId);
-    if (!player || player.isActive === false) {
-      toast({
-        title: "Kan inte lägga till spelare",
-        description: "Spelaren är inaktiv",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Kontrollera om spelaren redan har match samma dag
-    const matchDate = new Date(match.date);
-    const sameDayMatches = activities.filter(activity => {
-      if (activity.type !== 'match' || activity.id === matchId) return false;
-      const activityDate = new Date(activity.date);
-      return activityDate.toDateString() === matchDate.toDateString() &&
-             activity.participants?.includes(playerId);
-    });
-
-    if (sameDayMatches.length > 0) {
-      toast({
-        title: "Kan inte lägga till spelare",
-        description: "Spelaren har redan en match samma dag",
-        variant: "destructive"
-      });
-      return;
-    }
 
     setSortedMatches(prevMatches => 
       prevMatches.map(m => 
@@ -391,27 +290,13 @@ export default function TeamSelectionPage() {
     }
   };
 
-  const matches = activities.filter(a => a.type === 'match');
-  const currentMatch = matches.find(m => m.id === selectedMatchId) || null;
+  const currentMatch = multiSelectDialog.matchId 
+    ? sortedMatches.find(m => m.id === multiSelectDialog.matchId)
+    : null;
 
-  const availablePlayers = players.filter(player => {
-    // Filtrera bort inaktiva spelare
-    if (player.isActive === false) return false;
-
-    // Filtrera bort spelare som redan har match samma dag
-    if (currentMatch) {
-      const matchDate = new Date(currentMatch.date);
-      const sameDayMatches = activities.filter(activity => {
-        if (activity.type !== 'match' || activity.id === currentMatch.id) return false;
-        const activityDate = new Date(activity.date);
-        return activityDate.toDateString() === matchDate.toDateString() &&
-               activity.participants?.includes(player.id);
-      });
-      if (sameDayMatches.length > 0) return false;
-    }
-
-    return true;
-  });
+  const availablePlayers = players.filter(player => 
+    !currentMatch?.players.includes(player.id)
+  );
 
   // Beräkna aktiviteter denna vecka för varje spelare
   const getThisWeekActivities = (playerId: string) => {
@@ -432,258 +317,146 @@ export default function TeamSelectionPage() {
     }).length;
   };
 
-  // Calculate training ratios for players
-  const playersWithTrainingRatio = players.map(player => {
-    const trainingSessions = activities.filter(a => 
-      a.type === 'training' && 
-      a.participants?.includes(player.id)
-    ).length;
-
-    const matchesPlayed = activities.filter(a => 
-      a.type === 'match' && 
-      a.participants?.includes(player.id)
-    ).length;
-
-    const trainingRatio = trainingSessions > 0 ? matchesPlayed / trainingSessions : 99;
-
-    return {
-      ...player,
-      trainingRatio
-    };
-  });
-
-  const activitiesSafe = Array.isArray(activities) ? activities : [];
-
-  // Helper to get available players for the current match in dialog
-  const getDialogAllPlayers = () => {
-    if (!multiSelectDialog.matchId) return [];
-    const currentMatch = sortedMatches.find(m => m.id === multiSelectDialog.matchId);
-    if (!currentMatch) return [];
-    const matchDate = new Date(currentMatch.date).toDateString();
-    const gradeOrder = ['A', 'B', 'C', 'D'];
-    return players
-      .map(player => {
-        // Kontrollera status
-        let reason = '';
-        let disabled = false;
-        if (player.isActive === false) {
-          reason = 'Inaktiv';
-          disabled = true;
-        } else {
-          // 2 matcher denna vecka?
-          const activityMatch = {
-            id: currentMatch.id,
-            name: currentMatch.opponent,
-            date: currentMatch.date,
-            type: 'match' as 'match',
-            participants: currentMatch.players || []
-          };
-          const weekCount = getWeeklyMatchCountForActivity(player.id, activitiesSafe, activityMatch);
-          if (weekCount >= 2) {
-            reason = '2 matcher denna vecka';
-            disabled = true;
-          } else {
-            // Match samma dag?
-            const hasSameDayMatch = activitiesSafe.some(activity =>
-              activity.type === 'match' &&
-              new Date(activity.date).toDateString() === matchDate &&
-              activity.participants?.includes(player.id)
-            );
-            if (hasSameDayMatch) {
-              reason = 'Match samma dag';
-              disabled = true;
-            }
-          }
-        }
-        const stat = trainingStats.find(s => s.playerId === player.id || s.playerName === player.name);
-        const trainingRatio = stat?.trainingMatchRatio ?? 0;
-        const activitiesCount = stat?.trainingSessions ?? 0;
-        const activityMatch = {
-          id: currentMatch.id,
-          name: currentMatch.opponent,
-          date: currentMatch.date,
-          type: 'match' as 'match',
-          participants: currentMatch.players || []
-        };
-        const thisWeekCount = getWeeklyMatchCountForActivity(player.id, activitiesSafe, activityMatch);
-        return {
-          ...player,
-          trainingRatio,
-          activitiesCount,
-          thisWeekCount,
-          reason,
-          disabled
-        };
-      })
-      .sort((a, b) => {
-        const gradeA = gradeOrder.indexOf(a.grade);
-        const gradeB = gradeOrder.indexOf(b.grade);
-        if (gradeA !== gradeB) return gradeA - gradeB;
-        return b.trainingRatio - a.trainingRatio;
-      });
-  };
-
-  // CSV upload handler
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCsvError(null);
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      if (!file.name.endsWith('.csv')) {
-        setCsvError("Endast CSV-filer stöds.");
-        return;
-      }
-      const text = await file.text();
-      // Hitta raden med kolumnnamn
-      const lines = text.split(/\r?\n/);
-      let headerIndex = lines.findIndex(line => 
-        line.includes('Namn') && line.includes('Aktiviteter kallad till')
-      );
-      if (headerIndex === -1) {
-        setCsvError("Kunde inte hitta kolumnnamn i CSV-filen.");
-        return;
-      }
-      const csvContent = lines.slice(headerIndex).join('\n');
-      const result = Papa.parse(csvContent, {
-        header: true,
-        skipEmptyLines: true
-      });
-      if (result.errors.length > 0) {
-        setCsvError("Fel vid tolkning av CSV: " + result.errors[0].message);
-        return;
-      }
-      // Filtrera bort rader utan namn
-      const stats: TrainingStats[] = (result.data as any[])
-        .filter(row => row["Namn"] && row["Aktiviteter kallad till"])
-        .map(row => {
-          // Matcha mot spelare för nivå och aktiviteter
-          const player = players.find(p => p.name.trim().toLowerCase() === row["Namn"].trim().toLowerCase());
-          const trainingSessions = Number(row["Aktiviteter kallad till"] || 0);
-          const matchesPlayed = Number(row["Aktiviteter deltagit i"] || 0);
-          const attendanceRatio = row["Andel"] ? parseFloat(row["Andel"].replace('%',''))/100 : (trainingSessions > 0 ? matchesPlayed / trainingSessions : undefined);
-          return {
-            playerId: player?.id || row["Namn"],
-            playerName: row["Namn"],
-            level: player?.grade || row["Nivå"] || '',
-            activities: player?.activities?.length || Number(row["Aktiviteter"] || 0),
-            trainingSessions,
-            matchesPlayed,
-            trainingMatchRatio: trainingSessions > 0 ? matchesPlayed / trainingSessions : undefined,
-            attendanceRatio
-          };
-        });
-      if (stats.length === 0) {
-        setCsvError("Ingen giltig närvarodata hittades i filen.");
-        return;
-      }
-      // Spara till Supabase
-      await saveTrainingUpload(file.name, stats);
-      setTrainingStats(stats);
-      toast({
-        title: "Träningsstatistik uppladdad",
-        description: `${stats.length} spelares statistik har sparats.`
-      });
-    } catch (err) {
-      setCsvError("Kunde inte läsa CSV-filen. Kontrollera formatet.");
-      toast({
-        title: "Uppladdning misslyckades",
-        description: "Kunde inte spara träningsstatistiken.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (loading) {
-    return <div className="p-8 text-center">Laddar spelare och matcher...</div>;
-  }
-
-  if (matches.length === 0) {
-    return <div className="p-8 text-center text-red-500">Inga matcher finns tillgängliga för de kommande två veckorna.</div>;
-  }
-
-  // Match overview table
   return (
     <div className="container mx-auto p-6">
-      <h1 className="font-bold mb-6 text-lg">Laguttagning (kommande 2 veckor)</h1>
-      <div className="mb-4 flex flex-col gap-2">
-        <label className="font-medium">Ladda upp träningsstatistik (CSV):</label>
-        <input type="file" accept=".csv" onChange={handleCSVUpload} />
-        {csvError && <div className="text-red-500 text-sm">{csvError}</div>}
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Datum</TableHead>
-            <TableHead>Tid</TableHead>
-            <TableHead>Motståndare</TableHead>
-            <TableHead>Plats</TableHead>
-            <TableHead>Liga</TableHead>
-            <TableHead>Uttagna spelare</TableHead>
-            <TableHead>Antal</TableHead>
-            <TableHead>Åtgärd</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedMatches.map(match => {
-            const selectedPlayers = players.filter(p => match.players.includes(p.id));
-            return (
-              <TableRow key={match.id}>
-                <TableCell>{new Date(match.date).toLocaleDateString('sv-SE')}</TableCell>
-                <TableCell>{match.time || '-'}</TableCell>
-                <TableCell>{match.opponent}</TableCell>
-                <TableCell>{match.location || '-'}</TableCell>
-                <TableCell>{match.league || '-'}</TableCell>
-                <TableCell>
-                  {selectedPlayers.length === 0 ? (
-                    <span className="text-gray-400">Inga spelare uttagna</span>
-                  ) : (
-                    <ul className="text-xs">
-                      {selectedPlayers.map(p => (
-                        <li key={p.id}>
-                          {p.name} ({p.grade || '-'}, {typeof p.trainingRatio === 'number' ? (p.trainingRatio * 100).toFixed(0) + '%' : '-'}, {p.matchesCount ?? '-'})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </TableCell>
-                <TableCell>{selectedPlayers.length}</TableCell>
-                <TableCell>
-                  <Button size="sm" onClick={() => setSelectedMatchId(match.id)}>
-                    Lägg till spelare
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-      {/* Statistik-tabell */}
-      <div className="mt-8">
-        <h2 className="font-bold mb-2 text-base">Närvarostatistik</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Namn</TableHead>
-              <TableHead>Nivå</TableHead>
-              <TableHead>Aktiviteter</TableHead>
-              <TableHead>Aktiviteter kallad till</TableHead>
-              <TableHead>Aktiviteter deltagit i</TableHead>
-              <TableHead>Andel</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {trainingStats.map(stat => (
-              <TableRow key={stat.playerId || stat.playerName}>
-                <TableCell>{stat.playerName}</TableCell>
-                <TableCell>{stat.level || '-'}</TableCell>
-                <TableCell>{stat.activities || '-'}</TableCell>
-                <TableCell>{stat.trainingSessions}</TableCell>
-                <TableCell>{stat.matchesPlayed}</TableCell>
-                <TableCell>{typeof stat.attendanceRatio === 'number' ? (stat.attendanceRatio * 100).toFixed(0) + '%' : '-'}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <h1 className="font-bold mb-6 text-lg">Laguttagning</h1>
+      
+      <div className="grid gap-6">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <TrainingStatsUpload onStatsUploaded={handleStatsUploaded} />
+        </div>
+
+        {warnings.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <ul>
+                {warnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <UpcomingMatches 
+          matches={sortedMatches} 
+          players={players} 
+          onPlayerAssignment={handlePlayerAssignment}
+          onPlayerRemoval={handlePlayerRemoval}
+          onMultiPlayerAdd={handleMultiPlayerAdd}
+        />
+
+        {/* Multi-select dialog */}
+        <Dialog open={multiSelectDialog.open} onOpenChange={(open) => 
+          setMultiSelectDialog({ open, matchId: multiSelectDialog.matchId })
+        }>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>
+                Lägg till spelare - {currentMatch?.opponent}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 overflow-hidden">
+              <div className="overflow-auto max-h-[60vh]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Namn</TableHead>
+                      <TableHead>Nivå</TableHead>
+                      <TableHead>Aktiviteter</TableHead>
+                      <TableHead>Träningsratio</TableHead>
+                      <TableHead>Denna vecka</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {availablePlayers.map(player => {
+                      const stats = trainingStats.find(s => s.playerName === player.name);
+                      const thisWeekActivities = getThisWeekActivities(player.id);
+                      
+                      return (
+                        <TableRow key={player.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedPlayerIds.includes(player.id)}
+                              onCheckedChange={() => handlePlayerToggle(player.id)}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{player.name}</TableCell>
+                          <TableCell>{player.grade}</TableCell>
+                          <TableCell>{stats?.trainingSessions || '-'}</TableCell>
+                          <TableCell>
+                            {stats?.trainingMatchRatio ? stats.trainingMatchRatio.toFixed(2) : '-'}
+                          </TableCell>
+                          <TableCell>{thisWeekActivities}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setMultiSelectDialog({ open: false, matchId: null })}
+                >
+                  Avbryt
+                </Button>
+                <Button 
+                  onClick={handleMultiPlayerSave}
+                  disabled={selectedPlayerIds.length === 0}
+                >
+                  Bekräfta ({selectedPlayerIds.length} spelare)
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {sortedTrainingStats.length > 0 && (
+          <div className="overflow-x-auto mt-8">
+            <h2 className="text-xl font-semibold mb-2">Närvarostatistik</h2>
+            <table className="min-w-full text-sm border mt-2">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('playerName')}>Namn</th>
+                  <th className="border px-2 py-1">Nivå</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingSessions')}>Träning Kallad</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('matchesPlayed')}>Träning Deltagit</th>
+                  <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort('trainingMatchRatio')}>Träningsratio</th>
+                  <th className="border px-2 py-1">Aktiviteter</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTrainingStats.map(stat => {
+                  const player = players.find(p => p.name === stat.playerName);
+                  let activityCount = 0;
+                  if (player && Array.isArray(player.activities) && player.activities.length > 0) {
+                    activityCount = player.activities.length;
+                  } else {
+                    activityCount = activities.filter(a => 
+                      a.participants && a.participants.includes(stat.playerId)
+                    ).length;
+                  }
+                  
+                  return (
+                    <tr key={stat.playerId}>
+                      <td className="border px-2 py-1">{stat.playerName}</td>
+                      <td className="border px-2 py-1 text-center">{player?.grade || '-'}</td>
+                      <td className="border px-2 py-1 text-center">{stat.trainingSessions}</td>
+                      <td className="border px-2 py-1 text-center">{stat.matchesPlayed}</td>
+                      <td className="border px-2 py-1 text-center">
+                        {stat.trainingMatchRatio != null ? stat.trainingMatchRatio.toFixed(2) : '-'}
+                      </td>
+                      <td className="border px-2 py-1 text-center">{activityCount}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

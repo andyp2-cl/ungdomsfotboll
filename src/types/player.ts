@@ -93,29 +93,12 @@ export interface PlayerProfile {
 export interface Player {
   id: string;
   name: string;
-  grade?: PlayerGrade;
-  positions?: PlayerPosition[];
-  activities?: string[];
-  jerseyNumber?: string;
-  image?: string;
-  matches?: number;
-  development?: PlayerDevelopment;
-  isActive?: boolean;
-  trainingRatio?: number;
-  status?: 'active' | 'inactive';
-  matchesCount?: number;
-  activitiesCount?: number;
-}
-
-export interface Match {
-  id: string;
-  date: string;
-  time?: string;
-  opponent: string;
-  location: string;
-  league: string;
-  players: string[];
-  requiredPlayers: number;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  rawActivity?: Activity;
+  grade?: PlayerGrade; // Changed to optional since trainers don't have a grade
+  positions?: PlayerPosition[]; // Changed from position to positions array
+  activities?: string[]; // Array of activity IDs this player is participating in
+  jerseyNumber?: string; // Optional jersey number for the player
+  image?: string; // URL to player's image
+  matches?: number; // Number of matches the player has participated in
+  development?: PlayerDevelopment; // Updated development data with new fields
+  isActive?: boolean; // New field for active/inactive status
 }

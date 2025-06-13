@@ -8,21 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    strictPort: false,
-    hmr: {
-      protocol: 'ws',
-      timeout: 5000,
-      overlay: true,
-    },
-    watch: {
-      usePolling: true,
-      interval: 1000,
-    },
-    middlewareMode: false,
-    fs: {
-      strict: true,
-      allow: ['..'],
-    },
   },
   plugins: [
     react(),
@@ -33,12 +18,5 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  optimizeDeps: {
-    force: true,
-  },
-  build: {
-    sourcemap: true,
-    chunkSizeWarningLimit: 1000,
   },
 }));
