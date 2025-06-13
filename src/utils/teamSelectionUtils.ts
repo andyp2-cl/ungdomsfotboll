@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 
 // Check if player is playing on the same day as the given match
@@ -79,7 +78,7 @@ export function getThisWeekMatchCount(playerId: string, activities: Activity[], 
   return weeklyMatches.length;
 }
 
-// Sort players by grade (A > B > C > D) and then by training ratio
+// Sort players by grade (A > B > C > D) and then by training ratio (higher is better)
 export function sortPlayersByGradeAndRatio(players: Player[], trainingStats: any[]): Player[] {
   const gradeOrder = { 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
   
@@ -92,13 +91,13 @@ export function sortPlayersByGradeAndRatio(players: Player[], trainingStats: any
       return aGradeOrder - bGradeOrder;
     }
     
-    // Secondary sort: Training ratio (lower is better)
+    // Secondary sort: Training ratio (higher is better)
     const aStats = trainingStats.find(s => s.playerName === a.name);
     const bStats = trainingStats.find(s => s.playerName === b.name);
     
-    const aRatio = aStats?.trainingMatchRatio || 999;
-    const bRatio = bStats?.trainingMatchRatio || 999;
+    const aRatio = aStats?.trainingMatchRatio || 0;
+    const bRatio = bStats?.trainingMatchRatio || 0;
     
-    return aRatio - bRatio;
+    return bRatio - aRatio; // Changed to sort in descending order (higher first)
   });
 }

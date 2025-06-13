@@ -46,15 +46,15 @@ export default function TeamSelectionPage() {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
 
   const {
+    players
+  } = usePlayers();
+
+  const {
     filteredActivities,
     activities,
     isLoading,
     handleActivityUpdate
-  } = useActivities([], () => {});
-
-  const {
-    players
-  } = usePlayers();
+  } = useActivities(players, () => {});
 
   useEffect(() => {
     async function fetchLeagues() {
@@ -157,6 +157,7 @@ export default function TeamSelectionPage() {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
 
+    // Update local state immediately for better UX
     setSortedMatches(prevMatches => 
       prevMatches.map(m => 
         m.id === matchId 
@@ -165,15 +166,49 @@ export default function TeamSelectionPage() {
       )
     );
 
-    const { error } = await supabase
-      .from('player_activities')
-      .insert({
-        id: crypto.randomUUID(),
-        player_id: playerId,
-        activity_id: matchId
-      });
+    try {
+      const { error } = await supabase
+        .from('player_activities')
+        .insert({
+          id: crypto.randomUUID(),
+          player_id: playerId,
+          activity_id: matchId
+        });
 
-    if (error) {
+      if (error) {
+        // Revert local state on error
+        setSortedMatches(prevMatches => 
+          prevMatches.map(m => 
+            m.id === matchId 
+              ? { ...m, players: m.players.filter(id => id !== playerId) }
+              : m
+          )
+        );
+        toast({
+          title: "Kunde inte lägga till spelare",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update activities state to sync with other views
+      const activity = activities.find(a => a.id === matchId);
+      if (activity) {
+        const updatedActivity = {
+          ...activity,
+          participants: [...(activity.participants || []), playerId]
+        };
+        await handleActivityUpdate(updatedActivity);
+      }
+
+      toast({
+        title: "Spelare tillagd",
+        description: "Spelaren har lagts till i matchen"
+      });
+    } catch (error) {
+      console.error('Error adding player:', error);
+      // Revert local state on error
       setSortedMatches(prevMatches => 
         prevMatches.map(m => 
           m.id === matchId 
@@ -182,23 +217,18 @@ export default function TeamSelectionPage() {
         )
       );
       toast({
-        title: "Kunde inte lägga till spelare",
-        description: error.message,
+        title: "Ett fel uppstod",
+        description: "Kunde inte lägga till spelaren i matchen",
         variant: "destructive"
       });
-      return;
     }
-
-    toast({
-      title: "Spelare tillagd",
-      description: "Spelaren har lagts till i matchen"
-    });
   };
 
   const handlePlayerRemoval = async (matchId: string, playerId: string) => {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
 
+    // Update local state immediately for better UX
     setSortedMatches(prevMatches => 
       prevMatches.map(m => 
         m.id === matchId 
@@ -207,13 +237,47 @@ export default function TeamSelectionPage() {
       )
     );
 
-    const { error } = await supabase
-      .from('player_activities')
-      .delete()
-      .eq('activity_id', matchId)
-      .eq('player_id', playerId);
+    try {
+      const { error } = await supabase
+        .from('player_activities')
+        .delete()
+        .eq('activity_id', matchId)
+        .eq('player_id', playerId);
 
-    if (error) {
+      if (error) {
+        // Revert local state on error
+        setSortedMatches(prevMatches => 
+          prevMatches.map(m => 
+            m.id === matchId 
+              ? { ...m, players: [...m.players, playerId] }
+              : m
+          )
+        );
+        toast({
+          title: "Kunde inte ta bort spelare",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update activities state to sync with other views
+      const activity = activities.find(a => a.id === matchId);
+      if (activity) {
+        const updatedActivity = {
+          ...activity,
+          participants: activity.participants?.filter(id => id !== playerId) || []
+        };
+        await handleActivityUpdate(updatedActivity);
+      }
+
+      toast({
+        title: "Spelare borttagen",
+        description: "Spelaren har tagits bort från matchen"
+      });
+    } catch (error) {
+      console.error('Error removing player:', error);
+      // Revert local state on error
       setSortedMatches(prevMatches => 
         prevMatches.map(m => 
           m.id === matchId 
@@ -222,17 +286,11 @@ export default function TeamSelectionPage() {
         )
       );
       toast({
-        title: "Kunde inte ta bort spelare",
-        description: error.message,
+        title: "Ett fel uppstod",
+        description: "Kunde inte ta bort spelaren från matchen",
         variant: "destructive"
       });
-      return;
     }
-
-    toast({
-      title: "Spelare borttagen",
-      description: "Spelaren har tagits bort från matchen"
-    });
   };
 
   const handleMultiPlayerAdd = (matchId: string) => {
@@ -251,28 +309,101 @@ export default function TeamSelectionPage() {
   const handleMultiPlayerSave = async () => {
     if (!multiSelectDialog.matchId || selectedPlayerIds.length === 0) {
       setMultiSelectDialog({ open: false, matchId: null });
+      setSelectedPlayerIds([]);
       return;
     }
 
+    // Store values we need and close dialog immediately
     const matchId = multiSelectDialog.matchId;
-    let successCount = 0;
-
-    for (const playerId of selectedPlayerIds) {
-      try {
-        await handlePlayerAssignment(matchId, playerId);
-        successCount++;
-      } catch (error) {
-        console.error('Error adding player:', error);
-      }
-    }
-
-    toast({
-      title: "Spelare tillagda",
-      description: `${successCount} av ${selectedPlayerIds.length} spelare har lagts till.`
-    });
-
+    const selectedIds = [...selectedPlayerIds];
+    
+    // Close dialog and reset selection immediately
     setMultiSelectDialog({ open: false, matchId: null });
     setSelectedPlayerIds([]);
+
+    let successCount = 0;
+    const successfulIds: string[] = [];
+
+    try {
+      // Find the activity in the activities state
+      const activity = activities.find(a => a.id === matchId);
+      if (!activity) {
+        toast({
+          title: "Ett fel uppstod",
+          description: "Kunde inte hitta matchen",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update local state immediately for better UX
+      setSortedMatches(prevMatches => 
+        prevMatches.map(m => 
+          m.id === matchId 
+            ? { ...m, players: [...m.players, ...selectedIds] }
+            : m
+        )
+      );
+
+      // Add all players to database
+      for (const playerId of selectedIds) {
+        try {
+          const { error } = await supabase
+            .from('player_activities')
+            .insert({
+              id: crypto.randomUUID(),
+              player_id: playerId,
+              activity_id: matchId
+            });
+
+          if (error) throw error;
+          successCount++;
+          successfulIds.push(playerId);
+        } catch (error) {
+          console.error('Error adding player:', error);
+        }
+      }
+
+      if (successCount > 0) {
+        // Update activities state to sync with other views
+        const updatedActivity = {
+          ...activity,
+          participants: [...(activity.participants || []), ...successfulIds]
+        };
+        await handleActivityUpdate(updatedActivity);
+
+        toast({
+          title: "Spelare tillagda",
+          description: `${successCount} av ${selectedIds.length} spelare har lagts till.`
+        });
+      }
+
+      // If some players failed, revert local state to only include successful ones
+      if (successCount < selectedIds.length) {
+        setSortedMatches(prevMatches => 
+          prevMatches.map(m => 
+            m.id === matchId 
+              ? { ...m, players: [...m.players.filter(id => !selectedIds.includes(id)), ...successfulIds] }
+              : m
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error in handleMultiPlayerSave:', error);
+      // Revert local state completely on error
+      setSortedMatches(prevMatches => 
+        prevMatches.map(m => 
+          m.id === matchId 
+            ? { ...m, players: m.players.filter(id => !selectedIds.includes(id)) }
+            : m
+        )
+      );
+      toast({
+        title: "Ett fel uppstod",
+        description: "Kunde inte lägga till alla spelare",
+        variant: "destructive"
+      });
+    }
   };
 
   const sortedTrainingStats = [...trainingStats].sort((a, b) => {
@@ -311,9 +442,14 @@ export default function TeamSelectionPage() {
     const availablePlayersForSelection = playersNotInMatch.filter(player =>
       isPlayerAvailableForMatch(player.id, currentMatch.date, activities)
     );
+
+    // Filtrera bort inaktiva spelare
+    const onlyActivePlayers = availablePlayersForSelection.filter(
+      player => player.isActive !== false // Default till true om undefined
+    );
     
     // Sort by grade (A first) and training ratio
-    return sortPlayersByGradeAndRatio(availablePlayersForSelection, trainingStats);
+    return sortPlayersByGradeAndRatio(onlyActivePlayers, trainingStats);
   }, [players, currentMatch, activities, trainingStats]);
 
   // Updated function to count only matches this week
@@ -352,9 +488,15 @@ export default function TeamSelectionPage() {
         />
 
         {/* Multi-select dialog */}
-        <Dialog open={multiSelectDialog.open} onOpenChange={(open) => 
-          setMultiSelectDialog({ open, matchId: multiSelectDialog.matchId })
-        }>
+        <Dialog 
+          open={multiSelectDialog.open} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setMultiSelectDialog({ open: false, matchId: null });
+              setSelectedPlayerIds([]);
+            }
+          }}
+        >
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>

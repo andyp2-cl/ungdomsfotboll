@@ -1,13 +1,11 @@
-
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { saveTrainingUpload } from "@/lib/supabase/trainingUploads";
 import Papa from "papaparse";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TrainingStats {
   playerId: string;
@@ -24,8 +22,6 @@ interface TrainingStatsUploadProps {
 export function TrainingStatsUpload({
   onStatsUploaded
 }: TrainingStatsUploadProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpload, setLastUpload] = useState<string | null>(null);
 
@@ -33,45 +29,48 @@ export function TrainingStatsUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
-    setError(null);
     setIsLoading(true);
 
     try {
       if (!file.name.endsWith('.csv')) {
-        setError("Endast CSV-filer stöds.");
-        setIsLoading(false);
+        toast({
+          title: "Fel filformat",
+          description: "Endast CSV-filer stöds.",
+          variant: "destructive"
+        });
         return;
       }
 
       const text = await file.text();
-      
-      // Hitta raden med kolumnnamn
       const lines = text.split(/\r?\n/);
       let headerIndex = lines.findIndex(line => 
         line.includes('Namn') && line.includes('Aktiviteter kallad till')
       );
       
       if (headerIndex === -1) {
-        setError("Kunde inte hitta kolumnnamn i CSV-filen.");
-        setIsLoading(false);
+        toast({
+          title: "Felaktigt format",
+          description: "Kunde inte hitta kolumnnamn i CSV-filen.",
+          variant: "destructive"
+        });
         return;
       }
 
       const csvContent = lines.slice(headerIndex).join('\n');
-      
       const result = Papa.parse(csvContent, {
         header: true,
         skipEmptyLines: true
       });
 
       if (result.errors.length > 0) {
-        setError("Fel vid tolkning av CSV: " + result.errors[0].message);
-        setIsLoading(false);
+        toast({
+          title: "Fel vid tolkning",
+          description: "Kunde inte läsa CSV-filen korrekt.",
+          variant: "destructive"
+        });
         return;
       }
 
-      // Filtrera bort rader utan namn
       const stats: TrainingStats[] = (result.data as any[])
         .filter(row => row["Namn"] && row["Aktiviteter kallad till"])
         .map(row => ({
@@ -85,15 +84,15 @@ export function TrainingStatsUpload({
         }));
 
       if (stats.length === 0) {
-        setError("Ingen giltig närvarodata hittades i filen.");
-        setIsLoading(false);
+        toast({
+          title: "Ingen data",
+          description: "Ingen giltig närvarodata hittades i filen.",
+          variant: "destructive"
+        });
         return;
       }
 
-      // Spara till Supabase
       await saveTrainingUpload(file.name, stats);
-      
-      // Uppdatera UI
       onStatsUploaded(stats);
       setLastUpload(new Date().toLocaleString('sv-SE'));
       
@@ -104,7 +103,6 @@ export function TrainingStatsUpload({
 
     } catch (err) {
       console.error('Upload error:', err);
-      setError("Kunde inte ladda upp filen. Försök igen.");
       toast({
         title: "Uppladdning misslyckades",
         description: "Kunde inte spara träningsstatistiken.",
@@ -112,54 +110,52 @@ export function TrainingStatsUpload({
       });
     } finally {
       setIsLoading(false);
+      // Reset input
+      event.target.value = '';
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Upload className="h-5 w-5" />
-          Ladda upp träningsstatistik
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Input 
-            type="file" 
-            accept=".csv" 
-            onChange={handleFileUpload} 
-            disabled={isLoading}
-            className="cursor-pointer" 
-          />
-          
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {lastUpload && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                Senaste uppladdning: {lastUpload}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <p className="text-muted-foreground text-xs">
-            Ladda upp en CSV-fil med träningsstatistik. Filen ska innehålla:
-            <ul className="list-disc list-inside mt-2">
+    <div className="flex items-center gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative"
+                disabled={isLoading}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Ladda upp statistik
+                <Input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  tabIndex={-1}
+                />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Ladda upp CSV med:</p>
+            <ul className="list-disc list-inside text-xs">
               <li>Namn</li>
               <li>Aktiviteter kallad till</li>
               <li>Aktiviteter deltagit i</li>
               <li>Andel</li>
             </ul>
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      
+      {lastUpload && (
+        <span className="text-xs text-muted-foreground">
+          Senast uppdaterad: {lastUpload}
+        </span>
+      )}
+    </div>
   );
 }

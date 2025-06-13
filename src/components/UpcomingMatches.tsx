@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Match } from "@/types/match";
 import { Player } from "@/types/player";
 import { Plus, Users, X } from "lucide-react";
+import { sortPlayersByGradeAndRatio } from "@/utils/teamSelectionUtils";
 
 interface UpcomingMatchesProps {
   matches: Match[];
@@ -95,25 +95,39 @@ export function UpcomingMatches({
                   <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Uttagna spelare
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {match.players.map(playerId => {
-                      const player = players.find(p => p.id === playerId);
-                      return player ? (
-                        <div
-                          key={playerId}
-                          className="group flex items-center gap-2 bg-muted/50 hover:bg-muted text-xs px-3 py-2 rounded-md transition-colors cursor-pointer"
-                          onClick={() => onPlayerRemoval(match.id, playerId)}
-                        >
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage src={player.image} alt={player.name} />
-                            <AvatarFallback className="text-xs">
-                              {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{player.name}</span>
-                          <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
+                  <div className="flex flex-col gap-2">
+                    {['A', 'B', 'C', 'D'].map(grade => {
+                      const gradePlayers = match.players
+                        .map(playerId => players.find(p => p.id === playerId))
+                        .filter(player => player && player.grade === grade);
+                        
+                      if (gradePlayers.length === 0) return null;
+                      
+                      return (
+                        <div key={grade} className="space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Nivå {grade}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {gradePlayers.map(player => player && (
+                              <div
+                                key={player.id}
+                                className="group flex items-center gap-2 bg-muted/50 hover:bg-muted text-xs px-3 py-2 rounded-md transition-colors cursor-pointer"
+                                onClick={() => onPlayerRemoval(match.id, player.id)}
+                              >
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={player.image} alt={player.name} />
+                                  <AvatarFallback className="text-xs">
+                                    {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{player.name}</span>
+                                <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ) : null;
+                      );
                     })}
                   </div>
                 </div>

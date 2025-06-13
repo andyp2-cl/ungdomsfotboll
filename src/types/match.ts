@@ -8,4 +8,5 @@ export interface Match {
   players: string[]; // Array of player IDs
   requiredPlayers: number;
   status: 'scheduled' | 'completed' | 'cancelled';
+  rawActivity: any; // The original activity object
 } 
