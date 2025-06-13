@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { TrainingStatsUpload } from "@/components/TrainingStatsUpload";
 import { UpcomingMatches } from "@/components/UpcomingMatches";
@@ -18,6 +17,11 @@ import { toast } from "@/components/ui/use-toast";
 import { getStoredActivities } from "@/utils/storage/activity/fetch";
 import { getActiveTab } from "@/utils/storage/tabs";
 import { getLatestTrainingUpload } from "@/lib/supabase/trainingUploads";
+import { 
+  isPlayerAvailableForMatch, 
+  getThisWeekMatchCount, 
+  sortPlayersByGradeAndRatio 
+} from "@/utils/teamSelectionUtils";
 
 interface TrainingStats {
   playerId: string;
@@ -294,27 +298,27 @@ export default function TeamSelectionPage() {
     ? sortedMatches.find(m => m.id === multiSelectDialog.matchId)
     : null;
 
-  const availablePlayers = players.filter(player => 
-    !currentMatch?.players.includes(player.id)
-  );
+  // Filter and sort available players
+  const availablePlayers = React.useMemo(() => {
+    if (!currentMatch) return [];
+    
+    // Filter out players already in the match
+    const playersNotInMatch = players.filter(player => 
+      !currentMatch.players.includes(player.id)
+    );
+    
+    // Filter out players who can't be selected due to match restrictions
+    const availablePlayersForSelection = playersNotInMatch.filter(player =>
+      isPlayerAvailableForMatch(player.id, currentMatch.date, activities)
+    );
+    
+    // Sort by grade (A first) and training ratio
+    return sortPlayersByGradeAndRatio(availablePlayersForSelection, trainingStats);
+  }, [players, currentMatch, activities, trainingStats]);
 
-  // Beräkna aktiviteter denna vecka för varje spelare
-  const getThisWeekActivities = (playerId: string) => {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
-    
-    return activities.filter(activity => {
-      const activityDate = new Date(activity.date);
-      return activityDate >= startOfWeek && 
-             activityDate < endOfWeek && 
-             activity.participants && 
-             activity.participants.includes(playerId);
-    }).length;
+  // Updated function to count only matches this week
+  const getThisWeekMatches = (playerId: string) => {
+    return getThisWeekMatchCount(playerId, activities);
   };
 
   return (
@@ -365,15 +369,15 @@ export default function TeamSelectionPage() {
                       <TableHead className="w-12"></TableHead>
                       <TableHead>Namn</TableHead>
                       <TableHead>Nivå</TableHead>
-                      <TableHead>Aktiviteter</TableHead>
+                      <TableHead>Träningsaktiviteter</TableHead>
                       <TableHead>Träningsratio</TableHead>
-                      <TableHead>Denna vecka</TableHead>
+                      <TableHead>Matcher denna vecka</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {availablePlayers.map(player => {
                       const stats = trainingStats.find(s => s.playerName === player.name);
-                      const thisWeekActivities = getThisWeekActivities(player.id);
+                      const thisWeekMatches = getThisWeekMatches(player.id);
                       
                       return (
                         <TableRow key={player.id}>
@@ -389,7 +393,7 @@ export default function TeamSelectionPage() {
                           <TableCell>
                             {stats?.trainingMatchRatio ? stats.trainingMatchRatio.toFixed(2) : '-'}
                           </TableCell>
-                          <TableCell>{thisWeekActivities}</TableCell>
+                          <TableCell>{thisWeekMatches}</TableCell>
                         </TableRow>
                       );
                     })}
