@@ -155,6 +155,9 @@ export function CupsTabContent({
     );
   }
 
+  // Convert to the format expected by CupsList
+  const cupActivities = cupsWithMatches.flatMap(cup => cup.matches);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -163,10 +166,11 @@ export function CupsTabContent({
         </CardHeader>
         <CardContent>
           <CupsList 
-            cups={cupsWithMatches}
+            cupActivities={cupActivities}
             players={players}
             onActivitySelect={onActivitySelect}
             onPlayerSelect={onPlayerSelect}
+            isMobile={false}
           />
         </CardContent>
       </Card>

@@ -298,7 +298,7 @@ export default function TeamSelectionPage() {
     ? sortedMatches.find(m => m.id === multiSelectDialog.matchId)
     : null;
 
-  // Filter and sort available players
+  // Filter and sort available players - NOW WITH GRADE SORTING
   const availablePlayers = React.useMemo(() => {
     if (!currentMatch) return [];
     
@@ -388,7 +388,11 @@ export default function TeamSelectionPage() {
                             />
                           </TableCell>
                           <TableCell className="font-medium">{player.name}</TableCell>
-                          <TableCell>{player.grade}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {player.grade}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{stats?.trainingSessions || '-'}</TableCell>
                           <TableCell>
                             {stats?.trainingMatchRatio ? stats.trainingMatchRatio.toFixed(2) : '-'}
