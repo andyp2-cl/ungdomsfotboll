@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Match } from "@/types/match";
 import { Player } from "@/types/player";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, X } from "lucide-react";
 
 interface UpcomingMatchesProps {
   matches: Match[];
@@ -26,90 +26,95 @@ export function UpcomingMatches({
   onMultiPlayerAdd
 }: UpcomingMatchesProps) {
   const getLeagueBadgeColor = (league: string) => {
-    return "bg-gray-500";
+    if (league.includes("A")) return "bg-green-600 hover:bg-green-700";
+    if (league.includes("B")) return "bg-blue-600 hover:bg-blue-700";
+    if (league.includes("C")) return "bg-orange-600 hover:bg-orange-700";
+    return "bg-gray-500 hover:bg-gray-600";
   };
 
   const getPlayerCountDisplay = (match: Match) => {
     const currentCount = match.players.length;
+    const isFullTeam = currentCount >= 11;
     
     return (
-      <div className="flex items-center gap-1 text-foreground">
-        <Users className="h-4 w-4" />
-        <span className="font-medium">{currentCount}</span>
+      <div className={`flex items-center gap-1 text-sm ${
+        isFullTeam ? 'text-green-600 font-medium' : 'text-muted-foreground'
+      }`}>
+        <Users className="h-3 w-3" />
+        <span>{currentCount}/11</span>
       </div>
     );
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Kommande matcher</CardTitle>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">Kommande matcher</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Datum</TableHead>
-              <TableHead>Tid</TableHead>
-              <TableHead>Motståndare</TableHead>
-              <TableHead>Liga</TableHead>
-              <TableHead>Plats</TableHead>
-              <TableHead>Spelare</TableHead>
-              <TableHead>Antal</TableHead>
-              <TableHead>Åtgärder</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {matches.map(match => (
-              <TableRow key={match.id}>
-                <TableCell>{new Date(match.date).toLocaleDateString('sv-SE')}</TableCell>
-                <TableCell>{match.time}</TableCell>
-                <TableCell>{match.opponent}</TableCell>
-                <TableCell>
-                  <Badge className={getLeagueBadgeColor(match.league)}>
+        <div className="space-y-4">
+          {matches.map(match => (
+            <div key={match.id} className="border rounded-lg p-4 space-y-3">
+              {/* Match header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm text-muted-foreground">
+                    {new Date(match.date).toLocaleDateString('sv-SE')} {match.time && `• ${match.time}`}
+                  </div>
+                  <Badge className={`text-xs px-2 py-1 ${getLeagueBadgeColor(match.league)}`}>
                     {match.league}
                   </Badge>
-                </TableCell>
-                <TableCell>{match.location}</TableCell>
-                <TableCell>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getPlayerCountDisplay(match)}
+                  {onMultiPlayerAdd && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onMultiPlayerAdd(match.id)}
+                      className="h-7 w-7 p-0"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {renderExtraActions && renderExtraActions(match)}
+                </div>
+              </div>
+              
+              {/* Match details */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="font-medium">{match.opponent}</div>
+                {match.location && (
+                  <div className="text-muted-foreground">@ {match.location}</div>
+                )}
+              </div>
+              
+              {/* Players */}
+              {match.players.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Uttagna spelare
+                  </div>
                   <div className="flex flex-wrap gap-1">
                     {match.players.map(playerId => {
                       const player = players.find(p => p.id === playerId);
                       return player ? (
-                        <Badge 
-                          key={playerId} 
-                          variant="outline" 
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground text-xs"
+                        <div
+                          key={playerId}
+                          className="group flex items-center gap-1 bg-muted/50 hover:bg-muted text-xs px-2 py-1 rounded-md transition-colors cursor-pointer"
                           onClick={() => onPlayerRemoval(match.id, playerId)}
                         >
-                          {player.name}
-                        </Badge>
+                          <span>{player.name}</span>
+                          <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
+                        </div>
                       ) : null;
                     })}
                   </div>
-                </TableCell>
-                <TableCell>
-                  {getPlayerCountDisplay(match)}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    {onMultiPlayerAdd && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onMultiPlayerAdd(match.id)}
-                        className="p-1 h-8 w-8"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {renderExtraActions && renderExtraActions(match)}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

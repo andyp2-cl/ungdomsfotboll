@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityListWithMonthGrouping } from "@/components/activity-list/ActivityListWithMonthGrouping";
