@@ -35,11 +35,11 @@ export function ActivityManagementTabs({
       <TabsList className="mb-6">
         <TabsTrigger value="activities">
           <ActivityIcon className="h-4 w-4 mr-2" />
-          Aktiviteter
+          Matcher
         </TabsTrigger>
         <TabsTrigger value="historical">
           <History className="h-4 w-4 mr-2" />
-          Tidigare aktiviteter
+          Tidigare matcher
         </TabsTrigger>
         <TabsTrigger value="tools">
           Verktyg

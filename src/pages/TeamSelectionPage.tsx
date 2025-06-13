@@ -111,16 +111,41 @@ export default function TeamSelectionPage() {
     return league;
   }
 
-  const now = new Date();
-  const upcomingMatches = filteredActivities.filter((a: any) => 
-    a.type === 'match' && new Date(a.date) >= now
-  );
+  // Filter for upcoming matches that haven't been played yet
+  const upcomingMatches = activities.filter((a: any) => {
+    const matchDate = new Date(a.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+    
+    // Check if it's a match (including cup matches)
+    const isMatch = a.type === 'match' || a.type === 'cup';
+    
+    // Check if it's in the future
+    const isFutureMatch = matchDate >= today;
+    
+    // Check if it's not completed or cancelled
+    const isNotCompleted = a.status !== 'completed' && a.status !== 'cancelled';
+    
+    // For cup matches, we don't check scores
+    const isCupMatch = a.cupId || a.cupName;
+    
+    // For regular matches, check scores
+    const isRegularMatch = !isCupMatch && !a.homeScore && !a.awayScore;
+    
+    // Include both cup matches and regular matches that haven't been played
+    return isMatch && isFutureMatch && isNotCompleted && (isCupMatch || isRegularMatch);
+  });
 
   const mappedUpcomingMatches = upcomingMatches.map((a: any) => {
     let leagueName = '';
     if (a.leagueId && leagueMap[a.leagueId]) leagueName = leagueMap[a.leagueId];
     else if (a.league_id && leagueMap[a.league_id]) leagueName = leagueMap[a.league_id];
     else leagueName = a.leagueId || a.league_id || '';
+    
+    // For cup matches, use the cup name as the league
+    if (a.cupName) {
+      leagueName = a.cupName;
+    }
     
     return {
       id: a.id,
@@ -454,7 +479,7 @@ export default function TeamSelectionPage() {
 
   // Updated function to count only matches this week
   const getThisWeekMatches = (playerId: string) => {
-    return getThisWeekMatchCount(playerId, activities);
+    return currentMatch ? getThisWeekMatchCount(playerId, activities, currentMatch.date) : 0;
   };
 
   return (

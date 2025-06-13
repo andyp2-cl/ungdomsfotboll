@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ActivityListItem } from "./ActivityListItem";
 import { Activity, Player } from "@/types/player";
@@ -28,7 +27,7 @@ export function ActivityListWithMonthGrouping({
   onPlayerSelect,
   isHistorical = false,
   isMobile = false,
-  noResultsMessage = "Inga aktiviteter hittades",
+  noResultsMessage = "Inga matcher hittades",
   allActivities = []
 }: ActivityListWithMonthGroupingProps) {
   // Gruppera aktiviteter per månad
@@ -117,7 +116,7 @@ export function ActivityListWithMonthGrouping({
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    ({activityCount} aktivitet{activityCount !== 1 ? 'er' : ''})
+                    ({activityCount} match{activityCount !== 1 ? 'er' : ''})
                   </span>
                 </div>
               </Button>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -16,6 +15,7 @@ interface PlayerCardProps {
   compact?: boolean;
   showStats?: boolean;
   activities?: Activity[]; // Add activities prop to calculate winrate
+  isMobile?: boolean; // Ny prop
 }
 
 export function PlayerCard({ 
@@ -25,7 +25,8 @@ export function PlayerCard({
   action, 
   compact = false,
   showStats = false,
-  activities = []
+  activities = [],
+  isMobile = false // Ny prop
 }: PlayerCardProps) {
   // Get real activity count that excludes kiosk duty assignments
   const getActivityCount = () => {
@@ -70,30 +71,32 @@ export function PlayerCard({
   if (compact) {
     return (
       <div 
-        className={`flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors ${
+        className={`flex justify-between items-center p-1 md:p-2 rounded-md border hover:bg-muted/50 transition-colors min-w-0 ${
           onSelect ? 'cursor-pointer' : ''
         } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
         onClick={onSelect}
+        style={{ minHeight: '40px' }}
       >
-        <div className="flex items-center gap-2">
-          <div className={!isActive ? 'grayscale opacity-70' : ''}>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          {/* Visa liten bild på mobil och desktop */}
+          <div className={`${!isActive ? 'grayscale opacity-70' : ''} shrink-0`}>
             {player.image ? (
               <img 
                 src={player.image} 
                 alt={player.name} 
-                className="h-12 w-12 rounded-full object-cover"
+                className="h-8 w-8 rounded-full object-cover"
                 loading="lazy"
                 crossOrigin="anonymous"
               />
             ) : (
-              <UserCircle className="h-12 w-12 text-muted-foreground" />
+              <UserCircle className="h-8 w-8 text-muted-foreground" />
             )}
           </div>
-          <div>
-            <div className={`font-medium text-sm flex items-center ${!isActive ? 'text-gray-500' : ''}`}>
+          <div className="min-w-0">
+            <div className={`font-medium text-xs md:text-sm flex items-center ${!isActive ? 'text-gray-500' : ''}`}>
               {player.name}
               {player.jerseyNumber && !isCoach && (
-                <span className={`ml-1 text-xs px-1 py-0.5 rounded-full ${
+                <span className={`ml-1 text-[10px] md:text-xs px-1 py-0.5 rounded-full ${
                   !isActive ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-800'
                 }`}>
                   #{player.jerseyNumber}
@@ -101,35 +104,25 @@ export function PlayerCard({
               )}
             </div>
             {!isCoach && player.positions && (
-              <div className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
+              <div className={`text-[10px] md:text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
                 {formatPositions(player.positions, true)}
               </div>
             )}
             <PlayerStatusIndicator player={player} size="sm" />
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          {isCoach ? (
-            <Badge variant="outline" className={`text-xs ${
-              !isActive ? 'border-gray-300 text-gray-500' : 'border-amber-300 text-amber-700'
-            }`}>
-              Tränare
-            </Badge>
-          ) : (
-            <Badge variant="outline" className={`text-xs ${
-              !isActive ? 'border-gray-300 text-gray-500' : ''
-            }`}>
-              Nivå {player.grade}
-            </Badge>
-          )}
-          
-          {action && (
-            <div onClick={e => e.stopPropagation()}>
-              {action}
-            </div>
-          )}
-        </div>
+        {/* Actions */}
+        {onEdit && (
+          <button
+            className="p-1 md:p-2 rounded hover:bg-gray-100"
+            onClick={e => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
+          </button>
+        )}
       </div>
     );
   }
@@ -147,7 +140,7 @@ export function PlayerCard({
             <img 
               src={player.image} 
               alt={player.name} 
-              className="w-full h-full object-cover"
+              className="w-full h-24 md:h-full object-cover"
               loading="lazy"
               crossOrigin="anonymous"
             />

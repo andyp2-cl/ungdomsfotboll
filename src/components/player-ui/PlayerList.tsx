@@ -1,7 +1,7 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { PlayerCard } from "./PlayerCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerListProps {
   players: Player[];
@@ -24,6 +24,8 @@ export function PlayerList({
   showStats = false,
   className = ""
 }: PlayerListProps) {
+  const isMobile = useIsMobile();
+  
   if (players.length === 0) {
     return (
       <div className="text-center p-8 text-muted-foreground">
@@ -32,7 +34,7 @@ export function PlayerList({
     );
   }
   
-  if (compact) {
+  if (compact || isMobile) {
     return (
       <div className={`space-y-1 ${className}`}>
         {players.map(player => (
@@ -44,6 +46,7 @@ export function PlayerList({
             action={onPlayerAction ? onPlayerAction(player) : undefined}
             compact={true}
             showStats={showStats}
+            isMobile={isMobile}
           />
         ))}
       </div>
@@ -51,7 +54,7 @@ export function PlayerList({
   }
   
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ${className}`}>
+    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 ${className}`}>
       {players.map(player => (
         <PlayerCard
           key={player.id}

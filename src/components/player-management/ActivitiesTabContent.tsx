@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -57,10 +56,10 @@ export function ActivitiesTabContent({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Aktiviteter</h2>
+        <h2 className="text-2xl font-bold">Matcher</h2>
         <Button onClick={() => setIsAddActivityOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Lägg till aktivitet
+          Lägg till match
         </Button>
       </div>
       

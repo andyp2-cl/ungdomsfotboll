@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -61,7 +60,7 @@ export function ActivityMatchStats({
       <h3 className="text-lg font-semibold mb-3">Matchstatistik</h3>
       
       {sortedParticipants.length > 0 ? (
-        <ScrollArea className={isMobile ? "max-h-[60vh]" : ""}>
+        <ScrollArea className={isMobile ? "h-[80vh] min-h-[40vh] overflow-y-auto" : ""}>
           <div className="space-y-3 px-1">
             <p className="text-sm text-muted-foreground mb-2">
               {isHistorical ? 

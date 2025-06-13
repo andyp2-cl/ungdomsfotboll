@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormationTabContent } from "./formation/FormationTabContent";
 import { GoalsTabContent } from "./goals/GoalsTabContent";
@@ -36,14 +35,14 @@ export function StatisticsTabsWrapper({
 
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="mb-4 flex flex-wrap gap-1">
-        <TabsTrigger value="overview">Översikt</TabsTrigger>
-        <TabsTrigger value="combinations">Kombinationer</TabsTrigger>
-        <TabsTrigger value="formation">Formation</TabsTrigger>
-        <TabsTrigger value="goals">Mål</TabsTrigger>
-        <TabsTrigger value="matches">Matcher</TabsTrigger>
-        <TabsTrigger value="leagues">Ligor</TabsTrigger>
-        <TabsTrigger value="cups">Cuper</TabsTrigger>
+      <TabsList className="mb-4 flex flex-wrap gap-1 bg-white/90 rounded-lg p-1 shadow-sm overflow-x-auto">
+        <TabsTrigger value="overview" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Översikt</TabsTrigger>
+        <TabsTrigger value="combinations" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Kombinationer</TabsTrigger>
+        <TabsTrigger value="formation" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Formation</TabsTrigger>
+        <TabsTrigger value="goals" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Mål</TabsTrigger>
+        <TabsTrigger value="matches" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Matcher</TabsTrigger>
+        <TabsTrigger value="leagues" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Ligor</TabsTrigger>
+        <TabsTrigger value="cups" className="min-w-[90px] h-10 text-sm font-semibold md:text-base md:h-9">Cuper</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview">

@@ -66,7 +66,7 @@ interface MainTabsProps {
 export function MainTabs({
   tabs = [
     { id: "players", label: "Spelare", icon: null },
-    { id: "activities", label: "Aktiviteter", icon: null },
+    { id: "activities", label: "Matcher", icon: null },
     { id: "statistics", label: "Statistik", icon: null },
     { id: "development", label: "Utveckling", icon: null },
     { id: "training", label: "Träning", icon: null },
@@ -188,7 +188,7 @@ export function MainTabs({
       <Tabs value={activeTabId} onValueChange={handleTabChange}>
         {/* Header with tabs and action buttons */}
         <div className="flex items-center justify-between mb-4 gap-4">
-          <TabsList className="flex-1">
+          <TabsList className="flex-1 overflow-x-auto whitespace-nowrap">
             {tabs.map(tab => (
               <TabsTrigger
                 key={tab.id}

@@ -32,7 +32,7 @@ export function isPlayerPlayingTwoMatchesThisWeek(playerId: string, activities: 
 
   const weeklyMatches = activities.filter(activity => {
     const activityDate = new Date(activity.date);
-    const isMatch = activity.type === 'match';
+    const isMatch = activity.type === 'match' || activity.type === 'cup';
     const hasPlayer = activity.participants?.includes(playerId);
     const isInWeek = activityDate >= startOfWeek && activityDate <= endOfWeek;
     
@@ -68,7 +68,7 @@ export function getThisWeekMatchCount(playerId: string, activities: Activity[], 
 
   const weeklyMatches = activities.filter(activity => {
     const activityDate = new Date(activity.date);
-    const isMatch = activity.type === 'match';
+    const isMatch = activity.type === 'match' || activity.type === 'cup';
     const hasPlayer = activity.participants?.includes(playerId);
     const isInWeek = activityDate >= startOfWeek && activityDate <= endOfWeek;
     

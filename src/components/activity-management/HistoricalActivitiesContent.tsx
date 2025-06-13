@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityFilter } from "@/components/ActivityFilter";
@@ -50,7 +49,7 @@ export function HistoricalActivitiesContent({
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-xl font-semibold">Tidigare aktiviteter</h2>
+        <h2 className="text-xl font-semibold">Tidigare matcher</h2>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           {onClearHistoricalActivities && (
             <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
@@ -61,14 +60,14 @@ export function HistoricalActivitiesContent({
                   className="w-full sm:w-auto"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Ta bort tidigare aktiviteter
+                  Ta bort tidigare matcher
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Ta bort tidigare aktiviteter</DialogTitle>
+                  <DialogTitle>Ta bort tidigare matcher</DialogTitle>
                   <DialogDescription>
-                    Detta kommer att ta bort alla tidigare aktiviteter. Denna åtgärd kan inte ångras.
+                    Detta kommer att ta bort alla tidigare matcher. Denna åtgärd kan inte ångras.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -98,7 +97,7 @@ export function HistoricalActivitiesContent({
       </div>
       
       <ActivityTabContent
-        title="Tidigare aktiviteter"
+        title="Tidigare matcher"
         activities={activities}
         players={players}
         selectedActivity={selectedActivity}
