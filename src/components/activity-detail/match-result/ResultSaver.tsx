@@ -32,7 +32,43 @@ export function useResultSaver({
         manualWinStatus
       });
       
-      // Calculate if it's a win (if not manually set)
+      // Check if this is an upcoming match (no scores yet)
+      const isUpcomingMatch = activity.homeScore === undefined && activity.awayScore === undefined;
+      
+      // For upcoming matches, don't set any result or win status
+      if (isUpcomingMatch) {
+        const updatedActivity: Activity = {
+          ...activity,
+          homeScore: undefined,
+          awayScore: undefined,
+          isWin: undefined,
+          result: undefined,
+          player_stats: {
+            ...activity.player_stats,
+            scores: {
+              home: undefined,
+              away: undefined
+            },
+            isWin: undefined
+          }
+        };
+        
+        await updateActivity(updatedActivity);
+        
+        if (onMatchResultUpdate) {
+          await onMatchResultUpdate(activity.id, undefined, undefined);
+        }
+        
+        toast({
+          title: "Match uppdaterad",
+          description: "Matchen har uppdaterats utan resultat."
+        });
+        
+        return true;
+      }
+      
+      // For played matches, calculate if it's a win (if not manually set)
+      // Note: 0-0 is a valid result for played matches
       const isWin = manualWinStatus !== undefined 
         ? manualWinStatus 
         : homeScore !== undefined && awayScore !== undefined 
@@ -58,6 +94,7 @@ export function useResultSaver({
       };
       
       // Update the result string if we have scores
+      // For played matches, 0-0 is a valid result
       if (homeScore !== undefined && awayScore !== undefined) {
         updatedActivity.result = `${homeScore}-${awayScore}`;
       } else {
