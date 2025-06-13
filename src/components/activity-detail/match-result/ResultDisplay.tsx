@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +12,13 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
   const awayScore = activity.awayScore;
   const hasResult = homeScore !== undefined && awayScore !== undefined;
   
-  if (!hasResult) {
+  // Check if this is an upcoming match
+  const isUpcomingMatch = !hasResult;
+  
+  if (isUpcomingMatch) {
     return (
       <div className="text-center py-4">
-        <span className="text-muted-foreground">Inget resultat registrerat</span>
+        <span className="text-muted-foreground">Kommande match</span>
       </div>
     );
   }
@@ -38,6 +40,7 @@ export function ResultDisplay({ activity }: ResultDisplayProps) {
   let outcomeColorClass: string;
   
   // Check for draw first - important to check this before checking isWin
+  // Note: 0-0 is a valid result for played matches
   if (homeScore === awayScore) {
     outcomeText = "Oavgjort";
     outcomeColorClass = "bg-gray-100 text-gray-800";

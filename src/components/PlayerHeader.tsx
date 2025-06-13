@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Player } from "@/types/player";
@@ -43,7 +42,11 @@ export function PlayerHeader({
   // Förbättrad header med logotyp och gradienttext
   return (
     <div className="mb-8">
-      <div className="flex flex-col md:flex-row items-center md:items-center gap-6 md:gap-8 justify-center md:justify-start">
+      <div
+        className="flex flex-col md:flex-row items-center md:items-center gap-6 md:gap-8 justify-center md:justify-start cursor-pointer"
+        onClick={() => { window.location.href = '/players'; }}
+        title="Gå till Spelare"
+      >
         {/* Logo utan ringar och med skugga */}
         <div className="relative">
           <img 
