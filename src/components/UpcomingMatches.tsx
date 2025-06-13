@@ -1,9 +1,9 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Match } from "@/types/match";
 import { Player } from "@/types/player";
 import { Plus, Users, X } from "lucide-react";
@@ -41,7 +41,7 @@ export function UpcomingMatches({
         isFullTeam ? 'text-green-600 font-medium' : 'text-muted-foreground'
       }`}>
         <Users className="h-3 w-3" />
-        <span>{currentCount}/11</span>
+        <span>{currentCount} uttagna</span>
       </div>
     );
   };
@@ -95,15 +95,21 @@ export function UpcomingMatches({
                   <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Uttagna spelare
                   </div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-2">
                     {match.players.map(playerId => {
                       const player = players.find(p => p.id === playerId);
                       return player ? (
                         <div
                           key={playerId}
-                          className="group flex items-center gap-1 bg-muted/50 hover:bg-muted text-xs px-2 py-1 rounded-md transition-colors cursor-pointer"
+                          className="group flex items-center gap-2 bg-muted/50 hover:bg-muted text-xs px-3 py-2 rounded-md transition-colors cursor-pointer"
                           onClick={() => onPlayerRemoval(match.id, playerId)}
                         >
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={player.image} alt={player.name} />
+                            <AvatarFallback className="text-xs">
+                              {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
                           <span>{player.name}</span>
                           <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
                         </div>
