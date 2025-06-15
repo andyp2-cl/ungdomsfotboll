@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,46 +33,29 @@ export function ActivityParticipants({
 }: ActivityParticipantsProps) {
   const sortedParticipants = sortPlayersByGrade(participants);
   const displayedParticipants = sortedParticipants;
-  
+
   const participantsByGrade: Record<string, Player[]> = {};
-  
+
   ['A', 'B', 'C', 'D', undefined].forEach(grade => {
     participantsByGrade[grade || 'undefined'] = [];
   });
-  
+
   displayedParticipants.forEach(player => {
     const grade = player.grade || 'undefined';
     participantsByGrade[grade].push(player);
   });
-  
-  // Check if current activity is upcoming
+
   const currentDate = new Date();
   const activityDate = currentActivity ? new Date(currentActivity.date) : null;
   const isUpcomingActivity = activityDate && activityDate >= currentDate;
-  
-  console.log("ActivityParticipants: Enhanced Debug Info");
-  console.log("- currentActivity:", currentActivity?.name, currentActivity?.date);
-  console.log("- current date:", currentDate.toISOString());
-  console.log("- activity date:", activityDate?.toISOString());
-  console.log("- isUpcomingActivity:", isUpcomingActivity);
-  console.log("- allActivities count:", allActivities.length);
-  console.log("- participants count:", participants.length);
-  
-  // Visa alltid hela namnet, utan trunkering
+
   const getDisplayName = (fullName: string) => fullName;
 
   const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
-    console.log("ActivityParticipants: Player clicked:", playerName, "ID:", playerId);
-    console.log("ActivityParticipants: onPlayerSelect available:", !!onPlayerSelect);
-    
     if (onPlayerSelect) {
-      console.log("ActivityParticipants: Calling onPlayerSelect");
       onPlayerSelect(playerId);
-    } else {
-      console.log("ActivityParticipants: No onPlayerSelect handler provided");
     }
   };
 
@@ -83,10 +67,10 @@ export function ActivityParticipants({
     );
   }
 
-  // Improved mobile sizing - fewer columns for better name visibility
+  // Sizing, grid & layout vars
   const avatarSize = isMobile ? 'h-9 w-9' : 'h-16 w-16';
   const iconSize = isMobile ? 'h-4 w-4' : 'h-8 w-8';
-  const gridCols = isMobile ? 'grid-cols-4' : 'grid-cols-9'; // Reduced from 6 to 4 on mobile
+  const gridCols = isMobile ? 'grid-cols-4' : 'grid-cols-9';
   const cardPadding = isMobile ? 'p-1' : 'p-1';
   const gap = isMobile ? 'gap-1' : 'gap-1';
 
@@ -94,9 +78,9 @@ export function ActivityParticipants({
     <div className="flex flex-col gap-1.5 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
         const playersInGrade = participantsByGrade[gradeKey];
-        
+
         if (playersInGrade.length === 0) return null;
-        
+
         return (
           <div key={gradeKey} className="flex flex-col gap-1">
             {gradeKey !== 'undefined' && (
@@ -104,25 +88,22 @@ export function ActivityParticipants({
                 {gradeKey}
               </Badge>
             )}
-            
+
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
-                // Räkna matcher för spelaren under samma vecka som denna aktivitet
                 let weeklyMatchCount = 0;
                 if (allActivities.length > 0 && currentActivity) {
                   weeklyMatchCount = getWeeklyMatchCountForActivity(player.id, allActivities, currentActivity);
                 }
-                // Visa badge endast för kommande matcher och om spelaren har 2+ matcher samma vecka
                 const shouldShowBadge = isUpcomingActivity && weeklyMatchCount >= 2;
-                
-                console.log(`ActivityParticipants: Player ${player.name}: shouldShowBadge = ${shouldShowBadge} (weeklyMatchCount: ${weeklyMatchCount})`);
-                
+
                 return (
                   <div 
                     key={player.id}
                     data-player-item="true"
                     className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
                     onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
+                    style={{ minWidth: 0, width: "100%" }}
                   >
                     <TooltipProvider>
                       <Tooltip>
@@ -134,7 +115,6 @@ export function ActivityParticipants({
                                 <UserRound className={iconSize} />
                               </AvatarFallback>
                             </Avatar>
-                            {/* Weekly match count badge - show for 2+ matches, only for upcoming */}
                             {shouldShowBadge && (
                               <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white shadow-lg z-20">
                                 {weeklyMatchCount}
@@ -157,16 +137,17 @@ export function ActivityParticipants({
                     </TooltipProvider>
                     <span
                       className={
-                        `block text-xs text-center w-full mx-auto mt-1 ` +
-                        `${isMobile ? 'max-w-[84px]' : 'max-w-[120px]'} ` + // avatar ~36px/64px + margins...
-                        'break-words whitespace-normal leading-tight font-medium ' +
-                        'overflow-hidden'
+                        `block text-center w-full mx-auto mt-1 font-medium text-xs ${isMobile ? 'max-w-[84px]' : 'max-w-[120px]'}`
                       }
                       style={{
+                        whiteSpace: "normal",
                         wordBreak: "break-word",
-                        WebkitLineClamp: 2,
-                        display: "-webkit-box",
-                        WebkitBoxOrient: "vertical",
+                        textWrap: "pretty",
+                        padding: "0 2px",
+                        lineHeight: "1.15",
+                        minHeight: isMobile ? "28px" : "32px", // to keep cards even if one name is short
+                        maxHeight: isMobile ? "32px" : "38px", // for 2 lines
+                        display: "block",
                       }}
                     >
                       {getDisplayName(player.name)}
