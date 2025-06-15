@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 import { Form } from "@/components/ui/form";
 import { useActivityForm } from "./activity-form/useActivityForm";
@@ -9,6 +8,9 @@ import { FormButtons } from "./activity-form/FormButtons";
 import { toast } from "sonner";
 import { LeagueSelector } from "./activity-form/LeagueSelector";
 import { handleActivitySubmit } from "@/utils/activity/handleActivitySubmit";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface EditActivityFormProps {
   activity: Activity;
@@ -29,11 +31,21 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
   
   const { form, isSubmitting, setIsSubmitting } = useActivityForm(normalizedActivity);
   
+  // Lokala states för extra fält
+  const [reportText, setReportText] = useState(activity.matchReport || "");
+  const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
+
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
       console.log("Form submission values:", values);
-      await handleActivitySubmit(values, normalizedActivity, onSave, setIsSubmitting);
+      // Skicka med matchReport och youtubeLink i updatedActivity
+      await handleActivitySubmit(
+        { ...values, matchReport: reportText, youtubeLink },
+        normalizedActivity,
+        onSave,
+        setIsSubmitting
+      );
       console.log("Activity updated successfully with leagueId:", values.leagueId);
     } catch (error) {
       console.error("Failed to save activity:", error);
@@ -49,6 +61,35 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
         <LeagueSelector form={form} />
         <LocationFields form={form} />
         <ResultFields form={form} activityType={activity.type} />
+
+        {/* --- Matchrapportfält --- */}
+        <div>
+          <label htmlFor="match-report" className="block text-sm font-medium mb-1">
+            Matchreferat
+          </label>
+          <Textarea
+            id="match-report"
+            value={reportText}
+            onChange={(e) => setReportText(e.target.value)}
+            placeholder="Skriv matchreferat här..."
+            className="min-h-[100px]"
+          />
+        </div>
+
+        {/* --- YouTube-länksfält --- */}
+        <div>
+          <label htmlFor="youtube-link" className="block text-sm font-medium mb-1">
+            YouTube-länk
+          </label>
+          <Input
+            id="youtube-link"
+            type="url"
+            value={youtubeLink}
+            onChange={(e) => setYoutubeLink(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </div>
+
         <FormButtons onCancel={onCancel} isSubmitting={isSubmitting} />
       </form>
     </Form>
