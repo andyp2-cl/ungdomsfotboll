@@ -1,10 +1,14 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 
 interface ActivityMatchStatsProps {
   activity: Activity;
@@ -40,19 +44,44 @@ export function ActivityMatchStats({
   // Update player stats - removed the isHistorical check to allow editing for historical matches
   const updatePlayerStat = (playerId: string, statType: 'goals' | 'assists', value: number) => {
     const updatedActivity = { ...activity };
-    
     if (!updatedActivity.player_stats) {
       updatedActivity.player_stats = { goals: {}, assists: {} };
     }
-    
     if (!updatedActivity.player_stats[statType]) {
       updatedActivity.player_stats[statType] = {};
     }
-    
     // @ts-ignore (we know this is valid)
     updatedActivity.player_stats[statType][playerId] = value;
-    
     updateActivity(updatedActivity);
+  };
+
+  // Kommentar & YouTube-länk local state
+  const [matchReport, setMatchReport] = useState(activity.matchReport || "");
+  const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
+  const [saving, setSaving] = useState(false);
+
+  // Spara kommentarer och länk
+  const handleSaveExtras = async () => {
+    setSaving(true);
+    try {
+      await updateActivity({
+        ...activity,
+        matchReport,
+        youtubeLink,
+      });
+      toast().toast({
+        title: "Sparat",
+        description: "Kommentar och länk har sparats.",
+      });
+    } catch (e) {
+      toast().toast({
+        title: "Fel",
+        description: "Kunde inte spara kommentar/länk.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -144,6 +173,38 @@ export function ActivityMatchStats({
                 Assist: {getTotalAssists()}
               </Badge>
             </div>
+            {/* -------- Extra fält: Kommentar & YouTube-länk -------- */}
+            <div className="border-t mt-6 pt-4 flex flex-col gap-2">
+              <label htmlFor="match-report-detail" className="block text-sm font-medium">
+                Kommentar / matchreferat
+              </label>
+              <Textarea
+                id="match-report-detail"
+                value={matchReport}
+                onChange={e => setMatchReport(e.target.value)}
+                placeholder="Lägg till en kommentar eller ett referat här..."
+                className="min-h-[60px]"
+                maxLength={2000}
+              />
+              <label htmlFor="youtube-link-detail" className="block text-sm font-medium mt-3">
+                YouTube-länk
+              </label>
+              <Input
+                id="youtube-link-detail"
+                type="url"
+                value={youtubeLink}
+                onChange={e => setYoutubeLink(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <Button
+                className="mt-3 w-full sm:w-auto"
+                onClick={handleSaveExtras}
+                disabled={saving}
+                type="button"
+              >
+                {saving ? "Sparar..." : "Spara kommentar & länk"}
+              </Button>
+            </div>
           </div>
         </ScrollArea>
       ) : (
@@ -152,3 +213,4 @@ export function ActivityMatchStats({
     </div>
   );
 }
+
