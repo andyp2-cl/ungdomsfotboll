@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,12 +65,17 @@ export function ActivityListItem({
   // Function to clean league name - remove duplicate year prefix
   const getCleanLeagueName = (league: any) => {
     if (!league) return null;
+    
     let displayName = league.name;
     const yearStr = league.year.toString();
+    
+    // Remove year prefix if it duplicates the year
     if (displayName.startsWith(yearStr)) {
+      // This pattern matches both "2013 2013" and just a single year prefix
       displayName = displayName.replace(new RegExp(`^${yearStr}\\s+${yearStr}\\s+`), '');
       displayName = displayName.replace(new RegExp(`^${yearStr}\\s+`), '');
     }
+    
     return `${league.year} ${displayName}`;
   };
 
@@ -118,68 +122,63 @@ export function ActivityListItem({
       className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20 hover:border-l-primary/40"
       onClick={handleClick}
     >
-      <CardContent className="p-3 sm:p-3">
-        <div className={`flex flex-col sm:grid sm:grid-cols-[1fr,120px] gap-2 sm:gap-3`}>
+      <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[1fr,auto]'} gap-4`}>
           {/* Main content */}
-          <div className="space-y-2 sm:space-y-3">
-            {/* Kompakt header med datum/tid/plats på en rad */}
-            <div className="flex items-start justify-between gap-2 mb-1">
+          <div className={`space-y-${isMobile ? '2' : '3'}`}>
+            {/* Header with title and badges */}
+            <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-base whitespace-normal">
-                  {activity.name}
-                </h3>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(activity.date)}
-                  </span>
-                  {activity.time && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {activity.time}
-                    </span>
-                  )}
-                  {activity.location?.name && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {activity.location.name}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1 whitespace-nowrap">
-                    <Users className="h-3 w-3" />
-                    {participatingPlayers.length}
-                  </span>
-                  {league && (
-                    <span className="flex items-center gap-1">
-                      <Award className="h-3 w-3" />
-                      {getCleanLeagueName(league)}
-                    </span>
-                  )}
-                </div>
+                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} whitespace-normal`}>{activity.name}</h3>
               </div>
-              {/* Badge/result & share i högerhörn */}
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <div className="flex items-center gap-1">
-                  <CupMatchBadge activity={activity} isMobile={isMobile} />
-                  {activity.type === 'match' && actualIsHistorical && (
-                    <Badge variant="outline" className="text-sm px-1.5 py-0.5 whitespace-nowrap">
-                      <Trophy className="h-3 w-3 mr-1" />
-                      <span className={`${resultTextColor} text-base font-bold`}>{formatResult(activity)}</span>
-                    </Badge>
-                  )}
-                  {activity.type === 'match' && (
-                    <ShareMatchCard 
-                      targetElementId={cardId}
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                    />
-                  )}
-                </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <CupMatchBadge activity={activity} isMobile={isMobile} />
+                {activity.type === 'match' && actualIsHistorical && (
+                  <Badge variant="outline" className={`${isMobile ? 'text-xs px-1.5 py-0.5' : 'text-sm'} whitespace-nowrap`}>
+                    <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+                    <span className={`${resultTextColor} ${isMobile ? 'text-sm' : 'text-lg'} font-bold`}>{formatResult(activity)}</span>
+                  </Badge>
+                )}
+                {/* Share button moved to the far right with icon only */}
+                {activity.type === 'match' && (
+                  <ShareMatchCard 
+                    targetElementId={cardId}
+                    size="icon"
+                    variant="ghost"
+                    className={isMobile ? "h-6 w-6" : "h-8 w-8"}
+                  />
+                )}
               </div>
             </div>
 
-            {/* Deltagar-grid - optimerad på bredden */}
+            {/* Meta information - more compact on mobile */}
+            <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span>{formatDate(activity.date)}</span>
+              </div>
+              
+              {activity.location?.name && (
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <MapPin className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <span className="whitespace-normal">{activity.location.name}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Users className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span>{participatingPlayers.length}</span>
+              </div>
+
+              {league && !isMobile && (
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <Award className="h-4 w-4" />
+                  <span>{getCleanLeagueName(league)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Participants preview - optimized for mobile */}
             <ActivityParticipants 
               participants={participatingPlayers} 
               onPlayerSelect={onPlayerSelect}
@@ -205,9 +204,9 @@ export function ActivityListItem({
             )}
           </div>
 
-          {/* Stats widget - höger, kompakt och smal */}
+          {/* Stats widget - right side on desktop, integrated on mobile */}
           {!isMobile && (
-            <div className="flex-shrink-0 min-w-0 flex flex-col items-end">
+            <div className="flex-shrink-0">
               <ActivityStatsWidget 
                 activity={activity}
                 participants={participatingPlayers}
@@ -221,5 +220,3 @@ export function ActivityListItem({
     </Card>
   );
 }
-
-// Filen ActivityListItem.tsx är nu över 230 rader lång. Efter du godkänt dessa förbättringar, rekommenderar jag att vi bryter ut header och meta till egna små komponenter för bättre översikt och hanterbarhet!
