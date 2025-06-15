@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,7 +48,12 @@ export function ActivityParticipants({
   const activityDate = currentActivity ? new Date(currentActivity.date) : null;
   const isUpcomingActivity = activityDate && activityDate >= currentDate;
 
-  const getDisplayName = (fullName: string) => fullName;
+  const getDisplayName = (fullName: string) => {
+    const [firstName, ...rest] = fullName.trim().split(' ');
+    const lastName = rest.join(' ');
+    if (!lastName) return firstName; // Om bara ett namn
+    return `${firstName}<br />${lastName}`;
+  };
 
   const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -145,13 +149,12 @@ export function ActivityParticipants({
                         textWrap: "pretty",
                         padding: "0 2px",
                         lineHeight: "1.15",
-                        minHeight: isMobile ? "28px" : "32px", // to keep cards even if one name is short
-                        maxHeight: isMobile ? "32px" : "38px", // for 2 lines
+                        minHeight: isMobile ? "28px" : "32px",
+                        maxHeight: isMobile ? "32px" : "38px",
                         display: "block",
                       }}
-                    >
-                      {getDisplayName(player.name)}
-                    </span>
+                      dangerouslySetInnerHTML={{ __html: getDisplayName(player.name) }}
+                    />
                   </div>
                 );
               })}
