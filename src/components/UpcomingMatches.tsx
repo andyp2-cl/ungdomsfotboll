@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Match } from "@/types/match";
 import { Player } from "@/types/player";
 import { Plus, Users, X } from "lucide-react";
 import { sortPlayersByGradeAndRatio } from "@/utils/teamSelectionUtils";
+import { ShareMatchCard } from "@/components/share/ShareMatchCard";
 
 interface UpcomingMatchesProps {
   matches: Match[];
@@ -53,87 +55,97 @@ export function UpcomingMatches({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {matches.map(match => (
-            <div key={match.id} className="border rounded-lg p-4 space-y-3">
-              {/* Match header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-sm text-muted-foreground">
-                    {new Date(match.date).toLocaleDateString('sv-SE')} {match.time && `• ${match.time}`}
+          {matches.map(match => {
+            const matchCardId = `match-card-${match.id}`;
+            return (
+              <div key={match.id} id={matchCardId} className="border rounded-lg p-4 space-y-3">
+                {/* Match header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(match.date).toLocaleDateString('sv-SE')} {match.time && `• ${match.time}`}
+                    </div>
+                    <Badge className={`text-xs px-2 py-1 ${getLeagueBadgeColor(match.league)}`}>
+                      {match.league}
+                    </Badge>
                   </div>
-                  <Badge className={`text-xs px-2 py-1 ${getLeagueBadgeColor(match.league)}`}>
-                    {match.league}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getPlayerCountDisplay(match)}
-                  {onMultiPlayerAdd && (
-                    <Button
-                      variant="outline"
+                  <div className="flex items-center gap-2">
+                    {getPlayerCountDisplay(match)}
+                    {/* Share match card button */}
+                    <ShareMatchCard
+                      elementId={matchCardId}
                       size="sm"
-                      onClick={() => onMultiPlayerAdd(match.id)}
-                      className="h-7 w-7 p-0"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  )}
-                  {renderExtraActions && renderExtraActions(match)}
+                      variant="outline"
+                      className="ml-1"
+                    />
+                    {onMultiPlayerAdd && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onMultiPlayerAdd(match.id)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {renderExtraActions && renderExtraActions(match)}
+                  </div>
                 </div>
-              </div>
-              
-              {/* Match details */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="font-medium">{match.opponent}</div>
-                {match.location && (
-                  <div className="text-muted-foreground">@ {match.location}</div>
+                
+                {/* Match details */}
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="font-medium">{match.opponent}</div>
+                  {match.location && (
+                    <div className="text-muted-foreground">@ {match.location}</div>
+                  )}
+                </div>
+                
+                {/* Players */}
+                {match.players.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Uttagna spelare
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {['A', 'B', 'C', 'D'].map(grade => {
+                        const gradePlayers = match.players
+                          .map(playerId => players.find(p => p.id === playerId))
+                          .filter(player => player && player.grade === grade);
+                          
+                        if (gradePlayers.length === 0) return null;
+                        
+                        return (
+                          <div key={grade} className="space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground">
+                              Nivå {grade}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {gradePlayers.map(player => player && (
+                                <div
+                                  key={player.id}
+                                  className="group flex items-center gap-2 bg-muted/50 hover:bg-muted text-xs px-3 py-2 rounded-md transition-colors cursor-pointer"
+                                  onClick={() => onPlayerRemoval(match.id, player.id)}
+                                >
+                                  <Avatar className="h-5 w-5">
+                                    <AvatarImage src={player.image} alt={player.name} />
+                                    <AvatarFallback className="text-xs">
+                                      {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span>{player.name}</span>
+                                  <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              {/* Players */}
-              {match.players.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Uttagna spelare
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {['A', 'B', 'C', 'D'].map(grade => {
-                      const gradePlayers = match.players
-                        .map(playerId => players.find(p => p.id === playerId))
-                        .filter(player => player && player.grade === grade);
-                        
-                      if (gradePlayers.length === 0) return null;
-                      
-                      return (
-                        <div key={grade} className="space-y-1">
-                          <div className="text-xs font-medium text-muted-foreground">
-                            Nivå {grade}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {gradePlayers.map(player => player && (
-                              <div
-                                key={player.id}
-                                className="group flex items-center gap-2 bg-muted/50 hover:bg-muted text-xs px-3 py-2 rounded-md transition-colors cursor-pointer"
-                                onClick={() => onPlayerRemoval(match.id, player.id)}
-                              >
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={player.image} alt={player.name} />
-                                  <AvatarFallback className="text-xs">
-                                    {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{player.name}</span>
-                                <X className="h-3 w-3 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

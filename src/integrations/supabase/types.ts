@@ -28,6 +28,8 @@ export type Database = {
           player_stats: Json | null
           result: string | null
           scraped: boolean | null
+          tactics_board: Json | null
+          tactics_board_image: string | null
           time: string | null
           type: string
           youtube_link: string | null
@@ -50,6 +52,8 @@ export type Database = {
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
+          tactics_board?: Json | null
+          tactics_board_image?: string | null
           time?: string | null
           type: string
           youtube_link?: string | null
@@ -72,6 +76,8 @@ export type Database = {
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
+          tactics_board?: Json | null
+          tactics_board_image?: string | null
           time?: string | null
           type?: string
           youtube_link?: string | null
@@ -226,6 +232,54 @@ export type Database = {
           recorded_by?: string | null
         }
         Relationships: []
+      }
+      player_ratings: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          rated_by: string | null
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          rated_by?: string | null
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          rated_by?: string | null
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_player_ratings_activity_id"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_player_ratings_player_id"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       players: {
         Row: {
