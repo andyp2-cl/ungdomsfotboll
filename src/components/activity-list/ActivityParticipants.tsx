@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,8 +16,8 @@ interface ActivityParticipantsProps {
   maxShow?: number;
   isMobile?: boolean;
   showAll?: boolean;
-  allActivities?: any[]; // For calculating weekly match counts
-  currentActivity?: any; // Current activity to determine if it's upcoming
+  allActivities?: any[];
+  currentActivity?: any;
 }
 
 export function ActivityParticipants({
@@ -34,11 +35,9 @@ export function ActivityParticipants({
   const displayedParticipants = sortedParticipants;
 
   const participantsByGrade: Record<string, Player[]> = {};
-
   ['A', 'B', 'C', 'D', undefined].forEach(grade => {
     participantsByGrade[grade || 'undefined'] = [];
   });
-
   displayedParticipants.forEach(player => {
     const grade = player.grade || 'undefined';
     participantsByGrade[grade].push(player);
@@ -51,7 +50,7 @@ export function ActivityParticipants({
   const getDisplayName = (fullName: string) => {
     const [firstName, ...rest] = fullName.trim().split(' ');
     const lastName = rest.join(' ');
-    if (!lastName) return firstName; // Om bara ett namn
+    if (!lastName) return firstName;
     return `${firstName}<br />${lastName}`;
   };
 
@@ -65,34 +64,30 @@ export function ActivityParticipants({
 
   if (!displayedParticipants.length) {
     return (
-      <div className="text-xs text-muted-foreground">
-        Inga deltagare
-      </div>
+      <div className="text-xs text-muted-foreground">Inga deltagare</div>
     );
   }
 
-  // Sizing, grid & layout vars
-  const avatarSize = isMobile ? 'h-9 w-9' : 'h-16 w-16';
-  const iconSize = isMobile ? 'h-4 w-4' : 'h-8 w-8';
-  const gridCols = isMobile ? 'grid-cols-4' : 'grid-cols-9';
-  const cardPadding = isMobile ? 'p-1' : 'p-1';
-  const gap = isMobile ? 'gap-1' : 'gap-1';
+  // OPTIMERAD grid: fler kolumner, mindre gap, mindre avatars
+  const avatarSize = isMobile ? 'h-7 w-7' : 'h-11 w-11';
+  const iconSize = isMobile ? 'h-3 w-3' : 'h-7 w-7';
+  // Fler kolumner på desktop (8), på mobil (5)
+  const gridCols = isMobile ? 'grid-cols-5' : 'grid-cols-8';
+  const cardPadding = 'p-0.5';
+  const gap = isMobile ? 'gap-[2px]' : 'gap-2';
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
         const playersInGrade = participantsByGrade[gradeKey];
-
         if (playersInGrade.length === 0) return null;
-
         return (
-          <div key={gradeKey} className="flex flex-col gap-1">
+          <div key={gradeKey} className="flex flex-col gap-0.5">
             {gradeKey !== 'undefined' && (
-              <Badge variant="outline" className={`self-start mr-1 ${isMobile ? 'mb-0.5 text-xs px-1.5 py-0.5' : 'mb-1'}`}>
+              <Badge variant="outline" className={`self-start mr-1 mb-0.5 text-xs px-1.5 py-0.5`}>
                 {gradeKey}
               </Badge>
             )}
-
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
                 let weeklyMatchCount = 0;
@@ -105,7 +100,7 @@ export function ActivityParticipants({
                   <div 
                     key={player.id}
                     data-player-item="true"
-                    className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                    className={`flex flex-col items-center border rounded ${cardPadding} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
                     onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                     style={{ minWidth: 0, width: "100%" }}
                   >
@@ -120,7 +115,7 @@ export function ActivityParticipants({
                               </AvatarFallback>
                             </Avatar>
                             {shouldShowBadge && (
-                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white shadow-lg z-20">
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white shadow-lg z-20">
                                 {weeklyMatchCount}
                               </div>
                             )}
@@ -141,16 +136,16 @@ export function ActivityParticipants({
                     </TooltipProvider>
                     <span
                       className={
-                        `block text-center w-full mx-auto mt-1 font-medium text-xs ${isMobile ? 'max-w-[84px]' : 'max-w-[120px]'}`
+                        `block text-center w-full mx-auto mt-0.5 font-medium text-[11px] max-w-[84px]`
                       }
                       style={{
                         whiteSpace: "normal",
                         wordBreak: "break-word",
                         textWrap: "pretty",
-                        padding: "0 2px",
-                        lineHeight: "1.15",
-                        minHeight: isMobile ? "28px" : "32px",
-                        maxHeight: isMobile ? "32px" : "38px",
+                        padding: "0 1px",
+                        lineHeight: "1.10",
+                        minHeight: isMobile ? "18px" : "22px",
+                        maxHeight: isMobile ? "22px" : "28px",
                         display: "block",
                       }}
                       dangerouslySetInnerHTML={{ __html: getDisplayName(player.name) }}
