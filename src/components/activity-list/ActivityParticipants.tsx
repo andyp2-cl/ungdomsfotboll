@@ -57,15 +57,8 @@ export function ActivityParticipants({
   console.log("- allActivities count:", allActivities.length);
   console.log("- participants count:", participants.length);
   
-  // Function to get first name only, but keep more characters for mobile
-  const getDisplayName = (fullName: string) => {
-    if (isMobile) {
-      // On mobile, try to show a bit more of the name
-      const firstName = fullName.split(' ')[0];
-      return firstName.length > 8 ? firstName.substring(0, 7) + '.' : firstName;
-    }
-    return fullName.split(' ')[0];
-  };
+  // Visa alltid hela namnet, utan trunkering
+  const getDisplayName = (fullName: string) => fullName;
 
   const handlePlayerClick = (playerId: string, playerName: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -112,7 +105,7 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className={`grid ${gridCols} ${gap} w-full`}>
+            <div className={`grid ${isMobile ? 'grid-cols-4' : 'grid-cols-9'} ${isMobile ? 'gap-1' : 'gap-1'} w-full`}>
               {playersInGrade.map((player) => {
                 // Räkna matcher för spelaren under samma vecka som denna aktivitet
                 let weeklyMatchCount = 0;
@@ -128,7 +121,7 @@ export function ActivityParticipants({
                   <div 
                     key={player.id}
                     data-player-item="true"
-                    className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded ${cardPadding} bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
+                    className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
                     onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
                   >
                     <TooltipProvider>
@@ -162,7 +155,9 @@ export function ActivityParticipants({
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <span className={`text-xs text-center w-full ${isMobile ? 'leading-tight px-0.5' : ''} overflow-hidden text-ellipsis whitespace-nowrap`}>
+                    <span
+                      className={`text-xs text-center w-full break-all whitespace-normal leading-tight px-0.5`}
+                    >
                       {getDisplayName(player.name)}
                     </span>
                   </div>
