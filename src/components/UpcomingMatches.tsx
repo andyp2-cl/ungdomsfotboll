@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +72,7 @@ export function UpcomingMatches({
                     {getPlayerCountDisplay(match)}
                     {/* Share match card button */}
                     <ShareMatchCard
-                      elementId={matchCardId}
+                      targetElementId={matchCardId}
                       size="sm"
                       variant="outline"
                       className="ml-1"
