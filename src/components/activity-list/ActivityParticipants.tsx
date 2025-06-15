@@ -105,7 +105,7 @@ export function ActivityParticipants({
               </Badge>
             )}
             
-            <div className={`grid ${isMobile ? 'grid-cols-4' : 'grid-cols-9'} ${isMobile ? 'gap-1' : 'gap-1'} w-full`}>
+            <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
                 // Räkna matcher för spelaren under samma vecka som denna aktivitet
                 let weeklyMatchCount = 0;
@@ -156,7 +156,18 @@ export function ActivityParticipants({
                       </Tooltip>
                     </TooltipProvider>
                     <span
-                      className={`text-xs text-center w-full break-all whitespace-normal leading-tight px-0.5`}
+                      className={
+                        `block text-xs text-center w-full mx-auto mt-1 ` +
+                        `${isMobile ? 'max-w-[84px]' : 'max-w-[120px]'} ` + // avatar ~36px/64px + margins...
+                        'break-words whitespace-normal leading-tight font-medium ' +
+                        'overflow-hidden'
+                      }
+                      style={{
+                        wordBreak: "break-word",
+                        WebkitLineClamp: 2,
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                      }}
                     >
                       {getDisplayName(player.name)}
                     </span>
