@@ -69,12 +69,12 @@ export function ActivityMatchStats({
         matchReport,
         youtubeLink,
       });
-      toast().toast({
+      toast({
         title: "Sparat",
         description: "Kommentar och länk har sparats.",
       });
     } catch (e) {
-      toast().toast({
+      toast({
         title: "Fel",
         description: "Kunde inte spara kommentar/länk.",
         variant: "destructive"
