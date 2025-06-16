@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Users, Calendar, TrendingUp, Trophy, Target, Award } from "lucide-react";
 import { KPICard } from "./KPICard";
+import { isHomeMatch } from "@/utils/playerCombinations";
 
 interface KPISectionProps {
   players: Player[];
@@ -16,12 +16,24 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
   const totalActivities = activities.length;
   const matchActivities = activities.filter(a => a.type === "match");
   
-  // Calculate total goals scored by team
-  const totalGoals = matchActivities.reduce((sum, match) => sum + (match.homeScore || 0), 0);
+  // Only include played matches (date in the past)
+  const playedMatches = activities.filter(a => {
+    if (a.type !== "match") return false;
+    const activityDate = new Date(a.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return activityDate < today;
+  });
+
+  // Calculate total goals scored by team (home/away logic)
+  const totalGoals = playedMatches.reduce((sum, match) => {
+    const isHome = isHomeMatch(match);
+    return sum + (isHome ? (match.homeScore || 0) : (match.awayScore || 0));
+  }, 0);
   
   // Calculate win rate
-  const wins = matchActivities.filter(match => match.isWin === true).length;
-  const winRate = matchActivities.length > 0 ? Math.round((wins / matchActivities.length) * 100) : 0;
+  const wins = playedMatches.filter(match => match.isWin === true).length;
+  const winRate = playedMatches.length > 0 ? Math.round((wins / playedMatches.length) * 100) : 0;
   
   // Calculate average attendance
   const totalParticipations = players
@@ -55,8 +67,8 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
   );
 
   // Calculate goals per match
-  const goalsPerMatch = matchActivities.length > 0 
-    ? (totalGoals / matchActivities.length).toFixed(1)
+  const goalsPerMatch = playedMatches.length > 0 
+    ? (totalGoals / playedMatches.length).toFixed(1)
     : "0.0";
 
   const gridCols = isMobile ? "grid-cols-2" : "grid-cols-3 lg:grid-cols-6";
@@ -72,7 +84,7 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
       />
       <KPICard
         title="Antal matcher"
-        value={matchActivities.length}
+        value={playedMatches.length}
         icon={Calendar}
         description="Genomförda matcher"
         className="hover:shadow-md transition-shadow"
@@ -81,7 +93,7 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
         title="Vinstprocent"
         value={`${winRate}%`}
         icon={Trophy}
-        description={`${wins} vinster av ${matchActivities.length}`}
+        description={`${wins} vinster av ${playedMatches.length}`}
         className="hover:shadow-md transition-shadow"
       />
       <KPICard

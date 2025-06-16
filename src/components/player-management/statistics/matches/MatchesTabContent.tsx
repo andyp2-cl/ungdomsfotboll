@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MatchOverviewTab } from "./MatchOverviewTab";
 import { HomeAwayTab } from "./HomeAwayTab";
+import { isHomeMatch } from "@/utils/playerCombinations";
 
 interface MatchesTabContentProps {
   activities: Activity[];
@@ -37,15 +37,18 @@ export function MatchesTabContent({
     const away = { matches: 0, wins: 0, draws: 0, losses: 0, goals: 0, conceded: 0 };
 
     historicalMatchActivities.forEach(match => {
-      // Determine if this is a home or away match based on match name or other indicators
-      // For now, we'll split them roughly evenly or use a heuristic
-      const isHome = match.name?.toLowerCase().includes('hemma') || 
-                     Math.random() > 0.5; // Placeholder logic
-      
+      const isHome = isHomeMatch(match);
       const stats = isHome ? home : away;
       stats.matches++;
-      stats.goals += match.homeScore || 0;
-      stats.conceded += match.awayScore || 0;
+      
+      // Calculate goals based on home/away status
+      if (isHome) {
+        stats.goals += match.homeScore || 0;
+        stats.conceded += match.awayScore || 0;
+      } else {
+        stats.goals += match.awayScore || 0;
+        stats.conceded += match.homeScore || 0;
+      }
       
       if (match.homeScore === match.awayScore) {
         stats.draws++;

@@ -8,7 +8,7 @@ import { ChartSection } from "./ChartSection";
 import { isTrainer } from "@/utils/positionUtils";
 import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
 import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { getOpponentName } from '@/utils/playerCombinations';
+import { getOpponentName, isHomeMatch } from '@/utils/playerCombinations';
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -83,27 +83,32 @@ export function OverviewTabContent({
 
   // Calculate team trends data
   const monthlyData = React.useMemo(() => {
-    const months = new Map<string, { matches: number; goals: number; wins: number }>();
-    
-    activities.filter(a => a.type === "match").forEach(activity => {
+    const months = new Map<string, { matches: number; goals: number; wins: number; draws: number; losses: number; goalsConceded: number }>();
+
+    activities.filter(a => a.type === "match" && new Date(a.date) < new Date()).forEach(activity => {
       const date = new Date(activity.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (!months.has(monthKey)) {
-        months.set(monthKey, { matches: 0, goals: 0, wins: 0 });
+        months.set(monthKey, { matches: 0, goals: 0, wins: 0, draws: 0, losses: 0, goalsConceded: 0 });
       }
-      
+
       const data = months.get(monthKey)!;
       data.matches++;
-      data.goals += activity.homeScore || 0;
-      if (activity.isWin === true) data.wins++;
+      const isHome = isHomeMatch(activity);
+      data.goals += isHome ? (activity.homeScore || 0) : (activity.awayScore || 0);
+      data.goalsConceded += isHome ? (activity.awayScore || 0) : (activity.homeScore || 0);
+      if (activity.homeScore === activity.awayScore) data.draws++;
+      else if (activity.isWin === true) data.wins++;
+      else if (activity.isWin === false) data.losses++;
     });
-    
+
     return Array.from(months.entries())
       .map(([month, data]) => ({
         month,
         ...data,
-        winRate: data.matches > 0 ? Math.round((data.wins / data.matches) * 100) : 0
+        winRate: data.matches > 0 ? Math.round((data.wins / data.matches) * 100) : 0,
+        goalDiff: data.goals - data.goalsConceded
       }))
       .sort((a, b) => a.month.localeCompare(b.month))
       .slice(-6); // Last 6 months
@@ -135,13 +140,29 @@ export function OverviewTabContent({
   const topPlayersCount = isMobile ? 5 : 10;
 
   // 1. Lagets prestationer
-  const matchActivities = activities.filter(a => a.type === "match");
+  const matchActivities = activities.filter(a => {
+    if (a.type !== "match") return false;
+    const activityDate = new Date(a.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return activityDate < today;
+  });
   const totalMatches = matchActivities.length;
   const wins = matchActivities.filter(m => m.isWin === true).length;
   const draws = matchActivities.filter(m => m.homeScore === m.awayScore).length;
   const losses = matchActivities.filter(m => m.isWin === false && m.homeScore !== m.awayScore).length;
-  const goalsScored = matchActivities.reduce((sum, m) => sum + (m.homeScore || 0), 0);
-  const goalsConceded = matchActivities.reduce((sum, m) => sum + (m.awayScore || 0), 0);
+  
+  // Calculate goals scored and conceded based on home/away status
+  const goalsScored = matchActivities.reduce((sum, m) => {
+    const isHome = isHomeMatch(m);
+    return sum + (isHome ? (m.homeScore || 0) : (m.awayScore || 0));
+  }, 0);
+  
+  const goalsConceded = matchActivities.reduce((sum, m) => {
+    const isHome = isHomeMatch(m);
+    return sum + (isHome ? (m.awayScore || 0) : (m.homeScore || 0));
+  }, 0);
+  
   const goalDiff = goalsScored - goalsConceded;
   const avgGoalsFor = totalMatches > 0 ? (goalsScored / totalMatches).toFixed(2) : "0.00";
   const avgGoalsAgainst = totalMatches > 0 ? (goalsConceded / totalMatches).toFixed(2) : "0.00";
@@ -343,23 +364,38 @@ export function OverviewTabContent({
           description="Utveckling av vinstprocent och målproduktion"
           className="w-full"
         >
-          <div className="h-[300px] w-full">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-              {monthlyData.map(data => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {monthlyData.map((data) => {
+              // Calculate most goals in a match for this month
+              const matchesThisMonth = matchActivities.filter(m => m.date.startsWith(data.month));
+              let mostGoals = 0;
+              matchesThisMonth.forEach(m => {
+                const isHome = isHomeMatch(m);
+                const goals = isHome ? (m.homeScore || 0) : (m.awayScore || 0);
+                if (goals > mostGoals) mostGoals = goals;
+              });
+              // Calculate longest win streak for this month
+              let maxStreak = 0, currentStreak = 0;
+              matchesThisMonth.forEach(m => {
+                if (m.isWin === true) {
+                  currentStreak++;
+                  if (currentStreak > maxStreak) maxStreak = currentStreak;
+                } else {
+                  currentStreak = 0;
+                }
+              });
+              return (
                 <div key={data.month} className="bg-muted/50 rounded-lg p-3 text-center">
                   <div className="text-sm font-medium">{data.month}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {data.matches} matcher
-                  </div>
-                  <div className="text-lg font-bold text-green-600">
-                    {data.winRate}%
-                  </div>
-                  <div className="text-xs text-blue-600">
-                    {data.goals} mål
-                  </div>
+                  <div className="text-xs text-muted-foreground">{data.matches} matcher</div>
+                  <div className="text-lg font-bold text-green-700">Vinstprocent: {data.winRate}%</div>
+                  <div className="text-xs">Vinster: <b>{data.wins}</b> | Oavgjorda: <b>{data.draws}</b> | Förluster: <b>{data.losses}</b></div>
+                  <div className="text-xs mt-1">Mål: <b>{data.goals}</b> | Insläppta: <b>{data.goalsConceded}</b> | Målskillnad: <b>{data.goalDiff >= 0 ? '+' : ''}{data.goalDiff}</b></div>
+                  <div className="text-xs mt-2">Flest mål i en match: <b>{mostGoals}</b></div>
+                  <div className="text-xs">Längsta vinstsvit: <b>{maxStreak}</b></div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </ChartSection>
       </div>

@@ -147,7 +147,7 @@ function calculatePositionSynergy(pos1: string, pos2: string): number {
 }
 
 // Helper function to determine if Hässleholms IF was the home team
-function isHomeMatch(activity: Activity): boolean {
+export function isHomeMatch(activity: Activity): boolean {
   // Common pattern: "Team A - Team B" where Team A is the home team
   const nameParts = activity.name.split(' - ');
   
