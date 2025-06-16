@@ -118,6 +118,7 @@ function getCupsWithMatches(activities, players) {
 }
 
 function CupsPage({ activities, players, onActivitySelect, onPlayerSelect }) {
+  const isMobile = useIsMobile();
   let cupsWithMatches = getCupsWithMatches(activities, players);
   // Sort cups by date descending (latest first)
   cupsWithMatches = cupsWithMatches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -166,7 +167,7 @@ function CupsPage({ activities, players, onActivitySelect, onPlayerSelect }) {
                   onActivitySelect={onActivitySelect}
                   onPlayerSelect={onPlayerSelect}
                   isHistorical={true}
-                  isMobile={false}
+                  isMobile={isMobile}
                   noResultsMessage="Inga cupmatcher hittades"
                 />
               </AccordionContent>
