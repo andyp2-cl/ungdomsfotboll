@@ -32,9 +32,9 @@ export const useActivityTabViews = ({
   handleMatchResultUpdate,
   onPlayerSelect
 }: UseActivityTabViewsProps) => {
-  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("historical");
+  const [activeView, setActiveView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("historical");
+  const [previousView, setPreviousView] = useState<"upcoming" | "historical" | "statistics">("upcoming");
 
   // Handle player selection with better state management
   const handlePlayerSelect = useCallback((playerId: string) => {
