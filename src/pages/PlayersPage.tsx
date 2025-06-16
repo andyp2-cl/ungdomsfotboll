@@ -79,7 +79,13 @@ export default function PlayersPage({ initialTab }: PlayersPageProps = {}) {
   // När tab ändras, navigera till rätt route
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    navigate(`/${tabId}`);
+    // Only navigate for tabs that have a route defined
+    const routeTabs = [
+      "players", "activities", "statistics", "development", "training", "excel", "team-selection", "cups"
+    ];
+    if (routeTabs.includes(tabId)) {
+      navigate(`/${tabId}`);
+    }
   };
 
   // Converting Promise<boolean> to Promise<void> for player update functions

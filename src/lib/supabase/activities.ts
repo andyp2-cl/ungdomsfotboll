@@ -143,3 +143,143 @@ export const permanentlyDeleteActivity = async (activityId: string): Promise<boo
     return false;
   }
 };
+
+// Create a new cup activity
+export const createCupActivity = async (name: string, date: string): Promise<Activity | null> => {
+  try {
+    const id = crypto.randomUUID();
+    const { data, error } = await supabase
+      .from('activities')
+      .insert({
+        id,
+        name,
+        date,
+        type: 'cup',
+        cup_id: id, // Set cup_id to the same ID
+        player_stats: {
+          goals: {},
+          assists: {},
+          cup_matches: []
+        }
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating cup activity:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.error('No data returned after creating cup activity');
+      return null;
+    }
+    
+    return formatActivityFromDatabase(data);
+  } catch (error) {
+    console.error('Error in createCupActivity:', error);
+    return null;
+  }
+};
+
+// Link matches to a cup
+export const linkMatchesToCup = async (cupId: string, matchIds: string[]): Promise<boolean> => {
+  try {
+    // First, get the cup activity
+    const { data: cupData, error: cupError } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('id', cupId)
+      .single();
+      
+    if (cupError || !cupData) {
+      console.error('Error fetching cup activity:', cupError);
+      return false;
+    }
+    
+    // Update each match to reference the cup
+    for (const matchId of matchIds) {
+      const { error: matchError } = await supabase
+        .from('activities')
+        .update({ cup_id: cupId })
+        .eq('id', matchId);
+        
+      if (matchError) {
+        console.error(`Error updating match ${matchId}:`, matchError);
+        return false;
+      }
+    }
+    
+    // Update the cup's player_stats to include the matches
+    const playerStats = cupData.player_stats as { goals: Record<string, number>; assists: Record<string, number>; cup_matches: string[] } || { goals: {}, assists: {}, cup_matches: [] };
+    const cupMatches = new Set([...(playerStats.cup_matches || []), ...matchIds]);
+    
+    const { error: updateError } = await supabase
+      .from('activities')
+      .update({ 
+        player_stats: {
+          goals: playerStats.goals || {},
+          assists: playerStats.assists || {},
+          cup_matches: Array.from(cupMatches)
+        }
+      })
+      .eq('id', cupId);
+      
+    if (updateError) {
+      console.error('Error updating cup matches:', updateError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in linkMatchesToCup:', error);
+    return false;
+  }
+};
+
+// Restore Cuper and its activities
+export const restoreCuper = async (): Promise<boolean> => {
+  try {
+    // Create the Cuper cup activity
+    const cupActivity = await createCupActivity('Cuper 2024', new Date().toISOString().split('T')[0]);
+    
+    if (!cupActivity) {
+      console.error('Failed to create Cuper cup activity');
+      return false;
+    }
+    
+    console.log('Created Cuper cup activity:', cupActivity);
+    
+    // Get all matches that should be part of Cuper
+    const { data: matches, error: matchesError } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('type', 'match')
+      .order('date', { ascending: true });
+      
+    if (matchesError) {
+      console.error('Error fetching matches:', matchesError);
+      return false;
+    }
+    
+    if (!matches || matches.length === 0) {
+      console.log('No matches found to link to Cuper');
+      return true;
+    }
+    
+    // Link all matches to Cuper
+    const matchIds = matches.map(match => match.id);
+    const success = await linkMatchesToCup(cupActivity.id, matchIds);
+    
+    if (!success) {
+      console.error('Failed to link matches to Cuper');
+      return false;
+    }
+    
+    console.log(`Successfully linked ${matchIds.length} matches to Cuper`);
+    return true;
+  } catch (error) {
+    console.error('Error in restoreCuper:', error);
+    return false;
+  }
+};

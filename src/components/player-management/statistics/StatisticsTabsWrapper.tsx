@@ -42,7 +42,7 @@ export function StatisticsTabsWrapper({
         <TabsTrigger value="goals" className="min-w-[70px] h-9 px-2 text-xs md:text-sm font-semibold md:h-9">Mål</TabsTrigger>
         <TabsTrigger value="matches" className="min-w-[70px] h-9 px-2 text-xs md:text-sm font-semibold md:h-9">Matcher</TabsTrigger>
         <TabsTrigger value="leagues" className="min-w-[70px] h-9 px-2 text-xs md:text-sm font-semibold md:h-9">Ligor</TabsTrigger>
-        <TabsTrigger value="cups" className="min-w-[70px] h-9 px-2 text-xs md:text-sm font-semibold md:h-9">Cuper</TabsTrigger>
+        {/* <TabsTrigger value="cups" className="min-w-[70px] h-9 px-2 text-xs md:text-sm font-semibold md:h-9">Cuper</TabsTrigger> */}
       </TabsList>
       
       <TabsContent value="overview">
@@ -94,14 +94,14 @@ export function StatisticsTabsWrapper({
         />
       </TabsContent>
       
-      <TabsContent value="cups">
+      {/* <TabsContent value="cups">
         <CupsTabContent 
           activities={activities} 
           players={players}
           onActivitySelect={handleActivitySelectWithLogging}
           onPlayerSelect={onPlayerSelect}
         />
-      </TabsContent>
+      </TabsContent> */}
     </Tabs>
   );
 }

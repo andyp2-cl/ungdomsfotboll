@@ -1,7 +1,7 @@
-
 import React from "react";
 import { BackupButton } from "./BackupButton";
 import { RestoreButton } from "./RestoreButton";
+import { RestoreCuperButton } from "./RestoreCuperButton";
 import { BackupTips } from "./BackupTips";
 
 export function BackupRestoreActions() {
@@ -10,6 +10,7 @@ export function BackupRestoreActions() {
       <div className="flex items-center gap-2">
         <BackupButton />
         <RestoreButton />
+        <RestoreCuperButton />
       </div>
       
       <BackupTips />

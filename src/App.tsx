@@ -38,6 +38,7 @@ const App = () => (
                 <Route path="/" element={<Navigate to="/players" replace />} />
                 <Route path="/players" element={<PlayersPage initialTab="players" />} />
                 <Route path="/activities" element={<PlayersPage initialTab="activities" />} />
+                <Route path="/cups" element={<PlayersPage initialTab="cups" />} />
                 <Route path="/statistics" element={<PlayersPage initialTab="statistics" />} />
                 <Route path="/development" element={<PlayersPage initialTab="development" />} />
                 <Route path="/training" element={<PlayersPage initialTab="training" />} />

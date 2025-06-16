@@ -12,8 +12,12 @@ import { Player, Activity, PlayerGrade } from "@/types/player";
 import { TabItem } from "@/types/tabs";
 import { saveActiveTab } from "@/utils/storage/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus, Users } from "lucide-react";
+import { Plus, UserPlus, Users, Calendar, Trophy } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CupsList } from "@/components/player-management/statistics/cups/components/CupsList";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
+import { ActivityListWithMonthGrouping } from "@/components/activity-list/ActivityListWithMonthGrouping";
 
 interface MainTabsProps {
   tabs?: TabItem[];
@@ -63,10 +67,122 @@ interface MainTabsProps {
   onPlayerSelect?: (playerId: string) => void;
 }
 
+function getCupsWithMatches(activities, players) {
+  // Get all cup activities
+  const cupActivities = activities.filter(activity => activity.type === 'cup');
+  // Get all cup matches (matches that reference a cup)
+  const cupMatches = activities.filter(activity => activity.type === 'match' && (activity.cupId || activity.cupName));
+  const cupsWithMatches = [];
+  cupActivities.forEach(cupActivity => {
+    const relatedMatches = cupMatches.filter(match => match.cupId === cupActivity.id || match.cupName === cupActivity.name);
+    // Statistik: vinster, oavgjorda, förluster, mål, assist, deltagare
+    let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0, assists = 0;
+    const participantSet = new Set();
+    relatedMatches.forEach(match => {
+      if (match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore === match.awayScore) {
+        draws++;
+      } else if (match.isWin === true) {
+        wins++;
+      } else if (match.isWin === false) {
+        losses++;
+      }
+      // Dela upp mål i gjorda och insläppta (utgår från homeScore = våra mål)
+      if (typeof match.homeScore === 'number') {
+        goalsFor += match.homeScore;
+      }
+      if (typeof match.awayScore === 'number') {
+        goalsAgainst += match.awayScore;
+      }
+      // Summera assist som tidigare
+      if (match.player_stats && match.player_stats.assists) {
+        assists += Number(Object.values(match.player_stats.assists).reduce((a, b) => Number(a) + Number(b), 0));
+      }
+      // Samla deltagare
+      if (Array.isArray(match.participants)) {
+        match.participants.forEach(pid => participantSet.add(pid));
+      }
+    });
+    cupsWithMatches.push({
+      ...cupActivity,
+      matches: relatedMatches,
+      wins,
+      draws,
+      losses,
+      goalsFor,
+      goalsAgainst,
+      assists,
+      numParticipants: participantSet.size
+    });
+  });
+  return cupsWithMatches;
+}
+
+function CupsPage({ activities, players, onActivitySelect, onPlayerSelect }) {
+  let cupsWithMatches = getCupsWithMatches(activities, players);
+  // Sort cups by date descending (latest first)
+  cupsWithMatches = cupsWithMatches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  if (cupsWithMatches.length === 0) {
+    return <div className="p-8 text-center text-lg">Inga cuper hittades.</div>;
+  }
+  return (
+    <div className="space-y-4">
+      {cupsWithMatches.map(cup => (
+        <Card key={cup.id} className="transition-shadow hover:shadow-lg rounded-xl border border-gray-200">
+          <Accordion type="multiple" className="w-full" defaultValue={[]}>
+            <AccordionItem value={cup.id} className="border-0">
+              <AccordionTrigger className="w-full flex justify-between items-center px-6 py-4 text-lg font-bold bg-white rounded-xl group">
+                <div className="flex flex-col items-start gap-1">
+                  <span className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{cup.name}</span>
+                  <span className="flex items-center text-xs text-gray-500 gap-1">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {cup.date ? new Date(cup.date).toLocaleDateString() : ""}
+                  </span>
+                  <div className="mt-2 flex flex-wrap gap-4 text-xs">
+                    <div className="flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" /><span className="font-semibold">Matcher:</span> {cup.matches.length}</div>
+                    <div className="flex items-center gap-1"><Trophy className="h-4 w-4 text-green-600" /><span className="font-semibold">Gjorda mål:</span> {cup.goalsFor}</div>
+                    <div className="flex items-center gap-1"><Trophy className="h-4 w-4 text-red-600" /><span className="font-semibold">Insläppta mål:</span> {cup.goalsAgainst}</div>
+                    <div className="flex items-center gap-1"><UserPlus className="h-4 w-4 text-blue-600" /><span className="font-semibold">Assist:</span> {cup.assists}</div>
+                    <div className="flex items-center gap-1"><Users className="h-4 w-4 text-purple-600" /><span className="font-semibold">Deltagare:</span> {cup.numParticipants}</div>
+                    <div className="flex items-center gap-1"><span className="font-semibold">Vinster:</span> {cup.wins}</div>
+                    <div className="flex items-center gap-1"><span className="font-semibold">Oavgjorda:</span> {cup.draws}</div>
+                    <div className="flex items-center gap-1"><span className="font-semibold">Förluster:</span> {cup.losses}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                    <Trophy className="h-4 w-4 mr-1" />
+                    {cup.matches.length} matcher
+                  </span>
+                  <span className="ml-2 transition-transform group-data-[state=open]:rotate-180">
+                    ▼
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 pt-2">
+                <ActivityListWithMonthGrouping
+                  activities={cup.matches}
+                  players={players}
+                  onSelect={onActivitySelect}
+                  onActivitySelect={onActivitySelect}
+                  onPlayerSelect={onPlayerSelect}
+                  isHistorical={true}
+                  isMobile={false}
+                  noResultsMessage="Inga cupmatcher hittades"
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function MainTabs({
   tabs = [
     { id: "players", label: "Spelare", icon: null },
     { id: "activities", label: "Matcher", icon: null },
+    { id: "cups", label: "Cuper", icon: null },
     { id: "statistics", label: "Statistik", icon: null },
     { id: "development", label: "Utveckling", icon: null },
     { id: "training", label: "Träning", icon: null },
@@ -272,6 +388,15 @@ export function MainTabs({
           />
         </TabsContent>
         
+        <TabsContent value="cups" className="mt-0">
+          <CupsPage
+            activities={activities}
+            players={players}
+            onActivitySelect={handleActivitySelect}
+            onPlayerSelect={handlePlayerSelect}
+          />
+        </TabsContent>
+
         <TabsContent value="statistics" className="mt-0">
           <StatisticsTabsWrapper 
             players={players} 
