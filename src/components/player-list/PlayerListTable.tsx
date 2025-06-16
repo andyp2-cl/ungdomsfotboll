@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -71,7 +70,18 @@ export function PlayerListTable({
 
   return (
     <div className="rounded-md border">
-      <Table>
+      <Table style={{ tableLayout: 'fixed', width: '100%' }}>
+        <colgroup>
+          <col style={{ width: 80 }} /> {/* Bildkolumn */}
+          <col /> {/* Namn */}
+          <col /> {/* Nivå */}
+          <col /> {/* Position */}
+          <col /> {/* Aktiviteter */}
+          <col /> {/* Vinstprocent */}
+          <col /> {/* Mål/match */}
+          <col /> {/* Utveckling */}
+          <col /> {/* Form */}
+        </colgroup>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[50px]"></TableHead>

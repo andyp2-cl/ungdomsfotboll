@@ -177,36 +177,33 @@ function calculateGoalDifference(activity: Activity): number {
 }
 
 // Helper function to get opponent name from activity
-function getOpponentName(activity: Activity): string | undefined {
-  // Try to extract opponent from activity name if not directly available
-  if (activity.name) {
-    // First try to handle " - " separator (primary format)
-    if (activity.name.includes(' - ')) {
-      const parts = activity.name.split(' - ');
-      if (parts.length > 1) {
-        // Take the second part and clean it up
-        let opponent = parts[1].trim();
-        
-        // Remove common prefixes that might be in the opponent name
-        opponent = opponent.replace(/^(Hässleholms IF|IF)\s+/i, '').trim();
-        
-        return opponent;
-      }
-    }
-    
-    // Fallback to "vs" separator
-    if (activity.name.includes('vs')) {
-      const parts = activity.name.split('vs');
-      if (parts.length > 1) {
-        let opponent = parts[1].trim();
-        
-        // Remove common prefixes
-        opponent = opponent.replace(/^(Hässleholms IF|IF)\s+/i, '').trim();
-        
-        return opponent;
-      }
+export function getOpponentName(activity: Activity): string | undefined {
+  if (!activity.name) return undefined;
+  // Hantera " - " separator
+  if (activity.name.includes(' - ')) {
+    const parts = activity.name.split(' - ');
+    if (parts.length === 2) {
+      const teamA = parts[0].trim();
+      const teamB = parts[1].trim();
+      // Returnera det lag som INTE är Hässleholms IF
+      if (/hässleholms if/i.test(teamA)) return teamB;
+      if (/hässleholms if/i.test(teamB)) return teamA;
+      // Om inget är HIF, returnera teamB som fallback
+      return teamB;
     }
   }
+  // Hantera "vs" separator
+  if (activity.name.includes('vs')) {
+    const parts = activity.name.split('vs');
+    if (parts.length === 2) {
+      const teamA = parts[0].trim();
+      const teamB = parts[1].trim();
+      if (/hässleholms if/i.test(teamA)) return teamB;
+      if (/hässleholms if/i.test(teamB)) return teamA;
+      return teamB;
+    }
+  }
+  // Om inget av ovan, returnera undefined
   return undefined;
 }
 

@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -259,12 +258,6 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
           </div>
         </CardContent>
       </Card>
-
-      {/* Player Count Card */}
-      <PlayerSummaryCard data={gradeStats} />
-      
-      {/* Monthly Activity Trends */}
-      <MonthlyActivityChart activities={activities} />
     </div>
   );
 }

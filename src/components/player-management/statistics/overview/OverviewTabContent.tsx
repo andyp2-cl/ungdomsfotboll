@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
@@ -8,6 +7,8 @@ import { KPISection } from "./KPISection";
 import { ChartSection } from "./ChartSection";
 import { isTrainer } from "@/utils/positionUtils";
 import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
+import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { getOpponentName } from '@/utils/playerCombinations';
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -133,8 +134,192 @@ export function OverviewTabContent({
   const gridCols = isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2";
   const topPlayersCount = isMobile ? 5 : 10;
 
+  // 1. Lagets prestationer
+  const matchActivities = activities.filter(a => a.type === "match");
+  const totalMatches = matchActivities.length;
+  const wins = matchActivities.filter(m => m.isWin === true).length;
+  const draws = matchActivities.filter(m => m.homeScore === m.awayScore).length;
+  const losses = matchActivities.filter(m => m.isWin === false && m.homeScore !== m.awayScore).length;
+  const goalsScored = matchActivities.reduce((sum, m) => sum + (m.homeScore || 0), 0);
+  const goalsConceded = matchActivities.reduce((sum, m) => sum + (m.awayScore || 0), 0);
+  const goalDiff = goalsScored - goalsConceded;
+  const avgGoalsFor = totalMatches > 0 ? (goalsScored / totalMatches).toFixed(2) : "0.00";
+  const avgGoalsAgainst = totalMatches > 0 ? (goalsConceded / totalMatches).toFixed(2) : "0.00";
+  // Längsta vinst/förlustsvit
+  function getStreak(type: 'win'|'loss') {
+    let max = 0, current = 0;
+    for (const m of matchActivities) {
+      const isType = (type === 'win' ? m.isWin === true : m.isWin === false && m.homeScore !== m.awayScore);
+      if (isType) { current++; max = Math.max(max, current); } else { current = 0; }
+    }
+    return max;
+  }
+  const winStreak = getStreak('win');
+  const lossStreak = getStreak('loss');
+
+  // 2. Topp-listor
+  // Målskyttar
+  const playerGoals = players.map(p => ({
+    id: p.id,
+    name: p.name,
+    goals: matchActivities.reduce((sum, m) => sum + (m.player_stats?.goals?.[p.id] || 0), 0)
+  })).sort((a, b) => b.goals - a.goals).slice(0, 5);
+  // Assistkungar
+  const playerAssists = players.map(p => ({
+    id: p.id,
+    name: p.name,
+    assists: matchActivities.reduce((sum, m) => sum + (m.player_stats?.assists?.[p.id] || 0), 0)
+  })).sort((a, b) => b.assists - a.assists).slice(0, 5);
+  // Närvaro
+  const playerAttendance = players.map(p => ({
+    id: p.id,
+    name: p.name,
+    attendance: activities.filter(a => a.participants?.includes(p.id)).length
+  })).sort((a, b) => b.attendance - a.attendance).slice(0, 5);
+  // Utveckling (om det finns)
+  const playerDevelopment = players.filter(p => p.development).map(p => ({
+    id: p.id,
+    name: p.name,
+    dev: Object.values(p.development || {}).reduce((sum, v) => sum + (typeof v === 'number' ? v : 0), 0)
+  })).sort((a, b) => b.dev - a.dev).slice(0, 5);
+
+  // 3. Formkurva
+  // Lagets form senaste 5 matcher
+  const last5 = matchActivities.slice(-5);
+  const teamForm = last5.map(m => m.isWin === true ? 'V' : (m.homeScore === m.awayScore ? 'O' : 'F'));
+  // Spelare med bäst form (flest vinster senaste 5 matcher)
+  const playerForm = players.map(p => {
+    const last5p = matchActivities.filter(m => m.participants?.includes(p.id)).slice(-5);
+    const wins = last5p.filter(m => m.isWin === true).length;
+    return { id: p.id, name: p.name, wins };
+  }).sort((a, b) => b.wins - a.wins).slice(0, 5);
+
+  // Fun facts/highlights
+  function getBiggestWin(matches: Activity[]) {
+    let maxDiff = -Infinity;
+    let match: Activity | undefined;
+    for (const m of matches) {
+      if (typeof m.homeScore === 'number' && typeof m.awayScore === 'number') {
+        const diff = m.homeScore - m.awayScore;
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          match = m;
+        }
+      }
+    }
+    return match;
+  }
+  function getBiggestLoss(matches: Activity[]) {
+    let maxDiff = Infinity;
+    let match: Activity | undefined;
+    for (const m of matches) {
+      if (typeof m.homeScore === 'number' && typeof m.awayScore === 'number') {
+        const diff = m.homeScore - m.awayScore;
+        if (diff < maxDiff) {
+          maxDiff = diff;
+          match = m;
+        }
+      }
+    }
+    return match;
+  }
+  function getMostGoalsMatch(matches: Activity[]) {
+    let maxGoals = -Infinity;
+    let match: Activity | undefined;
+    for (const m of matches) {
+      if (typeof m.homeScore === 'number' && m.homeScore > maxGoals) {
+        maxGoals = m.homeScore;
+        match = m;
+      }
+    }
+    return match;
+  }
+  const biggestWin = getBiggestWin(matchActivities);
+  const biggestLoss = getBiggestLoss(matchActivities);
+  const mostGoalsMatch = getMostGoalsMatch(matchActivities);
+  // Sortera matcher i fallande datumordning (nyast först)
+  const sortedMatches = [...matchActivities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Hitta senaste spelade match (inte framtida)
+  const today = new Date();
+  const lastPlayedMatch = sortedMatches.find(m => new Date(m.date) <= today);
+  const bestFormPeriod = playerForm.find(p => p.wins === winStreak);
+  const avgGoalsLast5 = last5.reduce((sum, m) => sum + (m.homeScore || 0), 0) / last5.length;
+
   return (
     <div className="space-y-6">
+      {/* Lagets prestationer, topp 5-listor, formkurva */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8 max-w-screen-xl mx-auto">
+        <div className="bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-xl p-8 shadow-lg border border-yellow-200 min-h-[260px] flex flex-col justify-between">
+          <div className="font-bold text-2xl mb-6 flex items-center gap-2 text-yellow-800"><Trophy className="w-7 h-7 text-yellow-500" /> Lagets prestationer</div>
+          {/* Fun facts/highlights */}
+          <div className="mb-4">
+            <div className="font-semibold text-yellow-900">Största vinst:</div>
+            <div className="mb-2">{biggestWin ? `${biggestWin.homeScore}-${biggestWin.awayScore} mot ${getOpponentName(biggestWin) || '-'} (${biggestWin.date})` : '-'}</div>
+            <div className="font-semibold text-yellow-900">Största förlust:</div>
+            <div className="mb-2">{biggestLoss ? `${biggestLoss.homeScore}-${biggestLoss.awayScore} mot ${getOpponentName(biggestLoss) || '-'} (${biggestLoss.date})` : '-'}</div>
+            <div className="font-semibold text-yellow-900">Flest mål i en match:</div>
+            <div className="mb-2">{mostGoalsMatch ? `${mostGoalsMatch.homeScore} mot ${getOpponentName(mostGoalsMatch) || '-'} (${mostGoalsMatch.date})` : '-'}</div>
+            <div className="font-semibold text-yellow-900">Längsta obesegrade svit:</div>
+            <div className="mb-2">{winStreak ? `${winStreak} matcher` : '-'}</div>
+            <div className="font-semibold text-yellow-900">Senaste match:</div>
+            <div>{lastPlayedMatch ? `${lastPlayedMatch.homeScore}-${lastPlayedMatch.awayScore} mot ${getOpponentName(lastPlayedMatch) || '-'} (${lastPlayedMatch.date})` : '-'}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-lg">
+            <div>Matcher:</div><div className="font-semibold text-yellow-900">{totalMatches}</div>
+            <div>Vinster:</div><div className="font-semibold text-green-700">{wins}</div>
+            <div>Oavgjorda:</div><div className="font-semibold text-gray-600">{draws}</div>
+            <div>Förluster:</div><div className="font-semibold text-red-600">{losses}</div>
+            <div>Mål gjorda:</div><div className="font-semibold text-green-800">{goalsScored}</div>
+            <div>Mål insläppta:</div><div className="font-semibold text-red-700">{goalsConceded}</div>
+            <div>Målskillnad:</div><div className={`font-semibold ${goalDiff >= 0 ? 'text-green-700' : 'text-red-700'}`}>{goalDiff}</div>
+            <div>Snitt mål/match:</div><div className="font-semibold text-blue-700">{avgGoalsFor}</div>
+            <div>Snitt insläppta/match:</div><div className="font-semibold text-blue-400">{avgGoalsAgainst}</div>
+            <div>Längsta vinstsvit:</div><div className="inline-flex items-center gap-1 font-semibold text-green-700"><ArrowUpRight className="w-5 h-5" />{winStreak}</div>
+            <div>Längsta förlustsvit:</div><div className="inline-flex items-center gap-1 font-semibold text-red-700"><ArrowDownRight className="w-5 h-5" />{lossStreak}</div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl p-8 shadow-lg border border-blue-200 min-h-[260px] flex flex-col justify-between">
+          <div className="font-bold text-2xl mb-6 flex items-center gap-2 text-blue-800"><Users className="w-7 h-7 text-blue-500" /> Topp 5-listor</div>
+          <div className="text-lg mb-3 font-semibold">Målskyttar <span className="ml-1 px-2 py-0.5 rounded-full bg-green-200 text-green-800 text-xs">Bäst: {playerGoals[0]?.name} ({playerGoals[0]?.goals})</span></div>
+          <ul className="mb-3">
+            {playerGoals.map(p => <li key={p.id}>{p.name}: <span className="font-semibold text-green-700">{p.goals}</span></li>)}
+          </ul>
+          <div className="text-lg mb-3 font-semibold">Assistkungar <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-200 text-blue-800 text-xs">Bäst: {playerAssists[0]?.name} ({playerAssists[0]?.assists})</span></div>
+          <ul className="mb-3">
+            {playerAssists.map(p => <li key={p.id}>{p.name}: <span className="font-semibold text-blue-700">{p.assists}</span></li>)}
+          </ul>
+          <div className="text-lg mb-3 font-semibold">Närvaro <span className="ml-1 px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 text-xs">Bäst: {playerAttendance[0]?.name} ({playerAttendance[0]?.attendance})</span></div>
+          <ul className="mb-3">
+            {playerAttendance.map(p => <li key={p.id}>{p.name}: <span className="font-semibold text-purple-700">{p.attendance}</span></li>)}
+          </ul>
+          {playerDevelopment.length > 0 && <>
+            <div className="text-lg mb-3 font-semibold">Utveckling <span className="ml-1 px-2 py-0.5 rounded-full bg-orange-200 text-orange-800 text-xs">Bäst: {playerDevelopment[0]?.name} ({playerDevelopment[0]?.dev})</span></div>
+            <ul className="mb-3">
+              {playerDevelopment.map(p => <li key={p.id}>{p.name}: <span className="font-semibold text-orange-700">{p.dev}</span></li>)}
+            </ul>
+          </>}
+        </div>
+        <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-xl p-8 shadow-lg border border-green-200 min-h-[260px] flex flex-col justify-start">
+          <div className="font-bold text-2xl mb-6 flex items-center gap-2 text-green-800"><TrendingUp className="w-7 h-7 text-green-500" /> Formkurva</div>
+          {/* Fun facts/highlights och formkurva direkt under rubriken */}
+          <div className="flex flex-col gap-2 mb-2">
+            <div className="font-semibold text-green-900">Bästa formperiod:</div>
+            <div>{winStreak ? `${winStreak} raka vinster` : '-'}</div>
+            <div className="font-semibold text-green-900">Senaste match:</div>
+            <div>{lastPlayedMatch ? `${lastPlayedMatch.homeScore}-${lastPlayedMatch.awayScore} mot ${getOpponentName(lastPlayedMatch) || '-'} (${lastPlayedMatch.date})` : '-'}</div>
+            <div className="font-semibold text-green-900">Snittmål senaste 5:</div>
+            <div>{avgGoalsLast5 ? avgGoalsLast5.toFixed(2) : '-'}</div>
+            <div className="text-lg font-semibold mt-2">Lagets form (senaste 5 matcher)</div>
+            <div className="flex gap-2 mb-1">
+              {teamForm.map((f, i) => <span key={i} className={`px-2 py-1 rounded font-bold ${f === 'V' ? 'bg-green-300 text-green-900' : f === 'O' ? 'bg-yellow-200 text-yellow-900' : 'bg-red-300 text-red-900'}`}>{f}</span>)}
+            </div>
+            <div className="text-lg font-semibold mt-2">Spelare med bäst form <span className="ml-1 px-2 py-0.5 rounded-full bg-green-200 text-green-800 text-xs">{playerForm[0]?.name} ({playerForm[0]?.wins} vinster)</span></div>
+            <ul>
+              {playerForm.map(p => <li key={p.id}>{p.name}: <span className="font-semibold text-green-700">{p.wins} vinster</span></li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
       {/* Enhanced KPI Section */}
       <KPISection 
         players={players} 
@@ -142,8 +327,8 @@ export function OverviewTabContent({
         isMobile={isMobile}
       />
       
-      {/* Charts Section */}
-      <div className={`grid ${gridCols} gap-6`}>
+      {/* Charts Section: Aktivitetsstatistik per nivå + Lagprestationer över tid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <ChartSection
           title="Aktivitetsstatistik per nivå"
           description="Genomsnittligt antal aktiviteter per spelarnivå"
@@ -153,106 +338,31 @@ export function OverviewTabContent({
             config={gradeChartConfig} 
           />
         </ChartSection>
-        
         <ChartSection
-          title="Mest aktiva spelare"
-          description={`Topp ${topPlayersCount} spelare med flest aktiviteter`}
+          title="Lagprestationer över tid"
+          description="Utveckling av vinstprocent och målproduktion"
+          className="w-full"
         >
-          <PlayerActivityChart 
-            data={playerActivityData.slice(0, topPlayersCount)} 
-            config={playerChartConfig}
-            onBarClick={onPlayerSelect ? handlePlayerChartClick : undefined}
-          />
+          <div className="h-[300px] w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              {monthlyData.map(data => (
+                <div key={data.month} className="bg-muted/50 rounded-lg p-3 text-center">
+                  <div className="text-sm font-medium">{data.month}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {data.matches} matcher
+                  </div>
+                  <div className="text-lg font-bold text-green-600">
+                    {data.winRate}%
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    {data.goals} mål
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </ChartSection>
       </div>
-
-      {/* Team Performance Trends */}
-      <ChartSection
-        title="Lagprestationer över tid"
-        description="Utveckling av vinstprocent och målproduktion"
-        className="w-full"
-      >
-        <div className="h-[300px] w-full">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            {monthlyData.map(data => (
-              <div key={data.month} className="bg-muted/50 rounded-lg p-3 text-center">
-                <div className="text-sm font-medium">{data.month}</div>
-                <div className="text-xs text-muted-foreground">
-                  {data.matches} matcher
-                </div>
-                <div className="text-lg font-bold text-green-600">
-                  {data.winRate}%
-                </div>
-                <div className="text-xs text-blue-600">
-                  {data.goals} mål
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </ChartSection>
-
-      {/* Goals per match leaderboard */}
-      <ChartSection
-        title="Målskyttar - Mål per match"
-        description="Spelare med bäst målsnitt per match (min 3 matcher)"
-        className="w-full"
-      >
-        <div className="h-[300px] w-full overflow-y-auto">
-          <table className="w-full">
-            <thead className="sticky top-0 bg-background border-b">
-              <tr className="text-left">
-                <th className="pb-2 font-medium">Spelare</th>
-                <th className="pb-2 text-center font-medium">Matcher</th>
-                <th className="pb-2 text-center font-medium">Mål</th>
-                <th className="pb-2 text-center font-medium">Mål/match</th>
-              </tr>
-            </thead>
-            <tbody>
-              {playerStats
-                .filter(player => player.matches >= 3)
-                .sort((a, b) => {
-                  const aGoalsPerMatch = a.matches > 0 ? a.goals / a.matches : 0;
-                  const bGoalsPerMatch = b.matches > 0 ? b.goals / b.matches : 0;
-                  return bGoalsPerMatch - aGoalsPerMatch;
-                })
-                .slice(0, 10)
-                .map((player, index) => {
-                  const goalsPerMatch = player.matches > 0 ? (player.goals / player.matches).toFixed(2) : '0.00';
-                  return (
-                    <tr 
-                      key={player.playerId} 
-                      className="border-b hover:bg-accent/5 cursor-pointer transition-colors"
-                      onClick={() => onPlayerSelect && onPlayerSelect(player.playerId)}
-                    >
-                      <td className="py-2 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </span>
-                        {player.name}
-                      </td>
-                      <td className="py-2 text-center">{player.matches}</td>
-                      <td className="py-2 text-center font-semibold text-green-600">{player.goals}</td>
-                      <td className="py-2 text-center font-bold text-primary">{goalsPerMatch}</td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
-      </ChartSection>
-
-      {/* Attendance Analytics - Full Width */}
-      <ChartSection
-        title="Närvaroanalys"
-        description="Detaljerad närvarostatistik för spelare"
-        className="w-full"
-      >
-        <PlayerAttendanceAnalytics
-          players={players}
-          activities={activities}
-        />
-      </ChartSection>
     </div>
   );
 }
