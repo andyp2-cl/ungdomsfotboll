@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Player, PlayerPosition } from "@/types/player";
-import { PlayerCard } from "@/components/PlayerCard";
+import { PlayerCard } from "@/components/player-ui/PlayerCard";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
 
 interface PlayersListContentProps {
