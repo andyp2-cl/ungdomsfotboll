@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -68,52 +67,6 @@ export function PlayerCard({
   const isCoach = isTrainer(player.positions);
   const winRate = getPlayerWinRate();
   const isActive = player.isActive !== undefined ? player.isActive : true;
-
-  // Ultra kompakt mobil vy - minimal lista för att visa många spelare
-  if (compact && isMobile) {
-    return (
-      <div 
-        className={`flex items-center gap-1 p-0.5 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-          onSelect ? 'cursor-pointer' : ''
-        } ${!isActive ? 'opacity-60' : ''}`}
-        onClick={onSelect}
-        style={{ minHeight: '24px' }}
-      >
-        <div className={`${!isActive ? 'grayscale opacity-70' : ''} shrink-0`}>
-          {player.image ? (
-            <img 
-              src={player.image} 
-              alt={player.name} 
-              className="h-4 w-4 rounded-full object-cover"
-              loading="lazy"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <UserCircle className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1 flex items-center justify-between">
-          <span className={`font-medium text-xs truncate ${!isActive ? 'text-gray-500' : ''}`}>
-            {player.name}
-          </span>
-          <div className="flex items-center gap-1 shrink-0">
-            {!isCoach && (
-              <Badge className={`text-[6px] px-0.5 py-0 h-2.5 leading-none ${
-                !isActive ? 'bg-gray-400' : getGradeColor(player.grade || '')
-              }`}>
-                {player.grade}
-              </Badge>
-            )}
-            {winRate > 0 && !isCoach && (
-              <span className={`text-[7px] font-bold ${!isActive ? 'text-gray-400' : 'text-green-600'}`}>
-                {winRate}%
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (compact) {
     return (
