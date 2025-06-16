@@ -33,13 +33,34 @@ export function PlayersListContent({
     );
   }
 
+  // On mobile, always use a compact list layout that can show many players
+  if (isMobile) {
+    return (
+      <div className="space-y-0.5 w-full">
+        {sortedPlayers.map((player) => (
+          <PlayerCard
+            key={player.id}
+            player={player}
+            onSelect={() => {
+              console.log("PlayersListContent: Player card clicked:", player.name);
+              onPlayerSelect(player);
+            }}
+            onEdit={() => onPlayerEdit(player)}
+            compact={true}
+            isMobile={true}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} gap-4`}>
+    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} gap-4`}>
       {sortedPlayers.map((player) => (
         <PlayerCard
           key={player.id}
           player={player}
-          onClick={() => {
+          onSelect={() => {
             console.log("PlayersListContent: Player card clicked:", player.name);
             onPlayerSelect(player);
           }}

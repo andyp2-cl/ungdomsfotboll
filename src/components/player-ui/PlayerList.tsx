@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player } from "@/types/player";
 import { PlayerCard } from "./PlayerCard";
@@ -34,9 +35,10 @@ export function PlayerList({
     );
   }
   
+  // On mobile or when compact is true, use a very compact layout
   if (compact || isMobile) {
     return (
-      <div className={`space-y-1 ${className}`}>
+      <div className={`space-y-0.5 ${className}`}>
         {players.map(player => (
           <PlayerCard
             key={player.id}

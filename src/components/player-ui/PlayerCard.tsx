@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -67,6 +68,61 @@ export function PlayerCard({
   const isCoach = isTrainer(player.positions);
   const winRate = getPlayerWinRate();
   const isActive = player.isActive !== undefined ? player.isActive : true;
+
+  // Super compact mobile view - much smaller cards
+  if (compact && isMobile) {
+    return (
+      <div 
+        className={`flex items-center gap-2 p-1.5 rounded-md border hover:bg-muted/50 transition-colors min-w-0 ${
+          onSelect ? 'cursor-pointer' : ''
+        } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
+        onClick={onSelect}
+        style={{ minHeight: '32px' }}
+      >
+        <div className={`${!isActive ? 'grayscale opacity-70' : ''} shrink-0`}>
+          {player.image ? (
+            <img 
+              src={player.image} 
+              alt={player.name} 
+              className="h-6 w-6 rounded-full object-cover"
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <UserCircle className="h-6 w-6 text-muted-foreground" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className={`font-medium text-xs flex items-center gap-1 ${!isActive ? 'text-gray-500' : ''}`}>
+            <span className="truncate">{player.name}</span>
+            {!isCoach && (
+              <Badge className={`text-[8px] px-1 py-0 h-4 ${
+                !isActive ? 'bg-gray-400 hover:bg-gray-500' : getGradeColor(player.grade || '')
+              }`}>
+                {player.grade}
+              </Badge>
+            )}
+            {winRate > 0 && !isCoach && (
+              <span className={`text-[10px] font-semibold ${!isActive ? 'text-gray-400' : 'text-green-600'}`}>
+                {winRate}%
+              </span>
+            )}
+          </div>
+        </div>
+        {onEdit && (
+          <button
+            className="p-0.5 rounded hover:bg-gray-100 shrink-0"
+            onClick={e => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
+          </button>
+        )}
+      </div>
+    );
+  }
 
   if (compact) {
     return (
