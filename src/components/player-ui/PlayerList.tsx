@@ -36,7 +36,7 @@ export function PlayerList({
   
   if (compact || isMobile) {
     return (
-      <div className={`space-y-1 ${className}`}>
+      <div className={`grid grid-cols-5 gap-1 ${className}`}>
         {players.map(player => (
           <PlayerCard
             key={player.id}

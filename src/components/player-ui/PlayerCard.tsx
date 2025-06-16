@@ -71,32 +71,32 @@ export function PlayerCard({
   if (compact) {
     return (
       <div 
-        className={`flex justify-between items-center p-1 md:p-2 rounded-md border hover:bg-muted/50 transition-colors min-w-0 ${
+        className={`flex justify-between items-center p-0.5 md:p-2 rounded-md border hover:bg-muted/50 transition-colors min-w-0 h-12 ${
           onSelect ? 'cursor-pointer' : ''
         } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
         onClick={onSelect}
-        style={{ minHeight: '40px' }}
+        style={{ minHeight: '32px', height: '48px', maxHeight: '52px' }}
       >
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          {/* Visa liten bild på mobil och desktop */}
+        <div className="flex items-center gap-1 md:gap-2 min-w-0">
+          {/* Visa mycket liten bild på mobil och desktop */}
           <div className={`${!isActive ? 'grayscale opacity-70' : ''} shrink-0`}>
             {player.image ? (
               <img 
                 src={player.image} 
                 alt={player.name} 
-                className="h-8 w-8 rounded-full object-cover"
+                className="h-6 w-6 rounded-full object-cover"
                 loading="lazy"
                 crossOrigin="anonymous"
               />
             ) : (
-              <UserCircle className="h-8 w-8 text-muted-foreground" />
+              <UserCircle className="h-6 w-6 text-muted-foreground" />
             )}
           </div>
           <div className="min-w-0">
-            <div className={`font-medium text-xs md:text-sm flex items-center ${!isActive ? 'text-gray-500' : ''}`}>
+            <div className={`font-medium text-[11px] flex items-center ${!isActive ? 'text-gray-500' : ''}`}>
               {player.name}
               {player.jerseyNumber && !isCoach && (
-                <span className={`ml-1 text-[10px] md:text-xs px-1 py-0.5 rounded-full ${
+                <span className={`ml-1 text-[9px] px-1 py-0.5 rounded-full ${
                   !isActive ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-800'
                 }`}>
                   #{player.jerseyNumber}
@@ -104,7 +104,7 @@ export function PlayerCard({
               )}
             </div>
             {!isCoach && player.positions && (
-              <div className={`text-[10px] md:text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
+              <div className={`text-[9px] ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
                 {formatPositions(player.positions, true)}
               </div>
             )}
@@ -114,13 +114,13 @@ export function PlayerCard({
         {/* Actions */}
         {onEdit && (
           <button
-            className="p-1 md:p-2 rounded hover:bg-gray-100"
+            className="p-0.5 md:p-2 rounded hover:bg-gray-100"
             onClick={e => {
               e.stopPropagation();
               onEdit();
             }}
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
           </button>
         )}
       </div>
@@ -166,19 +166,6 @@ export function PlayerCard({
             </Badge>
           )}
         </div>
-        
-        {/* Show winrate badge for non-coaches */}
-        {!isCoach && winRate > 0 && (
-          <div className="absolute top-2 left-2">
-            <Badge variant="outline" className={`${
-              !isActive 
-                ? 'bg-gray-100 text-gray-500 border-gray-300' 
-                : 'bg-white/90 text-primary border-primary'
-            }`}>
-              {winRate}% vinster
-            </Badge>
-          </div>
-        )}
         
         {action && (
           <div className="absolute bottom-2 left-2" onClick={e => e.stopPropagation()}>

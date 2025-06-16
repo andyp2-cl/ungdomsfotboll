@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Player, Activity } from "@/types/player";
@@ -23,9 +22,8 @@ export function SortIcon({ field, sortField, sortDirection }: SortIconProps) {
 }
 
 // Function to calculate development spider value
-const calculateDevelopmentValue = (player: Player): number => {
+export const calculateDevelopmentValue = (player: Player): number => {
   if (!player.development) return 0;
-  
   const development = player.development;
   const attributes = [
     development.technical || 1,
@@ -49,10 +47,9 @@ const calculateDevelopmentValue = (player: Player): number => {
     development.composure || 1,
     development.workRate || 1
   ];
-  
   const sum = attributes.reduce((acc, val) => acc + val, 0);
   const average = sum / attributes.length;
-  return Math.round(average * 10) / 10; // Round to 1 decimal place
+  return Math.round(average * 10) / 10;
 };
 
 export function usePlayerSorting() {
