@@ -33,23 +33,28 @@ export function PlayersListContent({
     );
   }
 
-  // På mobil, använd alltid en mycket kompakt listlayout som kan visa många spelare
+  // På mobil, använd en ultra kompakt lista för att visa många spelare utan scrollning
   if (isMobile) {
     return (
-      <div className="space-y-0.5 w-full max-h-[calc(100vh-300px)] overflow-y-auto">
-        {sortedPlayers.map((player) => (
-          <PlayerCard
-            key={player.id}
-            player={player}
-            onSelect={() => {
-              console.log("PlayersListContent: Player card clicked:", player.name);
-              onPlayerSelect(player);
-            }}
-            onEdit={() => onPlayerEdit(player)}
-            compact={true}
-            isMobile={true}
-          />
-        ))}
+      <div className="w-full bg-white rounded border">
+        <div className="px-2 py-1 bg-gray-50 border-b text-xs font-medium text-gray-600">
+          {sortedPlayers.length} spelare
+        </div>
+        <div className="max-h-[400px] overflow-y-auto">
+          {sortedPlayers.map((player) => (
+            <PlayerCard
+              key={player.id}
+              player={player}
+              onSelect={() => {
+                console.log("PlayersListContent: Player card clicked:", player.name);
+                onPlayerSelect(player);
+              }}
+              onEdit={() => onPlayerEdit(player)}
+              compact={true}
+              isMobile={true}
+            />
+          ))}
+        </div>
       </div>
     );
   }

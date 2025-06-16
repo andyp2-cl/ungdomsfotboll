@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -68,57 +69,48 @@ export function PlayerCard({
   const winRate = getPlayerWinRate();
   const isActive = player.isActive !== undefined ? player.isActive : true;
 
-  // Super kompakt mobil vy - mycket mindre kort för att visa många spelare
+  // Ultra kompakt mobil vy - minimal lista för att visa många spelare
   if (compact && isMobile) {
     return (
       <div 
-        className={`flex items-center gap-1.5 p-1 rounded border hover:bg-muted/30 transition-colors min-w-0 ${
+        className={`flex items-center gap-1 p-0.5 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
           onSelect ? 'cursor-pointer' : ''
-        } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
+        } ${!isActive ? 'opacity-60' : ''}`}
         onClick={onSelect}
-        style={{ minHeight: '28px' }}
+        style={{ minHeight: '24px' }}
       >
         <div className={`${!isActive ? 'grayscale opacity-70' : ''} shrink-0`}>
           {player.image ? (
             <img 
               src={player.image} 
               alt={player.name} 
-              className="h-5 w-5 rounded-full object-cover"
+              className="h-4 w-4 rounded-full object-cover"
               loading="lazy"
               crossOrigin="anonymous"
             />
           ) : (
-            <UserCircle className="h-5 w-5 text-muted-foreground" />
+            <UserCircle className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
-        <div className="min-w-0 flex-1 flex items-center gap-1">
+        <div className="min-w-0 flex-1 flex items-center justify-between">
           <span className={`font-medium text-xs truncate ${!isActive ? 'text-gray-500' : ''}`}>
             {player.name}
           </span>
-          {!isCoach && (
-            <Badge className={`text-[7px] px-0.5 py-0 h-3 ${
-              !isActive ? 'bg-gray-400 hover:bg-gray-500' : getGradeColor(player.grade || '')
-            }`}>
-              {player.grade}
-            </Badge>
-          )}
-          {winRate > 0 && !isCoach && (
-            <span className={`text-[8px] font-semibold ${!isActive ? 'text-gray-400' : 'text-green-600'}`}>
-              {winRate}%
-            </span>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {!isCoach && (
+              <Badge className={`text-[6px] px-0.5 py-0 h-2.5 leading-none ${
+                !isActive ? 'bg-gray-400' : getGradeColor(player.grade || '')
+              }`}>
+                {player.grade}
+              </Badge>
+            )}
+            {winRate > 0 && !isCoach && (
+              <span className={`text-[7px] font-bold ${!isActive ? 'text-gray-400' : 'text-green-600'}`}>
+                {winRate}%
+              </span>
+            )}
+          </div>
         </div>
-        {onEdit && (
-          <button
-            className="p-0.5 rounded hover:bg-gray-100 shrink-0"
-            onClick={e => {
-              e.stopPropagation();
-              onEdit();
-            }}
-          >
-            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
-          </button>
-        )}
       </div>
     );
   }
