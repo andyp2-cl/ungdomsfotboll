@@ -364,7 +364,7 @@ export function OverviewTabContent({
           description="Utveckling av vinstprocent och målproduktion"
           className="w-full"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
             {monthlyData.map((data) => {
               // Calculate most goals in a match for this month
               const matchesThisMonth = matchActivities.filter(m => m.date.startsWith(data.month));
@@ -385,7 +385,7 @@ export function OverviewTabContent({
                 }
               });
               return (
-                <div key={data.month} className="bg-muted/50 rounded-lg p-3 text-center">
+                <div key={data.month} className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center w-full break-words">
                   <div className="text-sm font-medium">{data.month}</div>
                   <div className="text-xs text-muted-foreground">{data.matches} matcher</div>
                   <div className="text-lg font-bold text-green-700">Vinstprocent: {data.winRate}%</div>
