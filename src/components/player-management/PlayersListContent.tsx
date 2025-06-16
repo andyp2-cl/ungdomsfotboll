@@ -33,10 +33,10 @@ export function PlayersListContent({
     );
   }
 
-  // On mobile, always use a compact list layout that can show many players
+  // På mobil, använd alltid en mycket kompakt listlayout som kan visa många spelare
   if (isMobile) {
     return (
-      <div className="space-y-0.5 w-full">
+      <div className="space-y-0.5 w-full max-h-[calc(100vh-300px)] overflow-y-auto">
         {sortedPlayers.map((player) => (
           <PlayerCard
             key={player.id}
