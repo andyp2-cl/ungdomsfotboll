@@ -148,12 +148,12 @@ function CupsPage({ activities, players, onActivitySelect, onPlayerSelect }) {
                     <div className="flex items-center gap-1"><span className="font-semibold">Förluster:</span> {cup.losses}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 ml-auto">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                     <Trophy className="h-4 w-4 mr-1" />
                     {cup.matches.length} matcher
                   </span>
-                  <span className="ml-2 transition-transform group-data-[state=open]:rotate-180">
+                  <span className="transition-transform group-data-[state=open]:rotate-180 text-lg">
                     ▼
                   </span>
                 </div>
