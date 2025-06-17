@@ -253,16 +253,8 @@ export default function TeamSelectionPage() {
     const match = sortedMatches.find(m => m.id === matchId);
     if (!match) return;
 
-    // Update local state immediately for better UX
-    setSortedMatches(prevMatches => 
-      prevMatches.map(m => 
-        m.id === matchId 
-          ? { ...m, players: m.players.filter(id => id !== playerId) }
-          : m
-      )
-    );
-
     try {
+      // First, try to delete from database
       const { error } = await supabase
         .from('player_activities')
         .delete()
@@ -270,14 +262,6 @@ export default function TeamSelectionPage() {
         .eq('player_id', playerId);
 
       if (error) {
-        // Revert local state on error
-        setSortedMatches(prevMatches => 
-          prevMatches.map(m => 
-            m.id === matchId 
-              ? { ...m, players: [...m.players, playerId] }
-              : m
-          )
-        );
         toast({
           title: "Kunde inte ta bort spelare",
           description: error.message,
@@ -285,6 +269,15 @@ export default function TeamSelectionPage() {
         });
         return;
       }
+
+      // If database operation was successful, update local states
+      setSortedMatches(prevMatches => 
+        prevMatches.map(m => 
+          m.id === matchId 
+            ? { ...m, players: m.players.filter(id => id !== playerId) }
+            : m
+        )
+      );
 
       // Update activities state to sync with other views
       const activity = activities.find(a => a.id === matchId);
@@ -302,14 +295,6 @@ export default function TeamSelectionPage() {
       });
     } catch (error) {
       console.error('Error removing player:', error);
-      // Revert local state on error
-      setSortedMatches(prevMatches => 
-        prevMatches.map(m => 
-          m.id === matchId 
-            ? { ...m, players: [...m.players, playerId] }
-            : m
-        )
-      );
       toast({
         title: "Ett fel uppstod",
         description: "Kunde inte ta bort spelaren från matchen",
@@ -338,19 +323,13 @@ export default function TeamSelectionPage() {
       return;
     }
 
-    // Store values we need and close dialog immediately
     const matchId = multiSelectDialog.matchId;
     const selectedIds = [...selectedPlayerIds];
     
-    // Close dialog and reset selection immediately
     setMultiSelectDialog({ open: false, matchId: null });
     setSelectedPlayerIds([]);
 
-    let successCount = 0;
-    const successfulIds: string[] = [];
-
     try {
-      // Find the activity in the activities state
       const activity = activities.find(a => a.id === matchId);
       if (!activity) {
         toast({
@@ -361,36 +340,33 @@ export default function TeamSelectionPage() {
         return;
       }
 
-      // Update local state immediately for better UX
-      setSortedMatches(prevMatches => 
-        prevMatches.map(m => 
-          m.id === matchId 
-            ? { ...m, players: [...m.players, ...selectedIds] }
-            : m
-        )
+      // Add all players to database first
+      const insertPromises = selectedIds.map(playerId => 
+        supabase
+          .from('player_activities')
+          .insert({
+            id: crypto.randomUUID(),
+            player_id: playerId,
+            activity_id: matchId
+          })
       );
 
-      // Add all players to database
-      for (const playerId of selectedIds) {
-        try {
-          const { error } = await supabase
-            .from('player_activities')
-            .insert({
-              id: crypto.randomUUID(),
-              player_id: playerId,
-              activity_id: matchId
-            });
+      const results = await Promise.allSettled(insertPromises);
+      const successfulIds = selectedIds.filter((_, index) => 
+        results[index].status === 'fulfilled' && !(results[index] as PromiseFulfilledResult<any>).value.error
+      );
 
-          if (error) throw error;
-          successCount++;
-          successfulIds.push(playerId);
-        } catch (error) {
-          console.error('Error adding player:', error);
-        }
-      }
+      if (successfulIds.length > 0) {
+        // Update local states only after successful database operations
+        setSortedMatches(prevMatches => 
+          prevMatches.map(m => 
+            m.id === matchId 
+              ? { ...m, players: [...m.players, ...successfulIds] }
+              : m
+          )
+        );
 
-      if (successCount > 0) {
-        // Update activities state to sync with other views
+        // Update activities state
         const updatedActivity = {
           ...activity,
           participants: [...(activity.participants || []), ...successfulIds]
@@ -399,33 +375,22 @@ export default function TeamSelectionPage() {
 
         toast({
           title: "Spelare tillagda",
-          description: `${successCount} av ${selectedIds.length} spelare har lagts till.`
+          description: `${successfulIds.length} av ${selectedIds.length} spelare har lagts till.`
         });
       }
 
-      // If some players failed, revert local state to only include successful ones
-      if (successCount < selectedIds.length) {
-        setSortedMatches(prevMatches => 
-          prevMatches.map(m => 
-            m.id === matchId 
-              ? { ...m, players: [...m.players.filter(id => !selectedIds.includes(id)), ...successfulIds] }
-              : m
-          )
-        );
+      if (successfulIds.length < selectedIds.length) {
+        toast({
+          title: "Varning",
+          description: `${selectedIds.length - successfulIds.length} spelare kunde inte läggas till.`,
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error in handleMultiPlayerSave:', error);
-      // Revert local state completely on error
-      setSortedMatches(prevMatches => 
-        prevMatches.map(m => 
-          m.id === matchId 
-            ? { ...m, players: m.players.filter(id => !selectedIds.includes(id)) }
-            : m
-        )
-      );
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte lägga till alla spelare",
+        description: "Kunde inte lägga till spelarna",
         variant: "destructive"
       });
     }
