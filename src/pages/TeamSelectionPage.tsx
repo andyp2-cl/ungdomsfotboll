@@ -340,7 +340,42 @@ export default function TeamSelectionPage() {
         return;
       }
 
-      // Add all players to database first
+      // For cup activities, we need to update the activity first
+      if (activity.cupId) {
+        // Update the activity with new participants
+        const updatedActivity = {
+          ...activity,
+          participants: [...(activity.participants || []), ...selectedIds]
+        };
+
+        try {
+          await handleActivityUpdate(updatedActivity);
+          
+          // Update local state
+          setSortedMatches(prevMatches => 
+            prevMatches.map(m => 
+              m.id === matchId 
+                ? { ...m, players: [...m.players, ...selectedIds] }
+                : m
+            )
+          );
+
+          toast({
+            title: "Spelare tillagda",
+            description: `${selectedIds.length} spelare har lagts till.`
+          });
+        } catch (error) {
+          console.error('Error updating cup activity:', error);
+          toast({
+            title: "Ett fel uppstod",
+            description: "Kunde inte lägga till spelarna i cup-matchen",
+            variant: "destructive"
+          });
+        }
+        return;
+      }
+
+      // For regular matches, add players to player_activities table
       const insertPromises = selectedIds.map(playerId => 
         supabase
           .from('player_activities')
