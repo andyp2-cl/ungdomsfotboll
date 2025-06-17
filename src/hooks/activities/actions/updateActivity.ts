@@ -1,7 +1,7 @@
-
 import { Activity, Player } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { normalizePlayerStats } from "../utils/playerStatsUtils";
+import { supabase } from "@/lib/supabase/client";
 
 /**
  * Handles updating an existing activity
@@ -47,6 +47,51 @@ export const handleActivityUpdate = async (
     const updatedActivities = activities.map(activity => 
       activity.id === normalizedActivity.id ? normalizedActivity : activity
     );
+
+    // If this is a cup activity, we need to sync participants with all cup matches
+    if (normalizedActivity.cupId) {
+      try {
+        // Get all matches for this cup
+        const { data: cupMatches, error: cupMatchesError } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('cupId', normalizedActivity.cupId);
+
+        if (cupMatchesError) {
+          throw cupMatchesError;
+        }
+
+        // Update all cup matches with the same participants
+        const updatedCupMatches = cupMatches.map(match => ({
+          ...match,
+          participants: normalizedActivity.participants
+        }));
+
+        // Save all cup matches to database
+        await saveActivities(updatedCupMatches);
+
+        // Update local state for all cup matches
+        const allUpdatedActivities = activities.map(activity => {
+          if (activity.cupId === normalizedActivity.cupId) {
+            return {
+              ...activity,
+              participants: normalizedActivity.participants
+            };
+          }
+          return activity;
+        });
+
+        setActivities(allUpdatedActivities);
+      } catch (cupError) {
+        console.error("Error syncing cup matches:", cupError);
+        toast({
+          title: "Varning",
+          description: "Kunde inte synkronisera alla cup-matcher. Försök igen.",
+          variant: "destructive"
+        });
+        throw cupError;
+      }
+    }
     
     // Try to save to database FIRST, before updating UI state
     try {
