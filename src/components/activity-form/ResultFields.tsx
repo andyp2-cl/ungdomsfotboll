@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,18 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
   const awayScore = form.watch("awayScore");
   const isWin = form.watch("isWin");
 
+  // NYTT: Checkbox för att aktivera resultatfält
+  const [enableResult, setEnableResult] = useState(
+    homeScore !== undefined || awayScore !== undefined
+  );
+
+  // Om man redan har fyllt i resultat, visa alltid fälten
+  useEffect(() => {
+    if (homeScore !== undefined || awayScore !== undefined) {
+      setEnableResult(true);
+    }
+  }, [homeScore, awayScore]);
+
   // Log form values for debugging
   console.log("Form values for match result:", { 
     homeScore, 
@@ -39,6 +50,15 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
       form.setValue("isWin", undefined);
     }
   }, [homeScore, awayScore, form]);
+
+  // Rensa resultatfält om checkboxen är avbockad
+  useEffect(() => {
+    if (!enableResult) {
+      form.setValue("homeScore", undefined);
+      form.setValue("awayScore", undefined);
+      form.setValue("isWin", undefined);
+    }
+  }, [enableResult, form]);
 
   // Improved radio button change handler
   const handleWinStatusChange = (value: string) => {
@@ -84,87 +104,97 @@ export function ResultFields({ form, activityType }: ResultFieldsProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Matchresultat</h3>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="homeScore"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Hemmamål</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Hemmamål"
-                  value={field.value === undefined ? '' : field.value}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 
-                      undefined : 
-                      parseInt(e.target.value, 10);
-                    field.onChange(value);
-                  }}
-                />
-              </FormControl>
-            </FormItem>
-          )}
+      <label className="flex items-center gap-2 mb-2">
+        <input
+          type="checkbox"
+          checked={enableResult}
+          onChange={e => setEnableResult(e.target.checked)}
         />
-        
-        <FormField
-          control={form.control}
-          name="awayScore"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bortamål</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Bortamål"
-                  value={field.value === undefined ? '' : field.value}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 
-                      undefined : 
-                      parseInt(e.target.value, 10);
-                    field.onChange(value);
-                  }}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      </div>
-      
-      <div>
-        <FormLabel className="block mb-2">Matchresultat</FormLabel>
-        <RadioGroup 
-          value={winStatusValue} 
-          onValueChange={handleWinStatusChange}
-          className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="win" id="win" />
-            <Label htmlFor="win" className="flex items-center cursor-pointer">
-              <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
-              Vinst
-            </Label>
+        Lägg till matchresultat
+      </label>
+      {enableResult && (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="homeScore"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Hemmamål</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Hemmamål"
+                      value={field.value === undefined ? '' : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 
+                          undefined : 
+                          parseInt(e.target.value, 10);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="awayScore"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Bortamål</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Bortamål"
+                      value={field.value === undefined ? '' : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 
+                          undefined : 
+                          parseInt(e.target.value, 10);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="draw" id="draw" />
-            <Label htmlFor="draw" className="flex items-center cursor-pointer">
-              <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
-              Oavgjort
-            </Label>
+          <div>
+            <FormLabel className="block mb-2">Matchresultat</FormLabel>
+            <RadioGroup 
+              value={winStatusValue} 
+              onValueChange={handleWinStatusChange}
+              className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-4'}`}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="win" id="win" />
+                <Label htmlFor="win" className="flex items-center cursor-pointer">
+                  <CheckCircle2 className="h-4 w-4 mr-1 text-green-600" />
+                  Vinst
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draw" id="draw" />
+                <Label htmlFor="draw" className="flex items-center cursor-pointer">
+                  <MinusCircle className="h-4 w-4 mr-1 text-gray-600" />
+                  Oavgjort
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="loss" id="loss" />
+                <Label htmlFor="loss" className="flex items-center cursor-pointer">
+                  <XCircle className="h-4 w-4 mr-1 text-red-600" />
+                  Förlust
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="loss" id="loss" />
-            <Label htmlFor="loss" className="flex items-center cursor-pointer">
-              <XCircle className="h-4 w-4 mr-1 text-red-600" />
-              Förlust
-            </Label>
-          </div>
-        </RadioGroup>
-      </div>
+        </>
+      )}
     </div>
   );
 }
