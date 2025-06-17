@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +11,8 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
   }
   
   try {
-    console.log(`Updating participants for activity ${activity.id} (${activity.name})`);
+    console.log(`[updateActivityParticipants] Starting update for activity ${activity.id} (${activity.name})`);
+    console.log(`[updateActivityParticipants] Current participants:`, activity.participants);
     
     // Get current relationships for this activity
     const { data: existingRelationships, error: fetchError } = await supabase
@@ -21,17 +21,17 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
       .eq('activity_id', activity.id);
       
     if (fetchError) {
-      console.error("Error fetching existing participant relationships:", fetchError);
+      console.error("[updateActivityParticipants] Error fetching existing participant relationships:", fetchError);
       throw fetchError;
     }
     
     const existingPlayerIds = existingRelationships?.map(relation => relation.player_id) || [];
-    console.log(`Found ${existingPlayerIds.length} existing participants`);
+    console.log(`[updateActivityParticipants] Found ${existingPlayerIds.length} existing participants:`, existingPlayerIds);
     
     // If no participants in activity, just return
     if (!activity.participants || activity.participants.length === 0) {
       if (existingPlayerIds.length > 0) {
-        console.log(`Removing all ${existingPlayerIds.length} participants from activity ${activity.id}`);
+        console.log(`[updateActivityParticipants] Removing all ${existingPlayerIds.length} participants from activity ${activity.id}`);
         
         // Delete all existing relationships for this activity
         const { error: deleteAllError } = await supabase
@@ -40,9 +40,11 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           .eq('activity_id', activity.id);
           
         if (deleteAllError) {
-          console.error("Error deleting all participant relationships:", deleteAllError);
+          console.error("[updateActivityParticipants] Error deleting all participant relationships:", deleteAllError);
           throw deleteAllError;
         }
+        
+        console.log(`[updateActivityParticipants] Successfully removed all participants`);
       }
       return;
     }
@@ -51,10 +53,14 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
     const playersToAdd = activity.participants.filter(id => !existingPlayerIds.includes(id));
     const playersToRemove = existingPlayerIds.filter(id => !activity.participants.includes(id));
     
-    console.log(`Participants to add: ${playersToAdd.length}, to remove: ${playersToRemove.length}`);
+    console.log(`[updateActivityParticipants] Changes needed:
+      - To add: ${playersToAdd.length} players (${playersToAdd.join(', ')})
+      - To remove: ${playersToRemove.length} players (${playersToRemove.join(', ')})`);
     
     // Remove participants that are no longer in the list
     if (playersToRemove.length > 0) {
+      console.log(`[updateActivityParticipants] Removing ${playersToRemove.length} participants...`);
+      
       const { error: deleteError } = await supabase
         .from('player_activities')
         .delete()
@@ -62,33 +68,60 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
         .in('player_id', playersToRemove);
         
       if (deleteError) {
-        console.error("Error removing participants:", deleteError);
+        console.error("[updateActivityParticipants] Error removing participants:", deleteError);
         throw deleteError;
       }
       
-      console.log(`Removed ${playersToRemove.length} participants from activity ${activity.id}`);
+      console.log(`[updateActivityParticipants] Successfully removed ${playersToRemove.length} participants`);
     }
     
     // Add new participants
     if (playersToAdd.length > 0) {
+      console.log(`[updateActivityParticipants] Adding ${playersToAdd.length} new participants...`);
+      
+      // Verify that all player IDs are valid strings
+      const invalidPlayerIds = playersToAdd.filter(id => typeof id !== 'string' || !id);
+      if (invalidPlayerIds.length > 0) {
+        console.error("[updateActivityParticipants] Invalid player IDs detected:", invalidPlayerIds);
+        throw new Error(`Invalid player IDs: ${invalidPlayerIds.join(', ')}`);
+      }
+      
       const newRelationships = playersToAdd.map(playerId => ({
         id: uuidv4(),
         activity_id: activity.id,
         player_id: playerId
       }));
       
-      console.log(`Adding ${playersToAdd.length} participants to activity ${activity.id}:`, newRelationships);
+      console.log(`[updateActivityParticipants] Inserting new relationships:`, newRelationships);
       
       const { error: insertError } = await supabase
         .from('player_activities')
         .insert(newRelationships);
         
       if (insertError) {
-        console.error("Error adding participants:", insertError);
+        console.error("[updateActivityParticipants] Error adding participants:", insertError);
         throw insertError;
       }
       
-      console.log(`Added ${playersToAdd.length} participants to activity ${activity.id}`);
+      // Verify that the insert was successful by fetching the new relationships
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('player_activities')
+        .select('*')
+        .eq('activity_id', activity.id)
+        .in('player_id', playersToAdd);
+        
+      if (verifyError) {
+        console.error("[updateActivityParticipants] Error verifying new relationships:", verifyError);
+        throw verifyError;
+      }
+      
+      const verifiedCount = verifyData?.length || 0;
+      if (verifiedCount !== playersToAdd.length) {
+        console.error(`[updateActivityParticipants] Verification failed: Expected ${playersToAdd.length} new relationships, found ${verifiedCount}`);
+        throw new Error('Verification of new relationships failed');
+      }
+      
+      console.log(`[updateActivityParticipants] Successfully added and verified ${playersToAdd.length} new participants`);
       
       // Log changes for audit trail
       try {
@@ -99,11 +132,13 @@ export const updateActivityParticipants = async (activity: Activity): Promise<vo
           `Added ${playersToAdd.length} participants to ${activity.name}`
         );
       } catch (logError) {
-        console.error("Error logging participant changes (continuing anyway):", logError);
+        console.error("[updateActivityParticipants] Error logging participant changes (continuing anyway):", logError);
       }
     }
+    
+    console.log(`[updateActivityParticipants] Update completed successfully for activity ${activity.id}`);
   } catch (error) {
-    console.error(`Error updating participants for activity ${activity.id}:`, error);
+    console.error(`[updateActivityParticipants] Error updating participants for activity ${activity.id}:`, error);
     throw error;
   }
 };
