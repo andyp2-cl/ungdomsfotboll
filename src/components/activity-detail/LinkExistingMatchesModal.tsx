@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -33,13 +32,19 @@ export function LinkExistingMatchesModal({
   const { toast } = useToast();
 
   // Get all matches that are not already linked to any cup
-  // FIXED: Exclude the cup itself and sort by date (latest first)
+  // FIXED: Exclude the cup itself, filter by same month, and sort by date (latest first)
   const availableMatches = allActivities
-    .filter(activity => 
-      activity.type === "match" && 
-      !activity.cupId && 
-      activity.id !== cupActivity.id
-    )
+    .filter(activity => {
+      if (activity.type !== "match" || activity.cupId || activity.id === cupActivity.id) {
+        return false;
+      }
+      
+      // Check if match is from the same month as the cup
+      const cupDate = new Date(cupActivity.date);
+      const matchDate = new Date(activity.date);
+      return cupDate.getMonth() === matchDate.getMonth() && 
+             cupDate.getFullYear() === matchDate.getFullYear();
+    })
     .sort((a, b) => {
       // Sort by date (latest first)
       const dateA = new Date(a.date + (a.time ? ` ${a.time}` : ''));
