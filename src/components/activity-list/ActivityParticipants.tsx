@@ -6,6 +6,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
 import { getWeeklyMatchCountForActivity } from "@/utils/weeklyMatchUtils";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ActivityParticipantsProps {
   participants: Player[];
@@ -63,6 +65,14 @@ export function ActivityParticipants({
     }
   };
 
+  // För mobil: visa endast avatarer (utan namn), max 5 synliga, sedan '+X fler' som öppnar modal med hela listan (med namn). Namn visas i popover vid klick på avatar.
+  const maxMobileAvatars = 5;
+  const showMoreMobile = isMobile && participants.length > maxMobileAvatars;
+  const visibleMobileParticipants = isMobile && showMoreMobile ? participants.slice(0, maxMobileAvatars) : participants;
+  const moreMobileCount = isMobile && showMoreMobile ? participants.length - maxMobileAvatars : 0;
+  const [open, setOpen] = React.useState(false);
+  const [popoverPlayer, setPopoverPlayer] = React.useState<null | typeof participants[0]>(null);
+
   if (!displayedParticipants.length) {
     return (
       <div className="text-xs text-muted-foreground">
@@ -72,89 +82,89 @@ export function ActivityParticipants({
   }
 
   // Sizing, grid & layout vars
-  const avatarSize = isMobile ? 'h-9 w-9' : 'h-16 w-16';
-  const iconSize = isMobile ? 'h-4 w-4' : 'h-8 w-8';
+  const avatarSize = isMobile ? 'h-8 w-8' : 'h-16 w-16';
   const gridCols = isMobile ? 'grid-cols-4' : 'grid-cols-9';
-  const cardPadding = isMobile ? 'p-1' : 'p-1';
   const gap = isMobile ? 'gap-1' : 'gap-1';
 
+  // MOBIL: Endast avatarer, namn i popover vid klick
+  if (isMobile) {
+    return (
+      <div className="flex flex-row gap-1 w-full overflow-x-auto pb-1">
+        {visibleMobileParticipants.map((player) => (
+          <Popover key={player.id} open={popoverPlayer?.id === player.id} onOpenChange={(open) => setPopoverPlayer(open ? player : null)}>
+            <PopoverTrigger asChild>
+              <div className={`flex items-center justify-center ${avatarSize} rounded-full border border-background bg-background cursor-pointer`}>
+                <Avatar className={`${avatarSize}`} >
+                  <AvatarImage src={player.image} alt={player.name} />
+                  <AvatarFallback>{player.name?.[0]}</AvatarFallback>
+                </Avatar>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="p-2 flex flex-col items-center min-w-[120px]">
+              <Avatar className="h-12 w-12 mb-2">
+                <AvatarImage src={player.image} alt={player.name} />
+                <AvatarFallback>{player.name?.[0]}</AvatarFallback>
+              </Avatar>
+              <span className="font-semibold text-center text-sm mb-1">{player.name}</span>
+              {player.grade && <Badge variant="outline">{player.grade}</Badge>}
+              {/* Här kan du lägga till fler spelarstats/info */}
+            </PopoverContent>
+          </Popover>
+        ))}
+        {showMoreMobile && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <div className="flex flex-col items-center justify-center min-w-[40px] h-full cursor-pointer bg-accent rounded p-1 text-xs font-semibold text-blue-700 border border-blue-200">
+                +{moreMobileCount} fler
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-xs w-full p-4">
+              <div className="text-center font-bold mb-2">Alla deltagare</div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {participants.map((player) => (
+                  <div key={player.id} className="flex flex-col items-center gap-1">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={player.image} alt={player.name} />
+                      <AvatarFallback>{player.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-center max-w-[60px] truncate">{player.name}</span>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    );
+  }
+
+  // DESKTOP: group by grade
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {['A', 'B', 'C', 'D', 'undefined'].map(gradeKey => {
         const playersInGrade = participantsByGrade[gradeKey];
-
         if (playersInGrade.length === 0) return null;
-
         return (
           <div key={gradeKey} className="flex flex-col gap-1">
             {gradeKey !== 'undefined' && (
-              <Badge variant="outline" className={`self-start mr-1 ${isMobile ? 'mb-0.5 text-xs px-1.5 py-0.5' : 'mb-1'}`}>
+              <Badge variant="outline" className={`self-start mr-1 mb-1`}>
                 {gradeKey}
               </Badge>
             )}
-
             <div className={`grid ${gridCols} ${gap} w-full`}>
               {playersInGrade.map((player) => {
                 let weeklyMatchCount = 0;
                 if (allActivities.length > 0 && currentActivity) {
                   weeklyMatchCount = getWeeklyMatchCountForActivity(player.id, allActivities, currentActivity);
                 }
-                const shouldShowBadge = isUpcomingActivity && weeklyMatchCount >= 2;
-
+                const shouldShowBadge = false; // Only show on mobile if needed
                 return (
-                  <div 
-                    key={player.id}
-                    data-player-item="true"
-                    className={`flex flex-col items-center ${isMobile ? 'gap-0.5' : 'gap-0.5'} border rounded p-1 bg-background ${onPlayerSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
-                    onClick={onPlayerSelect ? (e) => handlePlayerClick(player.id, player.name, e) : undefined}
-                    style={{ minWidth: 0, width: "100%" }}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="relative">
-                            <Avatar className={`border border-background ${avatarSize}`}>
-                              <AvatarImage src={player.image} alt={player.name} />
-                              <AvatarFallback className="bg-muted">
-                                <UserRound className={iconSize} />
-                              </AvatarFallback>
-                            </Avatar>
-                            {shouldShowBadge && (
-                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white shadow-lg z-20">
-                                {weeklyMatchCount}
-                              </div>
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div>
-                            <p>{player.name}</p>
-                            {player.grade && (
-                              <Badge variant="outline" className="mt-1">{player.grade}</Badge>
-                            )}
-                            {shouldShowBadge && (
-                              <p className="text-xs mt-1 text-red-600 font-semibold">{weeklyMatchCount} matcher denna vecka</p>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <span
-                      className={
-                        `block text-center w-full mx-auto mt-1 font-medium text-xs ${isMobile ? 'max-w-[84px]' : 'max-w-[120px]'}`
-                      }
-                      style={{
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                        textWrap: "pretty",
-                        padding: "0 2px",
-                        lineHeight: "1.15",
-                        minHeight: isMobile ? "28px" : "32px",
-                        maxHeight: isMobile ? "32px" : "38px",
-                        display: "block",
-                      }}
-                      dangerouslySetInnerHTML={{ __html: getDisplayName(player.name) }}
-                    />
+                  <div key={player.id} className="flex flex-col items-center border rounded p-1 bg-background">
+                    <Avatar className={`border border-background ${avatarSize}`}>
+                      <AvatarImage src={player.image} alt={player.name} />
+                      <AvatarFallback>{player.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="block text-center w-full mx-auto mt-1 font-medium text-xs max-w-[120px]" style={{ whiteSpace: "normal", wordBreak: "break-word", textWrap: "pretty", padding: "0 2px", lineHeight: "1.15", minHeight: "32px", maxHeight: "38px", display: "block" }} dangerouslySetInnerHTML={{ __html: getDisplayName(player.name) }} />
                   </div>
                 );
               })}

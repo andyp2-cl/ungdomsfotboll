@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 interface CupMatchesManagerProps {
   cupActivity: Activity;
   matchActivities: Activity[];
+  availableMatches: Activity[];
   onAddMatches: (newMatches: Omit<Activity, 'id'>[]) => Promise<void>;
+  onAddExistingMatches: (matchIds: string[]) => Promise<void>;
   onEditMatch?: (matchId: string) => void;
   onMatchResultUpdate?: (activityId: string, homeScore?: number, awayScore?: number) => Promise<void>;
 }
@@ -23,7 +24,9 @@ interface CupMatchesManagerProps {
 export function CupMatchesManager({
   cupActivity,
   matchActivities,
+  availableMatches,
   onAddMatches,
+  onAddExistingMatches,
   onEditMatch,
   onMatchResultUpdate
 }: CupMatchesManagerProps) {
@@ -142,6 +145,28 @@ export function CupMatchesManager({
     }
   };
 
+  const handleExistingMatchesSubmit = async (matchIds: string[]) => {
+    setIsSubmitting(true);
+    
+    try {
+      await onAddExistingMatches(matchIds);
+      
+      toast({
+        title: "Matcher tillagda",
+        description: `${matchIds.length} matcher har lagts till i cupen.`,
+      });
+    } catch (error) {
+      console.error("Error adding existing matches:", error);
+      toast({
+        title: "Ett fel inträffade",
+        description: "Det gick inte att lägga till matcherna. Försök igen.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -171,11 +196,14 @@ export function CupMatchesManager({
         cupName={cupActivity.name}
         cupDate={cupActivity.date}
         cupLocation={cupActivity.location?.name || ''}
+        cupActivity={cupActivity}
+        availableMatches={availableMatches}
         newMatches={newMatches}
         onAddMatch={handleAddMatch}
         updateMatch={updateMatch}
         removeMatch={removeMatch}
         handleSubmit={handleSubmit}
+        onExistingMatchesSubmit={handleExistingMatchesSubmit}
         isSubmitting={isSubmitting}
       />
     </div>

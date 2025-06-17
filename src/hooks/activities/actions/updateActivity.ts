@@ -1,7 +1,29 @@
-import { Activity, Player } from "@/types/player";
+import { Activity, Player, ActivityType, PlayerStats } from "@/types/player";
 import { saveActivities, savePlayers } from "@/utils/storage";
 import { normalizePlayerStats } from "../utils/playerStatsUtils";
 import { supabase } from "@/lib/supabase/client";
+
+interface DatabaseActivity {
+  id: string;
+  name: string;
+  date: string;
+  type: string;
+  time?: string;
+  location_description?: string;
+  location_name?: string;
+  location_gps_link?: string;
+  kiosk_assigned_player_id?: string;
+  cup_id?: string;
+  cup_name?: string;
+  league_id?: string;
+  player_stats?: PlayerStats;
+  result?: string;
+  home_score?: number;
+  away_score?: number;
+  is_win?: boolean;
+  match_report?: string;
+  youtube_link?: string;
+}
 
 /**
  * Handles updating an existing activity
@@ -42,51 +64,51 @@ export const handleActivityUpdate = async (
       ...updatedActivity,
       player_stats: normalizePlayerStats(updatedActivity.player_stats)
     };
-    
-    // Create updated activities array
-    const updatedActivities = activities.map(activity => 
-      activity.id === normalizedActivity.id ? normalizedActivity : activity
-    );
 
     // If this is a cup activity, we need to sync participants with all cup matches
+    let cupMatches: Activity[] = [];
     if (normalizedActivity.cupId) {
       try {
         // Get all matches for this cup
-        const { data: cupMatches, error: cupMatchesError } = await supabase
+        const { data: matches, error: cupMatchesError } = await supabase
           .from('activities')
           .select('*')
-          .eq('cupId', normalizedActivity.cupId);
+          .eq('cup_id', normalizedActivity.cupId);
 
         if (cupMatchesError) {
           throw cupMatchesError;
         }
 
-        // Update all cup matches with the same participants
-        const updatedCupMatches = cupMatches.map(match => ({
-          ...match,
-          participants: normalizedActivity.participants
+        // Convert database format to Activity type
+        cupMatches = (matches as DatabaseActivity[] || []).map(match => ({
+          id: match.id,
+          name: match.name,
+          date: match.date,
+          type: match.type as ActivityType,
+          time: match.time,
+          location: match.location_name ? {
+            name: match.location_name,
+            description: match.location_description,
+            gpsLink: match.location_gps_link
+          } : undefined,
+          participants: [], // Will be updated with the cup's participants
+          kioskAssignedPlayerId: match.kiosk_assigned_player_id,
+          cupId: match.cup_id,
+          cupName: match.cup_name,
+          leagueId: match.league_id,
+          player_stats: match.player_stats,
+          result: match.result,
+          homeScore: match.home_score,
+          awayScore: match.away_score,
+          isWin: match.is_win,
+          matchReport: match.match_report,
+          youtubeLink: match.youtube_link
         }));
-
-        // Save all cup matches to database
-        await saveActivities(updatedCupMatches);
-
-        // Update local state for all cup matches
-        const allUpdatedActivities = activities.map(activity => {
-          if (activity.cupId === normalizedActivity.cupId) {
-            return {
-              ...activity,
-              participants: normalizedActivity.participants
-            };
-          }
-          return activity;
-        });
-
-        setActivities(allUpdatedActivities);
       } catch (cupError) {
-        console.error("Error syncing cup matches:", cupError);
+        console.error("Error fetching cup matches:", cupError);
         toast({
           title: "Varning",
-          description: "Kunde inte synkronisera alla cup-matcher. Försök igen.",
+          description: "Kunde inte hämta cup-matcher. Försök igen.",
           variant: "destructive"
         });
         throw cupError;
@@ -100,11 +122,37 @@ export const handleActivityUpdate = async (
       // Create a clean copy that won't be mutated by other code
       const activityToSave = JSON.parse(JSON.stringify(normalizedActivity));
       
+      // Save the main activity first
       await saveActivities([activityToSave]);
       console.log("Activity saved successfully to database");
+
+      // If this is a cup activity, update all cup matches
+      if (normalizedActivity.cupId && cupMatches.length > 0) {
+        const updatedCupMatches = cupMatches.map(match => ({
+          ...match,
+          participants: normalizedActivity.participants || []
+        }));
+
+        // Save all cup matches to database
+        await saveActivities(updatedCupMatches);
+        console.log("Cup matches updated successfully");
+      }
       
-      // Only update state AFTER successful database save
-      setActivities(updatedActivities);
+      // Update all states at once to avoid multiple re-renders
+      const allUpdatedActivities = activities.map(activity => {
+        if (activity.id === normalizedActivity.id) {
+          return normalizedActivity;
+        }
+        if (normalizedActivity.cupId && activity.cupId === normalizedActivity.cupId) {
+          return {
+            ...activity,
+            participants: normalizedActivity.participants || []
+          };
+        }
+        return activity;
+      });
+
+      setActivities(allUpdatedActivities);
       
       // Update player-activity relationships if needed
       if (normalizedActivity.participants) {
