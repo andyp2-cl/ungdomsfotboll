@@ -7,7 +7,7 @@ import { KPISection } from "./KPISection";
 import { ChartSection } from "./ChartSection";
 import { isTrainer } from "@/utils/positionUtils";
 import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
-import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight, Users2, CalendarDays } from "lucide-react";
 import { getOpponentName, isHomeMatch } from '@/utils/playerCombinations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
@@ -274,6 +274,26 @@ export function OverviewTabContent({
   const bestFormPeriod = playerForm.find(p => p.wins === winStreak);
   const avgGoalsLast5 = last5.reduce((sum, m) => sum + (m.homeScore || 0), 0) / last5.length;
 
+  // Calculate average unique teammates per player
+  const averageTeammates = React.useMemo(() => {
+    const teammatesPerPlayer = players.map(player => {
+      const uniqueTeammates = new Set();
+      matchActivities.forEach(match => {
+        if (match.participants?.includes(player.id)) {
+          match.participants.forEach(participantId => {
+            if (participantId !== player.id) {
+              uniqueTeammates.add(participantId);
+            }
+          });
+        }
+      });
+      return uniqueTeammates.size;
+    });
+
+    const total = teammatesPerPlayer.reduce((sum, count) => sum + count, 0);
+    return Math.round(total / players.length);
+  }, [players, matchActivities]);
+
   return (
     <div className="space-y-6">
       {/* Lagets prestationer, topp 5-listor, formkurva */}
@@ -349,15 +369,98 @@ export function OverviewTabContent({
           </div>
         </div>
       </div>
-      {/* Enhanced KPI Section */}
-      <KPISection 
-        players={players} 
-        activities={activities} 
-        isMobile={isMobile}
-      />
-      
-      {/* Charts Section: Aktivitetsstatistik per nivå + Lagprestationer över tid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+      {/* KPI Statistics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <Users2 className="h-4 w-4" />
+            Totalt antal spelare
+          </div>
+          <div className="text-2xl font-bold">{players.length}</div>
+          <div className="text-sm text-muted-foreground">Aktiva spelare</div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <CalendarDays className="h-4 w-4" />
+            Antal matcher
+          </div>
+          <div className="text-2xl font-bold">{totalMatches}</div>
+          <div className="text-sm text-muted-foreground">Genomförda matcher</div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <Trophy className="h-4 w-4" />
+            Vinstprocent
+          </div>
+          <div className="text-2xl font-bold">{Math.round((wins / totalMatches) * 100)}%</div>
+          <div className="text-sm text-muted-foreground">{wins} vinster av {totalMatches}</div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <Target className="h-4 w-4" />
+            Mål gjorda
+          </div>
+          <div className="text-2xl font-bold">{goalsScored}</div>
+          <div className="text-sm text-muted-foreground">{avgGoalsFor} per match</div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <Users className="h-4 w-4" />
+            Snitt antal medspelare
+          </div>
+          <div className="text-2xl font-bold">{averageTeammates}</div>
+          <div className="text-sm text-muted-foreground">Unika medspelare per spelare</div>
+        </div>
+      </div>
+
+      {/* Lagprestationer över tid - Full width */}
+      <ChartSection
+        title="Lagprestationer över tid"
+        description="Utveckling av vinstprocent och målproduktion"
+        className="w-full"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+          {monthlyData.map((data) => {
+            // Calculate most goals in a match for this month
+            const matchesThisMonth = matchActivities.filter(m => m.date.startsWith(data.month));
+            let mostGoals = 0;
+            matchesThisMonth.forEach(m => {
+              const isHome = m.homeTeam?.toLowerCase().includes('hässleholms if');
+              const goals = isHome ? (m.homeScore || 0) : (m.awayScore || 0);
+              if (goals > mostGoals) mostGoals = goals;
+            });
+            // Calculate longest win streak for this month
+            let maxStreak = 0, currentStreak = 0;
+            matchesThisMonth.forEach(m => {
+              if (m.isWin === true) {
+                currentStreak++;
+                if (currentStreak > maxStreak) maxStreak = currentStreak;
+              } else {
+                currentStreak = 0;
+              }
+            });
+            return (
+              <div key={data.month} className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center w-full break-words">
+                <div className="text-sm font-medium">{data.month}</div>
+                <div className="text-xs text-muted-foreground">{data.matches} matcher</div>
+                <div className="text-lg font-bold text-green-700">Vinstprocent: {data.winRate}%</div>
+                <div className="text-xs">Vinster: <b>{data.wins}</b> | Oavgjorda: <b>{data.draws}</b> | Förluster: <b>{data.losses}</b></div>
+                <div className="text-xs mt-1">Mål: <b>{data.goals}</b> | Insläppta: <b>{data.goalsConceded}</b> | Målskillnad: <b>{data.goalDiff >= 0 ? '+' : ''}{data.goalDiff}</b></div>
+                <div className="text-xs mt-2">Flest mål i en match: <b>{mostGoals}</b></div>
+                <div className="text-xs">Längsta vinstsvit: <b>{maxStreak}</b></div>
+              </div>
+            );
+          })}
+        </div>
+      </ChartSection>
+
+      {/* Activity Statistics and Trends - Side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartSection
           title="Aktivitetsstatistik per nivå"
           description="Genomsnittligt antal aktiviteter per spelarnivå"
@@ -367,52 +470,14 @@ export function OverviewTabContent({
             config={gradeChartConfig} 
           />
         </ChartSection>
+
         <ChartSection
-          title="Lagprestationer över tid"
-          description="Utveckling av vinstprocent och målproduktion"
-          className="w-full"
+          title="Aktivitetstrend"
+          description="Månadsvis aktivitetsöversikt"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-            {monthlyData.map((data) => {
-              // Calculate most goals in a match for this month
-              const matchesThisMonth = matchActivities.filter(m => m.date.startsWith(data.month));
-              let mostGoals = 0;
-              matchesThisMonth.forEach(m => {
-                const isHome = m.homeTeam?.toLowerCase().includes('hässleholms if');
-                const goals = isHome ? (m.homeScore || 0) : (m.awayScore || 0);
-                if (goals > mostGoals) mostGoals = goals;
-              });
-              // Calculate longest win streak for this month
-              let maxStreak = 0, currentStreak = 0;
-              matchesThisMonth.forEach(m => {
-                if (m.isWin === true) {
-                  currentStreak++;
-                  if (currentStreak > maxStreak) maxStreak = currentStreak;
-                } else {
-                  currentStreak = 0;
-                }
-              });
-              return (
-                <div key={data.month} className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center w-full break-words">
-                  <div className="text-sm font-medium">{data.month}</div>
-                  <div className="text-xs text-muted-foreground">{data.matches} matcher</div>
-                  <div className="text-lg font-bold text-green-700">Vinstprocent: {data.winRate}%</div>
-                  <div className="text-xs">Vinster: <b>{data.wins}</b> | Oavgjorda: <b>{data.draws}</b> | Förluster: <b>{data.losses}</b></div>
-                  <div className="text-xs mt-1">Mål: <b>{data.goals}</b> | Insläppta: <b>{data.goalsConceded}</b> | Målskillnad: <b>{data.goalDiff >= 0 ? '+' : ''}{data.goalDiff}</b></div>
-                  <div className="text-xs mt-2">Flest mål i en match: <b>{mostGoals}</b></div>
-                  <div className="text-xs">Längsta vinstsvit: <b>{maxStreak}</b></div>
-                </div>
-              );
-            })}
-          </div>
+          <MonthlyActivityChart activities={activities} />
         </ChartSection>
       </div>
-
-      {/* Player Count Card */}
-      <PlayerSummaryCard data={gradeData} players={players} activities={activities} />
-      
-      {/* Monthly Activity Trends */}
-      <MonthlyActivityChart activities={activities} />
     </div>
   );
 }
