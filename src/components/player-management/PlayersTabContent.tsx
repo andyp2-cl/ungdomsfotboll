@@ -1,8 +1,11 @@
+
 import React from "react";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Activity } from "@/types/player";
+import { PlayerFilter } from "@/components/PlayerFilter";
+import { PlayerManagementHeader } from "./PlayerManagementHeader";
+import { PlayersListContent } from "./PlayersListContent";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import { PlayerList } from "@/components/player-list/PlayerList";
 
 interface PlayersTabContentProps {
   players: Player[];
@@ -57,6 +60,20 @@ export function PlayersTabContent({
 
   return (
     <div className="space-y-6">
+      <PlayerManagementHeader
+        searchQuery={searchQuery}
+        viewMode={viewMode}
+        onSearchChange={onSearchChange}
+        onViewModeChange={(mode) => mode}
+        onAddPlayerClick={onAddPlayerClick}
+        isMobile={isMobile}
+      />
+      
+      <PlayerFilter 
+        selectedGrades={selectedGrades} 
+        onGradeChange={onGradeChange}
+      />
+      
       {selectedPlayer ? (
         <PlayerDetail 
           player={selectedPlayer} 
@@ -71,11 +88,13 @@ export function PlayersTabContent({
           allPlayers={players}
         />
       ) : (
-        <PlayerList 
-          players={filteredPlayers}
-          activities={activities}
+        <PlayersListContent 
+          filteredPlayers={filteredPlayers}
+          viewMode={viewMode}
+          selectedPositions={selectedPositions}
           onPlayerSelect={handlePlayerCardClick}
           onPlayerEdit={onEditPlayerClick}
+          isMobile={isMobile}
         />
       )}
     </div>

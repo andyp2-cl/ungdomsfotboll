@@ -1,5 +1,6 @@
 
 import { Activity } from "@/types/player";
+import { Json } from "@/types/supabase";
 import { 
   extractCupMatchesFromPlayerStats as extractMatches, 
   addMatchToPlayerStats as addMatch 

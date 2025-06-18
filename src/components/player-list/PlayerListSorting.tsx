@@ -3,9 +3,8 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { Player, Activity } from "@/types/player";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { calculateUniqueTeammates } from "@/utils/playerStatistics";
-import { formatPositions } from "@/utils/positionUtils";
 
-export type SortField = 'name' | 'grade' | 'position' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form' | 'development' | 'teammates';
+export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form' | 'development' | 'teammates';
 
 interface SortIconProps {
   field: SortField;
@@ -123,9 +122,6 @@ export function usePlayerSorting() {
           break;
         case 'grade':
           comparison = (a.grade || '').localeCompare(b.grade || '');
-          break;
-        case 'position':
-          comparison = (formatPositions(a.positions || []) || '').localeCompare(formatPositions(b.positions || []) || '');
           break;
         case 'activities':
           comparison = (a.activities?.length || 0) - (b.activities?.length || 0);
