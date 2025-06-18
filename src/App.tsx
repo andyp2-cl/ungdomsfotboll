@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PasswordProtection from "./components/PasswordProtection";
 import NotFound from "./pages/NotFound";
 import PlayersPage from "./pages/PlayersPage";
-import PlayerManagementPage from "./pages/PlayerManagementPage";
 import TeamSelectionPage from "./pages/TeamSelectionPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -43,7 +42,6 @@ const App = () => (
                 <Route path="/development" element={<PlayersPage initialTab="development" />} />
                 <Route path="/training" element={<PlayersPage initialTab="training" />} />
                 <Route path="/excel" element={<PlayersPage initialTab="excel" />} />
-                <Route path="/player-management" element={<PlayerManagementPage />} />
                 <Route path="/team-selection" element={<PlayersPage initialTab="team-selection" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

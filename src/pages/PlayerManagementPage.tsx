@@ -1,7 +1,6 @@
-
 import { PageContainer } from "@/components/page-containers/PageContainer";
 import { usePlayers } from "@/hooks/players/usePlayers";
-import { PlayersTabContent } from "@/components/player-management/PlayersTabContent";
+import { PlayerTabContent } from "@/components/tabs/PlayerTabContent";
 
 export default function PlayerManagementPage() {
   const {
@@ -50,29 +49,29 @@ export default function PlayerManagementPage() {
     await handleDeletePlayer(playerId);
   };
 
-  // Ensure viewMode is compatible with PlayersTabContent expectations
+  // Ensure viewMode is compatible with PlayerList expectations
   const compatibleViewMode: "grid" | "list" = viewMode === "stats" ? "list" : viewMode as "grid" | "list";
 
   return (
     <PageContainer isLoading={isLoading}>
-      <PlayersTabContent 
+      <PlayerTabContent 
         players={players}
-        activities={[]} // No activities needed for this simplified view
+        activities={[]}
         searchQuery={searchQuery}
         selectedGrades={selectedGrades}
-        selectedPositions={selectedPositions}
-        activeFiltersCount={activeFiltersCount}
         selectedPlayer={selectedPlayer}
         viewMode={compatibleViewMode}
         filteredPlayers={filteredPlayers}
-        onSearchChange={setSearchQuery}
-        onGradeChange={handleGradeChange}
-        onPositionChange={handlePositionChange}
-        onPlayerSelect={setSelectedPlayer}
-        onPlayerUpdate={handlePlayerUpdateWrapper}
-        onAddPlayerClick={() => setIsAddPlayerOpen(true)}
-        onEditPlayerClick={setEditingPlayer}
-        isMobile={isMobile}
+        isAddPlayerOpen={isAddPlayerOpen}
+        setSearchQuery={setSearchQuery}
+        handleGradeChange={handleGradeChange}
+        setSelectedPlayer={setSelectedPlayer}
+        setViewMode={setViewMode}
+        handlePlayerUpdate={handlePlayerUpdate}
+        handleBulkPlayerUpdate={handleBulkPlayerUpdate}
+        handleDeletePlayer={handleDeletePlayerWrapper}
+        setIsAddPlayerOpen={setIsAddPlayerOpen}
+        setEditingPlayer={setEditingPlayer}
       />
     </PageContainer>
   );

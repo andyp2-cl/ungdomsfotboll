@@ -28,6 +28,7 @@ interface PlayerListTableProps {
   toggleSort: (field: SortField) => void;
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit?: (player: Player) => void;
+  visibleColumns: string[];
 }
 
 export function PlayerListTable({ 
@@ -37,10 +38,11 @@ export function PlayerListTable({
   sortDirection, 
   toggleSort, 
   onPlayerSelect, 
-  onPlayerEdit 
+  onPlayerEdit,
+  visibleColumns
 }: PlayerListTableProps) {
   const { calculateDevelopmentValue } = usePlayerSorting();
-  const [visibleColumns, setVisibleColumns] = useState<SortField[]>([
+  const [visibleColumnsState, setVisibleColumnsState] = useState<SortField[]>([
     'name',
     'grade',
     'position',
@@ -231,86 +233,54 @@ export function PlayerListTable({
   ];
 
   const visibleColumnsList = columns.filter(col => 
-    col.alwaysShow || visibleColumns.includes(col.id)
+    col.alwaysShow || visibleColumnsState.includes(col.id)
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings2 className="h-4 w-4 mr-2" />
-              Kolumner
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {columns.map((column) => (
-              !column.alwaysShow && (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={visibleColumns.includes(column.id)}
-                  onCheckedChange={(checked) => {
-                    setVisibleColumns(prev => 
-                      checked 
-                        ? [...prev, column.id]
-                        : prev.filter(id => id !== column.id)
-                    );
-                  }}
-                >
-                  {column.label}
-                </DropdownMenuCheckboxItem>
-              )
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {visibleColumnsList.map((column) => (
+              <TableHead key={column.id}>
+                {column.id === 'name' || !column.alwaysShow ? (
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start"
+                    onClick={() => toggleSort(column.id)}
+                  >
+                    {column.label}
+                    <SortIcon field={column.id} sortField={sortField} sortDirection={sortDirection} />
+                  </Button>
+                ) : (
+                  column.label
+                )}
+              </TableHead>
             ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumnsList.map((column) => (
-                <TableHead key={column.id}>
-                  {column.id === 'name' || !column.alwaysShow ? (
-                    <Button 
-                      variant="ghost" 
-                      className="h-auto p-0 font-semibold justify-start"
-                      onClick={() => toggleSort(column.id)}
-                    >
-                      {column.label}
-                      <SortIcon field={column.id} sortField={sortField} sortDirection={sortDirection} />
-                    </Button>
-                  ) : (
-                    column.label
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {players.map((player) => {
-              const isActive = player.isActive !== undefined ? player.isActive : true;
-              
-              return (
-                <TableRow 
-                  key={player.id} 
-                  className={`cursor-pointer hover:bg-muted/50 transition-colors ${
-                    !isActive ? 'opacity-60 bg-gray-50/50' : ''
-                  }`}
-                  onClick={() => onPlayerSelect(player)}
-                >
-                  {visibleColumnsList.map((column) => (
-                    <TableCell key={`${player.id}-${column.id}`}>
-                      {column.render(player, activities)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {players.map((player) => {
+            const isActive = player.isActive !== undefined ? player.isActive : true;
+            
+            return (
+              <TableRow 
+                key={player.id} 
+                className={`cursor-pointer hover:bg-muted/50 transition-colors ${
+                  !isActive ? 'opacity-60 bg-gray-50/50' : ''
+                }`}
+                onClick={() => onPlayerSelect(player)}
+              >
+                {visibleColumnsList.map((column) => (
+                  <TableCell key={`${player.id}-${column.id}`}>
+                    {column.render(player, activities)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }
