@@ -76,6 +76,7 @@ export function PlayerListTable({
     { id: 'grade', label: 'Nivå', width: 'auto' },
     { id: 'position', label: 'Position', width: 'auto' },
     { id: 'activities', label: 'Aktiviteter', width: 'auto' },
+    { id: 'teammates', label: 'Medspelare', width: 'auto' },
     { id: 'winrate', label: 'Vinstprocent', width: 'auto' },
     { id: 'goalsPerMatch', label: 'Mål/match', width: 'auto' },
     { id: 'development', label: 'Utveckling', width: 'auto' },
@@ -198,6 +199,15 @@ export function PlayerListTable({
                   <TableCell>
                     <span className={`text-sm ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
                       {player.activities?.length || 0}
+                    </span>
+                  </TableCell>
+                )}
+
+                {/* Teammates column */}
+                {visibleColumnIds.includes('teammates') && (
+                  <TableCell>
+                    <span className={`text-sm ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                      {!isCoach ? uniqueTeammates : '-'}
                     </span>
                   </TableCell>
                 )}
