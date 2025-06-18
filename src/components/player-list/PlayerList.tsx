@@ -199,61 +199,6 @@ export function PlayerList({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtrering
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.length === columnOptions.length}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  handleSelectAll();
-                } else {
-                  handleDeselectAll();
-                }
-              }}
-            >
-              Välj alla
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.length === 1 && visibleColumns.includes('name')}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  handleDeselectAll();
-                } else {
-                  handleSelectAll();
-                }
-              }}
-            >
-              Avmarkera alla
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem className="opacity-0 pointer-events-none">
-              ─────────────
-            </DropdownMenuCheckboxItem>
-            {columnOptions.map((column) => (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                checked={visibleColumns.includes(column.id)}
-                onCheckedChange={(checked) => {
-                  setVisibleColumns(prev => 
-                    checked 
-                      ? [...prev, column.id]
-                      : prev.filter(id => id !== column.id)
-                  );
-                }}
-              >
-                {column.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
       <PlayerListTable 
         players={sortPlayers(filteredPlayers, activities)} 
         activities={activities}
