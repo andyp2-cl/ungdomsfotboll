@@ -1,27 +1,20 @@
-
 import React from "react";
 import { Player, Activity } from "@/types/player";
 import { Badge } from "@/components/ui/badge";
 import { isTrainer } from "@/utils/positionUtils";
 
 interface PlayerFormDisplayProps {
-  player: Player;
+  playerId: string;
   activities: Activity[];
 }
 
-export function PlayerFormDisplay({ player, activities }: PlayerFormDisplayProps) {
-  const isCoach = isTrainer(player.positions);
-  
-  if (isCoach) {
-    return <span className="text-muted-foreground">-</span>;
-  }
-
+export function PlayerFormDisplay({ playerId, activities }: PlayerFormDisplayProps) {
   // Get player's historical matches with results only
   const today = new Date();
   const playerMatches = activities
     .filter(activity => {
       // Only include matches where this player participated
-      if (activity.type !== "match" || !activity.participants?.includes(player.id)) {
+      if (activity.type !== "match" || !activity.participants?.includes(playerId)) {
         return false;
       }
       

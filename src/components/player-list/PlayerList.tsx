@@ -6,6 +6,9 @@ import { usePlayerSorting } from "./PlayerListSorting";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { calculateDevelopmentValue } from "./PlayerListSorting";
+import { Button } from "@/components/ui/button";
+import { Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface PlayerListProps {
   players: Player[];
@@ -27,6 +30,16 @@ export function PlayerList({
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
   const [gridSortField, setGridSortField] = React.useState<string>('grade');
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>([
+    'name',
+    'grade',
+    'position',
+    'activities',
+    'winrate',
+    'goalsPerMatch',
+    'development',
+    'form'
+  ]);
 
   // Filter out coaches if showCoaches is false
   const filteredPlayers = showCoaches 
@@ -150,6 +163,16 @@ export function PlayerList({
   // Force grid view on mobile devices
   const effectiveViewMode = isMobile ? "grid" : viewMode;
 
+  const columnOptions = [
+    { id: 'grade', label: 'Nivå' },
+    { id: 'position', label: 'Position' },
+    { id: 'activities', label: 'Aktiviteter' },
+    { id: 'winrate', label: 'Vinstprocent' },
+    { id: 'goalsPerMatch', label: 'Mål/match' },
+    { id: 'development', label: 'Utveckling' },
+    { id: 'form', label: 'Form' }
+  ];
+
   if (effectiveViewMode === "grid") {
     return (
       <PlayerGridView 
@@ -164,14 +187,45 @@ export function PlayerList({
   }
 
   return (
-    <PlayerListTable 
-      players={sortPlayers(filteredPlayers, activities)} 
-      activities={activities}
-      sortField={sortField} 
-      sortDirection={sortDirection} 
-      toggleSort={toggleSort} 
-      onPlayerSelect={onPlayerSelect} 
-      onPlayerEdit={onPlayerEdit} 
-    />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtrering
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {columnOptions.map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                checked={visibleColumns.includes(column.id)}
+                onCheckedChange={(checked) => {
+                  setVisibleColumns(prev => 
+                    checked 
+                      ? [...prev, column.id]
+                      : prev.filter(id => id !== column.id)
+                  );
+                }}
+              >
+                {column.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <PlayerListTable 
+        players={sortPlayers(filteredPlayers, activities)} 
+        activities={activities}
+        sortField={sortField} 
+        sortDirection={sortDirection} 
+        toggleSort={toggleSort} 
+        onPlayerSelect={onPlayerSelect} 
+        onPlayerEdit={onPlayerEdit}
+        visibleColumns={visibleColumns}
+      />
+    </div>
   );
 }
