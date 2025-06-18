@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,16 +34,17 @@ export function EditActivityDialog({
     if (!activityCopy) return;
     
     try {
-      console.log("Handling activity save:", updatedActivity.name);
+      console.log("EditActivityDialog handleSave called with:", updatedActivity);
       console.log("Activity leagueId:", updatedActivity.leagueId);
       
       // Pass the updated activity to the parent component
       await onActivityUpdate(updatedActivity);
+      console.log("onActivityUpdate completed");
       
       // Close the dialog only after successful update
       onOpenChange(false);
       
-      console.log("Activity update completed");
+      console.log("Activity update completed and dialog closed");
     } catch (error) {
       console.error("Error saving activity:", error);
       toast({

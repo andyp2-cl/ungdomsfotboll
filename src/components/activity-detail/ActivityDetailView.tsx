@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Activity, Player } from "@/types/player";
 import { ActivityDetailContent } from "./ActivityDetailContent";
 import { ActivityDetailHeader } from "./ActivityDetailHeader";
 import { useState } from "react";
 import { DeleteActivityDialog } from "./DeleteActivityDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActivityDetailViewProps {
   activity: Activity;
@@ -42,10 +42,26 @@ export function ActivityDetailView({
   onAddActivity
 }: ActivityDetailViewProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
   
   // Wrapper to handle activity updates
-  const handleActivityUpdate = (updatedActivity: Activity) => {
-    onActivityUpdate(updatedActivity);
+  const handleActivityUpdate = async (updatedActivity: Activity) => {
+    try {
+      console.log("ActivityDetailView handleActivityUpdate called with:", updatedActivity);
+      await onActivityUpdate(updatedActivity);
+      console.log("onActivityUpdate completed");
+      toast({
+        title: "Aktivitet uppdaterad",
+        description: "Ändringarna har sparats.",
+      });
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      toast({
+        title: "Kunde inte uppdatera aktiviteten",
+        description: "Ett fel uppstod när aktiviteten skulle uppdateras.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Calculate if activity is historical

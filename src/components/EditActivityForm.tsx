@@ -36,6 +36,9 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
   const [youtubeLink, setYoutubeLink] = useState(activity.youtubeLink || "");
 
   const handleSubmit = async (values: any) => {
+    if (isSubmitting) return; // Prevent double submission
+    
+    console.log("Form handleSubmit called with values:", values);
     setIsSubmitting(true);
     try {
       console.log("Form submission values:", values);
@@ -43,7 +46,11 @@ export function EditActivityForm({ activity, onSave, onCancel }: EditActivityFor
       await handleActivitySubmit(
         { ...values, matchReport: reportText, youtubeLink },
         normalizedActivity,
-        onSave,
+        async (updatedActivity) => {
+          console.log("handleActivitySubmit onSave callback called with:", updatedActivity);
+          await onSave(updatedActivity);
+          console.log("onSave completed");
+        },
         setIsSubmitting
       );
       console.log("Activity updated successfully with leagueId:", values.leagueId);

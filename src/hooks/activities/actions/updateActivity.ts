@@ -27,6 +27,7 @@ interface DatabaseActivity {
   is_win?: boolean;
   match_report?: string;
   youtube_link?: string;
+  participants?: string[];
 }
 
 /**
@@ -74,7 +75,8 @@ export const handleActivityUpdate = async (
       youtube_link: normalizedActivity.youtubeLink || null,
       home_team: normalizedActivity.homeTeam || null,
       away_team: normalizedActivity.awayTeam || null,
-      status: normalizedActivity.status || 'scheduled'
+      status: normalizedActivity.status || 'scheduled',
+      participants: normalizedActivity.participants || []
     };
 
     // First, update the activity in the database
@@ -87,11 +89,11 @@ export const handleActivityUpdate = async (
       throw updateError;
     }
 
-    // If this is a cup activity, update all related matches
+    // If this is a cup, update all related matches
     if (normalizedActivity.type === 'cup') {
       try {
         // Get all matches that reference this cup
-        const { data: relatedMatches, error: matchesError } = await supabase
+        const { data: cupMatches, error: matchesError } = await supabase
           .from('activities')
           .select('*')
           .eq('cup_id', normalizedActivity.id);
@@ -100,11 +102,11 @@ export const handleActivityUpdate = async (
           throw matchesError;
         }
 
-        if (relatedMatches && relatedMatches.length > 0) {
-          console.log(`Found ${relatedMatches.length} matches to update for cup ${normalizedActivity.id}`);
+        if (cupMatches && cupMatches.length > 0) {
+          console.log(`Found ${cupMatches.length} matches to update for cup ${normalizedActivity.id}`);
           
-          // Update each match to reflect the new cup name
-          const updatePromises = relatedMatches.map(async (match) => {
+          // Update each match to reflect the new cup name and participants
+          const updatePromises = cupMatches.map(async (match) => {
             try {
               // Safely handle player_stats
               const existingStats = match.player_stats as { 
@@ -121,12 +123,13 @@ export const handleActivityUpdate = async (
                 cup_name: normalizedActivity.name
               };
 
-              // Update both player_stats and cupName for the match
+              // Update both player_stats, cupName and participants for the match
               const { error: matchUpdateError } = await supabase
                 .from('activities')
                 .update({ 
                   player_stats: playerStats,
-                  cup_name: normalizedActivity.name
+                  cup_name: normalizedActivity.name,
+                  participants: normalizedActivity.participants // Sync participants from cup to match
                 })
                 .eq('id', match.id);
 
@@ -169,7 +172,7 @@ export const handleActivityUpdate = async (
         if (parentCup) {
           const typedParentCup = parentCup as DatabaseActivity;
           
-          // Update the parent cup's player_stats
+          // Update the parent cup's player_stats and ensure participants are synced
           const existingStats = typedParentCup.player_stats as {
             goals?: Record<string, number>;
             assists?: Record<string, number>;
@@ -186,12 +189,19 @@ export const handleActivityUpdate = async (
             ]))
           };
 
-          // Update the parent cup
+          // Get all unique participants from the cup and the current match
+          const allParticipants = Array.from(new Set([
+            ...(typedParentCup.participants || []),
+            ...(normalizedActivity.participants || [])
+          ]));
+
+          // Update the parent cup with combined participants
           const { error: updateCupError } = await supabase
             .from('activities')
             .update({ 
               player_stats: cupPlayerStats,
-              name: parentCup.name
+              name: parentCup.name,
+              participants: allParticipants
             })
             .eq('id', parentCup.id);
 

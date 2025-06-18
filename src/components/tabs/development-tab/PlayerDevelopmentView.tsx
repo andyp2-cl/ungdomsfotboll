@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
-import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock, GitCompare } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock, GitCompare, Trophy, Users, Star } from "lucide-react";
 import { ActivitySummaryCard } from "@/components/activity-summary/ActivitySummaryCard";
 import { calculateUniqueTeammates } from "@/utils/playerStatistics";
+import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 
 interface PlayerDevelopmentViewProps {
   players: Player[];
@@ -114,6 +115,36 @@ export function PlayerDevelopmentView({
       default: return 'text-gray-600';
     }
   };
+
+  // Calculate player statistics
+  const playerStats = React.useMemo(() => {
+    if (!selectedPlayer) return null;
+    return calculatePlayerStats(selectedPlayer, activities);
+  }, [selectedPlayer, activities]);
+
+  // Calculate unique teammates
+  const uniqueTeammatesCount = React.useMemo(() => {
+    if (!selectedPlayer) return 0;
+    return calculateUniqueTeammates(selectedPlayer.id, activities);
+  }, [selectedPlayer, activities]);
+
+  // Calculate participation rate
+  const participationRate = React.useMemo(() => {
+    if (!selectedPlayer) return 0;
+    const totalActivities = activities.length;
+    const playerActivities = activities.filter(a => a.participants?.includes(selectedPlayer.id));
+    return totalActivities > 0 ? Math.round((playerActivities.length / totalActivities) * 100) : 0;
+  }, [selectedPlayer, activities]);
+
+  // Calculate recent form (last 5 matches)
+  const recentForm = React.useMemo(() => {
+    if (!selectedPlayer) return 0;
+    const last5Matches = activities
+      .filter(a => a.type === 'match' && a.participants?.includes(selectedPlayer.id))
+      .slice(-5);
+    const wins = last5Matches.filter(m => m.isWin === true).length;
+    return last5Matches.length > 0 ? Math.round((wins / last5Matches.length) * 100) : 0;
+  }, [selectedPlayer, activities]);
 
   return (
     <div className="space-y-6">
@@ -414,6 +445,140 @@ export function PlayerDevelopmentView({
                       </div>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Statistics Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Statistik
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Matcher & Resultat */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Matcher & Resultat
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Matcher</span>
+                        <span className="font-medium">{playerStats?.matches || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Vinster</span>
+                        <span className="font-medium text-green-600">{playerStats?.wins || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Oavgjorda</span>
+                        <span className="font-medium text-yellow-600">{playerStats?.draws || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Förluster</span>
+                        <span className="font-medium text-red-600">{playerStats?.losses || 0}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-muted-foreground">Vinstprocent</span>
+                        <span className="font-medium">{playerStats?.winRate || 0}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Målstatistik */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Målstatistik
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mål</span>
+                        <span className="font-medium">{playerStats?.totalGoals || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Assist</span>
+                        <span className="font-medium">{playerStats?.totalAssists || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mål/match</span>
+                        <span className="font-medium">{playerStats?.totalGoals && playerStats.matches ? (playerStats.totalGoals / playerStats.matches).toFixed(2) : "0"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Poäng/match</span>
+                        <span className="font-medium">{((playerStats?.totalGoals || 0) + (playerStats?.totalAssists || 0)) / (playerStats?.matches || 1)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-muted-foreground">Totala poäng</span>
+                        <span className="font-medium">{(playerStats?.totalGoals || 0) + (playerStats?.totalAssists || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Övrigt */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Övrigt
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Medspelare</span>
+                        <span className="font-medium">{uniqueTeammatesCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Deltagande</span>
+                        <span className="font-medium">{participationRate}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Form (5 matcher)</span>
+                        <span className={`font-medium ${
+                          recentForm >= 60 ? 'text-green-600' : 
+                          recentForm >= 40 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>{recentForm}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Prestationer badges */}
+                <div className="mt-6 pt-4 border-t">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Trophy className="h-4 w-4" />
+                    Prestationer
+                  </h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {(playerStats?.totalGoals || 0) > 0 && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        {playerStats?.totalGoals} mål
+                      </Badge>
+                    )}
+                    {(playerStats?.totalAssists || 0) > 0 && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {playerStats?.totalAssists} assist
+                      </Badge>
+                    )}
+                    {(playerStats?.winRate || 0) > 0 && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        {playerStats?.winRate}% vinst
+                      </Badge>
+                    )}
+                    {participationRate > 75 && (
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                        {participationRate}% deltagande
+                      </Badge>
+                    )}
+                    {uniqueTeammatesCount > 20 && (
+                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                        {uniqueTeammatesCount} medspelare
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -2,7 +2,7 @@ export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
 export type PlayerPosition = 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 
-export type ActivityType = 'match' | 'cup' | 'training';
+export type ActivityType = 'match' | 'cup';
 
 export interface PlayerStats {
   goals?: Record<string, number>; // Record of player ID to number of goals
@@ -36,9 +36,9 @@ export interface Activity {
   participants: string[]; // Player IDs
   kioskAssignedPlayerId?: string;
   scraped?: boolean;
-  cupId?: string;
-  cupName?: string;
-  matches?: string[]; // Activity IDs for cup matches
+  cupId?: string; // ID of the parent cup (only for cup matches)
+  cupName?: string; // Name of the parent cup (only for cup matches)
+  matches?: string[]; // Match IDs for cup matches (only for cups)
   player_stats?: PlayerStats;
   result?: string; // Match result, e.g. "2-1"
   homeScore?: number; // Home team's score
@@ -50,6 +50,7 @@ export interface Activity {
   youtubeLink?: string; // YouTube link for the match
   homeTeam?: string;
   awayTeam?: string;
+  status?: 'scheduled' | 'completed' | 'cancelled'; // Activity status
 }
 
 export interface PlayerDevelopment {

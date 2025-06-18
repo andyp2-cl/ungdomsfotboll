@@ -15,6 +15,15 @@ interface BasicInfoFieldsProps {
 
 export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
   const type = form.watch("type");
+  const homeTeam = form.watch("homeTeam");
+  const awayTeam = form.watch("awayTeam");
+  
+  // Automatiskt uppdatera namnet när hemmalag eller bortalag ändras för matcher
+  useEffect(() => {
+    if (type === "match" && homeTeam && awayTeam) {
+      form.setValue("name", `${homeTeam} - ${awayTeam}`);
+    }
+  }, [type, homeTeam, awayTeam, form]);
   
   useEffect(() => {
     if (onTypeChange) {
@@ -78,7 +87,14 @@ export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
             <FormLabel>Typ</FormLabel>
             <FormControl>
               <RadioGroup
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  // Rensa hemmalag/bortalag när man byter från match till cup
+                  if (value === "cup") {
+                    form.setValue("homeTeam", "");
+                    form.setValue("awayTeam", "");
+                  }
+                }}
                 defaultValue={field.value}
                 value={field.value}
                 className="flex gap-4"

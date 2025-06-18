@@ -1,11 +1,10 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity, Player, ActivityType } from "@/types/player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivePlayerSelector } from "@/components/activity-management/ActivePlayerSelector";
 
@@ -23,6 +22,8 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
     date: string;
     time: string;
     type: ActivityType;
+    homeTeam: string;
+    awayTeam: string;
     location: {
       name: string;
       description: string;
@@ -32,7 +33,9 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
     name: "",
     date: "",
     time: "",
-    type: "training",
+    type: "match",
+    homeTeam: "",
+    awayTeam: "",
     location: {
       name: "",
       description: "",
@@ -41,6 +44,16 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
   });
   
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+
+  // Automatiskt uppdatera namnet när hemmalag eller bortalag ändras för matcher
+  useEffect(() => {
+    if (formData.type === "match" && formData.homeTeam && formData.awayTeam) {
+      setFormData(prev => ({
+        ...prev,
+        name: `${formData.homeTeam} - ${formData.awayTeam}`
+      }));
+    }
+  }, [formData.type, formData.homeTeam, formData.awayTeam]);
 
   // Filter to only active players for the "select all" functionality
   const activePlayers = players.filter(player => {
@@ -67,7 +80,12 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
   };
 
   const handleTypeChange = (newType: ActivityType) => {
-    setFormData(prev => ({ ...prev, type: newType }));
+    setFormData(prev => ({ 
+      ...prev, 
+      type: newType,
+      // Rensa hemmalag/bortalag när man byter till cup
+      ...(newType === "cup" ? { homeTeam: "", awayTeam: "" } : {})
+    }));
     if (onTypeChange) {
       onTypeChange(newType);
     }
@@ -89,6 +107,8 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
       date: formData.date,
       time: formData.time,
       type: formData.type,
+      homeTeam: formData.type === "match" ? formData.homeTeam : undefined,
+      awayTeam: formData.type === "match" ? formData.awayTeam : undefined,
       location: formData.location.name ? formData.location : undefined,
       participants: selectedPlayerIds
     };
@@ -104,31 +124,57 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name">Aktivitetsnamn</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                required
-              />
-            </div>
+            {formData.type === "match" ? (
+              <>
+                <div>
+                  <Label htmlFor="homeTeam">Hemmalag</Label>
+                  <Input
+                    id="homeTeam"
+                    value={formData.homeTeam}
+                    onChange={(e) => setFormData(prev => ({ ...prev, homeTeam: e.target.value }))}
+                    placeholder="Ange hemmalag"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="awayTeam">Bortalag</Label>
+                  <Input
+                    id="awayTeam"
+                    value={formData.awayTeam}
+                    onChange={(e) => setFormData(prev => ({ ...prev, awayTeam: e.target.value }))}
+                    placeholder="Ange bortalag"
+                    required
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2">
+                <Label htmlFor="name">Cupnamn</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+            )}
             
-            <div>
-              <Label htmlFor="type">Typ</Label>
-              <Select 
-                value={formData.type} 
+            <div className="col-span-2">
+              <Label>Typ</Label>
+              <RadioGroup
+                value={formData.type}
                 onValueChange={handleTypeChange}
+                className="flex gap-4"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="training">Träning</SelectItem>
-                  <SelectItem value="match">Match</SelectItem>
-                  <SelectItem value="cup">Cup</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="match" id="match" />
+                  <Label htmlFor="match">Match</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="cup" id="cup" />
+                  <Label htmlFor="cup">Cup</Label>
+                </div>
+              </RadioGroup>
             </div>
             
             <div>
@@ -191,7 +237,14 @@ export function AddActivityForm({ players, onSave, onCancel, onTypeChange, onDat
             <Button type="button" variant="outline" onClick={onCancel}>
               Avbryt
             </Button>
-            <Button type="submit" disabled={!formData.name || !formData.date}>
+            <Button 
+              type="submit" 
+              disabled={
+                !formData.date || 
+                (formData.type === "match" && (!formData.homeTeam || !formData.awayTeam)) ||
+                (formData.type === "cup" && !formData.name)
+              }
+            >
               Spara aktivitet
             </Button>
           </div>

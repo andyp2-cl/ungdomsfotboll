@@ -82,7 +82,6 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     player_stats: { goals: {}, assists: {} },
     // Add league_id from database
     leagueId: item.league_id || undefined,
-    league_id: item.league_id || undefined,
     // Add match report and YouTube link from database
     matchReport: item.match_report || undefined,
     youtubeLink: item.youtube_link || undefined,
@@ -100,51 +99,25 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     activity.cupName = activity.name;
   }
   
-  // Set result field if home_score and away_score are available
-  if (item.home_score !== null && item.home_score !== undefined && 
-      item.away_score !== null && item.away_score !== undefined) {
-    activity.result = `${item.home_score}-${item.away_score}`;
+  // Ensure player_stats is properly initialized
+  if (item.player_stats) {
+    if (typeof item.player_stats === 'string') {
+      try {
+        activity.player_stats = JSON.parse(item.player_stats);
+      } catch (e) {
+        console.error('Error parsing player_stats JSON:', e);
+      }
+    } else {
+      activity.player_stats = item.player_stats;
+    }
   }
   
-  // Handle player_stats properly
-  if (item.player_stats) {
-    try {
-      const stats = typeof item.player_stats === 'string' 
-        ? JSON.parse(item.player_stats) 
-        : item.player_stats;
-        
-      activity.player_stats = {
-        goals: stats.goals || {},
-        assists: stats.assists || {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin // Use the activity-level isWin value
-      };
-    } catch (e) {
-      console.error("Error parsing player_stats JSON:", e);
-      activity.player_stats = {
-        goals: {},
-        assists: {},
-        scores: {
-          home: item.home_score,
-          away: item.away_score
-        },
-        isWin: activity.isWin
-      };
-    }
-  } else {
-    activity.player_stats = {
-      goals: {},
-      assists: {},
-      scores: {
-        home: item.home_score,
-        away: item.away_score
-      },
-      isWin: activity.isWin
-    };
-  }
+  // Ensure goals and assists exist in player_stats
+  activity.player_stats = {
+    ...activity.player_stats,
+    goals: activity.player_stats?.goals || {},
+    assists: activity.player_stats?.assists || {}
+  };
   
   return activity;
 };
