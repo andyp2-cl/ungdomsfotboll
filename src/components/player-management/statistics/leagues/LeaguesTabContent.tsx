@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import { Activity, Player } from "@/types/player";
@@ -37,7 +36,7 @@ const fetchLeaguesWithMatches = async (
   
   return (leagues || []).map(league => {
     const leagueMatches = activities.filter(
-      activity => activity.type === "match" && activity.league_id === league.id
+      activity => activity.type === "match" && (activity.league_id === league.id || activity.leagueId === league.id)
     );
     
     let wins = 0;
