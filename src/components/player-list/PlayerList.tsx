@@ -17,6 +17,7 @@ interface PlayerListProps {
   onPlayerEdit?: (player: Player) => void;
   showCoaches?: boolean;
   activities?: Activity[];
+  children?: React.ReactNode;
 }
 
 export function PlayerList({ 
@@ -25,7 +26,8 @@ export function PlayerList({
   onPlayerSelect, 
   onPlayerEdit,
   showCoaches = true,
-  activities = []
+  activities = [],
+  children
 }: PlayerListProps) {
   const { sortField, sortDirection, toggleSort, sortPlayers } = usePlayerSorting();
   const isMobile = useIsMobile();
@@ -59,7 +61,7 @@ export function PlayerList({
   };
 
   const handleDeselectAll = () => {
-    setVisibleColumns(['name']); // Keep only the name column visible
+    setVisibleColumns(['name']);
   };
 
   // Filter out coaches if showCoaches is false
@@ -199,6 +201,48 @@ export function PlayerList({
 
   return (
     <div className="space-y-4">
+      {children}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtrering
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuCheckboxItem
+            checked={visibleColumns.length === columnOptions.length}
+            onCheckedChange={handleSelectAll}
+          >
+            Välj alla
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={visibleColumns.length === 1 && visibleColumns.includes('name')}
+            onCheckedChange={handleDeselectAll}
+          >
+            Avmarkera alla
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem className="opacity-0 pointer-events-none">
+            ─────────────
+          </DropdownMenuCheckboxItem>
+          {columnOptions.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              checked={visibleColumns.includes(column.id)}
+              disabled={column.alwaysVisible}
+              onCheckedChange={(checked) => {
+                setVisibleColumns(prev =>
+                  checked
+                    ? [...prev, column.id]
+                    : prev.filter(id => id !== column.id)
+                );
+              }}
+            >
+              {column.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
       <PlayerListTable 
         players={sortPlayers(filteredPlayers, activities)} 
         activities={activities}

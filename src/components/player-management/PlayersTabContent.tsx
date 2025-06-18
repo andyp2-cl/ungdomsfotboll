@@ -6,8 +6,9 @@ import { PlayerManagementHeader } from "./PlayerManagementHeader";
 import { PlayersListContent } from "./PlayersListContent";
 import { PlayerDetail } from "@/components/PlayerDetail";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
+import { PlayerList } from "../player-list/PlayerList";
 
 interface PlayersTabContentProps {
   players: Player[];
@@ -91,14 +92,23 @@ export function PlayersTabContent({
           allPlayers={players}
         />
       ) : (
-        <PlayersListContent 
-          filteredPlayers={filteredPlayers}
-          viewMode={viewMode}
-          selectedPositions={selectedPositions}
-          onPlayerSelect={handlePlayerCardClick}
-          onPlayerEdit={onEditPlayerClick}
-          isMobile={isMobile}
-        />
+        viewMode === "list" ? (
+          <PlayerList
+            players={filteredPlayers}
+            activities={activities}
+            onPlayerSelect={handlePlayerCardClick}
+            onPlayerEdit={onEditPlayerClick}
+          />
+        ) : (
+          <PlayersListContent 
+            filteredPlayers={filteredPlayers}
+            viewMode={viewMode}
+            selectedPositions={selectedPositions}
+            onPlayerSelect={handlePlayerCardClick}
+            onPlayerEdit={onEditPlayerClick}
+            isMobile={isMobile}
+          />
+        )
       )}
     </div>
   );

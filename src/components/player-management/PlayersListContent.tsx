@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Player, PlayerPosition } from "@/types/player";
 import { PlayerCard } from "@/components/PlayerCard";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { PlayerListTable } from "../player-list/PlayerListTable";
 
 interface PlayersListContentProps {
   filteredPlayers: Player[];
@@ -11,6 +11,7 @@ interface PlayersListContentProps {
   onPlayerSelect: (player: Player) => void;
   onPlayerEdit: (player: Player) => void;
   isMobile: boolean;
+  visibleColumns?: string[];
 }
 
 export function PlayersListContent({
@@ -19,7 +20,8 @@ export function PlayersListContent({
   selectedPositions,
   onPlayerSelect,
   onPlayerEdit,
-  isMobile
+  isMobile,
+  visibleColumns
 }: PlayersListContentProps) {
   
   // Sort players by grade for consistent display
@@ -34,18 +36,9 @@ export function PlayersListContent({
   }
 
   return (
-    <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} gap-4`}>
-      {sortedPlayers.map((player) => (
-        <PlayerCard
-          key={player.id}
-          player={player}
-          onClick={() => {
-            console.log("PlayersListContent: Player card clicked:", player.name);
-            onPlayerSelect(player);
-          }}
-          onEdit={() => onPlayerEdit(player)}
-        />
-      ))}
-    </div>
+    <PlayerListTable
+      players={sortedPlayers}
+      visibleColumns={visibleColumns}
+    />
   );
 }
