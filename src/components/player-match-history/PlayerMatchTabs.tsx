@@ -3,7 +3,6 @@ import React from 'react';
 import { Player, Activity } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MatchesTabContent } from './components/MatchesTabContent';
-import { StatsTabContent } from './components/StatsTabContent';
 import { CupsTabContent } from './components/CupsTabContent';
 
 interface PlayerMatchTabsProps {
@@ -29,7 +28,6 @@ export function PlayerMatchTabs({
     <Tabs defaultValue="matches">
       <TabsList className="mb-4">
         <TabsTrigger value="matches">Matcher ({matches.length})</TabsTrigger>
-        <TabsTrigger value="stats">Statistik</TabsTrigger>
         <TabsTrigger value="cups">Cuper ({cups.length})</TabsTrigger>
       </TabsList>
       
@@ -39,13 +37,6 @@ export function PlayerMatchTabs({
           matches={matches} 
           onActivitySelect={onActivitySelect}
           allPlayers={allPlayers}
-        />
-      </TabsContent>
-      
-      <TabsContent value="stats">
-        <StatsTabContent 
-          player={player} 
-          matches={matches} 
         />
       </TabsContent>
       

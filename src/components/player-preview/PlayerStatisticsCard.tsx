@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Player, Activity } from "@/types/player";
-import { Trophy, Target, Calendar, TrendingUp, Users } from "lucide-react";
+import { Trophy, Target, Calendar, TrendingUp, Users, Award } from "lucide-react";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
@@ -31,49 +32,11 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
     return total + assists;
   }, 0);
 
-  // Calculate recent form (last 5 matches)
-  const recentMatches = playerMatches
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-  
-  const recentWins = recentMatches.filter(match => match.isWin === true).length;
-  const recentForm = recentMatches.length > 0 ? Math.round((recentWins / recentMatches.length) * 100) : 0;
+  // Calculate goals per match
+  const goalsPerMatch = playerMatches.length > 0 ? (totalGoals / playerMatches.length).toFixed(2) : "0.00";
 
   // Calculate unique teammates
   const uniqueTeammatesCount = calculateUniqueTeammates(player.id, activities);
-
-  const statisticsData = [
-    {
-      label: "Matcher spelade",
-      value: playerMatches.length,
-      icon: Calendar,
-      color: "text-blue-600"
-    },
-    {
-      label: "Vinster",
-      value: `${stats.wins} (${stats.winRate}%)`,
-      icon: Trophy,
-      color: "text-green-600"
-    },
-    {
-      label: "Mål",
-      value: totalGoals,
-      icon: Target,
-      color: "text-orange-600"
-    },
-    {
-      label: "Unika medspelare",
-      value: uniqueTeammatesCount,
-      icon: Users,
-      color: "text-purple-600"
-    },
-    {
-      label: "Senaste form",
-      value: `${recentForm}%`,
-      icon: TrendingUp,
-      color: recentForm >= 60 ? "text-green-600" : recentForm >= 40 ? "text-yellow-600" : "text-red-600"
-    }
-  ];
 
   return (
     <Card>
@@ -84,25 +47,74 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          {statisticsData.map((stat, index) => (
-            <div key={index} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg ${index === 4 ? 'col-span-2' : ''}`}>
-              <div className={`p-2 rounded-full bg-white shadow-sm ${stat.color}`}>
-                <stat.icon className="h-4 w-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Allmän statistik */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Allmän statistik
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Antal matcher</span>
+                <span className="font-medium">{playerMatches.length}</span>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="font-semibold">{stat.value}</p>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Vinster</span>
+                <span className="font-medium">{stats.wins}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Förluster</span>
+                <span className="font-medium">{stats.losses}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Oavgjorda</span>
+                <span className="font-medium">{stats.draws}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Unika medspelare</span>
+                <span className="font-medium">{uniqueTeammatesCount}</span>
               </div>
             </div>
-          ))}
+          </div>
+          
+          {/* Mål statistik */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Mål statistik
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Totalt mål</span>
+                <span className="font-medium">{totalGoals}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Totalt assist</span>
+                <span className="font-medium">{totalAssists}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mål per match</span>
+                <span className="font-medium">{goalsPerMatch}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Goals and Assists breakdown */}
+        {/* Prestationer badges */}
         {(totalGoals > 0 || totalAssists > 0) && (
-          <div className="mt-4 pt-4 border-t">
-            <h4 className="font-medium mb-2">Prestationer</h4>
-            <div className="flex gap-2">
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="font-medium mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              Prestationer
+            </h4>
+            <div className="flex gap-2 flex-wrap">
               {totalGoals > 0 && (
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                   {totalGoals} mål
@@ -113,30 +125,9 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
                   {totalAssists} assist
                 </Badge>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Recent form visualization */}
-        {recentMatches.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <h4 className="font-medium mb-2">Senaste 5 matcher</h4>
-            <div className="flex gap-1">
-              {recentMatches.map((match, index) => (
-                <div
-                  key={match.id}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                    match.isWin === true 
-                      ? 'bg-green-500 text-white' 
-                      : match.isWin === false 
-                        ? 'bg-red-500 text-white'
-                        : 'bg-gray-400 text-white'
-                  }`}
-                  title={`${match.name} - ${match.isWin === true ? 'Vinst' : match.isWin === false ? 'Förlust' : 'Oavgjort'}`}
-                >
-                  {match.isWin === true ? 'V' : match.isWin === false ? 'F' : 'O'}
-                </div>
-              ))}
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                {stats.winRate}% vinst
+              </Badge>
             </div>
           </div>
         )}

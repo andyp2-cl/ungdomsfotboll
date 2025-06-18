@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Activity, Player } from "@/types/player";
 import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
@@ -17,8 +18,8 @@ export function ActivitySummaryCard({ activities, players, className = "" }: Act
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Antal medspelare
+          <Trophy className="h-4 w-4" />
+          Statistik
         </CardTitle>
       </CardHeader>
       <CardContent>

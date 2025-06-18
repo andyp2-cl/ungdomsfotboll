@@ -12,10 +12,12 @@ export type Database = {
       activities: {
         Row: {
           away_score: number | null
+          away_team: string | null
           created_at: string
           cup_id: string | null
           date: string
           home_score: number | null
+          home_team: string | null
           id: string
           is_win: boolean | null
           kiosk_assigned_player_id: string | null
@@ -33,15 +35,15 @@ export type Database = {
           time: string | null
           type: string
           youtube_link: string | null
-          home_team: string | null
-          away_team: string | null
         }
         Insert: {
           away_score?: number | null
+          away_team?: string | null
           created_at?: string
           cup_id?: string | null
           date: string
           home_score?: number | null
+          home_team?: string | null
           id: string
           is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
@@ -59,15 +61,15 @@ export type Database = {
           time?: string | null
           type: string
           youtube_link?: string | null
-          home_team?: string | null
-          away_team?: string | null
         }
         Update: {
           away_score?: number | null
+          away_team?: string | null
           created_at?: string
           cup_id?: string | null
           date?: string
           home_score?: number | null
+          home_team?: string | null
           id?: string
           is_win?: boolean | null
           kiosk_assigned_player_id?: string | null
@@ -85,8 +87,6 @@ export type Database = {
           time?: string | null
           type?: string
           youtube_link?: string | null
-          home_team?: string | null
-          away_team?: string | null
         }
         Relationships: [
           {
