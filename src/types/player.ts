@@ -1,6 +1,6 @@
 export type PlayerGrade = 'A' | 'B' | 'C' | 'D';
 
-export type PlayerPosition = 'GK' | 'DEF' | 'MID' | 'FW' | 'TR';
+export type PlayerPosition = 'GK' | 'DEF' | 'MID' | 'FW' | 'TR' | 'MV' | 'BACK' | 'MF' | 'ANF' | 'TRÄNARE';
 
 export type ActivityType = 'match' | 'cup';
 
