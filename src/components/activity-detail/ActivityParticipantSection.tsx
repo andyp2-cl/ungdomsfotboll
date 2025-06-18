@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Activity, Player } from "@/types/player";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +5,7 @@ import { AddPlayersToActivity } from "@/components/AddPlayersToActivity";
 import { ParticipantList } from "./ParticipantList";
 import { ParticipantActions } from "./ParticipantActions";
 import { sortPlayersByGrade } from "@/utils/gradeUtils";
+import { supabase } from "@/lib/supabase";
 
 interface ActivityParticipantSectionProps {
   activity: Activity;
@@ -28,27 +28,51 @@ export function ActivityParticipantSection({
     players.filter(player => activity.participants?.includes(player.id))
   );
 
-  const handleAddPlayers = (playerIds: string[]) => {
-    const updatedParticipants = [
-      ...(activity.participants || []),
-      ...playerIds
-    ];
-    
-    const updatedActivity = {
-      ...activity,
-      participants: updatedParticipants
-    };
-    
-    updateActivity(updatedActivity);
-    
-    const playerNames = playerIds.map(id => 
-      players.find(p => p.id === id)?.name || "Spelare"
-    ).join(", ");
-    
-    toast({
-      title: "Spelare tillagda",
-      description: `${playerNames} har lagts till i aktiviteten.`,
-    });
+  const handleAddPlayers = async (playerIds: string[]) => {
+    try {
+      // First add players to player_activities table
+      const insertPromises = playerIds.map(playerId => 
+        supabase
+          .from('player_activities')
+          .insert({
+            id: crypto.randomUUID(),
+            player_id: playerId,
+            activity_id: activity.id
+          })
+      );
+
+      await Promise.all(insertPromises);
+
+      // Update participants array in activity
+      const updatedParticipants = [
+        ...(activity.participants || []),
+        ...playerIds
+      ];
+      
+      const updatedActivity = {
+        ...activity,
+        participants: updatedParticipants
+      };
+      
+      // Update activity in database
+      await updateActivity(updatedActivity);
+      
+      const playerNames = playerIds.map(id => 
+        players.find(p => p.id === id)?.name || "Spelare"
+      ).join(", ");
+      
+      toast({
+        title: "Spelare tillagda",
+        description: `${playerNames} har lagts till i aktiviteten.`,
+      });
+    } catch (error) {
+      console.error("Error adding players:", error);
+      toast({
+        title: "Ett fel uppstod",
+        description: "Kunde inte lägga till spelarna. Försök igen.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRemovePlayer = (playerId: string) => {

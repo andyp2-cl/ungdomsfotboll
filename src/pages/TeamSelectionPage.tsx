@@ -44,6 +44,7 @@ export default function TeamSelectionPage() {
     matchId: string | null;
   }>({ open: false, matchId: null });
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const {
     players
@@ -51,7 +52,6 @@ export default function TeamSelectionPage() {
 
   const {
     filteredActivities,
-    activities,
     isLoading,
     handleActivityUpdate
   } = useActivities(players, () => {});
@@ -112,7 +112,9 @@ export default function TeamSelectionPage() {
   }
 
   // Filter for upcoming matches that haven't been played yet
-  const upcomingMatches = activities.filter((a: any) => {
+  const upcomingMatches = Array.isArray(filteredActivities) ? filteredActivities.filter((a: Activity) => {
+    if (!a || !a.date) return false;
+
     const matchDate = new Date(a.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to start of today
@@ -134,9 +136,9 @@ export default function TeamSelectionPage() {
     
     // Include both cup matches and regular matches that haven't been played
     return isMatch && isFutureMatch && isNotCompleted && (isCupMatch || isRegularMatch);
-  });
+  }) : [];
 
-  const mappedUpcomingMatches = upcomingMatches.map((a: any) => {
+  const mappedUpcomingMatches = upcomingMatches.map((a: Activity) => {
     let leagueName = '';
     if (a.leagueId && leagueMap[a.leagueId]) leagueName = leagueMap[a.leagueId];
     else if (a.league_id && leagueMap[a.league_id]) leagueName = leagueMap[a.league_id];
@@ -201,49 +203,36 @@ export default function TeamSelectionPage() {
         });
 
       if (error) {
-        // Revert local state on error
-        setSortedMatches(prevMatches => 
-          prevMatches.map(m => 
-            m.id === matchId 
-              ? { ...m, players: m.players.filter(id => id !== playerId) }
-              : m
-          )
-        );
-        toast({
-          title: "Kunde inte lägga till spelare",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
+        throw error;
       }
 
-      // Update activities state to sync with other views
-      const activity = activities.find(a => a.id === matchId);
-      if (activity) {
-        const updatedActivity = {
-          ...activity,
-          participants: [...(activity.participants || []), playerId]
-        };
-        await handleActivityUpdate(updatedActivity);
-      }
+      // Update the activity in the activities state
+      const updatedActivity = {
+        ...match.rawActivity,
+        participants: [...match.players, playerId]
+      };
+      
+      await handleActivityUpdate(updatedActivity);
 
       toast({
         title: "Spelare tillagd",
-        description: "Spelaren har lagts till i matchen"
+        description: "Spelaren har lagts till i matchen.",
       });
     } catch (error) {
-      console.error('Error adding player:', error);
+      console.error('Error assigning player:', error);
+      
       // Revert local state on error
       setSortedMatches(prevMatches => 
         prevMatches.map(m => 
           m.id === matchId 
-            ? { ...m, players: m.players.filter(id => id !== playerId) }
+            ? { ...m, players: m.players.filter(p => p !== playerId) }
             : m
         )
       );
+
       toast({
-        title: "Ett fel uppstod",
-        description: "Kunde inte lägga till spelaren i matchen",
+        title: "Fel vid tilldelning",
+        description: "Ett fel uppstod när spelaren skulle läggas till i matchen.",
         variant: "destructive"
       });
     }
@@ -280,7 +269,7 @@ export default function TeamSelectionPage() {
       );
 
       // Update activities state to sync with other views
-      const activity = activities.find(a => a.id === matchId);
+      const activity = filteredActivities.find(a => a.id === matchId);
       if (activity) {
         const updatedActivity = {
           ...activity,
@@ -316,56 +305,145 @@ export default function TeamSelectionPage() {
     );
   };
 
-  const handleMultiPlayerSave = async () => {
-    if (!multiSelectDialog.matchId || selectedPlayerIds.length === 0) {
-      setMultiSelectDialog({ open: false, matchId: null });
-      setSelectedPlayerIds([]);
-      return;
-    }
-
-    const matchId = multiSelectDialog.matchId;
-    const selectedIds = [...selectedPlayerIds];
-    
-    setMultiSelectDialog({ open: false, matchId: null });
-    setSelectedPlayerIds([]);
-
+  const handleMultiPlayerSave = async (selectedIds: string[], matchId: string) => {
     try {
-      const activity = activities.find(a => a.id === matchId);
-      if (!activity) {
+      setIsProcessing(true);
+      
+      // Get the match we're adding players to
+      const match = sortedMatches.find(m => m.id === matchId);
+      if (!match || !match.rawActivity) {
+        throw new Error("Could not find match");
+      }
+      
+      // Convert raw activity to proper Activity type
+      const activity: Activity = {
+        ...match.rawActivity,
+        type: match.rawActivity.type || 'match',
+        name: match.rawActivity.name || match.opponent,
+        participants: Array.isArray(match.rawActivity.participants) ? match.rawActivity.participants : match.players || [],
+        player_stats: typeof match.rawActivity.player_stats === 'object' ? match.rawActivity.player_stats : {}
+      };
+      
+      // Get current participants
+      const currentParticipants = activity.participants;
+      
+      // Filter out any already participating players
+      const uniqueSelectedIds = selectedIds.filter(id => !currentParticipants.includes(id));
+      
+      if (uniqueSelectedIds.length === 0) {
         toast({
-          title: "Ett fel uppstod",
-          description: "Kunde inte hitta matchen",
-          variant: "destructive"
+          title: "Inga nya spelare",
+          description: "Alla valda spelare är redan tillagda."
         });
         return;
       }
-
-      // For cup activities, we need to update the activity first
+      
+      // For cup matches, we need to update both the match and the parent cup
       if (activity.cupId) {
-        // Update the activity with new participants
-        const updatedActivity = {
-          ...activity,
-          participants: [...(activity.participants || []), ...selectedIds]
-        };
-
         try {
-          await handleActivityUpdate(updatedActivity);
+          // First add players to player_activities table for the match
+          const insertPromises = uniqueSelectedIds.map(playerId => 
+            supabase
+              .from('player_activities')
+              .insert({
+                id: crypto.randomUUID(),
+                player_id: playerId,
+                activity_id: matchId
+              })
+          );
+
+          await Promise.all(insertPromises);
+
+          // Update the match with new participants
+          const updatedMatch = {
+            ...activity,
+            participants: [...currentParticipants, ...uniqueSelectedIds]
+          };
+
+          // Update the match in activities table
+          const { error: matchUpdateError } = await supabase
+            .from('activities')
+            .update({ 
+              participants: updatedMatch.participants,
+              player_stats: updatedMatch.player_stats
+            })
+            .eq('id', matchId);
+
+          if (matchUpdateError) throw matchUpdateError;
+          
+          // Then get and update the parent cup
+          const { data: parentCup } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('id', activity.cupId)
+            .single();
+            
+          if (parentCup) {
+            // Convert database record to Activity type
+            const dbCup = parentCup as any;
+            const cupActivity: Activity = {
+              id: dbCup.id,
+              type: 'cup',
+              name: dbCup.name || '',
+              date: dbCup.date,
+              participants: Array.isArray(dbCup.participants) ? dbCup.participants : [],
+              player_stats: typeof dbCup.player_stats === 'object' ? dbCup.player_stats : {}
+            };
+            
+            // Update cup participants
+            const updatedCupParticipants = Array.from(new Set([
+              ...cupActivity.participants,
+              ...uniqueSelectedIds
+            ]));
+
+            // Update the cup in activities table
+            const { error: cupUpdateError } = await supabase
+              .from('activities')
+              .update({ 
+                participants: updatedCupParticipants,
+                player_stats: cupActivity.player_stats
+              })
+              .eq('id', cupActivity.id);
+
+            if (cupUpdateError) throw cupUpdateError;
+
+            // Also add players to player_activities for the cup
+            const cupInsertPromises = uniqueSelectedIds.map(playerId => 
+              supabase
+                .from('player_activities')
+                .insert({
+                  id: crypto.randomUUID(),
+                  player_id: playerId,
+                  activity_id: cupActivity.id
+                })
+            );
+
+            await Promise.all(cupInsertPromises);
+          }
           
           // Update local state
           setSortedMatches(prevMatches => 
-            prevMatches.map(m => 
-              m.id === matchId 
-                ? { ...m, players: [...m.players, ...selectedIds] }
-                : m
-            )
+            prevMatches.map(m => {
+              if (m.id === matchId) {
+                return {
+                  ...m,
+                  players: [...(m.players || []), ...uniqueSelectedIds],
+                  rawActivity: {
+                    ...m.rawActivity,
+                    participants: [...(m.rawActivity?.participants || []), ...uniqueSelectedIds]
+                  }
+                };
+              }
+              return m;
+            })
           );
 
           toast({
             title: "Spelare tillagda",
-            description: `${selectedIds.length} spelare har lagts till.`
+            description: `${uniqueSelectedIds.length} spelare har lagts till.`
           });
         } catch (error) {
-          console.error('Error updating cup activity:', error);
+          console.error('Error updating cup match:', error);
           toast({
             title: "Ett fel uppstod",
             description: "Kunde inte lägga till spelarna i cup-matchen",
@@ -376,7 +454,7 @@ export default function TeamSelectionPage() {
       }
 
       // For regular matches, add players to player_activities table
-      const insertPromises = selectedIds.map(playerId => 
+      const insertPromises = uniqueSelectedIds.map(playerId => 
         supabase
           .from('player_activities')
           .insert({
@@ -387,47 +465,57 @@ export default function TeamSelectionPage() {
       );
 
       const results = await Promise.allSettled(insertPromises);
-      const successfulIds = selectedIds.filter((_, index) => 
+      const successfulIds = uniqueSelectedIds.filter((_, index) => 
         results[index].status === 'fulfilled' && !(results[index] as PromiseFulfilledResult<any>).value.error
       );
 
-      if (successfulIds.length > 0) {
-        // Update local states only after successful database operations
-        setSortedMatches(prevMatches => 
-          prevMatches.map(m => 
-            m.id === matchId 
-              ? { ...m, players: [...m.players, ...successfulIds] }
-              : m
-          )
-        );
+      // Update local state
+      setSortedMatches(prevMatches => 
+        prevMatches.map(m => {
+          if (m.id === matchId) {
+            return {
+              ...m,
+              players: [...(m.players || []), ...successfulIds],
+              rawActivity: {
+                ...m.rawActivity,
+                participants: [...(m.rawActivity?.participants || []), ...successfulIds]
+              }
+            };
+          }
+          return m;
+        })
+      );
 
-        // Update activities state
-        const updatedActivity = {
-          ...activity,
-          participants: [...(activity.participants || []), ...successfulIds]
-        };
-        await handleActivityUpdate(updatedActivity);
+      // Update activities state
+      const updatedActivity = {
+        ...activity,
+        participants: [...currentParticipants, ...successfulIds]
+      };
 
-        toast({
-          title: "Spelare tillagda",
-          description: `${successfulIds.length} av ${selectedIds.length} spelare har lagts till.`
-        });
-      }
+      // Update the activity in the database
+      const { error: updateError } = await supabase
+        .from('activities')
+        .update({ 
+          participants: updatedActivity.participants,
+          player_stats: updatedActivity.player_stats
+        })
+        .eq('id', matchId);
 
-      if (successfulIds.length < selectedIds.length) {
-        toast({
-          title: "Varning",
-          description: `${selectedIds.length - successfulIds.length} spelare kunde inte läggas till.`,
-          variant: "destructive"
-        });
-      }
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Spelare tillagda",
+        description: `${successfulIds.length} av ${uniqueSelectedIds.length} spelare har lagts till.`
+      });
     } catch (error) {
       console.error('Error in handleMultiPlayerSave:', error);
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte lägga till spelarna",
+        description: "Kunde inte lägga till alla spelare. Försök igen.",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -465,7 +553,7 @@ export default function TeamSelectionPage() {
     
     // Filter out players who can't be selected due to match restrictions
     const availablePlayersForSelection = playersNotInMatch.filter(player =>
-      isPlayerAvailableForMatch(player.id, currentMatch.date, activities)
+      isPlayerAvailableForMatch(player.id, currentMatch.date, filteredActivities)
     );
 
     // Filtrera bort inaktiva spelare
@@ -475,11 +563,11 @@ export default function TeamSelectionPage() {
     
     // Sort by grade (A first) and training ratio
     return sortPlayersByGradeAndRatio(onlyActivePlayers, trainingStats);
-  }, [players, currentMatch, activities, trainingStats]);
+  }, [players, currentMatch, filteredActivities, trainingStats]);
 
   // Updated function to count only matches this week
   const getThisWeekMatches = (playerId: string) => {
-    return currentMatch ? getThisWeekMatchCount(playerId, activities, currentMatch.date) : 0;
+    return currentMatch ? getThisWeekMatchCount(playerId, filteredActivities, currentMatch.date) : 0;
   };
 
   return (
@@ -579,8 +667,8 @@ export default function TeamSelectionPage() {
                   Avbryt
                 </Button>
                 <Button 
-                  onClick={handleMultiPlayerSave}
-                  disabled={selectedPlayerIds.length === 0}
+                  onClick={() => handleMultiPlayerSave(selectedPlayerIds, currentMatch?.id || '')}
+                  disabled={selectedPlayerIds.length === 0 || isProcessing}
                 >
                   Bekräfta ({selectedPlayerIds.length} spelare)
                 </Button>
@@ -610,7 +698,7 @@ export default function TeamSelectionPage() {
                   if (player && Array.isArray(player.activities) && player.activities.length > 0) {
                     activityCount = player.activities.length;
                   } else {
-                    activityCount = activities.filter(a => 
+                    activityCount = filteredActivities.filter(a => 
                       a.participants && a.participants.includes(stat.playerId)
                     ).length;
                   }
