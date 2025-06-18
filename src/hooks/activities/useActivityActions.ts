@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 import { handleActivityUpdate, handleKioskAssignmentUpdate, handleAddActivity, handleMatchResultUpdate } from "./actions/activityUpdateActions";
 import { handleImportedActivities, handleScrapedMatches, handleClearHistoricalActivities } from "./actions/activityBatchActions";
@@ -18,8 +17,43 @@ export function useActivityActions(
   historicalActivities: Activity[]
 ) {
   return {
-    handleActivityUpdate: async (updatedActivity: Activity): Promise<void> => 
-      await handleActivityUpdate(activities, setActivities, players, setPlayers, toast, updatedActivity),
+    handleActivityUpdate: async (updatedActivity: Activity): Promise<void> => {
+      try {
+        await handleActivityUpdate(
+          updatedActivity,
+          (activity: Activity) => {
+            console.log("Activity update successful:", activity);
+            const updatedActivities = activities.map(a => 
+              a.id === activity.id ? activity : a
+            );
+            setActivities(updatedActivities);
+            toast({
+              title: "Aktivitet uppdaterad",
+              description: "Ändringarna har sparats."
+            });
+          },
+          (error: Error) => {
+            console.error("Error updating activity:", error);
+            toast({
+              title: "Kunde inte uppdatera aktiviteten",
+              description: "Ett fel uppstod när aktiviteten skulle uppdateras.",
+              variant: "destructive"
+            });
+            throw error;
+          },
+          (title: string, description: string) => {
+            toast({
+              title,
+              description,
+              variant: "warning"
+            });
+          }
+        );
+      } catch (error) {
+        console.error("Error in handleActivityUpdate:", error);
+        throw error;
+      }
+    },
       
     handleDeleteActivity: (activityId: string) => 
       handleDeleteActivity(activities, setActivities, players, setPlayers, toast, activityId),

@@ -61,6 +61,7 @@ export function ActivityDetailView({
         description: "Ett fel uppstod när aktiviteten skulle uppdateras.",
         variant: "destructive"
       });
+      throw error; // Re-throw error to propagate it
     }
   };
 

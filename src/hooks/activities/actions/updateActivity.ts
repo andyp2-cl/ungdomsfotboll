@@ -209,8 +209,8 @@ export const handleActivityUpdate = async (
             throw updateCupError;
           }
         }
-      } catch (cupError) {
-        console.error("Error updating parent cup:", cupError);
+      } catch (error) {
+        console.error("Error updating parent cup:", error);
         if (onWarning) {
           onWarning(
             "Varning",
