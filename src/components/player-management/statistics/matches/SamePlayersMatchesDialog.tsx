@@ -10,9 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/utils/formatDate";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { exportMatchesToExcel } from "@/utils/exportUtils";
 
 interface SamePlayersMatchesDialogProps {
   open: boolean;
@@ -29,30 +26,11 @@ export function SamePlayersMatchesDialog({
   combinations,
   players,
 }: SamePlayersMatchesDialogProps) {
-  const handleExport = () => {
-    exportMatchesToExcel(combinations, players);
-  };
-
-  // Helper function to get player names from IDs
-  const getPlayerNames = (playerIds: string[]) => {
-    return playerIds
-      .map(id => {
-        const player = players.find(p => p.id === id);
-        return player ? `${player.name}${player.jerseyNumber ? ` (#${player.jerseyNumber})` : ''}` : id;
-      })
-      .sort()
-      .join(", ");
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle>Matcher med samma spelare</DialogTitle>
-          <Button onClick={handleExport} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportera till Excel
-          </Button>
         </DialogHeader>
         <ScrollArea className="flex-grow">
           <div className="space-y-4 p-4">

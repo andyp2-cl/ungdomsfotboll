@@ -146,13 +146,8 @@ export function calculateMatchesWithSamePlayers(activities: Activity[]): {
       return false;
     }
     
-    // Also check if the match name contains team names with year suffixes (like "Team 2013")
-    // This pattern typically indicates cup or tournament matches
-    const name = activity.name?.toLowerCase() || '';
-    const hasYearSuffix = name.match(/\s+\d{4}\s*(-|vs|–|mot|\s+)/) !== null;
-    
-    // If it has a year suffix in the team names, it's likely a cup match
-    return !hasYearSuffix;
+    // Don't filter based on year in team names anymore since some teams have years in their names
+    return true;
   });
 
   console.log(`Found ${regularMatches.length} regular matches (non-cup matches)`);
@@ -160,17 +155,50 @@ export function calculateMatchesWithSamePlayers(activities: Activity[]): {
   // Create a map to store participant combinations and their matches
   const participantCombinations = new Map<string, Activity[]>();
 
-  // For each match, create a sorted string of participant IDs
-  regularMatches.forEach(match => {
-    if (match.participants && match.participants.length > 0) {
-      const sortedParticipants = [...match.participants].sort().join(',');
-      const existingMatches = participantCombinations.get(sortedParticipants) || [];
-      participantCombinations.set(sortedParticipants, [...existingMatches, match]);
-      
-      // Debug log for each match
-      console.log(`Match "${match.name}" (${match.date}) has ${match.participants.length} players`);
+  // For each pair of matches, check if they share all players from one match
+  for (let i = 0; i < regularMatches.length; i++) {
+    for (let j = i + 1; j < regularMatches.length; j++) {
+      const match1 = regularMatches[i];
+      const match2 = regularMatches[j];
+
+      if (!match1.participants || !match2.participants) continue;
+
+      // Check if all players from one match are present in the other match
+      const match1Players = new Set(match1.participants);
+      const match2Players = new Set(match2.participants);
+
+      // Find the smaller set of players
+      const [smallerSet, largerSet] = match1Players.size <= match2Players.size 
+        ? [match1Players, match2Players] 
+        : [match2Players, match1Players];
+
+      // Check if all players from the smaller set are in the larger set
+      let allPlayersPresent = true;
+      for (const player of smallerSet) {
+        if (!largerSet.has(player)) {
+          allPlayersPresent = false;
+          break;
+        }
+      }
+
+      if (allPlayersPresent) {
+        // Use the smaller set of players as the key
+        const sortedParticipants = Array.from(smallerSet).sort().join(',');
+        const existingMatches = participantCombinations.get(sortedParticipants) || [];
+        
+        // Add both matches if they're not already included
+        const newMatches = [...existingMatches];
+        if (!newMatches.find(m => m.id === match1.id)) {
+          newMatches.push(match1);
+        }
+        if (!newMatches.find(m => m.id === match2.id)) {
+          newMatches.push(match2);
+        }
+        
+        participantCombinations.set(sortedParticipants, newMatches);
+      }
     }
-  });
+  }
 
   // Convert combinations to array and filter those with more than one match
   const combinations = Array.from(participantCombinations.entries())
