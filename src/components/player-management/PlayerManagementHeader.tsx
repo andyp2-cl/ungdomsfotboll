@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Plus } from "lucide-react";
 import { SearchInput } from "@/components/SearchInput";
@@ -19,16 +18,18 @@ export function PlayerManagementHeader({
   onSearchChange,
   onViewModeChange,
   onAddPlayerClick,
-  isMobile
-}: PlayerManagementHeaderProps) {
+  isMobile,
+  children
+}: PlayerManagementHeaderProps & { children?: React.ReactNode }) {
   return (
     <div className="flex flex-col md:flex-row justify-between gap-4">
-      <div className="w-full md:w-1/2 xl:w-1/3">
+      <div className="w-full md:w-1/2 xl:w-1/3 flex items-center gap-2">
         <SearchInput 
           value={searchQuery} 
           onChange={onSearchChange} 
           placeholder="Sök spelare..."
         />
+        {children}
       </div>
       <div className="flex items-center gap-2">
         <Button onClick={onAddPlayerClick}>

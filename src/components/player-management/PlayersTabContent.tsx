@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Player, PlayerGrade, PlayerPosition } from "@/types/player";
 import { Activity } from "@/types/player";
@@ -6,6 +5,9 @@ import { PlayerFilter } from "@/components/PlayerFilter";
 import { PlayerManagementHeader } from "./PlayerManagementHeader";
 import { PlayersListContent } from "./PlayersListContent";
 import { PlayerDetail } from "@/components/PlayerDetail";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Filter } from "lucide-react";
 
 interface PlayersTabContentProps {
   players: Player[];
@@ -68,11 +70,23 @@ export function PlayersTabContent({
         onAddPlayerClick={onAddPlayerClick}
         isMobile={isMobile}
       />
-      
-      <PlayerFilter 
-        selectedGrades={selectedGrades} 
-        onGradeChange={onGradeChange}
-      />
+      <div className="flex items-center gap-2">
+        <PlayerFilter 
+          selectedGrades={selectedGrades} 
+          onGradeChange={onGradeChange}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtrering
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {/* ...samma innehåll som tidigare... */}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       
       {selectedPlayer ? (
         <PlayerDetail 

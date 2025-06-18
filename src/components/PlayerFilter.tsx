@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { PlayerGrade } from "@/types/player";
 
@@ -18,7 +17,6 @@ export function PlayerFilter({
       {/* Grade Filters */}
       <div className="flex items-center flex-wrap gap-2">
         <div className="flex flex-wrap gap-2 items-center">
-          <span className="self-center text-sm font-medium mr-2">Filtrera nivå:</span>
           {grades.map((grade) => (
             <Button
               key={grade}
