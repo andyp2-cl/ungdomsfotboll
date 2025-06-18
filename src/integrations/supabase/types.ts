@@ -35,6 +35,8 @@ export type Database = {
           time: string | null
           type: string
           youtube_link: string | null
+          status: string | null
+          participants: string[] | null
         }
         Insert: {
           away_score?: number | null
@@ -61,6 +63,8 @@ export type Database = {
           time?: string | null
           type: string
           youtube_link?: string | null
+          status?: string | null
+          participants?: string[] | null
         }
         Update: {
           away_score?: number | null
@@ -87,6 +91,8 @@ export type Database = {
           time?: string | null
           type?: string
           youtube_link?: string | null
+          status?: string | null
+          participants?: string[] | null
         }
         Relationships: [
           {
