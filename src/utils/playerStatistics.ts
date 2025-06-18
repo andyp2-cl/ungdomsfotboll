@@ -1,4 +1,3 @@
-
 import { Activity, Player } from "@/types/player";
 
 export interface PlayerStatistics {
@@ -107,4 +106,27 @@ export const sortActivitiesByDate = (activities: Activity[]): Activity[] => {
     const dateB = new Date(b.date);
     return dateB.getTime() - dateA.getTime(); // Sort descending (newest first)
   });
+};
+
+export const calculateUniqueTeammates = (playerId: string, activities: Activity[]): number => {
+  // Get all activities where the player participated
+  const playerActivities = activities.filter(activity => 
+    activity.participants?.includes(playerId) && 
+    (activity.type === 'match' || activity.type === 'cup')
+  );
+  
+  // Create a Set to store unique teammate IDs
+  const uniqueTeammates = new Set<string>();
+  
+  // Go through each activity and add teammates to the set
+  playerActivities.forEach(activity => {
+    activity.participants?.forEach(teammateId => {
+      // Don't count the player themselves
+      if (teammateId !== playerId) {
+        uniqueTeammates.add(teammateId);
+      }
+    });
+  });
+  
+  return uniqueTeammates.size;
 };

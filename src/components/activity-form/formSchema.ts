@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const activityFormSchema = z.object({
@@ -16,6 +15,8 @@ export const activityFormSchema = z.object({
   cupName: z.string().optional(),
   isWin: z.boolean().optional(),
   leagueId: z.string().optional(),
+  homeTeam: z.string().optional(),
+  awayTeam: z.string().optional(),
 });
 
 export type ActivityFormValues = z.infer<typeof activityFormSchema>;

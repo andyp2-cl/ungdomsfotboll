@@ -129,7 +129,11 @@ export function ActivityListItem({
             {/* Header with title and badges */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} whitespace-normal`}>{activity.name}</h3>
+                <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} whitespace-normal`}>
+                  {activity.homeTeam && activity.awayTeam
+                    ? `${activity.homeTeam} - ${activity.awayTeam}`
+                    : activity.name}
+                </h3>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <CupMatchBadge activity={activity} isMobile={isMobile} />

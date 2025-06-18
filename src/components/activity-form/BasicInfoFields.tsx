@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
@@ -25,19 +24,51 @@ export function BasicInfoFields({ form, onTypeChange }: BasicInfoFieldsProps) {
 
   return (
     <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Namn</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {type === "match" ? (
+        <>
+          <FormField
+            control={form.control}
+            name="homeTeam"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hemmalag</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ange hemmalag" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="awayTeam"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bortalag</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ange bortalag" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      ) : (
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Namn</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       
       <FormField
         control={form.control}

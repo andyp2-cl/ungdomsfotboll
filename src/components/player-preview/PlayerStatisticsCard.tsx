@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Player, Activity } from "@/types/player";
-import { Trophy, Target, Calendar, TrendingUp } from "lucide-react";
+import { Trophy, Target, Calendar, TrendingUp, Users } from "lucide-react";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
 interface PlayerStatisticsCardProps {
   player: Player;
@@ -39,6 +39,9 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
   const recentWins = recentMatches.filter(match => match.isWin === true).length;
   const recentForm = recentMatches.length > 0 ? Math.round((recentWins / recentMatches.length) * 100) : 0;
 
+  // Calculate unique teammates
+  const uniqueTeammatesCount = calculateUniqueTeammates(player.id, activities);
+
   const statisticsData = [
     {
       label: "Matcher spelade",
@@ -59,6 +62,12 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
       color: "text-orange-600"
     },
     {
+      label: "Unika medspelare",
+      value: uniqueTeammatesCount,
+      icon: Users,
+      color: "text-purple-600"
+    },
+    {
       label: "Senaste form",
       value: `${recentForm}%`,
       icon: TrendingUp,
@@ -77,7 +86,7 @@ export function PlayerStatisticsCard({ player, activities }: PlayerStatisticsCar
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
           {statisticsData.map((stat, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <div key={index} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg ${index === 4 ? 'col-span-2' : ''}`}>
               <div className={`p-2 rounded-full bg-white shadow-sm ${stat.color}`}>
                 <stat.icon className="h-4 w-4" />
               </div>

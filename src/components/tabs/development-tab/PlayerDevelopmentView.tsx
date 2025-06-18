@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
 import { TrendingUp, TrendingDown, Calendar, Target, BarChart3, Clock, GitCompare } from "lucide-react";
+import { ActivitySummaryCard } from "@/components/activity-summary/ActivitySummaryCard";
+import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
 interface PlayerDevelopmentViewProps {
   players: Player[];
@@ -289,6 +290,169 @@ export function PlayerDevelopmentView({
                 previousDevelopment={previousDevelopment}
                 playerName={selectedPlayer.name}
               />
+            )}
+          </TabsContent>
+
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Aktivitetssammanfattning
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Senaste aktivitet och totaler */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">Senaste aktivitet</div>
+                      <div className="font-medium">
+                        {playerActivities[0] ? (
+                          <div className="flex flex-col gap-1">
+                            <div>{playerActivities[0].name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(playerActivities[0].date).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ) : (
+                          "Ingen aktivitet registrerad"
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">Totala aktiviteter</div>
+                      <div className="font-medium text-2xl">{playerActivities.length}</div>
+                    </div>
+                  </div>
+
+                  {/* Aktivitetstyper */}
+                  <div>
+                    <div className="text-sm font-medium mb-3">Fördelning</div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold">
+                          {playerActivities.filter(a => a.type === 'match').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Matcher</div>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold">
+                          {playerActivities.filter(a => a.type === 'cup').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Cuper</div>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold">{history.length}</div>
+                        <div className="text-sm text-muted-foreground">Utvecklingsposter</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Medspelare */}
+                  <div>
+                    <div className="text-sm font-medium mb-3">Medspelare</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="text-3xl font-bold mb-1">
+                          {selectedPlayer && calculateUniqueTeammates(selectedPlayer.id, activities)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Unika medspelare</div>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="text-3xl font-bold mb-1">
+                          {playerActivities.reduce((max, activity) => {
+                            const teamSize = activity.participants?.length || 0;
+                            return teamSize > max ? teamSize : max;
+                          }, 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Största lagstorlek</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Matchstatistik om det finns matcher */}
+                  {playerActivities.some(a => a.type === 'match') && (
+                    <div>
+                      <div className="text-sm font-medium mb-3">Matchstatistik</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-muted/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold">
+                            {playerActivities.filter(a => a.type === 'match' && a.isWin === true).length}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Vinster</div>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold">
+                            {playerActivities.filter(a => 
+                              a.type === 'match' && 
+                              a.homeScore !== undefined && 
+                              a.awayScore !== undefined && 
+                              a.homeScore === a.awayScore
+                            ).length}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Oavgjorda</div>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold">
+                            {playerActivities.filter(a => a.type === 'match' && a.isWin === false).length}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Förluster</div>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold">
+                            {playerActivities
+                              .filter(a => a.type === 'match')
+                              .reduce((total, match) => {
+                                const goals = match.player_stats?.goals?.[selectedPlayer?.id] || 0;
+                                return total + goals;
+                              }, 0)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Mål</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Resten av innehållet */}
+            {history.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Utvecklingshistorik
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {history.map((entry, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <div className="min-w-[100px] text-sm text-muted-foreground">
+                          {new Date(entry.recorded_at).toLocaleDateString()}
+                        </div>
+                        <div>
+                          <div className="font-medium">
+                            {Object.entries(entry.development_data)
+                              .filter(([key]) => key !== 'id' && entry.development_data[key] !== undefined)
+                              .map(([key, value]) => (
+                                <span key={key} className="mr-2">
+                                  {key}: {value}
+                                </span>
+                              ))}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {entry.notes || 'Ingen anteckning'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
         </Tabs>

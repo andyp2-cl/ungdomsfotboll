@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,9 +71,9 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Player activity participation */}
-      <Card>
+      <Card className="col-span-1">
         <CardHeader>
           <CardTitle>Spelarnärvaro</CardTitle>
           <CardDescription>Antal aktiviteter per spelare</CardDescription>
@@ -87,9 +86,9 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
       </Card>
 
       {/* Activity by grade */}
-      <Card>
+      <Card className="col-span-1">
         <CardHeader>
-          <CardTitle>Närvaro per nivå</CardTitle>
+          <CardTitle>Aktivitetsstatistik per nivå</CardTitle>
           <CardDescription>Genomsnittligt antal aktiviteter per spelarnivå</CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,11 +98,18 @@ export function OverviewTabContent({ players, activities, onPlayerSelect }: Over
         </CardContent>
       </Card>
 
-      {/* Player Count Card */}
-      <PlayerSummaryCard data={gradeStats} />
-      
       {/* Monthly Activity Trends */}
-      <MonthlyActivityChart activities={activities} />
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Lagprestationer över tid</CardTitle>
+          <CardDescription>Utveckling av vinstprocent och målproduktion</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] w-full">
+            <MonthlyActivityChart activities={activities} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

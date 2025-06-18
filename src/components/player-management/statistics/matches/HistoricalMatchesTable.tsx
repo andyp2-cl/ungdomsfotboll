@@ -88,9 +88,16 @@ export function HistoricalMatchesTable({
       )
     },
     {
-      key: 'name',
+      key: 'match',
       label: 'Match',
-      sortable: true
+      sortable: true,
+      formatter: (_, activity) => (
+        <div>
+          {activity.homeTeam && activity.awayTeam
+            ? `${activity.homeTeam} - ${activity.awayTeam}`
+            : activity.name}
+        </div>
+      )
     },
     {
       key: 'league_id',

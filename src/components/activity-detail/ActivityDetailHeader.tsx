@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Activity } from "@/types/player";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -107,7 +106,11 @@ export function ActivityDetailHeader({ activity, isHistorical, onClose, onEdit, 
         </div>
       </div>
 
-      <CardTitle className={isMobile ? "text-xl" : "text-2xl"}>{activity.name}</CardTitle>
+      <CardTitle className={isMobile ? "text-xl" : "text-2xl"}>
+        {activity.homeTeam && activity.awayTeam
+          ? `${activity.homeTeam} - ${activity.awayTeam}`
+          : activity.name}
+      </CardTitle>
 
       <div className="flex items-center flex-wrap gap-2">
         <Badge className={getTypeColor(activity.type)}>{getTypeLabel(activity.type)}</Badge>

@@ -1,8 +1,8 @@
 import React from "react";
 import { Player, Activity } from "@/types/player";
-import { Users, Calendar, TrendingUp, Trophy, Target, Award } from "lucide-react";
-import { KPICard } from "./KPICard";
-import { isHomeMatch } from "@/utils/playerCombinations";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, Calendar, Trophy, Target, Award } from "lucide-react";
+import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
 interface KPISectionProps {
   players: Player[];
@@ -27,7 +27,7 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
 
   // Calculate total goals scored by team (home/away logic)
   const totalGoals = playedMatches.reduce((sum, match) => {
-    const isHome = isHomeMatch(match);
+    const isHome = match.homeTeam?.toLowerCase().includes('hässleholms if');
     return sum + (isHome ? (match.homeScore || 0) : (match.awayScore || 0));
   }, 0);
   
@@ -35,88 +35,70 @@ export function KPISection({ players, activities, isMobile = false }: KPISection
   const wins = playedMatches.filter(match => match.isWin === true).length;
   const winRate = playedMatches.length > 0 ? Math.round((wins / playedMatches.length) * 100) : 0;
   
-  // Calculate average attendance
-  const totalParticipations = players
-    .filter(p => !p.positions?.includes("TRÄNARE"))
+  // Calculate average teammates
+  const totalTeammates = players
+    .filter(player => !player.positions?.includes("TRÄNARE"))
     .reduce((sum, player) => {
-      const participations = activities.filter(activity => 
-        activity.participants?.includes(player.id)
-      ).length;
-      return sum + participations;
+      return sum + calculateUniqueTeammates(player.id, activities);
     }, 0);
   
-  const averageAttendance = totalPlayers > 0 && totalActivities > 0 
-    ? Math.round((totalParticipations / (totalPlayers * totalActivities)) * 100)
+  const averageTeammates = players.length > 0 
+    ? Math.round(totalTeammates / players.length) 
     : 0;
 
-  // Find most active grade
-  const gradeActivity = ['A', 'B', 'C', 'D'].map(grade => {
-    const gradePlayers = players.filter(p => p.grade === grade && !p.positions?.includes("TRÄNARE"));
-    const gradeParticipations = gradePlayers.reduce((sum, player) => {
-      return sum + activities.filter(activity => 
-        activity.participants?.includes(player.id)
-      ).length;
-    }, 0);
-    
-    const average = gradePlayers.length > 0 ? gradeParticipations / gradePlayers.length : 0;
-    return { grade, average };
-  });
-  
-  const mostActiveGrade = gradeActivity.reduce((max, current) => 
-    current.average > max.average ? current : max
-  );
+  const kpiData = [
+    {
+      label: "Totalt antal spelare",
+      value: totalPlayers,
+      icon: Users,
+      subtext: "Aktiva spelare"
+    },
+    {
+      label: "Antal matcher",
+      value: playedMatches.length,
+      icon: Calendar,
+      subtext: "Genomförda matcher"
+    },
+    {
+      label: "Vinstprocent",
+      value: `${winRate}%`,
+      icon: Trophy,
+      subtext: `${wins} vinster av ${playedMatches.length}`
+    },
+    {
+      label: "Mål gjorda",
+      value: totalGoals,
+      icon: Target,
+      subtext: `${(totalGoals / playedMatches.length).toFixed(1)} per match`
+    },
+    {
+      label: "Snitt antal medspelare",
+      value: averageTeammates,
+      icon: Award,
+      subtext: "Unika medspelare per spelare"
+    }
+  ];
 
-  // Calculate goals per match
-  const goalsPerMatch = playedMatches.length > 0 
-    ? (totalGoals / playedMatches.length).toFixed(1)
-    : "0.0";
-
-  const gridCols = isMobile ? "grid-cols-2" : "grid-cols-3 lg:grid-cols-6";
+  const gridCols = isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-5";
 
   return (
-    <div className={`grid ${gridCols} gap-4 mb-6`}>
-      <KPICard
-        title="Totalt antal spelare"
-        value={totalPlayers}
-        icon={Users}
-        description="Aktiva spelare"
-        className="hover:shadow-md transition-shadow"
-      />
-      <KPICard
-        title="Antal matcher"
-        value={playedMatches.length}
-        icon={Calendar}
-        description="Genomförda matcher"
-        className="hover:shadow-md transition-shadow"
-      />
-      <KPICard
-        title="Vinstprocent"
-        value={`${winRate}%`}
-        icon={Trophy}
-        description={`${wins} vinster av ${playedMatches.length}`}
-        className="hover:shadow-md transition-shadow"
-      />
-      <KPICard
-        title="Mål gjorda"
-        value={totalGoals}
-        icon={Target}
-        description={`${goalsPerMatch} per match`}
-        className="hover:shadow-md transition-shadow"
-      />
-      <KPICard
-        title="Genomsnittlig närvaro"
-        value={`${averageAttendance}%`}
-        icon={TrendingUp}
-        description="Av alla aktiviteter"
-        className="hover:shadow-md transition-shadow"
-      />
-      <KPICard
-        title="Mest aktiva nivå"
-        value={mostActiveGrade.grade}
-        icon={Award}
-        description={`${Math.round(mostActiveGrade.average * 10) / 10} aktiviteter/spelare`}
-        className="hover:shadow-md transition-shadow"
-      />
+    <div className={`grid ${gridCols} gap-4`}>
+      {kpiData.map((kpi, index) => (
+        <Card key={index}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+              <div className="text-sm font-medium">
+                {kpi.label}
+              </div>
+              <kpi.icon className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="text-2xl font-bold">{kpi.value}</div>
+            <p className="text-xs text-muted-foreground">
+              {kpi.subtext}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

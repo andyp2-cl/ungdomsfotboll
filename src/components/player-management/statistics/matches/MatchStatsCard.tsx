@@ -1,9 +1,7 @@
-
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, ShieldCheck, Target, TrendingUp } from "lucide-react";
 import { Activity } from "@/types/player";
-import { isHomeMatch } from "@/components/activity-detail/match-result/utils";
 
 interface MatchStatsCardProps {
   activities: Activity[];
@@ -23,9 +21,9 @@ export function MatchStatsCard({ activities, className = "" }: MatchStatsCardPro
       cleanSheets: 0
     };
     
-    // Calculate goals scored, conceded, and clean sheets based on home/away logic
+    // Calculate goals scored, conceded, and clean sheets based on home/away team
     activities.forEach(activity => {
-      const isHome = isHomeMatch(activity);
+      const isHome = activity.homeTeam?.toLowerCase().includes('hässleholms if');
       const homeScore = activity.homeScore || 0;
       const awayScore = activity.awayScore || 0;
       
@@ -96,16 +94,14 @@ export function MatchStatsCard({ activities, className = "" }: MatchStatsCardPro
             </div>
           </div>
           
-          <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200">
             <div className="flex items-center justify-between">
               <div>
-                <dt className="text-sm font-medium text-emerald-700">Nollor</dt>
-                <dd className="text-xl font-bold text-emerald-800">{matchStats.cleanSheets}</dd>
-                <dd className="text-xs text-emerald-600">
-                  {matchStats.total > 0 ? Math.round((matchStats.cleanSheets / matchStats.total) * 100) : 0}% av matcher
-                </dd>
+                <dt className="text-sm font-medium text-red-700">Mål insläppta</dt>
+                <dd className="text-xl font-bold text-red-800">{matchStats.goalsConceded}</dd>
+                <dd className="text-xs text-red-600">Ø {matchStats.avgGoalsAgainst}/match</dd>
               </div>
-              <ShieldCheck className="h-6 w-6 text-emerald-600" />
+              <ShieldCheck className="h-6 w-6 text-red-600" />
             </div>
           </div>
         </div>

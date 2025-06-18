@@ -1,4 +1,3 @@
-
 import { Activity } from "@/types/player";
 
 /**
@@ -28,7 +27,9 @@ export const formatActivityForDatabase = (activity: Activity): any => {
     scraped: activity.scraped || false,
     league_id: activity.leagueId || null,
     match_report: activity.matchReport || null,
-    youtube_link: activity.youtubeLink || null
+    youtube_link: activity.youtubeLink || null,
+    home_team: activity.homeTeam || null,
+    away_team: activity.awayTeam || null
   };
 
   // Special handling for cup type activities
@@ -84,7 +85,9 @@ export const formatActivityFromDatabase = (item: any): Activity => {
     league_id: item.league_id || undefined,
     // Add match report and YouTube link from database
     matchReport: item.match_report || undefined,
-    youtubeLink: item.youtube_link || undefined
+    youtubeLink: item.youtube_link || undefined,
+    homeTeam: item.home_team || undefined,
+    awayTeam: item.away_team || undefined
   };
   
   // For cup type activities, make sure cupId is set properly

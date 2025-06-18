@@ -48,6 +48,8 @@ export interface Activity {
   league_id?: string; // Database format of league ID
   matchReport?: string; // Match report text
   youtubeLink?: string; // YouTube link for the match
+  homeTeam?: string;
+  awayTeam?: string;
 }
 
 export interface PlayerDevelopment {

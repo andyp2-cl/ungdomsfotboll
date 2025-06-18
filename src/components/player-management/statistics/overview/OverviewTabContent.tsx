@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from 'react';
 import { Player, Activity } from "@/types/player";
 import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
 import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
@@ -9,6 +9,14 @@ import { isTrainer } from "@/utils/positionUtils";
 import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
 import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { getOpponentName, isHomeMatch } from '@/utils/playerCombinations';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
+import { MonthlyActivityChart } from "@/components/MonthlyActivityChart";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/client";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Badge } from "@/components/ui/badge";
+import { MatchStatsCard } from "../matches/MatchStatsCard";
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -95,7 +103,7 @@ export function OverviewTabContent({
 
       const data = months.get(monthKey)!;
       data.matches++;
-      const isHome = isHomeMatch(activity);
+      const isHome = activity.homeTeam?.toLowerCase().includes('hässleholms if');
       data.goals += isHome ? (activity.homeScore || 0) : (activity.awayScore || 0);
       data.goalsConceded += isHome ? (activity.awayScore || 0) : (activity.homeScore || 0);
       if (activity.homeScore === activity.awayScore) data.draws++;
@@ -152,15 +160,15 @@ export function OverviewTabContent({
   const draws = matchActivities.filter(m => m.homeScore === m.awayScore).length;
   const losses = matchActivities.filter(m => m.isWin === false && m.homeScore !== m.awayScore).length;
   
-  // Calculate goals scored and conceded based on home/away status
-  const goalsScored = matchActivities.reduce((sum, m) => {
-    const isHome = isHomeMatch(m);
-    return sum + (isHome ? (m.homeScore || 0) : (m.awayScore || 0));
+  // Calculate goals scored and conceded based on home/away team
+  const goalsScored = matchActivities.reduce((sum, activity) => {
+    const isHome = activity.homeTeam?.toLowerCase().includes('hässleholms if');
+    return sum + (isHome ? (activity.homeScore || 0) : (activity.awayScore || 0));
   }, 0);
   
-  const goalsConceded = matchActivities.reduce((sum, m) => {
-    const isHome = isHomeMatch(m);
-    return sum + (isHome ? (m.awayScore || 0) : (m.homeScore || 0));
+  const goalsConceded = matchActivities.reduce((sum, activity) => {
+    const isHome = activity.homeTeam?.toLowerCase().includes('hässleholms if');
+    return sum + (isHome ? (activity.awayScore || 0) : (activity.homeScore || 0));
   }, 0);
   
   const goalDiff = goalsScored - goalsConceded;
@@ -370,7 +378,7 @@ export function OverviewTabContent({
               const matchesThisMonth = matchActivities.filter(m => m.date.startsWith(data.month));
               let mostGoals = 0;
               matchesThisMonth.forEach(m => {
-                const isHome = isHomeMatch(m);
+                const isHome = m.homeTeam?.toLowerCase().includes('hässleholms if');
                 const goals = isHome ? (m.homeScore || 0) : (m.awayScore || 0);
                 if (goals > mostGoals) mostGoals = goals;
               });
@@ -399,6 +407,12 @@ export function OverviewTabContent({
           </div>
         </ChartSection>
       </div>
+
+      {/* Player Count Card */}
+      <PlayerSummaryCard data={gradeData} players={players} activities={activities} />
+      
+      {/* Monthly Activity Trends */}
+      <MonthlyActivityChart activities={activities} />
     </div>
   );
 }

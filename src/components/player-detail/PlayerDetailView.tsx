@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,7 @@ import { DevelopmentSummaryCard } from "@/components/development-tracking/Develo
 import { useDevelopmentHistory } from "@/hooks/useDevelopmentHistory";
 import { Calendar, MapPin, Users, Edit, BarChart3, User, Target } from "lucide-react";
 import { formatPositions } from "@/utils/positionUtils";
+import { ActivitySummaryCard } from "@/components/activity-summary/ActivitySummaryCard";
 
 interface PlayerDetailViewProps {
   player: Player;
@@ -157,44 +157,11 @@ export function PlayerDetailView({
             />
 
             {/* Activity Summary */}
-            <Card className="md:col-span-2 lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Aktivitetssammanfattning
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="flex justify-between">
-                  <span>Totala aktiviteter:</span>
-                  <span className="font-medium">{playerActivities.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Matcher:</span>
-                  <span className="font-medium">
-                    {playerActivities.filter(a => a.type === 'match').length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Cuper:</span>
-                  <span className="font-medium">
-                    {playerActivities.filter(a => a.type === 'cup').length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Utvecklingsposter:</span>
-                  <span className="font-medium">{history.length}</span>
-                </div>
-                {recentActivities.length > 0 && (
-                  <div className="flex justify-between md:col-span-2 lg:col-span-4">
-                    <span>Senaste aktivitet:</span>
-                    <span className="font-medium">
-                      {new Date(recentActivities[0].date).toLocaleDateString('sv-SE')}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ActivitySummaryCard
+              activities={playerActivities}
+              players={[player]}
+              className="md:col-span-2 lg:col-span-3"
+            />
           </div>
         </TabsContent>
 

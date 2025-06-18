@@ -1,4 +1,3 @@
-
 import { Activity, Location } from "@/types/player";
 import { ActivityFormValues } from "@/components/activity-form/formSchema";
 import { format } from "date-fns";
@@ -45,7 +44,7 @@ export async function handleActivitySubmit(
     
     // Auto-calculate isWin if we have scores and it's not explicitly set
     if (homeScore !== undefined && awayScore !== undefined && isWin === undefined) {
-      const isHomeTeam = isHomeMatch(originalActivity);
+      const isHomeTeam = values.homeTeam?.toLowerCase().includes('hässleholms if') || false;
       isWin = calculateWinStatus(homeScore, awayScore, isHomeTeam);
     }
     
@@ -84,7 +83,11 @@ export async function handleActivitySubmit(
     // Create updated activity with form values
     const formUpdatedActivity: Activity = {
       ...originalActivity,
-      name: values.name,
+      name: values.type === "match" && values.homeTeam && values.awayTeam 
+        ? `${values.homeTeam} - ${values.awayTeam}`
+        : values.name,
+      homeTeam: values.homeTeam,
+      awayTeam: values.awayTeam,
       date: formattedDate,
       type: values.type,
       time: values.time || undefined,
@@ -109,7 +112,7 @@ export async function handleActivitySubmit(
     
     await onSave(updatedActivity);
   } catch (error) {
-    console.error("Error saving activity:", error);
+    console.error("Error in handleActivitySubmit:", error);
     throw error;
   } finally {
     setIsSubmitting(false);

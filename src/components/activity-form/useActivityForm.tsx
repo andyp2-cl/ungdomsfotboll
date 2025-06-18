@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +30,8 @@ export function useActivityForm(initialActivity: Activity | null) {
       cupName: initialActivity?.cupName || "",
       isWin: initialActivity?.isWin,
       leagueId: initialActivity?.leagueId || "none",
+      homeTeam: initialActivity?.homeTeam || "",
+      awayTeam: initialActivity?.awayTeam || "",
     },
   });
 

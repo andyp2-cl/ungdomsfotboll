@@ -3,7 +3,6 @@ import { Activity, Player } from "@/types/player";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MatchOverviewTab } from "./MatchOverviewTab";
 import { HomeAwayTab } from "./HomeAwayTab";
-import { isHomeMatch } from "@/utils/playerCombinations";
 
 interface MatchesTabContentProps {
   activities: Activity[];
@@ -37,7 +36,7 @@ export function MatchesTabContent({
     const away = { matches: 0, wins: 0, draws: 0, losses: 0, goals: 0, conceded: 0 };
 
     historicalMatchActivities.forEach(match => {
-      const isHome = isHomeMatch(match);
+      const isHome = match.homeTeam?.toLowerCase().includes('hässleholms if');
       const stats = isHome ? home : away;
       stats.matches++;
       

@@ -33,6 +33,8 @@ export type Database = {
           time: string | null
           type: string
           youtube_link: string | null
+          home_team: string | null
+          away_team: string | null
         }
         Insert: {
           away_score?: number | null
@@ -57,6 +59,8 @@ export type Database = {
           time?: string | null
           type: string
           youtube_link?: string | null
+          home_team?: string | null
+          away_team?: string | null
         }
         Update: {
           away_score?: number | null
@@ -81,6 +85,8 @@ export type Database = {
           time?: string | null
           type?: string
           youtube_link?: string | null
+          home_team?: string | null
+          away_team?: string | null
         }
         Relationships: [
           {
