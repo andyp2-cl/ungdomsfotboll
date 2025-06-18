@@ -5,12 +5,23 @@ import { Activity } from "@/types/player";
 import { activityFormSchema, ActivityFormValues } from "./formSchema";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { extractTeamNames } from "@/components/activity-detail/match-result/utils";
 
 export function useActivityForm(initialActivity: Activity | null) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   console.log("useActivityForm initializing with leagueId:", initialActivity?.leagueId);
+
+  // Extract team names from activity name if they're not already set
+  let homeTeam = initialActivity?.homeTeam || "";
+  let awayTeam = initialActivity?.awayTeam || "";
+  
+  if (initialActivity && (!homeTeam || !awayTeam)) {
+    const teamNames = extractTeamNames(initialActivity);
+    homeTeam = homeTeam || teamNames.homeTeam;
+    awayTeam = awayTeam || teamNames.awayTeam;
+  }
 
   // Create form with default values
   const form = useForm<ActivityFormValues>({
@@ -30,8 +41,8 @@ export function useActivityForm(initialActivity: Activity | null) {
       cupName: initialActivity?.cupName || "",
       isWin: initialActivity?.isWin,
       leagueId: initialActivity?.leagueId || "none",
-      homeTeam: initialActivity?.homeTeam || "",
-      awayTeam: initialActivity?.awayTeam || "",
+      homeTeam,
+      awayTeam,
     },
   });
 
