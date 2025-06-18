@@ -88,7 +88,7 @@ export function PlayerListTable({
     .map(col => col.id);
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto max-w-full">
       <Table style={{ tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           <col style={{ width: 80 }} /> {/* Bildkolumn */}

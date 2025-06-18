@@ -201,48 +201,50 @@ export function PlayerList({
 
   return (
     <div className="space-y-4">
-      {children}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtrering
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuCheckboxItem
-            checked={visibleColumns.length === columnOptions.length}
-            onCheckedChange={handleSelectAll}
-          >
-            Välj alla
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={visibleColumns.length === 1 && visibleColumns.includes('name')}
-            onCheckedChange={handleDeselectAll}
-          >
-            Avmarkera alla
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem className="opacity-0 pointer-events-none">
-            ─────────────
-          </DropdownMenuCheckboxItem>
-          {columnOptions.map((column) => (
+      <div className="hidden sm:flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" aria-label="Filtrera kolumner" className="min-w-[44px] min-h-[44px]">
+              <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
+              Filtrering
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent aria-label="Välj kolumner att visa">
             <DropdownMenuCheckboxItem
-              key={column.id}
-              checked={visibleColumns.includes(column.id)}
-              disabled={column.alwaysVisible}
-              onCheckedChange={(checked) => {
-                setVisibleColumns(prev =>
-                  checked
-                    ? [...prev, column.id]
-                    : prev.filter(id => id !== column.id)
-                );
-              }}
+              checked={visibleColumns.length === columnOptions.length}
+              onCheckedChange={handleSelectAll}
             >
-              {column.label}
+              Välj alla
             </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.length === 1 && visibleColumns.includes('name')}
+              onCheckedChange={handleDeselectAll}
+            >
+              Avmarkera alla
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem className="opacity-0 pointer-events-none">
+              ─────────────
+            </DropdownMenuCheckboxItem>
+            {columnOptions.map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                checked={visibleColumns.includes(column.id)}
+                disabled={column.alwaysVisible}
+                onCheckedChange={(checked) => {
+                  setVisibleColumns(prev =>
+                    checked
+                      ? [...prev, column.id]
+                      : prev.filter(id => id !== column.id)
+                  );
+                }}
+                aria-label={`Visa kolumnen ${column.label}`}
+              >
+                {column.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <PlayerListTable 
         players={sortPlayers(filteredPlayers, activities)} 
         activities={activities}
