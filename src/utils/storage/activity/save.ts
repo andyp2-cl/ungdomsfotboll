@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { logDatabaseChange } from "@/lib/supabase/logs";
 import { Activity } from "@/types/player";
@@ -128,7 +129,15 @@ export const saveActivities = async (activities: Activity[]): Promise<void> => {
               throw cupError;
             }
             
-            const savedMatches = cupData?.player_stats?.cup_matches || [];
+            // Safely access cup_matches with proper type checking
+            const playerStats = cupData?.player_stats;
+            let savedMatches: string[] = [];
+            
+            if (playerStats && typeof playerStats === 'object' && playerStats !== null) {
+              const statsObj = playerStats as Record<string, any>;
+              savedMatches = Array.isArray(statsObj.cup_matches) ? statsObj.cup_matches : [];
+            }
+            
             if (savedMatches.length !== activity.matches.length) {
               console.error(`[saveActivities] Cup match count mismatch: Expected ${activity.matches.length}, got ${savedMatches.length}`);
               throw new Error('Cup match verification failed');
