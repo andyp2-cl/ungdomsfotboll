@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { Activity } from "@/types/player";
 import { formatActivityFromDatabase } from "@/utils/database/formatters/activity";
@@ -11,16 +10,24 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       .from('activities')
       .select('*');
       
-    if (activitiesError) throw activitiesError;
+    if (activitiesError) {
+      console.error("Error fetching activities:", activitiesError);
+      throw new Error(`Kunde inte hämta aktiviteter: ${activitiesError.message}`);
+    }
     
     // Ensure we have data before proceeding
-    if (!activitiesData) {
-      console.log("No activities data found in database");
-      return [];
+    if (!activitiesData || !Array.isArray(activitiesData)) {
+      console.error("Invalid activities data:", activitiesData);
+      throw new Error("Ogiltig data från databasen");
     }
     
     // Format all activities properly with correct typing
     const activities: Activity[] = activitiesData.map(formatActivityFromDatabase);
+    
+    if (!Array.isArray(activities)) {
+      console.error("Formatted activities is not an array:", activities);
+      throw new Error("Fel vid formatering av aktiviteter");
+    }
     
     console.log(`Fetched ${activities.length} activities from database`);
     
@@ -43,16 +50,30 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       .from('player_activities')
       .select('*');
       
-    if (relationshipError) throw relationshipError;
+    if (relationshipError) {
+      console.error("Error fetching player-activity relationships:", relationshipError);
+      throw new Error(`Kunde inte hämta spelar-aktivitetsrelationer: ${relationshipError.message}`);
+    }
+    
+    if (!playerActivitiesData || !Array.isArray(playerActivitiesData)) {
+      console.error("Invalid player-activities data:", playerActivitiesData);
+      throw new Error("Ogiltig data för spelar-aktivitetsrelationer");
+    }
     
     // Populate participants for each activity
     activities.forEach(activity => {
-      const activityPlayerRelations = playerActivitiesData?.filter(pa => pa.activity_id === activity.id) || [];
+      if (!activity || typeof activity !== 'object') {
+        console.warn("Invalid activity found:", activity);
+        return;
+      }
+      const activityPlayerRelations = playerActivitiesData.filter(pa => 
+        pa && pa.activity_id === activity.id
+      );
       activity.participants = activityPlayerRelations.map(relation => relation.player_id);
     });
     
     // For cup activities, find matches that have this cup as parent
-    const cupActivitiesArray = activities.filter(a => a.type === 'cup');
+    const cupActivitiesArray = activities.filter(a => a && a.type === 'cup');
     
     // First pass: ensure all cup activities have a matches array
     cupActivitiesArray.forEach(cupActivity => {
@@ -63,14 +84,19 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     
     // Second pass: Process cup-match relationships
     cupActivitiesArray.forEach(cupActivity => {
+      if (!cupActivity || !cupActivity.id || !cupActivity.name) {
+        console.warn("Invalid cup activity found:", cupActivity);
+        return;
+      }
+
       // Look for matches that reference this cup via cupId
       const matchesByCupId = activities.filter(a => 
-        a.cupId === cupActivity.id && a.type === 'match'
+        a && a.cupId === cupActivity.id && a.type === 'match'
       );
       
       // Look for matches that reference this cup via cupName
       const matchesByCupName = activities.filter(a => 
-        a.type === 'match' && a.cupName === cupActivity.name
+        a && a.type === 'match' && a.cupName === cupActivity.name
       );
       
       // Combine both sets of matches, removing duplicates
@@ -78,7 +104,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
       
       // Add matches by name if they aren't already included by ID
       matchesByCupName.forEach(match => {
-        if (!allMatches.some(m => m.id === match.id)) {
+        if (match && match.id && !allMatches.some(m => m.id === match.id)) {
           allMatches.push(match);
         }
       });
@@ -92,7 +118,7 @@ export const getStoredActivities = async (): Promise<Activity[]> => {
     console.log("Retrieved and linked activities from Supabase:", activities.length);
     return activities;
   } catch (error) {
-    console.error("Error fetching activities:", error);
-    return [];
+    console.error("Error in getStoredActivities:", error);
+    throw error; // Let the caller handle the error
   }
 };

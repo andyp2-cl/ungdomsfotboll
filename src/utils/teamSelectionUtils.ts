@@ -14,8 +14,8 @@ export function isPlayerPlayingSameDay(playerId: string, matchDate: string, acti
   });
 }
 
-// Check if player already has 2 matches this week
-export function isPlayerPlayingTwoMatchesThisWeek(playerId: string, activities: Activity[], referenceDate: string): boolean {
+// Get matches for a specific week
+export function getWeeklyMatches(playerId: string, activities: Activity[], referenceDate: string): Activity[] {
   const refDate = new Date(referenceDate);
   
   // Calculate start of week (Monday)
@@ -30,7 +30,7 @@ export function isPlayerPlayingTwoMatchesThisWeek(playerId: string, activities: 
   endOfWeek.setDate(startOfWeek.getDate() + 6); // Add 6 days to get to Sunday
   endOfWeek.setHours(23, 59, 59, 999);
 
-  const weeklyMatches = activities.filter(activity => {
+  return activities.filter(activity => {
     const activityDate = new Date(activity.date);
     const isMatch = activity.type === 'match' || activity.type === 'cup';
     const hasPlayer = activity.participants?.includes(playerId);
@@ -38,43 +38,32 @@ export function isPlayerPlayingTwoMatchesThisWeek(playerId: string, activities: 
     
     return isMatch && hasPlayer && isInWeek;
   });
+}
 
+// Check if player already has 2 matches this week
+export function isPlayerPlayingTwoMatchesThisWeek(playerId: string, activities: Activity[], referenceDate: string): boolean {
+  const weeklyMatches = getWeeklyMatches(playerId, activities, referenceDate);
   return weeklyMatches.length >= 2;
 }
 
-// Check if player is available for selection
+// Check if player is available for match
 export function isPlayerAvailableForMatch(playerId: string, matchDate: string, activities: Activity[]): boolean {
-  const playingSameDay = isPlayerPlayingSameDay(playerId, matchDate, activities);
-  const playingTwoMatchesThisWeek = isPlayerPlayingTwoMatchesThisWeek(playerId, activities, matchDate);
+  // First check: Is the player already playing on the same day?
+  if (isPlayerPlayingSameDay(playerId, matchDate, activities)) {
+    return false;
+  }
   
-  return !playingSameDay && !playingTwoMatchesThisWeek;
+  // Second check: How many matches does the player have this week?
+  const weeklyMatches = getWeeklyMatches(playerId, activities, matchDate);
+  
+  // Player is available if they have less than 2 matches this week
+  return weeklyMatches.length < 2;
 }
 
 // Get this week's match count for a player
 export function getThisWeekMatchCount(playerId: string, activities: Activity[], referenceDate?: string): number {
-  const refDate = referenceDate ? new Date(referenceDate) : new Date();
-  
-  // Calculate start of week (Monday)
-  const startOfWeek = new Date(refDate);
-  const dayOfWeek = refDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days to Monday
-  startOfWeek.setDate(refDate.getDate() - daysToSubtract);
-  startOfWeek.setHours(0, 0, 0, 0);
-  
-  // Calculate end of week (Sunday)
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6); // Add 6 days to get to Sunday
-  endOfWeek.setHours(23, 59, 59, 999);
-
-  const weeklyMatches = activities.filter(activity => {
-    const activityDate = new Date(activity.date);
-    const isMatch = activity.type === 'match' || activity.type === 'cup';
-    const hasPlayer = activity.participants?.includes(playerId);
-    const isInWeek = activityDate >= startOfWeek && activityDate <= endOfWeek;
-    
-    return isMatch && hasPlayer && isInWeek;
-  });
-
+  const refDate = referenceDate || new Date().toISOString();
+  const weeklyMatches = getWeeklyMatches(playerId, activities, refDate);
   return weeklyMatches.length;
 }
 

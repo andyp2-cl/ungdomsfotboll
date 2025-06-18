@@ -14,9 +14,13 @@ interface DatabaseActivity {
   location_gps_link?: string;
   kiosk_assigned_player_id?: string;
   cup_id?: string;
-  cup_name?: string;
   league_id?: string;
-  player_stats?: PlayerStats;
+  player_stats?: {
+    goals?: { [key: string]: number };
+    assists?: { [key: string]: number };
+    cup_matches?: string[];
+    cup_name?: string;
+  };
   result?: string;
   home_score?: number;
   away_score?: number;
@@ -29,182 +33,194 @@ interface DatabaseActivity {
  * Handles updating an existing activity
  */
 export const handleActivityUpdate = async (
-  activities: Activity[],
-  setActivities: (activities: Activity[]) => void,
-  players: Player[],
-  setPlayers: (players: Player[]) => void,
-  toast: any,
-  updatedActivity: Activity
+  activity: Activity,
+  onSuccess?: (updatedActivity: Activity) => void,
+  onError?: (error: Error) => void,
+  onWarning?: (title: string, description: string) => void
 ): Promise<void> => {
-  console.log("handleActivityUpdate called with:", {
-    activityId: updatedActivity.id,
-    activityName: updatedActivity.name,
-    date: updatedActivity.date,
-    cupId: updatedActivity.cupId,
-    cupName: updatedActivity.cupName,
-    participantsCount: updatedActivity.participants?.length || 0
-  });
-  
   try {
-    // Find the existing activity
-    const existingActivity = activities.find(activity => activity.id === updatedActivity.id);
+    console.log("handleActivityUpdate called for activity:", activity.id, activity.name, activity.type);
     
-    if (!existingActivity) {
-      console.error("Activity not found:", updatedActivity.id);
-      toast({
-        title: "Kunde inte uppdatera aktivitet",
-        description: "Aktiviteten hittades inte.",
-        variant: "destructive"
-      });
-      return;
+    if (!activity || !activity.id) {
+      throw new Error("Invalid activity data");
     }
-
-    // Normalize player_stats before updating
+    
+    // Normalize player stats
     const normalizedActivity = {
-      ...updatedActivity,
-      player_stats: normalizePlayerStats(updatedActivity.player_stats)
+      ...activity,
+      player_stats: normalizePlayerStats(activity.player_stats)
+    };
+    
+    // Format activity for database
+    const formattedActivity = {
+      id: normalizedActivity.id,
+      name: normalizedActivity.name,
+      date: normalizedActivity.date,
+      type: normalizedActivity.type,
+      time: normalizedActivity.time || null,
+      location_name: normalizedActivity.location?.name || null,
+      location_description: normalizedActivity.location?.description || null,
+      location_gps_link: normalizedActivity.location?.gpsLink || null,
+      player_stats: normalizedActivity.player_stats,
+      cup_id: normalizedActivity.cupId || null,
+      home_score: normalizedActivity.homeScore !== undefined ? normalizedActivity.homeScore : null,
+      away_score: normalizedActivity.awayScore !== undefined ? normalizedActivity.awayScore : null,
+      is_win: normalizedActivity.isWin !== undefined ? normalizedActivity.isWin : null,
+      result: normalizedActivity.result || null,
+      kiosk_assigned_player_id: normalizedActivity.kioskAssignedPlayerId || null,
+      scraped: normalizedActivity.scraped || false,
+      league_id: normalizedActivity.leagueId || null,
+      match_report: normalizedActivity.matchReport || null,
+      youtube_link: normalizedActivity.youtubeLink || null,
+      home_team: normalizedActivity.homeTeam || null,
+      away_team: normalizedActivity.awayTeam || null,
+      status: normalizedActivity.status || 'scheduled'
     };
 
-    // If this is a cup activity, we need to sync participants with all cup matches
-    let cupMatches: Activity[] = [];
-    if (normalizedActivity.cupId) {
+    // First, update the activity in the database
+    const { error: updateError } = await supabase
+      .from('activities')
+      .update(formattedActivity)
+      .eq('id', normalizedActivity.id);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    // If this is a cup activity, update all related matches
+    if (normalizedActivity.type === 'cup') {
       try {
-        // Get all matches for this cup
-        const { data: matches, error: cupMatchesError } = await supabase
+        // Get all matches that reference this cup
+        const { data: relatedMatches, error: matchesError } = await supabase
           .from('activities')
           .select('*')
-          .eq('cup_id', normalizedActivity.cupId);
+          .eq('cup_id', normalizedActivity.id);
 
-        if (cupMatchesError) {
-          throw cupMatchesError;
+        if (matchesError) {
+          throw matchesError;
         }
 
-        // Convert database format to Activity type
-        cupMatches = (matches as DatabaseActivity[] || []).map(match => ({
-          id: match.id,
-          name: match.name,
-          date: match.date,
-          type: match.type as ActivityType,
-          time: match.time,
-          location: match.location_name ? {
-            name: match.location_name,
-            description: match.location_description,
-            gpsLink: match.location_gps_link
-          } : undefined,
-          participants: [], // Will be updated with the cup's participants
-          kioskAssignedPlayerId: match.kiosk_assigned_player_id,
-          cupId: match.cup_id,
-          cupName: match.cup_name,
-          leagueId: match.league_id,
-          player_stats: match.player_stats,
-          result: match.result,
-          homeScore: match.home_score,
-          awayScore: match.away_score,
-          isWin: match.is_win,
-          matchReport: match.match_report,
-          youtubeLink: match.youtube_link
-        }));
+        if (relatedMatches && relatedMatches.length > 0) {
+          console.log(`Found ${relatedMatches.length} matches to update for cup ${normalizedActivity.id}`);
+          
+          // Update each match to reflect the new cup name
+          const updatePromises = relatedMatches.map(async (match) => {
+            try {
+              // Safely handle player_stats
+              const existingStats = match.player_stats as { 
+                goals?: Record<string, number>;
+                assists?: Record<string, number>;
+                cup_matches?: string[];
+                cup_name?: string;
+              } || {};
+              
+              const playerStats = {
+                goals: existingStats.goals || {},
+                assists: existingStats.assists || {},
+                cup_matches: existingStats.cup_matches || [],
+                cup_name: normalizedActivity.name
+              };
+
+              // Update both player_stats and cupName for the match
+              const { error: matchUpdateError } = await supabase
+                .from('activities')
+                .update({ 
+                  player_stats: playerStats,
+                  cup_name: normalizedActivity.name
+                })
+                .eq('id', match.id);
+
+              if (matchUpdateError) {
+                console.error(`Error updating match ${match.id}:`, matchUpdateError);
+              }
+            } catch (error) {
+              console.error(`Error updating match ${match.id}:`, error);
+            }
+          });
+
+          // Wait for all updates to complete
+          await Promise.all(updatePromises);
+        }
       } catch (cupError) {
-        console.error("Error fetching cup matches:", cupError);
-        toast({
-          title: "Varning",
-          description: "Kunde inte hämta cup-matcher. Försök igen.",
-          variant: "destructive"
-        });
-        throw cupError;
+        console.error("Error updating cup matches:", cupError);
+        if (onWarning) {
+          onWarning(
+            "Varning",
+            "Kunde inte uppdatera alla cup-matcher. Försök igen."
+          );
+        }
       }
     }
-    
-    // Try to save to database FIRST, before updating UI state
-    try {
-      console.log("Saving activity to database:", normalizedActivity.id, "with date:", normalizedActivity.date);
-      
-      // Create a clean copy that won't be mutated by other code
-      const activityToSave = JSON.parse(JSON.stringify(normalizedActivity));
-      
-      // Save the main activity first
-      await saveActivities([activityToSave]);
-      console.log("Activity saved successfully to database");
 
-      // If this is a cup activity, update all cup matches
-      if (normalizedActivity.cupId && cupMatches.length > 0) {
-        const updatedCupMatches = cupMatches.map(match => ({
-          ...match,
-          participants: normalizedActivity.participants || []
-        }));
+    // If this is a cup match, sync with the parent cup
+    if (normalizedActivity.type === 'match' && normalizedActivity.cupId) {
+      try {
+        // Get the parent cup
+        const { data: parentCup, error: cupError } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('id', normalizedActivity.cupId)
+          .single();
 
-        // Save all cup matches to database
-        await saveActivities(updatedCupMatches);
-        console.log("Cup matches updated successfully");
-      }
-      
-      // Update all states at once to avoid multiple re-renders
-      const allUpdatedActivities = activities.map(activity => {
-        if (activity.id === normalizedActivity.id) {
-          return normalizedActivity;
+        if (cupError) {
+          throw cupError;
         }
-        if (normalizedActivity.cupId && activity.cupId === normalizedActivity.cupId) {
-          return {
-            ...activity,
-            participants: normalizedActivity.participants || []
+
+        if (parentCup) {
+          const typedParentCup = parentCup as DatabaseActivity;
+          
+          // Update the parent cup's player_stats
+          const existingStats = typedParentCup.player_stats as {
+            goals?: Record<string, number>;
+            assists?: Record<string, number>;
+            cup_matches?: string[];
+            cup_name?: string;
+          } || {};
+          
+          const cupPlayerStats = {
+            goals: existingStats.goals || {},
+            assists: existingStats.assists || {},
+            cup_matches: Array.from(new Set([
+              ...(existingStats.cup_matches || []),
+              normalizedActivity.id
+            ]))
           };
-        }
-        return activity;
-      });
 
-      setActivities(allUpdatedActivities);
-      
-      // Update player-activity relationships if needed
-      if (normalizedActivity.participants) {
-        const updatedPlayers = players.map(player => {
-          const isParticipating = normalizedActivity.participants?.includes(player.id);
-          let playerActivities = player.activities || [];
-          
-          if (isParticipating && !playerActivities.includes(normalizedActivity.id)) {
-            return {
-              ...player,
-              activities: [...playerActivities, normalizedActivity.id]
-            };
-          } else if (!isParticipating && playerActivities.includes(normalizedActivity.id)) {
-            return {
-              ...player,
-              activities: playerActivities.filter(id => id !== normalizedActivity.id)
-            };
+          // Update the parent cup
+          const { error: updateCupError } = await supabase
+            .from('activities')
+            .update({ 
+              player_stats: cupPlayerStats,
+              name: parentCup.name
+            })
+            .eq('id', parentCup.id);
+
+          if (updateCupError) {
+            throw updateCupError;
           }
-          
-          return player;
-        });
-        
-        setPlayers(updatedPlayers);
-        
-        // Create a copy of the players list to avoid mutations
-        const playersToSave = JSON.parse(JSON.stringify(updatedPlayers));
-        await savePlayers(playersToSave);
+        }
+      } catch (cupError) {
+        console.error("Error updating parent cup:", cupError);
+        if (onWarning) {
+          onWarning(
+            "Varning",
+            "Kunde inte uppdatera cup-information. Försök igen."
+          );
+        }
       }
-      
-      // Show success notification AFTER everything is saved
-      toast({
-        title: "Aktivitet uppdaterad",
-        description: `${normalizedActivity.name} har uppdaterats.`,
-      });
-    } catch (saveError) {
-      console.error("Error saving activity to database:", saveError);
-      toast({
-        title: "Databasfel",
-        description: "Det gick inte att spara aktiviteten till databasen. Försök igen.",
-        variant: "destructive"
-      });
-      throw saveError;
     }
+
+    // Call success callback if provided
+    if (onSuccess) {
+      onSuccess(normalizedActivity);
+    }
+
   } catch (error) {
-    console.error("Error saving activity updates:", error);
+    console.error("Error updating activity:", error);
     
-    toast({
-      title: "Ett fel uppstod",
-      description: "Kunde inte spara ändringarna. Försök igen.",
-      variant: "destructive"
-    });
-    
-    throw error; // Re-throw to allow caller to handle
+    // Call error callback if provided
+    if (onError) {
+      onError(error as Error);
+    }
   }
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Activity } from "@/types/player";
 import { getStoredActivities } from "@/utils/storage";
@@ -10,13 +9,25 @@ export function useActivityState() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadActivities = async () => {
       try {
         setIsLoading(true);
+        setLoadError(null);
         const storedActivities = await getStoredActivities();
+        
+        // Only update state if component is still mounted
+        if (!isMounted) return;
+
+        if (!Array.isArray(storedActivities)) {
+          console.error("Stored activities is not an array:", storedActivities);
+          throw new Error("Ogiltig data från databasen");
+        }
         
         if (storedActivities.length > 0) {
           // Log some activities to check if they have match results
@@ -36,6 +47,7 @@ export function useActivityState() {
           
           setActivities(storedActivities);
         } else {
+          setActivities([]);
           toast({
             title: "Inga aktiviteter hittades",
             description: "Inga aktiviteter hittades i databasen.",
@@ -43,17 +55,27 @@ export function useActivityState() {
         }
       } catch (error) {
         console.error("Error loading activities:", error);
+        setLoadError(error as Error);
         toast({
           title: "Kunde inte ladda aktiviteter",
-          description: "Ett fel uppstod när aktiviteter skulle hämtas från databasen.",
+          description: error instanceof Error ? error.message : "Ett fel uppstod när aktiviteter skulle hämtas från databasen.",
           variant: "destructive"
         });
+        // Set activities to empty array on error to prevent undefined issues
+        setActivities([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadActivities();
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false;
+    };
   }, [toast]);
 
   // Update selected activity when activities change (to get latest data)
@@ -66,10 +88,19 @@ export function useActivityState() {
     }
   }, [activities, selectedActivity]);
 
+  // Function to retry loading if there was an error
+  const retryLoad = () => {
+    setLoadError(null);
+    setIsLoading(true);
+    // This will trigger the useEffect again
+  };
+
   return {
     activities,
     setActivities,
     isLoading,
+    loadError,
+    retryLoad,
     selectedActivity,
     setSelectedActivity,
     editingActivity,

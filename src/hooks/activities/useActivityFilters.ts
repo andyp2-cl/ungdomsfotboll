@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Activity } from "@/types/player";
 
@@ -12,7 +11,18 @@ export function useActivityFilters(activities: Activity[]) {
     const current: Activity[] = [];
     const historical: Activity[] = [];
     
+    // Ensure activities is an array before using forEach
+    if (!Array.isArray(activities)) {
+      console.warn('Activities is not an array:', activities);
+      return { currentActivities: [], historicalActivities: [] };
+    }
+    
     activities.forEach(activity => {
+      if (!activity || !activity.date) {
+        console.warn('Invalid activity found:', activity);
+        return;
+      }
+
       const activityDate = new Date(activity.date);
       
       // If there's a time specified, add it to the activity date
@@ -46,8 +56,17 @@ export function useActivityFilters(activities: Activity[]) {
 
   // Sort the filtered activities
   const filteredCurrentActivities = useMemo(() => {
+    if (!Array.isArray(currentActivities) || currentActivities.length === 0) {
+      return [];
+    }
+
     // Group activities by month
     const activitiesByMonth = currentActivities.reduce((acc, activity) => {
+      if (!activity || !activity.date) {
+        console.warn('Invalid activity in currentActivities:', activity);
+        return acc;
+      }
+
       const date = new Date(activity.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
@@ -81,6 +100,10 @@ export function useActivityFilters(activities: Activity[]) {
   }, [currentActivities]);
 
   const filteredHistoricalActivities = useMemo(() => {
+    if (!Array.isArray(historicalActivities) || historicalActivities.length === 0) {
+      return [];
+    }
+
     return historicalActivities
       .sort((a, b) => {
         const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
