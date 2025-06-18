@@ -27,16 +27,16 @@ export type Database = {
           location_name: string | null
           match_report: string | null
           name: string
+          participants: string[] | null
           player_stats: Json | null
           result: string | null
           scraped: boolean | null
+          status: string | null
           tactics_board: Json | null
           tactics_board_image: string | null
           time: string | null
           type: string
           youtube_link: string | null
-          status: string | null
-          participants: string[] | null
         }
         Insert: {
           away_score?: number | null
@@ -55,16 +55,16 @@ export type Database = {
           location_name?: string | null
           match_report?: string | null
           name: string
+          participants?: string[] | null
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
+          status?: string | null
           tactics_board?: Json | null
           tactics_board_image?: string | null
           time?: string | null
           type: string
           youtube_link?: string | null
-          status?: string | null
-          participants?: string[] | null
         }
         Update: {
           away_score?: number | null
@@ -83,16 +83,16 @@ export type Database = {
           location_name?: string | null
           match_report?: string | null
           name?: string
+          participants?: string[] | null
           player_stats?: Json | null
           result?: string | null
           scraped?: boolean | null
+          status?: string | null
           tactics_board?: Json | null
           tactics_board_image?: string | null
           time?: string | null
           type?: string
           youtube_link?: string | null
-          status?: string | null
-          participants?: string[] | null
         }
         Relationships: [
           {

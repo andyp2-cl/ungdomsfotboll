@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Player, Activity } from "@/types/player";
 import { Button } from "@/components/ui/button";
@@ -243,18 +244,14 @@ export function PlayerListTable({
           <TableRow>
             {visibleColumnsList.map((column) => (
               <TableHead key={column.id}>
-                {column.id === 'name' || !column.alwaysShow ? (
-                  <Button 
-                    variant="ghost" 
-                    className="h-auto p-0 font-semibold justify-start"
-                    onClick={() => toggleSort(column.id)}
-                  >
-                    {column.label}
-                    <SortIcon field={column.id} sortField={sortField} sortDirection={sortDirection} />
-                  </Button>
-                ) : (
-                  column.label
-                )}
+                <Button 
+                  variant="ghost" 
+                  className="h-auto p-0 font-semibold justify-start"
+                  onClick={() => toggleSort(column.id)}
+                >
+                  {column.label}
+                  <SortIcon field={column.id} sortField={sortField} sortDirection={sortDirection} />
+                </Button>
               </TableHead>
             ))}
           </TableRow>
