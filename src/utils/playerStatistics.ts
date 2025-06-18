@@ -130,3 +130,70 @@ export const calculateUniqueTeammates = (playerId: string, activities: Activity[
   
   return uniqueTeammates.size;
 };
+
+export function calculateMatchesWithSamePlayers(activities: Activity[]): {
+  count: number;
+  matches: Activity[];
+  allCombinations: { participants: string[]; matches: Activity[]; count: number }[];
+} {
+  // Filter out cup matches and keep only regular matches
+  const regularMatches = activities.filter(activity => {
+    // Must be a match type
+    if (activity.type !== "match") return false;
+    
+    // Check if it's explicitly marked as a cup match
+    if (activity.cupId || activity.cupName) {
+      return false;
+    }
+    
+    // Also check if the match name contains team names with year suffixes (like "Team 2013")
+    // This pattern typically indicates cup or tournament matches
+    const name = activity.name?.toLowerCase() || '';
+    const hasYearSuffix = name.match(/\s+\d{4}\s*(-|vs|–|mot|\s+)/) !== null;
+    
+    // If it has a year suffix in the team names, it's likely a cup match
+    return !hasYearSuffix;
+  });
+
+  console.log(`Found ${regularMatches.length} regular matches (non-cup matches)`);
+  
+  // Create a map to store participant combinations and their matches
+  const participantCombinations = new Map<string, Activity[]>();
+
+  // For each match, create a sorted string of participant IDs
+  regularMatches.forEach(match => {
+    if (match.participants && match.participants.length > 0) {
+      const sortedParticipants = [...match.participants].sort().join(',');
+      const existingMatches = participantCombinations.get(sortedParticipants) || [];
+      participantCombinations.set(sortedParticipants, [...existingMatches, match]);
+      
+      // Debug log for each match
+      console.log(`Match "${match.name}" (${match.date}) has ${match.participants.length} players`);
+    }
+  });
+
+  // Convert combinations to array and filter those with more than one match
+  const combinations = Array.from(participantCombinations.entries())
+    .map(([participantString, matches]) => ({
+      participants: participantString.split(','),
+      matches: matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      count: matches.length
+    }))
+    .filter(combo => combo.count > 1)
+    .sort((a, b) => b.count - a.count);
+
+  // Debug log for found combinations
+  combinations.forEach(combo => {
+    console.log(`Found combination with ${combo.count} matches and ${combo.participants.length} players:`);
+    console.log('Matches:', combo.matches.map(m => `${m.name} (${m.date})`));
+  });
+
+  // Get the combination with most matches for backward compatibility
+  const maxCombo = combinations[0] || { participants: [], matches: [], count: 0 };
+
+  return {
+    count: maxCombo.count,
+    matches: maxCombo.matches,
+    allCombinations: combinations
+  };
+}

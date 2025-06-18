@@ -41,6 +41,25 @@ export function PlayerList({
     'form'
   ]);
 
+  const columnOptions = [
+    { id: 'name', label: 'Spelare', alwaysVisible: true },
+    { id: 'grade', label: 'Nivå' },
+    { id: 'position', label: 'Position' },
+    { id: 'activities', label: 'Aktiviteter' },
+    { id: 'winrate', label: 'Vinstprocent' },
+    { id: 'goalsPerMatch', label: 'Mål/match' },
+    { id: 'development', label: 'Utveckling' },
+    { id: 'form', label: 'Form' }
+  ];
+
+  const handleSelectAll = () => {
+    setVisibleColumns(columnOptions.map(col => col.id));
+  };
+
+  const handleDeselectAll = () => {
+    setVisibleColumns(['name']); // Keep only the name column visible
+  };
+
   // Filter out coaches if showCoaches is false
   const filteredPlayers = showCoaches 
     ? players
@@ -163,16 +182,6 @@ export function PlayerList({
   // Force grid view on mobile devices
   const effectiveViewMode = isMobile ? "grid" : viewMode;
 
-  const columnOptions = [
-    { id: 'grade', label: 'Nivå' },
-    { id: 'position', label: 'Position' },
-    { id: 'activities', label: 'Aktiviteter' },
-    { id: 'winrate', label: 'Vinstprocent' },
-    { id: 'goalsPerMatch', label: 'Mål/match' },
-    { id: 'development', label: 'Utveckling' },
-    { id: 'form', label: 'Form' }
-  ];
-
   if (effectiveViewMode === "grid") {
     return (
       <PlayerGridView 
@@ -197,6 +206,33 @@ export function PlayerList({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.length === columnOptions.length}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  handleSelectAll();
+                } else {
+                  handleDeselectAll();
+                }
+              }}
+            >
+              Välj alla
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.length === 1 && visibleColumns.includes('name')}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  handleDeselectAll();
+                } else {
+                  handleSelectAll();
+                }
+              }}
+            >
+              Avmarkera alla
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem className="opacity-0 pointer-events-none">
+              ─────────────
+            </DropdownMenuCheckboxItem>
             {columnOptions.map((column) => (
               <DropdownMenuCheckboxItem
                 key={column.id}

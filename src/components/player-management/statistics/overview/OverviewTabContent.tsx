@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Player, Activity } from "@/types/player";
 import { GradeStatisticsChart } from "@/components/charts/GradeStatisticsChart";
 import { PlayerActivityChart } from "@/components/charts/PlayerActivityChart";
@@ -7,7 +7,7 @@ import { KPISection } from "./KPISection";
 import { ChartSection } from "./ChartSection";
 import { isTrainer } from "@/utils/positionUtils";
 import { calculateGoalStats } from "@/components/player-management/statistics/goals/calculateGoalStats";
-import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight, Users2, CalendarDays } from "lucide-react";
+import { Trophy, Users, TrendingUp, Target, Award, ArrowUpRight, ArrowDownRight, Users2, CalendarDays, UsersRound, Download } from "lucide-react";
 import { getOpponentName, isHomeMatch } from '@/utils/playerCombinations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlayerSummaryCard } from "@/components/charts/PlayerSummaryCard";
@@ -17,6 +17,10 @@ import { supabase } from "@/lib/supabase/client";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { MatchStatsCard } from "../matches/MatchStatsCard";
+import { calculateMatchesWithSamePlayers } from "@/utils/playerStatistics";
+import { SamePlayersMatchesDialog } from "../matches/SamePlayersMatchesDialog";
+import { Button } from "@/components/ui/button";
+import { exportMatchesToExcel } from "@/utils/exportUtils";
 
 interface OverviewTabContentProps {
   players: Player[];
@@ -33,6 +37,8 @@ export function OverviewTabContent({
   onPlayerSelect,
   isMobile = false 
 }: OverviewTabContentProps) {
+  const [showSamePlayersDialog, setShowSamePlayersDialog] = useState(false);
+  
   // Calculate activity count by grade
   const activityCountByGrade = gradeData.map(gradeInfo => {
     const gradePlayers = players.filter(p => p.grade === gradeInfo.grade && !isTrainer(p.positions));
@@ -294,9 +300,19 @@ export function OverviewTabContent({
     return Math.round(total / players.length);
   }, [players, matchActivities]);
 
+  // Calculate matches with same players
+  const { count: matchesWithSamePlayers, matches: samePlayerMatches, allCombinations } = calculateMatchesWithSamePlayers(activities);
+
   return (
-    <div className="space-y-6">
-      {/* Lagets prestationer, topp 5-listor, formkurva */}
+    <div className="space-y-8">
+      <SamePlayersMatchesDialog 
+        open={showSamePlayersDialog}
+        onOpenChange={setShowSamePlayersDialog}
+        matches={samePlayerMatches}
+        combinations={allCombinations}
+        players={players}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8 max-w-screen-xl mx-auto">
         <div className="bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-xl p-8 shadow-lg border border-yellow-200 min-h-[260px] flex flex-col justify-between">
           <div className="font-bold text-2xl mb-6 flex items-center gap-2 text-yellow-800"><Trophy className="w-7 h-7 text-yellow-500" /> Lagets prestationer</div>
@@ -370,7 +386,6 @@ export function OverviewTabContent({
         </div>
       </div>
 
-      {/* KPI Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -401,20 +416,23 @@ export function OverviewTabContent({
 
         <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Target className="h-4 w-4" />
-            Mål gjorda
-          </div>
-          <div className="text-2xl font-bold">{goalsScored}</div>
-          <div className="text-sm text-muted-foreground">{avgGoalsFor} per match</div>
-        </div>
-
-        <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
             <Users className="h-4 w-4" />
             Snitt antal medspelare
           </div>
           <div className="text-2xl font-bold">{averageTeammates}</div>
           <div className="text-sm text-muted-foreground">Unika medspelare per spelare</div>
+        </div>
+
+        <div 
+          className="bg-white rounded-lg p-4 shadow-sm border cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setShowSamePlayersDialog(true)}
+        >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <UsersRound className="h-4 w-4" />
+            Matcher med samma spelare
+          </div>
+          <div className="text-2xl font-bold">{matchesWithSamePlayers}</div>
+          <div className="text-sm text-muted-foreground">Exklusive cupmatcher</div>
         </div>
       </div>
 
@@ -459,7 +477,7 @@ export function OverviewTabContent({
         </div>
       </ChartSection>
 
-      {/* Activity Statistics and Trends - Side by side */}
+      {/* Activity Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartSection
           title="Aktivitetsstatistik per nivå"
@@ -470,13 +488,18 @@ export function OverviewTabContent({
             config={gradeChartConfig} 
           />
         </ChartSection>
+      </div>
 
-        <ChartSection
-          title="Aktivitetstrend"
-          description="Månadsvis aktivitetsöversikt"
+      <div className="flex justify-center">
+        <Button 
+          onClick={() => exportMatchesToExcel(activities, players)} 
+          variant="outline" 
+          size="lg"
+          className="flex items-center gap-2"
         >
-          <MonthlyActivityChart activities={activities} />
-        </ChartSection>
+          <Download className="w-5 h-5" />
+          Exportera alla matcher till Excel
+        </Button>
       </div>
     </div>
   );
