@@ -74,19 +74,7 @@ export function PlayersTabContent({
         <PlayerFilter 
           selectedGrades={selectedGrades} 
           onGradeChange={onGradeChange}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrering
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {/* Filterinnehåll här */}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </PlayerFilter>
+        />
       </div>
       
       {selectedPlayer ? (

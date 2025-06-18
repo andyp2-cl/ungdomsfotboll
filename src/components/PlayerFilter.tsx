@@ -4,13 +4,11 @@ import { PlayerGrade } from "@/types/player";
 interface PlayerFilterProps {
   selectedGrades: PlayerGrade[];
   onGradeChange: (grade: PlayerGrade) => void;
-  children?: React.ReactNode;
 }
 
 export function PlayerFilter({ 
   selectedGrades, 
-  onGradeChange,
-  children
+  onGradeChange
 }: PlayerFilterProps) {
   const grades: PlayerGrade[] = ['A', 'B', 'C', 'D'];
 
@@ -44,7 +42,6 @@ export function PlayerFilter({
           Visa alla
         </Button>
       )}
-      {children}
     </div>
   );
 }
