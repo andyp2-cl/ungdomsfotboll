@@ -8,6 +8,7 @@ import { SortField, SortIcon, usePlayerSorting } from "./PlayerListSorting";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
 import { formatPositions, isTrainer } from "@/utils/positionUtils";
 import { PlayerFormDisplay } from "./PlayerFormDisplay";
+import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
 interface PlayerListTableProps {
   players: Player[];
@@ -79,6 +80,7 @@ export function PlayerListTable({
           <col /> {/* Aktiviteter */}
           <col /> {/* Vinstprocent */}
           <col /> {/* Mål/match */}
+          <col /> {/* Medspelare */}
           <col /> {/* Utveckling */}
           <col /> {/* Form */}
         </colgroup>
@@ -140,6 +142,16 @@ export function PlayerListTable({
               <Button 
                 variant="ghost" 
                 className="h-auto p-0 font-semibold justify-start"
+                onClick={() => toggleSort('teammates')}
+              >
+                Medspelare
+                <SortIcon field="teammates" sortField={sortField} sortDirection={sortDirection} />
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button 
+                variant="ghost" 
+                className="h-auto p-0 font-semibold justify-start"
                 onClick={() => toggleSort('development')}
               >
                 Utveckling
@@ -165,6 +177,7 @@ export function PlayerListTable({
             const goalsPerMatch = getPlayerGoalsPerMatch(player);
             const developmentValue = calculateDevelopmentValue(player);
             const isActive = player.isActive !== undefined ? player.isActive : true;
+            const uniqueTeammates = calculateUniqueTeammates(player.id, activities);
             
             return (
               <TableRow 
@@ -236,6 +249,11 @@ export function PlayerListTable({
                 <TableCell>
                   <span className={`text-sm font-medium ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
                     {!isCoach && goalsPerMatch > 0 ? goalsPerMatch.toFixed(2) : '-'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className={`text-sm font-medium ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                    {!isCoach ? uniqueTeammates : '-'}
                   </span>
                 </TableCell>
                 <TableCell>

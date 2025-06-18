@@ -2,8 +2,9 @@ import React from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Player, Activity } from "@/types/player";
 import { calculatePlayerStats } from "@/components/player-match-history/utils/stats-calculator";
+import { calculateUniqueTeammates } from "@/utils/playerStatistics";
 
-export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form' | 'development';
+export type SortField = 'name' | 'grade' | 'activities' | 'winrate' | 'goalsPerMatch' | 'form' | 'development' | 'teammates';
 
 interface SortIconProps {
   field: SortField;
@@ -162,6 +163,11 @@ export function usePlayerSorting() {
           const aForm = calculateFormScore(a, activities);
           const bForm = calculateFormScore(b, activities);
           comparison = aForm - bForm;
+          break;
+        case 'teammates':
+          const aTeammates = calculateUniqueTeammates(a.id, activities);
+          const bTeammates = calculateUniqueTeammates(b.id, activities);
+          comparison = aTeammates - bTeammates;
           break;
         default:
           comparison = 0;
