@@ -1,0 +1,23 @@
+import { PageContainer } from "@/components/page-containers/PageContainer";
+import PodcastFeed from "@/components/PodcastFeed";
+
+export default function PodcastPage() {
+  return (
+    <PageContainer isLoading={false}>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Division9 Podcast
+            </h1>
+            <p className="text-gray-600">
+              En podcast om sport av folk som älskar sport men inte kan allt om sport
+            </p>
+          </div>
+          
+          <PodcastFeed />
+        </div>
+      </div>
+    </PageContainer>
+  );
+} 

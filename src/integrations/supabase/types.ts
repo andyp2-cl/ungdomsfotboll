@@ -37,6 +37,7 @@ export type Database = {
           youtube_link: string | null
           status: string | null
           participants: string[] | null
+          team_id: string | null
         }
         Insert: {
           away_score?: number | null
@@ -65,6 +66,7 @@ export type Database = {
           youtube_link?: string | null
           status?: string | null
           participants?: string[] | null
+          team_id?: string | null
         }
         Update: {
           away_score?: number | null
@@ -93,6 +95,7 @@ export type Database = {
           youtube_link?: string | null
           status?: string | null
           participants?: string[] | null
+          team_id?: string | null
         }
         Relationships: [
           {
@@ -304,6 +307,7 @@ export type Database = {
           jersey_number: string | null
           name: string
           position: string | null
+          team_id: string | null
         }
         Insert: {
           created_at?: string
@@ -315,6 +319,7 @@ export type Database = {
           jersey_number?: string | null
           name: string
           position?: string | null
+          team_id?: string | null
         }
         Update: {
           created_at?: string
@@ -326,6 +331,7 @@ export type Database = {
           jersey_number?: string | null
           name?: string
           position?: string | null
+          team_id?: string | null
         }
         Relationships: []
       }
@@ -365,6 +371,63 @@ export type Database = {
         }
         Relationships: []
       }
+      teams: {
+        Row: {
+          id: string
+          name: string
+          logo_url: string | null
+          primary_color: string
+          secondary_color: string
+          status: string
+          created_by: string
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          status?: string
+          created_by: string
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          status?: string
+          created_by?: string
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       training_uploads: {
         Row: {
           created_at: string
@@ -394,6 +457,51 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          id: string
+          team_id: string | null
+          role: string
+          full_name: string | null
+          phone: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          team_id?: string | null
+          role?: string
+          full_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          team_id?: string | null
+          role?: string
+          full_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Activity, Player } from "@/types/player";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ interface ActivityListItemProps {
   allActivities?: Activity[]; // For weekly match calculations
 }
 
-export function ActivityListItem({ 
+export const ActivityListItem = React.memo<ActivityListItemProps>(({ 
   activity, 
   players, 
   onClick, 
@@ -34,10 +34,15 @@ export function ActivityListItem({
   isHistorical = false,
   isMobile = false,
   allActivities = []
-}: ActivityListItemProps) {
-  const actualIsHistorical = isHistorical || new Date(activity.date) < new Date();
-  const participatingPlayers = players.filter(player => 
-    activity.participants?.includes(player.id)
+}) => {
+  const actualIsHistorical = useMemo(() => 
+    isHistorical || new Date(activity.date) < new Date(), 
+    [isHistorical, activity.date]
+  );
+
+  const participatingPlayers = useMemo(() => 
+    players.filter(player => activity.participants?.includes(player.id)),
+    [players, activity.participants]
   );
 
   // Fetch league info if we have a league ID
@@ -63,7 +68,7 @@ export function ActivityListItem({
   });
 
   // Function to clean league name - remove duplicate year prefix
-  const getCleanLeagueName = (league: any) => {
+  const getCleanLeagueName = useCallback((league: any) => {
     if (!league) return null;
     
     let displayName = league.name;
@@ -77,17 +82,17 @@ export function ActivityListItem({
     }
     
     return `${league.year} ${displayName}`;
-  };
+  }, []);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (onClick) {
       onClick();
     } else if (onSelect) {
       onSelect(activity);
     }
-  };
+  }, [onClick, onSelect, activity]);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     const tomorrow = new Date(today);
@@ -108,13 +113,26 @@ export function ActivityListItem({
         day: 'numeric' 
       });
     }
-  };
+  }, [isMobile]);
 
   // Get the color class for the result text
-  const resultTextColor = getResultTextColor(activity);
+  const resultTextColor = useMemo(() => getResultTextColor(activity), [activity]);
 
   // Generate unique ID for this activity card for sharing
-  const cardId = `activity-card-${activity.id}`;
+  const cardId = useMemo(() => `activity-card-${activity.id}`, [activity.id]);
+
+  // Memoize the activity title
+  const activityTitle = useMemo(() => {
+    return activity.homeTeam && activity.awayTeam
+      ? `${activity.homeTeam} - ${activity.awayTeam}`
+      : activity.name;
+  }, [activity.homeTeam, activity.awayTeam, activity.name]);
+
+  // Memoize the formatted date
+  const formattedDate = useMemo(() => formatDate(activity.date), [formatDate, activity.date]);
+
+  // Memoize the clean league name
+  const cleanLeagueName = useMemo(() => getCleanLeagueName(league), [getCleanLeagueName, league]);
 
   return (
     <Card 
@@ -130,9 +148,7 @@ export function ActivityListItem({
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'} whitespace-normal`}>
-                  {activity.homeTeam && activity.awayTeam
-                    ? `${activity.homeTeam} - ${activity.awayTeam}`
-                    : activity.name}
+                  {activityTitle}
                 </h3>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -159,7 +175,7 @@ export function ActivityListItem({
             <div className={`flex flex-wrap items-center ${isMobile ? 'gap-2' : 'gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                <span>{formatDate(activity.date)}</span>
+                <span>{formattedDate}</span>
               </div>
               
               {activity.location?.name && (
@@ -177,7 +193,7 @@ export function ActivityListItem({
               {league && !isMobile && (
                 <div className="flex items-center gap-1 whitespace-nowrap">
                   <Award className="h-4 w-4" />
-                  <span>{getCleanLeagueName(league)}</span>
+                  <span>{cleanLeagueName}</span>
                 </div>
               )}
             </div>
@@ -200,21 +216,31 @@ export function ActivityListItem({
               />
             )}
 
-            {/* Match report summary for historical activities - more compact on mobile */}
-            {actualIsHistorical && (
-              <div className={isMobile ? 'text-xs' : ''}>
-                <MatchReportSummary activity={activity} />
-              </div>
+            {/* Match report summary for historical matches */}
+            {actualIsHistorical && activity.type === 'match' && (
+              <MatchReportSummary 
+                activity={activity} 
+              />
+            )}
+
+            {/* Activity stats widget for historical matches */}
+            {actualIsHistorical && activity.type === 'match' && (
+              <ActivityStatsWidget 
+                activity={activity} 
+                participants={participatingPlayers}
+                isHistorical={actualIsHistorical}
+                isMobile={isMobile}
+              />
             )}
           </div>
 
-          {/* Stats widget - right side on desktop, integrated on mobile */}
+          {/* Side content - only show on desktop */}
           {!isMobile && (
-            <div className="flex-shrink-0">
-              <ActivityStatsWidget 
-                activity={activity}
-                participants={participatingPlayers}
-                isHistorical={actualIsHistorical}
+            <div className="flex flex-col gap-2">
+              <ActivityMeta 
+                date={activity.date}
+                time={activity.time}
+                location={activity.location}
                 isMobile={isMobile}
               />
             </div>
@@ -223,4 +249,6 @@ export function ActivityListItem({
       </CardContent>
     </Card>
   );
-}
+});
+
+ActivityListItem.displayName = 'ActivityListItem';

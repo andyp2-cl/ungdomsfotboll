@@ -8,7 +8,7 @@ interface PlayerFormDisplayProps {
   activities: Activity[];
 }
 
-export function PlayerFormDisplay({ playerId, activities }: PlayerFormDisplayProps) {
+export function PlayerFormDisplay({ playerId, activities = [] }: PlayerFormDisplayProps) {
   // Get player's historical matches with results only
   const today = new Date();
   const playerMatches = activities

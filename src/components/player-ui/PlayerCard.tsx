@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Player, Activity } from "@/types/player";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ interface PlayerCardProps {
   isMobile?: boolean; // Ny prop
 }
 
-export function PlayerCard({ 
+export const PlayerCard = React.memo<PlayerCardProps>(({ 
   player, 
   onSelect, 
   onEdit, 
@@ -27,15 +27,15 @@ export function PlayerCard({
   showStats = false,
   activities = [],
   isMobile = false // Ny prop
-}: PlayerCardProps) {
+}) => {
   // Get real activity count that excludes kiosk duty assignments
-  const getActivityCount = () => {
+  const getActivityCount = useCallback(() => {
     if (!player.activities) return 0;
     return player.activities.length;
-  };
+  }, [player.activities]);
 
   // Calculate winrate from player's matches
-  const getPlayerWinRate = () => {
+  const getPlayerWinRate = useCallback(() => {
     if (!activities.length) return 0;
     
     const playerMatches = activities.filter(activity => 
@@ -47,9 +47,9 @@ export function PlayerCard({
     
     const stats = calculatePlayerStats(player, playerMatches);
     return stats.winRate;
-  };
+  }, [activities, player.id]);
 
-  const getGradeColor = (grade: string) => {
+  const getGradeColor = useCallback((grade: string) => {
     switch (grade) {
       case 'A':
         return 'bg-green-500 hover:bg-green-600';
@@ -62,11 +62,30 @@ export function PlayerCard({
       default:
         return 'bg-gray-500 hover:bg-gray-600';
     }
-  };
+  }, []);
 
-  const isCoach = isTrainer(player.positions);
-  const winRate = getPlayerWinRate();
-  const isActive = player.isActive !== undefined ? player.isActive : true;
+  // Memoize expensive calculations
+  const isCoach = useMemo(() => isTrainer(player.positions), [player.positions]);
+  const winRate = useMemo(() => getPlayerWinRate(), [getPlayerWinRate]);
+  const isActive = useMemo(() => player.isActive !== undefined ? player.isActive : true, [player.isActive]);
+  const activityCount = useMemo(() => getActivityCount(), [getActivityCount]);
+
+  const handleCardClick = useCallback(() => {
+    if (onSelect) {
+      onSelect();
+    }
+  }, [onSelect]);
+
+  const handleEditClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit();
+    }
+  }, [onEdit]);
+
+  const handleActionClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
 
   if (compact) {
     return (
@@ -74,7 +93,7 @@ export function PlayerCard({
         className={`flex justify-between items-center p-0.5 md:p-2 rounded-md border hover:bg-muted/50 transition-colors min-w-0 h-12 ${
           onSelect ? 'cursor-pointer' : ''
         } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
-        onClick={onSelect}
+        onClick={handleCardClick}
         style={{ minHeight: '32px', height: '48px', maxHeight: '52px' }}
       >
         <div className="flex items-center gap-1 md:gap-2 min-w-0">
@@ -115,10 +134,7 @@ export function PlayerCard({
         {onEdit && (
           <button
             className="p-0.5 md:p-2 rounded hover:bg-gray-100"
-            onClick={e => {
-              e.stopPropagation();
-              onEdit();
-            }}
+            onClick={handleEditClick}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6zm0 0l9-9a2.828 2.828 0 014 4l-9 9H3v-6z"/></svg>
           </button>
@@ -132,7 +148,7 @@ export function PlayerCard({
       className={`overflow-hidden ${onSelect ? 'cursor-pointer' : ''} hover:border-primary transition-colors ${
         isCoach ? 'border-amber-300' : ''
       } ${!isActive ? 'opacity-60 bg-gray-50/50' : ''}`}
-      onClick={onSelect}
+      onClick={handleCardClick}
     >
       <div className="aspect-[3/2] bg-muted relative">
         <div className={!isActive ? 'grayscale opacity-70' : ''}>
@@ -168,7 +184,7 @@ export function PlayerCard({
         </div>
         
         {action && (
-          <div className="absolute bottom-2 left-2" onClick={e => e.stopPropagation()}>
+          <div className="absolute bottom-2 left-2" onClick={handleActionClick}>
             {action}
           </div>
         )}
@@ -198,18 +214,17 @@ export function PlayerCard({
       </CardContent>
       
       <CardFooter className="p-3 pt-0 flex justify-between">
-        <span className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
-          {getActivityCount() === 0
-            ? "Inga aktiviteter"
-            : `${getActivityCount()} aktiviteter`}
-        </span>
-        
-        {showStats && player.matches !== undefined && (
-          <span className={`text-xs ${!isActive ? 'text-gray-400' : 'text-muted-foreground'}`}>
-            {player.matches} matcher
-          </span>
+        <div className="text-sm text-muted-foreground">
+          {activityCount} aktiviteter
+        </div>
+        {showStats && winRate > 0 && (
+          <div className="text-sm text-muted-foreground">
+            {winRate}% vinst
+          </div>
         )}
       </CardFooter>
     </Card>
   );
-}
+});
+
+PlayerCard.displayName = 'PlayerCard';

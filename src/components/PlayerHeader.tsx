@@ -2,7 +2,8 @@ import React from "react";
 import { useLocation } from "react-router-dom";
 import { Player } from "@/types/player";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, LogOut, User } from "lucide-react";
+import { useAuth } from "@/integrations/supabase/auth";
 
 interface PlayerHeaderProps {
   player?: Player;
@@ -19,6 +20,7 @@ export function PlayerHeader({
   onBulkUpdate, 
   allPlayers 
 }: PlayerHeaderProps = {}) {
+  const { user, signOut } = useAuth();
   
   // Om vi har en spelare, visa spelarspecifik header
   if (player) {
@@ -29,19 +31,48 @@ export function PlayerHeader({
           <p className="text-muted-foreground">Nivå: {player.grade}</p>
         </div>
         
-        {onEdit && (
-          <Button variant="outline" size="sm" onClick={() => onEdit(player)} className="mt-2 md:mt-0">
-            <Edit className="h-4 w-4 mr-2" />
-            Redigera
+        <div className="flex items-center gap-2 mt-2 md:mt-0">
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={() => onEdit(player)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Redigera
+            </Button>
+          )}
+          
+          {/* Logout button för spelarvy */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={signOut}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
     );
   }
   
-  // Förbättrad header med logotyp och gradienttext
+  // Förbättrad header med logotyp, gradienttext och logout-knapp
   return (
     <div className="mb-8">
+      {/* Logout button i högra hörnet */}
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <User className="h-4 w-4" />
+          <span>{user?.email}</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={signOut}
+            className="text-muted-foreground hover:text-foreground hover:bg-red-50 hover:text-red-600"
+            title="Logga ut"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
       <div
         className="flex flex-col md:flex-row items-center md:items-center gap-6 md:gap-8 justify-center md:justify-start cursor-pointer"
         onClick={() => { window.location.href = '/players'; }}

@@ -1,67 +1,126 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Activity } from "@/types/player";
 
 export function useActivityFilters(activities: Activity[]) {
-  // Vi behåller selectedActivityTypes men använder det inte längre i UI
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
+  const [selectedCups, setSelectedCups] = useState<string[]>([]);
+  const [selectedLeagues, setSelectedLeagues] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null
+  });
 
-  const { currentActivities, historicalActivities } = useMemo(() => {
-    const now = new Date();
-    
-    const current: Activity[] = [];
-    const historical: Activity[] = [];
-    
-    // Ensure activities is an array before using forEach
-    if (!Array.isArray(activities)) {
-      console.warn('Activities is not an array:', activities);
-      return { currentActivities: [], historicalActivities: [] };
-    }
-    
-    activities.forEach(activity => {
-      if (!activity || !activity.date) {
-        console.warn('Invalid activity found:', activity);
-        return;
-      }
-
-      const activityDate = new Date(activity.date);
-      
-      // If there's a time specified, add it to the activity date
-      if (activity.time) {
-        const [hours, minutes] = activity.time.split(':').map(Number);
-        activityDate.setHours(hours || 0, minutes || 0);
-      } else {
-        // If no time specified, use end of day (23:59:59)
-        activityDate.setHours(23, 59, 59);
-      }
-      
-      // Compare with current time to determine if it's historical
-      if (activityDate >= now) {
-        current.push(activity);
-      } else {
-        historical.push(activity);
-      }
-    });
-    
-    return { currentActivities: current, historicalActivities: historical };
+  // Memoize expensive calculations
+  const currentActivities = useMemo(() => {
+    const today = new Date();
+    return activities.filter(activity => new Date(activity.date) >= today);
   }, [activities]);
 
-  // Behåll funktionen för att ändra aktivitetstyper (för bakåtkompatibilitet)
-  const handleActivityTypeChange = (type: string) => {
-    setSelectedActivityTypes(prev => 
-      prev.includes(type) 
-        ? prev.filter(t => t !== type) 
-        : [...prev, type]
-    );
-  };
+  const historicalActivities = useMemo(() => {
+    const today = new Date();
+    return activities.filter(activity => new Date(activity.date) < today);
+  }, [activities]);
 
-  // Sort the filtered activities
+  // Memoize available filter options
+  const availableActivityTypes = useMemo(() => {
+    const types = new Set<string>();
+    activities.forEach(activity => {
+      if (activity.type) types.add(activity.type);
+    });
+    return Array.from(types).sort();
+  }, [activities]);
+
+  const availableCups = useMemo(() => {
+    const cups = new Set<string>();
+    activities.forEach(activity => {
+      if (activity.cupName) cups.add(activity.cupName);
+    });
+    return Array.from(cups).sort();
+  }, [activities]);
+
+  const availableLeagues = useMemo(() => {
+    const leagues = new Set<string>();
+    activities.forEach(activity => {
+      if (activity.league_id) leagues.add(activity.league_id);
+    });
+    return Array.from(leagues).sort();
+  }, [activities]);
+
+  const availableLocations = useMemo(() => {
+    const locations = new Set<string>();
+    activities.forEach(activity => {
+      if (activity.location?.name) locations.add(activity.location.name);
+    });
+    return Array.from(locations).sort();
+  }, [activities]);
+
+  const availablePlayers = useMemo(() => {
+    const players = new Set<string>();
+    activities.forEach(activity => {
+      activity.participants?.forEach(playerId => {
+        players.add(playerId);
+      });
+    });
+    return Array.from(players).sort();
+  }, [activities]);
+
+  // Memoize filtered activities
   const filteredCurrentActivities = useMemo(() => {
     if (!Array.isArray(currentActivities) || currentActivities.length === 0) {
       return [];
     }
 
+    let filtered = currentActivities;
+
+    // Filter by activity type
+    if (selectedActivityTypes.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.type && selectedActivityTypes.includes(activity.type)
+      );
+    }
+
+    // Filter by cup
+    if (selectedCups.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.cupName && selectedCups.includes(activity.cupName)
+      );
+    }
+
+         // Filter by league
+     if (selectedLeagues.length > 0) {
+       filtered = filtered.filter(activity => 
+         activity.league_id && selectedLeagues.includes(activity.league_id)
+       );
+     }
+
+    // Filter by location
+    if (selectedLocations.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.location?.name && selectedLocations.includes(activity.location.name)
+      );
+    }
+
+    // Filter by players
+    if (selectedPlayers.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.participants?.some(playerId => selectedPlayers.includes(playerId))
+      );
+    }
+
+    // Filter by date range
+    if (dateRange.start || dateRange.end) {
+      filtered = filtered.filter(activity => {
+        const activityDate = new Date(activity.date);
+        if (dateRange.start && activityDate < dateRange.start) return false;
+        if (dateRange.end && activityDate > dateRange.end) return false;
+        return true;
+      });
+    }
+
     // Group activities by month
-    const activitiesByMonth = currentActivities.reduce((acc, activity) => {
+    const activitiesByMonth = filtered.reduce((acc, activity) => {
       if (!activity || !activity.date) {
         console.warn('Invalid activity in currentActivities:', activity);
         return acc;
@@ -97,14 +156,56 @@ export function useActivityFilters(activities: Activity[]) {
     // Flatten the sorted groups
     const sortedMonthKeys = Object.keys(activitiesByMonth).sort();
     return sortedMonthKeys.flatMap(month => activitiesByMonth[month]);
-  }, [currentActivities]);
+  }, [currentActivities, selectedActivityTypes, selectedCups, selectedLeagues, selectedLocations, selectedPlayers, dateRange]);
 
   const filteredHistoricalActivities = useMemo(() => {
     if (!Array.isArray(historicalActivities) || historicalActivities.length === 0) {
       return [];
     }
 
-    return historicalActivities
+    let filtered = historicalActivities;
+
+    // Apply same filters as current activities
+    if (selectedActivityTypes.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.type && selectedActivityTypes.includes(activity.type)
+      );
+    }
+
+    if (selectedCups.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.cupName && selectedCups.includes(activity.cupName)
+      );
+    }
+
+         if (selectedLeagues.length > 0) {
+       filtered = filtered.filter(activity => 
+         activity.league_id && selectedLeagues.includes(activity.league_id)
+       );
+     }
+
+    if (selectedLocations.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.location?.name && selectedLocations.includes(activity.location.name)
+      );
+    }
+
+    if (selectedPlayers.length > 0) {
+      filtered = filtered.filter(activity => 
+        activity.participants?.some(playerId => selectedPlayers.includes(playerId))
+      );
+    }
+
+    if (dateRange.start || dateRange.end) {
+      filtered = filtered.filter(activity => {
+        const activityDate = new Date(activity.date);
+        if (dateRange.start && activityDate < dateRange.start) return false;
+        if (dateRange.end && activityDate > dateRange.end) return false;
+        return true;
+      });
+    }
+
+    return filtered
       .sort((a, b) => {
         const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
         
@@ -114,14 +215,85 @@ export function useActivityFilters(activities: Activity[]) {
         
         return dateComparison;
       });
-  }, [historicalActivities]);
+  }, [historicalActivities, selectedActivityTypes, selectedCups, selectedLeagues, selectedLocations, selectedPlayers, dateRange]);
+
+  // Memoize filter handlers
+  const handleActivityTypeChange = useCallback((type: string, checked: boolean) => {
+    setSelectedActivityTypes(prev => 
+      checked 
+        ? [...prev, type]
+        : prev.filter(t => t !== type)
+    );
+  }, []);
+
+  const handleCupChange = useCallback((cup: string, checked: boolean) => {
+    setSelectedCups(prev => 
+      checked 
+        ? [...prev, cup]
+        : prev.filter(c => c !== cup)
+    );
+  }, []);
+
+  const handleLeagueChange = useCallback((league: string, checked: boolean) => {
+    setSelectedLeagues(prev => 
+      checked 
+        ? [...prev, league]
+        : prev.filter(l => l !== league)
+    );
+  }, []);
+
+  const handleLocationChange = useCallback((location: string, checked: boolean) => {
+    setSelectedLocations(prev => 
+      checked 
+        ? [...prev, location]
+        : prev.filter(l => l !== location)
+    );
+  }, []);
+
+  const handlePlayerChange = useCallback((playerId: string, checked: boolean) => {
+    setSelectedPlayers(prev => 
+      checked 
+        ? [...prev, playerId]
+        : prev.filter(p => p !== playerId)
+    );
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSelectedActivityTypes([]);
+    setSelectedCups([]);
+    setSelectedLeagues([]);
+    setSelectedLocations([]);
+    setSelectedPlayers([]);
+    setDateRange({ start: null, end: null });
+  }, []);
 
   return {
-    selectedActivityTypes,
+    // Filtered data
     filteredCurrentActivities,
     filteredHistoricalActivities,
-    currentActivities,
-    historicalActivities,
-    handleActivityTypeChange
+    
+    // Available options
+    availableActivityTypes,
+    availableCups,
+    availableLeagues,
+    availableLocations,
+    availablePlayers,
+    
+    // Current filter states
+    selectedActivityTypes,
+    selectedCups,
+    selectedLeagues,
+    selectedLocations,
+    selectedPlayers,
+    dateRange,
+    
+    // Filter handlers
+    handleActivityTypeChange,
+    handleCupChange,
+    handleLeagueChange,
+    handleLocationChange,
+    handlePlayerChange,
+    setDateRange,
+    clearAllFilters
   };
 }
